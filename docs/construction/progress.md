@@ -24,7 +24,7 @@ Trạng thái theo module: [modules.md](modules.md). Lệch và thiếu so với
 | Phase                      | Trạng thái   | WP xong / tổng | Cổng           |
 | -------------------------- | ------------ | -------------- | -------------- |
 | 0 — Nền móng               | Gần xong     | 8 / 10         | `G0`: chưa đạt |
-| 1 — Studio Core            | Đang làm     | 2 / 11         | `G1`           |
+| 1 — Studio Core            | Đang làm     | 3 / 11         | `G1`           |
 | 2 — Xuất code và tương tác | Chưa bắt đầu | 0 / 13         | `G2`           |
 | 3 — AI                     | Chưa bắt đầu | 0 / 8          | `G3`           |
 | 4 — Ngữ cảnh backend       | Chưa bắt đầu | 0 / 12         | `G4`           |
@@ -62,11 +62,12 @@ Phase 1 bắt đầu song song với phần còn lại của Phase 0 (chủ sả
 
 ## Phase 1: gói công việc
 
-| WP                  | Tên                                                         | Trạng thái                                                                                                                        |
-| ------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| WP-1.01             | Model: schema Zod đầy đủ, quy tắc V-xx                      | Xong (83 test model). V-29, V-33 dời sang WP-1.02 (spec-log #28)                                                                  |
-| WP-1.02             | Model: mọi operation, `applyBatch`, `assignIds`, dạng phẳng | Xong: 24 loại operation; property test 400 + 150 lượt (`apply(invert(op))`); PB-01 trung bình 2,1 ms, p99 4,0 ms (ngân sách 5 ms) |
-| WP-1.03 đến WP-1.11 | Theo SPEC-07 mục 5.2                                        | Chưa                                                                                                                              |
+| WP                  | Tên                                                         | Trạng thái                                                                                                                                                 |
+| ------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| WP-1.01             | Model: schema Zod đầy đủ, quy tắc V-xx                      | Xong (83 test model). V-29, V-33 dời sang WP-1.02 (spec-log #28)                                                                                           |
+| WP-1.02             | Model: mọi operation, `applyBatch`, `assignIds`, dạng phẳng | Xong: 24 loại operation; property test 400 + 150 lượt (`apply(invert(op))`); PB-01 trung bình 2,1 ms, p99 4,0 ms (ngân sách 5 ms)                          |
+| WP-1.03             | Model: khung migration, `serializeCanonical`                | Xong: ghi hai lần giống từng byte (kể cả sau khi đọc lại); pipeline migration chạy với 1 → 1 rỗng và chuỗi giả 0 → 1 → 2; tách và ghép file `.reactcraft/` |
+| WP-1.04 đến WP-1.11 | Theo SPEC-07 mục 5.2                                        | Chưa                                                                                                                                                       |
 
 ## Việc chờ chủ sản phẩm
 
@@ -86,6 +87,6 @@ Phase 1 bắt đầu song song với phần còn lại của Phase 0 (chủ sả
 
 ## Bước tiếp theo
 
-1. WP-1.03 (M-MC): khung migration (`schemaVersion` 1), `serializeCanonical` (ghi hai lần giống từng byte).
-2. WP-1.04: M-TK (bộ token mặc định), M-SM (ánh xạ thuộc tính sang class Tailwind, chuẩn hóa V-29).
+1. WP-1.05 (M-WS, M-DS, M-SV): server mở, tạo, lưu workspace (debounce, sao lưu, khóa phiên E018), endpoint và sự kiện workspace, `/workspace/trust`, cấu hình người dùng, log có lọc secrets.
+2. WP-1.06 (M-SH, M-HS): Studio Welcome, Editor, Settings, Undo/Redo. Sau đó WP-1.04 (M-TK, M-SM, V-29) trước WP-1.07 (Canvas).
 3. Làm lại VG-11 trước WP-1.08; VG-14 trước Phase 2.
