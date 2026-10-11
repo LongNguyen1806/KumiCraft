@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Test and benchmark output
+coverage/
+test-results/
+playwright-report/
+bench-results/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Secrets (QC-78)
+.env
+.env.*
+!.env.example
+
+# Workspaces created while trying ReactCraft locally
+.reactcraft/
+
+# Editors and operating systems
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

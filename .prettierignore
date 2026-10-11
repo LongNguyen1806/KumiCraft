@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+pnpm-lock.yaml
+CHANGELOG.md
+
+# Spec documents are formatted by hand: Prettier would realign every table.
+docs/srs.md
+docs/spec.md
+
+# Fixtures and templates mirror third-party projects and keep their own formatting.
+fixtures/
+templates/

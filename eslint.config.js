@@ -1,0 +1,190 @@
+// @ts-check
+// ESLint flat config. Rules come from SPEC-01.1 ADR-BE-27, SPEC-01.1 section 3.2 and SPEC-02 (QC-xx).
+// Studio-specific plugins (react-hooks, i18next, jsx-a11y) and the Studio layering rules of
+// SPEC-01.2 section 3.4 are added together with the Studio code (SPEC-07 WP-0.03, WP-0.05).
+import js from '@eslint/js';
+import { defineConfig, globalIgnores } from 'eslint/config';
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
+import tseslint from 'typescript-eslint';
+
+const TS_FILES = ['**/*.ts', '**/*.tsx'];
+const JS_FILES = ['**/*.js', '**/*.mjs'];
+
+/** QC-03: other packages are imported only through their public entry point. */
+const NO_DEEP_PACKAGE_IMPORT = {
+  group: ['@reactcraft/*/src', '@reactcraft/*/src/**'],
+  message: 'Import from the package entry point only (QC-03).',
+};
+
+const RESTRICTED_SYNTAX = [
+  {
+    selector: 'TSEnumDeclaration',
+    message: 'Do not use enum. Use a string union or an `as const` object (QC-38).',
+  },
+  {
+    selector: 'TSNullKeyword',
+    message: 'Use undefined instead of null (QC-40).',
+  },
+  {
+    selector: "Literal[raw='null']",
+    message: 'Use undefined instead of null (QC-40).',
+  },
+  {
+    selector: "CallExpression[callee.property.name='then']",
+    message: 'Use async/await instead of .then() chains (QC-42).',
+  },
+];
+
+const NO_DEFAULT_EXPORT = {
+  selector: 'ExportDefaultDeclaration',
+  message: 'Use named exports only (QC-37).',
+};
+
+export default defineConfig(
+  globalIgnores([
+    '**/node_modules/',
+    '**/dist/',
+    '**/coverage/',
+    'docs/',
+    'fixtures/',
+    'templates/',
+  ]),
+
+  {
+    linterOptions: { reportUnusedDisableDirectives: 'error' },
+  },
+
+  // Rules shared by every source file.
+  {
+    files: [...TS_FILES, ...JS_FILES],
+    extends: [js.configs.recommended],
+    plugins: { 'simple-import-sort': simpleImportSort },
+    rules: {
+      'simple-import-sort/imports': 'error', // QC-43
+      'simple-import-sort/exports': 'error',
+      'no-console': 'error', // ADR-BE-23: log through LoggerPort
+      'no-empty': ['error', { allowEmptyCatch: false }], // QC-49
+      'no-restricted-imports': ['error', { patterns: [NO_DEEP_PACKAGE_IMPORT] }],
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'process',
+          property: 'exit',
+          message: 'Only packages/cli may call process.exit() (QC-52).',
+        },
+      ],
+      'no-restricted-syntax': ['error', NO_DEFAULT_EXPORT, ...RESTRICTED_SYNTAX],
+      'max-lines': ['warn', { max: 400, skipBlankLines: true, skipComments: true }], // QC-44
+      'max-lines-per-function': ['warn', { max: 50, skipBlankLines: true, skipComments: true }],
+    },
+  },
+
+  // TypeScript: type-aware rules (ADR-BE-27).
+  {
+    files: TS_FILES,
+    extends: [tseslint.configs.strictTypeChecked],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      '@typescript-eslint/consistent-type-imports': 'error', // QC-43
+      '@typescript-eslint/ban-ts-comment': [
+        'error',
+        { 'ts-ignore': true, 'ts-expect-error': 'allow-with-description' }, // ADR-BE-02
+      ],
+      '@typescript-eslint/naming-convention': [
+        'error',
+        {
+          selector: 'interface',
+          format: ['PascalCase'],
+          custom: { regex: '^I[A-Z]', match: false }, // QC-21
+        },
+      ],
+    },
+  },
+
+  // Plain JavaScript (tool configs, scripts): Node globals, no type information.
+  {
+    files: JS_FILES,
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        URL: 'readonly',
+      },
+    },
+  },
+
+  // SPEC-01.1 section 3.2 rule 1: the model runs in both Node and the browser.
+  {
+    files: ['packages/model/src/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            NO_DEEP_PACKAGE_IMPORT,
+            {
+              regex: '^(?!(?:zod|nanoid)(?:/|$)|\\.{1,2}/).*',
+              message:
+                '@reactcraft/model may import only zod, nanoid and its own files (SPEC-01.1 section 3.2).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // SPEC-01.1 section 3.2 rule 2 and QC-63: the server core talks to the outside through ports.
+  {
+    files: ['packages/server/src/core/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'fastify',
+              message: 'core/ must not depend on Fastify (SPEC-01.1 section 3.2).',
+            },
+            {
+              name: 'chokidar',
+              message: 'core/ must use FileWatcherPort (SPEC-01.1 section 3.2).',
+            },
+            { name: 'node:fs', message: 'core/ must use FileSystemPort (QC-63).' },
+            { name: 'node:fs/promises', message: 'core/ must use FileSystemPort (QC-63).' },
+            { name: 'fs', message: 'core/ must use FileSystemPort (QC-63).' },
+            { name: 'fs/promises', message: 'core/ must use FileSystemPort (QC-63).' },
+          ],
+          patterns: [
+            NO_DEEP_PACKAGE_IMPORT,
+            {
+              group: ['**/adapters', '**/adapters/**', '@fastify/*'],
+              message: 'core/ must not import adapters (SPEC-01.1 section 3.2).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // The CLI and repository scripts are the only places allowed to print and exit.
+  {
+    files: ['packages/cli/src/**/*.ts', 'scripts/**/*.mjs'],
+    rules: {
+      'no-console': 'off',
+      'no-restricted-properties': 'off',
+    },
+  },
+
+  // Tool configuration files must use a default export (QC-37 exception).
+  {
+    files: ['*.config.js', '*.config.ts', 'packages/*/*.config.js', 'packages/*/*.config.ts'],
+    rules: {
+      'no-restricted-syntax': ['error', ...RESTRICTED_SYNTAX],
+    },
+  },
+);

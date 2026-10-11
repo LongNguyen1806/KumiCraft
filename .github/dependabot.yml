@@ -1,0 +1,18 @@
+# SPEC-05 S-92: weekly dependency updates, each one goes through the full CI.
+# Commit prefixes satisfy commitlint (SPEC-02 section 11.2): Dependabot adds ": " after the prefix.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build(repo)
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci(repo)

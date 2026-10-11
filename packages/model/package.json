@@ -1,0 +1,11 @@
+{
+  "name": "@reactcraft/model",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Design Model: schema, Design Operations, migrations and the styling map shared by Studio and server",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

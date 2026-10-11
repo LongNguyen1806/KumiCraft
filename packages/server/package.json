@@ -1,0 +1,14 @@
+{
+  "name": "@reactcraft/server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Local Backend: workspace, code generation, export, backend scan and AI gateway",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5"
+  }
+}

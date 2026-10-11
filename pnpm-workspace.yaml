@@ -1,0 +1,16 @@
+packages:
+  - packages/*
+
+# Pin exact versions when adding dependencies (SPEC-01.1 section 13.3).
+saveExact: true
+
+# Refuse to install on an unsupported Node.js version (see "engines" in package.json).
+engineStrict: true
+
+# SPEC-05 S-93: block install scripts of every dependency unless explicitly approved here.
+onlyBuiltDependencies: []
+
+# lefthook ships prebuilt binaries as optional dependencies; its postinstall is not needed.
+# Git hooks are installed by the root "prepare" script (scripts/install-git-hooks.mjs).
+ignoredBuiltDependencies:
+  - lefthook
