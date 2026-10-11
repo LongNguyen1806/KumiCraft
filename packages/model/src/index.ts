@@ -136,3 +136,4 @@ export {
   issuesToDetails,
   validateDocument,
 } from './schema/validate/validate-document.ts';
+export { createDefaultTokens } from './tokens/default-tokens.ts';
