@@ -1,6 +1,27 @@
 // Public entry point of @reactcraft/model (QC-03).
 export type { FeatureId } from './features.ts';
 export { FEATURES, RELEASED_PHASE, resolveEnabledFeatures } from './features.ts';
+export type { IdGenerator } from './operations/batch.ts';
+export { applyBatch, assignIds, TEMPORARY_ID } from './operations/batch.ts';
+export { applyOperation, invertOperation } from './operations/engine.ts';
+export type { NodeRecord, NormalizedTree } from './operations/normalize.ts';
+export { denormalize, normalize } from './operations/normalize.ts';
+export type {
+  DesignOperation,
+  OperationBatch,
+  OperationKind,
+  OperationOf,
+  StyleScope,
+  TreeTarget,
+} from './operations/operation.schema.ts';
+export {
+  DesignOperationSchema,
+  OperationBatchSchema,
+  StyleScopeSchema,
+  TreeTargetSchema,
+} from './operations/operation.schema.ts';
+export { findTokenUses } from './operations/token-refs.ts';
+export { validateOperation } from './operations/validate-operation.ts';
 export type { AppError, ErrorCode, ErrorDetail, Result } from './result.ts';
 export { err, ok } from './result.ts';
 export type { Binding, ValueFormat } from './schema/binding.schema.ts';
@@ -96,3 +117,10 @@ export {
 export type { BackgroundImage, StateStyleProps, StyleProps } from './schema/style.schema.ts';
 export { StylePropsSchema } from './schema/style.schema.ts';
 export { walkTree } from './schema/tree.ts';
+export { BINDING_KEYS } from './schema/validate/rules-data.ts';
+export type { ValidateOptions } from './schema/validate/validate-document.ts';
+export {
+  checkDocument,
+  issuesToDetails,
+  validateDocument,
+} from './schema/validate/validate-document.ts';

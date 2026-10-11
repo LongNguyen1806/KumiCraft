@@ -46,6 +46,27 @@ export const InteractionActionSchema = z.discriminatedUnion('type', [
 ]);
 export type InteractionAction = z.infer<typeof InteractionActionSchema>;
 
+// A Record over the union makes a missing or extra action type a compile error.
+const ACTION_TYPES: Readonly<Record<InteractionAction['type'], true>> = {
+  navigate: true,
+  openUrl: true,
+  openModal: true,
+  closeModal: true,
+  show: true,
+  hide: true,
+  toggle: true,
+  scrollTo: true,
+  switchTab: true,
+  showToast: true,
+  refreshData: true,
+  deleteRecord: true,
+};
+
+/** Every action type of the closed set (SPEC-03 section 6a.1). */
+export const INTERACTION_ACTION_TYPES = Object.keys(
+  ACTION_TYPES,
+) as readonly InteractionAction['type'][];
+
 /** V-96: at most 5 actions per interaction. */
 export const InteractionActionsSchema = z.array(InteractionActionSchema).min(1).max(5);
 
