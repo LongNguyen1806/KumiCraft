@@ -3,7 +3,7 @@
 // `.reactcraft/` folder of ADR-BE-11. Same seed, same bytes (SPEC-07 WP-0.07). The result is
 // checked with checkDocument before it is written.
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
 import {
@@ -12,7 +12,9 @@ import {
   type DesignDocument,
   type DesignNode,
   type DesignTokens,
+  documentToFiles,
   type Page,
+  WORKSPACE_DIR,
   type WorkspaceMeta,
 } from '@reactcraft/model';
 
@@ -206,18 +208,13 @@ export function generateLargeWorkspace(pages: number, nodes: number, seed: numbe
   };
 }
 
+/** Writes the canonical files of ADR-BE-11 (SPEC-04.1 R-DS-07 to R-DS-10). */
 function writeWorkspace(document: DesignDocument, out: string) {
-  const dir = join(out, '.reactcraft');
-  rmSync(dir, { recursive: true, force: true });
-  mkdirSync(join(dir, 'pages'), { recursive: true });
-  mkdirSync(join(dir, 'components'), { recursive: true });
-  const write = (file: string, value: unknown) => {
-    writeFileSync(join(dir, file), `${JSON.stringify(value, undefined, 2)}\n`);
-  };
-  write('workspace.json', document.workspace);
-  write('tokens.json', document.tokens);
-  write('data-sources.json', document.dataSources);
-  for (const page of Object.values(document.pages)) write(join('pages', `${page.id}.json`), page);
+  rmSync(join(out, WORKSPACE_DIR), { recursive: true, force: true });
+  for (const [path, content] of Object.entries(documentToFiles(document))) {
+    mkdirSync(dirname(join(out, path)), { recursive: true });
+    writeFileSync(join(out, path), content);
+  }
 }
 
 function main() {

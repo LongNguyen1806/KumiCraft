@@ -1,6 +1,18 @@
 // Public entry point of @reactcraft/model (QC-03).
 export type { FeatureId } from './features.ts';
 export { FEATURES, RELEASED_PHASE, resolveEnabledFeatures } from './features.ts';
+export type { Migration, MigrationOutcome, WorkspaceFiles } from './migrations/migrate.ts';
+export { migrateWorkspace, MIGRATIONS, readSchemaVersion } from './migrations/migrate.ts';
+export type { WorkspaceFileKind, WorkspaceFileValue } from './migrations/serialize-canonical.ts';
+export { serializeCanonical } from './migrations/serialize-canonical.ts';
+export type { AssembledDocument } from './migrations/workspace-files.ts';
+export {
+  assembleDocument,
+  documentToFiles,
+  WORKSPACE_DIR,
+  WORKSPACE_GITIGNORE,
+  workspaceFilePath,
+} from './migrations/workspace-files.ts';
 export type { IdGenerator } from './operations/batch.ts';
 export { applyBatch, assignIds, TEMPORARY_ID } from './operations/batch.ts';
 export { applyOperation, invertOperation } from './operations/engine.ts';
