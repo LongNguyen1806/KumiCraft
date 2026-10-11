@@ -7,7 +7,7 @@ import { defineConfig } from 'vite';
 const apiPort = process.env.REACTCRAFT_API_PORT ?? '4310';
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react({ compiler: true }), tailwindcss()],
   server: {
     host: '127.0.0.1',
     port: 5173,
