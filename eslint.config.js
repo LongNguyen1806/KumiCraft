@@ -212,6 +212,12 @@ export default defineConfig(
     },
   },
 
+  // QC-44 targets production functions; a describe() block naturally groups many cases.
+  {
+    files: ['**/*.test.{ts,tsx}', '**/*.e2e.ts', '**/*.bench.ts'],
+    rules: { 'max-lines-per-function': 'off' },
+  },
+
   // The CLI and repository scripts are the only places allowed to print and exit.
   {
     files: ['packages/cli/src/**/*.ts', 'scripts/**/*.mjs'],
