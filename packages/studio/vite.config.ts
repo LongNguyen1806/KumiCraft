@@ -7,6 +7,10 @@ import { defineConfig } from 'vite';
 const apiPort = process.env.REACTCRAFT_API_PORT ?? '4310';
 
 export default defineConfig({
+  // React Compiler (VG-13) through `oxc-transform-react`, the Rust port of the compiler.
+  // Fallback if that port misbehaves: Meta's Babel compiler. `babel-plugin-react-compiler` is kept
+  // installed for that; add `@rolldown/plugin-babel` and use `reactCompilerPreset()` from
+  // `@vitejs/plugin-react` instead of `compiler: true`.
   plugins: [react({ compiler: true }), tailwindcss()],
   server: {
     host: '127.0.0.1',
