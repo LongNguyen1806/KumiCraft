@@ -23,8 +23,8 @@ Trạng thái theo module: [modules.md](modules.md). Lệch và thiếu so với
 
 | Phase                      | Trạng thái   | WP xong / tổng | Cổng           |
 | -------------------------- | ------------ | -------------- | -------------- |
-| 0 — Nền móng               | Gần xong     | 7 / 10         | `G0`: chưa đạt |
-| 1 — Studio Core            | Bắt đầu      | 0 / 11         | `G1`           |
+| 0 — Nền móng               | Gần xong     | 8 / 10         | `G0`: chưa đạt |
+| 1 — Studio Core            | Đang làm     | 2 / 11         | `G1`           |
 | 2 — Xuất code và tương tác | Chưa bắt đầu | 0 / 13         | `G2`           |
 | 3 — AI                     | Chưa bắt đầu | 0 / 8          | `G3`           |
 | 4 — Ngữ cảnh backend       | Chưa bắt đầu | 0 / 12         | `G4`           |
@@ -34,18 +34,18 @@ Phase 1 bắt đầu song song với phần còn lại của Phase 0 (chủ sả
 
 ## Phase 0: gói công việc
 
-| WP      | Tên                         | Trạng thái   | Còn lại                                                                         |
-| ------- | --------------------------- | ------------ | ------------------------------------------------------------------------------- |
-| WP-0.01 | Khởi tạo repo               | Xong (local) | Bước GitHub hoãn                                                                |
-| WP-0.02 | CI                          | Xong (local) | Chạy thật khi lên GitHub                                                        |
-| WP-0.03 | Khung 4 package             | Xong         | —                                                                               |
-| WP-0.04 | Nền bảo mật mạng            | Xong         | Phần WebSocket của S-07 làm cùng `/api/v1/events` (WP-1.05)                     |
-| WP-0.05 | Hạ tầng i18n                | Xong         | Lưu ngôn ngữ vào cấu hình người dùng (WP-1.05)                                  |
-| WP-0.06 | Hạ tầng kiểm thử, SPEC-06.0 | Xong         | SPEC-06.0 đã có trong Spec (bản nháp)                                           |
-| WP-0.07 | Fixture ban đầu             | Đang làm     | `all-nodes.json`, `gen-large-workspace.ts`: làm ngay sau WP-1.01 (spec-log #20) |
-| WP-0.08 | Spike VG-01, VG-07          | Xong         | —                                                                               |
-| WP-0.09 | Spike Studio                | Đang làm     | Làm lại VG-11 (trước WP-1.08), VG-14 (trước Phase 2); báo cáo VG-12             |
-| WP-0.10 | Chuyển tài liệu vào repo    | Xong         | —                                                                               |
+| WP      | Tên                         | Trạng thái   | Còn lại                                                                                                                  |
+| ------- | --------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| WP-0.01 | Khởi tạo repo               | Xong (local) | Bước GitHub hoãn                                                                                                         |
+| WP-0.02 | CI                          | Xong (local) | Chạy thật khi lên GitHub                                                                                                 |
+| WP-0.03 | Khung 4 package             | Xong         | —                                                                                                                        |
+| WP-0.04 | Nền bảo mật mạng            | Xong         | Phần WebSocket của S-07 làm cùng `/api/v1/events` (WP-1.05)                                                              |
+| WP-0.05 | Hạ tầng i18n                | Xong         | Lưu ngôn ngữ vào cấu hình người dùng (WP-1.05)                                                                           |
+| WP-0.06 | Hạ tầng kiểm thử, SPEC-06.0 | Xong         | SPEC-06.0 đã có trong Spec (bản nháp)                                                                                    |
+| WP-0.07 | Fixture ban đầu             | Xong         | 2 target project, `all-nodes.json` (qua `checkDocument`, phủ đủ schema), `pnpm gen:large-workspace` (xác định theo seed) |
+| WP-0.08 | Spike VG-01, VG-07          | Xong         | —                                                                                                                        |
+| WP-0.09 | Spike Studio                | Đang làm     | Làm lại VG-11 (trước WP-1.08), VG-14 (trước Phase 2); báo cáo VG-12                                                      |
+| WP-0.10 | Chuyển tài liệu vào repo    | Xong         | —                                                                                                                        |
 
 ## Verification Gate
 
@@ -62,10 +62,11 @@ Phase 1 bắt đầu song song với phần còn lại của Phase 0 (chủ sả
 
 ## Phase 1: gói công việc
 
-| WP                  | Tên                                    | Trạng thái |
-| ------------------- | -------------------------------------- | ---------- |
-| WP-1.01             | Model: schema Zod đầy đủ, quy tắc V-xx | Đang làm   |
-| WP-1.02 đến WP-1.11 | Theo SPEC-07 mục 5.2                   | Chưa       |
+| WP                  | Tên                                                         | Trạng thái                                                                                                                        |
+| ------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| WP-1.01             | Model: schema Zod đầy đủ, quy tắc V-xx                      | Xong (83 test model). V-29, V-33 dời sang WP-1.02 (spec-log #28)                                                                  |
+| WP-1.02             | Model: mọi operation, `applyBatch`, `assignIds`, dạng phẳng | Xong: 24 loại operation; property test 400 + 150 lượt (`apply(invert(op))`); PB-01 trung bình 2,1 ms, p99 4,0 ms (ngân sách 5 ms) |
+| WP-1.03 đến WP-1.11 | Theo SPEC-07 mục 5.2                                        | Chưa                                                                                                                              |
 
 ## Việc chờ chủ sản phẩm
 
@@ -85,6 +86,6 @@ Phase 1 bắt đầu song song với phần còn lại của Phase 0 (chủ sả
 
 ## Bước tiếp theo
 
-1. WP-1.01 (M-MC): schema Zod của Design Model theo SPEC-03 mục 2 đến 6a, 8 và các quy tắc V-xx về tài liệu.
-2. Ngay sau: `all-nodes.json`, `gen-large-workspace.ts` (hoàn tất WP-0.07).
-3. WP-1.02 đến WP-1.04; làm lại VG-11 trước WP-1.08.
+1. WP-1.03 (M-MC): khung migration (`schemaVersion` 1), `serializeCanonical` (ghi hai lần giống từng byte).
+2. WP-1.04: M-TK (bộ token mặc định), M-SM (ánh xạ thuộc tính sang class Tailwind, chuẩn hóa V-29).
+3. Làm lại VG-11 trước WP-1.08; VG-14 trước Phase 2.
