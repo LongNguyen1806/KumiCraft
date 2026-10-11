@@ -6,7 +6,7 @@ ReactCraft Local runs a server on `127.0.0.1`, reads project folders and writes 
 
 Please **do not open a public issue**. Report privately by email to:
 
-`<security-contact-email>` <!-- Set before the repository becomes public (SPEC-05 section 17.2). -->
+security@reactcraft.dev
 
 Include the affected version, steps to reproduce and the impact you observed.
 

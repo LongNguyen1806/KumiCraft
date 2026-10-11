@@ -8593,6 +8593,66 @@ Workspace có thể đến từ repo clone về. ReactCraft áp dụng cơ chế
 
 ---
 
+# SPEC-06 — CHẤT LƯỢNG & KIỂM THỬ
+
+**Phiên bản phần:** 0.1  
+**Trạng thái:** Draft — chờ duyệt  
+**Truy vết:** SRS v4.0 (mục 14, 16), SPEC-01.1 (mục 11 đến 13), SPEC-01.2 (mục 12 đến 14), SPEC-02 (mục 9, 11 đến 14), SPEC-05 (mục 17), SPEC-07 (mục 18)  
+**Phạm vi:** Hạ tầng kiểm thử, cấu hình Vitest, Playwright, quy ước fixture, golden file, phản hồi AI ghi sẵn, pnpm bench, pnpm trace, môi trường CI. Chi tiết từng phase được bổ sung ở SPEC-06.1 đến SPEC-06.5.
+
+---
+
+## 1. HẠ TẦNG KIỂM THỬ TỔNG THỂ (SPEC-06.0)
+
+### 1.1. Mục đích và Phân tầng kiểm thử
+
+ReactCraft áp dụng kiểm thử đa tầng theo kim tự tháp chất lượng:
+1. **Unit Test (Vitest)**: Kiểm thử logic thuần, schema Zod, chuyển đổi dữ liệu, hàm tiện ích, parser, thuật toán chèn/kéo thả, không phụ thuộc I/O mạng hay file thật.
+2. **Integration Test (Vitest)**: Kiểm thử Fastify routes với server thật trên loopback `127.0.0.1`, bắt tay handshake WebSocket, ghi/đọc file với workspace cô lập tạm thời.
+3. **End-to-End Test (Playwright)**: Khởi động CLI/server thật và trình duyệt thật (Chromium, Firefox) để kiểm thử toàn bộ luồng tương tác của người dùng từ giao diện Studio vào Canvas và lưu trữ.
+4. **Spike Verification (VG Scripts)**: Kịch bản đo đạc tự động kiểm chứng các quyết định kiến trúc then chốt (ADR) và ngân sách hiệu năng (PB) trên môi trường thực tế.
+5. **Static Verification (`pnpm verify`)**: Linter (ESLint), kiểm tra kiểu (tsc), định dạng mã (Prettier), kiểm tra đa ngôn ngữ (`check:i18n`), truy vết đặc tả (`trace`).
+
+### 1.2. Cấu hình Vitest (`vitest.config.js`)
+- Workspace đa package (`packages/*`).
+- Coverage provider: `v8`.
+- Báo cáo kết quả: `text`, `json`, `html`.
+- Ngưỡng độ phủ dòng lệnh tối thiểu theo SPEC-02 mục 9:
+  - `@reactcraft/model`: $\ge 90\%$
+  - `@reactcraft/server`: $\ge 80\%$
+  - `@reactcraft/studio`: $\ge 70\%$
+  - Toàn bộ repo: $\ge 80\%$
+
+### 1.3. Cấu hình Playwright (`playwright.config.js`)
+- Môi trường trình duyệt: Chromium, Firefox (Windows, Ubuntu, macOS).
+- Headless mặc định trong CI; trace on first retry; screenshot khi thất bại.
+- WebServer tự động: khởi động CLI/server cục bộ với cổng ngẫu nhiên và token phiên an toàn.
+
+### 1.4. Quy ước Fixture & Cô lập dữ liệu (QC-06)
+- Thư mục fixture dùng chung: `fixtures/`.
+- `fixtures/target-projects/`: Dự án mẫu thực tế (`vite8-react19-tw4`, `vite7-react18-tw3`).
+- Quy tắc cô lập QC-06: Mọi bài kiểm thử cần đọc/ghi thư mục dự án BẮT BUỘC sao chép fixture ra thư mục tạm của hệ điều hành (`copyFixtureToTemp()`), KHÔNG ĐƯỢC ghi trực tiếp vào `fixtures/`. Sau khi test xong dọn dẹp sạch thư mục tạm.
+
+### 1.5. Golden Files & Phản hồi AI ghi sẵn
+- Golden files: Các tệp mẫu chuẩn cho bộ sinh mã (codegen), được kiểm tra diff nhị phân hoặc chuỗi ký tự chính xác tuyệt đối, không dùng snapshot tự động mờ mịt (QC-68).
+- AI Fixtures: Phản hồi từ AI Gateway được ghi sẵn dưới dạng JSON fixture cho các bộ 50 yêu cầu mẫu trong CI để đảm bảo tính xác định và không phụ thuộc kết nối bên ngoài.
+
+### 1.6. Đo kiểm hiệu năng (`pnpm bench`)
+- Công cụ: `vitest bench`.
+- Xuất file kết quả JSON: `bench-results.json` theo định dạng đo đạc P50, P95, ops/sec.
+- So sánh tự động với ngân sách hiệu năng PB-01 đến PB-20: Thất bại nếu vượt ngưỡng quy định.
+
+### 1.7. Công cụ truy vết đặc tả (`pnpm trace`)
+- Kịch bản `scripts/trace.mjs` quét toàn bộ mã định danh (`QC-xx`, `V-xx`, `R-xx`, `S-xx`, `AC-xx`, `PB-xx`, `VG-xx`) giữa `docs/spec.md` và mã kiểm thử.
+- Phạm vi kiểm tra theo `scripts/trace-scope.json`.
+- Báo lỗi nếu có mã kiểm thử không tồn tại trong spec, hoặc mã trong phạm vi phase chưa có bài kiểm thử tương ứng.
+
+### 1.8. Môi trường CI & Chế độ Local
+- CI (`ci.yml`, `nightly.yml`): Tự động thực thi toàn bộ luồng kiểm thử trên ma trận Windows + Ubuntu và Node 22 + Node 24.
+- Chế độ Local (CW-43 đến CW-47): Nhà phát triển chạy `pnpm verify` trước mỗi lần bàn giao thay cho CI trên GitHub.
+
+---
+
 # SPEC-07 — QUY TRÌNH THI CÔNG
 
 **Phiên bản phần:** 0.1  
