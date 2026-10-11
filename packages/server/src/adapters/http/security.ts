@@ -95,6 +95,9 @@ function checkRequest(
       }; // S-04c: an HTML form of another site cannot send a "simple request"
     }
   }
+  if (request.headers.upgrade?.toLowerCase() === 'websocket') {
+    return undefined; // S-07: WebSocket carries token in subprotocol and closes with 4401
+  }
   if (!isTokenValid(request.headers.authorization, options.sessionToken)) {
     return { error: { code: 'E014' } }; // S-07
   }

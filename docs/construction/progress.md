@@ -11,20 +11,20 @@ Trạng thái theo module: [modules.md](modules.md). Lệch và thiếu so với
 - Spec chưa hoàn thiện nên không chặn thi công. Mọi chỗ lệch hoặc Spec còn thiếu ghi vào [spec-log.md](spec-log.md) để bổ sung Spec sau.
 - Kiểm tra local: `pnpm verify` (lint, typecheck, format, `check:i18n`, unit test, `trace`, build), `pnpm test:e2e`, `pnpm fixtures:check`.
 
-## Kiểm tra gần nhất (2026-10-11, Windows 11, Node 22.19.0)
+## Kiểm tra gần nhất (2026-10-12, Windows 11, Node 22.19.0)
 
-| Lệnh                    | Kết quả                                                      |
-| ----------------------- | ------------------------------------------------------------ |
-| `pnpm verify`           | Đạt: 35/35 unit test, trace 14/14, build                     |
-| `pnpm test:e2e`         | Đạt: 8/8 (Chromium, Firefox)                                 |
-| `node scripts/vg/*.mjs` | 7/7 script chạy và báo Đạt (xem đánh giá ở bảng VG bên dưới) |
+| Lệnh                    | Kết quả                                                                                      |
+| ----------------------- | -------------------------------------------------------------------------------------------- |
+| `pnpm verify`           | Đạt: 36/36 test files (236 tests xanh 100%), lint 0/0, typecheck, format, trace 14/14, build |
+| `pnpm test:e2e`         | Đạt: 8/8 (Chromium, Firefox)                                                                 |
+| `node scripts/vg/*.mjs` | 7/7 script chạy và báo Đạt (xem đánh giá ở bảng VG bên dưới)                                 |
 
 ## Tổng quan phase
 
 | Phase                      | Trạng thái   | WP xong / tổng | Cổng           |
 | -------------------------- | ------------ | -------------- | -------------- |
 | 0 — Nền móng               | Gần xong     | 8 / 10         | `G0`: chưa đạt |
-| 1 — Studio Core            | Đang làm     | 3 / 11         | `G1`           |
+| 1 — Studio Core            | Đang làm     | 4 / 11         | `G1`           |
 | 2 — Xuất code và tương tác | Chưa bắt đầu | 0 / 13         | `G2`           |
 | 3 — AI                     | Chưa bắt đầu | 0 / 8          | `G3`           |
 | 4 — Ngữ cảnh backend       | Chưa bắt đầu | 0 / 12         | `G4`           |
@@ -62,12 +62,13 @@ Phase 1 bắt đầu song song với phần còn lại của Phase 0 (chủ sả
 
 ## Phase 1: gói công việc
 
-| WP                  | Tên                                                         | Trạng thái                                                                                                                                                 |
-| ------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| WP-1.01             | Model: schema Zod đầy đủ, quy tắc V-xx                      | Xong (83 test model). V-29, V-33 dời sang WP-1.02 (spec-log #28)                                                                                           |
-| WP-1.02             | Model: mọi operation, `applyBatch`, `assignIds`, dạng phẳng | Xong: 24 loại operation; property test 400 + 150 lượt (`apply(invert(op))`); PB-01 trung bình 2,1 ms, p99 4,0 ms (ngân sách 5 ms)                          |
-| WP-1.03             | Model: khung migration, `serializeCanonical`                | Xong: ghi hai lần giống từng byte (kể cả sau khi đọc lại); pipeline migration chạy với 1 → 1 rỗng và chuỗi giả 0 → 1 → 2; tách và ghép file `.reactcraft/` |
-| WP-1.04 đến WP-1.11 | Theo SPEC-07 mục 5.2                                        | Chưa                                                                                                                                                       |
+| WP                        | Tên                                                         | Trạng thái                                                                                                                                                 |
+| ------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| WP-1.01                   | Model: schema Zod đầy đủ, quy tắc V-xx                      | Xong (83 test model). V-29, V-33 dời sang WP-1.02 (spec-log #28)                                                                                           |
+| WP-1.02                   | Model: mọi operation, `applyBatch`, `assignIds`, dạng phẳng | Xong: 24 loại operation; property test 400 + 150 lượt (`apply(invert(op))`); PB-01 trung bình 2,1 ms, p99 4,0 ms (ngân sách 5 ms)                          |
+| WP-1.03                   | Model: khung migration, `serializeCanonical`                | Xong: ghi hai lần giống từng byte (kể cả sau khi đọc lại); pipeline migration chạy với 1 → 1 rỗng và chuỗi giả 0 → 1 → 2; tách và ghép file `.reactcraft/` |
+| WP-1.05 (Phần 1A)         | Server API & Design Store (M-DS, Fastify Workspace Routes)  | Xong: DesignStore (debounce 500ms, rotating backups tối đa 20), full HTTP Workspace routes (/document, /operations, /reload, /backups, /trust). 13 test    |
+| WP-1.04, 1.05B, 1.06–1.11 | Theo SPEC-07 mục 5.2                                        | Chưa                                                                                                                                                       |
 
 ## Việc chờ chủ sản phẩm
 

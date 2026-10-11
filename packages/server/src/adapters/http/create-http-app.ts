@@ -3,6 +3,7 @@
 import { randomBytes } from 'node:crypto';
 
 import fastifyStatic from '@fastify/static';
+import fastifyWebsocket from '@fastify/websocket';
 import Fastify, {
   type FastifyError,
   type FastifyInstance,
@@ -12,7 +13,9 @@ import Fastify, {
 } from 'fastify';
 
 import type { SessionInfo } from '../../core/shared/session.ts';
+import { type EventRoutesDeps, registerEventRoutes } from './routes/events.ts';
 import { registerSessionRoutes } from './routes/session.ts';
+import { registerWorkspaceRoutes, type WorkspaceRoutesDeps } from './routes/workspace.ts';
 import { registerSecurity, type SecurityOptions } from './security.ts';
 import { sendError } from './send-error.ts';
 
@@ -22,6 +25,8 @@ export type HttpAppOptions = {
   readonly logLevel: LogLevel;
   readonly security: SecurityOptions;
   readonly getSessionInfo: () => SessionInfo;
+  readonly workspaceRoutes?: WorkspaceRoutesDeps;
+  readonly eventRoutes?: EventRoutesDeps;
   /** Directory of the built Studio. When absent, only the API is served. */
   readonly studioDir?: string;
 };
@@ -44,6 +49,52 @@ function handleError(error: FastifyError, request: FastifyRequest, reply: Fastif
   return sendError(reply, { code: 'E013' });
 }
 
+function registerJsonParser(app: FastifyInstance): void {
+  app.addContentTypeParser('application/json', { parseAs: 'string' }, (_req, body, done) => {
+    if (typeof body !== 'string' || body.trim() === '') {
+      // eslint-disable-next-line no-restricted-syntax -- Fastify callback requires null
+      done(null, undefined);
+      return;
+    }
+    try {
+      // eslint-disable-next-line no-restricted-syntax -- Fastify callback requires null
+      done(null, JSON.parse(body));
+    } catch (cause) {
+      const parseError = cause as Error & { statusCode?: number; code?: string };
+      parseError.statusCode = 400;
+      parseError.code = 'FST_ERR_CTP_INVALID_MEDIA_TYPE';
+      done(parseError, undefined);
+    }
+  });
+}
+
+function registerNotFoundHandler(app: FastifyInstance, studioDir?: string): void {
+  app.setNotFoundHandler((request, reply) => {
+    const isStudioPage =
+      studioDir !== undefined && request.method === 'GET' && !request.url.startsWith('/api/');
+    if (isStudioPage) {
+      return reply.sendFile('index.html');
+    }
+    return sendError(reply, { code: 'E015', params: { resource: 'route' } });
+  });
+}
+
+async function registerApiRoutes(app: FastifyInstance, options: HttpAppOptions): Promise<void> {
+  await app.register(
+    (api, _opts, done) => {
+      registerSessionRoutes(api, options.getSessionInfo);
+      if (options.workspaceRoutes !== undefined) {
+        registerWorkspaceRoutes(api, options.workspaceRoutes);
+      }
+      if (options.eventRoutes !== undefined) {
+        registerEventRoutes(api, options.eventRoutes);
+      }
+      done();
+    },
+    { prefix: API_PREFIX },
+  );
+}
+
 export async function createHttpApp(options: HttpAppOptions): Promise<FastifyInstance> {
   const app = Fastify({
     logger: { level: options.logLevel, redact: REDACTED_PATHS },
@@ -57,31 +108,23 @@ export async function createHttpApp(options: HttpAppOptions): Promise<FastifyIns
     void reply.header('X-Request-Id', request.id);
     done();
   });
+  registerJsonParser(app);
   registerSecurity(app, options.security);
   app.setErrorHandler(handleError);
 
-  await app.register(
-    (api, _opts, done) => {
-      registerSessionRoutes(api, options.getSessionInfo);
-      done();
+  await app.register(fastifyWebsocket, {
+    options: {
+      handleProtocols: (protocols) => (protocols.has('reactcraft.v1') ? 'reactcraft.v1' : false),
     },
-    { prefix: API_PREFIX },
-  );
+  });
+
+  await registerApiRoutes(app, options);
 
   const { studioDir } = options;
   if (studioDir !== undefined) {
     await app.register(fastifyStatic, { root: studioDir });
   }
 
-  app.setNotFoundHandler((request, reply) => {
-    const isStudioPage =
-      studioDir !== undefined && request.method === 'GET' && !request.url.startsWith('/api/');
-    // Client-side routes of the Studio all load index.html.
-    if (isStudioPage) {
-      return reply.sendFile('index.html');
-    }
-    return sendError(reply, { code: 'E015', params: { resource: 'route' } });
-  });
-
+  registerNotFoundHandler(app, studioDir);
   return app;
 }
