@@ -136,4 +136,9 @@ export {
   issuesToDetails,
   validateDocument,
 } from './schema/validate/validate-document.ts';
+export { normalizeResponsiveStyle } from './styling/normalize-responsive.ts';
+export type { ParentLayout, StylingContext } from './styling/styling-context.ts';
+export type { ThemeCssOptions } from './styling/theme-css.ts';
+export { generateThemeCss, validateTokenNameCollisions } from './styling/theme-css.ts';
+export { toTailwindClasses } from './styling/to-tailwind-classes.ts';
 export { createDefaultTokens } from './tokens/default-tokens.ts';
