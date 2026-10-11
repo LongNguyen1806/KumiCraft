@@ -45,8 +45,8 @@ Các file của WP này nằm trong bộ khởi tạo `CS-0.01-1` (xem [wp-0.01]
 
 ## Definition of Done (SPEC-07 mục 11.2)
 
-- [ ] DW-01 Bộ thay đổi đã được commit
-- [ ] DW-02 `pnpm verify` đạt trên máy chủ sản phẩm (phần GitHub hoãn)
+- [x] DW-01 Bộ thay đổi đã được commit: `c0b394b` (trong `CS-0.01-1`)
+- [x] DW-02 `pnpm verify` đạt trên máy chủ sản phẩm (phần GitHub hoãn)
 - [x] DW-03, DW-04, DW-07 Không áp dụng
 - [x] DW-05 Không có lỗi SEV-1, SEV-2
 - [x] DW-06 Sai khác đã đưa vào Spec
@@ -54,5 +54,5 @@ Các file của WP này nằm trong bộ khởi tạo `CS-0.01-1` (xem [wp-0.01]
 
 ## Việc còn lại
 
-1. Chủ sản phẩm commit cùng `CS-0.01-1` (3 file `.github` đã nằm trong repo).
+1. `nightly.yml` khung: thêm cùng `pnpm bench` ở WP-0.06 (bộ M-RP `CS-0.06-2`). WP này chưa Xong cho tới khi có file đó.
 2. Khi lên GitHub: chạy CI trên một commit mẫu, xác nhận mọi job xanh trên Windows và Ubuntu (CW-47).

@@ -1,14 +1,14 @@
 # Module
 
-Cập nhật: 2026-10-11 · Spec: phiên bản 0.17
+Cập nhật: 2026-10-11 · Spec: phiên bản 0.18
 
 Bảng theo mẫu SPEC-07 mục 19.6. Thư mục sở hữu của từng module: SPEC-07 mục 3.5. Mỗi bộ thay đổi thuộc đúng một module (CW-39); chủ sản phẩm xem xét rồi tự commit (CW-43 đến CW-46).
 
-Ngoài các module, bộ thay đổi `CS-0.10-1` (Spec, SRS, báo cáo thi công trong `docs/`) đang chờ commit (CW-42).
+Ngoài các module, bộ thay đổi `CS-0.10-1` (Spec, SRS, báo cáo thi công trong `docs/`) đã commit ở `c0b394b`, chung commit với `CS-0.01-1` (CW-42, sai khác đã ghi ở [wp-0.01](wp/wp-0.01.md)).
 
 | Module | Tên                          | Phase | Trạng thái   | Bộ thay đổi chờ commit | Bộ thay đổi đã commit |
 | ------ | ---------------------------- | ----- | ------------ | ---------------------- | --------------------- |
-| M-RP   | Repo và công cụ              | 0     | Đang làm     | CS-0.01-1              | —                     |
+| M-RP   | Repo và công cụ              | 0     | Đang làm     | —                      | CS-0.01-1 (`c0b394b`) |
 | M-QA   | Hạ tầng kiểm thử             | 0     | Chưa bắt đầu | —                      | —                     |
 | M-SV   | Server nền                   | 0     | Chưa bắt đầu | —                      | —                     |
 | M-CL   | CLI                          | 0     | Chưa bắt đầu | —                      | —                     |

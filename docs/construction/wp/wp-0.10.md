@@ -23,7 +23,7 @@ Bản trong repo là bản chính. Lịch sử thay đổi ghi lần chuyển.
 ### CS-0.10-1 — Tài liệu và báo cáo thi công
 
 - Module: không thuộc module code (scope `docs`, CW-42)
-- Trạng thái: **Chờ commit** (sau `CS-0.01-1`)
+- Trạng thái: **Đã commit `c0b394b`** (chung commit với `CS-0.01-1`, chủ sản phẩm chấp nhận; xem sai khác ở [wp-0.01](wp-0.01.md))
 
 | Loại | File                                                                 |
 | ---- | -------------------------------------------------------------------- |
@@ -50,7 +50,7 @@ git commit -m "docs(docs): add srs, specification and construction reports" -m "
 
 ## Definition of Done (SPEC-07 mục 11.2)
 
-- [ ] DW-01 Bộ thay đổi đã được commit
+- [x] DW-01 Bộ thay đổi đã được commit: `c0b394b`
 - [x] DW-02 Bản trong repo là bản chính; Q-08 ghi trong Spec
 - [x] DW-03, DW-04, DW-07 Không áp dụng
 - [x] DW-05 Không có lỗi SEV-1, SEV-2
@@ -59,5 +59,4 @@ git commit -m "docs(docs): add srs, specification and construction reports" -m "
 
 ## Việc còn lại
 
-1. Chủ sản phẩm commit `CS-0.10-1`.
-2. Email liên hệ bảo mật cho `SECURITY.md` (trước khi repo public).
+1. Email liên hệ bảo mật cho `SECURITY.md` (trước khi repo public). WP này chưa Xong cho tới khi có email.

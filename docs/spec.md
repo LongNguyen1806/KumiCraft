@@ -4,9 +4,9 @@
 
 **Dự án:** ReactCraft Local  
 **Tài liệu gốc:** ReactCraft Local — Software Requirements Specification v4.0  
-**Phiên bản tài liệu:** 0.17  
+**Phiên bản tài liệu:** 0.18  
 **Trạng thái:** Đang xây dựng — viết và duyệt từng phần  
-**Cập nhật lần cuối:** 2026-10-07
+**Cập nhật lần cuối:** 2026-10-11
 
 ---
 
@@ -26,8 +26,8 @@ Nguyên tắc:
 
 | Phần | Nội dung | Trạng thái |
 |---|---|---|
-| SPEC-00 | Hướng dẫn sử dụng tài liệu, quy ước chung (Phần 0) | Đã viết |
-| SPEC-01.1 | Backend Technology Stack | Draft v0.2 — chờ duyệt |
+| SPEC-00 | Hướng dẫn sử dụng tài liệu, quy ước chung (Phần 0) | Draft — chờ duyệt |
+| SPEC-01.1 | Backend Technology Stack | Draft v0.3 — chờ duyệt |
 | SPEC-01.2 | Studio UI Technology Stack | Draft v0.1 — chờ duyệt |
 | SPEC-02 | Quy chuẩn code & repo: cấu trúc, đặt tên, lint, Git, review | Draft v0.1 — chờ duyệt |
 | SPEC-03 | Interface: Design Model, Design Operation, API REST, sự kiện WebSocket, mã lỗi | Draft v0.1 — chờ duyệt |
@@ -66,7 +66,7 @@ Nguyên tắc:
 | `V-xx` | Quy tắc hợp lệ của Design Model, operation, API (SPEC-03) | V-14 |
 | `E0xx` | Mã lỗi (SPEC-03 mục 13) | E010 |
 | `M-xx` | Mã module (SPEC-04, module nền ở SPEC-07 mục 3.5) | M-DD |
-| `R-<module>-nn` | Quy tắc xử lý của một module (SPEC-04) | R-DD-01 |
+| `R-<module>-nn` | Quy tắc xử lý của một module (SPEC-04). Ngoại lệ: `R-AS-nn` là quy tắc an toàn AI dùng chung cho các module AI (SPEC-04.3 mục 8), `AS` không phải mã module | R-DD-01 |
 | `S-xx` | Biện pháp bảo mật (SPEC-05). Có thể có hậu tố chữ cho biện pháp con, ví dụ S-04a | S-22 |
 | `A-xx`, `T-xx` | Tài sản, tác nhân đe dọa (SPEC-05) | T-01 |
 | `CW-xx` | Nguyên tắc, quy tắc thi công (SPEC-07) | CW-03 |
@@ -150,7 +150,7 @@ Nguyên tắc:
 
 | Nội dung | Tài liệu |
 |---|---|
-| Công nghệ Studio UI (canvas, kéo thả, inspector) | SPEC-01.2 |
+| Công nghệ Studio UI (Canvas, kéo thả, Inspector) | SPEC-01.2 |
 | Quy tắc đặt tên, Git, review | SPEC-02 |
 | Schema chi tiết Design Model, API, message, mã lỗi | SPEC-03 |
 | Thuật toán từng module (scan, codegen, export…) | SPEC-04 |
@@ -327,7 +327,7 @@ Backend phải format code bằng Prettier, kiểm tra bằng TypeScript, build 
 #### Quyết định
 
 - Runtime: **Node.js**, tối thiểu **22.12**, khuyến nghị **24 LTS**.
-- `package.json`: `"engines": { "node": ">=22.12" }`.
+- `package.json` của package phát hành (`reactcraft`): `"engines": { "node": ">=22.12" }`. `package.json` gốc của monorepo dùng mức tối thiểu cho phát triển (mục 13.3).
 
 #### Phương án đã xem xét
 
@@ -4043,7 +4043,7 @@ Mọi operation có trường phân biệt `op`. Ví dụ:
 
 ### 7.3. Quy tắc kiểm tra operation
 
-Mỗi operation phải qua `validate(doc, op)` trước `apply`. Ngoài V-01 đến V-38 và V-90 đến V-98, áp dụng:
+Mỗi operation phải qua `validate(doc, op)` trước `apply`. Ngoài các quy tắc của tài liệu (V-01 đến V-38, V-56, V-57, V-90 đến V-99), áp dụng:
 
 | Mã | Quy tắc |
 |---|---|
@@ -4579,7 +4579,7 @@ type ServerEvent<T extends string, P> = {
 
 ## 13. DANH MỤC MÃ LỖI
 
-E001 đến E012 theo SRS mục 13. E013 đến E021 bổ sung cho nhu cầu của API.
+E001 đến E012 theo SRS mục 13. E013 đến E022 bổ sung cho nhu cầu của API.
 
 | Mã | Tên | HTTP | Thử lại được? | `params` chính | Khi nào |
 |---|---|---|---|---|---|
@@ -4622,7 +4622,7 @@ E001 đến E012 theo SRS mục 13. E013 đến E021 bổ sung cho nhu cầu c�
 | FR-03 Target Project | 10.4 |
 | FR-04, FR-17, FR-18 Backend, quét, catalog | 3.7, 10.5, 10.6 |
 | FR-07 đến FR-16 Chỉnh sửa | 4, 7 |
-| FR-13 User Component | 3.6, 4.3 (V-16 đến V-18) |
+| FR-13 User Component | 3.6, 4.3 (V-16 đến V-18, V-56, V-57) |
 | FR-19, FR-20 Binding, dữ liệu mẫu | 6 |
 | FR-22 đến FR-29 AI | 7.4 (`assignIds`), 10.7 |
 | FR-31 đến FR-37 Xuất code | 10.8 |
@@ -8275,13 +8275,13 @@ Mỗi biện pháp có mã `S-xx`.
 
 | Mối đe dọa | Tác nhân | Tài sản | Biện pháp |
 |---|---|---|---|
-| Trang web độc gọi API ghi file, đọc mã nguồn | T-01 | A-01, A-02, A-06 | S-01 đến S-07 |
+| Trang web độc gọi API ghi file, đọc mã nguồn | T-01 | A-01, A-02, A-06 | S-01 đến S-09 |
 | DNS rebinding biến trang web thành "cùng origin" | T-01 | A-01, A-06 | S-04 |
 | WebSocket chéo trang đọc sự kiện | T-01 | A-01 | S-03, S-05 |
 | Clickjacking Studio | T-01 | A-02 | S-12 |
-| XSS trong Studio từ nội dung thiết kế, tên trong catalog, đầu ra AI | T-02, T-03, T-07 | A-04, A-05, A-06 | S-10 đến S-16 |
+| XSS trong Studio từ nội dung thiết kế, tên trong catalog, đầu ra AI | T-02, T-03, T-07 | A-04, A-05, A-06 | S-10 đến S-16, S-29a đến S-29c |
 | Path traversal, symlink thoát khỏi thư mục cho phép | T-02, T-03 | A-06 | S-20 đến S-28 |
-| Lộ secrets qua quét, AI, log, đoạn mã hiển thị | T-02 | A-01, A-04 | S-30 đến S-36 |
+| Lộ secrets qua quét, AI, log, đoạn mã hiển thị | T-02 | A-01, A-04 | S-30 đến S-36, S-89 |
 | Prompt injection dẫn AI đề xuất thay đổi độc | T-02 | A-02, A-03 | S-40 đến S-46 |
 | Chạy lệnh tùy ý qua tiến trình con | T-02, T-03 | A-06 | S-50 đến S-55 |
 | SSRF qua proxy dữ liệu | T-01, T-02 | A-06, A-07 | S-60 đến S-66 |
@@ -8289,7 +8289,7 @@ Mỗi biện pháp có mã `S-xx`.
 | Workspace clone về trỏ tới thư mục hệ thống | T-02 | A-06 | S-80 đến S-84 |
 | Package độc trong chuỗi cung ứng | T-06 | A-06 | S-90 đến S-96 |
 | Nghe lén request AI | T-05 | A-01, A-04 | S-47 |
-| Từ chối dịch vụ (file lớn, JSON lồng sâu, regex) | T-02, T-07 | Tính sẵn sàng | S-17, S-29, S-64 |
+| Từ chối dịch vụ (file lớn, JSON lồng sâu, regex) | T-02, T-07 | Tính sẵn sàng | S-17, S-29, S-64, S-85 đến S-87 |
 
 ---
 
@@ -8773,9 +8773,9 @@ Ngoài các module nghiệp vụ M-xx của SPEC-04, có sáu module nền:
 
 | Mã | Tên | Thư mục sở hữu | Spec | WP |
 |---|---|---|---|---|
-| M-RP | Repo và công cụ | File cấu hình ở gốc repo, `scripts/` (trừ script của M-QA, M-ST), `.github/`, `.changeset/` | SPEC-02, mục 4.3 | WP-0.01, 0.02 |
+| M-RP | Repo và công cụ | File cấu hình ở gốc repo, `scripts/` (trừ script của M-QA, M-ST), `.github/`, `.changeset/` | SPEC-02; mục 4.3 | WP-0.01, 0.02 |
 | M-QA | Hạ tầng kiểm thử | `vitest.workspace.ts`, `playwright.config.ts`, `fixtures/`, `e2e/support/`, `scripts/vg/`, `scripts/bench*`, `scripts/trace*`, `scripts/gen-large-workspace.ts` | ADR-BE-26, ADR-FE-18, SPEC-06 | WP-0.06, 0.07, 2.12, 3.07, 4.00 (fixture) |
-| M-MC | Model core | `packages/model/` gồm `package.json`, `tsconfig.json`, `README.md`, `src/index.ts`, `src/schema/`, `src/operations/`, `src/migrations/`, `src/features.ts` | SPEC-03 phần A, mục 3.4 | WP-1.01, 1.02, 1.03 |
+| M-MC | Model core | `packages/model/` gồm `package.json`, `tsconfig.json`, `README.md`, `src/index.ts`, `src/schema/`, `src/operations/`, `src/migrations/`, `src/features.ts` | SPEC-03 phần A; mục 3.4 | WP-1.01, 1.02, 1.03 |
 | M-SV | Server nền | `packages/server/` gồm `package.json`, `tsconfig.json`, `README.md`, `src/index.ts`, `src/core/ports/`, `src/core/shared/`, `src/adapters/http/` (trừ `routes/<module>.ts`), `src/adapters/fs/`, `src/adapters/watcher/`, `src/adapters/process/`, `src/workers/` | ADR-BE-03, 06, 07, 20, 21, 23, 24; SPEC-03 mục 9, 11 đến 13; SPEC-05 mục 5, 6, 14, 15 | WP-0.03, 0.04, 1.05 (log, cấu hình) |
 | M-CL | CLI | `packages/cli/` | ADR-BE-03, 25 | WP-0.03, 1.11 |
 | M-ST | Studio nền | `packages/studio/` gồm `package.json`, `tsconfig.json`, `README.md`, `index.html`, `vite.config.ts`, file Prettier riêng, `src/main.tsx`, `src/app/`, `src/api/`, `src/i18n/` (khung và namespace `common`, `errors`), `src/ui/`, `src/lib/`, `src/stores/ui/`; `scripts/check-i18n*` | ADR-FE-01, 02, 11 đến 17 | WP-0.03, 0.05, 1.06 (khung) |
@@ -8874,7 +8874,7 @@ Thực hiện đúng thứ tự. Mỗi bước là một commit trên nhánh `ch
 | Bước | Việc làm | Kiểm tra |
 |---|---|---|
 | 1 | Tạo repo GitHub (quyền truy cập theo Q-07), nhánh `main` | — |
-| 2 | `.node-version` (`24`), `package.json` gốc (`"private": true`, `"type": "module"`, `"packageManager": "pnpm@<bản ghim>"`, `"engines": { "node": ">=22.12" }`) | `corepack enable && pnpm -v` khớp bản ghim |
+| 2 | `.node-version` (`24`), `package.json` gốc (`"private": true`, `"type": "module"`, `"packageManager": "pnpm@<bản ghim>"`, `"engines": { "node": ">=22.13" }`, mức tối thiểu cho phát triển theo SPEC-01.1 mục 13.3) | `corepack enable pnpm && pnpm -v` khớp bản ghim. Khi thư mục cài Node cần quyền quản trị (Windows), dùng `corepack enable pnpm --install-directory <thư mục người dùng có trong PATH>` |
 | 3 | `pnpm-workspace.yaml` (`packages/*`), thư mục theo SPEC-02 mục 2.1 | `pnpm -r ls` liệt kê 4 package |
 | 4 | `.editorconfig`, `.gitattributes` (LF), `.gitignore`, `.prettierrc.json` theo SPEC-02 mục 10 | `git ls-files --eol` không có CRLF |
 | 5 | `tsconfig.base.json` (strict, ESM, `verbatimModuleSyntax`), `tsconfig.json` từng package | `pnpm typecheck` chạy |
@@ -8943,15 +8943,15 @@ SRS mục 16: dựng được một trang tĩnh hoàn chỉnh bằng kéo thả.
 | Mã | Nội dung | Spec | Phụ thuộc | Đầu ra kiểm chứng được |
 |---|---|---|---|---|
 | WP-1.01 | Model: schema Zod **đầy đủ** mọi kiểu ở SPEC-03 mục 2 đến 6a, 8; mã định danh; quy tắc hợp lệ của tài liệu (mọi V-xx về tài liệu, gồm V-56, V-57, V-90 đến V-99) | SPEC-03 phần A; ADR-BE-08, 10 | G0 | `fixtures/designs/all-nodes.json` hợp lệ; mỗi quy tắc V-xx có test vi phạm và test hợp lệ |
-| WP-1.02 | Model: **mọi** operation (`validate`, `apply`, `invert`), `applyBatch`, `assignIds`, dạng phẳng (mục 5) | SPEC-03 mục 5, 7; ADR-BE-09 | 1.01 | Property test: `apply(invert(op))` trả đúng tài liệu ban đầu cho mọi loại operation; PB-01 |
+| WP-1.02 | Model: **mọi** operation (`validate`, `apply`, `invert`), `applyBatch`, `assignIds`, dạng phẳng (SPEC-03 mục 5) | SPEC-03 mục 5, 7; ADR-BE-09 | 1.01 | Property test: `apply(invert(op))` trả đúng tài liệu ban đầu cho mọi loại operation; PB-01 |
 | WP-1.03 | Model: khung migration (`schemaVersion` 1), `serializeCanonical` | ADR-BE-11; SPEC-04.1 mục 3 | 1.01 | Ghi hai lần giống từng byte; migration rỗng 1 → 1 chạy qua pipeline |
 | WP-1.04 | Model: M-TK, M-SM (đủ bảng 5.3, cả `desktop-first` và `mobile-first`, trạng thái, `dark`, ảnh nền, transition) | SPEC-04.1 mục 4, 5; ADR-FE-06 | 1.01 | Golden test mọi dòng bảng 5.3 |
 | WP-1.05 | Server: M-WS, M-DS, endpoint và sự kiện workspace, khóa E018, sao lưu, thay đổi bên ngoài, `/workspace/trust`, log pino có lọc secrets, cấu hình người dùng (env-paths) | SPEC-04.1 mục 2, 3; SPEC-03 mục 9 đến 11; SPEC-05 mục 7, 13, 15 | 1.02, 1.03 | PB-02, PB-03, PB-04; nhóm "Đường dẫn" của SPEC-05 mục 17.1 đạt |
 | WP-1.06 | Studio: M-SH (Welcome, Editor, Settings, trạng thái tin cậy), router, REST/WS client, Editor Store, M-HS (Undo/Redo, đồng bộ, E017) | SPEC-04.1 mục 6, 13; ADR-FE-10 đến 12, 17 | 1.05 | Đóng server, mở lại: thiết kế còn nguyên |
 | WP-1.07 | Studio: M-CV (iframe, portal, Tailwind runtime, khung, zoom, **mọi** 25 loại node kể cả `ComponentInstance`, `Slot`, node dữ liệu với dữ liệu mẫu), M-OV (hover, chọn, sửa chữ trực tiếp không định dạng) | SPEC-04.1 mục 7, 8; ADR-FE-04 đến 08, 20 | 1.04, 1.06 | `all-nodes.json` hiển thị đúng; PB-13, PB-16 |
-| WP-1.08 | Studio: M-DD, M-LB (preset mục 10.2 trừ preset có tương tác), M-LT | SPEC-04.1 mục 9, 10, 12; ADR-FE-09 | 1.07 | AC-02; PB-15; kéo thả bằng bàn phím |
-| WP-1.09 | Studio: M-IN (trừ mục 11.2 Tương tác và nhóm Dữ liệu: chỉ đọc theo CW-19), phạm vi responsive và trạng thái | SPEC-04.1 mục 11 | 1.07 | AC-03; PB-14 |
-| WP-1.10 | Studio: M-CB, M-KB, M-PG | SPEC-04.1 mục 14 đến 16 | 1.08 | Phím tắt mục 15 hoạt động trên Windows và macOS |
+| WP-1.08 | Studio: M-DD, M-LB (preset SPEC-04.1 mục 10.2 trừ preset có tương tác), M-LT | SPEC-04.1 mục 9, 10, 12; ADR-FE-09 | 1.07 | AC-02; PB-15; kéo thả bằng bàn phím |
+| WP-1.09 | Studio: M-IN (trừ SPEC-04.1 mục 11.2 Tương tác và nhóm Dữ liệu: chỉ đọc theo CW-19), phạm vi responsive và trạng thái | SPEC-04.1 mục 11 | 1.07 | AC-03; PB-14 |
+| WP-1.10 | Studio: M-CB, M-KB, M-PG | SPEC-04.1 mục 14 đến 16 | 1.08 | Phím tắt SPEC-04.1 mục 15 hoạt động trên Windows và macOS |
 | WP-1.11 | CLI hoàn chỉnh: mọi tham số ADR-BE-03, xử lý E018 kèm cổng phiên cũ, tắt an toàn (Ctrl+C lưu nốt), `npm pack` + `npx` từ tarball | ADR-BE-03, 25 | 1.05 | `npx ./reactcraft-<ver>.tgz` chạy trong thư mục trống trên 3 hệ điều hành; PB-10 |
 
 ---
@@ -8998,13 +8998,13 @@ SRS mục 16: trang thiết kế trong Studio chạy được trong project th�
 |---|---|---|---|---|
 | WP-2.00 | Spike VG-02, VG-03 (A), VG-08 | SPEC-01.1 mục 12 | G1 | Báo cáo Đạt |
 | WP-2.01 | M-TP, M-PT (`templates/`), endpoint `/target-project/*` | SPEC-04.2 mục 2, 3 | 2.00 | Phát hiện đúng 2 project mẫu và 4 project không hỗ trợ (E001 kèm `reasons`) |
-| WP-2.02 | M-CG: IR, lowering, emitter React (mục 5, 6.1 đến 6.6, 6.8), sinh User Component (mục 6.3) từ tài liệu có sẵn component, format (mục 7) | SPEC-04.2 mục 4 đến 7; ADR-BE-16 | 2.01 | Golden file; R-CG-01 (xác định); PB-06, PB-07 |
+| WP-2.02 | M-CG: IR, lowering, emitter React (SPEC-04.2 mục 5, 6.1 đến 6.6, 6.8), sinh User Component (SPEC-04.2 mục 6.3) từ tài liệu có sẵn component, format (SPEC-04.2 mục 7) | SPEC-04.2 mục 4 đến 7; ADR-BE-16 | 2.01 | Golden file; R-CG-01 (xác định); PB-06, PB-07 |
 | WP-2.03 | M-CG: theme v3/v4, chế độ tối, chỉnh sửa hỗ trợ | SPEC-04.2 mục 8 | 2.02 | `theme.css`, `tailwind.config` đúng cho cả hai bản Tailwind |
 | WP-2.04 | M-HT | SPEC-04.2 mục 9 | 2.02 | AC-10 |
 | WP-2.05 | M-VL: T1, T2 (worker), T3 (tiến trình con) | SPEC-04.2 mục 11; SPEC-05 mục 10 | 2.02 | PB-09, PB-12; nhóm "Tiến trình con" SPEC-05 mục 17.1 |
 | WP-2.06 | M-EX: kế hoạch, diff, transaction, manifest, xung đột, `orphaned`, bước thủ công | SPEC-04.2 mục 10; ADR-BE-17, 18 | 2.05 | AC-11; VG-01 (B) trên transaction thật |
 | WP-2.07 | M-XU: màn hình Export, diff CodeMirror, chọn xử lý xung đột | SPEC-04.2 mục 12; ADR-FE-15 | 2.06 | E2E xuất, duyệt từng file, hủy |
-| WP-2.08 | Tương tác: Inspector mục 11.2, R-LT-08, R-LT-09, preset có tương tác, Xem thử (mục 7.7), sinh code tương tác (SPEC-04.2 mục 6.7, R-HT-04) | SPEC-03 mục 6a; SPEC-04.1 mục 7.7, 11.2 | 2.02 | AC-14 |
+| WP-2.08 | Tương tác: Inspector SPEC-04.1 mục 11.2, R-LT-08, R-LT-09, preset có tương tác, Xem thử (SPEC-04.1 mục 7.7), sinh code tương tác (SPEC-04.2 mục 6.7, R-HT-04) | SPEC-03 mục 6a; SPEC-04.1 mục 7.7, 11.2 | 2.02 | AC-14 |
 | WP-2.09 | Rich text (thanh định dạng, SPEC-04.1 mục 8.4), chế độ tối (cài đặt, nút xem sáng/tối), ràng buộc nhập liệu (Inspector + codegen) | SPEC-04.1 mục 8.4; SPEC-03 mục 3.4a | 2.03 | AC-15; VG-14 (B) |
 | WP-2.10 | Project JavaScript (SPEC-04.2 mục 6.9), monorepo (R-TP-04) | SPEC-04.2 | 2.02 | Thêm 2 fixture: `vite8-react19-js`, `monorepo-pnpm`; xuất và build đạt |
 | WP-2.11 | Bảo mật code xuất ra | SPEC-05 mục 12 | 2.02 | Nhóm "Code xuất ra" SPEC-05 mục 17.1 |
@@ -9165,7 +9165,7 @@ Thiết kế nhiều trang nhất quán và tái sử dụng được. Sản ph�
 | G5-02 | **Toàn bộ** VG-01 đến VG-14 Đạt với phiên bản phụ thuộc sẽ phát hành |
 | G5-03 | **Toàn bộ** PB-01 đến PB-20 đạt ở 3 lần chạy `nightly` liên tiếp |
 | G5-04 | **Toàn bộ** NFR-01 đến NFR-17 có bằng chứng (test hoặc báo cáo đo) |
-| G5-05 | SPEC-05 mục 17.1 đạt toàn bộ; mục 17.2 đã thực hiện |
+| G5-05 | SPEC-05 mục 17.1 đạt toàn bộ; SPEC-05 mục 17.2 đã thực hiện |
 | G5-06 | Không còn câu hỏi mở nào ngoài loại hành chính đã có ngày quyết định |
 | G5-07 | Không còn cờ tính năng nào (CW-20): `RELEASED_PHASE = 5` |
 | G5-08 | Danh sách kiểm tra phát hành mục 17.3 đạt |
@@ -9873,7 +9873,7 @@ Trạng thái module: `Chưa bắt đầu`, `Đang làm`, `Xong` (mọi WP chứ
 | SPEC-02 mục 11.1 | Thêm loại nhánh `spike` (CW-21) |
 | SPEC-02 mục 16 | Thêm Q-17 (giấy phép của ReactCraft) |
 | SPEC-03 mục 10.1 | `SessionInfo` thêm `features: readonly FeatureId[]` (CW-18) |
-| SPEC-04.5 | Thêm M-LS (mục 6a). `propRef` thêm đích `alt` cho ảnh |
+| SPEC-04.5 | Thêm M-LS (SPEC-04.5 mục 6a). `propRef` thêm đích `alt` cho ảnh |
 | SPEC-04.2 mục 6.3 | R-CG-17 thêm cách sinh code cho `propRef` |
 | SPEC-01.1 ADR-BE-26 | Truy vết AC-01 đến AC-16 |
 | SRS | Thêm FR-41 (gợi ý tách layout dùng chung), AC-16; làm rõ phạm vi Phase 5 |
@@ -9901,3 +9901,4 @@ Trạng thái module: `Chưa bắt đầu`, `Đang làm`, `Xong` (mọi WP chứ
 | 0.15 | 2026-10-11 | SPEC-01.1 mục 13.3: ghi phiên bản đã ghim của Node, TypeScript (6.0.3) và công cụ phát triển (pnpm 10.34.6, ESLint 10.12.0, typescript-eslint 8.71.1, Prettier 3.9.10, lefthook 2.2.1, commitlint 21.2.3, changesets 3.0.3, `@types/node` 22). SPEC-02: `prettier-plugin-tailwindcss` cấu hình riêng cho Studio (thêm cùng Studio), `.prettierignore` cho tài liệu spec, fixture, template; thêm dev dependency `@eslint/js`. Giải quyết Q-08 (bản chính của Spec là `docs/spec.md` trong repo), quyết định Q-17 (giấy phép MIT) |
 | 0.16 | 2026-10-11 | Tách báo cáo thi công khỏi Spec: Phần 0 thêm quy tắc 7; SPEC-07 thêm mục 12.5 (CW-35 đến CW-38) và mẫu 19.4 (bảng tiến độ), 19.5 (báo cáo gói công việc); mọi báo cáo thi công (tiến độ, WP, VG, phase) đặt trong `docs/construction/`; SPEC-02 mục 2.1 cập nhật cây `docs/` |
 | 0.17 | 2026-10-11 | SPEC-07: thêm mục 3.5 (module là đơn vị thi công; 6 module nền M-RP, M-QA, M-MC, M-SV, M-CL, M-ST; thư mục sở hữu của mọi module; bộ thay đổi `CS-n.nn-k`; CW-39 đến CW-42), mục 12.6 (chế độ thi công local: chưa dùng GitHub, chủ sản phẩm tự commit, `pnpm verify` thay CI, tiêu chí đa nền tảng hoãn tới khi bật CI; CW-43 đến CW-47), mẫu 19.6 (bảng module), mục bộ thay đổi trong mẫu 19.5; bảng 20.3 thêm module nền. Phần 0: thêm mã `CS-n.nn-k`. SPEC-02 mục 11: ghi chú chế độ local. SPEC-01.1, SPEC-01.2 mục 3.3: dẫn tới SPEC-07 mục 3.5 |
+| 0.18 | 2026-10-11 | Rà soát nhất quán, chỉ làm rõ, không đổi hành vi. Phần 0: mục 0.2 SPEC-00 thành "Draft — chờ duyệt" (cần duyệt theo SPEC-07 G0-05), SPEC-01.1 ghi đúng v0.3; mục 0.4 ghi ngoại lệ `R-AS-nn`. SPEC-01.1 ADR-BE-01: `engines >=22.12` là của package phát hành, gốc monorepo theo mục 13.3; viết hoa thống nhất Canvas, Inspector. SPEC-03: mục 7.3 liệt kê đủ quy tắc tài liệu (thêm V-56, V-57, V-99); mục 13 mã bổ sung là E013 đến E022; mục 14 FR-13 thêm V-56, V-57. SPEC-05 mục 4: bảng mối đe dọa thêm S-08, S-09, S-29a đến S-29c, S-85 đến S-87, S-89. SPEC-07: mục 4.3 bước 2 `engines >=22.13` và cách bật pnpm khi thư mục Node cần quyền quản trị; tham chiếu mục sang phần khác ghi rõ tên phần (bảng 3.5.1 M-RP, M-MC; WP-1.02, 1.08, 1.09, 1.10, 2.02, 2.08; G5-05; mục 21) |
