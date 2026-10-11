@@ -146,6 +146,11 @@ export default defineConfig(
   // SPEC-01.1 section 3.2 rule 2 and QC-63: the server core talks to the outside through ports.
   {
     files: ['packages/server/src/core/**/*.ts'],
+    // Integration tests of core services use the real adapters and fixtures.
+    ignores: [
+      'packages/server/src/core/**/*.test.ts',
+      'packages/server/src/core/**/test-support.ts',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',
