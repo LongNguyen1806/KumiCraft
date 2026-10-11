@@ -1,0 +1,1867 @@
+{
+  "workspace": {
+    "schemaVersion": 1,
+    "id": "allnodes01",
+    "name": "All nodes fixture",
+    "createdAt": "2026-10-11T00:00:00.000Z",
+    "updatedAt": "2026-10-11T00:00:00.000Z",
+    "revision": 0,
+    "pageOrder": [
+      "p_home000001",
+      "p_prod000001",
+      "p_form000001"
+    ],
+    "targetProject": {
+      "path": "../target-projects/vite8-react19-tw4"
+    },
+    "backends": [
+      {
+        "id": "b_shopapi001",
+        "path": "../backends/shop-api",
+        "label": "Shop API"
+      }
+    ],
+    "responsiveMode": "desktop-first",
+    "frames": [
+      {
+        "id": "desktop",
+        "label": "Desktop",
+        "width": 1440,
+        "height": 900
+      },
+      {
+        "id": "tablet",
+        "label": "Tablet",
+        "width": 768,
+        "height": 1024
+      },
+      {
+        "id": "mobile",
+        "label": "Mobile",
+        "width": 375,
+        "height": 812
+      }
+    ],
+    "primaryFrameId": "desktop",
+    "contentLocale": "vi-VN",
+    "darkMode": "class"
+  },
+  "tokens": {
+    "schemaVersion": 1,
+    "color": {
+      "primary": {
+        "value": "#2563eb",
+        "label": "Primary",
+        "dark": "#60a5fa"
+      },
+      "surface": {
+        "value": "#ffffff",
+        "dark": "#111827"
+      },
+      "text": {
+        "value": "#111827",
+        "dark": "#f9fafb"
+      },
+      "muted": {
+        "value": "#e5e7eb",
+        "dark": "#374151"
+      }
+    },
+    "spacing": {
+      "2": {
+        "value": {
+          "px": 8
+        }
+      },
+      "4": {
+        "value": {
+          "px": 16
+        }
+      },
+      "6": {
+        "value": {
+          "px": 24
+        }
+      }
+    },
+    "radius": {
+      "lg": {
+        "value": {
+          "px": 8
+        }
+      }
+    },
+    "shadow": {
+      "sm": {
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)"
+      },
+      "md": {
+        "value": "0 4px 6px -1px rgb(0 0 0 / 0.1)"
+      }
+    },
+    "fontSize": {
+      "lg": {
+        "value": {
+          "size": {
+            "px": 18
+          },
+          "lineHeight": 1.75
+        }
+      }
+    },
+    "fontWeight": {
+      "bold": {
+        "value": 700
+      }
+    },
+    "lineHeight": {
+      "relaxed": {
+        "value": 1.625
+      }
+    },
+    "fontFamily": {
+      "sans": {
+        "value": [
+          "Inter",
+          "system-ui",
+          "sans-serif"
+        ]
+      }
+    }
+  },
+  "pages": {
+    "p_home000001": {
+      "schemaVersion": 1,
+      "id": "p_home000001",
+      "name": "Trang chủ",
+      "route": "/",
+      "title": "Cửa hàng",
+      "description": "Trang chủ cửa hàng",
+      "root": {
+        "id": "n_allnode051",
+        "type": "Stack",
+        "content": {
+          "kind": "none"
+        },
+        "style": {
+          "direction": "column",
+          "background": "token:color.surface"
+        },
+        "children": [
+          {
+            "id": "n_allnode010",
+            "type": "Navbar",
+            "content": {
+              "kind": "none"
+            },
+            "name": "Top bar",
+            "style": {
+              "direction": "row",
+              "justify": "between",
+              "align": "center",
+              "wrap": false,
+              "position": "sticky",
+              "stickyTop": {
+                "px": 0
+              },
+              "zIndex": 40,
+              "padding": {
+                "top": "token:spacing.2",
+                "right": "token:spacing.4",
+                "bottom": "token:spacing.2",
+                "left": "token:spacing.4"
+              },
+              "background": "token:color.surface",
+              "borderWidth": {
+                "bottom": 1
+              },
+              "borderColor": "token:color.muted",
+              "borderStyle": "solid"
+            },
+            "children": [
+              {
+                "id": "n_allnode007",
+                "type": "Image",
+                "content": {
+                  "kind": "image",
+                  "src": "asset:logo.png",
+                  "alt": "Logo",
+                  "fit": "contain"
+                },
+                "style": {
+                  "width": {
+                    "fixed": {
+                      "px": 120
+                    }
+                  },
+                  "height": "hug"
+                }
+              },
+              {
+                "id": "n_allnode008",
+                "type": "Link",
+                "content": {
+                  "kind": "link",
+                  "text": "Tài liệu",
+                  "href": "https://example.com/docs",
+                  "newTab": true
+                }
+              },
+              {
+                "id": "n_allnode009",
+                "type": "Link",
+                "content": {
+                  "kind": "link",
+                  "text": "Mở giỏ hàng",
+                  "href": ""
+                },
+                "interactions": [
+                  {
+                    "id": "i_allint03",
+                    "trigger": "click",
+                    "actions": [
+                      {
+                        "type": "openModal",
+                        "modalId": "n_allnode003"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "n_allnode006",
+                "type": "Icon",
+                "content": {
+                  "kind": "icon",
+                  "name": "menu",
+                  "size": {
+                    "px": 24
+                  }
+                },
+                "interactions": [
+                  {
+                    "id": "i_allint02",
+                    "trigger": "click",
+                    "actions": [
+                      {
+                        "type": "toggle",
+                        "targetId": "n_allnode005"
+                      }
+                    ]
+                  }
+                ],
+                "responsive": {
+                  "md": {
+                    "display": "visible"
+                  }
+                },
+                "style": {
+                  "display": "hidden"
+                }
+              }
+            ]
+          },
+          {
+            "id": "n_allnode005",
+            "type": "Stack",
+            "content": {
+              "kind": "none"
+            },
+            "name": "Mobile menu",
+            "runtime": {
+              "initiallyHidden": true
+            },
+            "style": {
+              "direction": "column",
+              "gap": "token:spacing.2"
+            },
+            "children": [
+              {
+                "id": "n_allnode004",
+                "type": "Link",
+                "content": {
+                  "kind": "link",
+                  "text": "Sản phẩm",
+                  "href": "/products/new"
+                }
+              }
+            ]
+          },
+          {
+            "id": "n_allnode014",
+            "type": "Section",
+            "content": {
+              "kind": "section",
+              "as": "header"
+            },
+            "style": {
+              "direction": "column",
+              "align": "center",
+              "gap": "token:spacing.4",
+              "minHeight": {
+                "px": 480
+              },
+              "maxWidth": "none",
+              "padding": {
+                "top": {
+                  "px": 64
+                },
+                "bottom": {
+                  "px": 64
+                }
+              },
+              "backgroundImage": {
+                "kind": "linear-gradient",
+                "angle": 135,
+                "stops": [
+                  {
+                    "color": "#2563eb",
+                    "at": 0
+                  },
+                  {
+                    "color": "token:color.surface",
+                    "at": 100
+                  }
+                ]
+              }
+            },
+            "responsive": {
+              "lg": {
+                "padding": {
+                  "top": {
+                    "px": 48
+                  },
+                  "bottom": {
+                    "px": 48
+                  }
+                }
+              },
+              "md": {
+                "gap": "token:spacing.2"
+              }
+            },
+            "children": [
+              {
+                "id": "n_allnode011",
+                "type": "Heading",
+                "content": {
+                  "kind": "heading",
+                  "text": "Mùa hè rực rỡ",
+                  "level": 1,
+                  "runs": [
+                    {
+                      "text": "Mùa hè "
+                    },
+                    {
+                      "text": "rực rỡ",
+                      "bold": true,
+                      "italic": true,
+                      "color": "token:color.primary"
+                    }
+                  ]
+                },
+                "style": {
+                  "fontFamily": "token:fontFamily.sans",
+                  "fontSize": "token:fontSize.lg",
+                  "fontWeight": "token:fontWeight.bold",
+                  "lineHeight": "token:lineHeight.relaxed",
+                  "textAlign": "center",
+                  "textColor": "token:color.text",
+                  "textTransform": "none"
+                },
+                "responsive": {
+                  "sm": {
+                    "fontSize": {
+                      "px": 28
+                    }
+                  }
+                }
+              },
+              {
+                "id": "n_allnode012",
+                "type": "Text",
+                "content": {
+                  "kind": "text",
+                  "as": "p",
+                  "text": "Giảm giá xem chi tiết tại đây",
+                  "runs": [
+                    {
+                      "text": "Giảm giá ",
+                      "underline": true
+                    },
+                    {
+                      "text": "xem ",
+                      "strike": true
+                    },
+                    {
+                      "text": "chi tiết",
+                      "code": true
+                    },
+                    {
+                      "text": " tại đây",
+                      "link": {
+                        "href": "/products/new",
+                        "newTab": false
+                      }
+                    }
+                  ]
+                },
+                "style": {
+                  "fontSize": {
+                    "px": 18
+                  },
+                  "fontWeight": 400,
+                  "lineHeight": 1.6,
+                  "truncate": false,
+                  "opacity": 90
+                }
+              },
+              {
+                "id": "n_allnode013",
+                "type": "Button",
+                "content": {
+                  "kind": "button",
+                  "text": "Mua ngay",
+                  "variant": "primary",
+                  "buttonType": "button",
+                  "iconRight": "arrow-right"
+                },
+                "states": {
+                  "hover": {
+                    "background": "token:color.primary",
+                    "shadow": "token:shadow.md"
+                  },
+                  "focus": {
+                    "borderColor": "token:color.text"
+                  },
+                  "disabled": {
+                    "opacity": 50,
+                    "textColor": "#9ca3afff"
+                  }
+                },
+                "style": {
+                  "radius": "token:radius.lg",
+                  "shadow": "token:shadow.sm",
+                  "transition": {
+                    "property": "colors",
+                    "durationMs": 150
+                  }
+                },
+                "interactions": [
+                  {
+                    "id": "i_allint04",
+                    "trigger": "click",
+                    "actions": [
+                      {
+                        "type": "scrollTo",
+                        "targetId": "n_allnode010"
+                      },
+                      {
+                        "type": "showToast",
+                        "message": "Đã chọn",
+                        "tone": "info"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "n_allnode049",
+            "type": "Container",
+            "content": {
+              "kind": "container",
+              "maxWidth": "xl"
+            },
+            "style": {
+              "margin": {
+                "left": {
+                  "px": 0
+                },
+                "right": {
+                  "px": 0
+                }
+              }
+            },
+            "children": [
+              {
+                "id": "n_allnode048",
+                "type": "Section",
+                "content": {
+                  "kind": "section",
+                  "as": "main"
+                },
+                "children": [
+                  {
+                    "id": "n_allnode021",
+                    "type": "List",
+                    "content": {
+                      "kind": "list",
+                      "emptyText": "Chưa có sản phẩm",
+                      "loadingText": "Đang tải",
+                      "errorText": "Lỗi",
+                      "dataOptions": {
+                        "searchable": true,
+                        "searchPlaceholder": "Tìm",
+                        "pageSize": 12
+                      }
+                    },
+                    "bindings": {
+                      "items": {
+                        "source": "ds_products",
+                        "endpoint": "ep_list000001"
+                      }
+                    },
+                    "style": {
+                      "direction": "column",
+                      "gap": "token:spacing.4"
+                    },
+                    "children": [
+                      {
+                        "id": "n_allnode020",
+                        "type": "Card",
+                        "content": {
+                          "kind": "none"
+                        },
+                        "style": {
+                          "gap": "token:spacing.2",
+                          "padding": {
+                            "top": "token:spacing.4",
+                            "right": "token:spacing.4",
+                            "bottom": "token:spacing.4",
+                            "left": "token:spacing.4"
+                          },
+                          "radius": {
+                            "px": 12
+                          },
+                          "background": "token:color.surface",
+                          "overflowX": "hidden",
+                          "overflowY": "auto"
+                        },
+                        "states": {
+                          "hover": {
+                            "shadow": "token:shadow.md"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "n_allnode017",
+                            "type": "Image",
+                            "content": {
+                              "kind": "image",
+                              "src": "https://images.example.com/p.jpg",
+                              "alt": "Ảnh",
+                              "fit": "cover"
+                            },
+                            "bindings": {
+                              "src": {
+                                "source": "ds_products",
+                                "field": "image"
+                              },
+                              "alt": {
+                                "source": "ds_products",
+                                "field": "name"
+                              }
+                            },
+                            "style": {
+                              "aspectRatio": "4/3",
+                              "width": "fill"
+                            }
+                          },
+                          {
+                            "id": "n_allnode015",
+                            "type": "Heading",
+                            "content": {
+                              "kind": "heading",
+                              "text": "Tên sản phẩm",
+                              "level": 3
+                            },
+                            "bindings": {
+                              "text": {
+                                "source": "ds_products",
+                                "field": "name"
+                              }
+                            }
+                          },
+                          {
+                            "id": "n_allnode016",
+                            "type": "Text",
+                            "content": {
+                              "kind": "text",
+                              "text": "0 ₫",
+                              "as": "span"
+                            },
+                            "bindings": {
+                              "text": {
+                                "source": "ds_products",
+                                "field": "price",
+                                "format": "currency"
+                              }
+                            }
+                          },
+                          {
+                            "id": "n_allnode018",
+                            "type": "Link",
+                            "content": {
+                              "kind": "link",
+                              "text": "Danh mục",
+                              "href": "/"
+                            },
+                            "bindings": {
+                              "text": {
+                                "source": "ds_products",
+                                "field": "category.name"
+                              },
+                              "href": {
+                                "source": "ds_products",
+                                "field": "slug"
+                              }
+                            }
+                          },
+                          {
+                            "id": "n_allnode019",
+                            "type": "Button",
+                            "content": {
+                              "kind": "button",
+                              "text": "Chi tiết",
+                              "variant": "outline"
+                            },
+                            "interactions": [
+                              {
+                                "id": "i_allint05",
+                                "trigger": "click",
+                                "actions": [
+                                  {
+                                    "type": "navigate",
+                                    "pageId": "p_prod000001",
+                                    "params": {
+                                      "id": {
+                                        "kind": "field",
+                                        "field": "id"
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "n_allnode026",
+                "type": "Grid",
+                "content": {
+                  "kind": "none"
+                },
+                "style": {
+                  "columns": 4,
+                  "rows": 2,
+                  "gap": {
+                    "px": 16
+                  }
+                },
+                "responsive": {
+                  "md": {
+                    "columns": 2
+                  },
+                  "sm": {
+                    "columns": 1
+                  }
+                },
+                "children": [
+                  {
+                    "id": "n_allnode023",
+                    "type": "Card",
+                    "content": {
+                      "kind": "none"
+                    },
+                    "style": {
+                      "colSpan": 2,
+                      "rowSpan": 1
+                    },
+                    "children": [
+                      {
+                        "id": "n_allnode022",
+                        "type": "Text",
+                        "content": {
+                          "kind": "text",
+                          "text": "Rộng"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "n_allnode025",
+                    "type": "Card",
+                    "content": {
+                      "kind": "none"
+                    },
+                    "style": {
+                      "colSpan": "full"
+                    },
+                    "responsive": {
+                      "sm": {
+                        "colSpan": 1
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "n_allnode024",
+                        "type": "Divider",
+                        "content": {
+                          "kind": "none"
+                        },
+                        "style": {
+                          "borderWidth": {
+                            "top": 2
+                          },
+                          "borderStyle": "dashed",
+                          "margin": {
+                            "top": {
+                              "px": 8
+                            },
+                            "bottom": {
+                              "px": 8
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "n_allnode029",
+                "type": "Grid",
+                "content": {
+                  "kind": "none"
+                },
+                "style": {
+                  "autoFit": {
+                    "minColumnWidth": {
+                      "px": 240
+                    }
+                  },
+                  "gap": "token:spacing.4"
+                },
+                "children": [
+                  {
+                    "id": "n_allnode028",
+                    "type": "Card",
+                    "content": {
+                      "kind": "none"
+                    },
+                    "children": [
+                      {
+                        "id": "n_allnode027",
+                        "type": "Text",
+                        "content": {
+                          "kind": "text",
+                          "text": "Tự co giãn"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "n_allnode032",
+                "type": "Stack",
+                "content": {
+                  "kind": "none"
+                },
+                "style": {
+                  "direction": "row",
+                  "align": "baseline",
+                  "justify": "evenly",
+                  "wrap": true,
+                  "gap": {
+                    "px": 8
+                  }
+                },
+                "responsive": {
+                  "xl": {
+                    "justify": "around"
+                  },
+                  "2xl": {
+                    "justify": "center"
+                  }
+                },
+                "children": [
+                  {
+                    "id": "n_allnode030",
+                    "type": "Text",
+                    "content": {
+                      "kind": "text",
+                      "text": "Giãn"
+                    },
+                    "style": {
+                      "grow": true,
+                      "alignSelf": "center",
+                      "width": {
+                        "percent": 50
+                      },
+                      "maxHeight": {
+                        "px": 200
+                      },
+                      "minWidth": "none"
+                    }
+                  },
+                  {
+                    "id": "n_allnode031",
+                    "type": "Icon",
+                    "content": {
+                      "kind": "icon",
+                      "name": "shopping-cart",
+                      "size": {
+                        "px": 20
+                      }
+                    },
+                    "style": {
+                      "alignSelf": "end",
+                      "textColor": "#111827"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "n_allnode037",
+                "type": "Tabs",
+                "content": {
+                  "kind": "tabs",
+                  "items": [
+                    {
+                      "id": "info",
+                      "label": "Thông tin"
+                    },
+                    {
+                      "id": "reviews",
+                      "label": "Đánh giá"
+                    }
+                  ]
+                },
+                "children": [
+                  {
+                    "id": "n_allnode034",
+                    "type": "Stack",
+                    "content": {
+                      "kind": "none"
+                    },
+                    "children": [
+                      {
+                        "id": "n_allnode033",
+                        "type": "Text",
+                        "content": {
+                          "kind": "text",
+                          "text": "Mô tả"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "n_allnode036",
+                    "type": "Stack",
+                    "content": {
+                      "kind": "none"
+                    },
+                    "children": [
+                      {
+                        "id": "n_allnode035",
+                        "type": "Text",
+                        "content": {
+                          "kind": "text",
+                          "text": "Đánh giá"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "n_allnode038",
+                "type": "Button",
+                "content": {
+                  "kind": "button",
+                  "text": "Xem đánh giá",
+                  "variant": "secondary"
+                },
+                "interactions": [
+                  {
+                    "id": "i_allint06",
+                    "trigger": "click",
+                    "actions": [
+                      {
+                        "type": "switchTab",
+                        "tabsId": "n_allnode037",
+                        "tabId": "reviews"
+                      },
+                      {
+                        "type": "show",
+                        "targetId": "n_allnode036"
+                      },
+                      {
+                        "type": "hide",
+                        "targetId": "n_allnode034"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "n_allnode039",
+                "type": "Table",
+                "content": {
+                  "kind": "table",
+                  "emptyText": "Trống",
+                  "loadingText": "Đang tải",
+                  "errorText": "Lỗi",
+                  "columns": [
+                    {
+                      "id": "name",
+                      "header": "Tên",
+                      "field": "name",
+                      "format": "text"
+                    },
+                    {
+                      "id": "price",
+                      "header": "Giá",
+                      "field": "price",
+                      "format": "currency"
+                    },
+                    {
+                      "id": "stock",
+                      "header": "Còn hàng",
+                      "field": "inStock",
+                      "format": "boolean"
+                    }
+                  ],
+                  "rowActions": [
+                    {
+                      "id": "delete",
+                      "label": "Xóa",
+                      "icon": "trash",
+                      "tone": "danger",
+                      "actions": [
+                        {
+                          "type": "deleteRecord",
+                          "endpoint": "ep_dele000001",
+                          "confirm": {
+                            "title": "Xóa?",
+                            "message": "Không thể hoàn tác"
+                          }
+                        },
+                        {
+                          "type": "refreshData",
+                          "targetId": "n_allnode021"
+                        }
+                      ]
+                    }
+                  ],
+                  "rowClick": [
+                    {
+                      "type": "navigate",
+                      "pageId": "p_prod000001",
+                      "params": {
+                        "id": {
+                          "kind": "field",
+                          "field": "id"
+                        },
+                        "from": {
+                          "kind": "static",
+                          "value": "table"
+                        }
+                      }
+                    }
+                  ],
+                  "dataOptions": {
+                    "searchable": true,
+                    "pageSize": 20,
+                    "sortableColumns": [
+                      "name",
+                      "price"
+                    ]
+                  }
+                },
+                "bindings": {
+                  "rows": {
+                    "source": "ds_products",
+                    "endpoint": "ep_list000001"
+                  }
+                }
+              },
+              {
+                "id": "n_allnode042",
+                "type": "Sidebar",
+                "content": {
+                  "kind": "none"
+                },
+                "style": {
+                  "width": {
+                    "fixed": {
+                      "px": 240
+                    }
+                  },
+                  "height": "fill",
+                  "maxWidth": {
+                    "px": 320
+                  },
+                  "minHeight": "none"
+                },
+                "children": [
+                  {
+                    "id": "n_allnode040",
+                    "type": "Link",
+                    "content": {
+                      "kind": "link",
+                      "text": "Liên hệ",
+                      "href": "mailto:hi@example.com"
+                    }
+                  },
+                  {
+                    "id": "n_allnode041",
+                    "type": "Link",
+                    "content": {
+                      "kind": "link",
+                      "text": "Gọi",
+                      "href": "tel:+84123456789"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "n_allnode047",
+                "type": "ComponentInstance",
+                "content": {
+                  "kind": "instance",
+                  "componentId": "c_card000001",
+                  "propValues": {
+                    "title": "Sản phẩm nổi bật",
+                    "photo": "asset:hero.jpg",
+                    "link": "/products/new"
+                  }
+                },
+                "slots": {
+                  "actions": [
+                    {
+                      "id": "n_allnode046",
+                      "type": "Button",
+                      "content": {
+                        "kind": "button",
+                        "text": "Thêm vào giỏ",
+                        "variant": "primary"
+                      }
+                    }
+                  ]
+                },
+                "interactions": [
+                  {
+                    "id": "i_allint08",
+                    "trigger": "click",
+                    "actions": [
+                      {
+                        "type": "navigate",
+                        "pageId": "p_form000001"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "n_allnode045",
+            "type": "Footer",
+            "content": {
+              "kind": "none"
+            },
+            "style": {
+              "direction": "row",
+              "justify": "start",
+              "padding": {
+                "top": {
+                  "px": 24
+                }
+              },
+              "backgroundImage": {
+                "kind": "image",
+                "src": "asset:footer.jpg",
+                "size": "cover",
+                "position": "bottom",
+                "repeat": false
+              }
+            },
+            "children": [
+              {
+                "id": "n_allnode043",
+                "type": "Text",
+                "content": {
+                  "kind": "text",
+                  "text": "© ReactCraft"
+                }
+              },
+              {
+                "id": "n_allnode044",
+                "type": "Button",
+                "content": {
+                  "kind": "button",
+                  "text": "Web",
+                  "variant": "danger"
+                },
+                "interactions": [
+                  {
+                    "id": "i_allint07",
+                    "trigger": "click",
+                    "actions": [
+                      {
+                        "type": "openUrl",
+                        "url": "https://reactcraft.dev",
+                        "newTab": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "n_allnode050",
+            "type": "Text",
+            "content": {
+              "kind": "text",
+              "text": "Ẩn trên Canvas"
+            },
+            "hidden": true,
+            "locked": true,
+            "name": "Ghi chú"
+          },
+          {
+            "id": "n_allnode003",
+            "type": "Modal",
+            "content": {
+              "kind": "modal",
+              "title": "Giỏ hàng",
+              "openByDefault": false
+            },
+            "children": [
+              {
+                "id": "n_allnode001",
+                "type": "Text",
+                "content": {
+                  "kind": "text",
+                  "text": "Giỏ hàng trống"
+                }
+              },
+              {
+                "id": "n_allnode002",
+                "type": "Button",
+                "content": {
+                  "kind": "button",
+                  "text": "Đóng",
+                  "variant": "ghost",
+                  "iconLeft": "x"
+                },
+                "interactions": [
+                  {
+                    "id": "i_allint01",
+                    "trigger": "click",
+                    "actions": [
+                      {
+                        "type": "closeModal"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "p_prod000001": {
+      "schemaVersion": 1,
+      "id": "p_prod000001",
+      "name": "Chi tiết",
+      "route": "/products/:id",
+      "root": {
+        "id": "n_allnode054",
+        "type": "Stack",
+        "content": {
+          "kind": "none"
+        },
+        "children": [
+          {
+            "id": "n_allnode053",
+            "type": "DetailView",
+            "content": {
+              "kind": "detail",
+              "loadingText": "Đang tải",
+              "errorText": "Lỗi",
+              "notFoundText": "Không thấy"
+            },
+            "bindings": {
+              "record": {
+                "source": "ds_products",
+                "endpoint": "ep_detl000001"
+              }
+            },
+            "children": [
+              {
+                "id": "n_allnode052",
+                "type": "Heading",
+                "content": {
+                  "kind": "heading",
+                  "text": "Tên",
+                  "level": 2
+                },
+                "bindings": {
+                  "text": {
+                    "source": "ds_products",
+                    "field": "name"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "p_form000001": {
+      "schemaVersion": 1,
+      "id": "p_form000001",
+      "name": "Thêm sản phẩm",
+      "route": "/products/new",
+      "root": {
+        "id": "n_allnode068",
+        "type": "Stack",
+        "content": {
+          "kind": "none"
+        },
+        "children": [
+          {
+            "id": "n_allnode065",
+            "type": "Form",
+            "content": {
+              "kind": "none"
+            },
+            "bindings": {
+              "submit": {
+                "source": "ds_products",
+                "endpoint": "ep_crea000001"
+              }
+            },
+            "interactions": [
+              {
+                "id": "i_allint09",
+                "trigger": "submitSuccess",
+                "actions": [
+                  {
+                    "type": "showToast",
+                    "message": "Đã lưu",
+                    "tone": "success"
+                  },
+                  {
+                    "type": "navigate",
+                    "pageId": "p_home000001"
+                  }
+                ]
+              },
+              {
+                "id": "i_allint10",
+                "trigger": "submitError",
+                "actions": [
+                  {
+                    "type": "showToast",
+                    "message": "Lỗi",
+                    "tone": "error"
+                  }
+                ]
+              }
+            ],
+            "children": [
+              {
+                "id": "n_allnode055",
+                "type": "Input",
+                "content": {
+                  "kind": "input",
+                  "label": "Tên",
+                  "placeholder": "Áo thun",
+                  "inputType": "text",
+                  "fieldName": "name",
+                  "required": true,
+                  "validation": {
+                    "minLength": 2,
+                    "maxLength": 80,
+                    "message": "Tên 2–80 ký tự"
+                  }
+                },
+                "bindings": {
+                  "value": {
+                    "source": "ds_products",
+                    "field": "name"
+                  }
+                }
+              },
+              {
+                "id": "n_allnode056",
+                "type": "Input",
+                "content": {
+                  "kind": "input",
+                  "label": "Giá",
+                  "inputType": "number",
+                  "fieldName": "price",
+                  "validation": {
+                    "min": 0,
+                    "max": 100000000
+                  }
+                },
+                "bindings": {
+                  "value": {
+                    "source": "ds_products",
+                    "field": "price"
+                  }
+                }
+              },
+              {
+                "id": "n_allnode057",
+                "type": "Input",
+                "content": {
+                  "kind": "input",
+                  "label": "Ngày bán",
+                  "inputType": "date",
+                  "fieldName": "releasedOn",
+                  "validation": {
+                    "minDate": "2026-01-01",
+                    "maxDate": "2026-12-31"
+                  }
+                }
+              },
+              {
+                "id": "n_allnode058",
+                "type": "Input",
+                "content": {
+                  "kind": "input",
+                  "label": "Email",
+                  "inputType": "email",
+                  "fieldName": "contact",
+                  "validation": {
+                    "format": "email"
+                  }
+                }
+              },
+              {
+                "id": "n_allnode059",
+                "type": "Textarea",
+                "content": {
+                  "kind": "textarea",
+                  "label": "Mô tả",
+                  "fieldName": "description",
+                  "rows": 4,
+                  "validation": {
+                    "maxLength": 2000
+                  }
+                }
+              },
+              {
+                "id": "n_allnode060",
+                "type": "Select",
+                "content": {
+                  "kind": "select",
+                  "label": "Danh mục",
+                  "fieldName": "categoryId",
+                  "required": true,
+                  "options": [],
+                  "optionsFrom": {
+                    "endpoint": "ep_catl000001",
+                    "valueField": "id",
+                    "labelField": "name"
+                  }
+                },
+                "bindings": {
+                  "options": {
+                    "source": "ds_categories",
+                    "endpoint": "ep_catl000001"
+                  }
+                }
+              },
+              {
+                "id": "n_allnode061",
+                "type": "Checkbox",
+                "content": {
+                  "kind": "choice",
+                  "label": "Còn hàng",
+                  "fieldName": "inStock"
+                },
+                "bindings": {
+                  "value": {
+                    "source": "ds_products",
+                    "field": "inStock"
+                  }
+                }
+              },
+              {
+                "id": "n_allnode062",
+                "type": "Radio",
+                "content": {
+                  "kind": "choice",
+                  "label": "Kích cỡ",
+                  "fieldName": "size",
+                  "options": [
+                    {
+                      "value": "s",
+                      "label": "S"
+                    },
+                    {
+                      "value": "m",
+                      "label": "M"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "n_allnode063",
+                "type": "Switch",
+                "content": {
+                  "kind": "choice",
+                  "label": "Nổi bật",
+                  "fieldName": "featured"
+                }
+              },
+              {
+                "id": "n_allnode064",
+                "type": "Button",
+                "content": {
+                  "kind": "button",
+                  "text": "Lưu",
+                  "variant": "primary",
+                  "buttonType": "submit"
+                }
+              }
+            ]
+          },
+          {
+            "id": "n_allnode067",
+            "type": "Form",
+            "content": {
+              "kind": "none"
+            },
+            "bindings": {
+              "submit": {
+                "source": "ds_products",
+                "endpoint": "ep_updt000001"
+              }
+            },
+            "interactions": [
+              {
+                "id": "i_allint11",
+                "trigger": "submitSuccess",
+                "actions": [
+                  {
+                    "type": "navigate",
+                    "pageId": "p_prod000001",
+                    "params": {
+                      "id": {
+                        "kind": "field",
+                        "field": "id"
+                      }
+                    }
+                  }
+                ]
+              }
+            ],
+            "children": [
+              {
+                "id": "n_allnode066",
+                "type": "Input",
+                "content": {
+                  "kind": "input",
+                  "label": "Tên",
+                  "inputType": "text",
+                  "fieldName": "name"
+                },
+                "bindings": {
+                  "value": {
+                    "source": "ds_products",
+                    "field": "name"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "c_card000001": {
+      "schemaVersion": 1,
+      "id": "c_card000001",
+      "name": "ProductCard",
+      "recordEntity": "ds_products",
+      "props": [
+        {
+          "name": "title",
+          "kind": "text",
+          "defaultValue": "Sản phẩm"
+        },
+        {
+          "name": "photo",
+          "kind": "image",
+          "defaultValue": "asset:hero.jpg"
+        },
+        {
+          "name": "link",
+          "kind": "link",
+          "defaultValue": "/"
+        }
+      ],
+      "root": {
+        "id": "n_allnode074",
+        "type": "Card",
+        "content": {
+          "kind": "none"
+        },
+        "children": [
+          {
+            "id": "n_allnode069",
+            "type": "Image",
+            "content": {
+              "kind": "image",
+              "src": "asset:hero.jpg",
+              "alt": "Ảnh"
+            },
+            "propRef": {
+              "prop": "photo",
+              "target": "src"
+            }
+          },
+          {
+            "id": "n_allnode070",
+            "type": "Heading",
+            "content": {
+              "kind": "heading",
+              "text": "Sản phẩm",
+              "level": 3
+            },
+            "propRef": {
+              "prop": "title",
+              "target": "text"
+            }
+          },
+          {
+            "id": "n_allnode071",
+            "type": "Link",
+            "content": {
+              "kind": "link",
+              "text": "Xem",
+              "href": "/"
+            },
+            "propRef": {
+              "prop": "link",
+              "target": "href"
+            }
+          },
+          {
+            "id": "n_allnode072",
+            "type": "Text",
+            "content": {
+              "kind": "text",
+              "text": "0"
+            },
+            "bindings": {
+              "text": {
+                "source": "ds_products",
+                "field": "price",
+                "format": "number"
+              }
+            }
+          },
+          {
+            "id": "n_allnode073",
+            "type": "Slot",
+            "content": {
+              "kind": "slot",
+              "name": "actions"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "dataSources": {
+    "schemaVersion": 1,
+    "baseUrl": "https://api.example.com",
+    "auth": {
+      "kind": "bearer"
+    },
+    "entities": [
+      {
+        "id": "ds_products",
+        "name": "Product",
+        "provenance": {
+          "origin": "openapi",
+          "confidence": "high",
+          "file": "openapi.yaml",
+          "line": 12
+        },
+        "fields": [
+          {
+            "name": "id",
+            "type": "id",
+            "required": true,
+            "readOnly": true,
+            "provenance": {
+              "origin": "openapi",
+              "confidence": "high",
+              "file": "openapi.yaml",
+              "line": 12
+            }
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "required": true,
+            "readOnly": false,
+            "provenance": {
+              "origin": "openapi",
+              "confidence": "high",
+              "file": "openapi.yaml",
+              "line": 12
+            },
+            "label": "Tên"
+          },
+          {
+            "name": "slug",
+            "type": "url",
+            "required": false,
+            "readOnly": false,
+            "provenance": {
+              "origin": "openapi",
+              "confidence": "high",
+              "file": "openapi.yaml",
+              "line": 12
+            }
+          },
+          {
+            "name": "price",
+            "type": "decimal",
+            "required": false,
+            "readOnly": false,
+            "provenance": {
+              "origin": "openapi",
+              "confidence": "high",
+              "file": "openapi.yaml",
+              "line": 12
+            }
+          },
+          {
+            "name": "image",
+            "type": "image",
+            "required": false,
+            "readOnly": false,
+            "provenance": {
+              "origin": "openapi",
+              "confidence": "high",
+              "file": "openapi.yaml",
+              "line": 12
+            }
+          },
+          {
+            "name": "inStock",
+            "type": "boolean",
+            "required": false,
+            "readOnly": false,
+            "provenance": {
+              "origin": "openapi",
+              "confidence": "high",
+              "file": "openapi.yaml",
+              "line": 12
+            }
+          },
+          {
+            "name": "status",
+            "type": "enum",
+            "required": false,
+            "readOnly": false,
+            "provenance": {
+              "origin": "openapi",
+              "confidence": "high",
+              "file": "openapi.yaml",
+              "line": 12
+            },
+            "enumValues": [
+              "draft",
+              "published"
+            ]
+          },
+          {
+            "name": "category",
+            "type": "relation",
+            "required": false,
+            "readOnly": false,
+            "provenance": {
+              "origin": "openapi",
+              "confidence": "high",
+              "file": "openapi.yaml",
+              "line": 12
+            },
+            "relation": {
+              "entity": "ds_categories",
+              "many": false
+            }
+          }
+        ]
+      },
+      {
+        "id": "ds_categories",
+        "name": "Category",
+        "provenance": {
+          "origin": "code",
+          "confidence": "medium"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "type": "id",
+            "required": false,
+            "readOnly": false,
+            "provenance": {
+              "origin": "openapi",
+              "confidence": "high",
+              "file": "openapi.yaml",
+              "line": 12
+            }
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "required": false,
+            "readOnly": false,
+            "provenance": {
+              "origin": "openapi",
+              "confidence": "high",
+              "file": "openapi.yaml",
+              "line": 12
+            }
+          }
+        ]
+      }
+    ],
+    "endpoints": [
+      {
+        "id": "ep_list000001",
+        "method": "GET",
+        "path": "/products",
+        "purpose": "list",
+        "entity": "ds_products",
+        "params": [
+          {
+            "name": "q",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "role": "search"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "role": "page"
+          }
+        ],
+        "provenance": {
+          "origin": "openapi",
+          "confidence": "high",
+          "file": "openapi.yaml",
+          "line": 12
+        },
+        "pagination": {
+          "style": "page"
+        },
+        "responseEnvelope": "data"
+      },
+      {
+        "id": "ep_detl000001",
+        "method": "GET",
+        "path": "/products/{id}",
+        "purpose": "detail",
+        "entity": "ds_products",
+        "params": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "id",
+            "required": true
+          }
+        ],
+        "provenance": {
+          "origin": "openapi",
+          "confidence": "high",
+          "file": "openapi.yaml",
+          "line": 12
+        }
+      },
+      {
+        "id": "ep_crea000001",
+        "method": "POST",
+        "path": "/products",
+        "purpose": "create",
+        "entity": "ds_products",
+        "params": [],
+        "provenance": {
+          "origin": "openapi",
+          "confidence": "high",
+          "file": "openapi.yaml",
+          "line": 12
+        }
+      },
+      {
+        "id": "ep_updt000001",
+        "method": "PUT",
+        "path": "/products/{id}",
+        "purpose": "update",
+        "entity": "ds_products",
+        "params": [],
+        "provenance": {
+          "origin": "openapi",
+          "confidence": "high",
+          "file": "openapi.yaml",
+          "line": 12
+        }
+      },
+      {
+        "id": "ep_dele000001",
+        "method": "DELETE",
+        "path": "/products/{id}",
+        "purpose": "delete",
+        "entity": "ds_products",
+        "params": [],
+        "provenance": {
+          "origin": "openapi",
+          "confidence": "high",
+          "file": "openapi.yaml",
+          "line": 12
+        }
+      },
+      {
+        "id": "ep_catl000001",
+        "method": "GET",
+        "path": "/categories",
+        "purpose": "list",
+        "entity": "ds_categories",
+        "params": [],
+        "provenance": {
+          "origin": "openapi",
+          "confidence": "high",
+          "file": "openapi.yaml",
+          "line": 12
+        }
+      }
+    ]
+  }
+}
