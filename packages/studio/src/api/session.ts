@@ -1,15 +1,37 @@
-// Client of GET /api/v1/session (SPEC-03 section 10.1). Components call this module, never fetch.
+import type { FeatureId } from '@reactcraft/model';
+
 import { ApiError, apiGet, isRecord } from './http.ts';
+
+export type StudioWorkspaceState =
+  | { readonly state: 'none'; readonly directory?: string }
+  | {
+      readonly state: 'open';
+      readonly id: string;
+      readonly name: string;
+      readonly revision: number;
+      readonly trusted: boolean;
+    }
+  | {
+      readonly state: 'error';
+      readonly error?: { readonly code: string; readonly message: string };
+    };
+
+export type SessionInfo = {
+  readonly version: string;
+  readonly workspace: StudioWorkspaceState;
+  readonly platform?: 'win32' | 'darwin' | 'linux';
+  readonly features?: readonly FeatureId[];
+};
 
 /** Part of SessionInfo the Studio uses so far. */
 export type SessionSummary = {
   readonly version: string;
 };
 
-export async function fetchSession(): Promise<SessionSummary> {
+export async function fetchSession(): Promise<SessionInfo> {
   const data = await apiGet('session');
   if (!isRecord(data) || typeof data['version'] !== 'string') {
     throw new ApiError(200, undefined);
   }
-  return { version: data['version'] };
+  return data as unknown as SessionInfo;
 }
