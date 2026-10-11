@@ -32,6 +32,7 @@ export default defineConfig({
       // Entry points only wire things together; the E2E tests (e2e/) cover them.
       exclude: [
         '**/*.test.{ts,tsx}',
+        '**/*.bench.ts',
         '**/*.d.ts',
         'packages/studio/src/main.tsx',
         'packages/cli/src/index.ts',

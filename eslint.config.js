@@ -93,6 +93,8 @@ export default defineConfig(
     },
     rules: {
       '@typescript-eslint/consistent-type-imports': 'error', // QC-43
+      // `const { a, ...rest } = x` is the idiom for dropping fields.
+      '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
       '@typescript-eslint/ban-ts-comment': [
         'error',
         { 'ts-ignore': true, 'ts-expect-error': 'allow-with-description' }, // ADR-BE-02
@@ -123,7 +125,7 @@ export default defineConfig(
   // SPEC-01.1 section 3.2 rule 1: the model runs in both Node and the browser.
   {
     files: ['packages/model/src/**/*.ts'],
-    ignores: ['packages/model/src/**/*.test.ts'],
+    ignores: ['packages/model/src/**/*.test.ts', 'packages/model/src/**/*.bench.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -220,7 +222,7 @@ export default defineConfig(
 
   // The CLI and repository scripts are the only places allowed to print and exit.
   {
-    files: ['packages/cli/src/**/*.ts', 'scripts/**/*.mjs'],
+    files: ['packages/cli/src/**/*.ts', 'scripts/**/*.{mjs,ts}'],
     rules: {
       'no-console': 'off',
       'no-restricted-properties': 'off',
