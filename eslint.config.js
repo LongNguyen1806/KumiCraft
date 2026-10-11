@@ -1,9 +1,11 @@
 // @ts-check
 // ESLint flat config. Rules come from SPEC-01.1 ADR-BE-27, SPEC-01.1 section 3.2 and SPEC-02 (QC-xx).
-// Studio-specific plugins (react-hooks, i18next, jsx-a11y) and the Studio layering rules of
-// SPEC-01.2 section 3.4 are added together with the Studio code (SPEC-07 WP-0.03, WP-0.05).
+// Studio rules (ADR-FE-19): react-hooks, jsx-a11y and the layering rules of SPEC-01.2 section 3.4.
 import js from '@eslint/js';
 import { defineConfig, globalIgnores } from 'eslint/config';
+import i18next from 'eslint-plugin-i18next';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
+import reactHooks from 'eslint-plugin-react-hooks';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import tseslint from 'typescript-eslint';
 
@@ -121,6 +123,7 @@ export default defineConfig(
   // SPEC-01.1 section 3.2 rule 1: the model runs in both Node and the browser.
   {
     files: ['packages/model/src/**/*.ts'],
+    ignores: ['packages/model/src/**/*.test.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -166,6 +169,44 @@ export default defineConfig(
               message: 'core/ must not import adapters (SPEC-01.1 section 3.2).',
             },
           ],
+        },
+      ],
+    },
+  },
+
+  // Studio: hooks rules, accessibility (QC-58).
+  {
+    files: ['packages/studio/src/**/*.{ts,tsx}'],
+    extends: [reactHooks.configs.flat['recommended-latest'], jsxA11y.flatConfigs.recommended],
+  },
+
+  // ADR-FE-16, VG-12: no user-facing text written in JSX; it goes through t().
+  {
+    files: ['packages/studio/src/**/*.tsx'],
+    plugins: { i18next },
+    rules: {
+      'i18next/no-literal-string': [
+        'error',
+        {
+          mode: 'jsx-only',
+          'jsx-attributes': {
+            include: ['aria-label', 'aria-description', 'title', 'placeholder', 'alt'],
+          },
+        },
+      ],
+    },
+  },
+
+  // SPEC-01.2 section 3.4 rule 4: the backend is called only through src/api/.
+  {
+    files: ['packages/studio/src/**/*.{ts,tsx}'],
+    ignores: ['packages/studio/src/api/**'],
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        {
+          name: 'fetch',
+          message: 'Call the backend through src/api/ only (SPEC-01.2 section 3.4).',
         },
       ],
     },

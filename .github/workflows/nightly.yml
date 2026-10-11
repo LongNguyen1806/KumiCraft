@@ -1,0 +1,28 @@
+# SPEC-02 section 13.1: nightly benchmarks. The JSON result is kept as an artifact so the PB-xx
+# budgets can be compared from run to run (SPEC-07 G1-03).
+name: nightly
+
+on:
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm bench
+      - uses: actions/upload-artifact@v7
+        with:
+          name: bench-results
+          path: bench-results/
