@@ -33,6 +33,7 @@ export default defineConfig({
       exclude: [
         '**/*.test.{ts,tsx}',
         '**/*.bench.ts',
+        '**/test-support.ts',
         '**/*.d.ts',
         'packages/studio/src/main.tsx',
         'packages/cli/src/index.ts',
