@@ -1,26 +1,26 @@
 # Module
 
-Cập nhật: 2026-10-11 · Spec: phiên bản 0.18
+Cập nhật: 2026-10-12 · Spec: phiên bản 0.18
 
-Bảng theo mẫu SPEC-07 mục 19.6. Thư mục sở hữu của từng module: SPEC-07 mục 3.5. Mỗi bộ thay đổi thuộc đúng một module (CW-39); chủ sản phẩm xem xét rồi tự commit (CW-43 đến CW-46). Code Phase 0 của M-RP, M-QA, M-MC, M-SV, M-CL, M-ST đang chờ commit, lệnh commit ở [progress.md](progress.md) mục "Trạng thái commit".
+Bảng theo mẫu SPEC-07 mục 19.6. Thư mục sở hữu của từng module: SPEC-07 mục 3.5. Mỗi bộ thay đổi thuộc đúng một module (CW-39); chủ sản phẩm xem xét rồi tự commit (CW-43 đến CW-46).
 
 Ngoài các module, bộ thay đổi `CS-0.10-1` (Spec, SRS, báo cáo thi công trong `docs/`) đã commit ở `c0b394b`, chung commit với `CS-0.01-1` (CW-42, sai khác đã ghi ở [wp-0.01](wp/wp-0.01.md)).
 
 | Module | Tên                          | Phase | Trạng thái   | Bộ thay đổi chờ commit | Bộ thay đổi đã commit |
 | ------ | ---------------------------- | ----- | ------------ | ---------------------- | --------------------- |
 | M-RP   | Repo và công cụ              | 0     | Xong (P0)    | —                      | CS-0.01-1 (`c0b394b`) |
-| M-QA   | Hạ tầng kiểm thử             | 0     | Đang làm     | —                      | —                     |
+| M-QA   | Hạ tầng kiểm thử             | 0     | Xong (P0)    | —                      | —                     |
 | M-SV   | Server nền                   | 0     | Xong (P0)    | —                      | —                     |
 | M-CL   | CLI                          | 0     | Xong (P0)    | —                      | —                     |
 | M-ST   | Studio nền                   | 0     | Xong (P0)    | —                      | —                     |
-| M-MC   | Model core                   | 1     | Đang làm     | —                      | —                     |
-| M-TK   | Bộ token mặc định            | 1     | Chưa bắt đầu | —                      | —                     |
-| M-SM   | Styling Map                  | 1     | Chưa bắt đầu | —                      | —                     |
-| M-WS   | Vòng đời workspace           | 1     | Chưa bắt đầu | —                      | —                     |
-| M-DS   | Design Store                 | 1     | Chưa bắt đầu | —                      | —                     |
-| M-SH   | Studio Shell và màn hình     | 1     | Chưa bắt đầu | —                      | —                     |
-| M-HS   | Undo/Redo và đồng bộ         | 1     | Chưa bắt đầu | —                      | —                     |
-| M-CV   | Canvas Renderer              | 1     | Chưa bắt đầu | —                      | —                     |
+| M-MC   | Model core                   | 1     | Xong         | —                      | —                     |
+| M-TK   | Bộ token mặc định            | 1     | Xong         | —                      | —                     |
+| M-SM   | Styling Map                  | 1     | Xong         | —                      | —                     |
+| M-WS   | Vòng đời workspace           | 1     | Xong         | —                      | —                     |
+| M-DS   | Design Store                 | 1     | Xong         | —                      | —                     |
+| M-SH   | Studio Shell và màn hình     | 1     | Xong         | —                      | —                     |
+| M-HS   | Undo/Redo và đồng bộ         | 1     | Xong         | —                      | —                     |
+| M-CV   | Canvas Renderer              | 1     | Đang làm     | —                      | —                     |
 | M-OV   | Overlay và chọn phần tử      | 1     | Chưa bắt đầu | —                      | —                     |
 | M-DD   | Kéo thả                      | 1     | Chưa bắt đầu | —                      | —                     |
 | M-LB   | Component Library            | 1     | Chưa bắt đầu | —                      | —                     |

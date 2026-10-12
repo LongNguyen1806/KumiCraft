@@ -1,6 +1,6 @@
 # Tiến độ thi công
 
-Cập nhật: 2026-10-11 · Spec: phiên bản 0.18 · Phase hiện tại: 0 → bắt đầu 1 · Chế độ: **local** (SPEC-07 mục 12.6)
+Cập nhật: 2026-10-12 · Spec: phiên bản 0.18 · Phase hiện tại: 0 (xong) + Phase 1 (đang làm) · Chế độ: **local** (SPEC-07 mục 12.6)
 
 Trạng thái theo module: [modules.md](modules.md). Lệch và thiếu so với Spec: [spec-log.md](spec-log.md).
 
@@ -13,22 +13,22 @@ Trạng thái theo module: [modules.md](modules.md). Lệch và thiếu so với
 
 ## Kiểm tra gần nhất (2026-10-12, Windows 11, Node 22.19.0)
 
-| Lệnh                    | Kết quả                                                                                      |
-| ----------------------- | -------------------------------------------------------------------------------------------- |
-| `pnpm verify`           | Đạt: 36/36 test files (236 tests xanh 100%), lint 0/0, typecheck, format, trace 14/14, build |
-| `pnpm test:e2e`         | Đạt: 8/8 (Chromium, Firefox)                                                                 |
-| `node scripts/vg/*.mjs` | 7/7 script chạy và báo Đạt (xem đánh giá ở bảng VG bên dưới)                                 |
+| Lệnh                    | Kết quả                                                                                                                               |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm verify`           | Đạt: 58/58 test files (366 tests xanh 100%), lint 0/0, typecheck, format, `check:i18n`, trace 14/14, build (xác nhận 3 lần liên tiếp) |
+| `pnpm test:e2e`         | Đạt: 24/24 (Chromium: 8/8, Firefox: 8/8, WebKit: 8/8)                                                                                 |
+| `node scripts/vg/*.mjs` | 7/7 script chạy và báo Đạt (xem đánh giá ở bảng VG bên dưới)                                                                          |
 
 ## Tổng quan phase
 
-| Phase                      | Trạng thái   | WP xong / tổng | Cổng           |
-| -------------------------- | ------------ | -------------- | -------------- |
-| 0 — Nền móng               | Gần xong     | 8 / 10         | `G0`: chưa đạt |
-| 1 — Studio Core            | Đang làm     | 4 / 11         | `G1`           |
-| 2 — Xuất code và tương tác | Chưa bắt đầu | 0 / 13         | `G2`           |
-| 3 — AI                     | Chưa bắt đầu | 0 / 8          | `G3`           |
-| 4 — Ngữ cảnh backend       | Chưa bắt đầu | 0 / 12         | `G4`           |
-| 5 — Nâng cao và phát hành  | Chưa bắt đầu | 0 / 7          | `G5`           |
+| Phase                      | Trạng thái   | WP xong / tổng | Cổng                 |
+| -------------------------- | ------------ | -------------- | -------------------- |
+| 0 — Nền móng               | Xong         | 10 / 10        | `G0`: chờ duyệt Spec |
+| 1 — Studio Core            | Đang làm     | 6 / 11         | `G1`                 |
+| 2 — Xuất code và tương tác | Chưa bắt đầu | 0 / 13         | `G2`                 |
+| 3 — AI                     | Chưa bắt đầu | 0 / 8          | `G3`                 |
+| 4 — Ngữ cảnh backend       | Chưa bắt đầu | 0 / 12         | `G4`                 |
+| 5 — Nâng cao và phát hành  | Chưa bắt đầu | 0 / 7          | `G5`                 |
 
 Phase 1 bắt đầu song song với phần còn lại của Phase 0 (chủ sản phẩm đồng ý 2026-10-11): WP-1.01 là model thuần, không phụ thuộc VG-11, VG-14.
 
@@ -81,15 +81,17 @@ Phase 1 bắt đầu song song với phần còn lại của Phase 0 (chủ sả
 
 ## Rủi ro đang mở
 
-| #   | Vấn đề                                  | Hướng xử lý                                                                 |
-| --- | --------------------------------------- | --------------------------------------------------------------------------- |
-| 1   | `@dnd-kit` xuyên iframe chưa kiểm chứng | Làm lại VG-11 trước WP-1.08; nếu không đạt, xử lý theo SPEC-07 mục 14       |
-| 2   | TipTap trong iframe, gõ tiếng Việt      | Làm lại VG-14 trước Phase 2                                                 |
-| 3   | Chỉ kiểm tra trên Windows, Node 22      | Ubuntu, macOS, Node 24 kiểm khi bật CI, bắt buộc trước lần phát hành đầu    |
-| 4   | `oxc-transform-react` còn mới (0.x)     | Đường lui sang compiler Babel đã ghi trong `packages/studio/vite.config.ts` |
+| #   | Vấn đề                              | Hướng xử lý                                                                 |
+| --- | ----------------------------------- | --------------------------------------------------------------------------- |
+| 1   | `@dnd-kit` xuyên iframe             | Đã kiểm chứng (VG-11 Đạt 36/36); còn đo lại trên Canvas thật ở WP-1.08      |
+| 2   | TipTap trong iframe, gõ tiếng Việt  | VG-14 Đạt phần tự động; còn chủ sản phẩm gõ thử Unikey/EVKey thật           |
+| 3   | Chỉ kiểm tra trên Windows, Node 22  | Ubuntu, macOS, Node 24 kiểm khi bật CI, bắt buộc trước lần phát hành đầu    |
+| 4   | `oxc-transform-react` còn mới (0.x) | Đường lui sang compiler Babel đã ghi trong `packages/studio/vite.config.ts` |
 
 ## Bước tiếp theo
 
-1. WP-1.06 (M-SH, M-HS): Studio Welcome, Editor, Settings, Undo/Redo.
-2. WP-1.07 (M-CV, M-OV): Canvas Renderer (iframe, portal, Tailwind runtime, 25 loại node), Overlay hover/selection.
-3. Làm lại VG-11 trước WP-1.08; VG-14 trước Phase 2.
+Chi tiết từng bước: [ke-hoach-hoan-thanh.md](ke-hoach-hoan-thanh.md); bản giao việc: [giao-viec/](giao-viec/README.md).
+
+1. WP-1.07 (Canvas, Overlay): bước 1A hiển thị đúng, 1B chọn node, 1C sửa chữ trực tiếp, 1D đo hiệu năng.
+2. WP-1.08 (kéo thả, Library, Layer Tree), WP-1.09 (Inspector), WP-1.10 (clipboard, phím tắt, trang), WP-1.11 (CLI hoàn chỉnh).
+3. Cổng G1.
