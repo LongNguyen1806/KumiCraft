@@ -92,7 +92,13 @@ const nullFs: FileSystemPort = {
   copy: () => okAsync(undefined),
   rename: () => okAsync(undefined),
 };
-const system = { pid: 1, hostname: 'bench', now: () => new Date(), isProcessAlive: () => true };
+const system = {
+  pid: 1,
+  hostname: 'bench',
+  now: () => new Date(),
+  isProcessAlive: () => true,
+  isListening: () => Promise.resolve(true),
+};
 const temp = await makeTempDir();
 
 afterAll(async () => {

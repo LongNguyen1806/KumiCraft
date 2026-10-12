@@ -13,8 +13,9 @@ import type { SystemPort } from '../ports/system-port.ts';
 import { err, ok, type Result } from '../shared/result.ts';
 import type { ConfigStore } from '../shared/user-config.ts';
 import { createWorkspaceDocument } from './create-workspace.ts';
-import { acquireLock, releaseLock } from './lock.ts';
+import { acquireLock, type LockInfo, releaseLock } from './lock.ts';
 import { type FileProblem, loadWorkspace } from './read-workspace.ts';
+import { rememberPort } from './studio-port.ts';
 
 export type WorkspaceState =
   | { readonly status: 'none' }
@@ -109,14 +110,16 @@ async function readState(deps: WorkspaceServiceDeps, log: LoggerPort): Promise<W
 
 export function createWorkspaceService(deps: WorkspaceServiceDeps): WorkspaceService {
   let current: WorkspaceState = { status: 'none' };
-  let isLocked = false;
+  let held: LockInfo | undefined;
   const log = deps.logger.child({ module: 'M-WS' });
 
   const lock = async (): Promise<Result<void>> => {
-    if (isLocked) return ok(undefined);
+    if (held !== undefined) return ok(undefined);
     const taken = await acquireLock(deps.fs, deps.root, deps.system, deps.port);
-    isLocked = taken.ok;
-    return taken;
+    if (!taken.ok) return taken;
+    held = taken.value;
+    await rememberPort(deps.fs, deps.root, deps.port);
+    return ok(undefined);
   };
 
   const load = async (): Promise<WorkspaceState> => {
@@ -157,8 +160,8 @@ export function createWorkspaceService(deps: WorkspaceServiceDeps): WorkspaceSer
     },
 
     async close() {
-      if (isLocked) await releaseLock(deps.fs, deps.root, deps.system);
-      isLocked = false;
+      if (held !== undefined) await releaseLock(deps.fs, deps.root, held);
+      held = undefined;
     },
   };
 }

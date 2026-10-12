@@ -63,6 +63,7 @@ describe('WorkspaceWatcher', () => {
         pid: 1,
         hostname: 'host',
         isProcessAlive: () => true,
+        isListening: () => Promise.resolve(true),
       },
       logger: silentLogger,
       initialDocument: doc,

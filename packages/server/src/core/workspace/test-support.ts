@@ -21,9 +21,24 @@ export const silentLogger: LoggerPort = {
 
 export const NOW = new Date('2026-10-11T08:09:10.123Z');
 
-/** Another process on a machine, alive while its pid is in `alive`. */
-export function fakeSystem(pid: number, alive: Set<number>, hostname = 'MY-PC'): SystemPort {
-  return { pid, hostname, now: () => NOW, isProcessAlive: (other) => alive.has(other) };
+/**
+ * A process on a machine: other processes are alive while their pid is in `alive`, and a port
+ * accepts connections while it is in `listening`.
+ */
+export function fakeSystem(
+  pid: number,
+  alive: Set<number>,
+  hostname = 'MY-PC',
+  listening: Set<number> = new Set(),
+  now: () => Date = () => NOW,
+): SystemPort {
+  return {
+    pid,
+    hostname,
+    now,
+    isProcessAlive: (other) => alive.has(other),
+    isListening: (port) => Promise.resolve(listening.has(port)),
+  };
 }
 
 /** Deterministic ids: `id0000001`… padded to the requested size. */

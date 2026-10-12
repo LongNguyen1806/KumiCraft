@@ -26,6 +26,7 @@ import {
   toSupportedPlatform,
 } from './core/shared/session.ts';
 import { type ConfigStore, createConfigStore } from './core/shared/user-config.ts';
+import { readRememberedPort } from './core/workspace/studio-port.ts';
 import { createWorkspaceReader } from './core/workspace/workspace-reader.ts';
 import {
   createWorkspaceService,
@@ -267,4 +268,14 @@ export async function startServer(options: StartServerOptions): Promise<Result<R
       await app.close();
     },
   });
+}
+
+/**
+ * Port of the last session in `workspaceDir`, if it is a dynamic port (SPEC-05 S-02). The CLI tries
+ * it first so the Studio keeps its address.
+ */
+export async function lastStudioPort(workspaceDir: string): Promise<number | undefined> {
+  const platform = toSupportedPlatform(process.platform);
+  if (platform === undefined) return undefined;
+  return readRememberedPort(createNodeFileSystem(platform), workspaceDir);
 }
