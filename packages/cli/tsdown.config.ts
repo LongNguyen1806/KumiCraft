@@ -11,6 +11,8 @@ export default defineConfig({
   dts: false,
   // The package is ESM ("type": "module"), so the bin can be a plain `.js` file.
   fixedExtension: false,
-  deps: { alwaysBundle: [/^@reactcraft\//] },
+  // Bundling a third-party CommonJS package breaks it in ESM (write-file-atomic reads __filename):
+  // only the internal packages may be bundled, so a missing `dependencies` entry fails the build.
+  deps: { alwaysBundle: [/^@reactcraft\//], onlyBundle: [/^@reactcraft\//] },
   copy: [{ from: '../studio/dist', to: 'dist', rename: 'studio' }],
 });
