@@ -43,7 +43,7 @@ export default defineConfig({
         lines: 70,
         'packages/model/src/**': { lines: 90 },
         'packages/server/src/core/**': { lines: 80 },
-        'packages/studio/src/stores/**': { lines: 80 },
+        'packages/studio/src/store/**': { lines: 80 },
         'packages/studio/src/features/dnd/**': { lines: 80 },
       },
     },
