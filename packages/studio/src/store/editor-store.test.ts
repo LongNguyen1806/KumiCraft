@@ -1,301 +1,239 @@
-import { createDefaultTokens, type DesignDocument } from '@reactcraft/model';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { DesignDocument, OperationBatch } from '@reactcraft/model';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '../api/http.ts';
-import { createEditorStore } from './editor-store.ts';
+import type { ApplyOperationsResponse } from '../api/workspace-client.ts';
+import { createEditorStore, type StoreDeps } from './editor-store.ts';
+import type { HistoryStorage } from './history-persistence.ts';
+import { memoryStorage, sampleDocument, setText } from './test-support.ts';
 
-function createSampleDocument(): DesignDocument {
-  return {
-    workspace: {
-      schemaVersion: 1,
-      id: 'w_0123456789',
-      name: 'Store Test',
-      createdAt: '2026-01-01T00:00:00.000Z',
-      updatedAt: '2026-01-01T00:00:00.000Z',
-      revision: 1,
-      pageOrder: ['p_home000001'],
-      backends: [],
-      responsiveMode: 'desktop-first',
-      frames: [{ id: 'desktop', label: 'Desktop', width: 1440, height: 900 }],
-      primaryFrameId: 'desktop',
-      contentLocale: 'vi-VN',
-      darkMode: 'none',
-    },
-    tokens: createDefaultTokens(),
-    pages: {
-      p_home000001: {
-        schemaVersion: 1,
-        id: 'p_home000001',
-        name: 'Home',
-        route: '/',
-        root: {
-          id: 'n_root000001',
-          type: 'Stack',
-          content: { kind: 'none' },
-          children: [
-            {
-              id: 'n_card000001',
-              type: 'Card',
-              content: { kind: 'none' },
-              children: [
-                {
-                  id: 'n_text000001',
-                  type: 'Text',
-                  content: { kind: 'text', text: 'Original text' },
-                },
-              ],
-            },
-          ],
-        },
-      },
-    },
-    components: {},
-    dataSources: {
-      schemaVersion: 1,
-      auth: { kind: 'none' },
-      entities: [],
-      endpoints: [],
-    },
-  };
+const textOf = (doc: DesignDocument | undefined) => {
+  const card = doc?.pages['p_home000001']?.root.children?.[0];
+  const content = card?.children?.[0]?.content;
+  return content?.kind === 'text' ? content.text : undefined;
+};
+
+/** A server that answers every batch with the next revision. */
+function server(start = 1) {
+  let revision = start;
+  return vi.fn<(batch: OperationBatch) => Promise<ApplyOperationsResponse>>(() => {
+    revision += 1;
+    return Promise.resolve({ revision, idMap: {} });
+  });
 }
 
-describe('Editor Store & History Store', () => {
-  let doc: DesignDocument;
+const make = (deps: StoreDeps = {}, storage: HistoryStorage = memoryStorage()) => {
+  const store = createEditorStore({ sendBatch: server(), storage, ...deps });
+  store.getState().loadDocument(sampleDocument(), 1);
+  return store;
+};
 
-  beforeEach(() => {
-    doc = createSampleDocument();
-  });
+const edit = (store: ReturnType<typeof make>, text: string) =>
+  store.getState().dispatch([setText(text)], { source: 'user', label: 'Edit text' });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
 
-  it('loadDocument initializes state and flatNodes', () => {
-    const store = createEditorStore();
-    store.getState().loadDocument(doc, 1);
+describe('editor store', () => {
+  it('loads a document with its first page, nothing to undo', () => {
+    const state = make().getState();
 
-    const state = store.getState();
-    expect(state.document).toBeDefined();
-    expect(state.revision).toBe(1);
     expect(state.activePageId).toBe('p_home000001');
-    expect(state.flatNodes['n_root000001']).toBeDefined();
-    expect(state.flatNodes['n_card000001']).toBeDefined();
     expect(state.flatNodes['n_text000001']).toBeDefined();
-    expect(state.canUndo()).toBe(false);
-    expect(state.canRedo()).toBe(false);
+    expect([state.canUndo(), state.canRedo()]).toEqual([false, false]);
   });
 
-  it('selectNode and hoverNode update selection', () => {
-    const store = createEditorStore();
-    store.getState().loadDocument(doc, 1);
-
+  it('selects, hovers and switches pages', () => {
+    const store = make();
     store.getState().selectNode('n_card000001');
-    expect(store.getState().selectedNodeId).toBe('n_card000001');
-
     store.getState().hoverNode('n_text000001');
-    expect(store.getState().hoveredNodeId).toBe('n_text000001');
-
-    store.getState().selectNode(undefined);
-    expect(store.getState().selectedNodeId).toBeUndefined();
-  });
-
-  it('dispatch applies operations locally, pushes to undo stack, and syncs to server', async () => {
-    const sendBatch = vi.fn().mockResolvedValue({ revision: 2, idMap: {} });
-    const store = createEditorStore({ sendBatch });
-    store.getState().loadDocument(doc, 1);
-
-    const res = store.getState().dispatch(
-      [
-        {
-          op: 'setContent',
-          target: { kind: 'page', pageId: 'p_home000001' },
-          nodeId: 'n_text000001',
-          set: { text: 'Updated text' },
-        },
-      ],
-      { source: 'user', label: 'Edit Text' },
-    );
-
-    expect(res.ok).toBe(true);
-    const textNode = store.getState().flatNodes['n_text000001'];
-    expect(textNode?.content).toEqual({ kind: 'text', text: 'Updated text' });
-    expect(store.getState().canUndo()).toBe(true);
-    expect(store.getState().canRedo()).toBe(false);
-
-    await store.getState().flushSync();
-    expect(sendBatch).toHaveBeenCalledTimes(1);
-    expect(store.getState().revision).toBe(2);
-    expect(store.getState().syncStatus).toBe('saved');
-  });
-
-  it('undo and redo restore document state and adjust stacks synchronously', () => {
-    const sendBatch = vi.fn().mockResolvedValue({ revision: 2, idMap: {} });
-    const store = createEditorStore({ sendBatch });
-    store.getState().loadDocument(doc, 1);
-
-    store.getState().dispatch(
-      [
-        {
-          op: 'setContent',
-          target: { kind: 'page', pageId: 'p_home000001' },
-          nodeId: 'n_text000001',
-          set: { text: 'Step 1' },
-        },
-      ],
-      { source: 'user', label: 'Step 1' },
-    );
-
-    expect(store.getState().flatNodes['n_text000001']?.content).toEqual({
-      kind: 'text',
-      text: 'Step 1',
+    expect(store.getState()).toMatchObject({
+      selectedNodeId: 'n_card000001',
+      hoveredNodeId: 'n_text000001',
     });
+
+    store.getState().setActivePageId('p_about00001');
+    expect(store.getState()).toMatchObject({
+      activePageId: 'p_about00001',
+      selectedNodeId: undefined,
+    });
+    expect(Object.keys(store.getState().flatNodes)).toEqual(['n_root000002']);
+  });
+
+  it('applies an edit at once and sends it to the server', async () => {
+    const sendBatch = server();
+    const store = make({ sendBatch });
+
+    expect(edit(store, 'New').ok).toBe(true);
+    expect(textOf(store.getState().document)).toBe('New');
+    await store.getState().flushSync();
+
+    expect(sendBatch).toHaveBeenCalledWith({
+      baseRevision: 1,
+      ops: [setText('New')],
+      meta: { source: 'user', label: 'Edit text' },
+    });
+    expect(store.getState()).toMatchObject({ revision: 2, syncStatus: 'saved' });
+  });
+
+  it('refuses an invalid edit without touching the document or the history', () => {
+    const store = make();
+    const before = store.getState().document;
+
+    const result = store.getState().dispatch(
+      [
+        {
+          op: 'remove',
+          target: { kind: 'page', pageId: 'p_home000001' },
+          nodeId: 'n_missing001',
+        },
+      ],
+      { source: 'user', label: 'Remove' },
+    );
+
+    expect(result.ok).toBe(false);
+    expect(store.getState().document).toBe(before);
+    expect(store.getState().canUndo()).toBe(false);
+  });
+
+  it('undoes and redoes, sending each step as its own labelled batch [R-HS-02]', async () => {
+    const sendBatch = server();
+    const store = make({ sendBatch });
+    edit(store, 'New');
+    await store.getState().flushSync();
 
     store.getState().undo();
-    expect(store.getState().flatNodes['n_text000001']?.content).toEqual({
-      kind: 'text',
-      text: 'Original text',
-    });
-    expect(store.getState().canUndo()).toBe(false);
-    expect(store.getState().canRedo()).toBe(true);
-
+    expect(textOf(store.getState().document)).toBe('Original text');
+    expect([store.getState().canUndo(), store.getState().canRedo()]).toEqual([false, true]);
+    await store.getState().flushSync();
     store.getState().redo();
-    expect(store.getState().flatNodes['n_text000001']?.content).toEqual({
-      kind: 'text',
-      text: 'Step 1',
-    });
-    expect(store.getState().canUndo()).toBe(true);
-    expect(store.getState().canRedo()).toBe(false);
+    expect(textOf(store.getState().document)).toBe('New');
+    await store.getState().flushSync();
+
+    expect(sendBatch.mock.calls.map(([batch]) => [batch.baseRevision, batch.meta.label])).toEqual([
+      [1, 'Edit text'],
+      [2, 'Undo: Edit text'],
+      [3, 'Redo: Edit text'],
+    ]);
   });
 
-  it('dispatching invalid operation returns error without mutating state or history', () => {
-    const store = createEditorStore();
-    store.getState().loadDocument(doc, 1);
-
-    // Target a node that does not exist
-    const res = store.getState().dispatch(
-      [
-        {
-          op: 'setContent',
-          target: { kind: 'page', pageId: 'p_home000001' },
-          nodeId: 'non_existent_node_id',
-          set: { text: 'Invalid' },
-        },
-      ],
-      { source: 'user', label: 'Invalid Op' },
-    );
-
-    expect(res.ok).toBe(false);
-    expect(store.getState().canUndo()).toBe(false);
-    expect(store.getState().flatNodes['n_text000001']?.content).toEqual({
-      kind: 'text',
-      text: 'Original text',
-    });
-  });
-
-  it('undo and redo on empty history are safe no-ops', () => {
-    const store = createEditorStore();
-    store.getState().loadDocument(doc, 1);
-
-    expect(() => {
-      store.getState().undo();
-      store.getState().redo();
-    }).not.toThrow();
-
-    expect(store.getState().canUndo()).toBe(false);
-    expect(store.getState().canRedo()).toBe(false);
-  });
-
-  it('dispatching a new action after undo clears the redo stack', () => {
-    const store = createEditorStore();
-    store.getState().loadDocument(doc, 1);
-
-    store.getState().dispatch(
-      [
-        {
-          op: 'setContent',
-          target: { kind: 'page', pageId: 'p_home000001' },
-          nodeId: 'n_text000001',
-          set: { text: 'Branch A' },
-        },
-      ],
-      { source: 'user', label: 'A' },
-    );
-
+  it('clears Redo when a new edit is made, and ignores undo with no history', () => {
+    const store = make();
     store.getState().undo();
-    expect(store.getState().canRedo()).toBe(true);
-
-    // New operation branch
-    store.getState().dispatch(
-      [
-        {
-          op: 'setContent',
-          target: { kind: 'page', pageId: 'p_home000001' },
-          nodeId: 'n_text000001',
-          set: { text: 'Branch B' },
-        },
-      ],
-      { source: 'user', label: 'B' },
-    );
+    edit(store, 'A');
+    store.getState().undo();
+    edit(store, 'B');
 
     expect(store.getState().canRedo()).toBe(false);
-    expect(store.getState().flatNodes['n_text000001']?.content).toEqual({
-      kind: 'text',
-      text: 'Branch B',
-    });
   });
 
-  it('marks syncStatus as external_conflict on E017 API error', async () => {
-    const sendBatch = vi.fn().mockRejectedValue(new ApiError(409, 'E017'));
-    const store = createEditorStore({ sendBatch });
-    store.getState().loadDocument(doc, 1);
+  it('merges quick edits of the same text into one undo step', () => {
+    let now = 1000;
+    const store = make({ now: () => now });
+    edit(store, 'A');
+    now += 300;
+    edit(store, 'AB');
+    now += 600;
+    edit(store, 'ABC');
 
-    store.getState().dispatch(
-      [
-        {
-          op: 'setContent',
-          target: { kind: 'page', pageId: 'p_home000001' },
-          nodeId: 'n_text000001',
-          set: { text: 'Conflicting change' },
-        },
-      ],
-      { source: 'user', label: 'Conflict test' },
-    );
+    expect(store.getState().undoStack).toHaveLength(2);
+    store.getState().undo();
+    store.getState().undo();
+    expect(textOf(store.getState().document)).toBe('Original text');
+  });
+});
+
+describe('editor store synchronisation', () => {
+  it('sends one request at a time, the next one based on the revision just given [R-HS-01] [R-HS-04]', async () => {
+    let release: (value: ApplyOperationsResponse) => void = () => undefined;
+    let calls = 0;
+    const sendBatch = vi.fn<(batch: OperationBatch) => Promise<ApplyOperationsResponse>>(() => {
+      calls += 1;
+      return calls === 1
+        ? new Promise<ApplyOperationsResponse>((resolve) => {
+            release = resolve;
+          })
+        : Promise.resolve({ revision: 3, idMap: {} });
+    });
+    const store = make({ sendBatch });
+
+    edit(store, 'A');
+    const first = store.getState().flushSync();
+    edit(store, 'B');
+    const second = store.getState().flushSync();
+    expect(sendBatch).toHaveBeenCalledTimes(1);
+    expect(store.getState().hasUnsavedChanges()).toBe(true);
+    release({ revision: 2, idMap: {} });
+    await Promise.all([first, second]);
+
+    expect(sendBatch.mock.calls.map(([batch]) => batch.baseRevision)).toEqual([1, 2]);
+    expect(store.getState()).toMatchObject({ revision: 3, syncStatus: 'saved' });
+    expect(store.getState().hasUnsavedChanges()).toBe(false);
+  });
+
+  it('reloads the document and clears the history on E017', async () => {
+    const latest = sampleDocument(9);
+    const store = make({
+      sendBatch: () => Promise.reject(new ApiError(409, 'E017')),
+      fetchDocument: () => Promise.resolve({ document: latest, revision: 9 }),
+    });
+    edit(store, 'Mine');
 
     await store.getState().flushSync();
-    expect(store.getState().syncStatus).toBe('external_conflict');
+    await vi.waitFor(() => {
+      expect(store.getState().notice).toBe('E017');
+    });
+
+    expect(store.getState()).toMatchObject({ revision: 9, syncStatus: 'saved', undoStack: [] });
+    expect(textOf(store.getState().document)).toBe('Original text');
   });
 
-  it('marks syncStatus as error on generic network/server failure', async () => {
-    const sendBatch = vi.fn().mockRejectedValue(new Error('500 Internal Server Error'));
-    const store = createEditorStore({ sendBatch });
-    store.getState().loadDocument(doc, 1);
-
-    store.getState().dispatch(
-      [
-        {
-          op: 'setContent',
-          target: { kind: 'page', pageId: 'p_home000001' },
-          nodeId: 'n_text000001',
-          set: { text: 'Server failure change' },
-        },
-      ],
-      { source: 'user', label: 'Error test' },
-    );
+  it('keeps edits after a network failure and sends them again', async () => {
+    vi.useFakeTimers();
+    let attempts = 0;
+    const sendBatch = vi.fn(() => {
+      attempts += 1;
+      return attempts === 1
+        ? Promise.reject(new TypeError('offline'))
+        : Promise.resolve({ revision: 2, idMap: {} });
+    });
+    const store = make({ sendBatch });
+    edit(store, 'A');
 
     await store.getState().flushSync();
     expect(store.getState().syncStatus).toBe('error');
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(sendBatch).toHaveBeenCalledTimes(2);
+    expect(store.getState()).toMatchObject({ revision: 2, syncStatus: 'saved' });
+  });
+});
+
+describe('undo history across a page reload (spec-log #77)', () => {
+  it('comes back after a reload of the same document [R-HS-05]', async () => {
+    const storage = memoryStorage();
+    const first = make({}, storage);
+    edit(first, 'A');
+    await first.getState().flushSync();
+
+    const reloaded = createEditorStore({ sendBatch: server(2), storage });
+    reloaded.getState().loadDocument(first.getState().document ?? sampleDocument(), 2);
+    reloaded.getState().undo();
+
+    expect(textOf(reloaded.getState().document)).toBe('Original text');
   });
 
-  it('handles loadDocument when page does not exist in document', () => {
-    const emptyDoc: DesignDocument = {
-      ...doc,
-      workspace: { ...doc.workspace, pageOrder: ['p_missing'] },
-      pages: {},
-    };
-    const store = createEditorStore();
-    store.getState().loadDocument(emptyDoc, 1);
+  it('is dropped when the document on the server moved on [R-HS-05]', async () => {
+    const storage = memoryStorage();
+    const first = make({}, storage);
+    edit(first, 'A');
+    await first.getState().flushSync();
 
-    expect(store.getState().activePageId).toBe('p_missing');
-    expect(store.getState().flatNodes).toEqual({});
+    const reloaded = createEditorStore({ sendBatch: server(5), storage });
+    reloaded.getState().loadDocument(sampleDocument(5), 5);
+
+    expect(reloaded.getState().canUndo()).toBe(false);
   });
 });
