@@ -1,4 +1,4 @@
-// Playwright E2E (ADR-FE-18): Chromium and Firefox against the built CLI (`pnpm build` first).
+// Playwright E2E (ADR-FE-18): Chromium, Firefox and WebKit against the built CLI (`pnpm build` first).
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
@@ -16,5 +16,7 @@ export default defineConfig({
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    // The engine of Safari, the default browser of macOS users.
+    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
 });
