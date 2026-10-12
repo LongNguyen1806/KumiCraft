@@ -2,6 +2,8 @@ import type { Frame } from '@reactcraft/model';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { CanvasViewport } from '../canvas/canvas-viewport.tsx';
+
 const STAGE_PADDING = 64;
 
 /** Scale that fits `frameWidth` into `available` pixels, never above 100 %. */
@@ -56,10 +58,12 @@ export function CanvasArea({ frame, scale, onWidth }: CanvasAreaProps) {
           </div>
           <div style={{ zoom: scale }} className="w-max">
             <div
-              className="rounded-[14px] bg-white shadow-[0_2px_4px_rgb(60_52_30/0.06),0_24px_48px_rgb(60_52_30/0.12)]"
+              className="overflow-hidden rounded-[14px] bg-white shadow-[0_2px_4px_rgb(60_52_30/0.06),0_24px_48px_rgb(60_52_30/0.12)]"
               style={{ width: frame.width, minHeight: frame.height }}
               data-testid="frame"
-            />
+            >
+              <CanvasViewport />
+            </div>
           </div>
         </div>
       </div>

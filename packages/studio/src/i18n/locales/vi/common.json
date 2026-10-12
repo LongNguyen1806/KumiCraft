@@ -136,5 +136,13 @@
     "targetProject": "Project đích (nơi ghi code)",
     "noLinks": "Workspace chưa trỏ tới thư mục nào khác.",
     "outside": "Nằm ngoài thư mục workspace: hãy chắc đây là thư mục bạn biết."
+  },
+  "canvas": {
+    "emptyPlaceholder": "Kéo phần tử vào đây",
+    "noActivePage": "Chưa có trang nào được chọn",
+    "defaultButton": "Nút bấm",
+    "defaultLink": "Liên kết",
+    "imagePlaceholder": "Ảnh giữ chỗ",
+    "slot": "Slot: {{name}}"
   }
 }

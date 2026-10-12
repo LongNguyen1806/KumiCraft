@@ -136,5 +136,13 @@
     "targetProject": "Target Project (where code is written)",
     "noLinks": "This workspace points to no other folder.",
     "outside": "Outside the workspace folder: make sure you know this folder."
+  },
+  "canvas": {
+    "emptyPlaceholder": "Drag elements here",
+    "noActivePage": "No active page selected",
+    "defaultButton": "Button",
+    "defaultLink": "Link",
+    "imagePlaceholder": "Image placeholder",
+    "slot": "Slot: {{name}}"
   }
 }
