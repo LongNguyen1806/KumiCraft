@@ -1,6 +1,7 @@
 // WP-1.05 acceptance (SPEC-07 section 5.2): create a workspace, edit it, stop the server, start it
 // again in the same folder: the design is still there. The Studio version of this scenario is B7.
 import { createServer } from 'node:net';
+import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -23,13 +24,13 @@ const freePort = () =>
     });
   });
 
-async function start() {
+async function start(configDir = config.dir) {
   const started = await startServer({
     version: '0.0.0',
     port: await freePort(),
     workspaceDir: workspace.dir,
     logLevel: 'silent',
-    deps: { configDir: config.dir, logger: silentLogger },
+    deps: { configDir, logger: silentLogger },
   });
   if (started.ok) running.push(started.value);
   return started;
@@ -116,6 +117,23 @@ describe('server restart', () => {
     expect(await start()).toMatchObject({
       ok: false,
       error: { code: 'E018', params: { port: first.value.port } },
+    });
+  });
+
+  it('remembers settings across a restart on a computer that never ran ReactCraft', async () => {
+    const neverCreated = join(config.dir, 'reactcraft-nodejs', 'Config');
+    const first = await start(neverCreated);
+    if (!first.ok) throw new Error(first.error.code);
+
+    const saved = await call(first.value, 'PATCH', '/settings', { language: 'en' });
+    expect(saved.status).toBe(200);
+    await first.value.close();
+    running.length = 0;
+
+    const second = await start(neverCreated);
+    if (!second.ok) throw new Error(second.error.code);
+    expect((await call(second.value, 'GET', '/settings')).body).toMatchObject({
+      data: { language: 'en' },
     });
   });
 });

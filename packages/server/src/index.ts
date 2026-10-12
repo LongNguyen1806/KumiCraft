@@ -1,5 +1,6 @@
 // Public entry point of @reactcraft/server (QC-03): composition root of the Local Backend.
 import { randomBytes } from 'node:crypto';
+import { mkdir } from 'node:fs/promises';
 
 import { type DesignDocument, resolveEnabledFeatures } from '@reactcraft/model';
 import envPaths from 'env-paths';
@@ -87,6 +88,18 @@ type InitializedContext = {
   readonly eventBus: EventBusPort;
 };
 
+/**
+ * On a computer that never ran ReactCraft the config folder does not exist, and saving settings
+ * would fail (spec-log #85). A folder that cannot be made only costs saved settings.
+ */
+async function ensureConfigDir(dir: string, logger: LoggerPort): Promise<void> {
+  try {
+    await mkdir(dir, { recursive: true });
+  } catch (cause) {
+    logger.warn({ dir, err: cause }, 'cannot create the config folder; settings will not be saved');
+  }
+}
+
 async function initServerContext(
   options: StartServerOptions,
   platform: Platform,
@@ -97,6 +110,7 @@ async function initServerContext(
   const system = options.deps?.system ?? createNodeSystem();
   const configDir = options.deps?.configDir ?? envPaths('reactcraft').config;
   const eventBus = options.deps?.eventBus ?? createEventBus();
+  await ensureConfigDir(configDir, logger);
 
   const configStore = await createConfigStore({
     fs,

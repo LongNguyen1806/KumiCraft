@@ -1,6 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { makeTempDir, silentLogger } from './core/workspace/test-support.ts';
 import { startServer } from './index.ts';
+
+/** Never the settings folder of the machine running the tests. */
+let config: { dir: string; cleanup: () => Promise<void> };
+const deps = () => ({ configDir: config.dir, logger: silentLogger });
+
+beforeEach(async () => {
+  config = await makeTempDir();
+});
+
+afterEach(async () => {
+  await config.cleanup();
+});
 
 const randomPort = () => 49152 + Math.floor(Math.random() * 10000);
 
@@ -13,6 +26,7 @@ describe('startServer', () => {
       port,
       workspaceDir: '/w',
       logLevel: 'silent',
+      deps: deps(),
     });
 
     expect(result.ok).toBe(true);
@@ -29,13 +43,20 @@ describe('startServer', () => {
 
   it('reports E002 at the listen step when the port is taken', async () => {
     const port = randomPort();
-    const first = await startServer({ version: 'a', port, workspaceDir: '/w', logLevel: 'silent' });
+    const first = await startServer({
+      version: 'a',
+      port,
+      workspaceDir: '/w',
+      logLevel: 'silent',
+      deps: deps(),
+    });
 
     const second = await startServer({
       version: 'b',
       port,
       workspaceDir: '/w',
       logLevel: 'silent',
+      deps: deps(),
     });
 
     expect(second).toMatchObject({
