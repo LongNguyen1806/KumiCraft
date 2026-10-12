@@ -5593,12 +5593,12 @@ Khi gộp: `forward` = ops mới nhất, `inverse` giữ của mục đầu tiê
 
 ## 15. M-KB — PHÍM TẮT
 
-Giải quyết Q-05 của SPEC-01.2: dùng bộ phím gần giống Figma cho các thao tác phổ biến. `Mod` là Ctrl trên Windows/Linux, Cmd trên macOS.
+Giải quyết Q-05 của SPEC-01.2: dùng bộ phím gần giống Figma cho các thao tác phổ biến. `Mod` là Ctrl trên Windows/Linux, Cmd trên macOS. Không dùng phím trình duyệt giữ riêng trên một trong hai hệ điều hành (ví dụ `Cmd+[` / `Cmd+]` là Quay lại/Tiến tới trên macOS): bấm nhầm sẽ rời khỏi Studio. Chú thích phím trong Studio viết theo máy đang dùng: `⌘Z`, `⇧⌘Z` trên macOS; `Ctrl+Z`, `Ctrl+Y` trên Windows, Linux.
 
 | Phím | Hành động |
 |---|---|
 | `Mod+Z` | Undo |
-| `Mod+Shift+Z`, `Mod+Y` | Redo |
+| `Mod+Shift+Z`; `Ctrl+Y` chỉ trên Windows, Linux | Redo (trên macOS `Cmd+Y` là phím mở Lịch sử của Chrome nên không dùng) |
 | `Mod+C`, `Mod+X`, `Mod+V` | Sao chép, cắt, dán |
 | `Mod+D` | Nhân bản |
 | `Delete`, `Backspace` | Xóa node đang chọn |
@@ -5615,6 +5615,7 @@ Giải quyết Q-05 của SPEC-01.2: dùng bộ phím gần giống Figma cho c�
 | `Shift+1` | Vừa màn hình |
 | `1`…`8` | Chuyển sang khung thứ N |
 | `Mod+/` | Bảng phím tắt |
+| `Mod+\` | Ẩn/hiện cả hai panel bên (R-SH-01) |
 | `Alt+P` | Bật/tắt chế độ Xem thử |
 | `Alt+D` | Bật/tắt xem chế độ tối trên Canvas (khi `darkMode` khác `none`) |
 
@@ -9031,7 +9032,7 @@ SRS mục 16: dựng được một trang tĩnh hoàn chỉnh bằng kéo thả.
 
 | Mã | Tiêu chí |
 |---|---|
-| G1-01 | AC-01, AC-02, AC-03 tự động hóa (E2E SPEC-04.1 mục 17.2), đạt trên Windows và Ubuntu, giao diện `vi` và `en` |
+| G1-01 | AC-01, AC-02, AC-03 tự động hóa (E2E SPEC-04.1 mục 17.2), đạt trên Windows, macOS và Ubuntu, với Chromium, Firefox và WebKit (Safari), giao diện `vi` và `en`. Gói cài thử (`pnpm package`, `npm install -g`) chạy được trên cả ba hệ điều hành |
 | G1-02 | Mọi test bắt buộc ở SPEC-04.1 mục 17.1 có và đạt |
 | G1-03 | PB-01 đến PB-04, PB-10, PB-11, PB-13 đến PB-19 đạt ở 3 lần chạy `nightly` liên tiếp |
 | G1-04 | VG-07, VG-10, VG-11, VG-13 (B) Đạt trên hệ thống thật |

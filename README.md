@@ -4,7 +4,7 @@ Studio thiết kế giao diện chạy trên máy (local-first): kéo thả trê
 
 > Tên `reactcraft` là tên tạm (câu hỏi mở Q-01). Tên chính thức chốt trước khi phát hành.
 
-**Trạng thái:** Phase 0 — Nền móng (SPEC-07 mục 4). Chưa có chức năng chạy được.
+**Trạng thái:** Phase 1 (SPEC-07 mục 5), đang làm WP-1.06. Đã dùng thử được: tạo và mở workspace, màn hình lỗi kèm khôi phục bản sao lưu, khung Editor, Undo/Redo. Chưa có: hiển thị trang trên Canvas, kéo thả, chỉnh thuộc tính, xuất code.
 
 ---
 
@@ -28,6 +28,49 @@ Nguyên tắc: **spec trước, code sau** (SPEC-07 CW-01). Điều gì chưa c�
 | pnpm         | 10.34.6 (ghim trong `packageManager`)                                    |
 | Git          | Bản mới bất kỳ                                                           |
 | Hệ điều hành | Windows 10/11, macOS, Linux                                              |
+
+---
+
+## Dùng thử trên máy (chưa phát hành lên npm)
+
+Dành cho developer dùng **Windows** hoặc **macOS** (Linux làm như macOS). Cần Node.js 22.12 trở lên và pnpm (xem [Khởi tạo lần đầu](#khởi-tạo-lần-đầu)).
+
+**1. Đóng gói** (trong thư mục repo):
+
+```sh
+pnpm install
+pnpm package        # tạo artifacts/reactcraft-cli-0.0.0.tgz
+```
+
+**2. Cài lệnh `reactcraft`** (một lần, sau đó gõ được ở mọi thư mục):
+
+| Hệ điều hành            | Lệnh                                                  |
+| ----------------------- | ----------------------------------------------------- |
+| Windows (PowerShell)    | `npm install -g .\artifacts\reactcraft-cli-0.0.0.tgz` |
+| macOS, Linux (Terminal) | `npm install -g ./artifacts/reactcraft-cli-0.0.0.tgz` |
+
+Trên macOS, nếu Node cài bằng file `.pkg` từ nodejs.org thì lệnh trên có thể báo thiếu quyền (`EACCES`). Khi đó cài Node bằng Homebrew (`brew install node`) hoặc nvm, hoặc thêm `sudo` trước lệnh.
+
+**3. Chạy** trong thư mục dự án cần thiết kế:
+
+```sh
+cd duong-dan/du-an
+reactcraft
+```
+
+Trình duyệt tự mở Studio. Bấm `Ctrl+C` trong terminal để tắt; thay đổi chưa lưu được ghi nốt trước khi thoát. Lần sau chạy lại trong cùng thư mục, Studio mở đúng địa chỉ cũ và workspace còn nguyên.
+
+| Tham số                | Việc làm                                                    |
+| ---------------------- | ----------------------------------------------------------- |
+| `reactcraft <thư mục>` | Mở workspace ở thư mục khác thư mục hiện tại                |
+| `--no-open`            | Không tự mở trình duyệt (tự mở đường dẫn in trong terminal) |
+| `--port <số>`          | Dùng cổng cố định                                           |
+
+**Cập nhật** sau khi kéo code mới: làm lại bước 1 và 2. **Gỡ:** `npm uninstall -g @reactcraft/cli`.
+
+**Chạy nhanh không cần cài** (khi đang phát triển): `pnpm build` rồi `node packages/cli/dist/index.js <thư mục>`.
+
+Trình duyệt: Chrome, Edge, Firefox, Safari (đều có trong test tự động). Trên macOS, phím tắt dùng `⌘` thay cho `Ctrl` (ví dụ `⌘Z` hoàn tác, `⇧⌘Z` làm lại).
 
 ---
 
@@ -59,19 +102,20 @@ Sau đó commit theo các bộ thay đổi đang chờ trong [`docs/construction
 
 ## Lệnh
 
-| Lệnh                                | Việc làm                                 | Có từ   |
-| ----------------------------------- | ---------------------------------------- | ------- |
-| `pnpm verify`                       | Chạy lint, typecheck, kiểm tra định dạng | Bây giờ |
-| `pnpm lint`                         | ESLint toàn repo                         | Bây giờ |
-| `pnpm typecheck`                    | `tsc --noEmit` cho 4 package             | Bây giờ |
-| `pnpm format` / `pnpm format:check` | Prettier: định dạng / kiểm tra định dạng | Bây giờ |
-| `pnpm changeset`                    | Thêm ghi chú thay đổi cho lần phát hành  | Bây giờ |
-| `pnpm dev`                          | Chạy server và Studio                    | WP-0.03 |
-| `pnpm build`                        | Build toàn bộ package                    | WP-0.03 |
-| `pnpm check:i18n`                   | Kiểm tra khớp khóa `vi`/`en`             | WP-0.05 |
-| `pnpm test`, `pnpm test:e2e`        | Vitest, Playwright                       | WP-0.06 |
-| `pnpm bench`                        | Benchmark ngân sách hiệu năng            | WP-0.06 |
-| `pnpm trace`                        | Truy vết mã spec → test                  | WP-0.06 |
+| Lệnh                                | Việc làm                                             | Có từ   |
+| ----------------------------------- | ---------------------------------------------------- | ------- |
+| `pnpm verify`                       | Lint, typecheck, định dạng, i18n, test, trace, build | Bây giờ |
+| `pnpm lint`                         | ESLint toàn repo                                     | Bây giờ |
+| `pnpm typecheck`                    | `tsc --noEmit` cho 4 package                         | Bây giờ |
+| `pnpm format` / `pnpm format:check` | Prettier: định dạng / kiểm tra định dạng             | Bây giờ |
+| `pnpm changeset`                    | Thêm ghi chú thay đổi cho lần phát hành              | Bây giờ |
+| `pnpm dev`                          | Chạy server và Studio                                | WP-0.03 |
+| `pnpm build`                        | Build toàn bộ package                                | WP-0.03 |
+| `pnpm package`                      | Đóng gói lệnh `reactcraft` thành `.tgz` để cài thử   | WP-1.06 |
+| `pnpm check:i18n`                   | Kiểm tra khớp khóa `vi`/`en`                         | WP-0.05 |
+| `pnpm test`, `pnpm test:e2e`        | Vitest, Playwright                                   | WP-0.06 |
+| `pnpm bench`                        | Benchmark ngân sách hiệu năng                        | WP-0.06 |
+| `pnpm trace`                        | Truy vết mã spec → test                              | WP-0.06 |
 
 Lệnh chưa có in ra gói công việc sẽ làm nó và kết thúc bình thường (SPEC-07 mục 4.3, bước 9).
 
