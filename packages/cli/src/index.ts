@@ -43,6 +43,10 @@ async function start(options: CliOptions, studio: StudioSource): Promise<Running
       ...(process.env.REACTCRAFT_FEATURES === undefined
         ? {}
         : { featureOverride: process.env.REACTCRAFT_FEATURES }),
+      // Tests and side-by-side setups keep their settings apart from the user's (spec-log #87).
+      ...(process.env.REACTCRAFT_CONFIG_DIR === undefined
+        ? {}
+        : { deps: { configDir: process.env.REACTCRAFT_CONFIG_DIR } }),
     });
     if (result.ok) return result.value;
     const isPortBusy = result.error.code === 'E002' && result.error.params?.['step'] === 'listen';
