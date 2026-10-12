@@ -8508,7 +8508,7 @@ Workspace có thể đến từ repo clone về. ReactCraft áp dụng cơ chế
 | S-81 | Chưa tin cậy (**chế độ hạn chế**): xem và sửa thiết kế được; **không** quét backend, **không** xuất code, **không** chạy build, **không** gọi AI với mức ngữ cảnh 3, **không** dùng proxy dữ liệu |
 | S-82 | Danh sách workspace đã tin cậy lưu trong cấu hình người dùng (không lưu trong workspace, để workspace không tự đánh dấu tin cậy cho mình) |
 | S-83 | Liên kết trong workspace vi phạm S-28 bị bỏ qua dù đã tin cậy |
-| S-84 | Thay đổi liên kết (Target Project, backend) qua file bị sửa từ bên ngoài (`workspace.externalChange`) đưa workspace về chế độ hạn chế cho tới khi người dùng xác nhận lại |
+| S-84 | Thay đổi liên kết (Target Project, backend) qua file bị sửa từ bên ngoài đưa workspace về chế độ hạn chế cho tới khi người dùng xác nhận lại. Áp dụng cả khi file bị sửa lúc ReactCraft đang tắt (ví dụ `git pull`): quyết định tin cậy lưu kèm dấu vân tay các liên kết (đường dẫn Target Project và mọi backend); dấu vân tay khác thì workspace là chưa tin cậy |
 
 ---
 
