@@ -236,7 +236,13 @@ export default defineConfig(
 
   // Tool configuration files must use a default export (QC-37 exception).
   {
-    files: ['*.config.js', '*.config.ts', 'packages/*/*.config.js', 'packages/*/*.config.ts'],
+    files: [
+      '*.config.js',
+      '*.config.ts',
+      'packages/*/*.config.js',
+      'packages/*/*.config.ts',
+      'packages/*/spikes/*.config.ts',
+    ],
     rules: {
       'no-restricted-syntax': ['error', ...RESTRICTED_SYNTAX],
     },
