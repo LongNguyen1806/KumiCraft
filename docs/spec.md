@@ -4728,9 +4728,16 @@ File `.reactcraft/lock`:
 | Bước | Xử lý |
 |---|---|
 | 1 | Tạo file `lock` ở chế độ "chỉ tạo nếu chưa có" (`wx`) |
-| 2 | Đã tồn tại: đọc nội dung. Cùng `hostname` và process `pid` không còn chạy thì coi là khóa cũ, xóa và thử lại bước 1 **một lần** |
-| 3 | Process còn chạy, hoặc khác `hostname`: dừng với E018, in ra `port` của phiên đang chạy để người dùng mở |
-| 4 | Server tắt (ADR-BE-03): xóa file `lock` sau khi ghi xong mọi thay đổi |
+| 2 | Đã tồn tại: đọc nội dung. Nội dung trống hoặc hỏng thì chờ 500 ms rồi đọc lại (server kia có thể đang ghi dở); vẫn hỏng thì coi là khóa cũ |
+| 3 | Xét khóa theo R-WS-03, R-WS-04. Khóa cũ: xóa và thử lại bước 1 **một lần** |
+| 4 | Khóa còn sống: dừng với E018. CLI in ra địa chỉ `http://127.0.0.1:<port>` của phiên đang chạy, và đường dẫn file `lock` cần xóa nếu không còn ReactCraft nào chạy |
+| 5 | Server tắt (ADR-BE-03): xóa file `lock` sau khi ghi xong mọi thay đổi, chỉ khi file vẫn đúng là khóa server này đã ghi (cùng `pid`, `hostname`, `port`, `startedAt`) |
+
+| Mã | Quy tắc |
+|---|---|
+| R-WS-03 | Khóa cùng `hostname` là **khóa cũ** khi: process `pid` không còn chạy, **hoặc** khóa đã quá 15 giây kể từ `startedAt` mà không có gì nghe trên `127.0.0.1:<port>`. Lý do: sau mất điện hoặc khởi động lại máy, `pid` có thể đã thuộc về một chương trình khác; server ReactCraft đang chạy thì luôn nghe trên cổng ghi trong khóa. 15 giây đầu là thời gian server mới khởi động chưa kịp nghe cổng |
+| R-WS-04 | Khóa khác `hostname` (thư mục dùng chung qua mạng) **không bao giờ** bị tự lấy lại: máy này không kiểm tra được process và cổng của máy kia. Người dùng xóa tay theo hướng dẫn của bước 4 |
+| R-WS-05 | Kiểm tra cổng: kết nối bị từ chối là "không nghe"; quá 1 giây chưa trả lời thì coi là "đang nghe" (thà báo bận nhầm còn hơn chiếm khóa của server đang chạy) |
 
 ---
 
@@ -5545,8 +5552,9 @@ Hàng đợi đồng bộ (debounce 300 ms)
   ├─ gom ops thành OperationBatch { baseRevision: revision đã biết }
   ├─ POST /workspace/operations
   ├─ 200 → revision = kết quả
-  ├─ E017 → tải lại document, xóa lịch sử, toast "Workspace đã thay đổi, đã tải lại"
-  └─ E005 → áp inverse của batch lên store, xóa các mục lịch sử tương ứng, toast lỗi
+  ├─ E017 → tải lại document, xóa lịch sử, báo "Thiết kế đã thay đổi ở nơi khác nên đã được tải lại"
+  ├─ E005 → tải lại document từ server (bản đúng), xóa lịch sử, báo lỗi
+  └─ lỗi mạng / 5xx → giữ ops, báo "Lỗi lưu", tự gửi lại sau 2 giây
 ```
 
 | Mã | Quy tắc |
@@ -5554,6 +5562,8 @@ Hàng đợi đồng bộ (debounce 300 ms)
 | R-HS-01 | Chỉ một request đồng bộ được gửi tại một thời điểm. Ops mới trong lúc chờ được gom vào batch kế tiếp |
 | R-HS-02 | Undo = dispatch `inverse` với `meta.label` = "Undo: <label>", nhưng **không** đẩy vào ngăn Undo mà chuyển mục sang ngăn Redo |
 | R-HS-03 | Có thay đổi chưa đồng bộ và người dùng đóng tab: hỏi xác nhận (`beforeunload`) |
+| R-HS-04 | `baseRevision` của mỗi batch là revision server trả về gần nhất. Batch kế tiếp chỉ gửi khi batch trước đã có kết quả (cùng R-HS-01), nên một người sửa liên tục không bao giờ tự gây E017 |
+| R-HS-05 | Lịch sử Undo/Redo còn nguyên khi tải lại trang (F5) hoặc mất kết nối rồi nối lại: lưu trong `sessionStorage` của tab mỗi khi mọi thay đổi đã được server nhận, kèm `workspace.id` và `revision`. Chỉ khôi phục khi cả hai khớp với document vừa tải; lệch thì bỏ. Đóng tab hoặc tắt máy thì lịch sử mất (thiết kế vẫn còn trên đĩa; bản sao lưu R-DS-03 lo trường hợp cần lấy lại thứ cũ) |
 
 ---
 
@@ -5632,6 +5642,7 @@ Giải quyết Q-05 của SPEC-01.2: dùng bộ phím gần giống Figma cho c�
 
 | Module | Kiểm thử bắt buộc |
 |---|---|
+| M-WS | Khóa phiên: phiên đang chạy bị từ chối (E018 kèm `port`); phiên đang khởi động trong 15 giây đầu được tôn trọng; khóa của process đã chết được lấy lại; **sau khởi động lại máy, `pid` trong khóa thuộc chương trình khác và không có gì nghe cổng: khóa được lấy lại**; khóa trống hoặc hỏng được lấy lại; khóa khác `hostname` không bao giờ bị lấy lại |
 | M-DS | Gom file dirty đúng theo operation. `serializeCanonical` ghi hai lần giống từng byte. Xoay vòng 20 bản sao lưu |
 | M-SM | Golden test cho mọi dòng bảng 5.3, cả `desktop-first` và `mobile-first`, cả trạng thái |
 | M-DD | `canInsert` cho mọi cặp (loại cha, loại con) trong bảng chứa. Tính chỉ số chèn với layout giả lập cho flex-row, flex-column, grid, wrap |
@@ -8300,7 +8311,7 @@ Mỗi biện pháp có mã `S-xx`.
 | Mã | Biện pháp |
 |---|---|
 | S-01 | Server **chỉ** lắng nghe `127.0.0.1` (ADR-BE-03). Mỗi kết nối kiểm tra thêm `remoteAddress` là `127.0.0.1` hoặc `::ffff:127.0.0.1`, ngược lại đóng ngay |
-| S-02 | Cổng mặc định chọn ngẫu nhiên trong khoảng 49152–65535 (tránh trùng cổng phổ biến), hoặc theo `--port` |
+| S-02 | Cổng chọn theo thứ tự: `--port` nếu có; cổng của lần chạy trước trong workspace này (`.reactcraft/cache/studio.json`, không vào Git) nếu còn trống; còn lại chọn ngẫu nhiên trong khoảng 49152–65535 (tránh trùng cổng phổ biến). Chỉ cổng trong khoảng này được nhớ. Giữ cổng để Studio mở cùng địa chỉ, trình duyệt giữ được những gì nó nhớ cho địa chỉ đó (kích thước panel R-SH-01). Không giảm bảo mật: token phiên vẫn mới mỗi lần (S-03) |
 
 ---
 
