@@ -17,17 +17,20 @@ import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { LoggerPort } from '../ports/logger-port.ts';
 import type { SystemPort } from '../ports/system-port.ts';
 import { err, ok, type Result } from '../shared/result.ts';
+import {
+  backupKey,
+  backupName,
+  type BackupSummary,
+  listBackups,
+  restoreBackup,
+} from '../workspace/backup-files.ts';
 import { BACKUP_DIR, backupStamp } from '../workspace/backups.ts';
+
+export type { BackupSummary };
 
 const DEBOUNCE_MS = 500; // R-DS-01
 const MAX_DEBOUNCE_MS = 2000; // NFR-06
 const MAX_BACKUPS_PER_FILE = 20; // R-DS-03
-
-export type BackupSummary = {
-  readonly id: string;
-  readonly file: string;
-  readonly createdAt: string;
-};
 
 export type DesignStoreDeps = {
   readonly fs: FileSystemPort;
@@ -49,15 +52,12 @@ export type DesignStore = {
   flush(): Promise<Result<void>>;
   reload(document: DesignDocument, revision?: number): Promise<void>;
   listBackups(): Promise<Result<readonly BackupSummary[]>>;
-  restoreBackup(backupId: string): Promise<Result<void>>;
+  restoreBackup(backupId: string): Promise<Result<{ readonly file: string }>>;
   markExternalChange(): void;
   hasExternalChange(): boolean;
   getFileHash(file: string): string | undefined;
   close(): Promise<void>;
 };
-
-const pathToKey = (path: string): string => path.replace(/\//g, '_');
-const keyToPath = (key: string): string => key.replace(/_/g, '/');
 
 const sha256 = (content: string): string =>
   createHash('sha256').update(content, 'utf8').digest('hex');
@@ -126,9 +126,9 @@ async function saveFileWithBackup(
 ): Promise<Result<void>> {
   const exists = await deps.fs.exists(deps.root, path);
   if (exists) {
-    const fileKey = pathToKey(path);
+    const fileKey = backupKey(path);
     const stamp = backupStamp(deps.system.now());
-    const backupPath = `${BACKUP_DIR}/${fileKey}.${stamp}.json`;
+    const backupPath = `${BACKUP_DIR}/${backupName(path, stamp)}`;
     const copyRes = await deps.fs.copy(deps.root, path, backupPath);
     if (!copyRes.ok) return copyRes;
     await pruneOldBackups(deps.fs, deps.root, fileKey);
@@ -155,9 +155,8 @@ async function writeDirtyFiles(
     } else {
       const exists = await deps.fs.exists(deps.root, path);
       if (exists) {
-        const fileKey = pathToKey(path);
         const stamp = backupStamp(deps.system.now());
-        await deps.fs.copy(deps.root, path, `${BACKUP_DIR}/${fileKey}.${stamp}.json`);
+        await deps.fs.copy(deps.root, path, `${BACKUP_DIR}/${backupName(path, stamp)}`);
         await deps.fs.remove(deps.root, path);
       }
       knownHashes.delete(path);
@@ -166,51 +165,6 @@ async function writeDirtyFiles(
   }
 
   return ok(savedList);
-}
-
-async function readBackups(
-  fs: FileSystemPort,
-  root: string,
-): Promise<Result<readonly BackupSummary[]>> {
-  const dirRes = await fs.readDir(root, BACKUP_DIR);
-  if (!dirRes.ok) return dirRes;
-
-  const results: BackupSummary[] = [];
-  for (const entry of dirRes.value) {
-    if (entry.kind !== 'file' || !entry.name.endsWith('.json')) continue;
-    const base = entry.name.slice(0, -5);
-    const lastDot = base.lastIndexOf('.');
-    if (lastDot === -1) continue;
-
-    const fileKey = base.slice(0, lastDot);
-    const stamp = base.slice(lastDot + 1);
-    results.push({ id: entry.name, file: keyToPath(fileKey), createdAt: stamp });
-  }
-
-  results.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  return ok(results);
-}
-
-async function restoreBackupFile(
-  fs: FileSystemPort,
-  root: string,
-  backupId: string,
-): Promise<Result<void>> {
-  if (backupId.includes('/') || backupId.includes('\\') || !backupId.endsWith('.json')) {
-    return err({ code: 'E015', params: { resource: 'backup', id: backupId } });
-  }
-
-  const backupPath = `${BACKUP_DIR}/${backupId}`;
-  const readRes = await fs.readText(root, backupPath);
-  if (!readRes.ok) return readRes;
-
-  const base = backupId.slice(0, -5);
-  const lastDot = base.lastIndexOf('.');
-  if (lastDot === -1) {
-    return err({ code: 'E015', params: { resource: 'backup', id: backupId } });
-  }
-  const targetFile = keyToPath(base.slice(0, lastDot));
-  return fs.writeTextAtomic(root, targetFile, readRes.value);
 }
 
 function createDebouncer(deps: DesignStoreDeps, onFlush: () => Promise<Result<void>>) {
@@ -361,8 +315,8 @@ export function createDesignStore(deps: DesignStoreDeps): DesignStore {
       updateKnownHashes(knownHashes, state.doc);
       return Promise.resolve();
     },
-    listBackups: () => readBackups(deps.fs, deps.root),
-    restoreBackup: (backupId) => restoreBackupFile(deps.fs, deps.root, backupId),
+    listBackups: () => listBackups(deps.fs, deps.root),
+    restoreBackup: (backupId) => restoreBackup(deps.fs, deps.root, backupId),
     markExternalChange: () => {
       state.hasExtChange = true;
     },

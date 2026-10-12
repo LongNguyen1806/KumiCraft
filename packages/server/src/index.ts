@@ -24,9 +24,9 @@ import {
   createSessionInfoProvider,
   type Platform,
   toSupportedPlatform,
-  type WorkspaceState,
 } from './core/shared/session.ts';
 import { type ConfigStore, createConfigStore } from './core/shared/user-config.ts';
+import { createWorkspaceReader } from './core/workspace/workspace-reader.ts';
 import {
   createWorkspaceService,
   type WorkspaceService,
@@ -121,30 +121,6 @@ async function initServerContext(
   return ok({ fs, logger, system, workspaceService, configStore, eventBus });
 }
 
-function createWorkspaceReader(
-  service: WorkspaceService,
-  getStore: () => DesignStore | undefined,
-  dir: string,
-): () => WorkspaceState {
-  return () => {
-    const state = service.state();
-    if (state.status === 'open') {
-      const store = getStore();
-      return {
-        state: 'open',
-        id: state.document.workspace.id,
-        name: state.document.workspace.name,
-        revision: store ? store.revision() : state.document.workspace.revision,
-        trusted: state.trusted,
-      };
-    }
-    if (state.status === 'error') {
-      return { state: 'error', error: { code: 'E003', params: { resource: 'workspace' } } };
-    }
-    return { state: 'none', directory: dir };
-  };
-}
-
 function createHttpServer(
   options: StartServerOptions,
   ctx: InitializedContext,
@@ -170,6 +146,8 @@ function createHttpServer(
       setDesignStore: setStore,
       createDesignStore: makeStore,
       getSessionInfo,
+      fs: ctx.fs,
+      root: options.workspaceDir,
     },
     settingsRoutes: { config: ctx.configStore },
     eventRoutes: {

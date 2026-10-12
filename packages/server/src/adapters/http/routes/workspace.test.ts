@@ -13,6 +13,7 @@ import {
   sequenceIds,
   silentLogger,
 } from '../../../core/workspace/test-support.ts';
+import { createWorkspaceReader } from '../../../core/workspace/workspace-reader.ts';
 import {
   createWorkspaceService,
   type WorkspaceService,
@@ -80,19 +81,7 @@ describe('Workspace HTTP Routes (/api/v1/workspace)', () => {
       version: '1.0.0',
       platform,
       features: [],
-      readWorkspace: () => {
-        const state = workspaceService.state();
-        if (state.status === 'open') {
-          return {
-            state: 'open',
-            id: state.document.workspace.id,
-            name: state.document.workspace.name,
-            revision: currentStore ? currentStore.revision() : state.document.workspace.revision,
-            trusted: state.trusted,
-          };
-        }
-        return { state: 'none', directory: workspaceDir };
-      },
+      readWorkspace: createWorkspaceReader(workspaceService, () => currentStore, workspaceDir),
     });
 
     app = await createHttpApp({
@@ -107,6 +96,8 @@ describe('Workspace HTTP Routes (/api/v1/workspace)', () => {
         },
         createDesignStore: instantiateStore,
         getSessionInfo,
+        fs: nodeFs,
+        root: workspaceDir,
       },
     });
   });
@@ -342,5 +333,62 @@ describe('Workspace HTTP Routes (/api/v1/workspace)', () => {
       data?: { document: DesignDocument; revision: number };
     };
     expect(body.data?.document.workspace.name).toBe('Reload Test');
+  });
+
+  it('lists broken files, then restores one from a backup and opens the workspace [R-WS-01, R-WS-02]', async () => {
+    await app.inject({
+      method: 'POST',
+      url: '/api/v1/workspace',
+      headers: AUTH,
+      payload: { name: 'Broken' },
+    });
+    const doc = currentStore?.document();
+    const pageFile = `.reactcraft/pages/${doc?.workspace.pageOrder[0] ?? ''}.json`;
+    const good = await nodeFs.readText(workspaceDir, pageFile);
+    if (!good.ok) throw new Error('page missing');
+    await nodeFs.writeTextAtomic(
+      workspaceDir,
+      `.reactcraft/backups/${pageFile.replaceAll('/', '~')}.20261011-080910-123.json`,
+      good.value,
+    );
+    await nodeFs.writeTextAtomic(workspaceDir, pageFile, '{ broken');
+
+    const failed = await app.inject({
+      method: 'POST',
+      url: '/api/v1/workspace/reload',
+      headers: AUTH,
+    });
+    const session = await app.inject({ method: 'GET', url: '/api/v1/session', headers: AUTH });
+
+    expect(failed.json()).toMatchObject({ data: { session: { workspace: { state: 'error' } } } });
+    expect(session.json()).toMatchObject({
+      data: { workspace: { state: 'error', problems: [{ file: pageFile, code: 'E004' }] } },
+    });
+    const backups = await app.inject({
+      method: 'GET',
+      url: '/api/v1/workspace/backups',
+      headers: AUTH,
+    });
+    expect(backups.json()).toMatchObject({ data: { backups: [{ file: pageFile }] } });
+
+    const restored = await app.inject({
+      method: 'POST',
+      url: `/api/v1/workspace/backups/${pageFile.replaceAll('/', '~')}.20261011-080910-123.json/restore`,
+      headers: AUTH,
+    });
+    expect(restored.json()).toMatchObject({
+      data: { document: { workspace: { name: 'Broken' } } },
+    });
+    expect(currentStore).toBeDefined();
+  });
+
+  it('rejects a backup id that names no backup file [S-20]', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/workspace/backups/..~..~secret.20261011-080910-123.json/restore',
+      headers: AUTH,
+    });
+
+    expect(res.statusCode).toBe(404);
   });
 });

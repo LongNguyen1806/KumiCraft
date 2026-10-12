@@ -1,10 +1,12 @@
 // Workspace and Design Document endpoints (SPEC-03 section 10.3).
 import { type DesignDocument, OperationBatchSchema } from '@reactcraft/model';
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
 
 import type { DesignStore } from '../../../core/design-store/design-store.ts';
+import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
 import type { SessionInfo } from '../../../core/shared/session.ts';
+import { listBackups, restoreBackup } from '../../../core/workspace/backup-files.ts';
 import { CreateWorkspaceRequestSchema } from '../../../core/workspace/create-workspace.ts';
 import type { WorkspaceService } from '../../../core/workspace/workspace-service.ts';
 import { sendError } from '../send-error.ts';
@@ -15,6 +17,9 @@ export type WorkspaceRoutesDeps = {
   readonly setDesignStore: (store: DesignStore | undefined) => void;
   readonly createDesignStore: (doc: DesignDocument, rev: number) => DesignStore;
   readonly getSessionInfo: () => SessionInfo;
+  /** Backups are read and restored without a design store: the error screen needs them. */
+  readonly fs: FileSystemPort;
+  readonly root: string;
 };
 
 const TrustSchema = z.strictObject({
@@ -31,19 +36,28 @@ function registerDocumentRoutes(api: FastifyInstance, deps: WorkspaceRoutesDeps)
   });
 
   api.post('/workspace/reload', async (_request, reply) => {
-    const store = deps.getDesignStore();
-    if (!store) {
+    if (deps.workspaceService.state().status === 'none') {
       return sendError(reply, { code: 'E015', params: { resource: 'workspace' } });
     }
-
-    const reloaded = await deps.workspaceService.reload();
-    if (reloaded.status !== 'open') {
-      return sendError(reply, { code: 'E003', params: { resource: 'workspace' } });
-    }
-
-    await store.reload(reloaded.document, reloaded.document.workspace.revision);
-    return { data: { document: store.document(), revision: store.revision() } };
+    return reopen(deps, reply);
   });
+}
+
+/**
+ * Reads the workspace again. Open: the store follows the files (or is created, when the workspace
+ * was in error until now) and the document is returned. Still in error: the session says which
+ * files, so the Studio can show them.
+ */
+async function reopen(deps: WorkspaceRoutesDeps, reply: FastifyReply) {
+  const reloaded = await deps.workspaceService.reload();
+  if (reloaded.status !== 'open') return { data: { session: deps.getSessionInfo() } };
+  const revision = reloaded.document.workspace.revision;
+  const store = deps.getDesignStore();
+  if (store) await store.reload(reloaded.document, revision);
+  else deps.setDesignStore(deps.createDesignStore(reloaded.document, revision));
+  const current = deps.getDesignStore();
+  if (!current) return sendError(reply, { code: 'E013' });
+  return { data: { document: current.document(), revision: current.revision() } };
 }
 
 function registerCreateWorkspaceRoute(api: FastifyInstance, deps: WorkspaceRoutesDeps): void {
@@ -110,36 +124,14 @@ function registerOperationRoutes(api: FastifyInstance, deps: WorkspaceRoutesDeps
 
 function registerBackupRoutes(api: FastifyInstance, deps: WorkspaceRoutesDeps): void {
   api.get('/workspace/backups', async (_request, reply) => {
-    const store = deps.getDesignStore();
-    if (!store) {
-      return sendError(reply, { code: 'E015', params: { resource: 'workspace' } });
-    }
-
-    const backupsRes = await store.listBackups();
-    if (!backupsRes.ok) {
-      return sendError(reply, backupsRes.error);
-    }
-
-    return { data: { backups: backupsRes.value } };
+    const backups = await listBackups(deps.fs, deps.root);
+    return backups.ok ? { data: { backups: backups.value } } : sendError(reply, backups.error);
   });
 
   api.post<{ Params: { id: string } }>('/workspace/backups/:id/restore', async (request, reply) => {
-    const store = deps.getDesignStore();
-    if (!store) {
-      return sendError(reply, { code: 'E015', params: { resource: 'workspace' } });
-    }
-
-    const restoreRes = await store.restoreBackup(request.params.id);
-    if (!restoreRes.ok) {
-      return sendError(reply, restoreRes.error);
-    }
-
-    const reloaded = await deps.workspaceService.reload();
-    if (reloaded.status === 'open') {
-      await store.reload(reloaded.document, reloaded.document.workspace.revision);
-    }
-
-    return { data: { document: store.document(), revision: store.revision() } };
+    const restored = await restoreBackup(deps.fs, deps.root, request.params.id);
+    if (!restored.ok) return sendError(reply, restored.error);
+    return reopen(deps, reply);
   });
 }
 

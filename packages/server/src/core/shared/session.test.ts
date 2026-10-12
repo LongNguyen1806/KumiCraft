@@ -14,7 +14,7 @@ describe('createSessionInfoProvider', () => {
     });
 
     const first = getSessionInfo();
-    workspace = { state: 'error', error: { code: 'E003' } };
+    workspace = { state: 'error', error: { code: 'E003' }, problems: [] };
     const second = getSessionInfo();
 
     expect(first).toEqual({
@@ -23,7 +23,7 @@ describe('createSessionInfoProvider', () => {
       features: ['ai'],
       workspace: { state: 'none', directory: '/tmp/a' },
     });
-    expect(second.workspace).toEqual({ state: 'error', error: { code: 'E003' } });
+    expect(second.workspace).toEqual({ state: 'error', error: { code: 'E003' }, problems: [] });
   });
 });
 

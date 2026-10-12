@@ -1,7 +1,7 @@
 // Session information returned by GET /api/v1/session (SPEC-03 section 10.1).
 import type { FeatureId } from '@reactcraft/model';
 
-import type { AppError } from './result.ts';
+import type { AppError, ErrorCode } from './result.ts';
 
 export type Platform = 'win32' | 'darwin' | 'linux';
 
@@ -14,7 +14,15 @@ export type WorkspaceState =
       readonly revision: number;
       readonly trusted: boolean;
     }
-  | { readonly state: 'error'; readonly error: AppError };
+  | {
+      readonly state: 'error';
+      /** The first problem, as the overall error. */
+      readonly error: AppError;
+      /** Every file that stops the workspace from opening (R-WS-01, R-WS-02). */
+      readonly problems: readonly WorkspaceProblem[];
+    };
+
+export type WorkspaceProblem = { readonly file: string; readonly code: ErrorCode };
 
 export type SessionInfo = {
   readonly version: string;
