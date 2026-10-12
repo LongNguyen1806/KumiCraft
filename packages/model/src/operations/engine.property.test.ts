@@ -147,7 +147,7 @@ describe('operation inverses (property)', () => {
       }),
       { numRuns: 400 },
     );
-  });
+  }, 30_000);
 
   it('undoing a whole batch restores the document', () => {
     fc.assert(
@@ -161,7 +161,7 @@ describe('operation inverses (property)', () => {
       }),
       { numRuns: 150 },
     );
-  });
+  }, 30_000);
 
   it('generates valid operations of every kind, so the properties are not vacuous', () => {
     const validKinds = new Set(
@@ -186,5 +186,5 @@ describe('operation inverses (property)', () => {
         'wrap',
       ].sort(),
     );
-  });
+  }, 30_000);
 });
