@@ -1,0 +1,1375 @@
+<title>ReactCraft Studio Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+/>
+<style>
+  /* Layout: soft daylight studio. Frosted white panels float on a cool-grey to cream wash; charcoal
+   pills mark what is active, warm yellow marks what the Studio points at. One deliberate light
+   look (the owner asked for a bright workspace). The page being designed keeps its own colors. */
+  :root {
+    --wash-cool: #e4e6ea;
+    --wash-warm: #f6edc9;
+    --card: rgb(255 255 255 / 0.74);
+    --card-solid: #ffffff;
+    --field: #f3f2ed;
+    --ink: #1f1f1d;
+    --ink-soft: #5c5b55;
+    --ink-faint: #94928a;
+    --line: #e6e2d6;
+    --charcoal: #2a2a28;
+    --on-charcoal: #ffffff;
+    --sun: #f5cf4f;
+    --sun-soft: #fbf0c4;
+    --leaf: #6aa84f;
+    --shadow: 0 1px 2px rgb(60 52 30 / 0.05), 0 12px 32px rgb(60 52 30 / 0.08);
+    --frame-shadow: 0 2px 4px rgb(60 52 30 / 0.06), 0 24px 48px rgb(60 52 30 / 0.12);
+
+    /* The design being edited: default tokens of a new workspace (SPEC-04.1 section 4). */
+    --site-bg: #ffffff;
+    --site-surface: #f8fafc;
+    --site-fg: #0f172a;
+    --site-muted: #64748b;
+    --site-border: #e2e8f0;
+    --site-primary: #2563eb;
+    --site-on-primary: #ffffff;
+
+    --ui: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    --left: 268px;
+    --right: 308px;
+    --radius: 22px;
+    color-scheme: light;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+  body {
+    background: var(--wash-cool);
+    background-image:
+      radial-gradient(120% 90% at 100% 100%, var(--wash-warm) 0%, transparent 60%),
+      linear-gradient(135deg, var(--wash-cool) 0%, var(--wash-cool) 35%, var(--wash-warm) 100%);
+    color: var(--ink);
+    font: 400 13px/1.5 var(--ui);
+    overflow: hidden;
+  }
+  button,
+  input {
+    font: inherit;
+    color: inherit;
+  }
+  button {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--charcoal);
+    outline-offset: 2px;
+  }
+  .mono {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  svg.i {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex: none;
+  }
+
+  /* --- Shell --- */
+  .studio {
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    gap: 10px;
+    padding: 12px 14px;
+    box-sizing: border-box;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand {
+    height: 40px;
+    padding: 0 18px;
+    border: 1.5px solid var(--charcoal);
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 17px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+  .brand small {
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+  .pillbar {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--card);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(12px);
+  }
+  .pill {
+    height: 32px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink-soft);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition:
+      background 0.2s,
+      color 0.2s;
+  }
+  .pill:hover {
+    color: var(--ink);
+    background: var(--field);
+  }
+  .pill[aria-pressed='true'] {
+    background: var(--charcoal);
+    color: var(--on-charcoal);
+  }
+  .pill .k {
+    color: var(--ink-faint);
+  }
+  .divider {
+    width: 1px;
+    height: 18px;
+    background: var(--line);
+    margin: 0 4px;
+  }
+  .spacer {
+    flex: 1;
+  }
+  .round {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 0;
+    background: var(--card);
+    box-shadow: var(--shadow);
+    display: grid;
+    place-items: center;
+    color: var(--ink);
+    backdrop-filter: blur(12px);
+    transition: transform 0.15s;
+  }
+  .round:hover {
+    transform: translateY(-1px);
+  }
+  .lang {
+    font: 500 12px var(--mono);
+  }
+  .cta {
+    height: 40px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--sun);
+    color: var(--ink);
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cta:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  .tip {
+    position: relative;
+  }
+  .tip[data-tip]:hover::after,
+  .tip[data-tip]:focus-visible::after {
+    content: attr(data-tip);
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    background: var(--charcoal);
+    color: var(--on-charcoal);
+    font: 400 11.5px var(--ui);
+    padding: 5px 10px;
+    border-radius: 999px;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  .trustbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 6px 6px 18px;
+    border-radius: 999px;
+    background: var(--sun-soft);
+    color: var(--ink);
+  }
+  .trustbar p {
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+  }
+  .trustbar .pill {
+    background: var(--charcoal);
+    color: var(--on-charcoal);
+  }
+
+  .work {
+    display: grid;
+    grid-template-columns: var(--left) 10px 1fr 10px var(--right);
+    min-height: 0;
+    transition: grid-template-columns 0.25s ease;
+  }
+  /* R-SH-01: either panel can be hidden to give the Canvas the whole width. */
+  .work.no-left {
+    grid-template-columns: 0 0 1fr 10px var(--right);
+  }
+  .work.no-right {
+    grid-template-columns: var(--left) 10px 1fr 0 0;
+  }
+  .work.no-left.no-right {
+    grid-template-columns: 0 0 1fr 0 0;
+  }
+  .work.no-left .left,
+  .work.no-left [data-side='left'],
+  .work.no-right .right,
+  .work.no-right [data-side='right'] {
+    visibility: hidden;
+  }
+  .round[aria-pressed='false'] {
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px var(--line);
+    color: var(--ink-soft);
+  }
+  .panel {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(16px);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .resizer {
+    cursor: col-resize;
+    position: relative;
+  }
+  .resizer::after {
+    content: '';
+    position: absolute;
+    inset: 30% 4px;
+    border-radius: 2px;
+    transition: background 0.15s;
+  }
+  .resizer:hover::after,
+  .resizer.drag::after {
+    background: var(--charcoal);
+  }
+  .phead {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 16px 10px;
+  }
+  .phead h2 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+  }
+  .count {
+    margin-left: auto;
+    font-size: 26px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .tabs {
+    display: flex;
+    gap: 2px;
+    margin: 0 12px;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--field);
+  }
+  .tab {
+    flex: 1;
+    height: 28px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink-soft);
+  }
+  .tab[aria-selected='true'] {
+    background: var(--card-solid);
+    color: var(--ink);
+    box-shadow: 0 1px 3px rgb(60 52 30 / 0.12);
+  }
+  .tab:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  .pbody {
+    overflow: auto;
+    padding: 10px 12px 14px;
+    flex: 1;
+    min-height: 0;
+  }
+  .eyebrow {
+    font-size: 12px;
+    color: var(--ink-faint);
+    padding: 10px 4px 6px;
+  }
+
+  /* Layer tree */
+  .tree {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1px;
+  }
+  .tree li > button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    color: var(--ink-soft);
+    padding-left: calc(10px + var(--d, 0) * 14px);
+  }
+  .tree li > button:hover {
+    background: var(--field);
+    color: var(--ink);
+  }
+  .tree li > button[aria-current='true'] {
+    background: var(--charcoal);
+    color: var(--on-charcoal);
+  }
+  .tree .t {
+    font-weight: 500;
+  }
+  .tree .n {
+    color: var(--ink-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .tree .hid {
+    margin-left: auto;
+    color: var(--ink-faint);
+  }
+
+  /* Library */
+  .lib {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 10px;
+    border-radius: 14px;
+    background: var(--card-solid);
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    cursor: grab;
+  }
+  .chip:hover {
+    color: var(--ink);
+    border-color: var(--ink-faint);
+  }
+  .chip .g {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--field);
+    display: grid;
+    place-items: center;
+    font: 500 10px var(--mono);
+    color: var(--ink-soft);
+  }
+
+  /* Canvas */
+  .canvas {
+    position: relative;
+    overflow: auto;
+    min-width: 0;
+    min-height: 0;
+    border-radius: var(--radius);
+    background-color: rgb(255 255 255 / 0.35);
+    background-image: radial-gradient(rgb(60 52 30 / 0.14) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+  .stage {
+    padding: 36px 32px 56px;
+    display: flex;
+    justify-content: center;
+  }
+  .frame-wrap {
+    display: grid;
+    gap: 10px;
+  }
+  .frame-zoom {
+    width: max-content;
+  }
+  .frame-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px;
+    color: var(--ink-faint);
+  }
+  .frame-label b {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .frame {
+    background: var(--site-bg);
+    border-radius: 14px;
+    box-shadow: var(--frame-shadow);
+    container-type: inline-size;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* The design inside the frame (rendered with Tailwind in the real Canvas). */
+  .site {
+    color: var(--site-fg);
+    font:
+      16px/1.5 system-ui,
+      'Segoe UI',
+      sans-serif;
+    min-height: 900px;
+  }
+  .site [data-node] {
+    position: relative;
+  }
+  .site [data-node]:hover {
+    outline: 1.5px dashed var(--charcoal);
+    outline-offset: 3px;
+  }
+  .site [data-node].sel {
+    outline: 2px solid var(--charcoal);
+    outline-offset: 3px;
+  }
+  .site [data-node].sel::before {
+    content: attr(data-type);
+    position: absolute;
+    top: -27px;
+    left: -3px;
+    background: var(--sun);
+    color: var(--ink);
+    font: 500 11px/1 var(--ui);
+    padding: 5px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+    z-index: 3;
+  }
+  .s-nav {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 18px 48px;
+    border-bottom: 1px solid var(--site-border);
+  }
+  .s-logo {
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .s-links {
+    display: flex;
+    gap: 20px;
+    color: var(--site-muted);
+    font-size: 15px;
+    margin-left: auto;
+  }
+  .s-hero {
+    padding: 72px 48px 56px;
+    display: grid;
+    gap: 16px;
+    max-width: 760px;
+  }
+  .s-hero h2 {
+    font-size: 44px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .s-hero p {
+    color: var(--site-muted);
+    font-size: 18px;
+    margin: 0;
+    max-width: 56ch;
+  }
+  .s-btn {
+    justify-self: start;
+    background: var(--site-primary);
+    color: var(--site-on-primary);
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .s-products {
+    padding: 8px 48px 64px;
+  }
+  .s-products h3 {
+    margin: 0 0 20px;
+    font-size: 22px;
+  }
+  .s-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
+  .s-card {
+    border: 1px solid var(--site-border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--site-bg);
+  }
+  .s-img {
+    aspect-ratio: 4 / 3;
+    background: linear-gradient(135deg, var(--site-surface), var(--site-border));
+    display: grid;
+    place-items: center;
+    color: var(--site-muted);
+    font-size: 13px;
+  }
+  .s-body {
+    padding: 14px 16px 16px;
+    display: grid;
+    gap: 4px;
+  }
+  .s-body b {
+    font-weight: 600;
+  }
+  .s-price {
+    color: var(--site-primary);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  @container (max-width: 900px) {
+    .s-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .s-hero h2 {
+      font-size: 36px;
+    }
+  }
+  @container (max-width: 500px) {
+    .s-nav,
+    .s-hero,
+    .s-products {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+    .s-links {
+      display: none;
+    }
+    .s-grid {
+      grid-template-columns: 1fr;
+    }
+    .s-hero {
+      padding-top: 40px;
+    }
+    .s-hero h2 {
+      font-size: 30px;
+    }
+  }
+
+  /* Inspector */
+  .ins-id {
+    padding: 0 16px;
+    margin-top: -6px;
+    color: var(--ink-faint);
+  }
+  .bp {
+    display: flex;
+    gap: 2px;
+    margin: 12px 12px 4px;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--field);
+  }
+  .bp button {
+    flex: 1;
+    height: 26px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink-soft);
+    font: 500 11.5px var(--mono);
+  }
+  .bp button[aria-pressed='true'] {
+    background: var(--charcoal);
+    color: var(--on-charcoal);
+  }
+  .sec {
+    border-top: 1px dashed var(--line);
+    padding: 2px 0 10px;
+  }
+  .sec:first-of-type {
+    border-top: 0;
+  }
+  .sec-h {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 4px 6px;
+    font-size: 14px;
+  }
+  .sec-h svg {
+    color: var(--ink-faint);
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 84px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    padding: 3px 4px;
+  }
+  .row label {
+    color: var(--ink-soft);
+  }
+  .field {
+    height: 32px;
+    border-radius: 12px;
+    background: var(--field);
+    padding: 0 10px;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .field input {
+    border: 0;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    min-width: 0;
+  }
+  .field:focus-within {
+    border-color: var(--charcoal);
+    background: var(--card-solid);
+  }
+  .token {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sw {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12);
+    flex: none;
+  }
+  .pad {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .pad .field {
+    padding: 0;
+    justify-content: center;
+  }
+  .unit {
+    margin-left: auto;
+    color: var(--ink-faint);
+  }
+
+  /* Status bar */
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 34px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: var(--card);
+    box-shadow: var(--shadow);
+    color: var(--ink-soft);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--leaf);
+    display: inline-block;
+    margin-right: 7px;
+  }
+  .saving .dot {
+    background: var(--sun);
+  }
+  .crumbs {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  .crumbs b {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .tag {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--field);
+  }
+
+  /* R-SH-02: the Studio needs a wide screen. */
+  .narrow {
+    display: none;
+  }
+  @media (max-width: 1023px) {
+    body {
+      overflow: auto;
+    }
+    .studio {
+      display: none;
+    }
+    .narrow {
+      display: grid;
+      place-items: center;
+      min-height: 100%;
+      padding-inline: 16px;
+      padding-block: 32px;
+      box-sizing: border-box;
+    }
+    .narrow-card {
+      max-width: 380px;
+      display: grid;
+      gap: 14px;
+      padding: 28px;
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+    .narrow-card h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 400;
+      text-wrap: balance;
+    }
+    .narrow-card p {
+      margin: 0;
+      color: var(--ink-soft);
+    }
+    .narrow-card .brand {
+      justify-self: start;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+    }
+  }
+</style>
+
+<div class="studio" id="studio">
+  <header class="toolbar">
+    <div class="brand">ReactCraft <small>· Shop</small></div>
+    <button
+      class="round tip"
+      type="button"
+      data-toggle="left"
+      aria-pressed="true"
+      aria-label="Ẩn hoặc hiện panel Lớp"
+      data-tip="Ẩn/hiện panel trái (Ctrl+[)"
+    >
+      <svg class="i" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="3" />
+        <path d="M9 3v18" />
+      </svg>
+    </button>
+
+    <div class="pillbar">
+      <button class="pill tip" type="button" data-tip="Chọn trang">
+        <span class="k">Trang</span> Home
+        <svg class="i" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
+      </button>
+      <span class="divider"></span>
+      <div role="group" aria-label="Khung thiết kế" style="display: flex; gap: 2px">
+        <button
+          class="pill"
+          type="button"
+          data-frame="1440"
+          data-h="900"
+          data-name="Desktop"
+          aria-pressed="true"
+        >
+          Desktop <span class="k mono">1440</span>
+        </button>
+        <button
+          class="pill"
+          type="button"
+          data-frame="768"
+          data-h="1024"
+          data-name="Tablet"
+          aria-pressed="false"
+        >
+          Tablet <span class="k mono">768</span>
+        </button>
+        <button
+          class="pill"
+          type="button"
+          data-frame="375"
+          data-h="812"
+          data-name="Mobile"
+          aria-pressed="false"
+        >
+          Mobile <span class="k mono">375</span>
+        </button>
+      </div>
+      <span class="divider"></span>
+      <button class="pill tip" type="button" data-tip="Thu phóng: vừa khung">
+        <span class="mono" id="zoom">64%</span>
+      </button>
+    </div>
+
+    <div class="spacer"></div>
+
+    <button
+      class="round tip"
+      type="button"
+      id="undo"
+      data-tip="Hoàn tác (Ctrl+Z)"
+      aria-label="Hoàn tác"
+    >
+      <svg class="i" viewBox="0 0 24 24">
+        <path d="M9 14 4 9l5-5" />
+        <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
+      </svg>
+    </button>
+    <button
+      class="round tip"
+      type="button"
+      id="redo"
+      data-tip="Làm lại (Ctrl+Y)"
+      aria-label="Làm lại"
+    >
+      <svg class="i" viewBox="0 0 24 24">
+        <path d="m15 14 5-5-5-5" />
+        <path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13" />
+      </svg>
+    </button>
+    <button class="round tip lang" type="button" id="lang" data-tip="Ngôn ngữ giao diện">vi</button>
+    <button class="round tip" type="button" data-tip="Cài đặt" aria-label="Cài đặt">
+      <svg class="i" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3" />
+        <path
+          d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"
+        />
+      </svg>
+    </button>
+    <button class="cta tip" type="button" disabled data-tip="Có từ Phase 3">
+      <svg class="i" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6" /></svg>Xuất code
+    </button>
+    <button
+      class="round tip"
+      type="button"
+      data-toggle="right"
+      aria-pressed="true"
+      aria-label="Ẩn hoặc hiện panel Thuộc tính"
+      data-tip="Ẩn/hiện panel phải (Ctrl+])"
+    >
+      <svg class="i" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="3" />
+        <path d="M15 3v18" />
+      </svg>
+    </button>
+  </header>
+
+  <div class="trustbar" id="trustbar">
+    <svg class="i" viewBox="0 0 24 24">
+      <path d="M12 3 2 21h20L12 3Z" />
+      <path d="M12 10v4M12 17.5v.01" />
+    </svg>
+    <p>Workspace chưa được tin cậy. Quét backend, xuất code và AI đang tạm khóa.</p>
+    <button class="pill" type="button" id="trust">Tin cậy workspace này</button>
+  </div>
+
+  <div class="work">
+    <aside class="panel left" aria-label="Thư viện và lớp">
+      <div class="phead">
+        <h2 id="left-title">Lớp</h2>
+        <span class="count" id="left-count">13</span>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" type="button" aria-selected="false" data-tab="lib">
+          Thư viện
+        </button>
+        <button class="tab" role="tab" type="button" aria-selected="true" data-tab="layers">
+          Lớp
+        </button>
+      </div>
+      <div class="pbody" data-pane="layers"><ul class="tree" id="tree"></ul></div>
+      <div class="pbody" data-pane="lib" hidden>
+        <div class="eyebrow">Bố cục</div>
+        <div class="lib">
+          <div class="chip"><span class="g">▤</span>Stack</div>
+          <div class="chip"><span class="g">▦</span>Grid</div>
+          <div class="chip"><span class="g">§</span>Section</div>
+          <div class="chip"><span class="g">▭</span>Container</div>
+          <div class="chip"><span class="g">◫</span>Card</div>
+          <div class="chip"><span class="g">≡</span>Navbar</div>
+        </div>
+        <div class="eyebrow">Nội dung</div>
+        <div class="lib">
+          <div class="chip"><span class="g">H</span>Heading</div>
+          <div class="chip"><span class="g">T</span>Text</div>
+          <div class="chip"><span class="g">▣</span>Image</div>
+          <div class="chip"><span class="g">↗</span>Link</div>
+          <div class="chip"><span class="g">●</span>Button</div>
+          <div class="chip"><span class="g">—</span>Divider</div>
+        </div>
+        <div class="eyebrow">Biểu mẫu và dữ liệu</div>
+        <div class="lib">
+          <div class="chip"><span class="g">▁</span>Input</div>
+          <div class="chip"><span class="g">☰</span>Table</div>
+          <div class="chip"><span class="g">⋮</span>List</div>
+          <div class="chip"><span class="g">✓</span>Checkbox</div>
+        </div>
+      </div>
+    </aside>
+    <div class="resizer" data-side="left" title="Kéo để đổi độ rộng"></div>
+
+    <main class="canvas" id="canvas" aria-label="Canvas">
+      <div class="stage">
+        <div class="frame-wrap">
+          <div class="frame-label" id="frame-label">
+            <b id="frame-name">Desktop</b><span class="mono" id="frame-size">1440 × 900</span>
+          </div>
+          <div class="frame-zoom" id="frame-zoom">
+            <div class="frame" id="frame" style="width: 1440px">
+              <div class="site" data-node="n_root000001" data-type="Stack">
+                <nav class="s-nav" data-node="n_navbar0001" data-type="Navbar">
+                  <h1 class="s-logo" data-node="n_logo000001" data-type="Heading">Shop</h1>
+                  <div class="s-links">
+                    <span>Sản phẩm</span><span>Khuyến mãi</span><span>Liên hệ</span>
+                  </div>
+                </nav>
+                <section class="s-hero" data-node="n_hero000001" data-type="Section">
+                  <h2 data-node="n_herohead01" data-type="Heading">
+                    Bộ sưu tập thu 2026 đã lên kệ
+                  </h2>
+                  <p data-node="n_herotext01" data-type="Text">
+                    Áo khoác, len và phụ kiện cho những ngày se lạnh. Giao trong 2 giờ ở nội thành.
+                  </p>
+                  <span class="s-btn" data-node="n_herobtn001" data-type="Button">Mua ngay</span>
+                </section>
+                <section class="s-products" data-node="n_products01" data-type="Section">
+                  <h3>Bán chạy tuần này</h3>
+                  <div class="s-grid" data-node="n_grid000001" data-type="Grid">
+                    <div class="s-card" data-node="n_card000001" data-type="Card">
+                      <div class="s-img">Ảnh sản phẩm</div>
+                      <div class="s-body">
+                        <b>Áo khoác dạ dáng dài</b><span class="s-price">1.250.000 ₫</span>
+                      </div>
+                    </div>
+                    <div class="s-card" data-node="n_card000002" data-type="Card">
+                      <div class="s-img">Ảnh sản phẩm</div>
+                      <div class="s-body">
+                        <b>Len cổ lọ màu kem</b><span class="s-price">590.000 ₫</span>
+                      </div>
+                    </div>
+                    <div class="s-card" data-node="n_card000003" data-type="Card">
+                      <div class="s-img">Ảnh sản phẩm</div>
+                      <div class="s-body">
+                        <b>Khăn choàng dệt kim</b><span class="s-price">320.000 ₫</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <div class="resizer" data-side="right" title="Kéo để đổi độ rộng"></div>
+
+    <aside class="panel right" aria-label="Thuộc tính">
+      <div class="phead"><h2 id="ins-type">Button</h2></div>
+      <div class="ins-id mono" id="ins-id">n_herobtn001</div>
+      <div class="tabs" role="tablist" style="margin-top: 12px">
+        <button class="tab" role="tab" type="button" aria-selected="true">Thuộc tính</button>
+        <button class="tab" role="tab" type="button" aria-selected="false">Dữ liệu</button>
+        <button class="tab" role="tab" type="button" disabled>AI</button>
+      </div>
+      <div class="bp" role="group" aria-label="Breakpoint">
+        <button type="button" aria-pressed="true">base</button
+        ><button type="button" aria-pressed="false">md</button>
+        <button type="button" aria-pressed="false">lg</button
+        ><button type="button" aria-pressed="false">hover</button>
+      </div>
+      <div class="pbody">
+        <div class="sec" id="sec-content">
+          <div class="sec-h">
+            Nội dung <svg class="i" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6" /></svg>
+          </div>
+          <div class="row">
+            <label for="f-text">Chữ</label>
+            <div class="field"><input id="f-text" value="Mua ngay" /></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-h">
+            Bố cục <svg class="i" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6" /></svg>
+          </div>
+          <div class="row">
+            <label for="f-width">Rộng</label>
+            <div class="field"><input id="f-width" value="Hug" /></div>
+          </div>
+          <div class="row">
+            <label>Padding</label>
+            <div class="pad">
+              <div class="field mono">3</div>
+              <div class="field mono">5</div>
+              <div class="field mono">3</div>
+              <div class="field mono">5</div>
+            </div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-h">
+            Kiểu <svg class="i" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6" /></svg>
+          </div>
+          <div class="row">
+            <label>Nền</label>
+            <div class="field">
+              <span class="token mono"
+                ><span class="sw" style="background: var(--site-primary)"></span>primary</span
+              >
+            </div>
+          </div>
+          <div class="row">
+            <label>Chữ</label>
+            <div class="field">
+              <span class="token mono"
+                ><span class="sw" style="background: var(--site-on-primary)"></span
+                >primary-foreground</span
+              >
+            </div>
+          </div>
+          <div class="row">
+            <label>Bo góc</label>
+            <div class="field">
+              <span class="token mono">radius.md</span><span class="mono unit">8px</span>
+            </div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-h">
+            Tương tác <svg class="i" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="status" id="status">
+    <span id="save"><span class="dot"></span><span id="save-text">Đã lưu</span></span>
+    <span class="mono">revision <span id="rev">42</span></span>
+    <span class="crumbs" id="crumbs"></span>
+    <span class="spacer"></span>
+    <span class="tag">Desktop-first</span><span class="tag mono">vi-VN</span>
+  </footer>
+</div>
+
+<div class="narrow">
+  <div class="narrow-card">
+    <div class="brand">ReactCraft</div>
+    <h1>Studio cần màn hình rộng tối thiểu 1024 px</h1>
+    <p>
+      Hãy mở trên máy tính hoặc kéo rộng cửa sổ trình duyệt. Thiết kế của bạn vẫn được lưu bình
+      thường.
+    </p>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const nodes = [
+      { id: 'n_root000001', type: 'Stack', name: 'Trang', d: 0 },
+      { id: 'n_navbar0001', type: 'Navbar', name: '', d: 1 },
+      { id: 'n_logo000001', type: 'Heading', name: 'Shop', d: 2 },
+      { id: 'n_hero000001', type: 'Section', name: 'Hero', d: 1 },
+      { id: 'n_herohead01', type: 'Heading', name: 'Bộ sưu tập thu 2026…', d: 2 },
+      { id: 'n_herotext01', type: 'Text', name: 'Áo khoác, len và…', d: 2 },
+      { id: 'n_herobtn001', type: 'Button', name: 'Mua ngay', d: 2 },
+      { id: 'n_promo00001', type: 'Section', name: 'Khuyến mãi', d: 1, hidden: true },
+      { id: 'n_products01', type: 'Section', name: 'Bán chạy', d: 1 },
+      { id: 'n_grid000001', type: 'Grid', name: '3 cột', d: 2 },
+      { id: 'n_card000001', type: 'Card', name: 'Áo khoác dạ', d: 3 },
+      { id: 'n_card000002', type: 'Card', name: 'Len cổ lọ', d: 3 },
+      { id: 'n_card000003', type: 'Card', name: 'Khăn choàng', d: 3 },
+    ];
+    const textOf = {
+      n_logo000001: 'Shop',
+      n_herohead01: 'Bộ sưu tập thu 2026 đã lên kệ',
+      n_herotext01:
+        'Áo khoác, len và phụ kiện cho những ngày se lạnh. Giao trong 2 giờ ở nội thành.',
+      n_herobtn001: 'Mua ngay',
+    };
+    const $ = (s) => document.querySelector(s);
+    const tree = $('#tree');
+    let selected = 'n_herobtn001';
+
+    tree.innerHTML = nodes
+      .map(
+        (n) => `<li><button type="button" data-id="${n.id}" style="--d:${n.d}">
+    <span class="t">${n.type}</span><span class="n">${n.name}</span>${n.hidden ? '<svg class="i hid" viewBox="0 0 24 24" aria-label="Đang ẩn"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A10 10 0 0 1 22 12a17 17 0 0 1-3 3.9M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/></svg>' : ''}
+  </button></li>`,
+      )
+      .join('');
+
+    function pathTo(id) {
+      const i = nodes.findIndex((n) => n.id === id);
+      const out = [nodes[i]];
+      for (let d = nodes[i].d - 1, j = i; d >= 0; d--) {
+        while (j > 0 && nodes[j].d !== d) j--;
+        out.unshift(nodes[j]);
+      }
+      return out;
+    }
+
+    function select(id) {
+      selected = id;
+      const node = nodes.find((n) => n.id === id);
+      tree
+        .querySelectorAll('button')
+        .forEach((b) => b.setAttribute('aria-current', String(b.dataset.id === id)));
+      document
+        .querySelectorAll('.site [data-node]')
+        .forEach((el) => el.classList.toggle('sel', el.dataset.node === id));
+      $('#ins-type').textContent = node.type;
+      $('#ins-id').textContent = node.id;
+      const text = textOf[id];
+      $('#sec-content').hidden = text === undefined;
+      if (text !== undefined) $('#f-text').value = text;
+      $('#crumbs').innerHTML = pathTo(id)
+        .map((n, i, a) => (i === a.length - 1 ? `<b>${n.type}</b>` : n.type))
+        .join(' › ');
+    }
+    tree.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (b) select(b.dataset.id);
+    });
+    $('#frame').addEventListener('click', (e) => {
+      const el = e.target.closest('[data-node]');
+      if (el) select(el.dataset.node);
+    });
+
+    // Frames and fit-to-width zoom.
+    let frame = { w: 1440, h: 900, name: 'Desktop' };
+    function fit() {
+      const avail = $('#canvas').clientWidth - 64;
+      const scale = Math.min(1, avail / frame.w);
+      $('#frame').style.width = frame.w + 'px';
+      $('#frame-zoom').style.zoom = String(scale);
+      $('#frame-label').style.width = Math.round(frame.w * scale) + 'px';
+      $('#zoom').textContent = Math.round(scale * 100) + '%';
+      $('#frame-name').textContent = frame.name;
+      $('#frame-size').textContent = `${frame.w} × ${frame.h}`;
+    }
+    document.querySelectorAll('[data-frame]').forEach((b) =>
+      b.addEventListener('click', () => {
+        document
+          .querySelectorAll('[data-frame]')
+          .forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        frame = { w: Number(b.dataset.frame), h: Number(b.dataset.h), name: b.dataset.name };
+        fit();
+      }),
+    );
+    new ResizeObserver(fit).observe($('#canvas'));
+
+    // Edits: revision and save status (R-SH-03).
+    let rev = 42;
+    let timer;
+    function edited() {
+      rev += 1;
+      $('#rev').textContent = rev;
+      $('#status').classList.add('saving');
+      $('#save-text').textContent = 'Đang lưu…';
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        $('#status').classList.remove('saving');
+        $('#save-text').textContent = 'Đã lưu';
+      }, 700);
+    }
+    $('#undo').addEventListener('click', edited);
+    $('#redo').addEventListener('click', edited);
+    $('#f-text').addEventListener('input', (e) => {
+      const el = document.querySelector(`[data-node="${selected}"]`);
+      if (el && textOf[selected] !== undefined) {
+        el.textContent = e.target.value;
+        textOf[selected] = e.target.value;
+      }
+      edited();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        ['z', 'y'].includes(e.key.toLowerCase()) &&
+        e.target.tagName !== 'INPUT'
+      ) {
+        e.preventDefault();
+        edited();
+      }
+    });
+
+    // Tabs, language, breakpoint toggles.
+    document.querySelectorAll('.left .tab').forEach((t) =>
+      t.addEventListener('click', () => {
+        document
+          .querySelectorAll('.left .tab')
+          .forEach((x) => x.setAttribute('aria-selected', String(x === t)));
+        document.querySelectorAll('.left [data-pane]').forEach((p) => {
+          p.hidden = p.dataset.pane !== t.dataset.tab;
+        });
+        const isLib = t.dataset.tab === 'lib';
+        $('#left-title').textContent = isLib ? 'Thư viện' : 'Lớp';
+        $('#left-count').textContent = isLib ? '25' : String(nodes.length);
+      }),
+    );
+    const bp = document.querySelector('.bp');
+    bp.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      bp.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    });
+    $('#lang').addEventListener('click', (e) => {
+      e.currentTarget.textContent = e.currentTarget.textContent === 'vi' ? 'en' : 'vi';
+    });
+    $('#trust').addEventListener('click', () => {
+      $('#trustbar').hidden = true;
+    });
+
+    // R-SH-01: panels resize between 200 and 480 px, remembered per viewer.
+    const root = document.documentElement;
+    try {
+      for (const side of ['left', 'right']) {
+        const saved = localStorage.getItem('rc-panel-' + side);
+        if (saved) root.style.setProperty('--' + side, saved);
+      }
+    } catch {
+      /* storage unavailable */
+    }
+    document.querySelectorAll('.resizer').forEach((r) => {
+      r.addEventListener('pointerdown', (e) => {
+        const side = r.dataset.side;
+        const start = e.clientX;
+        const startW = parseFloat(getComputedStyle(root).getPropertyValue('--' + side));
+        r.classList.add('drag');
+        r.setPointerCapture(e.pointerId);
+        const move = (ev) => {
+          const dx = side === 'left' ? ev.clientX - start : start - ev.clientX;
+          root.style.setProperty('--' + side, Math.max(200, Math.min(480, startW + dx)) + 'px');
+        };
+        r.addEventListener('pointermove', move);
+        r.addEventListener(
+          'pointerup',
+          () => {
+            r.classList.remove('drag');
+            r.removeEventListener('pointermove', move);
+            try {
+              localStorage.setItem(
+                'rc-panel-' + side,
+                getComputedStyle(root)
+                  .getPropertyValue('--' + side)
+                  .trim(),
+              );
+            } catch {
+              /* ignore */
+            }
+          },
+          { once: true },
+        );
+      });
+    });
+
+    // R-SH-01: hide or show each panel (buttons, Ctrl+[ / Ctrl+], Ctrl+\ for both).
+    const work = $('.work');
+    function setPanel(side, visible) {
+      work.classList.toggle('no-' + side, !visible);
+      $(`[data-toggle="${side}"]`).setAttribute('aria-pressed', String(visible));
+      try {
+        localStorage.setItem('rc-hide-' + side, visible ? '0' : '1');
+      } catch {
+        /* ignore */
+      }
+    }
+    const isVisible = (side) => !work.classList.contains('no-' + side);
+    document
+      .querySelectorAll('[data-toggle]')
+      .forEach((b) =>
+        b.addEventListener('click', () => setPanel(b.dataset.toggle, !isVisible(b.dataset.toggle))),
+      );
+    document.addEventListener('keydown', (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      if (e.key === '[') setPanel('left', !isVisible('left'));
+      else if (e.key === ']') setPanel('right', !isVisible('right'));
+      else if (e.key === '\\') {
+        const show = !isVisible('left') && !isVisible('right');
+        setPanel('left', show);
+        setPanel('right', show);
+      } else return;
+      e.preventDefault();
+    });
+    try {
+      for (const side of ['left', 'right'])
+        if (localStorage.getItem('rc-hide-' + side) === '1') setPanel(side, false);
+    } catch {
+      /* storage unavailable */
+    }
+
+    select(selected);
+    fit();
+  })();
+</script>
