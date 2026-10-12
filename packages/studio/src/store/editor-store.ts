@@ -77,9 +77,28 @@ export type StoreDeps = {
 type Set = StoreApi<EditorState>['setState'];
 type Get = StoreApi<EditorState>['getState'];
 
-function flatNodesOf(doc: DesignDocument | undefined, pageId: string | undefined) {
+type FlatNodes = Readonly<Record<string, NodeRecord>>;
+
+/**
+ * Keeps the old record of every node that did not change, so a component reading one node by id
+ * re-renders only when that node changes (R-CV-05).
+ */
+function reuseUnchanged(previous: FlatNodes, next: FlatNodes): FlatNodes {
+  const result: Record<string, NodeRecord> = {};
+  for (const [id, record] of Object.entries(next)) {
+    const old = previous[id];
+    result[id] = old !== undefined && JSON.stringify(old) === JSON.stringify(record) ? old : record;
+  }
+  return result;
+}
+
+function flatNodesOf(
+  doc: DesignDocument | undefined,
+  pageId: string | undefined,
+  previous: FlatNodes = {},
+): FlatNodes {
   const page = doc === undefined || pageId === undefined ? undefined : doc.pages[pageId];
-  return page === undefined ? {} : normalize(page.root).nodes;
+  return page === undefined ? {} : reuseUnchanged(previous, normalize(page.root).nodes);
 }
 
 /** Inverse of a batch, last operation first (V-51). */
@@ -122,7 +141,7 @@ function dispatch(context: Context, ops: readonly DesignOperation[], meta: Meta)
   };
   set({
     document: applied.value.doc,
-    flatNodes: flatNodesOf(applied.value.doc, state.activePageId),
+    flatNodes: flatNodesOf(applied.value.doc, state.activePageId, state.flatNodes),
     undoStack: pushEntry(state.undoStack, entry),
     redoStack: [],
     notice: undefined,
@@ -144,7 +163,7 @@ function travel(context: Context, direction: 'undo' | 'redo'): void {
   const { coalesceKey: _merged, ...moved } = entry;
   set({
     document: applied.value.doc,
-    flatNodes: flatNodesOf(applied.value.doc, state.activePageId),
+    flatNodes: flatNodesOf(applied.value.doc, state.activePageId, state.flatNodes),
     undoStack: direction === 'undo' ? state.undoStack.slice(0, -1) : [...state.undoStack, moved],
     redoStack: direction === 'undo' ? [...state.redoStack, moved] : state.redoStack.slice(0, -1),
   });
