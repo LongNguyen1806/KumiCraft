@@ -142,3 +142,15 @@ export type { ThemeCssOptions } from './styling/theme-css.ts';
 export { generateThemeCss, validateTokenNameCollisions } from './styling/theme-css.ts';
 export { toTailwindClasses } from './styling/to-tailwind-classes.ts';
 export { createDefaultTokens } from './tokens/default-tokens.ts';
+export type {
+  CreateWorkspaceRequest,
+  FramePreset,
+  ParsedCreateWorkspaceRequest,
+} from './workspace/new-workspace.ts';
+export {
+  buildFrames,
+  CONTENT_LOCALE_PATTERN,
+  CreateWorkspaceRequestSchema,
+  FRAME_PRESETS,
+  resolvePrimaryFrame,
+} from './workspace/new-workspace.ts';

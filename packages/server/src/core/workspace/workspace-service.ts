@@ -2,17 +2,17 @@
 import {
   type DesignDocument,
   documentToFiles,
+  type ParsedCreateWorkspaceRequest,
   WORKSPACE_DIR,
   workspaceFilePath,
 } from '@reactcraft/model';
-import type { z } from 'zod';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { LoggerPort } from '../ports/logger-port.ts';
 import type { SystemPort } from '../ports/system-port.ts';
 import { err, ok, type Result } from '../shared/result.ts';
 import type { ConfigStore } from '../shared/user-config.ts';
-import { createWorkspaceDocument, type CreateWorkspaceRequestSchema } from './create-workspace.ts';
+import { createWorkspaceDocument } from './create-workspace.ts';
 import { acquireLock, releaseLock } from './lock.ts';
 import { type FileProblem, loadWorkspace } from './read-workspace.ts';
 
@@ -43,7 +43,7 @@ export type WorkspaceService = {
   state(): WorkspaceState;
   /** Startup: takes the lock and reads the workspace when `.reactcraft/` exists. E018 → exit. */
   open(): Promise<Result<WorkspaceState>>;
-  create(request: z.output<typeof CreateWorkspaceRequestSchema>): Promise<Result<WorkspaceState>>;
+  create(request: ParsedCreateWorkspaceRequest): Promise<Result<WorkspaceState>>;
   /** Reads the files again, for example after a restore or an external change. */
   reload(): Promise<WorkspaceState>;
   setTrusted(trusted: boolean): Promise<Result<WorkspaceState>>;
@@ -59,7 +59,7 @@ const ALREADY_EXISTS = err({ code: 'E018', params: { resource: 'workspace', reas
  */
 async function writeNewWorkspace(
   deps: WorkspaceServiceDeps,
-  request: z.output<typeof CreateWorkspaceRequestSchema>,
+  request: ParsedCreateWorkspaceRequest,
   log: LoggerPort,
 ): Promise<Result<DesignDocument>> {
   if (await deps.fs.exists(deps.root, workspaceFilePath.workspace())) return ALREADY_EXISTS;
