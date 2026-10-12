@@ -145,7 +145,7 @@ function LocaleField({ value, onChange }: FieldProps<string>) {
         onChange={(event) => {
           onChange(event.target.value);
         }}
-        className="h-10 justify-self-start rounded-full bg-field px-4"
+        className="h-10 justify-self-start rounded-full bg-field pr-8 pl-4"
       >
         {LOCALES.map((locale) => (
           <option key={locale} value={locale}>

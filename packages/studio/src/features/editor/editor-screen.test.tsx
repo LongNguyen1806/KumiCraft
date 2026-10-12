@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { isApplePlatform, shortcutLabel } from '../../app/platform.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { EditorScreen } from '../../routes/editor-screen.tsx';
 import { useEditorStore } from '../../store/editor-store.ts';
@@ -76,11 +77,13 @@ describe('Editor frame', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Show or hide the left panel/ }));
     expect(screen.queryByRole('complementary', { name: 'Layers and library' })).toBeNull();
-    press(']');
+    fireEvent.click(screen.getByRole('button', { name: /Show or hide the right panel/ }));
     expect(screen.queryByRole('complementary', { name: 'Properties' })).toBeNull();
     expect(readLayout().visible).toEqual({ left: false, right: false });
     press('\\');
     expect(screen.getAllByRole('complementary')).toHaveLength(2);
+    press('\\');
+    expect(screen.queryAllByRole('complementary')).toHaveLength(0);
   });
 
   it('undoes with Ctrl+Z and redoes with Ctrl+Y', async () => {
@@ -121,15 +124,49 @@ describe('Editor frame', () => {
 });
 
 describe('frame helpers', () => {
-  it('maps shortcuts, ignoring keys without Ctrl or Cmd', () => {
-    expect(shortcutFor({ key: 'z', ctrlKey: true, metaKey: false, shiftKey: false })).toBe('undo');
-    expect(shortcutFor({ key: 'Z', ctrlKey: false, metaKey: true, shiftKey: true })).toBe('redo');
-    expect(shortcutFor({ key: '[', ctrlKey: true, metaKey: false, shiftKey: false })).toBe(
-      'toggleLeft',
-    );
-    expect(
-      shortcutFor({ key: 'z', ctrlKey: false, metaKey: false, shiftKey: false }),
-    ).toBeUndefined();
+  it('uses Ctrl on Windows and Linux, Cmd on macOS', () => {
+    const key = (k: string, mods: Partial<KeyboardEvent> = {}) => ({
+      key: k,
+      ctrlKey: false,
+      metaKey: false,
+      shiftKey: false,
+      altKey: false,
+      ...mods,
+    });
+    expect(shortcutFor(key('z', { ctrlKey: true }), false)).toBe('undo');
+    expect(shortcutFor(key('y', { ctrlKey: true }), false)).toBe('redo');
+    expect(shortcutFor(key('\\', { ctrlKey: true }), false)).toBe('togglePanels');
+    expect(shortcutFor(key('z', { metaKey: true }), false)).toBeUndefined();
+
+    expect(shortcutFor(key('z', { metaKey: true }), true)).toBe('undo');
+    expect(shortcutFor(key('Z', { metaKey: true, shiftKey: true }), true)).toBe('redo');
+    expect(shortcutFor(key('z', { ctrlKey: true }), true)).toBeUndefined();
+  });
+
+  it('leaves the keys the browser keeps on macOS alone (back, forward, history)', () => {
+    const cmd = (k: string) => ({
+      key: k,
+      ctrlKey: false,
+      metaKey: true,
+      shiftKey: false,
+      altKey: false,
+    });
+
+    expect([
+      shortcutFor(cmd('['), true),
+      shortcutFor(cmd(']'), true),
+      shortcutFor(cmd('y'), true),
+    ]).toEqual([undefined, undefined, undefined]);
+  });
+
+  it('writes shortcuts the way each system does', () => {
+    expect([shortcutLabel('undo', true), shortcutLabel('redo', true)]).toEqual(['⌘Z', '⇧⌘Z']);
+    expect([shortcutLabel('undo', false), shortcutLabel('redo', false)]).toEqual([
+      'Ctrl+Z',
+      'Ctrl+Y',
+    ]);
+    expect(isApplePlatform('Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5)')).toBe(true);
+    expect(isApplePlatform('Mozilla/5.0 (Windows NT 10.0; Win64; x64)')).toBe(false);
   });
 
   it('keeps panel widths between 200 and 480 px and survives broken storage', () => {

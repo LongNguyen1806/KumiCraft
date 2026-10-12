@@ -90,13 +90,7 @@ function useShellKeys(
   useEditorShortcuts({
     undo: store.undo,
     redo: store.redo,
-    toggleLeft: () => {
-      panels.toggle('left');
-    },
-    toggleRight: () => {
-      panels.toggle('right');
-    },
-    toggleBoth: panels.toggleBoth,
+    togglePanels: panels.toggleBoth,
   });
 }
 

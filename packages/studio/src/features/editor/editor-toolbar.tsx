@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { LanguageSwitcher } from '../../app/language-switcher.tsx';
+import { shortcutLabel } from '../../app/platform.ts';
 import {
   CodeIcon,
   PanelLeftIcon,
@@ -49,10 +50,18 @@ export function EditorToolbar(props: EditorToolbarProps) {
         </span>
       </div>
       <div className="flex-1" />
-      <RoundButton label={t('editor.undo')} disabled={!props.canUndo} onClick={props.onUndo}>
+      <RoundButton
+        label={t('editor.undo', { shortcut: shortcutLabel('undo') })}
+        disabled={!props.canUndo}
+        onClick={props.onUndo}
+      >
         <UndoIcon />
       </RoundButton>
-      <RoundButton label={t('editor.redo')} disabled={!props.canRedo} onClick={props.onRedo}>
+      <RoundButton
+        label={t('editor.redo', { shortcut: shortcutLabel('redo') })}
+        disabled={!props.canRedo}
+        onClick={props.onRedo}
+      >
         <RedoIcon />
       </RoundButton>
       <LanguageSwitcher />
@@ -102,7 +111,9 @@ function PanelToggle({
   const { t } = useTranslation();
   return (
     <RoundButton
-      label={t(side === 'left' ? 'editor.toggleLeft' : 'editor.toggleRight')}
+      label={t(side === 'left' ? 'editor.toggleLeft' : 'editor.toggleRight', {
+        shortcut: shortcutLabel('panels'),
+      })}
       pressed={visible[side]}
       onClick={() => {
         onToggle(side);
@@ -123,7 +134,7 @@ function PagePicker({ pages, activePageId, onPage }: EditorToolbarProps) {
         onChange={(event) => {
           onPage(event.target.value);
         }}
-        className="h-8 rounded-full bg-transparent pr-2 text-ink"
+        className="h-8 rounded-full bg-transparent pr-7 pl-1 text-ink"
         data-testid="page-picker"
       >
         {pages.map((page) => (

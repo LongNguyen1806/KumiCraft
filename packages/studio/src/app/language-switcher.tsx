@@ -21,7 +21,7 @@ export function LanguageSwitcher() {
       <select
         value={i18n.resolvedLanguage}
         onChange={handleChange}
-        className="h-8 rounded-full bg-field px-3 text-ink"
+        className="h-8 rounded-full bg-field pr-7 pl-3 text-ink"
         data-testid="language-select"
       >
         {LANGUAGES.map((language) => (
