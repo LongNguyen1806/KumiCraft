@@ -30,6 +30,6 @@ export function WorkspaceScreen({ session, onRetry }: WorkspaceScreenProps) {
         />
       );
     case 'open':
-      return <EditorScreen version={version} name={workspace.name} revision={workspace.revision} />;
+      return <EditorScreen />;
   }
 }

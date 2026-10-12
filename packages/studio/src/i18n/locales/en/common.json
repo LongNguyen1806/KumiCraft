@@ -66,6 +66,46 @@
   },
   "editor": {
     "canvas": "Canvas",
-    "revision": "revision {{revision}}"
+    "revision": "revision {{revision}}",
+    "page": "Page",
+    "frames": "Design frames",
+    "zoom": "{{percent}}%",
+    "zoomFit": "Zoom to fit the frame",
+    "frameSize": "{{width}} × {{height}}",
+    "undo": "Undo (Ctrl+Z)",
+    "redo": "Redo (Ctrl+Y)",
+    "exportCode": "Export code",
+    "exportLater": "Available from Phase 3",
+    "toggleLeft": "Show or hide the left panel (Ctrl+[)",
+    "toggleRight": "Show or hide the right panel (Ctrl+])",
+    "resizeLeft": "Resize the left panel",
+    "resizeRight": "Resize the right panel",
+    "leftPanel": "Layers and library",
+    "rightPanel": "Properties",
+    "layers": "Layers",
+    "library": "Library",
+    "libraryLater": "The library of elements to drag onto the page comes with drag and drop.",
+    "properties": "Properties",
+    "data": "Data",
+    "ai": "AI",
+    "selectHint": "Select an element in Layers to see its properties.",
+    "sync": {
+      "saved": "Saved",
+      "saving": "Saving…",
+      "error": "Save failed",
+      "external_conflict": "The design was changed elsewhere"
+    },
+    "mode": {
+      "desktop-first": "Desktop first",
+      "mobile-first": "Mobile first"
+    },
+    "narrow": {
+      "title": "The Studio needs a screen at least 1024 px wide",
+      "body": "Open it on a computer or widen the browser window. Your design keeps being saved."
+    },
+    "notice": {
+      "E017": "The design changed elsewhere, so it was reloaded. Undo history was cleared.",
+      "E005": "The server refused the last change, so the design was reloaded. Undo history was cleared."
+    }
   }
 }

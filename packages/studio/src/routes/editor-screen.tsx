@@ -1,27 +1,53 @@
 import { useTranslation } from 'react-i18next';
 
-import { TopBar } from '../features/shell/top-bar.tsx';
+import { EditorShell } from '../features/editor/editor-shell.tsx';
+import { useWorkspaceDocument } from '../features/editor/use-workspace-document.ts';
+import { useEditorStore } from '../store/editor-store.ts';
+import { errorText } from './error-text.ts';
+import { LoadingScreen } from './loading-screen.tsx';
 
-type EditorScreenProps = {
-  readonly version: string;
-  readonly name: string;
-  readonly revision: number;
-};
+/** The document is missing although the session says the workspace is open. */
+const LOAD_FAILED = 'E003';
 
-/** State `open`. Toolbar, panels and status bar come with B4. */
-export function EditorScreen({ version, name, revision }: EditorScreenProps) {
+/** State `open`: the Editor (SPEC-04.1 section 6.2); narrower than 1024 px, a notice (R-SH-02). */
+export function EditorScreen() {
   const { t } = useTranslation();
+  const { t: tError } = useTranslation('errors');
+  const { load, retry } = useWorkspaceDocument();
+  const document = useEditorStore((state) => state.document);
+
+  if (load.status === 'loading' || (load.status === 'ready' && document === undefined)) {
+    return <LoadingScreen />;
+  }
+  if (load.status === 'failed' || document === undefined) {
+    return (
+      <main className="grid h-full place-items-center px-4">
+        <div className="grid max-w-md gap-4 rounded-panel bg-card p-8 shadow-soft">
+          <p role="alert" className="text-danger">
+            {errorText(tError, load.status === 'failed' ? load.code : LOAD_FAILED)}
+          </p>
+          <button
+            type="button"
+            onClick={retry}
+            className="h-10 justify-self-start rounded-full bg-charcoal px-5 text-on-charcoal"
+          >
+            {t('workspaceError.retry')}
+          </button>
+        </div>
+      </main>
+    );
+  }
   return (
-    <div className="flex h-full flex-col gap-2.5 px-3.5 py-3">
-      <TopBar version={version} workspaceName={name} />
-      <main
-        className="flex-1 rounded-panel bg-card/40 shadow-soft"
-        aria-label={t('editor.canvas')}
-        data-testid="editor"
-      />
-      <footer className="flex h-[34px] items-center gap-4 rounded-full bg-card px-4 text-xs text-ink-soft shadow-soft">
-        <span className="font-mono">{t('editor.revision', { revision })}</span>
-      </footer>
-    </div>
+    <>
+      <div className="h-full max-[1023px]:hidden">
+        <EditorShell document={document} />
+      </div>
+      <main className="hidden h-full place-items-center px-4 max-[1023px]:grid">
+        <div className="grid max-w-sm gap-3 rounded-panel bg-card p-7 shadow-soft">
+          <h1 className="text-[22px] font-normal text-balance">{t('editor.narrow.title')}</h1>
+          <p className="text-ink-soft">{t('editor.narrow.body')}</p>
+        </div>
+      </main>
+    </>
   );
 }

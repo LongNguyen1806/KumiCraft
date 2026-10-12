@@ -4,6 +4,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import type { EventsClientOptions } from '../api/events-client.ts';
 import { initI18n } from '../i18n/i18n.ts';
+import { sampleDocument, stubApi } from '../store/test-support.ts';
 import { App } from './app.tsx';
 
 /** The event socket is driven by the tests through the captured callback. */
@@ -52,7 +53,10 @@ describe('App', () => {
 
   it('opens the editor of an open workspace', async () => {
     const open = { state: 'open', id: 'ws00000001', name: 'Shop', revision: 42, trusted: true };
-    vi.stubGlobal('fetch', respond(200, session(open)));
+    stubApi({
+      session: session(open).data,
+      'workspace/document': { document: sampleDocument(42), revision: 42 },
+    });
 
     render(<App />);
 

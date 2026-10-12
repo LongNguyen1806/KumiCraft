@@ -66,6 +66,46 @@
   },
   "editor": {
     "canvas": "Canvas",
-    "revision": "revision {{revision}}"
+    "revision": "revision {{revision}}",
+    "page": "Trang",
+    "frames": "Khung thiết kế",
+    "zoom": "{{percent}}%",
+    "zoomFit": "Thu phóng vừa khung",
+    "frameSize": "{{width}} × {{height}}",
+    "undo": "Hoàn tác (Ctrl+Z)",
+    "redo": "Làm lại (Ctrl+Y)",
+    "exportCode": "Xuất code",
+    "exportLater": "Có từ Phase 3",
+    "toggleLeft": "Ẩn/hiện panel trái (Ctrl+[)",
+    "toggleRight": "Ẩn/hiện panel phải (Ctrl+])",
+    "resizeLeft": "Đổi độ rộng panel trái",
+    "resizeRight": "Đổi độ rộng panel phải",
+    "leftPanel": "Lớp và thư viện",
+    "rightPanel": "Thuộc tính",
+    "layers": "Lớp",
+    "library": "Thư viện",
+    "libraryLater": "Thư viện phần tử để kéo vào trang sẽ có ở bước kéo thả.",
+    "properties": "Thuộc tính",
+    "data": "Dữ liệu",
+    "ai": "AI",
+    "selectHint": "Chọn một phần tử trong Lớp để xem thuộc tính.",
+    "sync": {
+      "saved": "Đã lưu",
+      "saving": "Đang lưu…",
+      "error": "Lỗi lưu",
+      "external_conflict": "Thiết kế đã thay đổi ở nơi khác"
+    },
+    "mode": {
+      "desktop-first": "Desktop trước",
+      "mobile-first": "Mobile trước"
+    },
+    "narrow": {
+      "title": "Studio cần màn hình rộng tối thiểu 1024 px",
+      "body": "Hãy mở trên máy tính hoặc kéo rộng cửa sổ trình duyệt. Thiết kế của bạn vẫn được lưu bình thường."
+    },
+    "notice": {
+      "E017": "Thiết kế đã thay đổi ở nơi khác nên đã được tải lại. Lịch sử hoàn tác đã xóa.",
+      "E005": "Server từ chối thay đổi vừa rồi nên thiết kế đã được tải lại. Lịch sử hoàn tác đã xóa."
+    }
   }
 }
