@@ -62,13 +62,14 @@ Phase 1 bắt đầu song song với phần còn lại của Phase 0 (chủ sả
 
 ## Phase 1: gói công việc
 
-| WP                        | Tên                                                         | Trạng thái                                                                                                                                                 |
-| ------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| WP-1.01                   | Model: schema Zod đầy đủ, quy tắc V-xx                      | Xong (83 test model). V-29, V-33 dời sang WP-1.02 (spec-log #28)                                                                                           |
-| WP-1.02                   | Model: mọi operation, `applyBatch`, `assignIds`, dạng phẳng | Xong: 24 loại operation; property test 400 + 150 lượt (`apply(invert(op))`); PB-01 trung bình 2,1 ms, p99 4,0 ms (ngân sách 5 ms)                          |
-| WP-1.03                   | Model: khung migration, `serializeCanonical`                | Xong: ghi hai lần giống từng byte (kể cả sau khi đọc lại); pipeline migration chạy với 1 → 1 rỗng và chuỗi giả 0 → 1 → 2; tách và ghép file `.reactcraft/` |
-| WP-1.05 (Phần 1A)         | Server API & Design Store (M-DS, Fastify Workspace Routes)  | Xong: DesignStore (debounce 500ms, rotating backups tối đa 20), full HTTP Workspace routes (/document, /operations, /reload, /backups, /trust). 13 test    |
-| WP-1.04, 1.05B, 1.06–1.11 | Theo SPEC-07 mục 5.2                                        | Chưa                                                                                                                                                       |
+| WP           | Tên                                                                  | Trạng thái                                                                                                                                                                                                                                                                                                     |
+| ------------ | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| WP-1.01      | Model: schema Zod đầy đủ, quy tắc V-xx                               | Xong (83 test model). V-29, V-33 dời sang WP-1.02 (spec-log #28)                                                                                                                                                                                                                                               |
+| WP-1.02      | Model: mọi operation, `applyBatch`, `assignIds`, dạng phẳng          | Xong: 24 loại operation; property test 400 + 150 lượt (`apply(invert(op))`); PB-01 trung bình 2,1 ms, p99 4,0 ms (ngân sách 5 ms)                                                                                                                                                                              |
+| WP-1.03      | Model: khung migration, `serializeCanonical`                         | Xong: ghi hai lần giống từng byte (kể cả sau khi đọc lại); pipeline migration chạy với 1 → 1 rỗng và chuỗi giả 0 → 1 → 2; tách và ghép file `.reactcraft/`                                                                                                                                                     |
+| WP-1.04      | Model: M-TK, M-SM (Styling Map, toTailwindClasses, generateThemeCss) | Xong: Đủ bảng 5.3 cả v4 và v3, desktop-first và mobile-first, states, runtime hidden, 9 nhóm class (R-SM-01), V-29 normalizeResponsive, R-SM-05. 23 test styling đạt.                                                                                                                                          |
+| WP-1.05      | Server API, Design Store (M-DS), WebSocket Events & Watcher          | Xong: DesignStore (debounce 500 ms, tối đa 2 s, giữ 20 bản sao lưu), route workspace và `/settings`, WebSocket `/api/v1/events`, theo dõi file (R-DS-11). Test khởi động lại: tạo → sửa → tắt → mở lại còn nguyên. PB-02 1,8 ms, PB-03 24 ms. Sửa lỗi revision không lưu xuống `workspace.json` (spec-log #60) |
+| WP-1.06–1.11 | Theo SPEC-07 mục 5.2                                                 | Chưa                                                                                                                                                                                                                                                                                                           |
 
 ## Việc chờ chủ sản phẩm
 
@@ -88,6 +89,6 @@ Phase 1 bắt đầu song song với phần còn lại của Phase 0 (chủ sả
 
 ## Bước tiếp theo
 
-1. WP-1.05 (M-WS, M-DS, M-SV): server mở, tạo, lưu workspace (debounce, sao lưu, khóa phiên E018), endpoint và sự kiện workspace, `/workspace/trust`, cấu hình người dùng, log có lọc secrets.
-2. WP-1.06 (M-SH, M-HS): Studio Welcome, Editor, Settings, Undo/Redo. Sau đó WP-1.04 (M-TK, M-SM, V-29) trước WP-1.07 (Canvas).
+1. WP-1.06 (M-SH, M-HS): Studio Welcome, Editor, Settings, Undo/Redo.
+2. WP-1.07 (M-CV, M-OV): Canvas Renderer (iframe, portal, Tailwind runtime, 25 loại node), Overlay hover/selection.
 3. Làm lại VG-11 trước WP-1.08; VG-14 trước Phase 2.
