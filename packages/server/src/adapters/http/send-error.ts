@@ -8,7 +8,15 @@ import { type AppError, HTTP_STATUS_BY_CODE } from '../../core/shared/result.ts'
  * one (for example 421 for a wrong Host, SPEC-05 S-04).
  */
 export function sendError(reply: FastifyReply, error: AppError, status?: number): FastifyReply {
-  return reply.status(status ?? HTTP_STATUS_BY_CODE[error.code]).send({
+  const httpStatus = status ?? HTTP_STATUS_BY_CODE[error.code];
+  if (httpStatus >= 500) {
+    // The cause stays here: the log is the only place a server failure can be diagnosed.
+    reply.request.log.error(
+      { code: error.code, params: error.params, err: error.cause },
+      'request failed',
+    );
+  }
+  return reply.status(httpStatus).send({
     error: {
       code: error.code,
       params: error.params,
