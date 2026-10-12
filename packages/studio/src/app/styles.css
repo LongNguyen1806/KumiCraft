@@ -1,1 +1,76 @@
+/* Studio look (docs/construction/mockups/studio-editor.html, spec-log #64): frosted white panels on
+   a cool-grey to cream wash, charcoal pills for what is active, warm yellow for what the Studio
+   points at. Fonts ship with the Studio: the CSP allows fonts from the server only. */
+@import '@fontsource/be-vietnam-pro/300.css';
+@import '@fontsource/be-vietnam-pro/400.css';
+@import '@fontsource/be-vietnam-pro/500.css';
+@import '@fontsource/be-vietnam-pro/600.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
 @import 'tailwindcss';
+
+@theme {
+  --color-wash-cool: #e4e6ea;
+  --color-wash-warm: #f6edc9;
+  --color-card: rgb(255 255 255 / 0.74);
+  --color-card-solid: #ffffff;
+  --color-field: #f3f2ed;
+  --color-ink: #1f1f1d;
+  --color-ink-soft: #5c5b55;
+  --color-ink-faint: #94928a;
+  --color-line: #e6e2d6;
+  --color-charcoal: #2a2a28;
+  --color-on-charcoal: #ffffff;
+  --color-sun: #f5cf4f;
+  --color-sun-soft: #fbf0c4;
+  --color-leaf: #6aa84f;
+  --color-danger: #c2410c;
+
+  --font-sans: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+
+  --radius-panel: 22px;
+  --shadow-soft: 0 1px 2px rgb(60 52 30 / 0.05), 0 12px 32px rgb(60 52 30 / 0.08);
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    background-color: var(--color-wash-cool);
+    background-image:
+      radial-gradient(120% 90% at 100% 100%, var(--color-wash-warm) 0%, transparent 60%),
+      linear-gradient(
+        135deg,
+        var(--color-wash-cool) 0%,
+        var(--color-wash-cool) 35%,
+        var(--color-wash-warm) 100%
+      );
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-charcoal);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
+}
