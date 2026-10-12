@@ -23,7 +23,7 @@ const layerRow = (text: string): HTMLElement => {
 
 const openEditor = async () => {
   stubApi({ 'workspace/document': { document: sampleDocument(4), revision: 4 } });
-  render(<EditorScreen />);
+  render(<EditorScreen trusted onTrusted={vi.fn()} />);
   await screen.findByTestId('frame');
 };
 
@@ -117,7 +117,7 @@ describe('Editor frame', () => {
 
   it('shows the error and a retry when the document cannot be loaded', async () => {
     stubApi({});
-    render(<EditorScreen />);
+    render(<EditorScreen trusted onTrusted={vi.fn()} />);
 
     expect((await screen.findByRole('alert')).textContent).toContain('(E015)');
   });

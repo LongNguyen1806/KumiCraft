@@ -30,6 +30,6 @@ export function WorkspaceScreen({ session, onRetry }: WorkspaceScreenProps) {
         />
       );
     case 'open':
-      return <EditorScreen />;
+      return <EditorScreen trusted={workspace.trusted} onTrusted={onRetry} />;
   }
 }

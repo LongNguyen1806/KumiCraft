@@ -2,6 +2,7 @@ import { type DesignDocument, type DesignNode, type Frame, walkTree } from '@rea
 import { useEffect, useState } from 'react';
 
 import { type EditorState, useEditorStore } from '../../store/editor-store.ts';
+import { TrustPrompt } from '../trust/trust-prompt.tsx';
 import { CanvasArea, fitScale } from './canvas-area.tsx';
 import { EditorToolbar } from './editor-toolbar.tsx';
 import { Resizer } from './resizer.tsx';
@@ -95,7 +96,14 @@ function useShellKeys(
 }
 
 /** The Editor of an open workspace (SPEC-04.1 section 6.2), on the loaded document. */
-export function EditorShell({ document }: { readonly document: DesignDocument }) {
+type EditorShellProps = {
+  readonly document: DesignDocument;
+  /** S-81: an untrusted workspace opens in restricted mode. */
+  readonly trusted: boolean;
+  readonly onTrusted: () => void;
+};
+
+export function EditorShell({ document, trusted, onTrusted }: EditorShellProps) {
   const store = useEditorStore();
   const panels = usePanelLayout();
   const { workspace } = document;
@@ -126,6 +134,7 @@ export function EditorShell({ document }: { readonly document: DesignDocument })
         visible={panels.layout.visible}
         onToggle={panels.toggle}
       />
+      {!trusted && <TrustPrompt workspace={workspace} onTrusted={onTrusted} />}
       <WorkArea
         panels={panels}
         root={root}

@@ -10,7 +10,13 @@ import { LoadingScreen } from './loading-screen.tsx';
 const LOAD_FAILED = 'E003';
 
 /** State `open`: the Editor (SPEC-04.1 section 6.2); narrower than 1024 px, a notice (R-SH-02). */
-export function EditorScreen() {
+type EditorScreenProps = {
+  readonly trusted: boolean;
+  /** Reads the session again once the workspace is trusted. */
+  readonly onTrusted: () => void;
+};
+
+export function EditorScreen({ trusted, onTrusted }: EditorScreenProps) {
   const { t } = useTranslation();
   const { t: tError } = useTranslation('errors');
   const { load, retry } = useWorkspaceDocument();
@@ -40,7 +46,7 @@ export function EditorScreen() {
   return (
     <>
       <div className="h-full max-[1023px]:hidden">
-        <EditorShell document={document} />
+        <EditorShell document={document} trusted={trusted} onTrusted={onTrusted} />
       </div>
       <main className="hidden h-full place-items-center px-4 max-[1023px]:grid">
         <div className="grid max-w-sm gap-3 rounded-panel bg-card p-7 shadow-soft">

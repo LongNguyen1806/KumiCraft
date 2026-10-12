@@ -123,5 +123,18 @@
     "buildCheckHelp": "Runs the project build to make sure it still builds. The build runs the project's own configuration and plugins, so turn it on only for projects you trust.",
     "saving": "Saving…",
     "saved": "Saved"
+  },
+  "trust": {
+    "bar": "This workspace is not trusted: backend scanning, code export and AI are locked. You can still view and edit the design.",
+    "review": "Review and trust",
+    "title": "Do you trust this workspace?",
+    "intro": "This workspace is not trusted on this computer yet. When you scan a backend or export code, ReactCraft reads and writes the folders below.",
+    "restricted": "Until you trust it, you can view and edit the design; backend scanning, code export, test builds and sending source code to AI are locked.",
+    "confirm": "Trust this workspace",
+    "later": "Not now, only view and edit the design",
+    "close": "Close",
+    "targetProject": "Target Project (where code is written)",
+    "noLinks": "This workspace points to no other folder.",
+    "outside": "Outside the workspace folder: make sure you know this folder."
   }
 }

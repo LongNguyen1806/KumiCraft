@@ -123,5 +123,18 @@
     "buildCheckHelp": "Chạy build của project để chắc nó vẫn build được. Lệnh build chạy cấu hình và plugin của chính project, chỉ bật với project bạn tin tưởng.",
     "saving": "Đang lưu…",
     "saved": "Đã lưu"
+  },
+  "trust": {
+    "bar": "Workspace chưa được tin cậy: quét backend, xuất code và AI đang tạm khóa. Bạn vẫn xem và sửa thiết kế được.",
+    "review": "Xem và tin cậy",
+    "title": "Bạn có tin tưởng workspace này?",
+    "intro": "Workspace này chưa được tin cậy trên máy này. Khi bạn quét backend hoặc xuất code, ReactCraft sẽ đọc và ghi vào các thư mục dưới đây.",
+    "restricted": "Chưa tin cậy thì bạn vẫn xem và sửa thiết kế; quét backend, xuất code, build thử và gửi mã nguồn cho AI bị khóa.",
+    "confirm": "Tin cậy workspace này",
+    "later": "Chưa, chỉ xem và sửa thiết kế",
+    "close": "Đóng",
+    "targetProject": "Project đích (nơi ghi code)",
+    "noLinks": "Workspace chưa trỏ tới thư mục nào khác.",
+    "outside": "Nằm ngoài thư mục workspace: hãy chắc đây là thư mục bạn biết."
   }
 }
