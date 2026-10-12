@@ -18,7 +18,7 @@ Chứng minh bằng số đo rằng Canvas đạt ngân sách hiệu năng, rồ
 - `packages/studio/src/features/canvas/**`, `features/overlay/**`: chỉ thêm **mốc đo** (`performance.mark`/`measure`) và sửa lỗi hiệu năng tìm được
 - `packages/studio/src/store/editor-store.ts`: chỉ khi test R-CV-05 chứng minh store tạo lại object của node không đổi (xem việc C)
 - `e2e/perf/canvas-perf.e2e.ts` (mới), `playwright.config.js` (thêm project/`grep` cho perf nếu cần), `package.json` gốc (script `bench:ui`)
-- `docs/construction/progress.md`, `modules.md`, `docs/construction/wp/wp-1.07.md` (mới, báo cáo WP)
+- `docs/construction/progress.md`, `modules.md` (chỉ khi đóng WP)
 
 ## Việc cần làm
 
@@ -39,20 +39,15 @@ Chứng minh bằng số đo rằng Canvas đạt ngân sách hiệu năng, rồ
 
 ### C. R-CV-05: chỉ node đổi mới render lại
 
-Test Vitest (jsdom), `features/canvas/canvas-rerender.test.tsx`:
-
-- Dựng trang có nhiều node, đếm số lần render từng loại renderer (dùng `vi.mock` bọc `NODE_RENDERERS` bằng bản đếm, hoặc `<Profiler>`; chọn cách đọc dễ nhất).
-- `dispatch` đổi nội dung đúng một node `Text`; kiểm tra **chỉ** node đó render lại thêm một lần, **không** có anh em và tổ tiên của nó (tổ tiên được phép render lại **chỉ** nếu `childIds` đổi).
-- Nếu test đỏ vì store tạo object mới cho cả nhánh: sửa `editor-store.ts` để các node không đổi **giữ nguyên tham chiếu** trong `flatNodes` (chia sẻ cấu trúc). Báo rõ trong báo cáo đây là thay đổi ở store, kèm test của store.
+Đã làm ở 1A (Claude sửa): `packages/studio/src/features/canvas/canvas-rerender.test.tsx` và `reuseUnchanged` trong `editor-store.ts`. Ở bước này chỉ cần: (1) chạy lại test đó, (2) thêm một ca với trang có `List` và `ComponentInstance` (đổi một node bên trong slot của instance, chỉ node đó được vẽ lại), (3) thêm ca đổi **token**: chỉ khối theme cập nhật, không node nào render lại ngoài các node dùng token đó cũng không cần render lại (class không đổi).
 
 ### D. Dọn lỗi tìm được
 
 Ghi mọi thứ đo được cao bất thường vào báo cáo kèm nguyên nhân. Sửa nếu thuộc phạm vi; nếu thuộc module khác, ghi vào `spec-log.md` và báo, đừng tự sửa.
 
-### E. Báo cáo WP và theo dõi
+### E. Đóng WP-1.07
 
-- Viết `docs/construction/wp/wp-1.07.md` theo mẫu `wp-0.02.md` (xem file đó): phạm vi đã làm, số đo PB-13/PB-16, quyết định kỹ thuật (Tailwind runtime, `transform: scale`, cách tránh xung đột React khi sửa chữ), điểm lệch Spec (số # trong spec-log), việc còn lại (R-CV-03 dữ liệu mẫu theo binding chờ Phase 4; rich text chờ WP-2.09).
-- `progress.md`: WP-1.07 → Xong; Phase 1: 7/11. `modules.md`: M-CV, M-OV → Xong (P1), ghi "chưa gồm R-CV-03, R-CV-08..10 Xem thử (Phase 2/4) và rich text (WP-2.09)".
+Không viết báo cáo WP riêng. Chỉ cập nhật `progress.md` (WP-1.07 → Xong, Phase 1: 7/11) và `modules.md` (M-CV, M-OV → Xong), và ghi trong báo cáo cuối: việc hoãn (R-CV-03 dữ liệu mẫu chờ Phase 4; rich text chờ WP-2.09; Xem thử chờ WP-2.08).
 
 ## Kiểm tra (dán kết quả thật)
 

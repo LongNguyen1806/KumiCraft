@@ -1,5 +1,7 @@
 # Bước 1B — Overlay: hover, chọn, nhiều lựa chọn (M-OV)
 
+> Giao cùng lúc với [1C](buoc-01c-sua-chu-truc-tiep.md) và [1D](buoc-01d-hieu-nang-canvas.md). Làm lần lượt B → C → D, báo cáo một lần, theo "Quy trình rút gọn" trong [README](README.md).
+
 WP-1.07, phần 2/4. Module: M-OV. Spec: SPEC-04.1 mục 8.1 đến 8.3 (không gồm 8.4), mục 6 (thanh trạng thái). Yêu cầu: 1A đã xong và đã commit.
 
 ## Mục tiêu
