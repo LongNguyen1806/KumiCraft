@@ -4,11 +4,63 @@
     "version": "Version {{version}}"
   },
   "session": {
-    "connecting": "Connecting to ReactCraft…"
+    "connecting": "Connecting to ReactCraft…",
+    "lost": {
+      "title": "Lost connection to ReactCraft",
+      "body": "Trying to reconnect. You can keep editing once the connection is back."
+    }
   },
   "language": {
     "label": "Language",
     "vi": "Tiếng Việt",
     "en": "English"
+  },
+  "welcome": {
+    "title": "Welcome to ReactCraft",
+    "subtitle": "This folder has no workspace yet. Create one to start designing.",
+    "directory": "Folder",
+    "storage": "The design is saved as JSON files in the .reactcraft/ folder right here. You can commit it to Git with your source code.",
+    "form": {
+      "name": "Workspace name",
+      "namePlaceholder": "For example: Fashion store",
+      "mode": "Which screen do you design for first?",
+      "desktopFirst": "Desktop first",
+      "desktopFirstHelp": "Design for large screens, then adjust for tablets and phones.",
+      "mobileFirst": "Mobile first",
+      "mobileFirstHelp": "Design for phones, then expand to larger screens.",
+      "frame": "Primary frame",
+      "custom": "Custom",
+      "width": "Width",
+      "height": "Height",
+      "framesPreview": "The workspace gets these frames:",
+      "frameItem": "{{label}} {{width}} × {{height}}",
+      "locale": "Content language",
+      "localeHelp": "Language of the website you design: used for sample data and for number, currency and date formats. Separate from the Studio interface language.",
+      "locales": {
+        "vi-VN": "Tiếng Việt (vi-VN)",
+        "en-US": "English (en-US)"
+      },
+      "advanced": "Advanced options",
+      "darkMode": "Website dark mode",
+      "dark": {
+        "none": "None",
+        "media": "Follow the system",
+        "class": "Toggle with a class"
+      },
+      "submit": "Create workspace",
+      "submitting": "Creating…",
+      "errors": {
+        "name": "Name the workspace, up to 64 characters.",
+        "frameSize": "Frames are 320 to 3840 px wide and 320 to 2160 px high."
+      }
+    }
+  },
+  "workspaceError": {
+    "title": "Cannot open the workspace",
+    "retry": "Try again"
+  },
+  "editor": {
+    "canvas": "Canvas",
+    "revision": "revision {{revision}}"
   }
 }

@@ -16,12 +16,12 @@ export function LanguageSwitcher() {
   };
 
   return (
-    <label className="flex items-center gap-2 text-sm text-neutral-600">
+    <label className="flex h-10 items-center gap-2 rounded-full bg-card pr-1.5 pl-4 text-ink-soft shadow-soft">
       {t('language.label')}
       <select
         value={i18n.resolvedLanguage}
         onChange={handleChange}
-        className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-neutral-900"
+        className="h-8 rounded-full bg-field px-3 text-ink"
         data-testid="language-select"
       >
         {LANGUAGES.map((language) => (

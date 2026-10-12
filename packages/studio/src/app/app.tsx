@@ -1,59 +1,25 @@
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { ConnectionOverlay } from '../features/shell/connection-overlay.tsx';
+import { useConnection } from '../features/shell/use-connection.ts';
+import { useSession } from '../features/shell/use-session.ts';
+import { LoadingScreen } from '../routes/loading-screen.tsx';
+import { SessionErrorScreen } from '../routes/session-error-screen.tsx';
+import { WorkspaceScreen } from '../routes/workspace-screen.tsx';
 
-import { ApiError } from '../api/http.ts';
-import { fetchSession } from '../api/session.ts';
-import { isErrorKey } from '../i18n/error-key.ts';
-import { LanguageSwitcher } from './language-switcher.tsx';
-
-type SessionState =
-  | { readonly status: 'loading' }
-  | { readonly status: 'ready'; readonly version: string }
-  | { readonly status: 'failed'; readonly code: string };
-
+/** Studio shell: session first, then the screen of the workspace state (SPEC-04.1 section 6.1). */
 export function App() {
-  const { t } = useTranslation();
-  const { t: tError } = useTranslation('errors');
-  const [session, setSession] = useState<SessionState>({ status: 'loading' });
+  const { state, reload } = useSession();
+  const connection = useConnection(state.status === 'ready', reload);
 
-  useEffect(() => {
-    let isActive = true;
-    const load = async () => {
-      try {
-        const info = await fetchSession();
-        if (isActive) setSession({ status: 'ready', version: info.version });
-      } catch (error) {
-        const code = error instanceof ApiError ? (error.code ?? String(error.status)) : 'network';
-        if (isActive) setSession({ status: 'failed', code });
-      }
-    };
-    void load();
-    return () => {
-      isActive = false;
-    };
-  }, []);
+  if (state.status === 'loading') return <LoadingScreen />;
+  if (state.status === 'failed') return <SessionErrorScreen code={state.code} />;
 
+  const isOffline = connection === 'offline';
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-neutral-50 px-6 text-center text-neutral-900">
-      <h1 className="text-4xl font-semibold tracking-tight">{t('app.name')}</h1>
-      {session.status === 'loading' && (
-        <p className="text-sm text-neutral-500">{t('session.connecting')}</p>
-      )}
-      {session.status === 'ready' && (
-        <p className="text-sm text-neutral-500" data-testid="studio-version">
-          {t('app.version', { version: session.version })}
-        </p>
-      )}
-      {session.status === 'failed' && (
-        <p className="max-w-md text-sm text-red-600" role="alert" data-testid="session-error">
-          {isErrorKey(session.code)
-            ? `${tError(session.code)} (${session.code})`
-            : tError('unknown', { code: session.code })}
-        </p>
-      )}
-      <div className="mt-6">
-        <LanguageSwitcher />
+    <>
+      <div className="h-full" inert={isOffline}>
+        <WorkspaceScreen session={state.session} onRetry={reload} />
       </div>
-    </main>
+      {isOffline && <ConnectionOverlay />}
+    </>
   );
 }

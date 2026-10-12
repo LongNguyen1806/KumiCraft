@@ -1,20 +1,13 @@
 // Typed REST workspace client for Studio (SPEC-03 section 10.3, SPEC-04.1 section 6, ADR-FE-17).
 import type {
+  CreateWorkspaceRequest,
   DesignDocument,
   OperationBatch,
-  ResponsiveMode,
   WorkspaceMeta,
 } from '@reactcraft/model';
 
 import { apiGet, apiPost } from './http.ts';
 import type { SessionInfo } from './session.ts';
-
-export type CreateWorkspaceRequest = {
-  readonly name: string;
-  readonly responsiveMode: ResponsiveMode;
-  readonly defaultFrameId?: string;
-  readonly contentLocale?: string;
-};
 
 export type DocumentResponse = {
   readonly document: DesignDocument;

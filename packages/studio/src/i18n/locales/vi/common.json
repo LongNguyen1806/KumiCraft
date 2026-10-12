@@ -4,11 +4,63 @@
     "version": "Phiên bản {{version}}"
   },
   "session": {
-    "connecting": "Đang kết nối tới ReactCraft…"
+    "connecting": "Đang kết nối tới ReactCraft…",
+    "lost": {
+      "title": "Mất kết nối tới ReactCraft",
+      "body": "Đang thử kết nối lại. Bạn sửa tiếp được khi kết nối trở lại."
+    }
   },
   "language": {
     "label": "Ngôn ngữ",
     "vi": "Tiếng Việt",
     "en": "English"
+  },
+  "welcome": {
+    "title": "Chào mừng tới ReactCraft",
+    "subtitle": "Thư mục này chưa có workspace. Tạo một workspace để bắt đầu thiết kế giao diện.",
+    "directory": "Thư mục",
+    "storage": "Thiết kế được lưu trong thư mục .reactcraft/ ngay tại đây, dạng file JSON. Bạn có thể commit nó vào Git cùng mã nguồn.",
+    "form": {
+      "name": "Tên workspace",
+      "namePlaceholder": "Ví dụ: Cửa hàng thời trang",
+      "mode": "Bạn thiết kế cho màn hình nào trước?",
+      "desktopFirst": "Desktop trước",
+      "desktopFirstHelp": "Thiết kế cho màn hình lớn, rồi chỉnh lại cho tablet và điện thoại.",
+      "mobileFirst": "Mobile trước",
+      "mobileFirstHelp": "Thiết kế cho điện thoại, rồi mở rộng lên màn hình lớn.",
+      "frame": "Khung chính",
+      "custom": "Tùy chỉnh",
+      "width": "Rộng",
+      "height": "Cao",
+      "framesPreview": "Workspace sẽ có các khung:",
+      "frameItem": "{{label}} {{width}} × {{height}}",
+      "locale": "Ngôn ngữ nội dung",
+      "localeHelp": "Ngôn ngữ của trang web bạn thiết kế: dùng cho dữ liệu mẫu và định dạng số, tiền, ngày. Khác với ngôn ngữ giao diện Studio.",
+      "locales": {
+        "vi-VN": "Tiếng Việt (vi-VN)",
+        "en-US": "English (en-US)"
+      },
+      "advanced": "Tùy chọn nâng cao",
+      "darkMode": "Chế độ tối của trang web",
+      "dark": {
+        "none": "Không dùng",
+        "media": "Theo hệ điều hành",
+        "class": "Bật bằng class"
+      },
+      "submit": "Tạo workspace",
+      "submitting": "Đang tạo…",
+      "errors": {
+        "name": "Hãy đặt tên cho workspace, tối đa 64 ký tự.",
+        "frameSize": "Khung rộng từ 320 đến 3840 px, cao từ 320 đến 2160 px."
+      }
+    }
+  },
+  "workspaceError": {
+    "title": "Không mở được workspace",
+    "retry": "Thử lại"
+  },
+  "editor": {
+    "canvas": "Canvas",
+    "revision": "revision {{revision}}"
   }
 }
