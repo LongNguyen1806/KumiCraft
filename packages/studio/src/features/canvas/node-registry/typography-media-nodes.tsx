@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { NodeRenderProps } from './layout-nodes.tsx';
+import { nodeAttrs, type NodeRenderProps } from './layout-nodes.tsx';
 
 const HEADING_TAGS = {
   1: 'h1',
@@ -19,28 +19,28 @@ function resolveImageSrc(src: string): string {
   return src;
 }
 
-export function TextNode({ node, className }: NodeRenderProps) {
+export function TextNode({ node, className, isInner }: NodeRenderProps) {
   const content = node.content?.kind === 'text' ? node.content : undefined;
   const Tag = content?.as ?? 'p';
   return (
-    <Tag data-rc-node={node.id} className={className}>
+    <Tag {...nodeAttrs(node.id, isInner)} className={className}>
       {content?.text ?? ''}
     </Tag>
   );
 }
 
-export function HeadingNode({ node, className }: NodeRenderProps) {
+export function HeadingNode({ node, className, isInner }: NodeRenderProps) {
   const content = node.content?.kind === 'heading' ? node.content : undefined;
   const level = content?.level ?? 1;
   const Tag = HEADING_TAGS[level];
   return (
-    <Tag data-rc-node={node.id} className={className}>
+    <Tag {...nodeAttrs(node.id, isInner)} className={className}>
       {content?.text ?? ''}
     </Tag>
   );
 }
 
-export function ImageNode({ node, className }: NodeRenderProps) {
+export function ImageNode({ node, className, isInner }: NodeRenderProps) {
   const { t } = useTranslation();
   const content = node.content?.kind === 'image' ? node.content : undefined;
   const [failed, setFailed] = useState(false);
@@ -49,10 +49,22 @@ export function ImageNode({ node, className }: NodeRenderProps) {
     const placeholder = content?.alt ?? t('canvas.imagePlaceholder');
     return (
       <div
-        data-rc-node={node.id}
-        className={`flex items-center justify-center bg-neutral-200 text-neutral-500 ${className}`}
+        {...nodeAttrs(node.id, isInner)}
+        className={`flex items-center justify-center gap-2 bg-neutral-200 text-neutral-500 ${className}`}
         aria-label={placeholder}
       >
+        <svg
+          className="size-4 shrink-0 text-neutral-400"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          aria-hidden="true"
+        >
+          <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+          <circle cx="9" cy="9" r="2" />
+          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+        </svg>
         <span className="text-xs font-mono">{placeholder}</span>
       </div>
     );
@@ -60,7 +72,7 @@ export function ImageNode({ node, className }: NodeRenderProps) {
 
   return (
     <img
-      data-rc-node={node.id}
+      {...nodeAttrs(node.id, isInner)}
       src={resolveImageSrc(content.src)}
       alt={content.alt}
       onError={() => {
@@ -71,13 +83,13 @@ export function ImageNode({ node, className }: NodeRenderProps) {
   );
 }
 
-export function IconNode({ node, className }: NodeRenderProps) {
+export function IconNode({ node, className, isInner }: NodeRenderProps) {
   const content = node.content?.kind === 'icon' ? node.content : undefined;
   const rawSize = content?.size;
   const size = typeof rawSize === 'number' ? rawSize : (rawSize?.px ?? 24);
   return (
     <svg
-      data-rc-node={node.id}
+      {...nodeAttrs(node.id, isInner)}
       width={size}
       height={size}
       viewBox="0 0 24 24"
@@ -95,6 +107,6 @@ export function IconNode({ node, className }: NodeRenderProps) {
   );
 }
 
-export function DividerNode({ node, className }: NodeRenderProps) {
-  return <hr data-rc-node={node.id} className={className} />;
+export function DividerNode({ node, className, isInner }: NodeRenderProps) {
+  return <hr {...nodeAttrs(node.id, isInner)} className={className} />;
 }

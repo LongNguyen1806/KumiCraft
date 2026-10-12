@@ -1,13 +1,13 @@
 import { useTranslation } from 'react-i18next';
 
-import type { NodeRenderProps } from './layout-nodes.tsx';
+import { nodeAttrs, type NodeRenderProps } from './layout-nodes.tsx';
 
-export function ButtonNode({ node, className }: NodeRenderProps) {
+export function ButtonNode({ node, className, isInner }: NodeRenderProps) {
   const { t } = useTranslation();
   const content = node.content?.kind === 'button' ? node.content : undefined;
   return (
     <button
-      data-rc-node={node.id}
+      {...nodeAttrs(node.id, isInner)}
       type={content?.buttonType ?? 'button'}
       onClick={(e) => {
         e.preventDefault();
@@ -19,12 +19,12 @@ export function ButtonNode({ node, className }: NodeRenderProps) {
   );
 }
 
-export function LinkNode({ node, className }: NodeRenderProps) {
+export function LinkNode({ node, className, isInner }: NodeRenderProps) {
   const { t } = useTranslation();
   const content = node.content?.kind === 'link' ? node.content : undefined;
   return (
     <a
-      data-rc-node={node.id}
+      {...nodeAttrs(node.id, isInner)}
       href={content?.href ?? '#'}
       onClick={(e) => {
         e.preventDefault();
@@ -36,10 +36,10 @@ export function LinkNode({ node, className }: NodeRenderProps) {
   );
 }
 
-export function FormNode({ node, className, children }: NodeRenderProps) {
+export function FormNode({ node, className, children, isInner }: NodeRenderProps) {
   return (
     <form
-      data-rc-node={node.id}
+      {...nodeAttrs(node.id, isInner)}
       onSubmit={(e) => {
         e.preventDefault();
       }}
@@ -50,10 +50,10 @@ export function FormNode({ node, className, children }: NodeRenderProps) {
   );
 }
 
-export function InputNode({ node, className }: NodeRenderProps) {
+export function InputNode({ node, className, isInner }: NodeRenderProps) {
   const content = node.content?.kind === 'input' ? node.content : undefined;
   return (
-    <div data-rc-node={node.id} className={className}>
+    <div {...nodeAttrs(node.id, isInner)} className={className}>
       {content?.label !== undefined && (
         <label className="block text-xs font-medium mb-1">{content.label}</label>
       )}
@@ -67,10 +67,10 @@ export function InputNode({ node, className }: NodeRenderProps) {
   );
 }
 
-export function TextareaNode({ node, className }: NodeRenderProps) {
+export function TextareaNode({ node, className, isInner }: NodeRenderProps) {
   const content = node.content?.kind === 'textarea' ? node.content : undefined;
   return (
-    <div data-rc-node={node.id} className={className}>
+    <div {...nodeAttrs(node.id, isInner)} className={className}>
       {content?.label !== undefined && (
         <label className="block text-xs font-medium mb-1">{content.label}</label>
       )}
@@ -84,10 +84,10 @@ export function TextareaNode({ node, className }: NodeRenderProps) {
   );
 }
 
-export function SelectNode({ node, className }: NodeRenderProps) {
+export function SelectNode({ node, className, isInner }: NodeRenderProps) {
   const content = node.content?.kind === 'select' ? node.content : undefined;
   return (
-    <div data-rc-node={node.id} className={className}>
+    <div {...nodeAttrs(node.id, isInner)} className={className}>
       {content?.label !== undefined && (
         <label className="block text-xs font-medium mb-1">{content.label}</label>
       )}
@@ -102,30 +102,36 @@ export function SelectNode({ node, className }: NodeRenderProps) {
   );
 }
 
-export function CheckboxNode({ node, className }: NodeRenderProps) {
+export function CheckboxNode({ node, className, isInner }: NodeRenderProps) {
   const content = node.content?.kind === 'choice' ? node.content : undefined;
   return (
-    <label data-rc-node={node.id} className={`inline-flex items-center gap-2 text-sm ${className}`}>
+    <label
+      {...nodeAttrs(node.id, isInner)}
+      className={`inline-flex items-center gap-2 text-sm ${className}`}
+    >
       <input type="checkbox" disabled className="rounded border-neutral-300" />
       <span>{content?.label ?? ''}</span>
     </label>
   );
 }
 
-export function RadioNode({ node, className }: NodeRenderProps) {
+export function RadioNode({ node, className, isInner }: NodeRenderProps) {
   const content = node.content?.kind === 'choice' ? node.content : undefined;
   return (
-    <label data-rc-node={node.id} className={`inline-flex items-center gap-2 text-sm ${className}`}>
+    <label
+      {...nodeAttrs(node.id, isInner)}
+      className={`inline-flex items-center gap-2 text-sm ${className}`}
+    >
       <input type="radio" disabled className="border-neutral-300" />
       <span>{content?.label ?? ''}</span>
     </label>
   );
 }
 
-export function SwitchNode({ node, className }: NodeRenderProps) {
+export function SwitchNode({ node, className, isInner }: NodeRenderProps) {
   return (
     <button
-      data-rc-node={node.id}
+      {...nodeAttrs(node.id, isInner)}
       type="button"
       role="switch"
       aria-checked={false}

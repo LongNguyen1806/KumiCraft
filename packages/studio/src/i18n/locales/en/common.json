@@ -143,6 +143,7 @@
     "defaultButton": "Button",
     "defaultLink": "Link",
     "imagePlaceholder": "Image placeholder",
-    "slot": "Slot: {{name}}"
+    "slot": "Slot: {{name}}",
+    "initiallyHidden": "Hidden on page load"
   }
 }

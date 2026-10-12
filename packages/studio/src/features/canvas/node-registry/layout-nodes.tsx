@@ -5,7 +5,12 @@ export type NodeRenderProps = {
   readonly node: NodeRecord;
   readonly className: string;
   readonly children?: ReactNode;
+  readonly isInner?: boolean;
 };
+
+export function nodeAttrs(nodeId: string, isInner?: boolean) {
+  return isInner === true ? { 'data-rc-inner': '1' } : { 'data-rc-node': nodeId };
+}
 
 const CONTAINER_MAX_WIDTH: Record<string, string> = {
   sm: 'max-w-[640px]',
@@ -16,46 +21,46 @@ const CONTAINER_MAX_WIDTH: Record<string, string> = {
   full: 'max-w-full',
 };
 
-export function StackNode({ node, className, children }: NodeRenderProps) {
+export function StackNode({ node, className, children, isInner }: NodeRenderProps) {
   return (
-    <div data-rc-node={node.id} className={className}>
+    <div {...nodeAttrs(node.id, isInner)} className={className}>
       {children}
     </div>
   );
 }
 
-export function CardNode({ node, className, children }: NodeRenderProps) {
+export function CardNode({ node, className, children, isInner }: NodeRenderProps) {
   return (
-    <div data-rc-node={node.id} className={className}>
+    <div {...nodeAttrs(node.id, isInner)} className={className}>
       {children}
     </div>
   );
 }
 
-export function GridNode({ node, className, children }: NodeRenderProps) {
+export function GridNode({ node, className, children, isInner }: NodeRenderProps) {
   return (
-    <div data-rc-node={node.id} className={className}>
+    <div {...nodeAttrs(node.id, isInner)} className={className}>
       {children}
     </div>
   );
 }
 
-export function SectionNode({ node, className, children }: NodeRenderProps) {
+export function SectionNode({ node, className, children, isInner }: NodeRenderProps) {
   const content = node.content?.kind === 'section' ? node.content : undefined;
   const Tag = content?.as ?? 'section';
   return (
-    <Tag data-rc-node={node.id} className={className}>
+    <Tag {...nodeAttrs(node.id, isInner)} className={className}>
       {children}
     </Tag>
   );
 }
 
-export function ContainerNode({ node, className, children }: NodeRenderProps) {
+export function ContainerNode({ node, className, children, isInner }: NodeRenderProps) {
   const content = node.content?.kind === 'container' ? node.content : undefined;
   const maxW = content !== undefined ? CONTAINER_MAX_WIDTH[content.maxWidth] : 'max-w-full';
   const combined = `mx-auto w-full ${maxW ?? 'max-w-full'} ${className}`.trim();
   return (
-    <div data-rc-node={node.id} className={combined}>
+    <div {...nodeAttrs(node.id, isInner)} className={combined}>
       {children}
     </div>
   );

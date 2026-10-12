@@ -143,6 +143,7 @@
     "defaultButton": "Nút bấm",
     "defaultLink": "Liên kết",
     "imagePlaceholder": "Ảnh giữ chỗ",
-    "slot": "Slot: {{name}}"
+    "slot": "Slot: {{name}}",
+    "initiallyHidden": "Ẩn khi tải trang"
   }
 }
