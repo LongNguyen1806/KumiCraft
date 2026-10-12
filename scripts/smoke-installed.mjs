@@ -9,10 +9,13 @@ import { clearTimeout, setTimeout } from 'node:timers';
 
 const TIMEOUT_MS = 30_000;
 const workspace = mkdtempSync(join(tmpdir(), 'reactcraft-smoke-'));
+const configDir = mkdtempSync(join(tmpdir(), 'reactcraft-smoke-config-'));
 // `shell: true` finds `reactcraft.cmd` on Windows and the `reactcraft` link elsewhere.
 const child = spawn('reactcraft', [JSON.stringify(workspace), '--no-open', '--log-level', 'warn'], {
   stdio: ['ignore', 'pipe', 'pipe'],
   shell: true,
+  // Keeps the machine's own ReactCraft settings untouched.
+  env: { ...process.env, REACTCRAFT_CONFIG_DIR: configDir },
 });
 
 let output = '';
@@ -20,6 +23,7 @@ const finish = (code, message) => {
   console.log(message);
   child.kill();
   rmSync(workspace, { recursive: true, force: true });
+  rmSync(configDir, { recursive: true, force: true });
   process.exit(code);
 };
 

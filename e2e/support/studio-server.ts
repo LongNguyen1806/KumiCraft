@@ -22,11 +22,14 @@ export const test = base.extend<{ studio: StudioServer }>({
   studio: async ({ browserName }, use) => {
     if (!existsSync(CLI_ENTRY)) throw new Error('Run `pnpm build` before the E2E tests.');
     const workspace = await makeTempDir(`e2e-${browserName}`);
+    // Each test gets its own user settings: never the developer's, never another test's.
+    const config = await makeTempDir(`e2e-config-${browserName}`);
     const child = spawn(
       process.execPath,
       [CLI_ENTRY, workspace.path, '--no-open', '--log-level', 'warn'],
       {
         stdio: ['ignore', 'pipe', 'pipe'],
+        env: { ...process.env, REACTCRAFT_CONFIG_DIR: config.path },
       },
     );
 
@@ -55,6 +58,7 @@ export const test = base.extend<{ studio: StudioServer }>({
 
     child.kill();
     await workspace.remove();
+    await config.remove();
   },
 });
 
