@@ -74,12 +74,6 @@ importers:
       '@fastify/websocket':
         specifier: 11.3.4
         version: 11.3.4
-      '@reactcraft/model':
-        specifier: workspace:*
-        version: link:../model
-      '@reactcraft/server':
-        specifier: workspace:*
-        version: link:../server
       chokidar:
         specifier: 5.0.0
         version: 5.0.0
@@ -105,6 +99,12 @@ importers:
         specifier: 4.6.5
         version: 4.6.5
     devDependencies:
+      '@reactcraft/model':
+        specifier: workspace:*
+        version: link:../model
+      '@reactcraft/server':
+        specifier: workspace:*
+        version: link:../server
       '@reactcraft/studio':
         specifier: workspace:*
         version: link:../studio

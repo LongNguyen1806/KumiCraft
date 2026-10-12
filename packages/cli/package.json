@@ -5,16 +5,18 @@
   "description": "The reactcraft command: starts the Local Backend and opens the Studio",
   "license": "MIT",
   "type": "module",
-  "devDependencies": {
-    "@reactcraft/studio": "workspace:*",
-    "@types/node": "22.20.5",
-    "tsdown": "0.23.1"
+  "engines": {
+    "node": ">=22.12"
   },
+  "bin": {
+    "reactcraft": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "@fastify/static": "10.1.6",
     "@fastify/websocket": "11.3.4",
-    "@reactcraft/model": "workspace:*",
-    "@reactcraft/server": "workspace:*",
     "chokidar": "5.0.0",
     "env-paths": "4.0.0",
     "fastify": "5.12.5",
@@ -24,8 +26,12 @@
     "write-file-atomic": "7.0.1",
     "zod": "4.6.5"
   },
-  "bin": {
-    "reactcraft": "./dist/index.js"
+  "devDependencies": {
+    "@reactcraft/model": "workspace:*",
+    "@reactcraft/server": "workspace:*",
+    "@reactcraft/studio": "workspace:*",
+    "@types/node": "22.20.5",
+    "tsdown": "0.23.1"
   },
   "scripts": {
     "build": "tsdown"

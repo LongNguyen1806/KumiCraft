@@ -13,6 +13,7 @@
     "prepare": "node scripts/install-git-hooks.mjs",
     "dev": "node scripts/dev.mjs",
     "build": "pnpm -r build",
+    "package": "pnpm build && pnpm --filter @reactcraft/cli pack --pack-destination artifacts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p packages/model && tsc --noEmit -p packages/server && tsc --noEmit -p packages/studio && tsc --noEmit -p packages/cli && tsc --noEmit -p e2e && tsc --noEmit -p scripts",
     "test": "vitest run",
