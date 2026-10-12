@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { LoggerPort } from '../ports/logger-port.ts';
+import type { TrustKey } from '../workspace/trust.ts';
 import { isInside } from './paths.ts';
 import { err, ok, type Result } from './result.ts';
 import type { Platform } from './session.ts';
@@ -38,7 +39,9 @@ const UserConfigSchema = z.strictObject({
   export: z
     .strictObject({ typecheck: z.boolean().default(true), buildCheck: z.boolean().default(false) })
     .default({ typecheck: true, buildCheck: false }),
-  trustedWorkspaces: z.array(z.strictObject({ id: z.string(), path: z.string() })).default([]),
+  trustedWorkspaces: z
+    .array(z.strictObject({ id: z.string(), path: z.string(), links: z.string().default('') }))
+    .default([]),
 });
 type UserConfig = z.infer<typeof UserConfigSchema>;
 
@@ -82,8 +85,8 @@ export type ConfigStoreDeps = {
 export type ConfigStore = {
   settings(): Settings;
   updateSettings(patch: SettingsPatch): Promise<Result<Settings>>;
-  isTrusted(workspaceId: string, path: string): boolean;
-  setTrusted(workspaceId: string, path: string, trusted: boolean): Promise<Result<void>>;
+  isTrusted(key: TrustKey): boolean;
+  setTrusted(key: TrustKey, trusted: boolean): Promise<Result<void>>;
 };
 
 const defaults = (): UserConfig => UserConfigSchema.parse({});
@@ -152,8 +155,9 @@ export async function createConfigStore(deps: ConfigStoreDeps): Promise<ConfigSt
   };
   const samePath = (a: string, b: string) =>
     isInside(a, b, deps.platform) && isInside(b, a, deps.platform);
-  const isEntry = (entry: { id: string; path: string }, id: string, path: string) =>
-    entry.id === id && samePath(entry.path, path);
+  /** Same workspace in the same folder, whatever its links. */
+  const isSameWorkspace = (entry: { id: string; path: string }, key: TrustKey) =>
+    entry.id === key.id && samePath(entry.path, key.path);
 
   return {
     settings: () => toSettings(config, deps.env),
@@ -161,10 +165,14 @@ export async function createConfigStore(deps: ConfigStoreDeps): Promise<ConfigSt
       const saved = await save(merge(config, patch));
       return saved.ok ? ok(toSettings(config, deps.env)) : err(saved.error);
     },
-    isTrusted: (id, path) => config.trustedWorkspaces.some((entry) => isEntry(entry, id, path)),
-    async setTrusted(id, path, trusted) {
-      const others = config.trustedWorkspaces.filter((entry) => !isEntry(entry, id, path));
-      return save({ ...config, trustedWorkspaces: trusted ? [...others, { id, path }] : others });
+    isTrusted: (key) =>
+      config.trustedWorkspaces.some(
+        (entry) => isSameWorkspace(entry, key) && entry.links === key.links,
+      ),
+    async setTrusted(key, trusted) {
+      const others = config.trustedWorkspaces.filter((entry) => !isSameWorkspace(entry, key));
+      const entry = { id: key.id, path: key.path, links: key.links };
+      return save({ ...config, trustedWorkspaces: trusted ? [...others, entry] : others });
     },
   };
 }

@@ -72,17 +72,27 @@ describe('createConfigStore', () => {
     if (platform !== 'win32') expect(mode).toBe(0o600);
   });
 
-  it('remembers trusted workspaces by id and path, outside the workspace [S-82]', async () => {
+  it('remembers trusted workspaces by id, folder and links, outside the workspace [S-82]', async () => {
     const config = await store();
-    await config.setTrusted('ws00000001', 'C:\\Work\\Shop', true);
+    const key = { id: 'ws00000001', path: 'C:\\Work\\Shop', links: '["",[]]' };
+    await config.setTrusted(key, true);
 
     expect(
-      config.isTrusted('ws00000001', platform === 'linux' ? 'C:\\Work\\Shop' : 'c:\\work\\shop'),
+      config.isTrusted({ ...key, path: platform === 'linux' ? key.path : 'c:\\work\\shop' }),
     ).toBe(true);
-    expect(config.isTrusted('ws00000002', 'C:\\Work\\Shop')).toBe(false);
-    expect(config.isTrusted('ws00000001', 'C:\\Work\\Other')).toBe(false);
-    await config.setTrusted('ws00000001', 'C:\\Work\\Shop', false);
-    expect((await store()).isTrusted('ws00000001', 'C:\\Work\\Shop')).toBe(false);
+    expect(config.isTrusted({ ...key, id: 'ws00000002' })).toBe(false);
+    expect(config.isTrusted({ ...key, path: 'C:\\Work\\Other' })).toBe(false);
+    await config.setTrusted(key, false);
+    expect((await store()).isTrusted(key)).toBe(false);
+  });
+
+  it('stops trusting a workspace whose links changed [S-84]', async () => {
+    const config = await store();
+    const key = { id: 'ws00000001', path: 'C:\\Work\\Shop', links: '["../api",[]]' };
+    await config.setTrusted(key, true);
+
+    expect((await store()).isTrusted({ ...key, links: '["C:/Windows",[]]' })).toBe(false);
+    expect((await store()).isTrusted(key)).toBe(true);
   });
 
   it('falls back to defaults with a warning when the file is broken', async () => {

@@ -16,6 +16,7 @@ import { createWorkspaceDocument } from './create-workspace.ts';
 import { acquireLock, type LockInfo, releaseLock } from './lock.ts';
 import { type FileProblem, loadWorkspace } from './read-workspace.ts';
 import { rememberPort } from './studio-port.ts';
+import { trustKeyOf } from './trust.ts';
 
 export type WorkspaceState =
   | { readonly status: 'none' }
@@ -80,7 +81,7 @@ async function writeNewWorkspace(
     const written = await deps.fs.writeTextAtomic(deps.root, file, text);
     if (!written.ok) return written;
   }
-  const trusted = await deps.config.setTrusted(document.workspace.id, deps.root, true);
+  const trusted = await deps.config.setTrusted(trustKeyOf(document, deps.root), true);
   if (!trusted.ok) log.warn({ code: trusted.error.code }, 'could not remember trust');
   return ok(document);
 }
@@ -93,7 +94,7 @@ const openState = (
   status: 'open',
   document,
   warnings,
-  trusted: deps.config.isTrusted(document.workspace.id, deps.root),
+  trusted: deps.config.isTrusted(trustKeyOf(document, deps.root)),
 });
 
 async function readState(deps: WorkspaceServiceDeps, log: LoggerPort): Promise<WorkspaceState> {
@@ -153,7 +154,7 @@ export function createWorkspaceService(deps: WorkspaceServiceDeps): WorkspaceSer
     async setTrusted(trusted) {
       if (current.status !== 'open')
         return err({ code: 'E015', params: { resource: 'workspace' } });
-      const saved = await deps.config.setTrusted(current.document.workspace.id, deps.root, trusted);
+      const saved = await deps.config.setTrusted(trustKeyOf(current.document, deps.root), trusted);
       if (!saved.ok) return saved;
       current = { ...current, trusted };
       return ok(current);

@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { workspaceFilePath } from '@reactcraft/model';
@@ -26,10 +26,10 @@ const config: Pick<ConfigStore, 'settings' | 'isTrusted' | 'setTrusted'> = {
     },
     export: { typecheck: true, buildCheck: false },
   }),
-  isTrusted: (id, path) => trusted.has(`${id}|${path}`),
-  setTrusted: (id, path, value) => {
-    if (value) trusted.add(`${id}|${path}`);
-    else trusted.delete(`${id}|${path}`);
+  isTrusted: (key) => trusted.has(`${key.id}|${key.path}|${key.links}`),
+  setTrusted: (key, value) => {
+    if (value) trusted.add(`${key.id}|${key.path}|${key.links}`);
+    else trusted.delete(`${key.id}|${key.path}|${key.links}`);
     return Promise.resolve(ok(undefined));
   },
 };
@@ -136,5 +136,23 @@ describe('workspace service', () => {
       value: { trusted: false },
     });
     expect(trusted.size).toBe(0);
+  });
+
+  it('falls back to restricted mode when the links change, running or closed [S-84]', async () => {
+    const first = service(1);
+    await first.create(request);
+    const file = join(dir, workspaceFilePath.workspace());
+    const meta = JSON.parse(await readFile(file, 'utf8')) as Record<string, unknown>;
+    await writeFile(
+      file,
+      JSON.stringify({ ...meta, backends: [{ id: 'b_api0000001', path: '../api', label: 'API' }] }),
+    );
+
+    expect(await first.reload()).toMatchObject({ status: 'open', trusted: false });
+    await first.setTrusted(true);
+    await first.close();
+    await writeFile(file, JSON.stringify({ ...meta, targetProject: { path: 'C:/Windows' } }));
+
+    expect(await service(2).open()).toMatchObject({ ok: true, value: { trusted: false } });
   });
 });
