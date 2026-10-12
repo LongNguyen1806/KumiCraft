@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { LanguageSwitcher } from '../../app/language-switcher.tsx';
+import { SettingsButton } from '../settings/settings-button.tsx';
 
 type TopBarProps = {
   readonly version?: string;
@@ -29,6 +30,7 @@ export function TopBar({ version, workspaceName, children }: TopBarProps) {
         </span>
       )}
       <LanguageSwitcher />
+      <SettingsButton />
     </header>
   );
 }

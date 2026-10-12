@@ -11,6 +11,7 @@ import {
   RedoIcon,
   UndoIcon,
 } from '../../components/ui/icons.tsx';
+import { SettingsButton } from '../settings/settings-button.tsx';
 import type { Side } from './use-panel-layout.ts';
 
 export type EditorToolbarProps = {
@@ -65,6 +66,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
         <RedoIcon />
       </RoundButton>
       <LanguageSwitcher />
+      <SettingsButton />
       <button
         type="button"
         disabled

@@ -2,17 +2,19 @@ import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { type Language, LANGUAGES } from '../i18n/i18n.ts';
+import { useSettingsStore } from '../store/settings-store.ts';
 
 const isLanguage = (value: string): value is Language =>
   (LANGUAGES as readonly string[]).includes(value);
 
-/** Switches the interface language at once, without reloading the page (ADR-FE-16). */
+/** Switches the interface language at once, without reloading the page (ADR-FE-16), and remembers it. */
 export function LanguageSwitcher() {
   const { t, i18n } = useTranslation();
+  const setLanguage = useSettingsStore((state) => state.setLanguage);
 
   const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
     const { value } = event.target;
-    if (isLanguage(value)) void i18n.changeLanguage(value);
+    if (isLanguage(value)) void setLanguage(value);
   };
 
   return (

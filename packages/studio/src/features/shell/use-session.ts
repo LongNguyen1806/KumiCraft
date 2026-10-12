@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { ApiError } from '../../api/http.ts';
 import { fetchSession, type SessionInfo } from '../../api/session.ts';
+import { useSettingsStore } from '../../store/settings-store.ts';
 
 export type SessionState =
   | { readonly status: 'loading' }
@@ -24,7 +25,8 @@ export function useSession(): { readonly state: SessionState; readonly reload: (
     let isActive = true;
     const load = async () => {
       try {
-        const session = await fetchSession();
+        // Settings come with the session, so the saved language shows from the first screen.
+        const [session] = await Promise.all([fetchSession(), useSettingsStore.getState().load()]);
         if (isActive) setState({ status: 'ready', session });
       } catch (error) {
         if (isActive) setState({ status: 'failed', code: errorCode(error) });

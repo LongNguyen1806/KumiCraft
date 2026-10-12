@@ -19,6 +19,10 @@ vi.mock('../api/events-client.ts', () => ({
 const respond = (status: number, body: unknown) =>
   vi.fn(() => Promise.resolve(new Response(JSON.stringify(body), { status })));
 
+/** Number of `GET /session` calls (settings are read with each session). */
+const sessionCalls = (fetchMock: { readonly mock: { readonly calls: readonly unknown[][] } }) =>
+  fetchMock.mock.calls.filter(([url]) => url === '/api/v1/session').length;
+
 const session = (workspace: unknown) => ({ data: { version: '1.4.0', workspace } });
 
 beforeAll(async () => {
@@ -129,7 +133,7 @@ describe('App', () => {
     act(() => socket?.onConnectionChange?.(true));
     expect(screen.queryByTestId('connection-lost')).toBeNull();
     await vi.waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(sessionCalls(fetchMock)).toBe(2);
     });
   });
 });

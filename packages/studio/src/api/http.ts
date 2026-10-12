@@ -56,10 +56,14 @@ export async function apiGet(path: string): Promise<unknown> {
   return body['data'];
 }
 
-/** POST `/api/v1/<path>` and return the `data` member of the response. */
-export async function apiPost(path: string, payload?: unknown): Promise<unknown> {
+/** Sends `payload` as JSON with `method` and returns the `data` member of the response. */
+async function apiSend(
+  method: 'POST' | 'PATCH',
+  path: string,
+  payload?: unknown,
+): Promise<unknown> {
   const response = await fetch(`/api/v1/${path}`, {
-    method: 'POST',
+    method,
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
@@ -74,3 +78,11 @@ export async function apiPost(path: string, payload?: unknown): Promise<unknown>
   }
   return body['data'];
 }
+
+/** POST `/api/v1/<path>` and return the `data` member of the response. */
+export const apiPost = (path: string, payload?: unknown): Promise<unknown> =>
+  apiSend('POST', path, payload);
+
+/** PATCH `/api/v1/<path>` and return the `data` member of the response. */
+export const apiPatch = (path: string, payload: unknown): Promise<unknown> =>
+  apiSend('PATCH', path, payload);

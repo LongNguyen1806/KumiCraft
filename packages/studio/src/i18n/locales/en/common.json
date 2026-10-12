@@ -107,5 +107,21 @@
       "E017": "The design changed elsewhere, so it was reloaded. Undo history was cleared.",
       "E005": "The server refused the last change, so the design was reloaded. Undo history was cleared."
     }
+  },
+  "settings": {
+    "open": "Settings",
+    "title": "Settings",
+    "close": "Close",
+    "interface": "Interface",
+    "language": "Interface language",
+    "languageHelp": "Changes at once, without reloading. Remembered for every workspace on this computer.",
+    "export": "Code export",
+    "exportLater": "Applies once code export is available (Phase 3).",
+    "typecheck": "Check TypeScript types after exporting",
+    "typecheckHelp": "Finds type errors in the exported code before you run the project. Turn off to export a few seconds faster.",
+    "buildCheck": "Test-build the project after exporting",
+    "buildCheckHelp": "Runs the project build to make sure it still builds. The build runs the project's own configuration and plugins, so turn it on only for projects you trust.",
+    "saving": "Saving…",
+    "saved": "Saved"
   }
 }
