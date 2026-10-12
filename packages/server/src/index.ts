@@ -1,6 +1,5 @@
 // Public entry point of @reactcraft/server (QC-03): composition root of the Local Backend.
 import { randomBytes } from 'node:crypto';
-import os from 'node:os';
 
 import { type DesignDocument, resolveEnabledFeatures } from '@reactcraft/model';
 import envPaths from 'env-paths';
@@ -10,6 +9,7 @@ import { nanoid } from 'nanoid';
 import { createNodeFileSystem } from './adapters/fs/node-file-system.ts';
 import { createHttpApp, type LogLevel } from './adapters/http/create-http-app.ts';
 import { createServerLogger } from './adapters/log/create-logger.ts';
+import { createNodeSystem } from './adapters/system/node-system.ts';
 import {
   createWorkspaceWatcher,
   type WorkspaceWatcher,
@@ -26,7 +26,7 @@ import {
   toSupportedPlatform,
   type WorkspaceState,
 } from './core/shared/session.ts';
-import { createConfigStore } from './core/shared/user-config.ts';
+import { type ConfigStore, createConfigStore } from './core/shared/user-config.ts';
 import {
   createWorkspaceService,
   type WorkspaceService,
@@ -77,27 +77,12 @@ export type RunningServer = {
   readonly close: () => Promise<void>;
 };
 
-function defaultSystem(): SystemPort {
-  return {
-    pid: process.pid,
-    hostname: os.hostname(),
-    now: () => new Date(),
-    isProcessAlive: (pid: number) => {
-      try {
-        process.kill(pid, 0);
-        return true;
-      } catch {
-        return false;
-      }
-    },
-  };
-}
-
 type InitializedContext = {
   readonly fs: FileSystemPort;
   readonly logger: LoggerPort;
   readonly system: SystemPort;
   readonly workspaceService: WorkspaceService;
+  readonly configStore: ConfigStore;
   readonly eventBus: EventBusPort;
 };
 
@@ -108,7 +93,7 @@ async function initServerContext(
   const fs = options.deps?.fs ?? createNodeFileSystem(platform);
   const logger =
     options.deps?.logger ?? createServerLogger({ level: options.logLevel ?? 'info' }).port;
-  const system = options.deps?.system ?? defaultSystem();
+  const system = options.deps?.system ?? createNodeSystem();
   const configDir = options.deps?.configDir ?? envPaths('reactcraft').config;
   const eventBus = options.deps?.eventBus ?? createEventBus();
 
@@ -133,7 +118,7 @@ async function initServerContext(
   const opened = await workspaceService.open();
   if (!opened.ok) return opened;
 
-  return ok({ fs, logger, system, workspaceService, eventBus });
+  return ok({ fs, logger, system, workspaceService, configStore, eventBus });
 }
 
 function createWorkspaceReader(
@@ -186,6 +171,7 @@ function createHttpServer(
       createDesignStore: makeStore,
       getSessionInfo,
     },
+    settingsRoutes: { config: ctx.configStore },
     eventRoutes: {
       eventBus: ctx.eventBus,
       sessionToken,

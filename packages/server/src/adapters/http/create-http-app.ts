@@ -15,6 +15,7 @@ import Fastify, {
 import type { SessionInfo } from '../../core/shared/session.ts';
 import { type EventRoutesDeps, registerEventRoutes } from './routes/events.ts';
 import { registerSessionRoutes } from './routes/session.ts';
+import { registerSettingsRoutes, type SettingsRoutesDeps } from './routes/settings.ts';
 import { registerWorkspaceRoutes, type WorkspaceRoutesDeps } from './routes/workspace.ts';
 import { registerSecurity, type SecurityOptions } from './security.ts';
 import { sendError } from './send-error.ts';
@@ -27,6 +28,7 @@ export type HttpAppOptions = {
   readonly getSessionInfo: () => SessionInfo;
   readonly workspaceRoutes?: WorkspaceRoutesDeps;
   readonly eventRoutes?: EventRoutesDeps;
+  readonly settingsRoutes?: SettingsRoutesDeps;
   /** Directory of the built Studio. When absent, only the API is served. */
   readonly studioDir?: string;
 };
@@ -85,6 +87,9 @@ async function registerApiRoutes(app: FastifyInstance, options: HttpAppOptions):
       registerSessionRoutes(api, options.getSessionInfo);
       if (options.workspaceRoutes !== undefined) {
         registerWorkspaceRoutes(api, options.workspaceRoutes);
+      }
+      if (options.settingsRoutes !== undefined) {
+        registerSettingsRoutes(api, options.settingsRoutes);
       }
       if (options.eventRoutes !== undefined) {
         registerEventRoutes(api, options.eventRoutes);
