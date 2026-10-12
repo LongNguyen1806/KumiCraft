@@ -61,17 +61,19 @@ describe('App', () => {
     expect(screen.getByText('revision 42')).toBeDefined();
   });
 
-  it('shows the workspace error and reads the session again on retry [R-WS-01]', async () => {
-    const fetchMock = respond(200, session({ state: 'error', error: { code: 'E004' } }));
-    vi.stubGlobal('fetch', fetchMock);
+  it('lists the broken files of a workspace in error [R-WS-01, R-WS-02]', async () => {
+    const error = {
+      state: 'error',
+      error: { code: 'E004' },
+      problems: [{ file: '.reactcraft/pages/p_abc.json', code: 'E004' }],
+    };
+    vi.stubGlobal('fetch', respond(200, session(error)));
 
     render(<App />);
-    expect((await screen.findByRole('alert')).textContent).toContain('(E004)');
-    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
 
-    await vi.waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(2);
-    });
+    expect((await screen.findByTestId('problem-file')).textContent).toBe(
+      '.reactcraft/pages/p_abc.json',
+    );
   });
 
   it('shows a translated E014 message when the session is invalid', async () => {

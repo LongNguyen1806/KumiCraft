@@ -13,8 +13,12 @@ export type StudioWorkspaceState =
     }
   | {
       readonly state: 'error';
-      readonly error?: { readonly code: string; readonly message: string };
+      readonly error?: { readonly code: string };
+      /** Every file that stops the workspace from opening (R-WS-01, R-WS-02). */
+      readonly problems?: readonly WorkspaceProblem[];
     };
+
+export type WorkspaceProblem = { readonly file: string; readonly code: string };
 
 export type SessionInfo = {
   readonly version: string;

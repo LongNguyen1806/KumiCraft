@@ -57,6 +57,11 @@
   },
   "workspaceError": {
     "title": "Không mở được workspace",
+    "intro": "Một số file của workspace bị lỗi. ReactCraft không mở một phần để tránh ghi đè làm mất dữ liệu. Khôi phục từ bản sao lưu, hoặc sửa file bằng tay rồi bấm Thử lại.",
+    "files": "File bị lỗi",
+    "restore": "Khôi phục bản sao lưu gần nhất",
+    "backupFrom": "Bản sao lưu lúc {{time}}",
+    "noBackup": "Chưa có bản sao lưu của file này. Hãy sửa file bằng tay.",
     "retry": "Thử lại"
   },
   "editor": {

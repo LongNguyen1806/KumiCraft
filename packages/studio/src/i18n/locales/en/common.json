@@ -57,6 +57,11 @@
   },
   "workspaceError": {
     "title": "Cannot open the workspace",
+    "intro": "Some workspace files are broken. ReactCraft does not open a workspace in part, so nothing is overwritten and lost. Restore from a backup, or fix the file by hand and press Try again.",
+    "files": "Broken files",
+    "restore": "Restore the latest backup",
+    "backupFrom": "Backup from {{time}}",
+    "noBackup": "This file has no backup yet. Fix it by hand.",
     "retry": "Try again"
   },
   "editor": {

@@ -25,8 +25,8 @@ export function WorkspaceScreen({ session, onRetry }: WorkspaceScreenProps) {
       return (
         <WorkspaceErrorScreen
           version={version}
-          code={workspace.error?.code ?? 'E003'}
-          onRetry={onRetry}
+          problems={workspace.problems ?? []}
+          onChanged={onRetry}
         />
       );
     case 'open':

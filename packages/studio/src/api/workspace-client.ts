@@ -30,9 +30,12 @@ export async function fetchDocument(): Promise<DocumentResponse> {
   return data as DocumentResponse;
 }
 
-export async function reloadWorkspace(): Promise<DocumentResponse> {
+/** The document when the workspace opened, otherwise the session (still in error). */
+export type ReopenResponse = Partial<DocumentResponse> & { readonly session?: SessionInfo };
+
+export async function reloadWorkspace(): Promise<ReopenResponse> {
   const data = await apiPost('workspace/reload');
-  return data as DocumentResponse;
+  return data as ReopenResponse;
 }
 
 export async function createWorkspace(payload: CreateWorkspaceRequest): Promise<WorkspaceMeta> {
@@ -50,9 +53,9 @@ export async function fetchBackups(): Promise<readonly BackupSummary[]> {
   return (data as { backups: BackupSummary[] }).backups;
 }
 
-export async function restoreBackup(id: string): Promise<DocumentResponse> {
-  const data = await apiPost(`workspace/backups/${id}/restore`);
-  return data as DocumentResponse;
+export async function restoreBackup(id: string): Promise<ReopenResponse> {
+  const data = await apiPost(`workspace/backups/${encodeURIComponent(id)}/restore`);
+  return data as ReopenResponse;
 }
 
 export async function setWorkspaceTrust(trusted: boolean): Promise<SessionInfo> {
