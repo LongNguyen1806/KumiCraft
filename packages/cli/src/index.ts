@@ -2,19 +2,14 @@
 // Entry point of the `reactcraft` command (ADR-BE-03): start the Local Backend, open the Studio.
 import { statSync } from 'node:fs';
 
-import { type RunningServer, startServer } from '@reactcraft/server';
+import { lastStudioPort, type RunningServer, startServer } from '@reactcraft/server';
 import open from 'open';
 
 import packageJson from '../package.json' with { type: 'json' };
 import { type CliOptions, parseCliArgs } from './args.ts';
+import { startFailureMessage } from './messages.ts';
 import { findStudioDir } from './paths.ts';
-
-// S-02: random port in the dynamic range, away from well-known ports.
-const PORT_RANGE_START = 49152;
-const PORT_RANGE_SIZE = 65535 - PORT_RANGE_START + 1;
-const MAX_PORT_ATTEMPTS = 10;
-
-const randomPort = (): number => PORT_RANGE_START + Math.floor(Math.random() * PORT_RANGE_SIZE);
+import { attemptsFor, portFor, type PortPlan } from './port-choice.ts';
 
 function fail(message: string): never {
   console.error(`reactcraft: ${message}`);
@@ -32,11 +27,15 @@ function isDirectory(path: string): boolean {
 type StudioSource = { readonly studioDir?: string; readonly devStudioUrl?: string };
 
 async function start(options: CliOptions, studio: StudioSource): Promise<RunningServer> {
-  const attempts = options.port === undefined ? MAX_PORT_ATTEMPTS : 1;
+  const plan: PortPlan = {
+    fixed: options.port,
+    remembered: options.port === undefined ? await lastStudioPort(options.workspaceDir) : undefined,
+  };
+  const attempts = attemptsFor(plan);
   for (let attempt = 1; attempt <= attempts; attempt++) {
     const result = await startServer({
       version: packageJson.version,
-      port: options.port ?? randomPort(),
+      port: portFor(attempt, plan),
       workspaceDir: options.workspaceDir,
       logLevel: options.logLevel,
       ...(studio.studioDir === undefined ? {} : { studioDir: studio.studioDir }),
@@ -48,9 +47,7 @@ async function start(options: CliOptions, studio: StudioSource): Promise<Running
     if (result.ok) return result.value;
     const isPortBusy = result.error.code === 'E002' && result.error.params?.['step'] === 'listen';
     if (!isPortBusy || attempt === attempts) {
-      fail(
-        `could not start the server (${result.error.code}, ${JSON.stringify(result.error.params)}).`,
-      );
+      fail(startFailureMessage(result.error, options.workspaceDir));
     }
   }
   return fail('could not find a free port.');
