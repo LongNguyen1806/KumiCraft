@@ -295,18 +295,28 @@ type MutableStoreState = {
   dirty: Set<string>;
 };
 
+/**
+ * The revision lives in workspace.json (SPEC-04.1 section 2.3 step 6), so every batch rewrites it:
+ * a restarted server goes on from the same revision and stale clients still get E017.
+ */
 function executeBatch(
   state: MutableStoreState,
   batch: OperationBatch,
+  now: Date,
   schedule: () => void,
 ): Promise<Result<{ revision: number; idMap: Record<string, string> }>> {
   const check = checkBatchPreconditions(state.hasExtChange, state.rev, batch.baseRevision);
   if (!check.ok) return Promise.resolve(check);
   const res = applyOperations(state.doc, batch.ops);
   if (!res.ok) return Promise.resolve(res);
-  state.doc = res.value.doc;
   state.rev += 1;
+  const { workspace } = res.value.doc;
+  state.doc = {
+    ...res.value.doc,
+    workspace: { ...workspace, revision: state.rev, updatedAt: now.toISOString() },
+  };
   for (const file of res.value.affectedFiles) state.dirty.add(file);
+  state.dirty.add(workspaceFilePath.workspace());
   schedule();
   return Promise.resolve(ok({ revision: state.rev, idMap: res.value.idMap }));
 }
@@ -338,7 +348,7 @@ export function createDesignStore(deps: DesignStoreDeps): DesignStore {
     document: () => state.doc,
     revision: () => state.rev,
     applyBatch: (batch) =>
-      executeBatch(state, batch, () => {
+      executeBatch(state, batch, deps.system.now(), () => {
         debouncer.schedule();
       }),
     flush,
