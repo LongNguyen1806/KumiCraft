@@ -18,7 +18,7 @@ export function LanguageSwitcher() {
   };
 
   return (
-    <label className="flex h-10 items-center gap-2 rounded-full bg-card pr-1.5 pl-4 text-ink-soft shadow-soft">
+    <label className="flex h-10 items-center gap-2 rounded-full whitespace-nowrap bg-card pr-1.5 pl-4 text-ink-soft shadow-soft">
       {t('language.label')}
       <select
         value={i18n.resolvedLanguage}

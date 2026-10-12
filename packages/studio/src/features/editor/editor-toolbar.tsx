@@ -35,10 +35,12 @@ export type EditorToolbarProps = {
 export function EditorToolbar(props: EditorToolbarProps) {
   const { t } = useTranslation();
   return (
-    <header className="flex items-center gap-2.5">
-      <div className="flex h-10 items-center gap-2 rounded-full border-[1.5px] border-charcoal px-[18px] text-[17px] tracking-tight">
+    <header className="flex items-center gap-2.5 whitespace-nowrap [&>*]:shrink-0">
+      <div className="flex h-10 max-w-[24rem] min-w-[9rem] !shrink items-center gap-2 rounded-full border-[1.5px] border-charcoal px-[18px] text-[17px] tracking-tight">
         {t('app.name')}
-        <span className="text-xs text-ink-faint">{props.workspaceName}</span>
+        <span className="min-w-0 truncate text-xs text-ink-faint" title={props.workspaceName}>
+          {props.workspaceName}
+        </span>
       </div>
       <PanelToggle side="left" {...props} />
       <div className="flex h-10 items-center gap-0.5 rounded-full bg-card px-1 shadow-soft backdrop-blur-md">
@@ -65,19 +67,30 @@ export function EditorToolbar(props: EditorToolbarProps) {
       >
         <RedoIcon />
       </RoundButton>
-      <LanguageSwitcher />
+      <div className="hidden xl:block">
+        <LanguageSwitcher />
+      </div>
       <SettingsButton />
-      <button
-        type="button"
-        disabled
-        title={t('editor.exportLater')}
-        className="flex h-10 items-center gap-2 rounded-full bg-sun px-[18px] font-medium text-ink disabled:opacity-55"
-      >
-        <CodeIcon />
-        {t('editor.exportCode')}
-      </button>
+      <ExportButton />
       <PanelToggle side="right" {...props} />
     </header>
+  );
+}
+
+/** Export comes with Phase 3; below 1280 px only its icon shows. */
+function ExportButton() {
+  const { t } = useTranslation();
+  return (
+    <button
+      type="button"
+      disabled
+      aria-label={t('editor.exportCode')}
+      title={t('editor.exportLater')}
+      className="flex h-10 w-10 items-center justify-center gap-2 rounded-full bg-sun font-medium text-ink disabled:opacity-55 xl:w-auto xl:px-[18px]"
+    >
+      <CodeIcon />
+      <span className="hidden xl:inline">{t('editor.exportCode')}</span>
+    </button>
   );
 }
 
@@ -164,7 +177,7 @@ function FramePicker({ frames, activeFrameId, onFrame }: EditorToolbarProps) {
           className="flex h-8 items-center gap-1.5 rounded-full px-3.5 text-ink-soft transition-colors hover:bg-field hover:text-ink aria-pressed:bg-charcoal aria-pressed:text-on-charcoal"
         >
           {frame.label}
-          <span className="font-mono text-xs opacity-60">{frame.width}</span>
+          <span className="hidden font-mono text-xs opacity-60 xl:inline">{frame.width}</span>
         </button>
       ))}
     </div>
