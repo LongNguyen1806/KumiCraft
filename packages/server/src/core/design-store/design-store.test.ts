@@ -4,9 +4,11 @@ import {
   type OperationBatch,
   workspaceFilePath,
 } from '@reactcraft/model';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { createNodeFileSystem } from '../../adapters/fs/node-file-system.ts';
+import type { FileSystemPort } from '../ports/file-system-port.ts';
+import { err } from '../shared/result.ts';
 import {
   createWorkspaceDocument,
   CreateWorkspaceRequestSchema,
@@ -203,6 +205,52 @@ describe('DesignStore', () => {
           expect(restored.ok).toBe(true);
         }
       }
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it('tries the save again when writing a file fails for a moment [NFR-06]', async () => {
+    const { dir, cleanup } = await makeTempDir();
+    try {
+      const real = createNodeFileSystem(platform);
+      let failures = 1;
+      const fs: FileSystemPort = {
+        ...real,
+        writeTextAtomic: (root, path, content) =>
+          failures-- > 0
+            ? Promise.resolve(err({ code: 'E011', params: { path, operation: 'write' } }))
+            : real.writeTextAtomic(root, path, content),
+      };
+      const store = createDesignStore({
+        fs,
+        root: dir,
+        system: {
+          now: () => new Date(),
+          pid: 1,
+          hostname: 'host',
+          isProcessAlive: () => true,
+          isListening: () => Promise.resolve(true),
+        },
+        logger: silentLogger,
+        initialDocument: sampleDoc(),
+        initialRevision: 1,
+      });
+
+      await store.applyBatch({
+        baseRevision: 1,
+        ops: [{ op: 'workspace.update', name: 'Saved Later' }],
+        meta: { source: 'user', label: 'rename' },
+      });
+
+      await vi.waitFor(
+        async () => {
+          const saved = await real.readText(dir, workspaceFilePath.workspace());
+          expect(saved.ok && saved.value.includes('Saved Later')).toBe(true);
+        },
+        { timeout: 5000, interval: 100 },
+      );
+      expect(failures).toBeLessThan(0);
     } finally {
       await cleanup();
     }

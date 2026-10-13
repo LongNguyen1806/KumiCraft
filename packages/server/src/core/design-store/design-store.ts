@@ -275,6 +275,34 @@ function executeBatch(
   return Promise.resolve(ok({ revision: state.rev, idMap: res.value.idMap }));
 }
 
+/**
+ * Writes the dirty files. NFR-06: a write can fail for a moment (on Windows, another program may
+ * hold the file); the changes are still in memory, so the save is tried again soon instead of
+ * waiting for the next edit. The last save, when the store closes, is not rescheduled.
+ */
+function createFlusher(
+  deps: DesignStoreDeps,
+  state: MutableStoreState,
+  knownHashes: Map<string, string>,
+) {
+  const write = async (retry: boolean): Promise<Result<void>> => {
+    debouncer.clear();
+    if (state.dirty.size === 0) return ok(undefined);
+    const written = await writeDirtyFiles(deps, state.doc, state.dirty, knownHashes);
+    if (!written.ok) {
+      deps.logger.warn({ code: written.error.code }, 'saving failed');
+      if (retry) debouncer.schedule();
+      return written;
+    }
+    state.dirty.clear();
+    deps.onSaved?.(written.value);
+    deps.eventBus?.publish('workspace.saved', { revision: state.rev, files: written.value });
+    return ok(undefined);
+  };
+  const debouncer = createDebouncer(deps, () => write(true));
+  return { debouncer, flush: () => write(true), flushFinal: () => write(false) };
+}
+
 export function createDesignStore(deps: DesignStoreDeps): DesignStore {
   const state: MutableStoreState = {
     doc: deps.initialDocument,
@@ -285,18 +313,7 @@ export function createDesignStore(deps: DesignStoreDeps): DesignStore {
   const knownHashes = new Map<string, string>();
   updateKnownHashes(knownHashes, state.doc);
 
-  async function flush(): Promise<Result<void>> {
-    debouncer.clear();
-    if (state.dirty.size === 0) return ok(undefined);
-    const written = await writeDirtyFiles(deps, state.doc, state.dirty, knownHashes);
-    if (!written.ok) return written;
-    state.dirty.clear();
-    deps.onSaved?.(written.value);
-    deps.eventBus?.publish('workspace.saved', { revision: state.rev, files: written.value });
-    return ok(undefined);
-  }
-
-  const debouncer = createDebouncer(deps, flush);
+  const { debouncer, flush, flushFinal } = createFlusher(deps, state, knownHashes);
 
   return {
     document: () => state.doc,
@@ -323,7 +340,7 @@ export function createDesignStore(deps: DesignStoreDeps): DesignStore {
     hasExternalChange: () => state.hasExtChange,
     getFileHash: (file) => knownHashes.get(file),
     close: async () => {
-      await flush();
+      await flushFinal();
     },
   };
 }
