@@ -1,12 +1,20 @@
 import { useTranslation } from 'react-i18next';
 
+import { useTextEditStore } from '../../overlay/text-edit/use-text-edit-store.ts';
 import { nodeAttrs, type NodeRenderProps } from './layout-nodes.tsx';
 
 export function ButtonNode({ node, className, isInner }: NodeRenderProps) {
   const { t } = useTranslation();
   const content = node.content?.kind === 'button' ? node.content : undefined;
+  const isEditing = useTextEditStore((s) => s.editingNodeId === node.id);
+  const session = useTextEditStore((s) => s.endedSessions[node.id] ?? 0);
+  const originalText = useTextEditStore((s) => s.originalText);
+  const defaultText = t('canvas.defaultButton');
+  const textToRender = isEditing ? originalText : (content?.text ?? defaultText);
+
   return (
     <button
+      key={`${node.id}:${String(session)}`}
       {...nodeAttrs(node.id, isInner)}
       type={content?.buttonType ?? 'button'}
       onClick={(e) => {
@@ -14,7 +22,8 @@ export function ButtonNode({ node, className, isInner }: NodeRenderProps) {
       }}
       className={className}
     >
-      {content?.text ?? t('canvas.defaultButton')}
+      {/* Edited in place on this span: inside a focused <button>, Space would press the button. */}
+      <span data-rc-edit="">{textToRender}</span>
     </button>
   );
 }
@@ -22,8 +31,15 @@ export function ButtonNode({ node, className, isInner }: NodeRenderProps) {
 export function LinkNode({ node, className, isInner }: NodeRenderProps) {
   const { t } = useTranslation();
   const content = node.content?.kind === 'link' ? node.content : undefined;
+  const isEditing = useTextEditStore((s) => s.editingNodeId === node.id);
+  const session = useTextEditStore((s) => s.endedSessions[node.id] ?? 0);
+  const originalText = useTextEditStore((s) => s.originalText);
+  const defaultText = t('canvas.defaultLink');
+  const textToRender = isEditing ? originalText : (content?.text ?? defaultText);
+
   return (
     <a
+      key={`${node.id}:${String(session)}`}
       {...nodeAttrs(node.id, isInner)}
       href={content?.href ?? '#'}
       onClick={(e) => {
@@ -31,7 +47,7 @@ export function LinkNode({ node, className, isInner }: NodeRenderProps) {
       }}
       className={className}
     >
-      {content?.text ?? t('canvas.defaultLink')}
+      {textToRender}
     </a>
   );
 }

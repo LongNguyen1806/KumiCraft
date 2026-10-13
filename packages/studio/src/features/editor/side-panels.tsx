@@ -72,35 +72,97 @@ function preview(node: DesignNode): string {
   return typeof content?.text === 'string' ? content.text : '';
 }
 
+type LayerRowProps = {
+  readonly node: DesignNode;
+  readonly depth: number;
+  readonly isSelected: boolean;
+  readonly isHovered: boolean;
+  readonly onSelect: (nodeId: string) => void;
+  readonly onToggleSelect: (nodeId: string) => void;
+  readonly onHover: (nodeId: string | undefined) => void;
+};
+
+function LayerRow({
+  node,
+  depth,
+  isSelected,
+  isHovered,
+  onSelect,
+  onToggleSelect,
+  onHover,
+}: LayerRowProps) {
+  return (
+    <button
+      type="button"
+      role="treeitem"
+      aria-selected={isSelected}
+      aria-current={isSelected}
+      onClick={(e) => {
+        if (e.shiftKey || e.ctrlKey || e.metaKey) {
+          onToggleSelect(node.id);
+        } else {
+          onSelect(node.id);
+        }
+      }}
+      onPointerEnter={() => {
+        onHover(node.id);
+      }}
+      onPointerLeave={() => {
+        onHover(undefined);
+      }}
+      style={{ paddingLeft: 10 + (depth - 1) * 14 }}
+      className={`flex h-[30px] w-full items-center gap-2 rounded-full pr-2.5 text-left transition-colors ${
+        isSelected
+          ? 'bg-charcoal text-on-charcoal'
+          : isHovered
+            ? 'bg-field text-ink'
+            : 'text-ink-soft hover:bg-field hover:text-ink'
+      }`}
+    >
+      <span className="font-medium">{node.type}</span>
+      <span className={`min-w-0 truncate ${isSelected ? 'text-on-charcoal/70' : 'text-ink-faint'}`}>
+        {preview(node)}
+      </span>
+      {node.hidden === true && (
+        <span className={`ml-auto ${isSelected ? 'text-on-charcoal/70' : 'text-ink-faint'}`}>
+          <EyeOffIcon />
+        </span>
+      )}
+    </button>
+  );
+}
+
 type LayerListProps = {
   readonly rows: readonly Row[];
-  readonly selectedNodeId: string | undefined;
+  readonly selectedNodeIds: readonly string[];
+  readonly hoveredNodeId?: string | undefined;
   readonly onSelect: (nodeId: string) => void;
+  readonly onToggleSelect: (nodeId: string) => void;
+  readonly onHover: (nodeId: string | undefined) => void;
 };
 
 /** A plain outline of the page; the Layer Tree of WP-1.10 replaces it. */
-function LayerList({ rows, selectedNodeId, onSelect }: LayerListProps) {
+function LayerList({
+  rows,
+  selectedNodeIds,
+  hoveredNodeId,
+  onSelect,
+  onToggleSelect,
+  onHover,
+}: LayerListProps) {
   return (
     <ul className="grid gap-px" data-testid="layer-list">
       {rows.map(({ node, depth }) => (
         <li key={node.id}>
-          <button
-            type="button"
-            aria-current={node.id === selectedNodeId}
-            onClick={() => {
-              onSelect(node.id);
-            }}
-            style={{ paddingLeft: 10 + (depth - 1) * 14 }}
-            className="flex h-[30px] w-full items-center gap-2 rounded-full pr-2.5 text-left text-ink-soft hover:bg-field hover:text-ink aria-[current=true]:bg-charcoal aria-[current=true]:text-on-charcoal"
-          >
-            <span className="font-medium">{node.type}</span>
-            <span className="min-w-0 truncate text-ink-faint">{preview(node)}</span>
-            {node.hidden === true && (
-              <span className="ml-auto text-ink-faint">
-                <EyeOffIcon />
-              </span>
-            )}
-          </button>
+          <LayerRow
+            node={node}
+            depth={depth}
+            isSelected={selectedNodeIds.includes(node.id)}
+            isHovered={node.id === hoveredNodeId}
+            onSelect={onSelect}
+            onToggleSelect={onToggleSelect}
+            onHover={onHover}
+          />
         </li>
       ))}
     </ul>
@@ -109,22 +171,29 @@ function LayerList({ rows, selectedNodeId, onSelect }: LayerListProps) {
 
 type LeftPanelProps = {
   readonly root: DesignNode | undefined;
-  readonly selectedNodeId: string | undefined;
+  readonly selectedNodeId?: string | undefined;
+  readonly selectedNodeIds?: readonly string[];
+  readonly hoveredNodeId?: string | undefined;
   readonly onSelect: (nodeId: string) => void;
+  readonly onToggleSelect?: (nodeId: string) => void;
+  readonly onHover?: (nodeId: string | undefined) => void;
 };
 
 /** Layers of the page and the Library (filled by drag and drop, WP-1.08). */
-export function LeftPanel({ root, selectedNodeId, onSelect }: LeftPanelProps) {
+function LeftPanelTabs({
+  isLayers,
+  onSelectTab,
+}: {
+  readonly isLayers: boolean;
+  readonly onSelectTab: (tab: 'layers' | 'library') => void;
+}) {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<'layers' | 'library'>('layers');
-  const rows = rowsOf(root);
-  const isLayers = tab === 'layers';
-  const tabs = (
+  return (
     <>
       <Tab
         selected={!isLayers}
         onSelect={() => {
-          setTab('library');
+          onSelectTab('library');
         }}
       >
         {t('editor.library')}
@@ -132,22 +201,46 @@ export function LeftPanel({ root, selectedNodeId, onSelect }: LeftPanelProps) {
       <Tab
         selected={isLayers}
         onSelect={() => {
-          setTab('layers');
+          onSelectTab('layers');
         }}
       >
         {t('editor.layers')}
       </Tab>
     </>
   );
+}
+
+/** Layers of the page and the Library (filled by drag and drop, WP-1.08). */
+export function LeftPanel({
+  root,
+  selectedNodeId,
+  selectedNodeIds = selectedNodeId !== undefined ? [selectedNodeId] : [],
+  hoveredNodeId,
+  onSelect,
+  onToggleSelect = onSelect,
+  onHover = () => {},
+}: LeftPanelProps) {
+  const { t } = useTranslation();
+  const [tab, setTab] = useState<'layers' | 'library'>('layers');
+  const rows = rowsOf(root);
+  const isLayers = tab === 'layers';
+
   return (
     <Panel
       label={t('editor.leftPanel')}
       title={t(isLayers ? 'editor.layers' : 'editor.library')}
       {...(isLayers ? { count: rows.length } : {})}
-      tabs={tabs}
+      tabs={<LeftPanelTabs isLayers={isLayers} onSelectTab={setTab} />}
     >
       {isLayers ? (
-        <LayerList rows={rows} selectedNodeId={selectedNodeId} onSelect={onSelect} />
+        <LayerList
+          rows={rows}
+          selectedNodeIds={selectedNodeIds}
+          hoveredNodeId={hoveredNodeId}
+          onSelect={onSelect}
+          onToggleSelect={onToggleSelect}
+          onHover={onHover}
+        />
       ) : (
         <p className="px-1 pt-2 text-ink-faint">{t('editor.libraryLater')}</p>
       )}

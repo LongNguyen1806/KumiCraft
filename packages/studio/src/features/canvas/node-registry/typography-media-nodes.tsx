@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useTextEditStore } from '../../overlay/text-edit/use-text-edit-store.ts';
 import { nodeAttrs, type NodeRenderProps } from './layout-nodes.tsx';
 
 const HEADING_TAGS = {
@@ -21,21 +22,39 @@ function resolveImageSrc(src: string): string {
 
 export function TextNode({ node, className, isInner }: NodeRenderProps) {
   const content = node.content?.kind === 'text' ? node.content : undefined;
+  const isEditing = useTextEditStore((s) => s.editingNodeId === node.id);
+  const session = useTextEditStore((s) => s.endedSessions[node.id] ?? 0);
+  const originalText = useTextEditStore((s) => s.originalText);
   const Tag = content?.as ?? 'p';
+  const textToRender = isEditing ? originalText : (content?.text ?? '');
+
   return (
-    <Tag {...nodeAttrs(node.id, isInner)} className={className}>
-      {content?.text ?? ''}
+    <Tag
+      key={`${node.id}:${String(session)}`}
+      {...nodeAttrs(node.id, isInner)}
+      className={`${className} whitespace-pre-line`}
+    >
+      {textToRender}
     </Tag>
   );
 }
 
 export function HeadingNode({ node, className, isInner }: NodeRenderProps) {
   const content = node.content?.kind === 'heading' ? node.content : undefined;
+  const isEditing = useTextEditStore((s) => s.editingNodeId === node.id);
+  const session = useTextEditStore((s) => s.endedSessions[node.id] ?? 0);
+  const originalText = useTextEditStore((s) => s.originalText);
   const level = content?.level ?? 1;
   const Tag = HEADING_TAGS[level];
+  const textToRender = isEditing ? originalText : (content?.text ?? '');
+
   return (
-    <Tag {...nodeAttrs(node.id, isInner)} className={className}>
-      {content?.text ?? ''}
+    <Tag
+      key={`${node.id}:${String(session)}`}
+      {...nodeAttrs(node.id, isInner)}
+      className={`${className} whitespace-pre-line`}
+    >
+      {textToRender}
     </Tag>
   );
 }

@@ -55,7 +55,11 @@ type WorkAreaProps = {
 /** Left panel, Canvas and right panel, with the resize handles between them. */
 function WorkArea({ panels, root, path, frame, scale, onCanvasWidth }: WorkAreaProps) {
   const selectedNodeId = useEditorStore((state) => state.selectedNodeId);
+  const selectedNodeIds = useEditorStore((state) => state.selectedNodeIds);
+  const hoveredNodeId = useEditorStore((state) => state.hoveredNodeId);
   const selectNode = useEditorStore((state) => state.selectNode);
+  const toggleNodeSelection = useEditorStore((state) => state.toggleNodeSelection);
+  const hoverNode = useEditorStore((state) => state.hoverNode);
   const { layout, resize } = panels;
   const handle = (side: Side) => (
     <Resizer
@@ -70,7 +74,15 @@ function WorkArea({ panels, root, path, frame, scale, onCanvasWidth }: WorkAreaP
   return (
     <div className="grid min-h-0 flex-1" style={{ gridTemplateColumns: columns(layout) }}>
       {layout.visible.left ? (
-        <LeftPanel root={root} selectedNodeId={selectedNodeId} onSelect={selectNode} />
+        <LeftPanel
+          root={root}
+          selectedNodeId={selectedNodeId}
+          selectedNodeIds={selectedNodeIds}
+          hoveredNodeId={hoveredNodeId}
+          onSelect={selectNode}
+          onToggleSelect={toggleNodeSelection}
+          onHover={hoverNode}
+        />
       ) : (
         <div />
       )}
@@ -103,38 +115,26 @@ type EditorShellProps = {
   readonly onTrusted: () => void;
 };
 
-export function EditorShell({ document, trusted, onTrusted }: EditorShellProps) {
-  const store = useEditorStore();
-  const panels = usePanelLayout();
-  const { workspace } = document;
-  const [frameId, setFrameId] = useState(workspace.primaryFrameId);
-  const [canvasWidth, setCanvasWidth] = useState(0);
-  const frame = workspace.frames.find((item) => item.id === frameId) ?? workspace.frames[0];
+function EditorMain({
+  document,
+  store,
+  panels,
+  frame,
+  scale,
+  setCanvasWidth,
+}: {
+  readonly document: DesignDocument;
+  readonly store: EditorState;
+  readonly panels: ReturnType<typeof usePanelLayout>;
+  readonly frame: Frame;
+  readonly scale: number;
+  readonly setCanvasWidth: (w: number) => void;
+}) {
   const pageId = store.activePageId;
   const root = pageId === undefined ? undefined : document.pages[pageId]?.root;
   const path = pathTo(root, store.selectedNodeId);
-  useShellKeys(store, panels);
-  if (frame === undefined) return undefined;
-  const scale = fitScale(canvasWidth, frame.width);
   return (
-    <div className="flex h-full flex-col gap-2.5 px-3.5 py-3">
-      <EditorToolbar
-        workspaceName={workspace.name}
-        pages={workspace.pageOrder.map((id) => ({ id, name: document.pages[id]?.name ?? id }))}
-        activePageId={pageId}
-        onPage={store.setActivePageId}
-        frames={workspace.frames}
-        activeFrameId={frame.id}
-        onFrame={setFrameId}
-        zoomPercent={Math.round(scale * 100)}
-        canUndo={store.undoStack.length > 0}
-        canRedo={store.redoStack.length > 0}
-        onUndo={store.undo}
-        onRedo={store.redo}
-        visible={panels.layout.visible}
-        onToggle={panels.toggle}
-      />
-      {!trusted && <TrustPrompt workspace={workspace} onTrusted={onTrusted} />}
+    <>
       <WorkArea
         panels={panels}
         root={root}
@@ -148,7 +148,49 @@ export function EditorShell({ document, trusted, onTrusted }: EditorShellProps) 
         notice={store.notice}
         revision={store.revision}
         path={path}
-        workspace={workspace}
+        selectedCount={store.selectedNodeIds.length}
+        workspace={document.workspace}
+      />
+    </>
+  );
+}
+
+export function EditorShell({ document, trusted, onTrusted }: EditorShellProps) {
+  const store = useEditorStore();
+  const panels = usePanelLayout();
+  const { workspace } = document;
+  const [frameId, setFrameId] = useState(workspace.primaryFrameId);
+  const [canvasWidth, setCanvasWidth] = useState(0);
+  const frame = workspace.frames.find((item) => item.id === frameId) ?? workspace.frames[0];
+  useShellKeys(store, panels);
+  if (frame === undefined) return undefined;
+  const scale = fitScale(canvasWidth, frame.width);
+  return (
+    <div className="flex h-full flex-col gap-2.5 px-3.5 py-3">
+      <EditorToolbar
+        workspaceName={workspace.name}
+        pages={workspace.pageOrder.map((id) => ({ id, name: document.pages[id]?.name ?? id }))}
+        activePageId={store.activePageId}
+        onPage={store.setActivePageId}
+        frames={workspace.frames}
+        activeFrameId={frame.id}
+        onFrame={setFrameId}
+        zoomPercent={Math.round(scale * 100)}
+        canUndo={store.undoStack.length > 0}
+        canRedo={store.redoStack.length > 0}
+        onUndo={store.undo}
+        onRedo={store.redo}
+        visible={panels.layout.visible}
+        onToggle={panels.toggle}
+      />
+      {!trusted && <TrustPrompt workspace={workspace} onTrusted={onTrusted} />}
+      <EditorMain
+        document={document}
+        store={store}
+        panels={panels}
+        frame={frame}
+        scale={scale}
+        setCanvasWidth={setCanvasWidth}
       />
     </div>
   );

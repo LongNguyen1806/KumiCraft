@@ -106,7 +106,8 @@
     "notice": {
       "E017": "The design changed elsewhere, so it was reloaded. Undo history was cleared.",
       "E005": "The server refused the last change, so the design was reloaded. Undo history was cleared."
-    }
+    },
+    "selectedCount": "{{count}} items selected"
   },
   "settings": {
     "open": "Settings",
@@ -145,5 +146,10 @@
     "imagePlaceholder": "Image placeholder",
     "slot": "Slot: {{name}}",
     "initiallyHidden": "Hidden on page load"
+  },
+  "overlay": {
+    "textFromData": "Content is bound to data",
+    "textHasFormat": "Formatted content will be editable in rich text",
+    "editFailed": "Failed to save text"
   }
 }

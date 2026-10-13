@@ -11,10 +11,15 @@ export type ShortcutActions = {
   readonly togglePanels: () => void;
 };
 
-/** Typing in a field keeps the browser's own undo for that field. */
-function isTyping(target: unknown): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  return target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
+/**
+ * Typing in a field keeps the browser's own undo for that field. Reads properties instead of
+ * `instanceof`, because the target may come from the Canvas iframe, which has its own classes.
+ */
+export function isTypingTarget(element: EventTarget | undefined): boolean {
+  if (element === undefined) return false;
+  const editable = 'isContentEditable' in element && element.isContentEditable === true;
+  const tag = 'tagName' in element && typeof element.tagName === 'string' ? element.tagName : '';
+  return editable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(tag);
 }
 
 type KeyPress = Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey'>;
@@ -42,7 +47,7 @@ export function useEditorShortcuts(actions: ShortcutActions): void {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const action = shortcutFor(event);
-      if (action === undefined || isTyping(event.target)) return;
+      if (action === undefined || isTypingTarget(event.target ?? undefined)) return;
       event.preventDefault();
       latest.current[action]();
     };

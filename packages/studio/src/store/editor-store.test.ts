@@ -143,6 +143,17 @@ describe('editor store', () => {
     store.getState().undo();
     expect(textOf(store.getState().document)).toBe('Original text');
   });
+
+  it('keeps each confirmed text edit as its own undo step, however fast', () => {
+    const store = make({ now: () => 1000 });
+    const meta = { source: 'user', label: 'Edit text', coalesce: false } as const;
+    store.getState().dispatch([setText('First')], meta);
+    store.getState().dispatch([setText('Second')], meta);
+
+    expect(store.getState().undoStack).toHaveLength(2);
+    store.getState().undo();
+    expect(textOf(store.getState().document)).toBe('First');
+  });
 });
 
 describe('editor store synchronisation', () => {
@@ -235,5 +246,79 @@ describe('undo history across a page reload (spec-log #77)', () => {
     reloaded.getState().loadDocument(sampleDocument(5), 5);
 
     expect(reloaded.getState().canUndo()).toBe(false);
+  });
+});
+
+describe('multiple selection in editor store', () => {
+  it('selects single node and syncs selectedNodeId and selectedNodeIds', () => {
+    const store = make();
+    store.getState().selectNode('n_card000001');
+    expect(store.getState().selectedNodeId).toBe('n_card000001');
+    expect(store.getState().selectedNodeIds).toEqual(['n_card000001']);
+
+    store.getState().selectNode(undefined);
+    expect(store.getState().selectedNodeId).toBeUndefined();
+    expect(store.getState().selectedNodeIds).toEqual([]);
+  });
+
+  it('selects multiple nodes with selectNodes and toggleNodeSelection', () => {
+    const store = make();
+    store.getState().selectNodes(['n_card000001', 'n_text000001']);
+    expect(store.getState().selectedNodeIds).toEqual(['n_card000001', 'n_text000001']);
+    expect(store.getState().selectedNodeId).toBe('n_text000001');
+
+    // Toggle removes already selected node
+    store.getState().toggleNodeSelection('n_text000001');
+    expect(store.getState().selectedNodeIds).toEqual(['n_card000001']);
+    expect(store.getState().selectedNodeId).toBe('n_card000001');
+
+    // Toggle adds new node
+    store.getState().toggleNodeSelection('n_text000001');
+    expect(store.getState().selectedNodeIds).toEqual(['n_card000001', 'n_text000001']);
+    expect(store.getState().selectedNodeId).toBe('n_text000001');
+  });
+
+  it('clears selection on page change or document reload', () => {
+    const store = make();
+    store.getState().selectNodes(['n_card000001']);
+    store.getState().setActivePageId('p_about00001');
+    expect(store.getState().selectedNodeIds).toEqual([]);
+    expect(store.getState().selectedNodeId).toBeUndefined();
+
+    store.getState().loadDocument(sampleDocument(), 2);
+    expect(store.getState().selectedNodeIds).toEqual([]);
+    expect(store.getState().selectedNodeId).toBeUndefined();
+  });
+
+  it('prunes deleted nodes from selection on dispatch, undo and redo', () => {
+    const store = make();
+    store.getState().selectNodes(['n_card000001', 'n_text000001']);
+
+    // Delete n_text000001
+    store.getState().dispatch(
+      [
+        {
+          op: 'remove',
+          target: { kind: 'page', pageId: 'p_home000001' },
+          nodeId: 'n_text000001',
+        },
+      ],
+      { source: 'user', label: 'Remove text' },
+    );
+
+    expect(store.getState().selectedNodeIds).toEqual(['n_card000001']);
+    expect(store.getState().selectedNodeId).toBe('n_card000001');
+
+    // Undo: n_text000001 comes back, selection remains pruned
+    store.getState().undo();
+    expect(store.getState().flatNodes['n_text000001']).toBeDefined();
+
+    // Select text again then redo remove
+    store.getState().toggleNodeSelection('n_text000001');
+    expect(store.getState().selectedNodeIds).toEqual(['n_card000001', 'n_text000001']);
+
+    store.getState().redo();
+    expect(store.getState().selectedNodeIds).toEqual(['n_card000001']);
+    expect(store.getState().selectedNodeId).toBe('n_card000001');
   });
 });

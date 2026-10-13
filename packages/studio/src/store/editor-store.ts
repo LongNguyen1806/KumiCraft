@@ -37,13 +37,19 @@ export type SyncStatus = 'saved' | 'saving' | 'error' | 'external_conflict';
 /** Shown once after the Studio reloaded the document: E017 changed elsewhere, E005 refused. */
 export type SyncNotice = 'E017' | 'E005';
 
-type Meta = { readonly source: 'user' | 'ai'; readonly label: string };
+type Meta = {
+  readonly source: 'user' | 'ai';
+  readonly label: string;
+  /** `false` keeps this change as its own Undo step even right after a similar one. */
+  readonly coalesce?: boolean;
+};
 
 export type EditorState = {
   readonly document: DesignDocument | undefined;
   readonly revision: number;
   readonly activePageId: string | undefined;
   readonly selectedNodeId: string | undefined;
+  readonly selectedNodeIds: readonly string[];
   readonly hoveredNodeId: string | undefined;
   readonly flatNodes: Readonly<Record<string, NodeRecord>>;
   readonly syncStatus: SyncStatus;
@@ -54,6 +60,8 @@ export type EditorState = {
   readonly loadDocument: (doc: DesignDocument, revision: number) => void;
   readonly setActivePageId: (pageId: string) => void;
   readonly selectNode: (nodeId: string | undefined) => void;
+  readonly selectNodes: (nodeIds: readonly string[]) => void;
+  readonly toggleNodeSelection: (nodeId: string) => void;
   readonly hoverNode: (nodeId: string | undefined) => void;
   readonly dispatch: (ops: readonly DesignOperation[], meta: Meta) => Result<void>;
   readonly undo: () => void;
@@ -123,13 +131,21 @@ type Context = {
   readonly deps: Required<Pick<StoreDeps, 'now'>> & StoreDeps;
 };
 
+function pruneSelection(selectedNodeIds: readonly string[], flatNodes: FlatNodes) {
+  const valid = selectedNodeIds.filter((id) => flatNodes[id] !== undefined);
+  return {
+    selectedNodeIds: valid,
+    selectedNodeId: valid.at(-1),
+  };
+}
+
 function dispatch(context: Context, ops: readonly DesignOperation[], meta: Meta): Result<void> {
   const { get, set, queue, deps } = context;
   const state = get();
   if (state.document === undefined) return err({ code: 'E015', params: { resource: 'document' } });
   const applied = applyBatch(state.document, ops);
   if (!applied.ok) return applied;
-  const coalesceKey = coalesceKeyOf(ops);
+  const coalesceKey = meta.coalesce === false ? undefined : coalesceKeyOf(ops);
   const entry: HistoryEntry = {
     id: nextEntryId(),
     label: meta.label,
@@ -139,9 +155,13 @@ function dispatch(context: Context, ops: readonly DesignOperation[], meta: Meta)
     at: deps.now(),
     ...(coalesceKey === undefined ? {} : { coalesceKey }),
   };
+  const nextFlat = flatNodesOf(applied.value.doc, state.activePageId, state.flatNodes);
+  const selection = pruneSelection(state.selectedNodeIds, nextFlat);
   set({
     document: applied.value.doc,
-    flatNodes: flatNodesOf(applied.value.doc, state.activePageId, state.flatNodes),
+    flatNodes: nextFlat,
+    selectedNodeIds: selection.selectedNodeIds,
+    selectedNodeId: selection.selectedNodeId,
     undoStack: pushEntry(state.undoStack, entry),
     redoStack: [],
     notice: undefined,
@@ -161,9 +181,13 @@ function travel(context: Context, direction: 'undo' | 'redo'): void {
   const applied = applyBatch(state.document, ops);
   if (!applied.ok) return;
   const { coalesceKey: _merged, ...moved } = entry;
+  const nextFlat = flatNodesOf(applied.value.doc, state.activePageId, state.flatNodes);
+  const selection = pruneSelection(state.selectedNodeIds, nextFlat);
   set({
     document: applied.value.doc,
-    flatNodes: flatNodesOf(applied.value.doc, state.activePageId, state.flatNodes),
+    flatNodes: nextFlat,
+    selectedNodeIds: selection.selectedNodeIds,
+    selectedNodeId: selection.selectedNodeId,
     undoStack: direction === 'undo' ? state.undoStack.slice(0, -1) : [...state.undoStack, moved],
     redoStack: direction === 'undo' ? [...state.redoStack, moved] : state.redoStack.slice(0, -1),
   });
@@ -183,6 +207,7 @@ function load(context: Context, doc: DesignDocument, revision: number, keepHisto
     revision,
     activePageId,
     selectedNodeId: undefined,
+    selectedNodeIds: [],
     hoveredNodeId: undefined,
     flatNodes: flatNodesOf(doc, activePageId),
     syncStatus: 'saved',
@@ -236,6 +261,7 @@ const initialState = {
   revision: 0,
   activePageId: undefined,
   selectedNodeId: undefined,
+  selectedNodeIds: [] as readonly string[],
   hoveredNodeId: undefined,
   flatNodes: {},
   syncStatus: 'saved' as SyncStatus,
@@ -243,6 +269,66 @@ const initialState = {
   undoStack: [] as readonly HistoryEntry[],
   redoStack: [] as readonly HistoryEntry[],
 };
+
+function buildSelectionActions(ctx: Context) {
+  const { set, get } = ctx;
+  return {
+    selectNode: (selectedNodeId: string | undefined) => {
+      set({
+        selectedNodeId,
+        selectedNodeIds: selectedNodeId === undefined ? [] : [selectedNodeId],
+      });
+    },
+    selectNodes: (selectedNodeIds: readonly string[]) => {
+      const valid = selectedNodeIds.filter((id) => get().flatNodes[id] !== undefined);
+      set({ selectedNodeIds: valid, selectedNodeId: valid.at(-1) });
+    },
+    toggleNodeSelection: (nodeId: string) => {
+      const current = get().selectedNodeIds;
+      const next = current.includes(nodeId)
+        ? current.filter((id) => id !== nodeId)
+        : [...current, nodeId];
+      set({ selectedNodeIds: next, selectedNodeId: next.at(-1) });
+    },
+    hoverNode: (hoveredNodeId: string | undefined) => {
+      set({ hoveredNodeId });
+    },
+  };
+}
+
+function buildStoreActions(ctx: Context) {
+  const { set, get, queue } = ctx;
+  return {
+    ...initialState,
+    loadDocument: (doc: DesignDocument, revision: number) => {
+      load(ctx, doc, revision, true);
+    },
+    setActivePageId: (activePageId: string) => {
+      set({
+        activePageId,
+        selectedNodeId: undefined,
+        selectedNodeIds: [],
+        hoveredNodeId: undefined,
+        flatNodes: flatNodesOf(get().document, activePageId),
+      });
+    },
+    ...buildSelectionActions(ctx),
+    dispatch: (ops: readonly DesignOperation[], meta: Meta) => dispatch(ctx, ops, meta),
+    undo: () => {
+      travel(ctx, 'undo');
+    },
+    redo: () => {
+      travel(ctx, 'redo');
+    },
+    canUndo: () => get().undoStack.length > 0,
+    canRedo: () => get().redoStack.length > 0,
+    setExternalConflict: () => {
+      set({ syncStatus: 'external_conflict' });
+    },
+    flushSync: () => queue.flush(),
+    hasUnsavedChanges: () => queue.hasUnsaved(),
+  };
+}
 
 export function createEditorStore(deps: StoreDeps = {}) {
   const resolved = { storage: sessionHistoryStorage(), now: () => Date.now(), ...deps };
@@ -254,41 +340,7 @@ export function createEditorStore(deps: StoreDeps = {}) {
 
   return create<EditorState>((set, get) => {
     context = { get, set, queue, deps: resolved };
-    const ctx = context;
-    return {
-      ...initialState,
-      loadDocument: (doc, revision) => {
-        load(ctx, doc, revision, true);
-      },
-      setActivePageId: (activePageId) => {
-        set({
-          activePageId,
-          selectedNodeId: undefined,
-          hoveredNodeId: undefined,
-          flatNodes: flatNodesOf(get().document, activePageId),
-        });
-      },
-      selectNode: (selectedNodeId) => {
-        set({ selectedNodeId });
-      },
-      hoverNode: (hoveredNodeId) => {
-        set({ hoveredNodeId });
-      },
-      dispatch: (ops, meta) => dispatch(ctx, ops, meta),
-      undo: () => {
-        travel(ctx, 'undo');
-      },
-      redo: () => {
-        travel(ctx, 'redo');
-      },
-      canUndo: () => get().undoStack.length > 0,
-      canRedo: () => get().redoStack.length > 0,
-      setExternalConflict: () => {
-        set({ syncStatus: 'external_conflict' });
-      },
-      flushSync: () => queue.flush(),
-      hasUnsavedChanges: () => queue.hasUnsaved(),
-    };
+    return buildStoreActions(context);
   });
 }
 

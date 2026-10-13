@@ -2,8 +2,12 @@ import type { Frame } from '@reactcraft/model';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useEditorStore } from '../../store/editor-store.ts';
+import { CanvasContext } from '../canvas/canvas-context.ts';
 import { CanvasScaleProvider } from '../canvas/canvas-scale-context.tsx';
 import { CanvasViewport } from '../canvas/canvas-viewport.tsx';
+import { CanvasOverlay } from '../overlay/canvas-overlay.tsx';
+import { useCanvasInteraction } from '../overlay/use-canvas-interaction.ts';
 
 const STAGE_PADDING = 64;
 
@@ -32,6 +36,54 @@ function FrameHeader({ frame, scale }: { readonly frame: Frame; readonly scale: 
   );
 }
 
+function FrameViewportContainer({
+  frame,
+  scale,
+  effectiveHeight,
+  onContentHeight,
+  onIframe,
+  onDocReady,
+}: {
+  readonly frame: Frame;
+  readonly scale: number;
+  readonly effectiveHeight: number;
+  readonly onContentHeight: (height: number) => void;
+  readonly onIframe: (iframe: HTMLIFrameElement | undefined) => void;
+  readonly onDocReady: (doc: Document) => void;
+}) {
+  return (
+    <div
+      className="relative w-max"
+      style={{
+        width: Math.round(frame.width * scale),
+        height: Math.round(effectiveHeight * scale),
+      }}
+    >
+      <div
+        style={{
+          transform: `scale(${String(scale)})`,
+          transformOrigin: '0 0',
+          width: frame.width,
+        }}
+      >
+        <div
+          className="overflow-hidden rounded-[14px] bg-white shadow-[0_2px_4px_rgb(60_52_30/0.06),0_24px_48px_rgb(60_52_30/0.12)]"
+          style={{ width: frame.width, minHeight: frame.height, height: effectiveHeight }}
+          data-testid="frame"
+        >
+          <CanvasViewport
+            frame={frame}
+            onContentHeight={onContentHeight}
+            onIframe={onIframe}
+            onDocReady={onDocReady}
+          />
+        </div>
+      </div>
+      <CanvasOverlay />
+    </div>
+  );
+}
+
 function FrameViewportMat({
   frame,
   scale,
@@ -43,35 +95,31 @@ function FrameViewportMat({
   readonly effectiveHeight: number;
   readonly onContentHeight: (height: number) => void;
 }) {
+  const [iframe, setIframe] = useState<HTMLIFrameElement>();
+  const [iframeDoc, setIframeDoc] = useState<Document>();
+  const activePageId = useEditorStore((s) => s.activePageId);
+  const rootId = useEditorStore((s) =>
+    activePageId !== undefined ? s.document?.pages[activePageId]?.root.id : undefined,
+  );
+
+  useCanvasInteraction({ iframeDoc, rootId });
+
   return (
-    <div className="flex justify-center px-8 pt-9 pb-14">
-      <div className="grid gap-2.5">
-        <FrameHeader frame={frame} scale={scale} />
-        <div
-          className="w-max"
-          style={{
-            width: Math.round(frame.width * scale),
-            height: Math.round(effectiveHeight * scale),
-          }}
-        >
-          <div
-            style={{
-              transform: `scale(${String(scale)})`,
-              transformOrigin: '0 0',
-              width: frame.width,
-            }}
-          >
-            <div
-              className="overflow-hidden rounded-[14px] bg-white shadow-[0_2px_4px_rgb(60_52_30/0.06),0_24px_48px_rgb(60_52_30/0.12)]"
-              style={{ width: frame.width, minHeight: frame.height, height: effectiveHeight }}
-              data-testid="frame"
-            >
-              <CanvasViewport frame={frame} onContentHeight={onContentHeight} />
-            </div>
-          </div>
+    <CanvasContext.Provider value={{ iframe, iframeDoc }}>
+      <div className="flex justify-center px-8 pt-9 pb-14">
+        <div className="grid gap-2.5">
+          <FrameHeader frame={frame} scale={scale} />
+          <FrameViewportContainer
+            frame={frame}
+            scale={scale}
+            effectiveHeight={effectiveHeight}
+            onContentHeight={onContentHeight}
+            onIframe={setIframe}
+            onDocReady={setIframeDoc}
+          />
         </div>
       </div>
-    </div>
+    </CanvasContext.Provider>
   );
 }
 
@@ -83,6 +131,7 @@ export function CanvasArea({ frame, scale, onWidth }: CanvasAreaProps) {
   const { t } = useTranslation();
   const [area, setArea] = useState<HTMLElement>();
   const [contentHeight, setContentHeight] = useState<number>(frame.height);
+  const selectNode = useEditorStore((s) => s.selectNode);
 
   useEffect(() => {
     if (area === undefined) return undefined;
@@ -95,6 +144,20 @@ export function CanvasArea({ frame, scale, onWidth }: CanvasAreaProps) {
       observer.disconnect();
     };
   }, [area, onWidth]);
+
+  useEffect(() => {
+    if (area === undefined) return undefined;
+    const handleClick = (e: MouseEvent) => {
+      const target = (e.target ?? undefined) as HTMLElement | undefined;
+      if (target && !target.closest('[data-testid="frame"]')) {
+        selectNode(undefined);
+      }
+    };
+    area.addEventListener('click', handleClick);
+    return () => {
+      area.removeEventListener('click', handleClick);
+    };
+  }, [area, selectNode]);
 
   const effectiveHeight = Math.max(frame.height, contentHeight);
 

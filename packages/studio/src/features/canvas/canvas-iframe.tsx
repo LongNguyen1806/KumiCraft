@@ -107,6 +107,7 @@ function useIframeThemeSync(
   iframe: HTMLIFrameElement | undefined,
   themeCss: string,
   setMountNode: (node: HTMLElement) => void,
+  onDocReady?: (doc: Document) => void,
 ): void {
   useEffect(() => {
     if (iframe === undefined) return undefined;
@@ -116,6 +117,7 @@ function useIframeThemeSync(
       if (doc?.body === undefined) return;
       syncIframeHead(doc, themeCss);
       setMountNode(doc.body);
+      onDocReady?.(doc);
     };
 
     if (iframe.contentDocument?.readyState === 'complete') {
@@ -127,7 +129,7 @@ function useIframeThemeSync(
       };
     }
     return undefined;
-  }, [iframe, themeCss, setMountNode]);
+  }, [iframe, themeCss, setMountNode, onDocReady]);
 
   useEffect(() => {
     const doc = iframe?.contentDocument ?? undefined;
@@ -137,15 +139,43 @@ function useIframeThemeSync(
   }, [iframe, themeCss]);
 }
 
+/**
+ * Whether the Tailwind runtime has injected its generated stylesheet into the iframe. Until then the
+ * design is drawn without styles, so measuring or clicking it would hit the wrong place.
+ */
+function useTailwindReady(iframe: HTMLIFrameElement | undefined, mounted: boolean): boolean {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const doc = iframe?.contentDocument ?? undefined;
+    if (doc === undefined || !mounted) return undefined;
+    const check = () => {
+      if ((doc.head.querySelector('style:not([id])') ?? undefined) !== undefined) setReady(true);
+    };
+    const observer = new MutationObserver(check);
+    observer.observe(doc.head, { childList: true });
+    check();
+    return () => {
+      observer.disconnect();
+    };
+  }, [iframe, mounted]);
+
+  return ready;
+}
+
 export function CanvasIframe({
   children,
   frame,
   onContentHeight,
+  onIframe,
+  onDocReady,
   title = 'Canvas Preview',
 }: {
   readonly children: ReactNode;
   readonly frame?: Frame | undefined;
   readonly onContentHeight?: ((height: number) => void) | undefined;
+  readonly onIframe?: ((iframe: HTMLIFrameElement | undefined) => void) | undefined;
+  readonly onDocReady?: ((doc: Document) => void) | undefined;
   readonly title?: string | undefined;
 }) {
   const [iframe, setIframe] = useState<HTMLIFrameElement>();
@@ -157,16 +187,20 @@ export function CanvasIframe({
   const contentHeight = useIframeAutoHeight(iframe, minHeight, onContentHeight);
 
   useIframeNavigationBlocker(iframe);
-  useIframeThemeSync(iframe, themeCss, setMountNode);
+  useIframeThemeSync(iframe, themeCss, setMountNode, onDocReady);
+  const styled = useTailwindReady(iframe, mountNode !== undefined);
 
   return (
     <>
       <iframe
         ref={(element) => {
-          setIframe(element ?? undefined);
+          const el = element ?? undefined;
+          setIframe(el);
+          onIframe?.(el);
         }}
         title={title}
         data-testid="canvas-iframe"
+        data-rc-styled={styled ? '1' : undefined}
         style={{
           width: `${String(frameWidth)}px`,
           height: `${String(contentHeight)}px`,

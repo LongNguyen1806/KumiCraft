@@ -106,7 +106,8 @@
     "notice": {
       "E017": "Thiết kế đã thay đổi ở nơi khác nên đã được tải lại. Lịch sử hoàn tác đã xóa.",
       "E005": "Server từ chối thay đổi vừa rồi nên thiết kế đã được tải lại. Lịch sử hoàn tác đã xóa."
-    }
+    },
+    "selectedCount": "{{count}} phần tử đã chọn"
   },
   "settings": {
     "open": "Cài đặt",
@@ -145,5 +146,10 @@
     "imagePlaceholder": "Ảnh giữ chỗ",
     "slot": "Slot: {{name}}",
     "initiallyHidden": "Ẩn khi tải trang"
+  },
+  "overlay": {
+    "textFromData": "Nội dung lấy từ dữ liệu",
+    "textHasFormat": "Nội dung có định dạng, sẽ sửa được ở bản rich text",
+    "editFailed": "Không thể lưu nội dung"
   }
 }
