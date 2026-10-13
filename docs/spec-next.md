@@ -24,16 +24,16 @@ SRS v5.0 mô tả **hệ thống phải làm gì**. Tài liệu này mô tả **
 
 ## 0.2. Cấu trúc và tiến độ viết lại
 
-| Phần    | Nội dung                                                          | Trạng thái                                                      |
-| ------- | ----------------------------------------------------------------- | --------------------------------------------------------------- |
-| Phần 0  | Hướng dẫn sử dụng tài liệu                                        | Đã viết lại                                                     |
-| SPEC-01 | Kiến trúc kỹ thuật & tech stack (gộp backend và Studio)           | Đã viết lại                                                     |
-| SPEC-02 | Quy chuẩn code & repo                                             | Đã viết lại (đợt 3a)                                            |
-| SPEC-03 | Giao tiếp: API REST, sự kiện WebSocket, giao thức cầu nối, mã lỗi | Đã viết lại (đợt 2); chi tiết endpoint Phase 2–4 ở đợt 3        |
-| SPEC-04 | Đặc tả module theo phase                                          | Phase 1 đã viết (đợt 2); Phase 2–4 ở đợt 3                      |
-| SPEC-05 | Bảo mật                                                           | Đã viết lại (đợt 3a)                                            |
-| SPEC-06 | Chất lượng & kiểm thử                                             | Đã viết lại (đợt 3a)                                            |
-| SPEC-07 | Quy trình thi công, phase, cổng nghiệm thu                        | Lộ trình và chế độ local đã viết; DoR/DoD, mẫu báo cáo ở đợt 3b |
+| Phần    | Nội dung                                                          | Trạng thái                                          |
+| ------- | ----------------------------------------------------------------- | --------------------------------------------------- |
+| Phần 0  | Hướng dẫn sử dụng tài liệu                                        | Đã viết lại                                         |
+| SPEC-01 | Kiến trúc kỹ thuật & tech stack (gộp backend và Studio)           | Đã viết lại                                         |
+| SPEC-02 | Quy chuẩn code & repo                                             | Đã viết lại (đợt 3a)                                |
+| SPEC-03 | Giao tiếp: API REST, sự kiện WebSocket, giao thức cầu nối, mã lỗi | Đã viết lại                                         |
+| SPEC-04 | Đặc tả module theo phase                                          | Đã viết lại (Phase 1–3 chi tiết, Phase 4 mức khung) |
+| SPEC-05 | Bảo mật                                                           | Đã viết lại (đợt 3a)                                |
+| SPEC-06 | Chất lượng & kiểm thử                                             | Đã viết lại (đợt 3a)                                |
+| SPEC-07 | Quy trình thi công, phase, cổng nghiệm thu                        | Đã viết lại                                         |
 
 ---
 
@@ -1203,6 +1203,7 @@ type ServerEvent<T extends string, P> = {
 | `runner.status`        | `RunnerStatus`                                      | Đổi trạng thái dev server                                           | 1     |
 | `runner.log`           | `{ stream: 'stdout' \| 'stderr'; lines: string[] }` | Đầu ra của dev server, gộp 200 ms, tối đa 100 dòng mỗi sự kiện      | 1     |
 | `history.changed`      | `HistoryState`                                      | Lịch sử đổi                                                         | 1     |
+| `agent.event`          | `{ turnId, event: AgentEvent }`                     | Sự kiện của lượt AI đang chạy (SPEC-04 mục 23)                      | 3     |
 | `settings.changed`     | `Settings`                                          | Cấu hình đổi                                                        | 0     |
 | `job.progress`         | `{ jobId, kind, done, total, stepKey? }`            | Job tiến triển                                                      | 1     |
 | `job.completed`        | `{ jobId, kind, result }`                           | Job xong                                                            | 1     |
@@ -1305,14 +1306,12 @@ type TreeNode = {
 
 ---
 
-## 9. ENDPOINT CỦA PHASE SAU (CHỈ TÊN)
+## 9. ENDPOINT CỦA PHASE SAU
 
-| Phase | Endpoint                                                                                                                                 |
-| ----- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 2     | `POST /source/edits` thêm `insert`, `move`, `remove`, `duplicate`, `wrap`, `unwrap`, `paste`                                             |
-| 2     | `GET /project/pages`, `POST /project/pages`, `PATCH /project/pages/{route}`, `DELETE /project/pages/{route}`                             |
-| 2     | `GET /library`                                                                                                                           |
-| 3     | `GET /agents`, `POST /agent/turns` (job `agent.turn`), `GET /agent/turns`, `GET /agent/turns/{id}/diff`, `POST /agent/turns/{id}/revert` |
+| Phase | Endpoint                                                                                                                                                                         |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2     | Trang: `GET`, `POST`, `PATCH`, `DELETE /project/pages` (SPEC-04 mục 18); `GET /source/element-text`, `POST /source/edits/batch`, thao tác cấu trúc (SPEC-04 mục 14)              |
+| 3     | `GET /agents`, `POST /agent/turns` (job `agent.turn`), `GET /agent/turns`, `GET /agent/turns/{id}/diff`, `POST /agent/turns/{id}/revert`; sự kiện `agent.event` (SPEC-04 mục 23) |
 
 Endpoint của bản 0.18 bị xóa ở WP-1.01: `POST /workspace`, `GET /workspace/document`, `POST /workspace/operations`, `POST /workspace/reload`, `GET /workspace/backups`, `POST /workspace/backups/{id}/restore`, `POST /workspace/trust` (thay bằng `POST /project/trust`).
 
@@ -1368,9 +1367,9 @@ Mã theo SRS v5.0 mục 13. **Đã bỏ (1.0), không dùng lại:** E004, E005,
 
 ---
 
-# SPEC-04 — ĐẶC TẢ MODULE (PHASE 1)
+# SPEC-04 — ĐẶC TẢ MODULE
 
-**Phiên bản phần:** 1.0 (Phase 1). Module của Phase 2–4 viết ở đợt 3.  
+**Phiên bản phần:** 1.0. Phase 1 đến 3 chi tiết; Phase 4 ở mức khung (mục 25).  
 **Trạng thái:** Draft — chờ duyệt  
 **Truy vết:** SRS v5.0 FR-01 đến FR-30 (phần Phase 1), L-01 đến L-06; SPEC-03
 
@@ -1379,7 +1378,7 @@ Mã theo SRS v5.0 mục 13. **Đã bỏ (1.0), không dùng lại:** E004, E005,
 ## 0. QUY ƯỚC
 
 1. Mỗi module có: mục đích, nơi đặt code, quy tắc `R-<module>-nn`, và **bộ kiểm thử bắt buộc** (bảng cuối mỗi module). Bộ kiểm thử là danh sách tình huống tối thiểu mà WP-1.02 phải viết thành test (CW-50); được thêm tình huống, không được bớt.
-2. Mã module trùng tên với bản 0.18 (`M-IN`) đánh số quy tắc từ `10` để không trùng nghĩa với `R-IN-01` đến `R-IN-07` cũ.
+2. Mã module trùng tên với bản 0.18 (`M-IN`, `M-LB`, `M-DD`, `M-CB`, `M-PG`, `M-KB`, `M-AG`) đánh số quy tắc từ `10` để không trùng nghĩa với quy tắc cũ.
 3. "Studio" là code trong `packages/studio`; "server" là `packages/server`; "Bridge" là `packages/bridge`; "shared" là `packages/shared`.
 
 | Mã   | Module                     | Nơi đặt chính                                                                                  | WP      |
@@ -1976,6 +1975,353 @@ Cạnh riêng của viền và bo góc (`border-t`, `rounded-tl`…) chưa có �
 
 ---
 
+## 13. PHASE 2 — DANH SÁCH MODULE
+
+| Mã   | Module                           | Nơi đặt chính                                                                           | WP      |
+| ---- | -------------------------------- | --------------------------------------------------------------------------------------- | ------- |
+| M-SE | Source Editor: thao tác cấu trúc | `server/src/core/source-editor/structure/`                                              | WP-2.02 |
+| M-LB | Library                          | `shared/src/library/`, `studio/src/features/library/`                                   | WP-2.03 |
+| M-DD | Kéo thả                          | `bridge/src/client/drag.ts`, `studio/src/features/dnd/`                                 | WP-2.04 |
+| M-CB | Sao chép, cắt, dán, chọn nhiều   | `studio/src/features/clipboard/`, `server/src/core/source-editor/`                      | WP-2.04 |
+| M-PG | Trang                            | `server/src/core/project/frameworks/vite-react/routes.ts`, `studio/src/features/pages/` | WP-2.05 |
+| M-KB | Phím tắt                         | `studio/src/features/shortcuts/`                                                        | WP-2.06 |
+| M-CL | CLI và gói cài                   | `packages/cli/`                                                                         | WP-2.07 |
+
+Mã module trùng bản 0.18 (`M-LB`, `M-DD`, `M-CB`, `M-PG`, `M-KB`, `M-AG`) đánh số quy tắc từ `10` (như mục 0).
+
+---
+
+## 14. M-SE — THAO TÁC CẤU TRÚC (PHASE 2)
+
+**Mục đích:** SRS FR-26 đến FR-28, AC-05. Bổ sung cho mục 6; R-SE-01 đến R-SE-17 vẫn áp dụng.
+
+```ts
+type ElementGuard = { loc: LocString; tag: string };
+type InsertTarget =
+  | { kind: 'sibling'; ref: ElementGuard; where: 'before' | 'after' }
+  | { kind: 'child'; parent: ElementGuard; where: 'start' | 'end' };
+
+type StructureEdit =
+  | {
+      kind: 'insert';
+      target: InsertTarget;
+      jsx: string;
+      from?: { file: RelPath; imports: string[] };
+    }
+  | { kind: 'move'; elements: ElementGuard[]; target: InsertTarget }
+  | { kind: 'remove'; elements: ElementGuard[] }
+  | { kind: 'duplicate'; elements: ElementGuard[] }
+  | { kind: 'wrap'; elements: ElementGuard[]; wrapper: 'row' | 'column' | 'grid' }
+  | { kind: 'unwrap'; element: ElementGuard };
+
+// POST /source/edits nhận thêm StructureEdit. POST /source/edits/batch nhận { edits: SourceEdit[] } (Phase 2):
+// mọi thao tác thành công hoặc không thao tác nào được ghi; một mục lịch sử.
+type StructureResult = EditResult & { files: RelPath[]; locs: LocString[] }; // locs: vị trí mới của phần tử được chèn/di chuyển/nhân bản/bọc
+```
+
+| Mã      | Quy tắc                                                                                                                                                                                                                                                                                                                                                                     |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-SE-20 | **Con JSX** của một phần tử: các nút `JSXElement`, `JSXFragment`, `JSXExpressionContainer` khác rỗng, `JSXText` có chữ khác khoảng trắng. Mọi chỉ số, vị trí trước/sau tính trên danh sách này                                                                                                                                                                              |
+| R-SE-21 | Đích hợp lệ: cha là `JSXElement` hoặc `JSXFragment` không tự đóng (tự đóng thì đổi thành có thẻ đóng). Không hợp lệ: E023 với `rootElement` (xóa, di chuyển, bọc phần tử là giá trị `return` duy nhất), `loopRoot` (chèn cạnh, xóa, di chuyển phần tử gốc của callback `.map`), `expressionChild` (đích nằm trong `{…}`), `componentSlot` (cha trong nguồn là `{children}`) |
+| R-SE-22 | `insert`: `jsx` phải phân tích được thành một hoặc nhiều phần tử JSX khi bọc trong `<>…</>` (sai: E016 `notJsx`). Chèn trên dòng riêng, thụt lề theo vị trí chèn (R-SE-09), giữ kiểu xuống dòng (R-SE-10)                                                                                                                                                                   |
+| R-SE-23 | Import còn thiếu: với mỗi tên thẻ viết hoa trong đoạn chèn mà file đích chưa import, lấy câu import của tên đó trong `from.imports`, đổi đường dẫn tương đối theo file đích (giữ alias `@/`), thêm sau import cuối của file đích. Không tìm được: vẫn chèn, `warnings` có `missingImport`                                                                                   |
+| R-SE-24 | `move` trong cùng file: một lần sửa văn bản (xóa rồi chèn). Khác file: xóa ở file nguồn, chèn ở file đích kèm R-SE-23; một mục lịch sử gồm hai file. Nhiều phần tử: phải cùng cha, giữ thứ tự. Đích nằm trong chính phần tử đang di chuyển: E016 `moveIntoSelf`. Thả về đúng chỗ cũ: `changed: false`                                                                       |
+| R-SE-25 | `remove`: xóa phần tử và khoảng trắng thụt lề của nó; dòng trống còn lại bị xóa. Nhiều phần tử trong một mục lịch sử                                                                                                                                                                                                                                                        |
+| R-SE-26 | `duplicate`: chèn bản sao văn bản ngay sau từng phần tử (cùng cha)                                                                                                                                                                                                                                                                                                          |
+| R-SE-27 | `wrap`: các phần tử phải cùng cha và liền nhau (E016 `notContiguous`). Bọc bằng `<div className="flex flex-row gap-4">`, `"flex flex-col gap-4"`, `"grid grid-cols-2 gap-4"`; nội dung bên trong thụt thêm một bậc                                                                                                                                                          |
+| R-SE-28 | `unwrap`: chỉ thẻ viết thường; thay phần tử bằng các con của nó, thụt lùi một bậc. Phần tử có thuộc tính khác `className`: vẫn làm, `warnings` có `attributesDropped`                                                                                                                                                                                                       |
+| R-SE-29 | Sau mọi thao tác: R-SE-11 (phân tích lại, E024). Batch: kiểm tra toàn bộ trước khi ghi file nào                                                                                                                                                                                                                                                                             |
+| R-SE-30 | `GET /source/element-text?loc=…` trả `{ jsx, file, imports }`: văn bản nguồn của phần tử (đã bỏ thụt lề chung) và các câu import của mọi tên thẻ viết hoa trong nó — dùng cho sao chép (M-CB)                                                                                                                                                                               |
+
+**Kiểm thử bắt buộc**
+
+| #   | Tình huống                                                                                            | Kỳ vọng                                                               | Loại |
+| --- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ---- |
+| 1   | Chèn trước, sau, đầu, cuối; vào thẻ tự đóng `<div />`; vào Fragment                                   | Đúng vị trí, thụt lề đúng, thẻ tự đóng thành có thẻ đóng              | Unit |
+| 2   | Chèn đoạn có `<Card>` vào file chưa import `Card` (import tương đối, alias `@/`, không tìm được)      | Import thêm đúng đường dẫn; cảnh báo `missingImport`                  | Unit |
+| 3   | Di chuyển lên, xuống trong cùng cha; sang cha khác cùng file; sang file khác; vào chính nó; về chỗ cũ | Đúng; một mục lịch sử hai file; E016 `moveIntoSelf`; `changed: false` | Unit |
+| 4   | Xóa phần tử giữa, cuối, phần tử duy nhất; xóa phần tử gốc `return`; xóa gốc callback `.map`           | Không dòng trống thừa; E023 `rootElement`; E023 `loopRoot`            | Unit |
+| 5   | Bọc 2 phần tử liền nhau; không liền nhau; bỏ bọc `<div className="flex">`; bỏ bọc thẻ có `id`         | Đúng; E016 `notContiguous`; đúng; cảnh báo `attributesDropped`        | Unit |
+| 6   | Mỗi thao tác trên file CRLF, BOM, thụt lề tab                                                         | R-SE-09, R-SE-10 giữ đúng                                             | Unit |
+| 7   | Batch 3 thao tác, thao tác 2 lỗi                                                                      | Không file nào đổi                                                    | Unit |
+| 8   | Undo mọi thao tác ở #1–#5                                                                             | Đúng từng byte                                                        | Unit |
+| 9   | VG-16 mở rộng: bộ 40 file × chèn, xóa, di chuyển, bọc                                                 | Khớp `*.expected.*`                                                   | Unit |
+
+---
+
+## 15. M-LB — LIBRARY
+
+**Mục đích:** SRS FR-70, FR-26.
+
+```ts
+type LibraryBlock = {
+  id: string; // 'layout.row'
+  category: 'layout' | 'content' | 'form' | 'data' | 'composite';
+  labelKey: string; // 'library:blocks.row'
+  keywords: { vi: string[]; en: string[] };
+  icon: string; // tên icon lucide
+  jsx: { vi: string; en: string }; // đoạn JSX + Tailwind, chỉ thẻ viết thường
+};
+```
+
+| Mã      | Quy tắc                                                                                                                                                                                                 |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-LB-10 | Danh sách khối tối thiểu (FR-70): Hàng, Cột, Lưới, Section, Tiêu đề, Đoạn văn, Ảnh, Nút, Liên kết, Form, Ô nhập, Bảng, Card, Thanh điều hướng, Chân trang, Hero. Định nghĩa trong `shared/src/library/` |
+| R-LB-11 | Khối chỉ gồm thẻ HTML viết thường và class Tailwind chuẩn của v4 (không token riêng của dự án), không biểu thức, không import. Chữ mẫu theo ngôn ngữ Studio lúc chèn                                    |
+| R-LB-12 | Ảnh mẫu dùng `src` là SVG xám dạng `data:` URI, có `alt`; không dùng địa chỉ mạng                                                                                                                       |
+| R-LB-13 | Tìm kiếm theo nhãn và từ khóa của cả `vi` và `en`, không phân biệt hoa thường và dấu tiếng Việt                                                                                                         |
+| R-LB-14 | Chèn: kéo vào Canvas (M-DD), hoặc bấm khối → chèn sau phần tử đang chọn (là phần tử chứa được thì chèn vào cuối nó). Không chọn gì: nút bị khóa kèm gợi ý                                               |
+| R-LB-15 | Sau khi chèn: chọn phần tử mới (`locs` của kết quả) khi Bridge báo `tree` có vị trí đó                                                                                                                  |
+
+**Kiểm thử bắt buộc:** mỗi khối phân tích được và render không lỗi trong fixture (unit + E2E chụp không lỗi console); tìm "nut", "button", "Nút" ra khối Nút; AC-05 phần kéo Card vào trang (E2E).
+
+---
+
+## 16. M-DD — KÉO THẢ
+
+**Mục đích:** SRS FR-26, FR-27, AC-05 (ADR-FE-09).
+
+| Mã      | Quy tắc                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R-DD-10 | Nguồn kéo: tay cầm trên khung chọn (Bridge), nút trên Layer Tree, khối trong Library. Kéo từ Studio vào Canvas: Studio gửi `drag-over { x, y, payload: 'library' \| 'layer' }` với tọa độ đã quy đổi theo thu phóng, `drag-end { drop: boolean }`                                                                                                                                                                                    |
+| R-DD-11 | Thuật toán vị trí thả (giữ bản 0.18, đổi sang DOM có `data-rc-loc`): phần tử dưới con trỏ `N` (bỏ phần tử đang kéo và con của nó); `N` **chứa được** khi không là thẻ rỗng (`img`, `input`, `br`, `hr`, `textarea`, `select`) và con trực tiếp của nó toàn là phần tử (hoặc không có con), và con trỏ cách mọi cạnh > 12 px → thả vào `N`; ngược lại thả cạnh `N` trong cha. Chỉ số theo hướng bố cục của cha (hàng, cột, lưới/wrap) |
+| R-DD-12 | Ứng viên thả cạnh `R` chỉ hợp lệ khi cha `C` và `R` có `data-rc-loc` cùng file (khác file là ranh giới component). Không hợp lệ: thử lên cha của `C`; hết thì không có vị trí thả                                                                                                                                                                                                                                                    |
+| R-DD-13 | Bridge gửi `drop-target { target: InsertTarget; rect; label }` khi đổi vị trí; vẽ chỉ báo như bản 0.18 (vạch 2 px giữa con, viền nét đứt khi thả vào trong, nhãn "Vào <tag>")                                                                                                                                                                                                                                                        |
+| R-DD-14 | Thả: kéo trên Canvas → Bridge gửi `move-intent { elements, target }`; Studio gọi `move`. Từ Library → `insert`. Server trả E023 (R-SE-21): Studio báo lý do, không đổi gì                                                                                                                                                                                                                                                            |
+| R-DD-15 | Đo vị trí con của cha đang trỏ được lưu đệm, chỉ đo lại khi đổi cha, cuộn, đổi kích thước; mỗi lần di chuyển chuột ≤ 8 ms                                                                                                                                                                                                                                                                                                            |
+| R-DD-16 | Con trỏ cách mép trên/dưới iframe < 40 px: tự cuộn trang trong iframe                                                                                                                                                                                                                                                                                                                                                                |
+| R-DD-17 | Esc khi đang kéo: hủy. Kéo nhiều phần tử: chỉ khi cùng cha, giữ thứ tự                                                                                                                                                                                                                                                                                                                                                               |
+
+**Kiểm thử bắt buộc**
+
+| #   | Tình huống                                                                                                       | Kỳ vọng                                           | Loại           |
+| --- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | -------------- |
+| 1   | Vị trí thả trong hàng, cột, lưới 3 cột, flex-wrap; vào cha rỗng; cạnh `<p>` (không chứa được)                    | Đúng `InsertTarget`                               | Unit (DOM)     |
+| 2   | Trỏ vào phần tử của `Card.tsx` nằm trong `Home.tsx`                                                              | Không thả cạnh phần tử bên trong `Card` (R-DD-12) | Unit (DOM)     |
+| 3   | Kéo phần tử vào chính nó                                                                                         | Không có vị trí thả                               | Unit (DOM)     |
+| 4   | 200 lần di chuyển chuột trên trang 2.000 phần tử                                                                 | P95 ≤ 8 ms                                        | E2E (Chromium) |
+| 5   | E2E AC-05: kéo Card từ Library vào giữa hai section; di chuyển, nhân bản, xóa một phần tử; mỗi thao tác một Undo | Đúng file, đúng Undo                              | E2E            |
+| 6   | Esc giữa chừng; thả ngoài Canvas                                                                                 | Không có yêu cầu sửa                              | E2E            |
+
+---
+
+## 17. M-CB — SAO CHÉP, CẮT, DÁN, CHỌN NHIỀU
+
+| Mã      | Quy tắc                                                                                                                                                                                                                        |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R-CB-10 | Sao chép: Studio gọi `GET /source/element-text` cho từng phần tử chọn (theo thứ tự tài liệu), ghi `text/plain` = các đoạn JSX nối bằng xuống dòng vào clipboard hệ thống, và giữ trong bộ nhớ Studio bản kèm `file`, `imports` |
+| R-CB-11 | Dán: đọc `text/plain`; bằng bản trong bộ nhớ thì dùng kèm `file`, `imports` (R-SE-23); khác thì dán như JSX thuần (E016 `notJsx` nếu không phân tích được). Dán ≤ 1 MB (S-17)                                                  |
+| R-CB-12 | Vị trí dán: vào cuối phần tử đang chọn nếu chứa được (R-DD-11), ngược lại ngay sau nó. Không chọn gì: không dán                                                                                                                |
+| R-CB-13 | Cắt = sao chép rồi `remove`; Undo chỉ hoàn tác phần xóa                                                                                                                                                                        |
+| R-CB-14 | Đoạn dán có biểu thức `{…}` sang file khác: cảnh báo "đoạn dán dùng biến của file gốc, có thể cần sửa"                                                                                                                         |
+| R-CB-15 | Inspector khi chọn nhiều: ô hiện giá trị chung hoặc "Hỗn hợp"; sửa một ô áp dụng cho mọi phần tử bằng `POST /source/edits/batch` (một mục lịch sử). Phần tử nào có `className` không tĩnh: cả batch bị khóa, nêu phần tử đó    |
+
+**Kiểm thử bắt buộc:** sao chép rồi dán trong cùng file, sang trang khác (có component, import thêm); dán chữ thường không phải JSX (E016); cắt rồi Undo; Inspector đổi padding cho 3 phần tử một lần Undo; chọn nhiều có một `cn(...)` thì khóa.
+
+---
+
+## 18. M-PG — TRANG
+
+**Mục đích:** SRS FR-16, FR-50 đến FR-52, AC-07, L-07.
+
+```ts
+type PageInfo = { path: string; component: string; file?: RelPath; dynamic: boolean }; // dynamic: path có ':param'
+type PagesInfo = { convention: boolean; routesFile?: RelPath; pages: PageInfo[] };
+// GET /project/pages → PagesInfo
+// POST /project/pages { name, path? } → StructureResult
+// PATCH /project/pages { path, newPath?, newName? } → StructureResult
+// DELETE /project/pages { path } → StructureResult
+```
+
+| Mã      | Quy tắc                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-PG-10 | Quy ước (adapter `vite-react`): `src/routes.tsx` (hoặc `.jsx`) có lời gọi `createBrowserRouter([...])` với mảng **viết sẵn**; mỗi mục là object có `path` là chuỗi và `element` là một thẻ component viết hoa được import từ `./pages/…`; `children` lồng nhau được nối đường dẫn. Khác quy ước: `convention: false` (L-07), danh sách trang lấy từ những gì đọc được, thêm/sửa/xóa bị khóa |
+| R-PG-11 | Thêm trang: tên → tên component PascalCase không dấu (`Giới thiệu` → `GioiThieu`), file `src/pages/<Tên>.tsx` (`.jsx` với dự án JS), đường dẫn theo R-PJ-11 (`/gioi-thieu`). Nội dung file mới: component trả `<main className="mx-auto max-w-5xl p-8"><h1 className="text-3xl font-bold">{tên}</h1></main>`                                                                                |
+| R-PG-12 | Thêm import sau import cuối của `routes`; thêm mục route vào cuối mảng gốc; mảng gốc chỉ có một mục `path: '/'` có `children` (bố cục chung) thì thêm vào cuối `children` với đường dẫn tương đối                                                                                                                                                                                           |
+| R-PG-13 | Đường dẫn đã có: E016 `pathExists`; file đã có: E016 `fileExists`. Mọi thao tác trang là một mục lịch sử (có thể gồm tạo, xóa file — R-HI-11)                                                                                                                                                                                                                                               |
+| R-PG-14 | Đổi tên: đổi `path` trong route; `newName` đổi tên component, tên file (tạo file mới, xóa file cũ), câu import. Xóa: cần xác nhận; xóa mục route, câu import, file trang; trang cuối cùng không xóa được (E016 `lastPage`)                                                                                                                                                                  |
+| R-PG-15 | Điều hướng: danh sách trang trên thanh Canvas và ô địa chỉ; chọn trang gửi `navigate`. Trang `dynamic`: hỏi giá trị tham số trước khi điều hướng                                                                                                                                                                                                                                            |
+| R-HI-11 | (bổ sung M-HI) Mục lịch sử có file được tạo (`before` vắng mặt) hoặc bị xóa (`after` vắng mặt); Undo xóa file đã tạo, tạo lại file đã xóa; kiểm tra hash như R-HI-04 (file đã tạo phải còn và đúng hash; file đã xóa phải chưa có lại)                                                                                                                                                      |
+
+**Kiểm thử bắt buộc:** phân tích `routes.tsx` của template, có `children`, có route động, dùng `useRoutes` (không quy ước); thêm "Giới thiệu" (AC-07, E2E: Canvas mở được `/gioi-thieu`); trùng đường dẫn, trùng file; đổi tên; xóa rồi Undo (file trở lại đúng từng byte); xóa trang cuối.
+
+---
+
+## 19. M-KB — PHÍM TẮT
+
+`Mod` là Ctrl (Windows, Linux) hoặc Cmd (macOS).
+
+| Phím                                                   | Hành động                                      |
+| ------------------------------------------------------ | ---------------------------------------------- |
+| `Mod+Z`; `Mod+Shift+Z`, `Ctrl+Y` (không có trên macOS) | Undo; Redo                                     |
+| `Mod+C`, `Mod+X`, `Mod+V`, `Mod+D`                     | Sao chép, cắt, dán, nhân bản                   |
+| `Delete`, `Backspace`                                  | Xóa phần tử đang chọn                          |
+| `Mod+G`, `Mod+Shift+G`                                 | Bọc trong Cột; bỏ bọc                          |
+| `Esc`, `Enter`, `Tab`, `Shift+Tab`                     | Chọn cha; chọn con đầu; phần tử kế tiếp; trước |
+| `Mod+↑`, `Mod+↓`                                       | Đổi thứ tự trong cha                           |
+| `Mod+=`, `Mod+-`, `Shift+0`, `Shift+1`                 | Phóng to, thu nhỏ, 100 %, vừa khung            |
+| `1` … `8`                                              | Chuyển khung thứ N                             |
+| `Alt+P`                                                | Bật/tắt Xem thử                                |
+| `Alt+E`                                                | Mở phần tử chính trong editor                  |
+| `Mod+/`                                                | Bảng phím tắt                                  |
+
+| Mã      | Quy tắc                                                                                                                                            |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-KB-10 | Không chạy khi tiêu điểm ở ô nhập của Studio, trừ khi phím không có nghĩa trong ô nhập (`Alt+P`, `Mod+/`). Không chạy khi đang sửa chữ trên Canvas |
+| R-KB-11 | Khi tiêu điểm ở iframe (chế độ Thiết kế), Bridge chuyển mọi phím trong bảng qua `shortcut` (mở rộng R-BR-18)                                       |
+| R-KB-12 | Khai báo tập trung một bảng trong `features/shortcuts/`; tên qua i18n; ký hiệu phím theo hệ điều hành (`⌘⇧Z` trên macOS, `Ctrl+Shift+Z` nơi khác)  |
+| R-KB-13 | Không dùng phím trình duyệt giữ riêng (`Ctrl+E`, `Ctrl+L`, `Cmd+[`, `Cmd+Y` trên macOS…)                                                           |
+
+**Kiểm thử bắt buộc:** mỗi phím trên Windows (Ctrl) và macOS (Meta, giả lập `platform`) ở Studio và khi tiêu điểm trong iframe; không chạy khi đang gõ ô nhập.
+
+---
+
+## 20. M-CL — CLI VÀ GÓI CÀI
+
+| Mã      | Quy tắc                                                                                                                                                         |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-CL-01 | `reactcraft [dir] [--port <n>] [--no-open] [--log-level <level>]`; `--help`, `--version`. Tham số sai: in hướng dẫn, mã thoát 2                                 |
+| R-CL-02 | `SIGINT`, `SIGTERM`: dừng dev server (R-RN-07), hủy cài đặt, hủy lượt agent, nhả khóa, phát `server.shuttingDown`, thoát trong 10 s                             |
+| R-CL-03 | Gói `reactcraft` gồm server, Studio đã build, Bridge đã build, template; không `postinstall` (S-96); `pnpm package` tạo tarball                                 |
+| R-CL-04 | Kiểm tra máy sạch: cài tarball vào thư mục trống bằng npm, chạy `npx reactcraft` trên Windows và macOS, mở dự án mẫu tới Canvas (`scripts/smoke-installed.mjs`) |
+
+---
+
+## 21. PHASE 3 — DANH SÁCH MODULE
+
+| Mã   | Module                 | Nơi đặt chính                                               | WP               |
+| ---- | ---------------------- | ----------------------------------------------------------- | ---------------- |
+| M-MR | Bản sao backend        | `server/src/core/mirror/`                                   | WP-3.02          |
+| M-AG | Kết nối agent, lượt AI | `server/src/core/agent/`, `server/src/core/agent/adapters/` | WP-3.03, WP-3.04 |
+| M-CH | Ô chat                 | `studio/src/features/chat/`                                 | WP-3.05          |
+
+---
+
+## 22. M-MR — BẢN SAO BACKEND
+
+**Mục đích:** ADR-BE-34, SRS FR-64, PR-05; biện pháp S-120 đến S-125.
+
+| Mã      | Quy tắc                                                                                                                                                                             |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-MR-01 | Thư mục `<cache>/mirrors/<projectId>/<backendId>/`, kèm `manifest.json` (`path`, `size`, `mtimeMs`, `sha256` của từng file đã chép)                                                 |
+| R-MR-02 | Làm mới trước mỗi lượt có backend: duyệt backend (S-120 đến S-122), chép file mới hoặc đổi (`size`, `mtimeMs` khác), xóa file không còn; ghi lại manifest. ≤ 10 s cho 50 MB (PB-08) |
+| R-MR-03 | Backend `missing` hoặc `blocked`: bỏ qua, chat báo                                                                                                                                  |
+| R-MR-04 | Sau lượt: so `sha256` các file của bản sao với manifest (S-118)                                                                                                                     |
+
+**Kiểm thử bắt buộc:** backend mẫu có `.env`, `settings.py` chứa `SECRET_KEY = "RC_SECRET_MARKER_1"`, `node_modules`, symlink ra ngoài, file nhị phân, file 2 MB → bản sao không có các file loại trừ, `settings.py` có `«redacted»`, không chuỗi đánh dấu nào (AC-11); làm mới chỉ chép file đổi; vượt 50 MB báo lỗi.
+
+---
+
+## 23. M-AG — KẾT NỐI AGENT VÀ LƯỢT AI
+
+**Mục đích:** ADR-BE-33, SRS FR-60 đến FR-68, NFR-09, NFR-10.
+
+```ts
+interface AgentAdapter {
+  readonly id: 'agy' | 'claude';
+  detect(process: ProcessPort): Promise<{ installed: boolean; version?: string }>;
+  /** Tham số cố định theo S-112; chốt sau VG-17. */
+  buildArgs(turn: { prompt: string; mirrorDirs: string[]; conversationId?: string }): string[];
+  /** Một dòng đầu ra luồng JSON → sự kiện chuẩn hóa; dòng không hiểu → undefined. */
+  parseLine(line: string): AgentEvent | undefined;
+}
+
+type AgentEvent =
+  | { kind: 'message'; text: string }
+  | { kind: 'tool'; name: string; target?: string } // ví dụ đọc file, sửa file
+  | { kind: 'conversation'; id: string }
+  | { kind: 'error'; message: string };
+
+type TurnSummary = {
+  id: string;
+  startedAt: string;
+  finishedAt?: string;
+  prompt: string;
+  state: 'running' | 'completed' | 'failed' | 'cancelled';
+  files: { path: RelPath; change: 'modified' | 'created' | 'deleted' }[];
+  revertible: boolean;
+};
+// GET /agents → { id, installed, version? }[]
+// POST /agent/turns { prompt, context, conversation: 'new' | 'continue', docs: RelPath[] } → 202 job 'agent.turn'
+// GET /agent/turns → TurnSummary[] ; GET /agent/turns/{id}/diff?file=… → { diff: string } (unified, ADR-BE-17)
+// POST /agent/turns/{id}/revert → TurnSummary
+// WebSocket: agent.event { turnId, event: AgentEvent }
+```
+
+| Mã      | Quy tắc                                                                                                                                                                                                                                                           |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-AG-10 | Dò agent khi mở Cài đặt, mở ô chat, hoặc trước lượt đầu: chạy lệnh phiên bản (tối đa 5 s). `preferred: 'auto'` chọn `agy` nếu có, sau đó `claude`. Không có: E026 `notInstalled` kèm hướng dẫn cài                                                                |
+| R-AG-11 | Điều kiện chạy lượt: dự án mở, tin cậy (E011 `untrusted`), có agent, không lượt nào đang chạy (E018)                                                                                                                                                              |
+| R-AG-12 | Trình tự: ảnh chụp dự án (S-113) → làm mới bản sao (M-MR) → dựng lời nhắc (S-117) → spawn (S-111, S-112, S-115) → chuyển từng dòng thành `agent.event` → kết thúc → so hash với ảnh chụp lập danh sách file → `job.completed` với `TurnSummary`                   |
+| R-AG-13 | Lời nhắc gồm: yêu cầu; ngữ cảnh (phần tử chính `file:dòng`, đường dẫn trang, khung đang xem); nội dung `.reactcraft/agent-guide.md`; đường dẫn bản sao backend; đường dẫn tài liệu người dùng chỉ định. Mẫu lời nhắc ở `server/src/core/agent/prompt.ts`, có test |
+| R-AG-14 | Hủy hoặc quá 30 phút: dừng cả cây tiến trình; file đã đổi vẫn được liệt kê, lượt có `revertible` như lượt xong                                                                                                                                                    |
+| R-AG-15 | Hoàn tác lượt: với mỗi file của lượt, nội dung hiện tại phải bằng nội dung sau lượt (hash); khác thì E017 cho file đó và không hoàn tác gì. Đạt thì đưa mọi file về như ảnh chụp (xóa file đã tạo, tạo lại file đã xóa), qua `writeTextAtomic` (NFR-09)           |
+| R-AG-16 | Hội thoại: lưu `conversationId` của agent theo dự án; `continue` dùng lại. Lưu `TurnSummary` (không lưu đầu ra thô quá 1 MB mỗi lượt) trong thư mục dữ liệu, giữ 20 lượt gần nhất (S-113)                                                                         |
+| R-AG-17 | Agent lỗi, treo, hết hạn mức (NFR-10): Studio, Canvas, Inspector vẫn dùng bình thường; lỗi hiện E027 trong chat                                                                                                                                                   |
+| R-AG-18 | File do agent ghi là thay đổi từ bên ngoài với lịch sử Undo (R-HI-05); Canvas tự cập nhật qua HMR                                                                                                                                                                 |
+
+**Kiểm thử bắt buộc** (agent giả lập, SPEC-06 mục 5)
+
+| #   | Tình huống                                                                                                                     | Kỳ vọng                                                                                       | Loại     |
+| --- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- | -------- |
+| 1   | Lượt sửa 2 file, tạo 1 file                                                                                                    | `TurnSummary` đúng; `agent.event` theo thứ tự                                                 | Contract |
+| 2   | Hoàn tác lượt #1; hoàn tác khi một file đã bị sửa thêm                                                                         | Đúng từng byte; E017, không file nào đổi                                                      | Contract |
+| 3   | Lượt treo → hủy; lượt quá hạn (đồng hồ giả)                                                                                    | `job.cancelled`; E020; không còn tiến trình con                                               | Contract |
+| 4   | Chưa tin cậy; không có agent; đang có lượt chạy                                                                                | E011; E026; E018                                                                              | Contract |
+| 5   | Tham số spawn                                                                                                                  | `cwd` là gốc dự án, chỉ đường dẫn bản sao, không đường dẫn backend thật, môi trường theo S-53 | Unit     |
+| 6   | `parseLine` với đầu ra mẫu của `agy` (ghi lại ở VG-17)                                                                         | Đúng sự kiện; dòng lạ bỏ qua                                                                  | Unit     |
+| 7   | E2E AC-08 với agent giả lập: lượt viết lớp gọi API và trang sản phẩm; Canvas hiện trang; backend không đổi byte; hoàn tác lượt | Đạt                                                                                           | E2E      |
+| 8   | E2E AC-09: chọn Card, yêu cầu thêm nút; ngữ cảnh có `file:dòng` của Card                                                       | Đạt                                                                                           | E2E      |
+
+---
+
+## 24. M-CH — Ô CHAT
+
+| Mã      | Quy tắc                                                                                                                                                      |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R-CH-01 | Panel chat bên phải (chung vùng với Inspector, có tab). Ô nhập nhiều dòng, `Mod+Enter` gửi                                                                   |
+| R-CH-02 | Thẻ ngữ cảnh phía trên ô nhập: phần tử chính, trang, khung; bỏ được từng thẻ. Nút đính kèm tài liệu: chọn file trong dự án                                   |
+| R-CH-03 | Trong lượt: hiện `agent.event` theo thứ tự (tin nhắn dạng Markdown an toàn S-114, công cụ dạng một dòng có icon), nút Hủy                                    |
+| R-CH-04 | Hết lượt: danh sách file đổi (ảo hóa khi nhiều), bấm file xem diff (ADR-BE-17), nút **Hoàn tác lượt này** (có xác nhận), nút "Mở trong editor" cho từng file |
+| R-CH-05 | Lịch sử hội thoại của dự án hiện lại khi mở dự án (`GET /agent/turns`); nút "Hội thoại mới"                                                                  |
+| R-CH-06 | Chưa tin cậy, chưa có agent: ô chat khóa, hiện lý do và việc cần làm. Cài đặt có mục chọn agent và trạng thái từng agent                                     |
+
+**Kiểm thử bắt buộc:** component cho từng trạng thái (khóa, đang chạy, xong, lỗi); E2E gửi yêu cầu với agent giả lập, xem diff, hoàn tác lượt; chữ `vi`/`en` đầy đủ.
+
+---
+
+## 25. PHASE 4 — MODULE (MỨC KHUNG)
+
+Chi tiết quy tắc và bảng kiểm thử viết ở đầu Phase 4 (WP-4.00), trước khi làm (CW-50).
+
+| Mã   | Module                | Nội dung chính                                                                                                                                                          |
+| ---- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M-TK | Token `@theme`        | Xem, sửa, thêm biến `--color-*`, `--text-*`, `--radius-*` trong file CSS chính bằng sửa văn bản tối thiểu (như M-SE); Undo; Inspector cập nhật danh sách token (FR-71)  |
+| M-XC | Tách component        | Vùng chọn (cùng cha) → file component mới trong `src/components/`, chỗ cũ thay bằng thẻ component, thêm import; biến dùng trong vùng chọn thành props (FR-72)           |
+| M-MF | Nhiều khung cạnh nhau | Nhiều iframe cùng origin dev server, mỗi iframe một nonce riêng; vùng chọn đồng bộ theo `loc`                                                                           |
+| M-BC | Kiểm tra build        | Chạy `tsc --noEmit` và `vite build` của dự án theo yêu cầu (bổ sung loại tiến trình vào S-50 khi làm), hiện lỗi có `file:dòng`                                          |
+| M-SC | Mở rộng phạm vi       | `className={cn('tĩnh', …)}` sửa được phần chuỗi tĩnh (L-01 đầy đủ); breakpoint tùy biến; cạnh riêng của viền, bo góc; Tailwind v3; monorepo (`node_modules` treo ở gốc) |
+| M-RL | Phát hành             | Tài liệu người dùng `vi`/`en`, kiểm tra giấy phép, SBOM, kiểm tra máy sạch, phát hành 1.0 (S-90 đến S-96)                                                               |
+
+---
+
+## 26. TRUY VẾT SPEC-04 PHASE 2–4
+
+| SRS                 | Module                    |
+| ------------------- | ------------------------- |
+| FR-26, FR-27, FR-28 | M-SE (mục 14), M-DD, M-CB |
+| FR-31               | M-KB                      |
+| FR-16, FR-50 đến 52 | M-PG                      |
+| FR-60 đến FR-68     | M-MR, M-AG, M-CH          |
+| FR-70               | M-LB                      |
+| FR-71, FR-72        | M-TK, M-XC                |
+| AC-05               | M-DD #5                   |
+| AC-07               | M-PG                      |
+| AC-08, AC-09        | M-AG #7, #8               |
+| AC-11 (secrets)     | M-MR                      |
+
+---
+
 # SPEC-05 — BẢO MẬT
 
 **Phiên bản phần:** 1.0  
@@ -2353,7 +2699,7 @@ Kết quả ghi `bench-results/`; vượt ngân sách là lỗi ở cổng phase
 
 # SPEC-07 — QUY TRÌNH THI CÔNG (LỘ TRÌNH BẢN 1.0)
 
-**Phiên bản phần:** 1.0 (lộ trình). DoR, DoD, kiểm soát thay đổi, mức nghiêm trọng, phát hành: giữ như bản 0.18 tới khi viết lại ở đợt 3.
+**Phiên bản phần:** 1.0
 
 ---
 
@@ -2455,6 +2801,7 @@ CI dùng **agent giả lập** (một script nhận đúng tham số dòng lện
 
 | Mã      | Nội dung                                                                            |
 | ------- | ----------------------------------------------------------------------------------- |
+| WP-4.00 | Chi tiết hóa SPEC-04 mục 25 và bộ test nghiệm thu Phase 4 (CW-50)                   |
 | WP-4.01 | Token trong `@theme` (màu, cỡ chữ, bo góc): xem, sửa, thêm                          |
 | WP-4.02 | Tách vùng chọn thành component (file mới, thay chỗ cũ)                              |
 | WP-4.03 | Xem nhiều khung cạnh nhau                                                           |
@@ -2477,6 +2824,87 @@ CI dùng **agent giả lập** (một script nhận đúng tham số dòng lện
 
 ---
 
+## 8. QUY TRÌNH MỘT GÓI CÔNG VIỆC
+
+### 8.1. Vai trò
+
+| Vai trò                | Việc                                                                                                                                                        |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chủ sản phẩm           | Quyết định phạm vi, duyệt spec, commit, chạy kiểm tra tay ở cổng                                                                                            |
+| Claude (giao việc, QA) | Viết spec, viết bộ test khóa (CW-50), viết lệnh giao việc, kiểm tra trực tiếp code và kết quả test (không tin báo cáo), sửa lỗi, viết báo cáo, gợi ý commit |
+| Gemini (viết code)     | Làm bộ test xanh theo lệnh giao việc; sau 3 lần sửa không đạt thì dừng và báo cáo                                                                           |
+
+### 8.2. Definition of Ready (DoR) của một WP
+
+| Mã    | Điều kiện                                                                                                                           |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| DR-10 | Quy tắc của WP có mã trong spec (R, V, S), có bảng kiểm thử bắt buộc                                                                |
+| DR-11 | Test của WP đã có trong bộ test phase, đang **đỏ đúng lý do** (chưa có code), đã được Claude kiểm bằng bản cài đặt nháp khi khả thi |
+| DR-12 | Lệnh giao việc ghi: mục tiêu, danh sách file phải đọc trước, file được tạo hoặc sửa, test phải xanh, lệnh kiểm chứng, điều cấm      |
+| DR-13 | WP phụ thuộc đã `Đã commit`                                                                                                         |
+
+### 8.3. Definition of Done (DoD) của một WP
+
+| Mã    | Điều kiện                                                                                                     |
+| ----- | ------------------------------------------------------------------------------------------------------------- |
+| DW-10 | Mọi test của WP xanh; `pnpm verify` xanh; E2E của WP xanh trên Chromium, Firefox, WebKit (CW-53)              |
+| DW-11 | Claude đã đọc từng file thay đổi và chạy lại test trên máy (không dựa vào báo cáo của người viết code)        |
+| DW-12 | Test không bị sửa cho dễ qua: thay đổi test sau khi khóa phải có lý do ghi trong báo cáo và được Claude duyệt |
+| DW-13 | Ngân sách hiệu năng liên quan đạt (đo theo SPEC-06 mục 4)                                                     |
+| DW-14 | Báo cáo WP (CW-44) có commit message đã qua `commitlint`                                                      |
+
+### 8.4. Cổng phase
+
+Cổng `G<n>` đạt khi mọi tiêu chí `G<n>-xx` đạt, không còn lỗi SEV-1 hoặc SEV-2 đang mở, bộ test đầy đủ của phase chạy một lần xanh (CW-51), và chủ sản phẩm chạy kịch bản nghiệm thu tay. Kết quả ghi `docs/construction/phases/phase-<n>.md`.
+
+---
+
+## 9. KIỂM SOÁT THAY ĐỔI
+
+| Mã    | Quy tắc                                                                                                                                                                                                    |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CW-60 | Đổi hành vi so với spec: sửa spec **trước hoặc cùng** bộ thay đổi code, thêm dòng vào Lịch sử thay đổi                                                                                                     |
+| CW-61 | Lệch nhỏ phát hiện khi làm (spec thiếu chi tiết, cách làm thực tế khác chút): làm theo cách hợp lý, ghi vào `docs/construction/spec-log.md` (ngày, mã quy tắc, lệch gì, vì sao), gộp vào spec ở cuối phase |
+| CW-62 | Thêm runtime dependency: theo QC-86                                                                                                                                                                        |
+| CW-63 | Đổi hợp đồng SPEC-03 (API, sự kiện, thông điệp Bridge, `workspace.json`): sửa schema trong `shared` và spec cùng một bộ thay đổi; đổi phá vỡ tương thích theo QC-77                                        |
+
+---
+
+## 10. MỨC NGHIÊM TRỌNG CỦA LỖI
+
+| Mức   | Định nghĩa                                                                                              | Xử lý                          |
+| ----- | ------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| SEV-1 | Mất hoặc hỏng mã nguồn của người dùng, ghi ra ngoài phạm vi, lộ secrets, vượt qua tin cậy hoặc xác thực | Dừng mọi việc khác, sửa ngay   |
+| SEV-2 | Tính năng chính không dùng được (không mở được dự án, Canvas không hiện, sửa ra sai file), Undo sai     | Sửa trước cổng phase           |
+| SEV-3 | Tính năng phụ lỗi, có cách đi vòng; vượt ngân sách hiệu năng dưới 50 %                                  | Sửa trong phase hoặc phase sau |
+| SEV-4 | Giao diện, chữ, chi tiết nhỏ                                                                            | Gom sửa khi tiện               |
+
+---
+
+## 11. TÀI LIỆU THI CÔNG (`docs/construction/`)
+
+| File, thư mục         | Nội dung                                                                                                                               |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `progress.md`         | Bảng tiến độ: mỗi WP một dòng (mã, nội dung, trạng thái, commit). Trạng thái: `Chưa làm`, `Đang làm`, `Chờ commit`, `Đã commit <hash>` |
+| `spec-log.md`         | Nhật ký lệch spec (CW-61)                                                                                                              |
+| `giao-viec/`          | Quy trình giao việc (`README.md`) và lệnh giao việc từng phần (`<WP>-<phần>.md`)                                                       |
+| `wp/<WP>.md`          | Báo cáo WP theo CW-44                                                                                                                  |
+| `vg/<VG>.md`          | Báo cáo bài kiểm chứng: cách đo, số liệu, kết luận Đạt/Không đạt, ADR bị ảnh hưởng                                                     |
+| `phases/phase-<n>.md` | Báo cáo cổng: từng tiêu chí, bằng chứng, lỗi còn mở                                                                                    |
+
+Tài liệu thi công của hướng cũ (Design Model) được chuyển vào `docs/construction/archive-0.18/` ở WP-1.01, không xóa.
+
+---
+
+## 12. PHÁT HÀNH (PHASE 4)
+
+1. Cổng G4 đạt; S-90 đến S-96 đạt; SBOM và báo cáo giấy phép đính kèm.
+2. Kiểm tra máy sạch (R-CL-04) trên Windows 11, macOS 14, Ubuntu 22.04.
+3. Tài liệu người dùng `vi`/`en`: cài đặt, mở và tạo dự án, Canvas, Inspector, trang, chat AI, tin cậy dự án, giới hạn (SRS L-01 đến L-07).
+4. Phiên bản `1.0.0`, changeset, tag `v1.0.0`, phát hành npm có provenance (khi đã chuyển lên GitHub, CW-47).
+
+---
+
 # LỊCH SỬ THAY ĐỔI
 
 | Ngày       | Phiên bản          | Thay đổi                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -2484,3 +2912,4 @@ CI dùng **agent giả lập** (một script nhận đúng tham số dòng lện
 | 2026-10-13 | 1.0 (nháp, đợt 1)  | Chuyển sang hướng "mã nguồn là nguồn sự thật" theo SRS v5.0. Viết lại Phần 0, SPEC-01, lộ trình SPEC-07. Bỏ toàn bộ hướng Design Model của bản 0.18                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | 2026-10-14 | 1.0 (nháp, đợt 2)  | Viết SPEC-03 (API, sự kiện, giao thức Bridge, mã lỗi) và SPEC-04 Phase 1 (M-FW, M-PJ, M-RN, M-BR, M-SL, M-SE, M-HI, M-TW, M-IN, M-TX, bộ test Phase 1). Thêm bộ chuyển đổi framework để thêm Next.js sau. Sửa ADR-BE-05 (lý do `noTailwindCss`), ADR-BE-28 (thư mục `runners/`, đổi cổng), ADR-FE-04 (iframe cao theo khung, cuộn bên trong), ADR-FE-22 (danh mục thông điệp chuyển sang SPEC-03)                                                                                                                                                                         |
 | 2026-10-14 | 1.0 (nháp, đợt 3a) | Viết SPEC-02 (giữ số QC, thêm QC-95 đến QC-98 cho Bridge và ghi file dự án, scope commit mới), SPEC-05 (giữ S-01 đến S-33, S-50 đến S-55, S-80 đến S-96 còn đúng nghĩa; thêm S-100 đến S-105 Canvas và dev server, S-110 đến S-118 agent, S-120 đến S-125 bản sao backend, S-130; liệt kê mã đã bỏ), SPEC-06 (tầng kiểm thử, cấu hình, helper E2E, đo hiệu năng, agent giả lập). SPEC-07 thêm CW-43 đến CW-47 (chế độ local). ADR-FE-04: iframe có `sandbox` theo S-100 Quyền của agent dựa vào cấu hình và rules có sẵn của agent (S-112), không đặt thêm kiểm tra riêng |
+| 2026-10-14 | 1.0 (nháp, đợt 3b) | SPEC-04 thêm Phase 2 (thao tác cấu trúc, Library, kéo thả, sao chép/dán, trang, phím tắt, CLI), Phase 3 (bản sao backend, agent, chat), Phase 4 mức khung. SPEC-03 mục 9 trỏ tới chi tiết, thêm sự kiện `agent.event`. SPEC-07 thêm quy trình WP (DoR, DoD), kiểm soát thay đổi, mức nghiêm trọng, tài liệu thi công, phát hành. Đủ các phần để thay `docs/spec.md` ở WP-1.01                                                                                                                                                                                             |
