@@ -51,14 +51,41 @@ type WorkAreaProps = {
   readonly root: DesignNode | undefined;
   readonly path: readonly DesignNode[];
   readonly frame: Frame;
+  readonly primaryFrame: Frame;
+  readonly responsiveMode: DesignDocument['workspace']['responsiveMode'];
   readonly scale: number;
   readonly onCanvasWidth: (width: number) => void;
 };
 
-/** Left panel, Canvas and right panel, with the resize handles between them. */
-function WorkArea({ panels, root, path, frame, scale, onCanvasWidth }: WorkAreaProps) {
-  const [iframe, setIframe] = useState<HTMLIFrameElement>();
-  const [iframeDoc, setIframeDoc] = useState<Document>();
+const SideHandle = ({
+  side,
+  layout,
+  resize,
+}: {
+  readonly side: Side;
+  readonly layout: PanelLayout;
+  readonly resize: (side: Side, width: number) => void;
+}) => (
+  <Resizer
+    side={side}
+    width={layout.width[side]}
+    hidden={!layout.visible[side]}
+    onResize={(width) => {
+      resize(side, width);
+    }}
+  />
+);
+
+function WorkGrid({
+  panels,
+  root,
+  path,
+  frame,
+  primaryFrame,
+  responsiveMode,
+  scale,
+  onCanvasWidth,
+}: WorkAreaProps) {
   const selectedNodeId = useEditorStore((state) => state.selectedNodeId);
   const selectedNodeIds = useEditorStore((state) => state.selectedNodeIds);
   const hoveredNodeId = useEditorStore((state) => state.hoveredNodeId);
@@ -66,39 +93,47 @@ function WorkArea({ panels, root, path, frame, scale, onCanvasWidth }: WorkAreaP
   const toggleNodeSelection = useEditorStore((state) => state.toggleNodeSelection);
   const hoverNode = useEditorStore((state) => state.hoverNode);
   const { layout, resize } = panels;
-  const handle = (side: Side) => (
-    <Resizer
-      side={side}
-      width={layout.width[side]}
-      hidden={!layout.visible[side]}
-      onResize={(width) => {
-        resize(side, width);
-      }}
-    />
-  );
   return (
-    <CanvasScaleProvider scale={scale}>
+    <div className="grid min-h-0 flex-1" style={{ gridTemplateColumns: columns(layout) }}>
+      {layout.visible.left ? (
+        <LeftPanel
+          root={root}
+          selectedNodeId={selectedNodeId}
+          selectedNodeIds={selectedNodeIds}
+          hoveredNodeId={hoveredNodeId}
+          onSelect={selectNode}
+          onToggleSelect={toggleNodeSelection}
+          onHover={hoverNode}
+        />
+      ) : (
+        <div />
+      )}
+      <SideHandle side="left" layout={layout} resize={resize} />
+      <CanvasArea frame={frame} scale={scale} onWidth={onCanvasWidth} />
+      <SideHandle side="right" layout={layout} resize={resize} />
+      {layout.visible.right ? (
+        <RightPanel
+          selected={path.at(-1)}
+          frame={frame}
+          primaryFrame={primaryFrame}
+          responsiveMode={responsiveMode}
+        />
+      ) : (
+        <div />
+      )}
+    </div>
+  );
+}
+
+/** Left panel, Canvas and right panel, with the resize handles between them. */
+function WorkArea(props: WorkAreaProps) {
+  const [iframe, setIframe] = useState<HTMLIFrameElement>();
+  const [iframeDoc, setIframeDoc] = useState<Document>();
+  return (
+    <CanvasScaleProvider scale={props.scale}>
       <CanvasContext.Provider value={{ iframe, iframeDoc, setIframe, setIframeDoc }}>
         <DndCanvasProvider>
-          <div className="grid min-h-0 flex-1" style={{ gridTemplateColumns: columns(layout) }}>
-            {layout.visible.left ? (
-              <LeftPanel
-                root={root}
-                selectedNodeId={selectedNodeId}
-                selectedNodeIds={selectedNodeIds}
-                hoveredNodeId={hoveredNodeId}
-                onSelect={selectNode}
-                onToggleSelect={toggleNodeSelection}
-                onHover={hoverNode}
-              />
-            ) : (
-              <div />
-            )}
-            {handle('left')}
-            <CanvasArea frame={frame} scale={scale} onWidth={onCanvasWidth} />
-            {handle('right')}
-            {layout.visible.right ? <RightPanel selected={path.at(-1)} /> : <div />}
-          </div>
+          <WorkGrid {...props} />
         </DndCanvasProvider>
       </CanvasContext.Provider>
     </CanvasScaleProvider>
@@ -131,6 +166,8 @@ function EditorMain({
   store,
   panels,
   frame,
+  primaryFrame,
+  responsiveMode,
   scale,
   setCanvasWidth,
 }: {
@@ -138,6 +175,8 @@ function EditorMain({
   readonly store: EditorState;
   readonly panels: ReturnType<typeof usePanelLayout>;
   readonly frame: Frame;
+  readonly primaryFrame: Frame;
+  readonly responsiveMode: DesignDocument['workspace']['responsiveMode'];
   readonly scale: number;
   readonly setCanvasWidth: (w: number) => void;
 }) {
@@ -151,6 +190,8 @@ function EditorMain({
         root={root}
         path={path}
         frame={frame}
+        primaryFrame={primaryFrame}
+        responsiveMode={responsiveMode}
         scale={scale}
         onCanvasWidth={setCanvasWidth}
       />
@@ -173,8 +214,10 @@ export function EditorShell({ document, trusted, onTrusted }: EditorShellProps) 
   const [frameId, setFrameId] = useState(workspace.primaryFrameId);
   const [canvasWidth, setCanvasWidth] = useState(0);
   const frame = workspace.frames.find((item) => item.id === frameId) ?? workspace.frames[0];
+  const primaryFrame =
+    workspace.frames.find((item) => item.id === workspace.primaryFrameId) ?? workspace.frames[0];
   useShellKeys(store, panels);
-  if (frame === undefined) return undefined;
+  if (frame === undefined || primaryFrame === undefined) return undefined;
   const scale = fitScale(canvasWidth, frame.width);
   return (
     <div className="flex h-full flex-col gap-2.5 px-3.5 py-3">
@@ -200,6 +243,8 @@ export function EditorShell({ document, trusted, onTrusted }: EditorShellProps) 
         store={store}
         panels={panels}
         frame={frame}
+        primaryFrame={primaryFrame}
+        responsiveMode={workspace.responsiveMode}
         scale={scale}
         setCanvasWidth={setCanvasWidth}
       />

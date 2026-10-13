@@ -231,5 +231,44 @@
       "collapse": "Thu gọn"
     },
     "binding": "Có liên kết dữ liệu"
+  },
+  "inspector": {
+    "scopePrefix": "Đang sửa:",
+    "base": "Gốc",
+    "overrideDesktopFirst": "Ghi đè < {{min}} px",
+    "overrideMobileFirst": "Ghi đè ≥ {{min}} px",
+    "stateLabel": "Trạng thái",
+    "inherited": "từ {{source}}",
+    "baseValue": "Giá trị gốc:",
+    "clearOverride": "Xóa ghi đè",
+    "tokenMode": "Chế độ token",
+    "customMode": "Chế độ tùy chỉnh px",
+    "selectToken": "-- Chọn token --",
+    "directionRow": "row",
+    "directionColumn": "column",
+    "states": {
+      "normal": "Bình thường",
+      "hover": "Hover",
+      "focus": "Focus",
+      "disabled": "Vô hiệu hóa"
+    },
+    "groups": {
+      "layout": "Bố cục",
+      "spacing": "Khoảng cách",
+      "effects": "Hiệu ứng"
+    },
+    "fields": {
+      "direction": "Hướng",
+      "paddingTop": "Padding trên",
+      "paddingRight": "Padding phải",
+      "paddingBottom": "Padding dưới",
+      "paddingLeft": "Padding trái",
+      "gap": "Khoảng cách (Gap)",
+      "opacity": "Độ mờ đục"
+    },
+    "validation": {
+      "pxRange": "Giá trị px hợp lệ từ 0 đến 10000, tối đa 2 chữ số thập phân",
+      "opacityRange": "Giá trị độ mờ từ 0 đến 100, bội của 5"
+    }
   }
 }

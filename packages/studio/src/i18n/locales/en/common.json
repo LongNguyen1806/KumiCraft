@@ -231,5 +231,44 @@
       "collapse": "Collapse"
     },
     "binding": "Bound to data"
+  },
+  "inspector": {
+    "scopePrefix": "Editing:",
+    "base": "Base",
+    "overrideDesktopFirst": "Override < {{min}} px",
+    "overrideMobileFirst": "Override ≥ {{min}} px",
+    "stateLabel": "State",
+    "inherited": "from {{source}}",
+    "baseValue": "Base value:",
+    "clearOverride": "Clear override",
+    "tokenMode": "Token mode",
+    "customMode": "Custom px mode",
+    "selectToken": "-- Select token --",
+    "directionRow": "row",
+    "directionColumn": "column",
+    "states": {
+      "normal": "Normal",
+      "hover": "Hover",
+      "focus": "Focus",
+      "disabled": "Disabled"
+    },
+    "groups": {
+      "layout": "Layout",
+      "spacing": "Spacing",
+      "effects": "Effects"
+    },
+    "fields": {
+      "direction": "Direction",
+      "paddingTop": "Padding top",
+      "paddingRight": "Padding right",
+      "paddingBottom": "Padding bottom",
+      "paddingLeft": "Padding left",
+      "gap": "Gap",
+      "opacity": "Opacity"
+    },
+    "validation": {
+      "pxRange": "Valid px value from 0 to 10000, max 2 decimal places",
+      "opacityRange": "Valid opacity from 0 to 100, multiple of 5"
+    }
   }
 }

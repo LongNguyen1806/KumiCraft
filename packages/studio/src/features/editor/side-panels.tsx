@@ -1,7 +1,9 @@
-import { type DesignNode, walkTree } from '@reactcraft/model';
+import { type DesignNode, type Frame, type ResponsiveMode, walkTree } from '@reactcraft/model';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useEditorStore } from '../../store/editor-store.ts';
+import { InspectorPanel } from '../inspector/inspector-panel.tsx';
 import { LayerTree } from '../layers/layer-tree.tsx';
 import { LibraryPanel } from '../library/library-panel.tsx';
 
@@ -145,9 +147,17 @@ export function LeftPanel({
   );
 }
 
+type RightPanelProps = {
+  readonly selected: DesignNode | undefined;
+  readonly frame: Frame;
+  readonly primaryFrame: Frame;
+  readonly responsiveMode: ResponsiveMode;
+};
+
 /** Properties of the selected node; the Inspector itself comes with WP-1.09. */
-export function RightPanel({ selected }: { readonly selected: DesignNode | undefined }) {
+export function RightPanel({ selected, frame, primaryFrame, responsiveMode }: RightPanelProps) {
   const { t } = useTranslation();
+  const selectedNodeIds = useEditorStore((state) => state.selectedNodeIds);
   const tabs = (
     <>
       <Tab selected>{t('editor.properties')}</Tab>
@@ -159,6 +169,7 @@ export function RightPanel({ selected }: { readonly selected: DesignNode | undef
       </Tab>
     </>
   );
+  const showInspector = selected !== undefined && selectedNodeIds.length === 1;
   return (
     <Panel
       label={t('editor.rightPanel')}
@@ -168,9 +179,19 @@ export function RightPanel({ selected }: { readonly selected: DesignNode | undef
       {selected === undefined ? (
         <p className="px-1 pt-2 text-ink-faint">{t('editor.selectHint')}</p>
       ) : (
-        <p className="px-1 pt-2 font-mono text-xs text-ink-faint" data-testid="selected-id">
-          {selected.id}
-        </p>
+        <>
+          <p className="px-1 pt-2 font-mono text-xs text-ink-faint" data-testid="selected-id">
+            {selected.id}
+          </p>
+          {showInspector && (
+            <InspectorPanel
+              selectedNode={selected}
+              frame={frame}
+              primaryFrame={primaryFrame}
+              responsiveMode={responsiveMode}
+            />
+          )}
+        </>
       )}
     </Panel>
   );
