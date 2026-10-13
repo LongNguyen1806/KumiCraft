@@ -151,5 +151,85 @@
     "textFromData": "Content is bound to data",
     "textHasFormat": "Formatted content will be editable in rich text",
     "editFailed": "Failed to save text"
+  },
+  "dnd": {
+    "intoContainer": "Into {{name}}",
+    "dropIndicator": "Drop here",
+    "announcements": {
+      "pickedUp": "Picked up {{name}}",
+      "moved": "At position {{index}} of {{container}}",
+      "dropped": "Dropped {{name}}",
+      "cancelled": "Cancelled drag"
+    }
+  },
+  "library": {
+    "title": "Library",
+    "searchPlaceholder": "Search components…",
+    "noResults": "No components found",
+    "category": {
+      "layout": "Layout",
+      "content": "Content",
+      "form": "Form",
+      "data": "Data",
+      "composite": "Composite"
+    },
+    "presets": {
+      "stackRow": "Stack row",
+      "stackCol": "Stack col",
+      "grid3Col": "3-column grid",
+      "gridAuto": "Auto-fit grid",
+      "section": "Section",
+      "container": "Container",
+      "heading": "Heading",
+      "text": "Text",
+      "image": "Image",
+      "icon": "Icon",
+      "link": "Link",
+      "divider": "Divider",
+      "badge": "Badge",
+      "avatar": "Avatar",
+      "form": "Form",
+      "input": "Input",
+      "textarea": "Textarea",
+      "select": "Select",
+      "checkbox": "Checkbox",
+      "radio": "Radio",
+      "switch": "Switch",
+      "button": "Button",
+      "table": "Table",
+      "list": "List",
+      "detailView": "Detail view",
+      "card": "Card",
+      "navbar": "Navbar",
+      "sidebar": "Sidebar",
+      "footer": "Footer",
+      "modal": "Modal",
+      "tabs": "Tabs",
+      "hero": "Hero"
+    }
+  },
+  "layers": {
+    "title": "Layers",
+    "empty": "No elements",
+    "menu": {
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "wrapRow": "Wrap in Row",
+      "wrapColumn": "Wrap in Column",
+      "wrapGrid": "Wrap in Grid",
+      "unwrap": "Unwrap",
+      "rename": "Rename",
+      "copy": "Copy",
+      "pasteInside": "Paste inside"
+    },
+    "actions": {
+      "hide": "Hide layer",
+      "show": "Show layer",
+      "lock": "Lock layer",
+      "unlock": "Unlock layer",
+      "expand": "Expand",
+      "collapse": "Collapse"
+    },
+    "binding": "Bound to data"
   }
 }

@@ -93,6 +93,8 @@ function useCanvasSelection(
         chain,
         selected: currentSelected,
         modifiers: { shift: e.shiftKey, deep: e.ctrlKey || e.metaKey },
+        // Section 8.2: a locked node is never picked on the Canvas.
+        isLocked: (id) => useEditorStore.getState().flatNodes[id]?.locked === true,
       });
       if (result.kind === 'select') {
         selectNode(result.id);

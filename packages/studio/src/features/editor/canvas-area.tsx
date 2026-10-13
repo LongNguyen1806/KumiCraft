@@ -3,9 +3,11 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useEditorStore } from '../../store/editor-store.ts';
-import { CanvasContext } from '../canvas/canvas-context.ts';
+import { useCanvasContext } from '../canvas/canvas-context.ts';
 import { CanvasScaleProvider } from '../canvas/canvas-scale-context.tsx';
 import { CanvasViewport } from '../canvas/canvas-viewport.tsx';
+import { useDndCanvas } from '../dnd/dnd-canvas-context.tsx';
+import { useCanvasAutoScroll } from '../dnd/use-canvas-auto-scroll.ts';
 import { CanvasOverlay } from '../overlay/canvas-overlay.tsx';
 import { useCanvasInteraction } from '../overlay/use-canvas-interaction.ts';
 
@@ -95,8 +97,7 @@ function FrameViewportMat({
   readonly effectiveHeight: number;
   readonly onContentHeight: (height: number) => void;
 }) {
-  const [iframe, setIframe] = useState<HTMLIFrameElement>();
-  const [iframeDoc, setIframeDoc] = useState<Document>();
+  const { iframeDoc, setIframe, setIframeDoc } = useCanvasContext();
   const activePageId = useEditorStore((s) => s.activePageId);
   const rootId = useEditorStore((s) =>
     activePageId !== undefined ? s.document?.pages[activePageId]?.root.id : undefined,
@@ -105,34 +106,27 @@ function FrameViewportMat({
   useCanvasInteraction({ iframeDoc, rootId });
 
   return (
-    <CanvasContext.Provider value={{ iframe, iframeDoc }}>
-      <div className="flex justify-center px-8 pt-9 pb-14">
-        <div className="grid gap-2.5">
-          <FrameHeader frame={frame} scale={scale} />
-          <FrameViewportContainer
-            frame={frame}
-            scale={scale}
-            effectiveHeight={effectiveHeight}
-            onContentHeight={onContentHeight}
-            onIframe={setIframe}
-            onDocReady={setIframeDoc}
-          />
-        </div>
+    <div className="flex justify-center px-8 pt-9 pb-14">
+      <div className="grid gap-2.5">
+        <FrameHeader frame={frame} scale={scale} />
+        <FrameViewportContainer
+          frame={frame}
+          scale={scale}
+          effectiveHeight={effectiveHeight}
+          onContentHeight={onContentHeight}
+          onIframe={setIframe ?? (() => {})}
+          onDocReady={setIframeDoc ?? (() => {})}
+        />
       </div>
-    </CanvasContext.Provider>
+    </div>
   );
 }
 
-/**
- * The dotted mat with the active frame, zoomed to fit (SPEC-04.1 section 6.2). The page itself is
- * rendered inside the frame by the Canvas Renderer of WP-1.07.
- */
-export function CanvasArea({ frame, scale, onWidth }: CanvasAreaProps) {
-  const { t } = useTranslation();
-  const [area, setArea] = useState<HTMLElement>();
-  const [contentHeight, setContentHeight] = useState<number>(frame.height);
-  const selectNode = useEditorStore((s) => s.selectNode);
-
+function useCanvasAreaInteractions(
+  area: HTMLElement | undefined,
+  onWidth: (width: number) => void,
+  selectNode: (id: string | undefined) => void,
+) {
   useEffect(() => {
     if (area === undefined) return undefined;
     const observer = new ResizeObserver(() => {
@@ -158,6 +152,21 @@ export function CanvasArea({ frame, scale, onWidth }: CanvasAreaProps) {
       area.removeEventListener('click', handleClick);
     };
   }, [area, selectNode]);
+}
+
+/**
+ * The dotted mat with the active frame, zoomed to fit (SPEC-04.1 section 6.2). The page itself is
+ * rendered inside the frame by the Canvas Renderer of WP-1.07.
+ */
+export function CanvasArea({ frame, scale, onWidth }: CanvasAreaProps) {
+  const { t } = useTranslation();
+  const [area, setArea] = useState<HTMLElement>();
+  const [contentHeight, setContentHeight] = useState<number>(frame.height);
+  const selectNode = useEditorStore((s) => s.selectNode);
+  const { isDragging, pointerY } = useDndCanvas();
+
+  useCanvasAutoScroll(isDragging, pointerY, area);
+  useCanvasAreaInteractions(area, onWidth, selectNode);
 
   const effectiveHeight = Math.max(frame.height, contentHeight);
 

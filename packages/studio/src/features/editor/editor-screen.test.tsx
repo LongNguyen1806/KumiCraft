@@ -16,7 +16,7 @@ const press = (key: string, extra: Partial<KeyboardEventInit> = {}) => {
 
 /** The layer row showing `text`. */
 const layerRow = (text: string): HTMLElement => {
-  const row = screen.getByText(text).closest('button') ?? undefined;
+  const row = screen.getByText(text).closest<HTMLElement>('[role="treeitem"]') ?? undefined;
   if (row === undefined) throw new Error(`no layer row for ${text}`);
   return row;
 };

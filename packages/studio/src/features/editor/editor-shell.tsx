@@ -2,6 +2,9 @@ import { type DesignDocument, type DesignNode, type Frame, walkTree } from '@rea
 import { useEffect, useState } from 'react';
 
 import { type EditorState, useEditorStore } from '../../store/editor-store.ts';
+import { CanvasContext } from '../canvas/canvas-context.ts';
+import { CanvasScaleProvider } from '../canvas/canvas-scale-context.tsx';
+import { DndCanvasProvider } from '../dnd/dnd-canvas-context.tsx';
 import { TrustPrompt } from '../trust/trust-prompt.tsx';
 import { CanvasArea, fitScale } from './canvas-area.tsx';
 import { EditorToolbar } from './editor-toolbar.tsx';
@@ -54,6 +57,8 @@ type WorkAreaProps = {
 
 /** Left panel, Canvas and right panel, with the resize handles between them. */
 function WorkArea({ panels, root, path, frame, scale, onCanvasWidth }: WorkAreaProps) {
+  const [iframe, setIframe] = useState<HTMLIFrameElement>();
+  const [iframeDoc, setIframeDoc] = useState<Document>();
   const selectedNodeId = useEditorStore((state) => state.selectedNodeId);
   const selectedNodeIds = useEditorStore((state) => state.selectedNodeIds);
   const hoveredNodeId = useEditorStore((state) => state.hoveredNodeId);
@@ -72,25 +77,31 @@ function WorkArea({ panels, root, path, frame, scale, onCanvasWidth }: WorkAreaP
     />
   );
   return (
-    <div className="grid min-h-0 flex-1" style={{ gridTemplateColumns: columns(layout) }}>
-      {layout.visible.left ? (
-        <LeftPanel
-          root={root}
-          selectedNodeId={selectedNodeId}
-          selectedNodeIds={selectedNodeIds}
-          hoveredNodeId={hoveredNodeId}
-          onSelect={selectNode}
-          onToggleSelect={toggleNodeSelection}
-          onHover={hoverNode}
-        />
-      ) : (
-        <div />
-      )}
-      {handle('left')}
-      <CanvasArea frame={frame} scale={scale} onWidth={onCanvasWidth} />
-      {handle('right')}
-      {layout.visible.right ? <RightPanel selected={path.at(-1)} /> : <div />}
-    </div>
+    <CanvasScaleProvider scale={scale}>
+      <CanvasContext.Provider value={{ iframe, iframeDoc, setIframe, setIframeDoc }}>
+        <DndCanvasProvider>
+          <div className="grid min-h-0 flex-1" style={{ gridTemplateColumns: columns(layout) }}>
+            {layout.visible.left ? (
+              <LeftPanel
+                root={root}
+                selectedNodeId={selectedNodeId}
+                selectedNodeIds={selectedNodeIds}
+                hoveredNodeId={hoveredNodeId}
+                onSelect={selectNode}
+                onToggleSelect={toggleNodeSelection}
+                onHover={hoverNode}
+              />
+            ) : (
+              <div />
+            )}
+            {handle('left')}
+            <CanvasArea frame={frame} scale={scale} onWidth={onCanvasWidth} />
+            {handle('right')}
+            {layout.visible.right ? <RightPanel selected={path.at(-1)} /> : <div />}
+          </div>
+        </DndCanvasProvider>
+      </CanvasContext.Provider>
+    </CanvasScaleProvider>
   );
 }
 

@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
 import { useEditorStore } from '../../store/editor-store.ts';
+import { useDndCanvas } from '../dnd/dnd-canvas-context.tsx';
 import { CanvasPortal } from './canvas-portal.tsx';
 
 export function syncIframeHead(doc: Document, themeCss: string): void {
@@ -163,6 +164,19 @@ function useTailwindReady(iframe: HTMLIFrameElement | undefined, mounted: boolea
   return ready;
 }
 
+/** While dragging, the Overlay takes the pointer so dnd-kit keeps getting its events (VG-11). */
+function iframeStyle(width: number, height: number, isDragging: boolean) {
+  return {
+    width: `${String(width)}px`,
+    height: `${String(height)}px`,
+    display: 'block',
+    border: 0,
+    backgroundColor: '#ffffff',
+    overflow: 'hidden',
+    pointerEvents: isDragging ? 'none' : 'auto',
+  } as const;
+}
+
 export function CanvasIframe({
   children,
   frame,
@@ -189,6 +203,7 @@ export function CanvasIframe({
   useIframeNavigationBlocker(iframe);
   useIframeThemeSync(iframe, themeCss, setMountNode, onDocReady);
   const styled = useTailwindReady(iframe, mountNode !== undefined);
+  const { isDragging } = useDndCanvas();
 
   return (
     <>
@@ -201,14 +216,7 @@ export function CanvasIframe({
         title={title}
         data-testid="canvas-iframe"
         data-rc-styled={styled ? '1' : undefined}
-        style={{
-          width: `${String(frameWidth)}px`,
-          height: `${String(contentHeight)}px`,
-          display: 'block',
-          border: 0,
-          backgroundColor: '#ffffff',
-          overflow: 'hidden',
-        }}
+        style={iframeStyle(frameWidth, contentHeight, isDragging)}
       />
       {mountNode !== undefined && <CanvasPortal container={mountNode}>{children}</CanvasPortal>}
     </>

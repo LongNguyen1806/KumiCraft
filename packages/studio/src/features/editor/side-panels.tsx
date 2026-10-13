@@ -2,7 +2,8 @@ import { type DesignNode, walkTree } from '@reactcraft/model';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { EyeOffIcon } from '../../components/ui/icons.tsx';
+import { LayerTree } from '../layers/layer-tree.tsx';
+import { LibraryPanel } from '../library/library-panel.tsx';
 
 type PanelProps = {
   readonly label: string;
@@ -64,110 +65,6 @@ export const rowsOf = (root: DesignNode | undefined): Row[] => {
   if (root !== undefined) walkTree(root, (node, { depth }) => rows.push({ node, depth }));
   return rows;
 };
-
-/** Short text of a node for its row: its name, or its text. */
-function preview(node: DesignNode): string {
-  if (node.name !== undefined) return node.name;
-  const content = node.content as { readonly text?: unknown } | undefined;
-  return typeof content?.text === 'string' ? content.text : '';
-}
-
-type LayerRowProps = {
-  readonly node: DesignNode;
-  readonly depth: number;
-  readonly isSelected: boolean;
-  readonly isHovered: boolean;
-  readonly onSelect: (nodeId: string) => void;
-  readonly onToggleSelect: (nodeId: string) => void;
-  readonly onHover: (nodeId: string | undefined) => void;
-};
-
-function LayerRow({
-  node,
-  depth,
-  isSelected,
-  isHovered,
-  onSelect,
-  onToggleSelect,
-  onHover,
-}: LayerRowProps) {
-  return (
-    <button
-      type="button"
-      role="treeitem"
-      aria-selected={isSelected}
-      aria-current={isSelected}
-      onClick={(e) => {
-        if (e.shiftKey || e.ctrlKey || e.metaKey) {
-          onToggleSelect(node.id);
-        } else {
-          onSelect(node.id);
-        }
-      }}
-      onPointerEnter={() => {
-        onHover(node.id);
-      }}
-      onPointerLeave={() => {
-        onHover(undefined);
-      }}
-      style={{ paddingLeft: 10 + (depth - 1) * 14 }}
-      className={`flex h-[30px] w-full items-center gap-2 rounded-full pr-2.5 text-left transition-colors ${
-        isSelected
-          ? 'bg-charcoal text-on-charcoal'
-          : isHovered
-            ? 'bg-field text-ink'
-            : 'text-ink-soft hover:bg-field hover:text-ink'
-      }`}
-    >
-      <span className="font-medium">{node.type}</span>
-      <span className={`min-w-0 truncate ${isSelected ? 'text-on-charcoal/70' : 'text-ink-faint'}`}>
-        {preview(node)}
-      </span>
-      {node.hidden === true && (
-        <span className={`ml-auto ${isSelected ? 'text-on-charcoal/70' : 'text-ink-faint'}`}>
-          <EyeOffIcon />
-        </span>
-      )}
-    </button>
-  );
-}
-
-type LayerListProps = {
-  readonly rows: readonly Row[];
-  readonly selectedNodeIds: readonly string[];
-  readonly hoveredNodeId?: string | undefined;
-  readonly onSelect: (nodeId: string) => void;
-  readonly onToggleSelect: (nodeId: string) => void;
-  readonly onHover: (nodeId: string | undefined) => void;
-};
-
-/** A plain outline of the page; the Layer Tree of WP-1.10 replaces it. */
-function LayerList({
-  rows,
-  selectedNodeIds,
-  hoveredNodeId,
-  onSelect,
-  onToggleSelect,
-  onHover,
-}: LayerListProps) {
-  return (
-    <ul className="grid gap-px" data-testid="layer-list">
-      {rows.map(({ node, depth }) => (
-        <li key={node.id}>
-          <LayerRow
-            node={node}
-            depth={depth}
-            isSelected={selectedNodeIds.includes(node.id)}
-            isHovered={node.id === hoveredNodeId}
-            onSelect={onSelect}
-            onToggleSelect={onToggleSelect}
-            onHover={onHover}
-          />
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 type LeftPanelProps = {
   readonly root: DesignNode | undefined;
@@ -233,8 +130,8 @@ export function LeftPanel({
       tabs={<LeftPanelTabs isLayers={isLayers} onSelectTab={setTab} />}
     >
       {isLayers ? (
-        <LayerList
-          rows={rows}
+        <LayerTree
+          root={root}
           selectedNodeIds={selectedNodeIds}
           hoveredNodeId={hoveredNodeId}
           onSelect={onSelect}
@@ -242,7 +139,7 @@ export function LeftPanel({
           onHover={onHover}
         />
       ) : (
-        <p className="px-1 pt-2 text-ink-faint">{t('editor.libraryLater')}</p>
+        <LibraryPanel />
       )}
     </Panel>
   );

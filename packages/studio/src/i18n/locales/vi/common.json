@@ -151,5 +151,85 @@
     "textFromData": "Nội dung lấy từ dữ liệu",
     "textHasFormat": "Nội dung có định dạng, sẽ sửa được ở bản rich text",
     "editFailed": "Không thể lưu nội dung"
+  },
+  "dnd": {
+    "intoContainer": "Vào {{name}}",
+    "dropIndicator": "Thả tại đây",
+    "announcements": {
+      "pickedUp": "Đã chọn {{name}}",
+      "moved": "Đang ở vị trí {{index}} của {{container}}",
+      "dropped": "Đã thả {{name}}",
+      "cancelled": "Đã hủy kéo"
+    }
+  },
+  "library": {
+    "title": "Thư viện",
+    "searchPlaceholder": "Tìm component…",
+    "noResults": "Không tìm thấy component",
+    "category": {
+      "layout": "Bố cục",
+      "content": "Nội dung",
+      "form": "Biểu mẫu",
+      "data": "Dữ liệu",
+      "composite": "Phức hợp"
+    },
+    "presets": {
+      "stackRow": "Hàng ngang",
+      "stackCol": "Hàng dọc",
+      "grid3Col": "Lưới 3 cột",
+      "gridAuto": "Lưới tự co",
+      "section": "Section",
+      "container": "Khung chứa",
+      "heading": "Tiêu đề",
+      "text": "Đoạn văn",
+      "image": "Hình ảnh",
+      "icon": "Biểu tượng",
+      "link": "Liên kết",
+      "divider": "Đường kẻ",
+      "badge": "Huy hiệu",
+      "avatar": "Ảnh đại diện",
+      "form": "Biểu mẫu",
+      "input": "Ô nhập",
+      "textarea": "Văn bản nhiều dòng",
+      "select": "Hộp chọn",
+      "checkbox": "Hộp kiểm",
+      "radio": "Nút chọn một",
+      "switch": "Công tắc",
+      "button": "Nút bấm",
+      "table": "Bảng dữ liệu",
+      "list": "Danh sách",
+      "detailView": "Xem chi tiết",
+      "card": "Thẻ",
+      "navbar": "Thanh điều hướng",
+      "sidebar": "Thanh bên",
+      "footer": "Chân trang",
+      "modal": "Hộp thoại Modal",
+      "tabs": "Thẻ tab",
+      "hero": "Khối Hero"
+    }
+  },
+  "layers": {
+    "title": "Lớp",
+    "empty": "Không có phần tử nào",
+    "menu": {
+      "duplicate": "Nhân bản",
+      "delete": "Xóa",
+      "wrapRow": "Bọc trong Hàng ngang",
+      "wrapColumn": "Bọc trong Hàng dọc",
+      "wrapGrid": "Bọc trong Lưới",
+      "unwrap": "Bỏ bọc",
+      "rename": "Đổi tên",
+      "copy": "Sao chép",
+      "pasteInside": "Dán vào trong"
+    },
+    "actions": {
+      "hide": "Ẩn lớp",
+      "show": "Hiện lớp",
+      "lock": "Khóa lớp",
+      "unlock": "Mở khóa lớp",
+      "expand": "Mở rộng",
+      "collapse": "Thu gọn"
+    },
+    "binding": "Có liên kết dữ liệu"
   }
 }
