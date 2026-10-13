@@ -142,6 +142,13 @@ export {
   validateDocument,
 } from './schema/validate/validate-document.ts';
 export { normalizeResponsiveStyle } from './styling/normalize-responsive.ts';
+export {
+  bandOf,
+  BREAKPOINT_MIN,
+  editBreakpoint,
+  effectiveStyleValue,
+  styleScope,
+} from './styling/responsive-scope.ts';
 export type { ParentLayout, StylingContext } from './styling/styling-context.ts';
 export type { ThemeCssOptions } from './styling/theme-css.ts';
 export { generateThemeCss, validateTokenNameCollisions } from './styling/theme-css.ts';

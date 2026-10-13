@@ -2,7 +2,7 @@
 import type { ResponsiveKey, ResponsiveMode } from '../schema/primitives.schema.ts';
 import type { StyleProps } from '../schema/style.schema.ts';
 
-const DESKTOP_CASCADE: readonly ResponsiveKey[] = ['xl', 'lg', 'md', 'sm'];
+const DESKTOP_CASCADE: readonly ResponsiveKey[] = ['2xl', 'xl', 'lg', 'md', 'sm'];
 const MOBILE_CASCADE: readonly ResponsiveKey[] = ['sm', 'md', 'lg', 'xl', '2xl'];
 
 function isDeepEqual(a: unknown, b: unknown): boolean {
