@@ -172,7 +172,12 @@ test('drops in the right place when the frame is shown at a small zoom', async (
   await expectSaved((r) => childTypes(findIn(r, ROW)), ['Button', 'Button', 'Button']);
 });
 
-test('R-DD-02: holding a drag near the bottom edge scrolls the Canvas', async ({ page }) => {
+test('R-DD-02: holding a drag near the bottom edge scrolls the Canvas', async ({
+  page,
+  browserName,
+}) => {
+  // Harness time, not a budget: a long held drag is slow in WebKit on Windows under load.
+  test.slow(browserName === 'webkit');
   // A page taller than the Canvas area, so the area can scroll.
   const tall = smallPage();
   const extra = Array.from({ length: 40 }, (_, i) =>

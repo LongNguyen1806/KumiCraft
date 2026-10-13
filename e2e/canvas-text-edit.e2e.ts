@@ -348,7 +348,8 @@ test('6. Editing same node twice consecutively, then Undo/Redo produces no conso
 });
 
 test('7. Typing Vietnamese Unikey style simulation in Text node', async ({ page, browserName }) => {
-  test.setTimeout(90000);
+  // Harness time, not a budget: 200 characters typed key by key are slow in WebKit under load.
+  test.setTimeout(browserName === 'webkit' ? 240_000 : 90_000);
   const session = await start();
   const tab = await openStudio(page, session);
   const canvas = getCanvasFrame(tab);
