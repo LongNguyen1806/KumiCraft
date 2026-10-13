@@ -28,12 +28,12 @@ SRS v5.0 mô tả **hệ thống phải làm gì**. Tài liệu này mô tả **
 | ------- | ----------------------------------------------------------------- | --------------------------------------------------------------- |
 | Phần 0  | Hướng dẫn sử dụng tài liệu                                        | Đã viết lại                                                     |
 | SPEC-01 | Kiến trúc kỹ thuật & tech stack (gộp backend và Studio)           | Đã viết lại                                                     |
-| SPEC-02 | Quy chuẩn code & repo                                             | Chờ viết lại (đợt 3)                                            |
+| SPEC-02 | Quy chuẩn code & repo                                             | Đã viết lại (đợt 3a)                                            |
 | SPEC-03 | Giao tiếp: API REST, sự kiện WebSocket, giao thức cầu nối, mã lỗi | Đã viết lại (đợt 2); chi tiết endpoint Phase 2–4 ở đợt 3        |
 | SPEC-04 | Đặc tả module theo phase                                          | Phase 1 đã viết (đợt 2); Phase 2–4 ở đợt 3                      |
-| SPEC-05 | Bảo mật                                                           | Chờ viết lại (đợt 3)                                            |
-| SPEC-06 | Chất lượng & kiểm thử                                             | Chờ viết lại (đợt 3)                                            |
-| SPEC-07 | Quy trình thi công, phase, cổng nghiệm thu                        | Đã viết lại (lộ trình); chi tiết DoR/DoD giữ như 0.18 tới đợt 3 |
+| SPEC-05 | Bảo mật                                                           | Đã viết lại (đợt 3a)                                            |
+| SPEC-06 | Chất lượng & kiểm thử                                             | Đã viết lại (đợt 3a)                                            |
+| SPEC-07 | Quy trình thi công, phase, cổng nghiệm thu                        | Lộ trình và chế độ local đã viết; DoR/DoD, mẫu báo cáo ở đợt 3b |
 
 ---
 
@@ -318,7 +318,7 @@ Phần giải thích đầy đủ của các ADR này có trong bản 0.18; dư�
 
 ### ADR-FE-04 — Canvas (sửa đổi)
 
-**Quyết định:** Canvas là `<iframe>` có `src` là địa chỉ dev server của dự án (`http://127.0.0.1:<D>/<đường dẫn trang>`), rộng và cao đúng kích thước khung thiết kế, trang cuộn **bên trong** iframe như trên thiết bị thật (đơn vị `vh` của dự án đúng như thật), thu phóng bằng `transform: scale()` trên khung bao trong Studio (SPEC-04 R-RN-21). `sandbox` **không** đặt (dự án cần chạy đầy đủ); an toàn dựa vào khác origin và tin cậy dự án (S-80).
+**Quyết định:** Canvas là `<iframe>` có `src` là địa chỉ dev server của dự án (`http://127.0.0.1:<D>/<đường dẫn trang>`), rộng và cao đúng kích thước khung thiết kế, trang cuộn **bên trong** iframe như trên thiết bị thật (đơn vị `vh` của dự án đúng như thật), thu phóng bằng `transform: scale()` trên khung bao trong Studio (SPEC-04 R-RN-21). `sandbox` theo SPEC-05 S-100 (đủ quyền để dự án chạy bình thường, trừ điều hướng cửa sổ Studio); an toàn còn dựa vào khác origin và tin cậy dự án (S-80).
 
 ### ADR-FE-06 — Mô hình class Tailwind (sửa đổi)
 
@@ -489,6 +489,307 @@ VG-02 đến VG-06, VG-08 đến VG-11, VG-14 của bản 0.18: không còn hi�
 
 ---
 
+# SPEC-02 — QUY CHUẨN CODE & REPO
+
+**Phiên bản phần:** 1.0  
+**Trạng thái:** Draft — chờ duyệt  
+**Truy vết:** SPEC-01
+
+Mỗi quy tắc có mã `QC-xx` để dẫn chiếu khi review ("vi phạm QC-14"). Số QC của bản 0.18 được giữ; quy tắc thuộc hướng cũ ghi "Đã bỏ (1.0)" và không dùng lại số.
+
+---
+
+## 1. CẤU TRÚC REPO
+
+### 1.1. Cây thư mục gốc
+
+```text
+reactcraft/
+├── .github/            # workflows (ci.yml, nightly.yml), pull_request_template.md, dependabot.yml
+├── .changeset/
+├── docs/
+│   ├── srs.md          # SRS hiện hành
+│   ├── spec.md         # bộ spec này
+│   └── construction/   # tiến độ, giao việc, báo cáo thi công (SPEC-07)
+├── packages/
+│   ├── shared/         # @reactcraft/shared
+│   ├── server/         # @reactcraft/server
+│   ├── bridge/         # @reactcraft/bridge
+│   ├── studio/         # @reactcraft/studio
+│   └── cli/            # reactcraft (gói phát hành)
+├── templates/          # khung dự án mới (ADR-BE-32)
+├── fixtures/
+│   ├── projects/       # dự án mẫu chạy được (SPEC-04 mục 11.1)
+│   ├── source-corpus/  # bộ file mẫu cho Source Editor (VG-16)
+│   ├── backends/       # backend mẫu (Phase 3)
+│   └── agents/         # agent giả lập (Phase 3, SPEC-06)
+├── e2e/                # test Playwright
+├── scripts/            # check-i18n, trace, vg, dev, script hỗ trợ
+└── (file cấu hình gốc: .editorconfig, .gitattributes, .prettierrc.json, eslint.config.js,
+     lefthook.yml, commitlint.config.js, package.json, pnpm-workspace.yaml, tsconfig.base.json,
+     vitest.config.js, playwright.config.js, LICENSE, SECURITY.md, README.md)
+```
+
+### 1.2. Bên trong một package
+
+```text
+packages/<name>/
+├── src/
+│   ├── index.ts        # điểm export công khai duy nhất
+│   └── …               # theo SPEC-01 mục 3.3 và SPEC-04
+├── package.json
+├── tsconfig.json       # extends ../../tsconfig.base.json
+└── README.md
+```
+
+| Mã    | Quy tắc                                                                                                                                     |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| QC-01 | Test unit đặt **cạnh file nguồn**: `class-model.ts` → `class-model.test.ts`                                                                 |
+| QC-02 | Test E2E đặt trong `e2e/` ở gốc repo                                                                                                        |
+| QC-03 | Package khác chỉ import qua tên `@reactcraft/<name>` và các entry khai báo trong `exports`. **KHÔNG ĐƯỢC** import đường dẫn sâu (`…/src/…`) |
+| QC-04 | Entry phụ được phép của `@reactcraft/shared`: `./tailwind` (M-TW), `./bridge-protocol` (SPEC-03 mục 7). Thêm entry phải sửa quy tắc này     |
+| QC-05 | Bên trong một package dùng import tương đối, **KHÔNG** dùng file barrel trong thư mục con                                                   |
+| QC-06 | Fixture **KHÔNG ĐƯỢC** sửa tại chỗ khi test; chép ra thư mục tạm (SPEC-04 R-QA-01)                                                          |
+
+### 1.3. Script gốc
+
+| Script            | Việc làm                                                                    |
+| ----------------- | --------------------------------------------------------------------------- |
+| `pnpm dev`        | Server (watch) và Studio (Vite dev, proxy `/api`)                           |
+| `pnpm build`      | Build mọi package (Bridge client build thành một file ESM)                  |
+| `pnpm lint`       | ESLint                                                                      |
+| `pnpm typecheck`  | `tsc --noEmit` cho mọi package, `e2e`, `scripts`                            |
+| `pnpm test`       | Vitest (unit, contract, integration)                                        |
+| `pnpm test:e2e`   | Build rồi chạy Playwright                                                   |
+| `pnpm check:i18n` | Khớp khóa `vi`/`en` (VG-12)                                                 |
+| `pnpm bench`      | Benchmark ngân sách hiệu năng phía server và `shared`                       |
+| `pnpm bench:ui`   | Đo ngân sách hiệu năng trên trình duyệt (PB-01, PB-02)                      |
+| `pnpm trace`      | Truy vết mã spec → test (QC-94)                                             |
+| `pnpm format`     | Prettier                                                                    |
+| `pnpm verify`     | `lint`, `typecheck`, `format:check`, `check:i18n`, `test`, `trace`, `build` |
+| `pnpm package`    | Đóng gói tarball `reactcraft` vào `artifacts/`                              |
+
+| Mã    | Quy tắc                                                                                                                               |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| QC-07 | Script **KHÔNG ĐƯỢC** dùng lệnh chỉ có trên một hệ điều hành (`rm -rf`, `cp`, `FOO=1 cmd`). Cần thì viết script Node trong `scripts/` |
+
+---
+
+## 2. NGÔN NGỮ TRONG MÃ NGUỒN
+
+| Mã    | Nội dung                             | Ngôn ngữ                                         |
+| ----- | ------------------------------------ | ------------------------------------------------ |
+| QC-08 | Tên biến, hàm, kiểu, file, thư mục   | Tiếng Anh                                        |
+| QC-09 | Comment, TSDoc                       | Tiếng Anh                                        |
+| QC-10 | Commit message, tên nhánh, PR        | Tiếng Anh                                        |
+| QC-11 | Chuỗi hiển thị cho người dùng Studio | Qua i18n (`vi`, `en`), **KHÔNG** viết trong code |
+| QC-12 | Log, thông điệp lỗi nội bộ           | Tiếng Anh                                        |
+| QC-13 | Tài liệu trong `docs/`               | Tiếng Việt (giữ thuật ngữ kỹ thuật tiếng Anh)    |
+
+---
+
+## 3. ĐẶT TÊN
+
+| Mã    | Đối tượng                            | Quy tắc                                                                                          | Ví dụ                                                      |
+| ----- | ------------------------------------ | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| QC-14 | File mã nguồn, kể cả component React | `kebab-case`                                                                                     | `layer-tree.tsx`, `source-editor.ts`                       |
+| QC-15 | Thư mục                              | `kebab-case`                                                                                     | `source-editor/`                                           |
+| QC-16 | File test                            | `<tên>.test.ts(x)`, `<tên>.bench.ts`, E2E `<luồng>.e2e.ts`                                       | `set-class-name.test.ts`, `inspector.e2e.ts`               |
+| QC-17 | File schema Zod                      | `<tên>.schema.ts`                                                                                | `project.schema.ts`                                        |
+| QC-18 | File dịch                            | `locales/<lang>/<namespace>.json`, namespace `kebab-case`                                        | `locales/vi/inspector.json`                                |
+| QC-19 | Biến, hàm, thuộc tính                | `camelCase`                                                                                      | `selectedRefs`, `writeValue()`                             |
+| QC-20 | Component, kiểu, interface, class    | `PascalCase`                                                                                     | `LayerTree`, `ElementSource`                               |
+| QC-21 | Interface **không** có tiền tố `I`   |                                                                                                  | `FileSystemPort`                                           |
+| QC-22 | Props                                | `<TênComponent>Props`                                                                            | `LayerTreeProps`                                           |
+| QC-23 | Hook                                 | `use<Tên>`                                                                                       | `useSelection`                                             |
+| QC-24 | Schema Zod và kiểu suy ra            | `<Tên>Schema`, `type <Tên> = z.infer<typeof <Tên>Schema>`                                        | `SourceEditSchema`, `SourceEdit`                           |
+| QC-25 | Hằng số bất biến cấp module          | `UPPER_SNAKE_CASE`                                                                               | `MAX_HISTORY_ENTRIES`                                      |
+| QC-26 | Boolean                              | Tiền tố `is`, `has`, `can`, `should`                                                             | `isTrusted`, `needsInstall` (ngoại lệ đã có trong SPEC-03) |
+| QC-27 | Xử lý sự kiện                        | `handle<Sự kiện>`; prop callback `on<Sự kiện>`                                                   | `handleCommit`, `onSelect`                                 |
+| QC-28 | Port, adapter                        | `<Tên>Port`, `<Công nghệ><Tên>Adapter`                                                           | `ProcessPort`, `CrossSpawnProcessAdapter`                  |
+| QC-29 | Đường dẫn REST                       | `/api/v1/<danh-từ>`, `kebab-case`; số nhiều cho tập hợp, số ít cho tài nguyên duy nhất của phiên | `/api/v1/project/backends`, `/api/v1/runner`               |
+| QC-30 | Trường JSON (API, file)              | `camelCase`                                                                                      | `schemaVersion`, `primaryFrameId`                          |
+| QC-31 | Sự kiện WebSocket, thông điệp Bridge | WebSocket `<miền>.<hành động>`, mỗi đoạn `camelCase`; Bridge `kebab-case`                        | `project.filesChanged`, `selection-info`                   |
+| QC-32 | Đã bỏ (1.0) — tên Design Operation   |                                                                                                  |                                                            |
+| QC-33 | Khóa i18n                            | `<namespace>:<nhóm>.<khóa>`, `camelCase`                                                         | `inspector:spacing.padding`                                |
+| QC-34 | Mã lỗi                               | `E` + 3 chữ số (SPEC-03 mục 10)                                                                  | `E024`                                                     |
+| QC-35 | Biến môi trường của ReactCraft       | `REACTCRAFT_<TÊN>`                                                                               | `REACTCRAFT_CONFIG_DIR`                                    |
+
+---
+
+## 4. TYPESCRIPT
+
+| Mã    | Quy tắc                                                                                                              |
+| ----- | -------------------------------------------------------------------------------------------------------------------- |
+| QC-36 | Theo ADR-BE-02: `strict`, không `any`, không `@ts-ignore`                                                            |
+| QC-37 | Chỉ named export. `export default` chỉ ở file cấu hình công cụ bắt buộc                                              |
+| QC-38 | Không `enum`; dùng union chuỗi hoặc object `as const`                                                                |
+| QC-39 | `type` cho dữ liệu và union; `interface` cho hợp đồng có hiện thực (port, `FrameworkAdapter`)                        |
+| QC-40 | Dùng `undefined`, **KHÔNG** dùng `null` (trừ API bên ngoài bắt buộc). Trong JSON, trường không có giá trị thì bỏ hẳn |
+| QC-41 | Kiểu dữ liệu qua ranh giới (schema trong `shared`) khai báo `readonly`. **KHÔNG ĐƯỢC** sửa tham số đầu vào của hàm   |
+| QC-42 | `async`/`await`; **KHÔNG** viết chuỗi `.then()`                                                                      |
+| QC-43 | `import type` cho kiểu; thứ tự import do `simple-import-sort`                                                        |
+| QC-44 | Hàm ≤ 50 dòng, file ≤ 400 dòng (ESLint báo)                                                                          |
+| QC-45 | Export công khai của `@reactcraft/shared`, mọi port và `FrameworkAdapter` **BẮT BUỘC** có TSDoc                      |
+| QC-46 | Comment giải thích **tại sao**. `TODO` kèm mã việc: `// TODO(WP-2.03): …`                                            |
+| QC-47 | Không để code bị comment out                                                                                         |
+
+---
+
+## 5. XỬ LÝ LỖI
+
+Lỗi nghiệp vụ (đoán trước được: E017, E023, E024…) trả `Result`; lỗi lập trình (vi phạm bất biến) ném exception. `Result`, `AppError` theo SPEC-03 mục 4.1.
+
+| Mã    | Quy tắc                                                                                                                    |
+| ----- | -------------------------------------------------------------------------------------------------------------------------- |
+| QC-48 | Hàm core có thể thất bại vì lý do nghiệp vụ **BẮT BUỘC** trả `Result`                                                      |
+| QC-49 | **KHÔNG** nuốt lỗi (`catch` rỗng hoặc chỉ `console.log`)                                                                   |
+| QC-50 | Route chuyển `Result` lỗi thành phản hồi có mã E0xx; exception không bắt được trả E013 và ghi log đầy đủ                   |
+| QC-51 | `cause`, stack trace **KHÔNG** gửi xuống Studio                                                                            |
+| QC-52 | Chỉ `packages/cli` được gọi `process.exit()`; riêng script runner (`server/src/runners/`) được thoát tiến trình con của nó |
+
+---
+
+## 6. REACT (STUDIO)
+
+| Mã    | Quy tắc                                                                                                      |
+| ----- | ------------------------------------------------------------------------------------------------------------ |
+| QC-53 | Chỉ function component                                                                                       |
+| QC-54 | Một file một component được export; component con riêng tư < 30 dòng để chung file                           |
+| QC-55 | Component chỉ hiển thị và gọi hành động; logic ở hook, store, hoặc `@reactcraft/shared`                      |
+| QC-56 | Ghép class bằng `cn()`; **KHÔNG** `style` inline trừ giá trị tính động (thu phóng, kích thước khung, tọa độ) |
+| QC-57 | Mọi chuỗi hiển thị qua `t()`                                                                                 |
+| QC-58 | Phần tử tương tác dùng được bằng bàn phím và có nhãn truy cập                                                |
+| QC-59 | Đọc store qua selector hẹp; **KHÔNG** đăng ký cả store                                                       |
+| QC-60 | Không viết `useMemo`, `useCallback`, `memo` khi chưa có đo đạc (React Compiler, ADR-FE-02)                   |
+
+---
+
+## 7. SERVER
+
+| Mã    | Quy tắc                                                                                                                                      |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| QC-61 | Route chỉ: parse Zod, gọi service của core, chuyển kết quả thành phản hồi                                                                    |
+| QC-62 | Service nhận port qua tham số của hàm tạo (factory); không DI container, không biến toàn cục giữ port                                        |
+| QC-63 | Mọi thao tác file qua `FileSystemPort`; mọi tiến trình con qua `ProcessPort`. **KHÔNG** import `node:fs`, `node:child_process` trong `core/` |
+| QC-64 | Tác vụ dài nhận `AbortSignal`                                                                                                                |
+| QC-65 | Log có cấu trúc qua `LoggerPort`                                                                                                             |
+
+---
+
+## 8. BRIDGE (CHẠY TRONG DỰ ÁN CỦA NGƯỜI DÙNG)
+
+| Mã    | Quy tắc                                                                                                                                                                                            |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| QC-95 | Bridge client **KHÔNG ĐƯỢC** sửa DOM của ứng dụng ngoài: phần tử gốc của overlay, `contenteditable` của phần tử đang sửa chữ (R-TX-02). Không thêm biến toàn cục ngoài `window.__reactcraftBridge` |
+| QC-96 | Mọi listener của Bridge client bọc `try/catch`; lỗi của Bridge không bao giờ lan ra ứng dụng, chỉ ghi `console.debug` có tiền tố `[reactcraft]`                                                    |
+| QC-97 | Bridge client không phụ thuộc thư viện ngoài trừ `@reactcraft/shared` (và Zod qua nó); bundle ≤ 80 KB gzip                                                                                         |
+| QC-98 | Chỉ Source Editor (M-SE), lịch sử (M-HI), tạo khung (M-PJ) và hoàn tác lượt AI (Phase 3) được ghi file của dự án. **KHÔNG** sửa mã nguồn dự án bằng thay chuỗi ở nơi khác                          |
+
+---
+
+## 9. KIỂM THỬ
+
+| Mã    | Quy tắc                                                                                                                                                                                           |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| QC-66 | Tên test mô tả hành vi bằng tiếng Anh                                                                                                                                                             |
+| QC-67 | Arrange, Act, Assert, ngăn bằng dòng trống                                                                                                                                                        |
+| QC-68 | **KHÔNG** dùng snapshot tự động. Ngoại lệ: file kết quả mong đợi của bộ `fixtures/source-corpus/` (`*.expected.*`), so khớp từng byte                                                             |
+| QC-69 | Test không phụ thuộc thứ tự chạy, mạng (trừ nhãn `@network`), giờ hệ thống (dùng đồng hồ giả)                                                                                                     |
+| QC-70 | Sửa bug **BẮT BUỘC** kèm test tái hiện                                                                                                                                                            |
+| QC-93 | Test hiện thực quy tắc có mã thì tên test kết thúc bằng mã trong ngoặc vuông: `it('keeps the quote style [R-SE-05]')`; nhiều mã cách nhau dấu phẩy                                                |
+| QC-94 | `pnpm trace` đọc mã R-xx, V-xx, S-xx, AC-xx từ `docs/spec.md` và từ tên test; báo mã trong phạm vi phase chưa có test, mã trong test không có trong spec. Phạm vi theo `scripts/trace-scope.json` |
+
+Ngưỡng độ phủ dòng lệnh (chặn khi thấp hơn):
+
+| Phạm vi                                                                  | Ngưỡng |
+| ------------------------------------------------------------------------ | ------ |
+| `packages/shared`                                                        | 90 %   |
+| `packages/bridge/src/transform`                                          | 90 %   |
+| `packages/server/src/core`                                               | 80 %   |
+| `packages/studio/src/stores`, `features/selection`, `features/inspector` | 80 %   |
+| Toàn repo                                                                | 70 %   |
+
+---
+
+## 10. ĐỊNH DẠNG
+
+Prettier gốc: `printWidth 100`, `singleQuote`, `semi`, `trailingComma all`, `arrowParens always`, `endOfLine lf`; `prettier-plugin-tailwindcss` chỉ cho `packages/studio`. `.prettierignore` gồm `fixtures/`, `templates/` (giữ định dạng dự án gốc), `docs/srs.md`. Từ bản 1.0, `docs/spec.md` **được** định dạng bằng Prettier (bỏ khỏi `.prettierignore` ở WP-1.01). EditorConfig và `.gitattributes` giữ như hiện có.
+
+| Mã    | Quy tắc                                                                                                                                              |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| QC-71 | Mọi file văn bản của ReactCraft dùng LF và UTF-8 không BOM. Ngoại lệ: fixture cố ý dùng CRLF hoặc BOM (khai báo trong `.gitattributes` bằng `-text`) |
+| QC-72 | Hook `pre-commit` chạy Prettier và ESLint trên file đã stage                                                                                         |
+
+---
+
+## 11. GIT VÀ PHÁT HÀNH
+
+Chế độ thi công hiện tại là **local** (SPEC-07 mục 1.1): chủ sản phẩm tự commit, chưa dùng Pull Request. Quy tắc nhánh và PR (QC-73 đến QC-75, QC-82 đến QC-86) áp dụng khi chuyển lên GitHub.
+
+```text
+<type>(<scope>): <summary>
+
+<body: why, not what>
+
+Refs: <mã WP, module, spec>
+```
+
+| Thành phần | Giá trị                                                                                                              |
+| ---------- | -------------------------------------------------------------------------------------------------------------------- |
+| `type`     | `feat`, `fix`, `refactor`, `test`, `docs`, `spec`, `chore`, `perf`, `build`, `ci`, `spike`                           |
+| `scope`    | `shared`, `server`, `bridge`, `studio`, `cli`, `e2e`, `fixtures`, `templates`, `repo`, `docs` (`model` bỏ ở WP-1.01) |
+| `summary`  | Tiếng Anh, mệnh lệnh, **chữ thường toàn bộ** (kể cả tên riêng), không dấu chấm cuối, ≤ 72 ký tự                      |
+
+| Mã    | Quy tắc                                                                                        |
+| ----- | ---------------------------------------------------------------------------------------------- |
+| QC-73 | (GitHub) `main` được bảo vệ, không push thẳng, không force push                                |
+| QC-74 | (GitHub) Tên nhánh `<loại>/<mô-tả-ngắn>`                                                       |
+| QC-75 | (GitHub) Nhánh sống ≤ 3 ngày                                                                   |
+| QC-76 | Commit message kiểm tra bằng `commitlint` qua hook `commit-msg`                                |
+| QC-77 | Thay đổi phá vỡ tương thích (API, `workspace.json`, cấu hình) có `!` và mục `BREAKING CHANGE:` |
+| QC-78 | **KHÔNG** commit secrets, `.env`, dữ liệu cá nhân                                              |
+| QC-79 | SemVer; giai đoạn phát triển `0.x.y`                                                           |
+| QC-80 | Thay đổi ảnh hưởng người dùng kèm changeset                                                    |
+| QC-81 | Phát hành tạo tag `v<phiên bản>`, `CHANGELOG.md` sinh từ changeset                             |
+| QC-82 | (GitHub) PR ≤ 400 dòng thay đổi                                                                |
+| QC-83 | (GitHub) Một PR một việc                                                                       |
+| QC-84 | (GitHub) Squash merge                                                                          |
+| QC-85 | (GitHub) Chỉ merge khi CI đạt                                                                  |
+| QC-86 | Thêm runtime dependency **BẮT BUỘC** cập nhật SPEC-01 mục 4 trước hoặc cùng lúc                |
+| QC-87 | Được dùng AI coding assistant; người giao việc chịu trách nhiệm như code tự viết               |
+| QC-88 | Code do AI viết qua đúng quy trình QA và kiểm thử như mọi code khác                            |
+| QC-89 | Giao việc cho AI kèm phần spec liên quan (mã ADR, R, V, S, QC) và danh sách file phải đọc      |
+| QC-90 | **KHÔNG** đưa secrets, dữ liệu thật của người dùng vào prompt                                  |
+| QC-91 | Test và CI **KHÔNG ĐƯỢC** gọi agent AI thật; dùng agent giả lập (SPEC-06 mục 5)                |
+| QC-92 | Không tắt test để qua; test chập chờn phải sửa trong 1 ngày                                    |
+
+---
+
+## 12. CI (KHI CHUYỂN LÊN GITHUB)
+
+| Job     | Môi trường                           | Lệnh                                                        |
+| ------- | ------------------------------------ | ----------------------------------------------------------- |
+| install | Windows, Ubuntu, macOS · Node 22, 24 | `pnpm install --frozen-lockfile`                            |
+| verify  | Ubuntu · Node 24                     | `pnpm verify`                                               |
+| test    | Windows, Ubuntu, macOS · Node 22, 24 | `pnpm test --coverage` (ngưỡng mục 9)                       |
+| e2e     | Windows, Ubuntu, macOS · Node 24     | `pnpm test:e2e` (Chromium, Firefox, WebKit), trừ `@network` |
+| nightly | Ubuntu · Node 24                     | `pnpm bench`, `pnpm bench:ui`, E2E `@network`               |
+| audit   | Ubuntu · Node 24                     | `pnpm audit --audit-level=high`                             |
+
+---
+
+## 13. DEFINITION OF DONE CỦA MỘT BỘ THAY ĐỔI
+
+1. Đúng quy tắc spec được dẫn chiếu; đã đọc các file liên quan trước khi sửa (CW-52).
+2. `pnpm verify` xanh; E2E liên quan xanh trên 3 trình duyệt.
+3. Có test cho hành vi mới, đặt mã quy tắc theo QC-93; độ phủ không dưới ngưỡng.
+4. Không chuỗi hiển thị viết cứng; đủ `vi` và `en`.
+5. Không thêm dependency ngoài SPEC-01 mục 4.
+6. Báo cáo bộ thay đổi và commit message gợi ý đã qua `commitlint` (SPEC-07).
+
+---
+
 # SPEC-03 — GIAO TIẾP: API, SỰ KIỆN, GIAO THỨC BRIDGE, MÃ LỖI
 
 **Phiên bản phần:** 1.0  
@@ -558,7 +859,7 @@ Mốc breakpoint mặc định: `sm` 640, `md` 768, `lg` 1024, `xl` 1280, `2xl` 
 | ---------------------------- | -------------------------------------- | ------------------------ |
 | `.reactcraft/workspace.json` | `WorkspaceFile` (dưới đây)             | Server                   |
 | `.reactcraft/lock`           | Khóa phiên (giữ cơ chế bản 0.18, E018) | Server                   |
-| `.reactcraft/.gitignore`     | Một dòng `lock`                        | Server, khi mở lần đầu   |
+| `.reactcraft/.gitignore`     | Hai dòng `lock`, `cache/`              | Server, khi mở lần đầu   |
 | `.reactcraft/agent-guide.md` | Quy ước cho agent AI (Phase 3)         | Template; người dùng sửa |
 
 Lịch sử Undo, ảnh chụp lượt AI, bản sao backend **không** nằm trong dự án (ở thư mục dữ liệu và cache của người dùng, `env-paths`).
@@ -1675,6 +1976,381 @@ Cạnh riêng của viền và bo góc (`border-t`, `rounded-tl`…) chưa có �
 
 ---
 
+# SPEC-05 — BẢO MẬT
+
+**Phiên bản phần:** 1.0  
+**Trạng thái:** Draft — chờ duyệt  
+**Truy vết:** SRS v5.0 SEC-01 đến SEC-09, PR-05 đến PR-07, AC-11
+
+Mỗi biện pháp có mã `S-xx`. Mã của bản 0.18 còn đúng nghĩa được giữ (nhiều mã đã có test từ Phase 0); mã thuộc hướng cũ ghi "Đã bỏ (1.0)" ở mục 15 và không dùng lại. Biện pháp mới đánh số từ `S-100`.
+
+---
+
+## 1. NGUYÊN TẮC
+
+| Nguyên tắc            | Ý nghĩa                                                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Mặc định đóng         | Mạng, đường dẫn, method, tiến trình con: từ chối trừ khi được phép rõ ràng                                 |
+| Quyền tối thiểu       | Backend chỉ đọc qua bản sao. ReactCraft chỉ ghi trong dự án frontend và thư mục dữ liệu của chính nó       |
+| Không tin dữ liệu vào | Request của trình duyệt, thông điệp của iframe, file trong dự án, đầu ra của agent đều được kiểm tra       |
+| Người dùng quyết định | Chạy code của dự án (dev server, cài đặt, agent) chỉ khi dự án được tin cậy; cài đặt cần xác nhận từng lần |
+| Không gửi gì ra ngoài | Không telemetry; mạng chỉ dùng khi người dùng cài dependency hoặc chạy agent                               |
+
+---
+
+## 2. TÀI SẢN, TÁC NHÂN, MỐI ĐE DỌA
+
+| Mã   | Tài sản                                                            | Mức     |
+| ---- | ------------------------------------------------------------------ | ------- |
+| A-01 | Mã nguồn backend (có thể chứa secrets)                             | Cao     |
+| A-02 | Mã nguồn dự án frontend                                            | Cao     |
+| A-05 | Token phiên của server                                             | Cao     |
+| A-06 | File system của máy người dùng                                     | Rất cao |
+| A-09 | Phiên đăng nhập của agent AI (thuộc agent, không thuộc ReactCraft) | Cao     |
+
+| Mã   | Tác nhân                                                          | Khả năng                                                                                                                         |
+| ---- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| T-01 | Trang web độc hại trong cùng trình duyệt                          | Gọi `127.0.0.1` (CSRF), WebSocket chéo trang, DNS rebinding, nhúng Studio, gửi `postMessage`                                     |
+| T-02 | Nội dung không tin cậy: repo clone về, backend do người khác viết | Cấu hình dev server chạy code, `workspace.json` trỏ thư mục hệ thống, chữ dẫn dắt agent (prompt injection), file làm treo parser |
+| T-03 | Agent AI làm sai hoặc bị dẫn dắt                                  | Sửa file ngoài ý muốn, đọc file ngoài phạm vi, chạy lệnh                                                                         |
+| T-04 | Tiến trình khác trên cùng máy                                     | Gọi cổng local, đọc file cấu hình                                                                                                |
+| T-06 | Chuỗi cung ứng                                                    | Package độc khi cài hoặc khi chạy                                                                                                |
+
+| Mối đe dọa                                              | Tác nhân   | Biện pháp                            |
+| ------------------------------------------------------- | ---------- | ------------------------------------ |
+| Trang web độc gọi API ghi file, đọc mã nguồn            | T-01       | S-01 đến S-08                        |
+| Trang web độc gửi thông điệp giả cho Studio hoặc Canvas | T-01       | S-101, S-102                         |
+| XSS trong Studio từ tên file, log, đầu ra agent         | T-02, T-03 | S-10 đến S-14, S-114                 |
+| Path traversal, symlink thoát phạm vi                   | T-02, T-03 | S-20 đến S-28                        |
+| Dự án lạ chạy code khi vừa mở                           | T-02       | S-80 đến S-84, S-105                 |
+| Lộ secrets qua bản sao backend, log                     | T-02       | S-30 đến S-33, S-89, S-120 đến S-125 |
+| Agent đọc backend thật, sửa ngoài dự án, chạy lệnh      | T-02, T-03 | S-110 đến S-118                      |
+| Chạy lệnh tùy ý qua tiến trình con                      | T-02       | S-50 đến S-55                        |
+| Dev server của dự án bị trang web khác đọc              | T-01       | S-104                                |
+| Chuỗi cung ứng                                          | T-06       | S-90 đến S-96, S-130                 |
+| Từ chối dịch vụ (file lớn, JSON lồng sâu, regex)        | T-02       | S-29, S-86, S-87                     |
+
+---
+
+## 3. MẠNG VÀ XÁC THỰC PHIÊN (GIỮ TỪ PHASE 0)
+
+| Mã    | Biện pháp                                                                                                                                                                                                                 |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S-01  | Server **chỉ** lắng nghe `127.0.0.1`; kết nối có `remoteAddress` khác `127.0.0.1` / `::ffff:127.0.0.1` bị đóng ngay                                                                                                       |
+| S-02  | Cổng Studio: `--port` nếu có; cổng lần trước của dự án (`.reactcraft/cache/studio.json`, không vào Git) nếu CLI được gọi với thư mục dự án và cổng còn trống; còn lại ngẫu nhiên trong 49152–65535. Token vẫn mới mỗi lần |
+| S-03  | Token phiên 32 byte `crypto.randomBytes`, base64url, mới mỗi lần khởi động, không lưu xuống đĩa                                                                                                                           |
+| S-04  | Header `Host` phải là `127.0.0.1:<port>` hoặc `localhost:<port>`; khác: 421 E014 (chặn DNS rebinding)                                                                                                                     |
+| S-04a | Request `/api/*` có `Origin` thì `Origin` phải là origin của Studio; WebSocket **bắt buộc** có `Origin` hợp lệ                                                                                                            |
+| S-04b | Không gửi header CORS                                                                                                                                                                                                     |
+| S-04c | `POST`, `PUT`, `PATCH`, `DELETE` phải có `Content-Type: application/json`                                                                                                                                                 |
+| S-05  | CLI mở `http://127.0.0.1:<port>/#t=<token>` (token ở fragment, không lên server, không vào log, không vào Referer); in đường dẫn ra terminal                                                                              |
+| S-06  | Studio đọc token từ fragment, xóa fragment ngay (`history.replaceState`), giữ trong `sessionStorage`; không `localStorage`, không cookie                                                                                  |
+| S-07  | REST gửi `Authorization: Bearer`; WebSocket gửi subprotocol `reactcraft.token.<token>` cùng `reactcraft.v1`; so sánh bằng `timingSafeEqual`; sai: 401 E014 hoặc đóng 4401                                                 |
+| S-08  | Chỉ file tĩnh của Studio (`/`, `/assets/*`) không cần token; mọi `/api/*` cần token                                                                                                                                       |
+
+---
+
+## 4. STUDIO TRONG TRÌNH DUYỆT
+
+| Mã   | Biện pháp                                                                                                                                                                                                                                                                                                                                     |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S-10 | CSP của Studio: `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self' ws://127.0.0.1:<port> ws://localhost:<port>; frame-src http://127.0.0.1:*; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'` |
+| S-11 | Header chung: `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Resource-Policy: same-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`                                                                                                       |
+| S-12 | Chống clickjacking: `frame-ancestors 'none'` và `X-Frame-Options: DENY` cho **mọi** phản hồi của Studio (không còn ngoại lệ `canvas-frame.html`)                                                                                                                                                                                              |
+| S-13 | **KHÔNG** dùng `dangerouslySetInnerHTML`, `innerHTML`, `insertAdjacentHTML`, `document.write` trong Studio (ESLint chặn)                                                                                                                                                                                                                      |
+| S-14 | Nội dung từ dự án, log, đầu ra agent chỉ hiển thị qua React (tự escape); i18next không render HTML từ tham số                                                                                                                                                                                                                                 |
+| S-15 | Studio không điều hướng tới URL lấy từ dự án hay agent. Liên kết ngoài trong chat chỉ `http`/`https`, mở tab mới với `rel="noreferrer"` khi người dùng bấm                                                                                                                                                                                    |
+| S-16 | Diff và đoạn mã hiển thị như văn bản (React), không thực thi                                                                                                                                                                                                                                                                                  |
+| S-17 | Dữ liệu clipboard của ReactCraft (Phase 2) ≤ 1 MB, qua Zod trước khi dùng                                                                                                                                                                                                                                                                     |
+
+---
+
+## 5. CANVAS VÀ DEV SERVER
+
+| Mã    | Biện pháp                                                                                                                                                                                                                                                                                                                |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| S-100 | iframe Canvas có `sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads"` (không có `allow-top-navigation`): trang của dự án không điều hướng được Studio. iframe khác origin với Studio nên `allow-same-origin` không cho trang chạm vào Studio |
+| S-101 | Mọi `postMessage` giữa Studio và Bridge theo SPEC-03 V-110 đến V-114 (đúng cửa sổ, đúng origin, đúng nonce, qua Zod). Không có `targetOrigin: '*'`                                                                                                                                                                       |
+| S-102 | Studio không đọc DOM của iframe, không chèn script vào iframe; chỉ trao đổi qua `postMessage`                                                                                                                                                                                                                            |
+| S-103 | Plugin Bridge chỉ có trong dev server do ReactCraft chạy (`apply: 'serve'`, R-BR-04); bản build của dự án không có `data-rc-loc` hay Bridge client                                                                                                                                                                       |
+| S-104 | Runner ép `server.host = '127.0.0.1'` và `server.cors = false`; không nới `server.allowedHosts`, `server.fs.*` so với cấu hình của dự án (giữ bảo vệ DNS rebinding và đọc file của Vite)                                                                                                                                 |
+| S-105 | Dev server chỉ chạy khi dự án đã tin cậy (S-81); vì nó chạy `vite.config.*` và plugin của dự án                                                                                                                                                                                                                          |
+
+---
+
+## 6. FILE SYSTEM
+
+### 6.1. Phạm vi
+
+| Vùng                                                 | Đọc                                          | Ghi                                                                     |
+| ---------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------- |
+| Dự án frontend                                       | Có                                           | Chỉ qua M-SE, M-HI, tạo khung, hoàn tác lượt AI, `.reactcraft/` (QC-98) |
+| `node_modules` của dự án                             | Chỉ `package.json` của gói                   | **Không**                                                               |
+| Thư mục backend                                      | Có, chỉ để tạo bản sao                       | **Không bao giờ**                                                       |
+| Thư mục cấu hình, dữ liệu, cache, log của ReactCraft | Có                                           | Có                                                                      |
+| Mọi nơi khác                                         | Chỉ tên thư mục qua `/fs/directories` (S-27) | **Không**                                                               |
+
+Agent AI là tiến trình riêng của người dùng: ReactCraft giới hạn nó bằng tham số khởi chạy và kiểm tra sau lượt (mục 8), không bằng `FileSystemPort`.
+
+### 6.2. Đường dẫn
+
+Hàm duy nhất `resolveSafePath(root, path, mode)` trong `core/shared/paths.ts`; mọi truy cập file của core đi qua nó.
+
+| Mã   | Biện pháp                                                                                                                                                                                                                           |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S-20 | Từ chối đường dẫn có `\0`, ký tự điều khiển, dài hơn 1.024 ký tự                                                                                                                                                                    |
+| S-21 | Windows: từ chối UNC, `\\?\`, `\\.\`, `C:foo`, luồng dữ liệu thay thế, tên dành riêng (`CON`, `PRN`, `AUX`, `NUL`, `COM1`–`COM9`, `LPT1`–`LPT9`)                                                                                    |
+| S-22 | Chuẩn hóa bằng `path.resolve`, rồi `realpath` của phần đã tồn tại dài nhất; kết quả **bắt buộc** nằm trong `realpath(root)`                                                                                                         |
+| S-23 | So sánh tiền tố không phân biệt hoa thường trên Windows và macOS, có dấu phân cách cuối                                                                                                                                             |
+| S-24 | Trước khi ghi: `lstat` file đích; symlink hoặc junction → E012                                                                                                                                                                      |
+| S-25 | Liệt kê file không đi theo symlink                                                                                                                                                                                                  |
+| S-26 | Vi phạm trả E012, log `warn` kèm đường dẫn đã chuẩn hóa (không kèm nội dung)                                                                                                                                                        |
+| S-27 | `/fs/directories` chỉ trả tên thư mục, không tên file, không đọc nội dung (trừ kiểm tra có `package.json`), ẩn thư mục ẩn và thư mục hệ thống                                                                                       |
+| S-28 | Gốc dự án hoặc backend **KHÔNG ĐƯỢC** là: gốc ổ đĩa, thư mục home, thư mục hệ thống (`C:\Windows`, `C:\Program Files*`, `/`, `/etc`, `/usr`, `/bin`, `/System`, `/Library`, `/Applications`), thư mục của ReactCraft. Vi phạm: E012 |
+| S-29 | Giới hạn: JSON của ReactCraft (`workspace.json`, `config.json`) ≤ 1 MB, độ sâu ≤ 64 (kiểm tra trước Zod); file nguồn Source Editor sửa ≤ 1 MB; file đọc chung qua `FileSystemPort` mặc định ≤ 20 MB                                 |
+
+---
+
+## 7. SECRETS
+
+| Mã   | Biện pháp                                                                                                                                                                                                                                                                                                                                                                        |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S-30 | Mẫu file secrets: `.env`, `.env.*` (trừ `.env.example`, `.env.sample`, `.env.template`), `*.pem`, `*.key`, `*.p12`, `*.pfx`, `*.jks`, `*.keystore`, `id_rsa*`, `id_ed25519*`, `*.ppk`, `credentials*`, `secrets*`, `*.secret`, `.npmrc`, `.pypirc`, `.netrc`, `service-account*.json`, `*-credentials.json`, `kubeconfig*`, `.aws/`, `.ssh/`, `.gnupg/`                          |
+| S-31 | ReactCraft **không mở** file khớp S-30, kể cả để đọc vài byte (ở backend và ở dự án frontend)                                                                                                                                                                                                                                                                                    |
+| S-32 | `redactSecrets(text)` áp dụng cho: nội dung file chép vào bản sao backend, `runner.log`, đầu ra cài đặt giữ lại, tiến trình agent hiển thị trong chat                                                                                                                                                                                                                            |
+| S-33 | Bộ lọc thay giá trị bằng `«redacted»` khi gặp: gán chuỗi cho tên khớp `(?i)(secret\|password\|passwd\|pwd\|token\|api[_-]?key\|private[_-]?key\|credential\|auth\|dsn\|connection[_-]?string)`; mẫu khóa `AKIA[0-9A-Z]{16}`, `-----BEGIN [A-Z ]*PRIVATE KEY-----`, `sk-[A-Za-z0-9_-]{20,}`, `ghp_[A-Za-z0-9]{36}`, `xox[baprs]-[A-Za-z0-9-]+`, chuỗi kết nối `://<user>:<pass>@` |
+| S-36 | Token phiên **không bao giờ** gửi cho tiến trình con, ghi log, vào thông báo lỗi. `pino` `redact` `req.headers.authorization`, `req.headers["sec-websocket-protocol"]`, `*.token`                                                                                                                                                                                                |
+
+---
+
+## 8. AGENT AI
+
+| Mã    | Biện pháp                                                                                                                                                                                           |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S-110 | Agent chỉ chạy khi dự án đã tin cậy, và chỉ khi người dùng gửi yêu cầu (mỗi lượt một lần bấm). Không có lượt tự động                                                                                |
+| S-111 | `cwd` của agent là gốc dự án; thư mục đọc thêm chỉ là bản sao backend (S-120). **KHÔNG BAO GIỜ** truyền đường dẫn thật của backend, thư mục home, thư mục của ReactCraft                            |
+| S-112 | Quyền của agent (đọc, sửa file, chạy lệnh) do **cấu hình và rules có sẵn của agent** quyết định (Antigravity có sẵn). ReactCraft **không** truyền tham số nới quyền và không sửa cấu hình của agent |
+| S-113 | Ảnh chụp trước lượt lưu ở thư mục dữ liệu (quyền `0700` trên macOS/Linux), tối đa 200 MB mỗi lượt; dự án lớn hơn thì không chạy lượt và báo. Giữ 20 lượt gần nhất                                   |
+| S-114 | Đầu ra của agent hiển thị như văn bản (S-14); Markdown hiển thị không cho HTML thô; liên kết theo S-15                                                                                              |
+| S-115 | Môi trường của agent theo S-53; ReactCraft không đọc, không ghi cấu hình đăng nhập của agent                                                                                                        |
+| S-116 | Lượt AI tối đa 30 phút; hủy dừng cả cây tiến trình                                                                                                                                                  |
+| S-117 | Lời nhắc ReactCraft gửi agent chỉ gồm: yêu cầu của người dùng, ngữ cảnh SRS FR-62, nội dung `.reactcraft/agent-guide.md`, đường dẫn bản sao. ReactCraft không chèn mã nguồn backend vào lời nhắc    |
+| S-118 | Sau lượt: so hash bản sao backend; bị sửa thì xóa bản sao, tạo lại ở lượt sau và cảnh báo trong chat                                                                                                |
+
+---
+
+## 9. BẢN SAO BACKEND
+
+| Mã    | Biện pháp                                                                                                                                              |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| S-120 | Loại khỏi bản sao: mẫu S-30, `node_modules`, `.git`, `dist`, `build`, `.next`, `.venv`, `venv`, `__pycache__`, `target`, theo `.gitignore` của backend |
+| S-121 | Không đi theo symlink, junction                                                                                                                        |
+| S-122 | File nhị phân (có byte `0` trong 8 KB đầu) và file > 1 MB không chép                                                                                   |
+| S-123 | Nội dung văn bản chép qua S-32                                                                                                                         |
+| S-124 | Tổng ≤ 50 MB; vượt thì không tạo bản sao, không chạy lượt có backend đó                                                                                |
+| S-125 | Bản sao nằm trong thư mục cache (quyền `0700` trên macOS/Linux); gỡ liên kết backend thì xóa bản sao                                                   |
+
+---
+
+## 10. TIẾN TRÌNH CON
+
+| Mã   | Biện pháp                                                                                                                                       |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| S-50 | Chỉ các loại: runner dev server, cài dependency, agent AI, mở editor, mở trình duyệt. Không có cơ chế chạy lệnh tùy ý                           |
+| S-51 | Lệnh là **mảng tham số** cố định, không ghép chuỗi, **không** shell; Windows dùng `cross-spawn`                                                 |
+| S-52 | `cwd`: gốc dự án (runner, cài đặt, agent); không đặt (editor, trình duyệt)                                                                      |
+| S-53 | Môi trường truyền xuống bỏ mọi biến `REACTCRAFT_*` và token phiên. Biến khác giữ nguyên (agent cần cấu hình đăng nhập của chính nó)             |
+| S-54 | Cài dependency: Studio hiện **đúng** lệnh sẽ chạy, người dùng bấm xác nhận mỗi lần; server từ chối lệnh khác lệnh đã hiện (R-PJ-13)             |
+| S-55 | Thời hạn: cài đặt 10 phút, dev server khởi động 60 s, agent 30 phút. Hủy được, dừng cả cây tiến trình. Đầu ra giữ lại tối đa 200 dòng, qua S-32 |
+
+---
+
+## 11. DỰ ÁN KHÔNG TIN CẬY
+
+| Mã   | Biện pháp                                                                                                                                                                                                        |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S-80 | Lần đầu mở một dự án (theo `id` + đường dẫn gốc), Studio hỏi **"Bạn có tin tưởng dự án này?"**, liệt kê gốc dự án, các backend (đường dẫn thật) và cảnh báo backend nằm ngoài thư mục cha của dự án              |
+| S-81 | Chưa tin cậy (**chế độ hạn chế**): xem thông tin dự án, duyệt thư mục được; **không** chạy dev server, **không** cài dependency, **không** chạy agent                                                            |
+| S-82 | Danh sách dự án đã tin cậy lưu trong cấu hình người dùng, không trong dự án                                                                                                                                      |
+| S-83 | Backend vi phạm S-28 bị bỏ qua dù dự án đã tin cậy (`status: 'blocked'`)                                                                                                                                         |
+| S-84 | Quyết định tin cậy lưu kèm dấu vân tay danh sách backend (R-PJ-15). Liên kết đổi qua file sửa từ bên ngoài (kể cả khi ReactCraft tắt, ví dụ `git pull`): dự án về chế độ hạn chế tới khi người dùng xác nhận lại |
+
+---
+
+## 12. TÀI NGUYÊN, LOG, QUYỀN RIÊNG TƯ
+
+| Mã    | Biện pháp                                                                                                                                 |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| S-86  | Regex chạy trên nội dung không tin cậy (S-33, R-PJ-09, R-TW-01) không có backtracking thảm họa: chuỗi 1 MB xử lý ≤ 100 ms                 |
+| S-87  | Giới hạn SPEC-03 mục 8 áp dụng nghiêm ngặt; body vượt giới hạn bị cắt trước khi parse                                                     |
+| S-88  | Log ở thư mục log của người dùng, xoay vòng 10 MB × 5 file                                                                                |
+| S-89  | Log **không** chứa: nội dung file, `runner.log`, lời nhắc, đầu ra agent, secrets, token                                                   |
+| S-89a | Không telemetry, không thống kê, không tự kiểm tra cập nhật. Mạng chỉ dùng khi người dùng cài dependency hoặc chạy agent (mạng của agent) |
+
+---
+
+## 13. CHUỖI CUNG ỨNG
+
+| Mã    | Biện pháp                                                                                         |
+| ----- | ------------------------------------------------------------------------------------------------- |
+| S-90  | `pnpm-lock.yaml` được commit; cài bằng `--frozen-lockfile`                                        |
+| S-91  | `pnpm audit --audit-level=high` chặn phát hành                                                    |
+| S-92  | Cập nhật dependency tự động hằng tuần, mỗi lần qua toàn bộ kiểm thử                               |
+| S-93  | pnpm `onlyBuiltDependencies` chỉ gồm gói native đã duyệt                                          |
+| S-94  | Phát hành npm có provenance, tài khoản npm bật 2FA                                                |
+| S-95  | Mỗi bản phát hành có SBOM CycloneDX và báo cáo giấy phép                                          |
+| S-96  | Package phát hành không có `postinstall`                                                          |
+| S-130 | Template (ADR-BE-32) ghim **chính xác** phiên bản dependency; cập nhật template qua S-92 và VG-18 |
+
+---
+
+## 14. KIỂM THỬ BẢO MẬT BẮT BUỘC
+
+| Nhóm              | Ca kiểm thử                                                                                                                            | Biện pháp                      |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| Xác thực          | Không token, token sai; WebSocket thiếu hoặc sai subprotocol                                                                           | S-03, S-07                     |
+| Host/Origin       | `Host: evil.example`, `Origin: https://evil.example`, WebSocket thiếu Origin, `POST` với `text/plain`                                  | S-04 đến S-04c                 |
+| Header            | CSP (có `frame-src http://127.0.0.1:*`, `frame-ancestors 'none'`), `X-Frame-Options`, `nosniff` trên mọi phản hồi                      | S-10 đến S-12                  |
+| Canvas            | iframe có đúng `sandbox`; trang dự án gọi `top.location = …` không điều hướng Studio; thông điệp sai origin, nonce, schema bị bỏ qua   | S-100, S-101                   |
+| Dev server        | Request tới dev server với `Origin: https://evil.example` không nhận header CORS; `Host` lạ bị Vite từ chối; bản build không có Bridge | S-103, S-104                   |
+| Đường dẫn         | `../`, `..\\`, tuyệt đối khác gốc, UNC, `\\?\`, `C:foo`, `NUL`, `con.txt`, `\0`, symlink và junction thoát gốc, khác hoa thường        | S-20 đến S-28                  |
+| Tin cậy           | Dự án mới ở chế độ hạn chế: `runner/start`, `project/install` trả E011 `untrusted`; liên kết đổi từ ngoài → hạn chế                    | S-80 đến S-84, S-105           |
+| Tiến trình con    | Môi trường không có `REACTCRAFT_*`, token; tên thư mục chứa `;`, `&&`, `                                                               | ` không gây chạy lệnh          | S-51, S-53 |
+| Secrets (Phase 3) | Chuỗi `RC_SECRET_MARKER_*` trong `.env`, `settings.py`, `config.ts` của backend mẫu không có trong bản sao, log, chat, `runner.log`    | S-30 đến S-33, S-120 đến S-125 |
+| Agent (Phase 3)   | Agent giả lập kiểm tham số: `cwd`, thư mục đọc thêm chỉ là bản sao, không có tham số nới quyền; lượt quá hạn bị dừng                   | S-110 đến S-116                |
+| Fuzz              | `fast-check` sinh request ngẫu nhiên theo mọi schema: không có lỗi 500                                                                 | S-87                           |
+
+---
+
+## 15. MÃ ĐÃ BỎ (1.0)
+
+S-09 (ảnh trong workspace), S-29a, S-29b, S-29c (ảnh tải lên), S-34 (dữ liệu trích xuất), S-35 (API key), S-40 đến S-47 (AI gọi API), S-60 đến S-66 (proxy dữ liệu), S-70 đến S-76 (code xuất ra), S-85 (worker phân tích).
+
+---
+
+## 16. TRUY VẾT SPEC-05
+
+| SRS                          | Biện pháp                                        |
+| ---------------------------- | ------------------------------------------------ |
+| SEC-01 Local, token, Origin  | S-01 đến S-08                                    |
+| SEC-02 Backend không bị ghi  | Mục 6.1, S-111, S-120 đến S-125                  |
+| SEC-03 Chỉ ghi trong phạm vi | S-20 đến S-28, QC-98                             |
+| SEC-04 File bí mật           | S-30 đến S-33, S-89, S-120                       |
+| SEC-05 Dự án chưa tin cậy    | S-80 đến S-84, S-105, S-110                      |
+| SEC-06 Tiến trình con        | S-50 đến S-55                                    |
+| SEC-07 Không API key         | S-53, S-115                                      |
+| SEC-08 Canvas ↔ Studio       | S-100 đến S-102                                  |
+| SEC-09 Không telemetry       | S-89a                                            |
+| AC-11                        | Mục 14 (Xác thực, Host/Origin, Tin cậy, Secrets) |
+
+---
+
+# SPEC-06 — CHẤT LƯỢNG & KIỂM THỬ
+
+**Phiên bản phần:** 1.0  
+**Trạng thái:** Draft — chờ duyệt  
+**Truy vết:** SRS v5.0 mục 11, 14; SPEC-01 mục 8, 9; SPEC-02 mục 9; SPEC-04; SPEC-05 mục 14
+
+---
+
+## 1. CÁC TẦNG KIỂM THỬ
+
+| Tầng        | Công cụ                         | Phạm vi                                                                                             | Đặt ở                                         |
+| ----------- | ------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| Unit        | Vitest                          | Logic thuần: M-TW, biến đổi Bridge, Source Editor, lịch sử, phát hiện dự án, chọn phần tử (DOM giả) | Cạnh file nguồn (QC-01)                       |
+| Component   | Vitest + Testing Library        | Component Studio (Inspector, Layer Tree, hộp thoại Project) với store và API giả                    | Cạnh file nguồn                               |
+| Contract    | Vitest + Fastify `inject`       | Route + core với port giả (`FileSystemPort` trên thư mục tạm, `ProcessPort` giả, đồng hồ giả)       | `packages/server/src/adapters/http/…`         |
+| Integration | Vitest                          | Runner thật trên fixture, `vite build` của fixture, tiến trình con thật                             | `packages/server/src/…/*.integration.test.ts` |
+| E2E         | Playwright                      | CLI đã build + Studio + dự án mẫu chạy thật trên Chromium, Firefox, WebKit                          | `e2e/`                                        |
+| Bench       | `vitest bench`, Playwright perf | PB-01 đến PB-09                                                                                     | `*.bench.ts`, `e2e/perf/`                     |
+| VG          | Script trong `scripts/vg/`      | Kiểm chứng ADR (VG-15 đến VG-18)                                                                    | `scripts/vg/`                                 |
+| Tĩnh        | `pnpm verify`                   | Lint, kiểu, định dạng, i18n, truy vết, build                                                        | —                                             |
+
+Mỗi module ở SPEC-04 có bảng **Kiểm thử bắt buộc** ghi tầng của từng tình huống.
+
+---
+
+## 2. CẤU HÌNH
+
+### 2.1. Vitest
+
+- Một cấu hình gốc `vitest.config.js` chạy mọi package; môi trường `node` mặc định, `happy-dom` cho test DOM của Studio và Bridge client.
+- Coverage `v8`, ngưỡng theo SPEC-02 mục 9.
+- Test integration chạy trong cùng lệnh `pnpm test`, mỗi test tối đa 60 s, dùng cổng ngẫu nhiên.
+
+### 2.2. Playwright
+
+| Mục         | Giá trị                                                                                     |
+| ----------- | ------------------------------------------------------------------------------------------- |
+| Trình duyệt | Chromium, Firefox, WebKit                                                                   |
+| Worker      | 4 (máy phát triển Windows chịu được; 8 làm chập chờn)                                       |
+| Thời hạn    | test 60 s, `expect` 10 s, mỗi thao tác 15 s                                                 |
+| Thử lại     | 0 trên máy local, 1 trên CI; `trace: 'on-first-retry'`, ảnh chụp khi lỗi                    |
+| Chạy trên   | Bản build thật (`pnpm test:e2e` build trước), server khởi động bằng CLI với cổng ngẫu nhiên |
+| Nhãn        | `@network` (cần mạng), `@perf` (đo hiệu năng, một worker)                                   |
+
+### 2.3. Helper E2E bắt buộc
+
+| Helper                     | Việc làm                                                                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `copyProjectToTemp(name)`  | Chép `fixtures/projects/<name>` (trừ `node_modules`) vào thư mục tạm, tạo junction/symlink `node_modules` (R-QA-01) |
+| `startStudio(options)`     | Chạy CLI đã build với `REACTCRAFT_CONFIG_DIR`, thư mục dữ liệu, cache trong thư mục tạm (R-QA-02); trả URL có token |
+| `trustAndWaitCanvas()`     | Bấm tin cậy, chờ `runner.status` `ready` và Bridge `ready`                                                          |
+| `canvasFrame(page)`        | `FrameLocator` của iframe Canvas                                                                                    |
+| `readProjectFile(path)`    | Đọc file trong bản chép tạm (so byte, hash)                                                                         |
+| `editExternally(path, fn)` | Sửa file từ "bên ngoài" (tiến trình test) để kiểm L-06, AC-10                                                       |
+
+---
+
+## 3. FIXTURE
+
+| Fixture                          | Mục đích                                                                          | Quy tắc                                                                |
+| -------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `fixtures/projects/*`            | Dự án chạy được (SPEC-04 mục 11.1)                                                | Nằm trong pnpm workspace; dependency ghim chính xác; không sửa tại chỗ |
+| `fixtures/source-corpus/`        | 40 file nguồn + `*.expected.*` cho từng thao tác                                  | `.gitattributes` đánh dấu `-text` cho file CRLF, BOM                   |
+| `fixtures/backends/*`            | Backend mẫu Express có API sản phẩm, `.env` chứa `RC_SECRET_MARKER_<n>` (Phase 3) | Không chạy được backend trong test, chỉ đọc                            |
+| `fixtures/agents/fake-agent.mjs` | Agent giả lập (mục 5, Phase 3)                                                    | Không gọi mạng                                                         |
+
+---
+
+## 4. ĐO HIỆU NĂNG
+
+| PB    | Đo bằng                                                                                         | Môi trường                    |
+| ----- | ----------------------------------------------------------------------------------------------- | ----------------------------- |
+| PB-01 | Playwright `@perf`: Bridge ghi thời gian mỗi khung hình cập nhật overlay qua `performance.mark` | Chromium, trang 2.000 phần tử |
+| PB-02 | Playwright `@perf`: từ lúc xác nhận ô Inspector tới `selection-info` có class mới, 30 lần, P95  | Chromium, fixture TS          |
+| PB-03 | `vitest bench`: `setClassName`, `setText` trên file 2.000 dòng                                  | Node                          |
+| PB-04 | Integration: thời gian `starting` → `ready`                                                     | Fixture đã cài                |
+| PB-05 | Script đo CLI khởi động tới `GET /session` trả 200                                              | Bản build                     |
+| PB-06 | Kích thước gzip bundle khởi đầu của Studio sau `pnpm build`                                     | —                             |
+| PB-07 | Playwright: đổi ngôn ngữ tới khi chữ đổi                                                        | Chromium                      |
+| PB-08 | `vitest bench`: làm mới bản sao 50 MB (Phase 3)                                                 | Node                          |
+| PB-09 | Integration: bộ nhớ RSS của server sau kịch bản G1                                              | Node                          |
+
+Kết quả ghi `bench-results/`; vượt ngân sách là lỗi ở cổng phase.
+
+---
+
+## 5. AGENT GIẢ LẬP (PHASE 3)
+
+| Mã      | Quy tắc                                                                                                                                                                                                    |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-QA-10 | `fake-agent.mjs` nhận **đúng** tham số dòng lệnh mà adapter agent thật nhận (theo adapter agent); tham số lạ hoặc thiếu thì thoát mã 2 và ghi lý do ra `stderr`                                            |
+| R-QA-11 | Kịch bản đọc từ file JSON (đường dẫn qua biến môi trường `RC_FAKE_AGENT_SCRIPT`, chỉ có trong test): danh sách bước gồm in sự kiện luồng JSON, ghi file trong `cwd`, đọc file, chờ, thoát với mã cho trước |
+| R-QA-12 | Adapter agent trong test trỏ tới `fake-agent.mjs` qua cấu hình test của server (không qua biến môi trường của người dùng)                                                                                  |
+| R-QA-13 | Kịch bản mẫu bắt buộc: lượt thành công sửa 2 file và tạo 1 file; lượt lỗi giữa chừng; lượt treo (để kiểm hủy và quá hạn)                                                                                   |
+
+---
+
+## 6. TRUY VẾT VÀ CỔNG
+
+- `pnpm trace` theo QC-94; `scripts/trace-scope.json` gán phase cho mọi mã R, V, S, AC của bản 1.0 (cập nhật ở WP-1.01 cùng lúc thay `docs/spec.md`).
+- `docs/spec.md` bản 1.0 được Prettier căn bảng, nên ô mã có thể có khoảng trắng đệm (`| S-01  |`): `scripts/trace.mjs` **BẮT BUỘC** nhận một hoặc nhiều dấu cách trước `|` (sửa ở WP-1.01).
+- Bộ test của một phase viết trước ở WP-n.01/WP-1.02 (CW-50), chạy đầy đủ ở cuối mỗi lần giao và ở cổng (CW-51).
+- Chế độ local (CW-43 đến CW-47): `pnpm verify` và `pnpm test:e2e` chạy trên máy phát triển Windows thay CI; tiêu chí cần macOS, Linux được đánh dấu "chạy tay ở cổng" cho tới khi có CI.
+
+---
+
 # SPEC-07 — QUY TRÌNH THI CÔNG (LỘ TRÌNH BẢN 1.0)
 
 **Phiên bản phần:** 1.0 (lộ trình). DoR, DoD, kiểm soát thay đổi, mức nghiêm trọng, phát hành: giữ như bản 0.18 tới khi viết lại ở đợt 3.
@@ -1685,6 +2361,11 @@ Cạnh riêng của viền và bo góc (`border-t`, `rounded-tl`…) chưa có �
 
 | Mã    | Quy tắc                                                                                                                                                                                                                                          |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| CW-43 | **Chế độ local:** Claude **KHÔNG** commit, **KHÔNG** tạo nhánh, **KHÔNG** sửa thư mục `.git`; xem trạng thái Git chỉ bằng lệnh đọc có `--no-optional-locks`                                                                                      |
+| CW-44 | Mỗi bộ thay đổi có báo cáo trong `docs/construction/`: việc đã làm, file tạo và sửa, lệnh kiểm chứng và kết quả, commit message gợi ý, trạng thái `Chờ commit` hoặc `Đã commit <hash>`                                                           |
+| CW-45 | Commit message gợi ý theo SPEC-02 mục 11, đã qua `commitlint`. **KHÔNG** thêm dòng ghi công cho công cụ AI (`Co-Authored-By` và tương tự). Người commit là chủ sản phẩm                                                                          |
+| CW-46 | Chủ sản phẩm báo đã commit (hoặc thấy commit qua lệnh đọc) thì báo cáo đổi trạng thái thành `Đã commit <hash>`                                                                                                                                   |
+| CW-47 | Khi chuyển lên GitHub: bật CI (SPEC-02 mục 12), bảo vệ nhánh, chạy CI cho mọi tiêu chí đang "chạy tay ở cổng"                                                                                                                                    |
 | CW-50 | **Test của cả phase viết trước:** đầu mỗi phase, bộ test nghiệm thu của phase (E2E cho mọi AC của cổng, unit và hợp đồng cho từng module) được viết, kiểm bằng bản cài đặt nháp khi khả thi, và khóa lại. Code của phase làm cho bộ test đó xanh |
 | CW-51 | **Chạy test một lần:** trong lúc làm chỉ chạy test của phần đang sửa; bộ đầy đủ của phase chạy ở cuối mỗi lần giao và ở cổng                                                                                                                     |
 | CW-52 | **Đọc trước khi sửa:** trước khi sửa một file, đọc file đó và các file liên quan (nơi gọi, nơi được gọi, test). Không đoán                                                                                                                       |
@@ -1798,7 +2479,8 @@ CI dùng **agent giả lập** (một script nhận đúng tham số dòng lện
 
 # LỊCH SỬ THAY ĐỔI
 
-| Ngày       | Phiên bản         | Thay đổi                                                                                                                                                                                                                                                                                                                                                                                          |
-| ---------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-13 | 1.0 (nháp, đợt 1) | Chuyển sang hướng "mã nguồn là nguồn sự thật" theo SRS v5.0. Viết lại Phần 0, SPEC-01, lộ trình SPEC-07. Bỏ toàn bộ hướng Design Model của bản 0.18                                                                                                                                                                                                                                               |
-| 2026-10-14 | 1.0 (nháp, đợt 2) | Viết SPEC-03 (API, sự kiện, giao thức Bridge, mã lỗi) và SPEC-04 Phase 1 (M-FW, M-PJ, M-RN, M-BR, M-SL, M-SE, M-HI, M-TW, M-IN, M-TX, bộ test Phase 1). Thêm bộ chuyển đổi framework để thêm Next.js sau. Sửa ADR-BE-05 (lý do `noTailwindCss`), ADR-BE-28 (thư mục `runners/`, đổi cổng), ADR-FE-04 (iframe cao theo khung, cuộn bên trong), ADR-FE-22 (danh mục thông điệp chuyển sang SPEC-03) |
+| Ngày       | Phiên bản          | Thay đổi                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ---------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-13 | 1.0 (nháp, đợt 1)  | Chuyển sang hướng "mã nguồn là nguồn sự thật" theo SRS v5.0. Viết lại Phần 0, SPEC-01, lộ trình SPEC-07. Bỏ toàn bộ hướng Design Model của bản 0.18                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 2026-10-14 | 1.0 (nháp, đợt 2)  | Viết SPEC-03 (API, sự kiện, giao thức Bridge, mã lỗi) và SPEC-04 Phase 1 (M-FW, M-PJ, M-RN, M-BR, M-SL, M-SE, M-HI, M-TW, M-IN, M-TX, bộ test Phase 1). Thêm bộ chuyển đổi framework để thêm Next.js sau. Sửa ADR-BE-05 (lý do `noTailwindCss`), ADR-BE-28 (thư mục `runners/`, đổi cổng), ADR-FE-04 (iframe cao theo khung, cuộn bên trong), ADR-FE-22 (danh mục thông điệp chuyển sang SPEC-03)                                                                                                                                                                         |
+| 2026-10-14 | 1.0 (nháp, đợt 3a) | Viết SPEC-02 (giữ số QC, thêm QC-95 đến QC-98 cho Bridge và ghi file dự án, scope commit mới), SPEC-05 (giữ S-01 đến S-33, S-50 đến S-55, S-80 đến S-96 còn đúng nghĩa; thêm S-100 đến S-105 Canvas và dev server, S-110 đến S-118 agent, S-120 đến S-125 bản sao backend, S-130; liệt kê mã đã bỏ), SPEC-06 (tầng kiểm thử, cấu hình, helper E2E, đo hiệu năng, agent giả lập). SPEC-07 thêm CW-43 đến CW-47 (chế độ local). ADR-FE-04: iframe có `sandbox` theo S-100 Quyền của agent dựa vào cấu hình và rules có sẵn của agent (S-112), không đặt thêm kiểm tra riêng |
