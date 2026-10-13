@@ -1,6 +1,6 @@
 # Tiến độ thi công
 
-Cập nhật: 2026-10-12 · Spec: phiên bản 0.18 · Phase hiện tại: 0 (xong) + Phase 1 (đang làm) · Chế độ: **local** (SPEC-07 mục 12.6)
+Cập nhật: 2026-10-13 · Spec: phiên bản 0.18 · Phase hiện tại: 0 (xong) + Phase 1 (đang làm) · Chế độ: **local** (SPEC-07 mục 12.6)
 
 Trạng thái theo module: [modules.md](modules.md). Lệch và thiếu so với Spec: [spec-log.md](spec-log.md).
 
@@ -13,18 +13,19 @@ Trạng thái theo module: [modules.md](modules.md). Lệch và thiếu so với
 
 ## Kiểm tra gần nhất (2026-10-12, Windows 11, Node 22.19.0)
 
-| Lệnh                    | Kết quả                                                                                                                               |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm verify`           | Đạt: 58/58 test files (366 tests xanh 100%), lint 0/0, typecheck, format, `check:i18n`, trace 14/14, build (xác nhận 3 lần liên tiếp) |
-| `pnpm test:e2e`         | Đạt: 24/24 (Chromium: 8/8, Firefox: 8/8, WebKit: 8/8)                                                                                 |
-| `node scripts/vg/*.mjs` | 7/7 script chạy và báo Đạt (xem đánh giá ở bảng VG bên dưới)                                                                          |
+| Lệnh                    | Kết quả                                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm verify`           | Đạt: 63/63 test files (401 tests), lint 0/0, typecheck, format, `check:i18n`, trace 14/14, build                                |
+| `pnpm test:e2e`         | Đạt: 87/87 (29 kịch bản × Chromium, Firefox, WebKit), 2 lượt liên tiếp, 4 luồng                                                 |
+| `pnpm bench:ui`         | Đạt: PB-16 mở trang 500 node: Chromium 191 ms, Firefox 120 ms, WebKit 727 ms (≤ 1000). PB-13 overlay P95: 0,8 / 2 / 2 ms (≤ 16) |
+| `node scripts/vg/*.mjs` | 7/7 script chạy và báo Đạt (xem đánh giá ở bảng VG bên dưới)                                                                    |
 
 ## Tổng quan phase
 
 | Phase                      | Trạng thái   | WP xong / tổng | Cổng                 |
 | -------------------------- | ------------ | -------------- | -------------------- |
 | 0 — Nền móng               | Xong         | 10 / 10        | `G0`: chờ duyệt Spec |
-| 1 — Studio Core            | Đang làm     | 6 / 11         | `G1`                 |
+| 1 — Studio Core            | Đang làm     | 7 / 11         | `G1`                 |
 | 2 — Xuất code và tương tác | Chưa bắt đầu | 0 / 13         | `G2`                 |
 | 3 — AI                     | Chưa bắt đầu | 0 / 8          | `G3`                 |
 | 4 — Ngữ cảnh backend       | Chưa bắt đầu | 0 / 12         | `G4`                 |
@@ -70,7 +71,8 @@ Phase 1 bắt đầu song song với phần còn lại của Phase 0 (chủ sả
 | WP-1.04      | Model: M-TK, M-SM (Styling Map, toTailwindClasses, generateThemeCss) | Xong: Đủ bảng 5.3 cả v4 và v3, desktop-first và mobile-first, states, runtime hidden, 9 nhóm class (R-SM-01), V-29 normalizeResponsive, R-SM-05. 23 test styling đạt.                                                                                                                                          |
 | WP-1.05      | Server API, Design Store (M-DS), WebSocket Events & Watcher          | Xong: DesignStore (debounce 500 ms, tối đa 2 s, giữ 20 bản sao lưu), route workspace và `/settings`, WebSocket `/api/v1/events`, theo dõi file (R-DS-11). Test khởi động lại: tạo → sửa → tắt → mở lại còn nguyên. PB-02 1,8 ms, PB-03 24 ms. Sửa lỗi revision không lưu xuống `workspace.json` (spec-log #60) |
 | WP-1.06      | Studio: Welcome, Editor, Settings, Undo/Redo                         | Xong: chọn màn hình theo trạng thái workspace, Welcome, lỗi workspace + khôi phục, khung Editor, Undo/Redo đúng mục 13, Cài đặt, tin cậy workspace (S-80 đến S-84), chạy trên Windows và macOS. E2E luồng chính 12/12 trên 3 trình duyệt                                                                       |
-| WP-1.07–1.11 | Theo SPEC-07 mục 5.2                                                 | Chưa                                                                                                                                                                                                                                                                                                           |
+| WP-1.07      | Studio: Canvas (M-CV), Overlay (M-OV)                                | Xong: Tailwind runtime trong iframe, thu phóng `transform`, 25 loại node, hover/chọn/chọn nhiều đồng bộ Layer Tree, sửa chữ trực tiếp không định dạng. Hoãn: R-CV-03 dữ liệu mẫu theo binding (Phase 4), Xem thử (WP-2.08), rich text (WP-2.09)                                                                |
+| WP-1.08–1.11 | Theo SPEC-07 mục 5.2                                                 | Chưa                                                                                                                                                                                                                                                                                                           |
 
 ## Việc chờ chủ sản phẩm
 
@@ -92,6 +94,6 @@ Phase 1 bắt đầu song song với phần còn lại của Phase 0 (chủ sả
 
 Chi tiết từng bước: [ke-hoach-hoan-thanh.md](ke-hoach-hoan-thanh.md); bản giao việc: [giao-viec/](giao-viec/README.md).
 
-1. WP-1.07 (Canvas, Overlay): bước 1A hiển thị đúng, 1B chọn node, 1C sửa chữ trực tiếp, 1D đo hiệu năng.
+1. WP-1.08 (kéo thả, Library, Layer Tree).
 2. WP-1.08 (kéo thả, Library, Layer Tree), WP-1.09 (Inspector), WP-1.10 (clipboard, phím tắt, trang), WP-1.11 (CLI hoàn chỉnh).
 3. Cổng G1.

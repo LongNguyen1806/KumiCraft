@@ -1,6 +1,6 @@
 # Module
 
-Cập nhật: 2026-10-12 · Spec: phiên bản 0.18
+Cập nhật: 2026-10-13 · Spec: phiên bản 0.18
 
 Bảng theo mẫu SPEC-07 mục 19.6. Thư mục sở hữu của từng module: SPEC-07 mục 3.5. Mỗi bộ thay đổi thuộc đúng một module (CW-39); chủ sản phẩm xem xét rồi tự commit (CW-43 đến CW-46).
 
@@ -20,8 +20,8 @@ Ngoài các module, bộ thay đổi `CS-0.10-1` (Spec, SRS, báo cáo thi công
 | M-DS   | Design Store                 | 1     | Xong         | —                      | —                     |
 | M-SH   | Studio Shell và màn hình     | 1     | Xong         | —                      | —                     |
 | M-HS   | Undo/Redo và đồng bộ         | 1     | Xong         | —                      | —                     |
-| M-CV   | Canvas Renderer              | 1     | Đang làm     | —                      | —                     |
-| M-OV   | Overlay và chọn phần tử      | 1     | Chưa bắt đầu | —                      | —                     |
+| M-CV   | Canvas Renderer              | 1     | Xong (P1)    | —                      | —                     |
+| M-OV   | Overlay và chọn phần tử      | 1     | Xong (P1)    | —                      | —                     |
 | M-DD   | Kéo thả                      | 1     | Chưa bắt đầu | —                      | —                     |
 | M-LB   | Component Library            | 1     | Chưa bắt đầu | —                      | —                     |
 | M-LT   | Layer Tree                   | 1     | Chưa bắt đầu | —                      | —                     |

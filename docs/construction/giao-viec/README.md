@@ -2,7 +2,7 @@
 
 Cách dùng: chủ sản phẩm đưa **một** file `buoc-XX-*.md` cho AI thực hiện, kèm câu: "Đọc `docs/construction/ke-hoach-hoan-thanh.md` mục 0 (quy tắc bắt buộc) rồi làm đúng bản giao việc này. Không làm gì ngoài phạm vi." Khi AI báo xong, chủ sản phẩm đưa kết quả lại cho Claude để kiểm tra và sửa lỗi.
 
-Thứ tự: [bước 0](buoc-00-don-nen.md) (xong) → [1A](buoc-01a-canvas-hien-thi.md) (đang làm) → **[1B + 1C + 1D giao cùng lúc](buoc-01b-overlay-chon.md)** (làm lần lượt B, C, D; báo cáo và nhờ Claude kiểm một lần cho cả ba) → các WP sau, mỗi WP một lần giao và một lần kiểm (Bước 2 trở đi trong [ke-hoach-hoan-thanh.md](../ke-hoach-hoan-thanh.md)).
+Thứ tự: [bước 0](buoc-00-don-nen.md), 1A, 1B, 1C, 1D (xong, WP-1.07 đã đóng) → **[Bước 2: WP-1.08](buoc-02-keo-tha-library-layer.md)** → các WP sau, mỗi WP một lần giao và một lần kiểm (xem [ke-hoach-hoan-thanh.md](../ke-hoach-hoan-thanh.md)).
 
 ## Quy trình rút gọn (hiệu lực từ 2026-10-12, ưu tiên hơn mọi chỗ khác nếu mâu thuẫn)
 
@@ -32,6 +32,8 @@ Mục tiêu: xong Phase 1 nhanh. **Kiểm thử giữ nguyên độ kỹ**; bỏ
 - **Phần tử trong iframe là của "vũ trụ" JavaScript khác.** Không dùng `x instanceof HTMLElement` / `HTMLStyleElement` / `Element` của trang cha với phần tử lấy từ iframe: luôn `false` trên trình duyệt thật (jsdom không tái hiện được). Dùng `iframeDocument.defaultView?.Element`, hoặc `querySelector<T>()`, hoặc `closest`/`matches` sau khi kiểm tra bằng cách khác. Lỗi này đã làm hỏng khối theme và chặn link ở 1A.
 - **Store: node không đổi phải giữ nguyên object** (đã làm trong `editor-store.ts`, `reuseUnchanged`). Component đọc store phải dùng selector hẹp (`s.flatNodes[id]`, `s.document?.tokens`); **cấm** `useEditorStore((s) => s.document)` trong component vẽ node, vì mỗi thao tác sẽ vẽ lại mọi node (R-CV-05).
 - **Giới hạn hiện tại của Studio:** chưa nhận thay đổi tài liệu do client khác gửi lên server (chỉ có một Studio). E2E không được dựa vào việc gọi API từ ngoài để đổi tài liệu rồi chờ giao diện tự cập nhật; muốn đổi tài liệu trong E2E thì phải thao tác qua giao diện hoặc tạo sẵn file trước khi mở Studio.
+- **E2E trên Canvas phải mở Studio bằng `openCanvasStudio` (`e2e/support/canvas-studio.ts`)**: nó trả lời hộp thoại tin cậy và chờ Tailwind áp style xong (`data-rc-styled`). Đo vị trí rồi bấm trước lúc đó sẽ bấm trượt.
+- **Bài đo hiệu năng chạy 1 luồng** (`pnpm bench:ui`); E2E thường chạy 4 luồng (đặt trong `playwright.config.js`).
 - **E2E không dùng vòng lặp `await` từng phần tử** (chậm, quá giờ khi 3 trình duyệt chạy song song). Gom bằng một lần `evaluateAll`.
 
 - Chỉ sửa file thuộc phạm vi ghi ở mục "Phạm vi". Cần sửa ngoài phạm vi thì **dừng và báo**, không tự làm.
