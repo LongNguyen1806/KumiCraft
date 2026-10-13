@@ -15,6 +15,8 @@ export {
 } from './migrations/workspace-files.ts';
 export type { IdGenerator } from './operations/batch.ts';
 export { applyBatch, assignIds, TEMPORARY_ID } from './operations/batch.ts';
+export type { CanInsertSubject } from './operations/can-insert.ts';
+export { canInsert } from './operations/can-insert.ts';
 export { applyOperation, invertOperation } from './operations/engine.ts';
 export type { NodeRecord, NormalizedTree } from './operations/normalize.ts';
 export { denormalize, normalize } from './operations/normalize.ts';
@@ -34,6 +36,9 @@ export {
 } from './operations/operation.schema.ts';
 export { findTokenUses } from './operations/token-refs.ts';
 export { validateOperation } from './operations/validate-operation.ts';
+export { type InstantiatedPreset, instantiatePreset } from './presets/instantiate.ts';
+export { PRESETS } from './presets/presets.ts';
+export type { Preset, PresetCategory, PresetContext } from './presets/types.ts';
 export type { AppError, ErrorCode, ErrorDetail, Result } from './result.ts';
 export { err, ok } from './result.ts';
 export type { Binding, ValueFormat } from './schema/binding.schema.ts';
