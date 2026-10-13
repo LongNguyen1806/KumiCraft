@@ -11,6 +11,10 @@ export default defineConfig({
   // Each test starts its own CLI server and browser; more workers than this overload a dev machine
   // and make slow steps (WebKit typing, Firefox screenshots) time out.
   workers: process.env.CI ? 2 : 4,
+  // Waiting time of the harness, not a budget (budgets are measured by `pnpm bench:ui`): Canvas
+  // tests start a server and a browser each, and WebKit on Windows is slow under that load.
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',

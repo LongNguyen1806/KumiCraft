@@ -45,24 +45,29 @@ function calculateMax(numbers: readonly number[]): number {
 
 type PerfStore = {
   pb13: Record<string, { p95: number; max: number }>;
+  pb15?: Record<string, { p95: number; max: number }>;
   pb16: Record<string, number>;
 };
 
 async function savePerfMetric(
   browserName: string,
   pb13: { p95: number; max: number },
+  pb15: { p95: number; max: number },
   pb16: number,
 ): Promise<void> {
   const resultPath = join(REPO_ROOT, 'bench-results', 'canvas-perf.json');
   await mkdir(dirname(resultPath), { recursive: true });
-  let data: PerfStore = { pb13: {}, pb16: {} };
+  let data: PerfStore = { pb13: {}, pb15: {}, pb16: {} };
   try {
     const raw = await readFile(resultPath, 'utf8');
     data = JSON.parse(raw) as PerfStore;
+    if (!data.pb15) data.pb15 = {};
   } catch {
     // Fresh file
   }
   data.pb13[browserName] = pb13;
+  if (!data.pb15) data.pb15 = {};
+  data.pb15[browserName] = pb15;
   data.pb16[browserName] = Math.round(pb16 * 10) / 10;
   await writeFile(resultPath, JSON.stringify(data, undefined, 2), 'utf8');
 }
@@ -158,15 +163,45 @@ test.describe('@perf Canvas Performance (PB-13, PB-16)', () => {
 
     const p95 = calculateP95(overlayUpdates);
     const max = calculateMax(overlayUpdates);
+    expect(p95).toBeLessThanOrEqual(16);
+
+    // 5. PB-15: Drag library item across 50 positions on 500-node document, measuring rc:drop-target (P95 <= 8ms)
+    await tab.evaluate(() => {
+      performance.clearMeasures('rc:drop-target');
+    });
+    await tab.getByRole('tab', { name: /thư viện|library/i }).click();
+    const libraryCard = tab.getByTestId('library-item-card');
+    await libraryCard.scrollIntoViewIfNeeded();
+    const libBox = (await libraryCard.boundingBox()) ?? undefined;
+    if (libBox === undefined) throw new Error('Library item is not on screen');
+    await tab.mouse.move(libBox.x + 10, libBox.y + 10);
+    await tab.mouse.down();
+    await tab.mouse.move(libBox.x + 20, libBox.y + 20, { steps: 2 });
+    for (let i = 0; i < 50; i++) {
+      const stepX = box.x + 20 + ((i * 19) % Math.max(10, box.width - 40));
+      const stepY = box.y + 20 + ((i * 29) % Math.max(10, box.height - 40));
+      await tab.mouse.move(stepX, stepY);
+    }
+    await tab.keyboard.press('Escape');
+    await tab.mouse.up();
+
+    const dropTargetSamples = await tab.evaluate(() =>
+      performance.getEntriesByName('rc:drop-target').map((e) => e.duration),
+    );
+    expect(dropTargetSamples.length).toBeGreaterThanOrEqual(10);
+    const pb15P95 = calculateP95(dropTargetSamples);
+    const pb15Max = calculateMax(dropTargetSamples);
+    expect(pb15P95).toBeLessThanOrEqual(8);
+
     test.info().annotations.push({
       type: 'perf',
-      description: `${browserName} PB-16 ${String(pb16Max)} ms, PB-13 P95 ${String(p95)} ms, max ${String(max)} ms (${String(overlayUpdates.length)} samples)`,
+      description: `${browserName} PB-16 ${String(pb16Max)} ms, PB-13 P95 ${String(p95)} ms, PB-15 P95 ${String(pb15P95)} ms, max ${String(pb15Max)} ms (${String(dropTargetSamples.length)} samples)`,
     });
-    expect(p95).toBeLessThanOrEqual(16);
 
     await savePerfMetric(
       browserName,
       { p95: Math.round(p95 * 100) / 100, max: Math.round(max * 100) / 100 },
+      { p95: Math.round(pb15P95 * 100) / 100, max: Math.round(pb15Max * 100) / 100 },
       pb16Max,
     );
   });

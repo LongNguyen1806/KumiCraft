@@ -267,11 +267,11 @@ test('6. two-way sync with Layer Tree', async ({ page }) => {
   await tab.mouse.click(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2);
   await tab.keyboard.up('Control');
 
-  const layerRow = tab.locator('button[role="treeitem"][aria-selected="true"]');
+  const layerRow = tab.locator('[role="treeitem"][aria-selected="true"]');
   await expect(layerRow).toBeVisible();
 
   // Select another node from Layer tree -> overlay updates
-  const navbarRow = tab.locator('button[role="treeitem"]:has-text("Top bar")');
+  const navbarRow = tab.locator('[role="treeitem"]:has-text("Top bar")');
   await navbarRow.click();
   await expect(
     tab.locator('[data-testid="selection-box"][data-node-id="n_allnode010"]'),
