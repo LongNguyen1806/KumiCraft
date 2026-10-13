@@ -36,6 +36,12 @@ Mục tiêu: xong Phase 1 nhanh. **Kiểm thử giữ nguyên độ kỹ**; bỏ
 - **Bài đo hiệu năng chạy 1 luồng** (`pnpm bench:ui`); E2E thường chạy 4 luồng (đặt trong `playwright.config.js`).
 - **E2E không dùng vòng lặp `await` từng phần tử** (chậm, quá giờ khi 3 trình duyệt chạy song song). Gom bằng một lần `evaluateAll`.
 
+- **E2E phải kiểm kết quả thật**: đọc file trang đã lưu (`e2e/support/small-page.ts`: `writeSmallWorkspace`, `expectSaved`) hoặc trạng thái chắc chắn; **cấm** `if (!box) return`, `if (count > 0)` hay test không có câu `expect` cuối (WP-1.08: nhiều test như vậy "xanh" trong khi chức năng hỏng).
+- **Test model/preset với bộ token của fixture** (`fixtures/designs/all-nodes.json`), không thay bằng `createDefaultTokens()`: workspace thật thiếu token, lỗi chỉ lộ ra như vậy. Preset luôn tạo qua `instantiatePreset`.
+- **Node mới trong thao tác dùng ID tạm `tmp_<số>`** rồi `assignIds`; không chép node cũ giữ nguyên ID, không dùng `tmp_chữ`.
+- **React Compiler + `@tanstack/react-virtual`**: đọc `getVirtualItems()` trong hook, không trong component (spec-log #101).
+- **Vòng làm việc nhanh**: khi sửa chỉ chạy `pnpm exec eslint <file>`, `pnpm exec tsc --noEmit -p packages/<gói>`, `pnpm exec vitest run <file>`, E2E một file trên Chromium; chạy ở chế độ chờ kết quả, không chạy nền rồi hỏi lại. Lệnh đầy đủ chỉ chạy một lần ở cuối.
+
 - Chỉ sửa file thuộc phạm vi ghi ở mục "Phạm vi". Cần sửa ngoài phạm vi thì **dừng và báo**, không tự làm.
 - Không thêm thư viện mới nếu bản giao việc không cho phép.
 - Không được "làm cho test qua" bằng cách nới ngưỡng, bỏ test, `skip`, `eslint-disable`, `@ts-ignore`, `as any`. Gặp vướng thì báo.

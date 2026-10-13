@@ -22,9 +22,9 @@ Ngoài các module, bộ thay đổi `CS-0.10-1` (Spec, SRS, báo cáo thi công
 | M-HS   | Undo/Redo và đồng bộ         | 1     | Xong         | —                      | —                     |
 | M-CV   | Canvas Renderer              | 1     | Xong (P1)    | —                      | —                     |
 | M-OV   | Overlay và chọn phần tử      | 1     | Xong (P1)    | —                      | —                     |
-| M-DD   | Kéo thả                      | 1     | Chưa bắt đầu | —                      | —                     |
-| M-LB   | Component Library            | 1     | Chưa bắt đầu | —                      | —                     |
-| M-LT   | Layer Tree                   | 1     | Chưa bắt đầu | —                      | —                     |
+| M-DD   | Kéo thả                      | 1     | Xong (P1)    | —                      | —                     |
+| M-LB   | Component Library            | 1     | Xong (P1)    | —                      | —                     |
+| M-LT   | Layer Tree                   | 1     | Xong (P1)    | —                      | —                     |
 | M-IN   | Inspector                    | 1     | Chưa bắt đầu | —                      | —                     |
 | M-CB   | Clipboard                    | 1     | Chưa bắt đầu | —                      | —                     |
 | M-KB   | Phím tắt                     | 1     | Chưa bắt đầu | —                      | —                     |
