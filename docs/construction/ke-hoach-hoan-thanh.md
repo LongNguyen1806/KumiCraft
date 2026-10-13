@@ -10,7 +10,7 @@ Tài liệu gốc để tra cứu: [spec.md](../spec.md) (SPEC-07 mục 5 đến
 
 ## 0. Quy tắc bắt buộc (đọc trước khi làm bất kỳ bước nào)
 
-> **Từ 2026-10-12 có quy trình rút gọn** ở [giao-viec/README.md](giao-viec/README.md) mục "Quy trình rút gọn". Nếu mâu thuẫn với các điều 5, 6, 11, 12 bên dưới thì theo quy trình rút gọn. Kiểm thử không bị giảm.
+> **Từ 2026-10-13 áp dụng Quy trình v3** (Claude viết test trước, Gemini làm cho xanh, quy tắc dừng sau 3 lần sửa) và lộ trình chia nhỏ ở [giao-viec/README.md](giao-viec/README.md). **Từ 2026-10-12 có quy trình rút gọn** ở [giao-viec/README.md](giao-viec/README.md) mục "Quy trình rút gọn". Nếu mâu thuẫn với các điều 5, 6, 11, 12 bên dưới thì theo quy trình rút gọn. Kiểm thử không bị giảm.
 
 1. **Không commit, không tạo nhánh, không ghi vào `.git`.** Chủ sản phẩm tự commit theo lô. Cuối mỗi bước, đưa ra danh sách lệnh `git add` / `git commit` gợi ý. Đọc Git chỉ dùng `git --no-optional-locks`.
 2. **Thông điệp commit gợi ý**: tiếng Anh, dạng `type(scope): mô tả`, tiêu đề tối đa 72 ký tự (nên ≤ 60), không có dòng ghi công AI (CW-45). Chạy thử bằng commitlint trước khi đưa cho chủ sản phẩm.

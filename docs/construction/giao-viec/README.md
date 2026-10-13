@@ -1,10 +1,37 @@
 # Giao việc cho AI thực hiện (Gemini)
 
-Cách dùng: chủ sản phẩm đưa **một** file `buoc-XX-*.md` cho AI thực hiện, kèm câu: "Đọc `docs/construction/ke-hoach-hoan-thanh.md` mục 0 (quy tắc bắt buộc) rồi làm đúng bản giao việc này. Không làm gì ngoài phạm vi." Khi AI báo xong, chủ sản phẩm đưa kết quả lại cho Claude để kiểm tra và sửa lỗi.
+Cách dùng: chủ sản phẩm đưa **một** file `buoc-XX-*.md` cho Gemini, kèm câu: "Đọc `docs/construction/giao-viec/README.md` (mục Quy trình v3 và Quy ước chung) rồi làm đúng bản giao việc này." Gemini báo xong thì chủ sản phẩm đưa kết quả lại cho Claude kiểm tra.
 
-Thứ tự: [bước 0](buoc-00-don-nen.md), 1A, 1B, 1C, 1D (xong, WP-1.07 đã đóng) → **[Bước 2: WP-1.08](buoc-02-keo-tha-library-layer.md)** → các WP sau, mỗi WP một lần giao và một lần kiểm (xem [ke-hoach-hoan-thanh.md](../ke-hoach-hoan-thanh.md)).
+Thứ tự còn lại của Phase 1: xem mục "Lộ trình" cuối file.
 
-## Quy trình rút gọn (hiệu lực từ 2026-10-12, ưu tiên hơn mọi chỗ khác nếu mâu thuẫn)
+## Quy trình v3: Claude viết test trước, Gemini làm cho xanh (từ WP-1.09, ưu tiên hơn mọi chỗ khác)
+
+Bài học WP-1.08: viết code nhanh, thứ tốn thời gian là **mò lỗi** vì test lỏng và yêu cầu chưa rõ. Từ nay:
+
+| Bước          | Ai     | Việc                                                                                                                                                                                               |
+| ------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Thiết kế   | Claude | Bản giao việc ghi **hợp đồng**: file, tên hàm và kiểu, `data-testid`, khóa i18n, thuật toán từng bước, **các bẫy đã biết**. Phần khó (iframe, kéo thả, hiệu năng) có mã khung hoặc mã giả chi tiết |
+| 2. Test trước | Claude | Viết sẵn test nghiệm thu (unit + E2E) trong repo, **kiểm chính test bằng một bản cài đặt nháp** rồi xóa bản nháp, để test đỏ đúng lý do "chưa có chức năng"                                        |
+| 3. Code       | Gemini | Viết code tới khi các test đó xanh. **Không sửa file test được giao** (danh sách "Test khóa" trong bản giao việc)                                                                                  |
+| 4. QA         | Claude | Chạy đủ, đọc diff, sửa, đưa lệnh commit                                                                                                                                                            |
+
+**Kích thước**: mỗi lần giao khoảng ≤ 600 dòng code, ≤ 15 test, một tiêu chí xong.
+
+### Quy tắc gỡ lỗi của Gemini (bắt buộc, để không mò)
+
+1. Một test đỏ: đọc thông báo lỗi và `test-results/<tên test>/error-context.md` trước khi sửa.
+2. Lỗi logic: tái hiện bằng unit test (`pnpm exec vitest run <file>`), không build.
+3. Lỗi chỉ thấy trên trình duyệt: chạy `pnpm dev <thư mục workspace mẫu>` (tự nạp lại khi sửa, không cần build) và xem trực tiếp; chỉ build khi chạy E2E.
+4. **Sửa 3 lần mà một test vẫn đỏ thì dừng**, báo: tên test, thông báo lỗi, đã thử gì, nghi ngờ gì. Claude xử lý. Không thử lần thứ 4.
+5. **Cấm** làm test qua bằng cách: sửa file test khóa, thêm `waitForTimeout`, `if (...) return` trong test, đổi code sản phẩm cho khớp test sai (ví dụ cố định token mặc định). Thấy test có vẻ sai thì dừng và báo.
+6. Trong lúc làm chỉ chạy: `pnpm exec eslint <file sửa>`, `pnpm exec tsc --noEmit -p packages/<gói>`, `pnpm exec vitest run <file>`, `pnpm build` rồi `pnpm exec playwright test <file> --project=chromium`. Chạy chờ kết quả, không chạy nền rồi hỏi lại.
+7. Cuối cùng chạy một lần: `pnpm verify`, `pnpm test:e2e` (3 trình duyệt).
+
+### Báo cáo khi xong (5 dòng)
+
+1. Kết quả lệnh cuối (số test, mã thoát). 2. Việc đã làm. 3. Test nào dừng theo quy tắc 4 (nếu có). 4. Lệch spec. 5. Lệnh commit gợi ý.
+
+## Quy trình rút gọn (2026-10-12, vẫn áp dụng phần không trái Quy trình v3)
 
 Mục tiêu: xong Phase 1 nhanh. **Kiểm thử giữ nguyên độ kỹ**; bỏ phần giấy tờ không làm sản phẩm tốt hơn.
 
@@ -59,3 +86,15 @@ BƯỚC: <mã>
 5. Rủi ro hoặc điều Claude nên soi kỹ:
 6. Lệnh commit gợi ý (đã qua commitlint, không dòng ghi công AI):
 ```
+
+## Lộ trình còn lại của Phase 1 (mỗi dòng là một lần giao)
+
+| Lần giao                           | Nội dung                                                                                                                                                                                                    | Ai code |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| [9A](buoc-09a-responsive-scope.md) | Model: khóa responsive theo khung, giá trị hiệu lực, scope `setStyle`, sửa cascade `2xl`                                                                                                                    | Gemini  |
+| 9B                                 | Inspector khung: thanh phạm vi (11.1), ô giá trị token/tùy chỉnh (R-IN-01), chấm ghi đè (R-IN-02), kế thừa (R-IN-03), sai giá trị (R-IN-05), scrub gộp Undo (R-IN-04); nhóm Bố cục, Kích thước, Khoảng cách | Gemini  |
+| 9C                                 | Nhóm còn lại của 11.2 (trừ Tương tác, Dữ liệu), chọn nhiều (R-IN-06), AC-03 E2E, PB-14                                                                                                                      | Gemini  |
+| 10A                                | Phím tắt (M-KB) + Clipboard (M-CB)                                                                                                                                                                          | Gemini  |
+| 10B                                | Quản lý trang (M-PG)                                                                                                                                                                                        | Gemini  |
+| 11                                 | CLI hoàn chỉnh, tắt an toàn, tarball                                                                                                                                                                        | Gemini  |
+| G1                                 | Kiểm cổng G1, schema-v1, báo cáo phase 1                                                                                                                                                                    | Claude  |
