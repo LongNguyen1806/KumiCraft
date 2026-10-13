@@ -1,10 +1,16 @@
 // Playwright E2E (ADR-FE-18): Chromium, Firefox and WebKit against the built CLI (`pnpm build` first).
 import { defineConfig, devices } from '@playwright/test';
 
+const isPerf = process.argv.some((arg) => arg.includes('perf'));
+
 export default defineConfig({
   testDir: 'e2e',
   testMatch: '**/*.e2e.ts',
+  testIgnore: isPerf ? [] : ['**/perf/**'],
   fullyParallel: true,
+  // Each test starts its own CLI server and browser; more workers than this overload a dev machine
+  // and make slow steps (WebKit typing, Firefox screenshots) time out.
+  workers: process.env.CI ? 2 : 4,
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',

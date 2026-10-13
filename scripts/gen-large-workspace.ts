@@ -247,4 +247,9 @@ function main() {
   );
 }
 
-main();
+if (
+  process.argv[1] !== undefined &&
+  process.argv[1].replace(/\\/g, '/').endsWith('gen-large-workspace.ts')
+) {
+  main();
+}

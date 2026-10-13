@@ -6,6 +6,7 @@ import { expect, type FrameLocator, type Page, test } from '@playwright/test';
 import { type DesignDocument, documentToFiles } from '@reactcraft/model';
 
 import allNodesFixture from '../fixtures/designs/all-nodes.json' with { type: 'json' };
+import { openCanvasStudio } from './support/canvas-studio.ts';
 import { type CliSession, startCli } from './support/cli-session.ts';
 import { makeTempDir, type TempDir } from './support/copy-fixture.ts';
 
@@ -48,19 +49,7 @@ async function setupWorkspaceWithAllNodes(): Promise<void> {
   }
 }
 
-async function openStudio(page: Page, session: CliSession): Promise<Page> {
-  const tab = await page.context().newPage();
-  await tab.goto(session.studioUrl);
-
-  const trustDialog = tab.getByRole('dialog', { name: /tin tưởng|trust/i });
-  if (await trustDialog.isVisible({ timeout: 5000 }).catch(() => false)) {
-    await tab.getByRole('button', { name: /Chưa|Not yet/i }).click();
-    await expect(trustDialog).toHaveCount(0);
-  }
-
-  await expect(tab.getByTestId('frame')).toBeVisible();
-  return tab;
-}
+const openStudio = openCanvasStudio;
 
 function getCanvasFrame(page: Page): FrameLocator {
   return page.frameLocator('[data-testid="canvas-iframe"]');
