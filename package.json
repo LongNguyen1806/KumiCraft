@@ -2,7 +2,7 @@
   "name": "reactcraft-monorepo",
   "version": "0.0.0",
   "private": true,
-  "description": "ReactCraft Local: local-first AI design studio that exports React + TypeScript + Tailwind code",
+  "description": "ReactCraft Local: a visual studio that edits the source code of a real React + Vite + Tailwind project, with AI through a local agent",
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@10.34.6",
@@ -15,7 +15,7 @@
     "build": "pnpm -r build",
     "package": "pnpm build && pnpm --filter @reactcraft/cli pack --pack-destination artifacts",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit -p packages/model && tsc --noEmit -p packages/server && tsc --noEmit -p packages/studio && tsc --noEmit -p packages/cli && tsc --noEmit -p e2e && tsc --noEmit -p scripts",
+    "typecheck": "tsc --noEmit -p packages/shared && tsc --noEmit -p packages/server && tsc --noEmit -p packages/studio && tsc --noEmit -p packages/cli && tsc --noEmit -p e2e",
     "test": "vitest run",
     "test:e2e": "pnpm build && playwright test",
     "check:i18n": "node scripts/check-i18n.mjs",
@@ -25,9 +25,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "verify": "pnpm lint && pnpm typecheck && pnpm format:check && pnpm check:i18n && pnpm test && pnpm trace && pnpm build",
-    "changeset": "changeset",
-    "fixtures:check": "node scripts/vg/build-target-fixtures.mjs",
-    "gen:large-workspace": "node scripts/gen-large-workspace.ts"
+    "changeset": "changeset"
   },
   "devDependencies": {
     "@changesets/cli": "3.0.3",
@@ -35,7 +33,6 @@
     "@commitlint/config-conventional": "21.2.3",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.64.0",
-    "@reactcraft/model": "workspace:*",
     "@types/node": "22.20.5",
     "@vitest/coverage-v8": "5.0.3",
     "eslint": "10.12.0",

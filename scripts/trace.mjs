@@ -1,4 +1,4 @@
-// `pnpm trace` (SPEC-02 QC-94, SPEC-07 section 11.4): links rule codes of docs/spec.md to the tests
+// `pnpm trace` (SPEC-02 QC-94, SPEC-06 section 6): links rule codes of docs/spec.md to the tests
 // that name them in square brackets (QC-93). Fails when a code in scope has no test, when a test
 // names a code the spec does not define, or when a code has no phase in trace-scope.json.
 import { readdirSync, readFileSync } from 'node:fs';
@@ -14,10 +14,11 @@ const scope = JSON.parse(readFileSync(SCOPE, 'utf8'));
 const rules = scope.rules.map((rule) => ({ ...rule, regex: new RegExp(rule.pattern) }));
 const phaseOf = (code) => rules.find((rule) => rule.regex.test(code))?.phase;
 
-// Defined codes: first cell of a spec table row; AC codes come from the SRS and are only referenced.
+// Defined codes: first cell of a spec table row, which Prettier may pad with spaces (SPEC-06
+// section 6); AC codes come from the SRS and are only referenced.
 const specText = readFileSync(SPEC, 'utf8');
 const defined = new Set(
-  [...specText.matchAll(new RegExp(String.raw`^\| (${CODE}) \|`, 'gm'))].map((m) => m[1]),
+  [...specText.matchAll(new RegExp(String.raw`^\| (${CODE}) +\|`, 'gm'))].map((m) => m[1]),
 );
 for (const m of specText.matchAll(/\bAC-\d{2}\b/g)) defined.add(m[0]);
 

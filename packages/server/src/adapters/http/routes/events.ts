@@ -1,4 +1,4 @@
-// WebSocket /api/v1/events endpoint (SPEC-03 section 11, SPEC-05 section 5.1).
+// WebSocket /api/v1/events endpoint (SPEC-03 section 6, SPEC-05 section 3).
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { WebSocket } from 'ws';
 
@@ -6,7 +6,7 @@ import type { EventBusPort } from '../../../core/ports/event-bus-port.ts';
 import { isTokenValid } from '../security.ts';
 
 const TOKEN_PROTOCOL_PREFIX = 'reactcraft.token.';
-const PING_INTERVAL_MS = 20_000; // SPEC-03 section 11.1
+const PING_INTERVAL_MS = 20_000; // SPEC-03 section 6
 
 export type EventRoutesDeps = {
   readonly eventBus: EventBusPort;

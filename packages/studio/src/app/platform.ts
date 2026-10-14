@@ -1,4 +1,4 @@
-// Keyboard conventions of the user's computer (SPEC-04.1 section 15): `Mod` is Cmd on macOS and
+// Keyboard conventions of the user's computer (SPEC-04 section 19): `Mod` is Cmd on macOS and
 // Ctrl elsewhere, and shortcuts are shown the way that system shows them.
 
 /** macOS (and iPadOS with a keyboard): Cmd is the command key. */

@@ -1,102 +1,54 @@
-import type { Frame } from '@reactcraft/model';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { LanguageSwitcher } from '../../app/language-switcher.tsx';
 import { shortcutLabel } from '../../app/platform.ts';
-import {
-  CodeIcon,
-  PanelLeftIcon,
-  PanelRightIcon,
-  RedoIcon,
-  UndoIcon,
-} from '../../components/ui/icons.tsx';
+import { PanelLeftIcon, PanelRightIcon, RedoIcon, UndoIcon } from '../../components/ui/icons.tsx';
 import { SettingsButton } from '../settings/settings-button.tsx';
 import type { Side } from './use-panel-layout.ts';
 
 export type EditorToolbarProps = {
-  readonly workspaceName: string;
-  readonly pages: readonly { readonly id: string; readonly name: string }[];
-  readonly activePageId: string | undefined;
-  readonly onPage: (pageId: string) => void;
-  readonly frames: readonly Frame[];
-  readonly activeFrameId: string;
-  readonly onFrame: (frameId: string) => void;
-  readonly zoomPercent: number;
-  readonly canUndo: boolean;
-  readonly canRedo: boolean;
-  readonly onUndo: () => void;
-  readonly onRedo: () => void;
+  readonly projectName: string;
   readonly visible: Readonly<Record<Side, boolean>>;
   readonly onToggle: (side: Side) => void;
 };
 
-/** Top row of the Editor (SPEC-04.1 section 6.2), as in the approved mockup. */
+/**
+ * Top row of the Editor: project name, panels, Undo/Redo, language and settings. The frame picker
+ * and zoom come with the Canvas (WP-1.04); Undo/Redo work from WP-1.06.
+ */
 export function EditorToolbar(props: EditorToolbarProps) {
   const { t } = useTranslation();
   return (
     <header className="flex items-center gap-2.5 whitespace-nowrap [&>*]:shrink-0">
       <div className="flex h-10 max-w-[24rem] min-w-[9rem] !shrink items-center gap-2 rounded-full border-[1.5px] border-charcoal px-[18px] text-[17px] tracking-tight">
         {t('app.name')}
-        <span className="min-w-0 truncate text-xs text-ink-faint" title={props.workspaceName}>
-          {props.workspaceName}
+        <span
+          className="min-w-0 truncate text-xs text-ink-faint"
+          title={props.projectName}
+          data-testid="project-name"
+        >
+          {props.projectName}
         </span>
       </div>
       <PanelToggle side="left" {...props} />
-      <div className="flex h-10 items-center gap-0.5 rounded-full bg-card px-1 shadow-soft backdrop-blur-md">
-        <PagePicker {...props} />
-        <span className="mx-1 h-[18px] w-px bg-line" />
-        <FramePicker {...props} />
-        <span className="mx-1 h-[18px] w-px bg-line" />
-        <span className="px-3 font-mono text-xs text-ink-soft" title={t('editor.zoomFit')}>
-          {t('editor.zoom', { percent: props.zoomPercent })}
-        </span>
-      </div>
       <div className="flex-1" />
-      <RoundButton
-        label={t('editor.undo', { shortcut: shortcutLabel('undo') })}
-        disabled={!props.canUndo}
-        onClick={props.onUndo}
-      >
+      <RoundButton label={t('editor.undo', { shortcut: shortcutLabel('undo') })} disabled>
         <UndoIcon />
       </RoundButton>
-      <RoundButton
-        label={t('editor.redo', { shortcut: shortcutLabel('redo') })}
-        disabled={!props.canRedo}
-        onClick={props.onRedo}
-      >
+      <RoundButton label={t('editor.redo', { shortcut: shortcutLabel('redo') })} disabled>
         <RedoIcon />
       </RoundButton>
-      <div className="hidden xl:block">
-        <LanguageSwitcher />
-      </div>
+      <LanguageSwitcher />
       <SettingsButton />
-      <ExportButton />
       <PanelToggle side="right" {...props} />
     </header>
   );
 }
 
-/** Export comes with Phase 3; below 1280 px only its icon shows. */
-function ExportButton() {
-  const { t } = useTranslation();
-  return (
-    <button
-      type="button"
-      disabled
-      aria-label={t('editor.exportCode')}
-      title={t('editor.exportLater')}
-      className="flex h-10 w-10 items-center justify-center gap-2 rounded-full bg-sun font-medium text-ink disabled:opacity-55 xl:w-auto xl:px-[18px]"
-    >
-      <CodeIcon />
-      <span className="hidden xl:inline">{t('editor.exportCode')}</span>
-    </button>
-  );
-}
-
 type RoundButtonProps = {
   readonly label: string;
-  readonly onClick: () => void;
+  readonly onClick?: () => void;
   readonly disabled?: boolean;
   readonly pressed?: boolean;
   readonly children: ReactNode;
@@ -136,50 +88,5 @@ function PanelToggle({
     >
       {side === 'left' ? <PanelLeftIcon /> : <PanelRightIcon />}
     </RoundButton>
-  );
-}
-
-function PagePicker({ pages, activePageId, onPage }: EditorToolbarProps) {
-  const { t } = useTranslation();
-  return (
-    <label className="flex h-8 items-center gap-1.5 rounded-full pl-3.5 text-ink-soft">
-      {t('editor.page')}
-      <select
-        value={activePageId}
-        onChange={(event) => {
-          onPage(event.target.value);
-        }}
-        className="h-8 rounded-full bg-transparent pr-7 pl-1 text-ink"
-        data-testid="page-picker"
-      >
-        {pages.map((page) => (
-          <option key={page.id} value={page.id}>
-            {page.name}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-function FramePicker({ frames, activeFrameId, onFrame }: EditorToolbarProps) {
-  const { t } = useTranslation();
-  return (
-    <div role="group" aria-label={t('editor.frames')} className="flex gap-0.5">
-      {frames.map((frame) => (
-        <button
-          key={frame.id}
-          type="button"
-          aria-pressed={frame.id === activeFrameId}
-          onClick={() => {
-            onFrame(frame.id);
-          }}
-          className="flex h-8 items-center gap-1.5 rounded-full px-3.5 text-ink-soft transition-colors hover:bg-field hover:text-ink aria-pressed:bg-charcoal aria-pressed:text-on-charcoal"
-        >
-          {frame.label}
-          <span className="hidden font-mono text-xs opacity-60 xl:inline">{frame.width}</span>
-        </button>
-      ))}
-    </div>
   );
 }

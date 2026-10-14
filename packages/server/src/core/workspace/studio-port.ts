@@ -1,7 +1,7 @@
-// Port of the last session of a workspace (SPEC-05 S-02): the CLI tries it first, so the Studio
+// Port of the last session of a project (SPEC-05 S-02): the CLI tries it first, so the Studio
 // opens at the same address and the browser keeps what it remembers for it (panel sizes, R-SH-01).
 // Kept in `.reactcraft/cache/`, which never goes to Git.
-import { WORKSPACE_DIR } from '@reactcraft/model';
+import { WORKSPACE_DIR } from '@reactcraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 

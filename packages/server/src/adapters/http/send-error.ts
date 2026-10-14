@@ -1,4 +1,4 @@
-// Common error response of SPEC-03 section 9.2. `cause` never leaves the server (QC-51).
+// Common error response of SPEC-03 section 4.1. `cause` never leaves the server (QC-51).
 import type { FastifyReply } from 'fastify';
 
 import { type AppError, HTTP_STATUS_BY_CODE } from '../../core/shared/result.ts';

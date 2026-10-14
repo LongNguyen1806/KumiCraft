@@ -7,7 +7,7 @@
     "connecting": "Đang kết nối tới ReactCraft…",
     "lost": {
       "title": "Mất kết nối tới ReactCraft",
-      "body": "Đang thử kết nối lại. Bạn sửa tiếp được khi kết nối trở lại."
+      "body": "Đang thử kết nối lại. Bạn làm tiếp được khi kết nối trở lại."
     }
   },
   "language": {
@@ -15,99 +15,38 @@
     "vi": "Tiếng Việt",
     "en": "English"
   },
-  "welcome": {
-    "title": "Chào mừng tới ReactCraft",
-    "subtitle": "Thư mục này chưa có workspace. Tạo một workspace để bắt đầu thiết kế giao diện.",
-    "directory": "Thư mục",
-    "storage": "Thiết kế được lưu trong thư mục .reactcraft/ ngay tại đây, dạng file JSON. Bạn có thể commit nó vào Git cùng mã nguồn.",
-    "form": {
-      "name": "Tên workspace",
-      "namePlaceholder": "Ví dụ: Cửa hàng thời trang",
-      "mode": "Bạn thiết kế cho màn hình nào trước?",
-      "desktopFirst": "Desktop trước",
-      "desktopFirstHelp": "Thiết kế cho màn hình lớn, rồi chỉnh lại cho tablet và điện thoại.",
-      "mobileFirst": "Mobile trước",
-      "mobileFirstHelp": "Thiết kế cho điện thoại, rồi mở rộng lên màn hình lớn.",
-      "frame": "Khung chính",
-      "custom": "Tùy chỉnh",
-      "width": "Rộng",
-      "height": "Cao",
-      "framesPreview": "Workspace sẽ có các khung:",
-      "frameItem": "{{label}} {{width}} × {{height}}",
-      "locale": "Ngôn ngữ nội dung",
-      "localeHelp": "Ngôn ngữ của trang web bạn thiết kế: dùng cho dữ liệu mẫu và định dạng số, tiền, ngày. Khác với ngôn ngữ giao diện Studio.",
-      "locales": {
-        "vi-VN": "Tiếng Việt (vi-VN)",
-        "en-US": "English (en-US)"
-      },
-      "advanced": "Tùy chọn nâng cao",
-      "darkMode": "Chế độ tối của trang web",
-      "dark": {
-        "none": "Không dùng",
-        "media": "Theo hệ điều hành",
-        "class": "Bật bằng class"
-      },
-      "submit": "Tạo workspace",
-      "submitting": "Đang tạo…",
-      "errors": {
-        "name": "Hãy đặt tên cho workspace, tối đa 64 ký tự.",
-        "frameSize": "Khung rộng từ 320 đến 3840 px, cao từ 320 đến 2160 px."
-      }
-    }
+  "noProject": {
+    "title": "Chưa mở dự án nào",
+    "body": "ReactCraft mở dự án trong thư mục bạn chạy lệnh. Thư mục này chưa có dự án ReactCraft (.reactcraft/workspace.json).",
+    "folder": "Thư mục"
   },
-  "workspaceError": {
-    "title": "Không mở được workspace",
-    "intro": "Một số file của workspace bị lỗi. ReactCraft không mở một phần để tránh ghi đè làm mất dữ liệu. Khôi phục từ bản sao lưu, hoặc sửa file bằng tay rồi bấm Thử lại.",
-    "files": "File bị lỗi",
-    "restore": "Khôi phục bản sao lưu gần nhất",
-    "backupFrom": "Bản sao lưu lúc {{time}}",
-    "noBackup": "Chưa có bản sao lưu của file này. Hãy sửa file bằng tay.",
-    "retry": "Thử lại"
+  "projectError": {
+    "title": "Không mở được dự án",
+    "oldVersion": "Dự án này được lưu bởi ReactCraft bản cũ, giữ thiết kế trong file JSON. Định dạng đó không còn được đọc.",
+    "howToFix": "ReactCraft không bao giờ ghi đè .reactcraft/workspace.json. Hãy sửa hoặc xóa file rồi chạy lại ReactCraft."
   },
   "editor": {
     "canvas": "Canvas",
-    "revision": "revision {{revision}}",
-    "page": "Trang",
-    "frames": "Khung thiết kế",
-    "zoom": "{{percent}}%",
-    "zoomFit": "Thu phóng vừa khung",
-    "frameSize": "{{width}} × {{height}}",
+    "canvasPending": "Canvas sẽ hiển thị dự án của bạn đang chạy ở đây, bằng dev server của chính dự án.",
     "undo": "Hoàn tác ({{shortcut}})",
     "redo": "Làm lại ({{shortcut}})",
-    "exportCode": "Xuất code",
-    "exportLater": "Có từ Phase 3",
     "toggleLeft": "Ẩn/hiện panel trái ({{shortcut}}: cả hai panel)",
     "toggleRight": "Ẩn/hiện panel phải ({{shortcut}}: cả hai panel)",
     "resizeLeft": "Đổi độ rộng panel trái",
     "resizeRight": "Đổi độ rộng panel phải",
-    "leftPanel": "Lớp và thư viện",
+    "leftPanel": "Lớp",
     "rightPanel": "Thuộc tính",
     "layers": "Lớp",
-    "library": "Thư viện",
-    "libraryLater": "Thư viện phần tử để kéo vào trang sẽ có ở bước kéo thả.",
+    "layersHint": "Cấu trúc của trang hiện ở đây khi Canvas chạy dự án của bạn.",
     "properties": "Thuộc tính",
-    "data": "Dữ liệu",
     "ai": "AI",
-    "selectHint": "Chọn một phần tử trong Lớp để xem thuộc tính.",
-    "sync": {
-      "saved": "Đã lưu",
-      "saving": "Đang lưu…",
-      "error": "Lỗi lưu",
-      "external_conflict": "Thiết kế đã thay đổi ở nơi khác"
-    },
-    "mode": {
-      "desktop-first": "Desktop trước",
-      "mobile-first": "Mobile trước"
-    },
+    "selectHint": "Chọn một phần tử trên Canvas để sửa class Tailwind của nó ở đây.",
+    "trusted": "Dự án đã tin cậy",
+    "restricted": "Chế độ hạn chế: không chạy gì của dự án này",
     "narrow": {
       "title": "Studio cần màn hình rộng tối thiểu 1024 px",
-      "body": "Hãy mở trên máy tính hoặc kéo rộng cửa sổ trình duyệt. Thiết kế của bạn vẫn được lưu bình thường."
-    },
-    "notice": {
-      "E017": "Thiết kế đã thay đổi ở nơi khác nên đã được tải lại. Lịch sử hoàn tác đã xóa.",
-      "E005": "Server từ chối thay đổi vừa rồi nên thiết kế đã được tải lại. Lịch sử hoàn tác đã xóa."
-    },
-    "selectedCount": "{{count}} phần tử đã chọn"
+      "body": "Hãy mở trên máy tính hoặc kéo rộng cửa sổ trình duyệt. Mã nguồn của bạn không bị ảnh hưởng."
+    }
   },
   "settings": {
     "open": "Cài đặt",
@@ -115,160 +54,30 @@
     "close": "Đóng",
     "interface": "Giao diện",
     "language": "Ngôn ngữ giao diện",
-    "languageHelp": "Đổi ngay, không tải lại trang. Được nhớ cho mọi workspace trên máy này.",
-    "export": "Xuất code",
-    "exportLater": "Áp dụng khi tính năng xuất code ra mắt (Phase 3).",
-    "typecheck": "Kiểm tra lỗi kiểu TypeScript sau khi xuất",
-    "typecheckHelp": "Phát hiện code vừa xuất bị lỗi kiểu trước khi bạn chạy project. Tắt thì xuất nhanh hơn vài giây.",
-    "buildCheck": "Build thử project sau khi xuất",
-    "buildCheckHelp": "Chạy build của project để chắc nó vẫn build được. Lệnh build chạy cấu hình và plugin của chính project, chỉ bật với project bạn tin tưởng.",
+    "languageHelp": "Đổi ngay, không tải lại trang. Được nhớ cho mọi dự án trên máy này.",
+    "tools": "Công cụ",
+    "editor": "Editor để mở file mã nguồn",
+    "editorHelp": "\"Mở trong editor\" nhảy tới đúng file và dòng của phần tử đang chọn trong editor này.",
+    "editors": {
+      "vscode": "VS Code",
+      "cursor": "Cursor",
+      "webstorm": "WebStorm",
+      "zed": "Zed"
+    },
+    "packageManager": "Package manager cho dự án mới",
+    "packageManagerHelp": "Dùng để cài dependency cho dự án ReactCraft tạo ra. Dự án có sẵn dùng package manager của chính nó.",
     "saving": "Đang lưu…",
     "saved": "Đã lưu"
   },
   "trust": {
-    "bar": "Workspace chưa được tin cậy: quét backend, xuất code và AI đang tạm khóa. Bạn vẫn xem và sửa thiết kế được.",
+    "bar": "Dự án chưa được tin cậy: dev server, cài dependency và agent AI không chạy. Bạn vẫn xem được.",
     "review": "Xem và tin cậy",
-    "title": "Bạn có tin tưởng workspace này?",
-    "intro": "Workspace này chưa được tin cậy trên máy này. Khi bạn quét backend hoặc xuất code, ReactCraft sẽ đọc và ghi vào các thư mục dưới đây.",
-    "restricted": "Chưa tin cậy thì bạn vẫn xem và sửa thiết kế; quét backend, xuất code, build thử và gửi mã nguồn cho AI bị khóa.",
-    "confirm": "Tin cậy workspace này",
-    "later": "Chưa, chỉ xem và sửa thiết kế",
-    "close": "Đóng",
-    "targetProject": "Project đích (nơi ghi code)",
-    "noLinks": "Workspace chưa trỏ tới thư mục nào khác.",
-    "outside": "Nằm ngoài thư mục workspace: hãy chắc đây là thư mục bạn biết."
-  },
-  "canvas": {
-    "emptyPlaceholder": "Kéo phần tử vào đây",
-    "noActivePage": "Chưa có trang nào được chọn",
-    "defaultButton": "Nút bấm",
-    "defaultLink": "Liên kết",
-    "imagePlaceholder": "Ảnh giữ chỗ",
-    "slot": "Slot: {{name}}",
-    "initiallyHidden": "Ẩn khi tải trang"
-  },
-  "overlay": {
-    "textFromData": "Nội dung lấy từ dữ liệu",
-    "textHasFormat": "Nội dung có định dạng, sẽ sửa được ở bản rich text",
-    "editFailed": "Không thể lưu nội dung"
-  },
-  "dnd": {
-    "intoContainer": "Vào {{name}}",
-    "dropIndicator": "Thả tại đây",
-    "announcements": {
-      "pickedUp": "Đã chọn {{name}}",
-      "moved": "Đang ở vị trí {{index}} của {{container}}",
-      "dropped": "Đã thả {{name}}",
-      "cancelled": "Đã hủy kéo"
-    }
-  },
-  "library": {
-    "title": "Thư viện",
-    "searchPlaceholder": "Tìm component…",
-    "noResults": "Không tìm thấy component",
-    "category": {
-      "layout": "Bố cục",
-      "content": "Nội dung",
-      "form": "Biểu mẫu",
-      "data": "Dữ liệu",
-      "composite": "Phức hợp"
-    },
-    "presets": {
-      "stackRow": "Hàng ngang",
-      "stackCol": "Hàng dọc",
-      "grid3Col": "Lưới 3 cột",
-      "gridAuto": "Lưới tự co",
-      "section": "Section",
-      "container": "Khung chứa",
-      "heading": "Tiêu đề",
-      "text": "Đoạn văn",
-      "image": "Hình ảnh",
-      "icon": "Biểu tượng",
-      "link": "Liên kết",
-      "divider": "Đường kẻ",
-      "badge": "Huy hiệu",
-      "avatar": "Ảnh đại diện",
-      "form": "Biểu mẫu",
-      "input": "Ô nhập",
-      "textarea": "Văn bản nhiều dòng",
-      "select": "Hộp chọn",
-      "checkbox": "Hộp kiểm",
-      "radio": "Nút chọn một",
-      "switch": "Công tắc",
-      "button": "Nút bấm",
-      "table": "Bảng dữ liệu",
-      "list": "Danh sách",
-      "detailView": "Xem chi tiết",
-      "card": "Thẻ",
-      "navbar": "Thanh điều hướng",
-      "sidebar": "Thanh bên",
-      "footer": "Chân trang",
-      "modal": "Hộp thoại Modal",
-      "tabs": "Thẻ tab",
-      "hero": "Khối Hero"
-    }
-  },
-  "layers": {
-    "title": "Lớp",
-    "empty": "Không có phần tử nào",
-    "menu": {
-      "duplicate": "Nhân bản",
-      "delete": "Xóa",
-      "wrapRow": "Bọc trong Hàng ngang",
-      "wrapColumn": "Bọc trong Hàng dọc",
-      "wrapGrid": "Bọc trong Lưới",
-      "unwrap": "Bỏ bọc",
-      "rename": "Đổi tên",
-      "copy": "Sao chép",
-      "pasteInside": "Dán vào trong"
-    },
-    "actions": {
-      "hide": "Ẩn lớp",
-      "show": "Hiện lớp",
-      "lock": "Khóa lớp",
-      "unlock": "Mở khóa lớp",
-      "expand": "Mở rộng",
-      "collapse": "Thu gọn"
-    },
-    "binding": "Có liên kết dữ liệu"
-  },
-  "inspector": {
-    "scopePrefix": "Đang sửa:",
-    "base": "Gốc",
-    "overrideDesktopFirst": "Ghi đè < {{min}} px",
-    "overrideMobileFirst": "Ghi đè ≥ {{min}} px",
-    "stateLabel": "Trạng thái",
-    "inherited": "từ {{source}}",
-    "baseValue": "Giá trị gốc:",
-    "clearOverride": "Xóa ghi đè",
-    "tokenMode": "Chế độ token",
-    "customMode": "Chế độ tùy chỉnh px",
-    "selectToken": "-- Chọn token --",
-    "directionRow": "row",
-    "directionColumn": "column",
-    "states": {
-      "normal": "Bình thường",
-      "hover": "Hover",
-      "focus": "Focus",
-      "disabled": "Vô hiệu hóa"
-    },
-    "groups": {
-      "layout": "Bố cục",
-      "spacing": "Khoảng cách",
-      "effects": "Hiệu ứng"
-    },
-    "fields": {
-      "direction": "Hướng",
-      "paddingTop": "Padding trên",
-      "paddingRight": "Padding phải",
-      "paddingBottom": "Padding dưới",
-      "paddingLeft": "Padding trái",
-      "gap": "Khoảng cách (Gap)",
-      "opacity": "Độ mờ đục"
-    },
-    "validation": {
-      "pxRange": "Giá trị px hợp lệ từ 0 đến 10000, tối đa 2 chữ số thập phân",
-      "opacityRange": "Giá trị độ mờ từ 0 đến 100, bội của 5"
-    }
+    "title": "Bạn có tin tưởng dự án này?",
+    "intro": "Chạy một dự án là chạy code của chính nó: cấu hình Vite, các plugin và dependency. Chỉ tin cậy dự án bạn biết rõ.",
+    "project": "Dự án",
+    "restricted": "Khi chưa tin cậy, ReactCraft không khởi động dev server, không cài dependency và không chạy agent AI trên dự án.",
+    "confirm": "Tin cậy dự án này",
+    "later": "Để sau",
+    "close": "Đóng"
   }
 }

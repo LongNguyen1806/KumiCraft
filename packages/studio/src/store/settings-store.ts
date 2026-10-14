@@ -34,7 +34,9 @@ function merge(settings: Settings | undefined, patch: SettingsPatch): Settings |
   return {
     ...settings,
     ...(patch.language === undefined ? {} : { language: patch.language }),
-    export: { ...settings.export, ...patch.export },
+    ...(patch.editor === undefined ? {} : { editor: patch.editor }),
+    ...(patch.packageManager === undefined ? {} : { packageManager: patch.packageManager }),
+    agent: { preferred: patch.agent?.preferred ?? settings.agent.preferred },
   };
 }
 

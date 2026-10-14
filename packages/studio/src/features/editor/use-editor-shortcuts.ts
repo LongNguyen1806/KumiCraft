@@ -1,15 +1,18 @@
-// Keyboard shortcuts of the Editor frame (SPEC-04.1 section 15). `Mod` is Cmd on macOS, Ctrl on
+// Keyboard shortcuts of the Editor frame (SPEC-04 section 19). `Mod` is Cmd on macOS, Ctrl on
 // Windows and Linux. Keys the browser keeps for itself are avoided: Cmd+[ / Cmd+] go back and
-// forward on macOS, Cmd+Y opens the history in Chrome on macOS (spec-log #81).
+// forward on macOS, Cmd+Y opens the history in Chrome on macOS (R-KB-13).
 import { useEffect, useRef } from 'react';
 
 import { isApplePlatform } from '../../app/platform.ts';
 
 export type ShortcutActions = {
-  readonly undo: () => void;
-  readonly redo: () => void;
+  /** Undo and Redo come with the history of M-HI (WP-1.06). */
+  readonly undo?: () => void;
+  readonly redo?: () => void;
   readonly togglePanels: () => void;
 };
+
+export type ShortcutName = keyof ShortcutActions;
 
 /**
  * Typing in a field keeps the browser's own undo for that field. Reads properties instead of
@@ -28,7 +31,7 @@ type KeyPress = Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey' | 'shiftKey' |
 export function shortcutFor(
   event: KeyPress,
   apple: boolean = isApplePlatform(),
-): keyof ShortcutActions | undefined {
+): ShortcutName | undefined {
   const hasMod = apple ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey;
   if (!hasMod || event.altKey) return undefined;
   const key = event.key.toLowerCase();
@@ -48,8 +51,10 @@ export function useEditorShortcuts(actions: ShortcutActions): void {
     const onKeyDown = (event: KeyboardEvent) => {
       const action = shortcutFor(event);
       if (action === undefined || isTypingTarget(event.target ?? undefined)) return;
+      const run = latest.current[action];
+      if (run === undefined) return;
       event.preventDefault();
-      latest.current[action]();
+      run();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => {

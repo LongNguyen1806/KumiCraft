@@ -1,4 +1,4 @@
-// Event bus port for broadcasting server-sent WebSocket events (SPEC-03 section 11).
+// Event bus port for broadcasting server-sent WebSocket events (SPEC-03 section 6).
 
 export type ServerEvent<T extends string = string, P = unknown> = {
   readonly v: 1;

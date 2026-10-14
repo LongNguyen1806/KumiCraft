@@ -1,7 +1,7 @@
-// User configuration (ADR-BE-24, SPEC-03 section 10.2): `config.json` in the user's config folder.
-// Holds the interface language, export options, AI choices and the trusted workspaces (SPEC-05
-// S-82: never stored in the workspace, so a workspace cannot trust itself). API keys never leave
-// the server: Settings only says whether a key is configured.
+// User configuration (ADR-BE-24, SPEC-03 section 5.2): `config.json` in the user's config folder.
+// Holds the interface language, the editor and package manager the user prefers, the agent choice
+// and the trusted projects (S-82: never stored in the project, so a project cannot trust itself).
+// No API key, ever (V-108).
 import { z } from 'zod';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
@@ -12,73 +12,57 @@ import { err, ok, type Result } from './result.ts';
 import type { Platform } from './session.ts';
 
 export const CONFIG_FILE = 'config.json';
-export const AI_PROVIDERS = ['openai', 'anthropic', 'deepseek', 'ollama'] as const;
-export type AIProviderName = (typeof AI_PROVIDERS)[number];
 
-/** Environment variables that win over a stored key (ADR-BE-24). */
-const KEY_ENV: Readonly<Record<AIProviderName, string | undefined>> = {
-  openai: 'OPENAI_API_KEY',
-  anthropic: 'ANTHROPIC_API_KEY',
-  deepseek: 'DEEPSEEK_API_KEY',
-  ollama: undefined,
-};
+export const EDITORS = ['vscode', 'cursor', 'webstorm', 'zed'] as const;
+export const PACKAGE_MANAGERS = ['pnpm', 'npm', 'yarn'] as const;
+export const AGENT_CHOICES = ['auto', 'agy', 'claude'] as const;
 
 const LanguageSchema = z.enum(['vi', 'en']);
-const ProviderSchema = z.enum(AI_PROVIDERS);
+const EditorSchema = z.enum(EDITORS);
+const PackageManagerSchema = z.enum(PACKAGE_MANAGERS);
+const AgentChoiceSchema = z.enum(AGENT_CHOICES);
 
-const UserConfigSchema = z.strictObject({
+const TrustedProjectSchema = z.strictObject({
+  id: z.string(),
+  path: z.string(),
+  links: z.string(),
+});
+
+/**
+ * V-107: a plain object, so keys of 0.18 (`ai`, `export`, `trustedWorkspaces`) are dropped when
+ * read instead of failing the whole file, and disappear at the next write.
+ */
+const UserConfigSchema = z.object({
   language: LanguageSchema.optional(),
-  ai: z
-    .strictObject({
-      provider: ProviderSchema.optional(),
-      model: z.string().min(1).max(200).optional(),
-      ollamaBaseUrl: z.url().default('http://127.0.0.1:11434'),
-      keys: z.partialRecord(ProviderSchema, z.string().min(1)).default({}),
-    })
-    .default({ ollamaBaseUrl: 'http://127.0.0.1:11434', keys: {} }),
-  export: z
-    .strictObject({ typecheck: z.boolean().default(true), buildCheck: z.boolean().default(false) })
-    .default({ typecheck: true, buildCheck: false }),
-  trustedWorkspaces: z
-    .array(z.strictObject({ id: z.string(), path: z.string(), links: z.string().default('') }))
-    .default([]),
+  editor: EditorSchema.default('vscode'),
+  packageManager: PackageManagerSchema.optional(),
+  agent: z.object({ preferred: AgentChoiceSchema.default('auto') }).default({ preferred: 'auto' }),
+  trustedProjects: z.array(TrustedProjectSchema).default([]),
 });
 type UserConfig = z.infer<typeof UserConfigSchema>;
 
-/** What the Studio sees (SPEC-03 section 10.2). No key value is ever included. */
+/** What the Studio sees (SPEC-03 section 5.2). */
 export type Settings = {
   /** Unset until the user picks one; the Studio then follows the browser (ADR-FE-16). */
   readonly language?: 'vi' | 'en';
-  readonly ai: {
-    readonly provider?: AIProviderName;
-    readonly model?: string;
-    readonly ollamaBaseUrl: string;
-    readonly keys: Readonly<Record<AIProviderName, 'configured' | 'missing' | 'fromEnv'>>;
-  };
-  readonly export: { readonly typecheck: boolean; readonly buildCheck: boolean };
+  readonly editor: (typeof EDITORS)[number];
+  readonly packageManager?: (typeof PACKAGE_MANAGERS)[number];
+  readonly agent: { readonly preferred: (typeof AGENT_CHOICES)[number] };
 };
 
 export const SettingsPatchSchema = z.strictObject({
   language: LanguageSchema.optional(),
-  ai: z
-    .strictObject({
-      provider: ProviderSchema.optional(),
-      model: z.string().min(1).max(200).optional(),
-      ollamaBaseUrl: z.url().optional(),
-    })
-    .optional(),
-  export: z
-    .strictObject({ typecheck: z.boolean().optional(), buildCheck: z.boolean().optional() })
-    .optional(),
+  editor: EditorSchema.optional(),
+  packageManager: PackageManagerSchema.optional(),
+  agent: z.strictObject({ preferred: AgentChoiceSchema.optional() }).optional(),
 });
 export type SettingsPatch = z.infer<typeof SettingsPatchSchema>;
 
 export type ConfigStoreDeps = {
   readonly fs: FileSystemPort;
-  /** The user's config folder (env-paths). */
+  /** The user's config folder (env-paths, or REACTCRAFT_CONFIG_DIR). */
   readonly dir: string;
   readonly platform: Platform;
-  readonly env: Readonly<Record<string, string | undefined>>;
   readonly logger: LoggerPort;
 };
 
@@ -91,42 +75,22 @@ export type ConfigStore = {
 
 const defaults = (): UserConfig => UserConfigSchema.parse({});
 
-/** Keeps only the fields that a patch actually sets. */
-type Defined<T> = { [K in keyof T]?: Exclude<T[K], undefined> };
-
-const definedOnly = <T extends object>(value: T | undefined): Defined<T> =>
-  Object.fromEntries(
-    Object.entries(value ?? {}).filter(([, item]) => item !== undefined),
-  ) as Defined<T>;
-
 function merge(config: UserConfig, patch: SettingsPatch): UserConfig {
   return {
     ...config,
     ...(patch.language === undefined ? {} : { language: patch.language }),
-    ai: { ...config.ai, ...definedOnly(patch.ai) },
-    export: { ...config.export, ...definedOnly(patch.export) },
+    ...(patch.editor === undefined ? {} : { editor: patch.editor }),
+    ...(patch.packageManager === undefined ? {} : { packageManager: patch.packageManager }),
+    agent: { preferred: patch.agent?.preferred ?? config.agent.preferred },
   };
 }
 
-function toSettings(config: UserConfig, env: ConfigStoreDeps['env']): Settings {
-  const keyStatus = (provider: AIProviderName) => {
-    const variable = KEY_ENV[provider];
-    if (variable !== undefined && (env[variable] ?? '') !== '') return 'fromEnv' as const;
-    return config.ai.keys[provider] === undefined ? ('missing' as const) : ('configured' as const);
-  };
-  return {
-    ...(config.language === undefined ? {} : { language: config.language }),
-    ai: {
-      ...(config.ai.provider === undefined ? {} : { provider: config.ai.provider }),
-      ...(config.ai.model === undefined ? {} : { model: config.ai.model }),
-      ollamaBaseUrl: config.ai.ollamaBaseUrl,
-      keys: Object.fromEntries(
-        AI_PROVIDERS.map((provider) => [provider, keyStatus(provider)]),
-      ) as Settings['ai']['keys'],
-    },
-    export: { ...config.export },
-  };
-}
+const toSettings = (config: UserConfig): Settings => ({
+  ...(config.language === undefined ? {} : { language: config.language }),
+  editor: config.editor,
+  ...(config.packageManager === undefined ? {} : { packageManager: config.packageManager }),
+  agent: { ...config.agent },
+});
 
 /** A missing or broken `config.json` falls back to defaults, with a warning. */
 async function loadConfig(deps: ConfigStoreDeps): Promise<UserConfig> {
@@ -155,24 +119,24 @@ export async function createConfigStore(deps: ConfigStoreDeps): Promise<ConfigSt
   };
   const samePath = (a: string, b: string) =>
     isInside(a, b, deps.platform) && isInside(b, a, deps.platform);
-  /** Same workspace in the same folder, whatever its links. */
-  const isSameWorkspace = (entry: { id: string; path: string }, key: TrustKey) =>
+  /** Same project in the same folder, whatever its links. */
+  const isSameProject = (entry: { id: string; path: string }, key: TrustKey) =>
     entry.id === key.id && samePath(entry.path, key.path);
 
   return {
-    settings: () => toSettings(config, deps.env),
+    settings: () => toSettings(config),
     async updateSettings(patch) {
       const saved = await save(merge(config, patch));
-      return saved.ok ? ok(toSettings(config, deps.env)) : err(saved.error);
+      return saved.ok ? ok(toSettings(config)) : err(saved.error);
     },
     isTrusted: (key) =>
-      config.trustedWorkspaces.some(
-        (entry) => isSameWorkspace(entry, key) && entry.links === key.links,
+      config.trustedProjects.some(
+        (entry) => isSameProject(entry, key) && entry.links === key.links,
       ),
     async setTrusted(key, trusted) {
-      const others = config.trustedWorkspaces.filter((entry) => !isSameWorkspace(entry, key));
+      const others = config.trustedProjects.filter((entry) => !isSameProject(entry, key));
       const entry = { id: key.id, path: key.path, links: key.links };
-      return save({ ...config, trustedWorkspaces: trusted ? [...others, entry] : others });
+      return save({ ...config, trustedProjects: trusted ? [...others, entry] : others });
     },
   };
 }

@@ -8,7 +8,7 @@ import { initI18n } from '../../i18n/i18n.ts';
 import { useSettingsStore } from '../../store/settings-store.ts';
 import { SettingsButton } from './settings-button.tsx';
 
-const DEFAULTS: Settings = { export: { typecheck: true, buildCheck: false } };
+const DEFAULTS: Settings = { editor: 'vscode', agent: { preferred: 'auto' } };
 
 type Sent = { readonly method: string; readonly body: unknown };
 let sent: Sent[];
@@ -30,7 +30,7 @@ function stubSettings(stored: Settings = DEFAULTS, failCode?: string) {
       }
       if (method === 'PATCH') {
         const patch = body as Partial<Settings>;
-        current = { ...current, ...patch, export: { ...current.export, ...patch.export } };
+        current = { ...current, ...patch, agent: { ...current.agent, ...patch.agent } };
       }
       return Promise.resolve(new Response(JSON.stringify({ data: current }), { status: 200 }));
     }),
@@ -82,31 +82,36 @@ describe('Settings dialog', () => {
     expect(patches()).toEqual([{ language: 'vi' }]);
   });
 
-  it('saves an export option and says so', async () => {
+  it('saves the editor that opens source files and says so', async () => {
     stubSettings();
     await openSettings();
 
-    fireEvent.click(screen.getByRole('switch', { name: 'Test-build the project after exporting' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Cursor' }));
 
     expect(await screen.findByText('Saved')).toBeDefined();
-    expect(patches()).toEqual([{ export: { buildCheck: true } }]);
-    expect(useSettingsStore.getState().settings?.export).toEqual({
-      typecheck: true,
-      buildCheck: true,
+    expect(patches()).toEqual([{ editor: 'cursor' }]);
+    expect(useSettingsStore.getState().settings?.editor).toBe('cursor');
+  });
+
+  it('saves the package manager for new projects', async () => {
+    stubSettings();
+    await openSettings();
+
+    fireEvent.click(screen.getByRole('radio', { name: 'pnpm' }));
+
+    await vi.waitFor(() => {
+      expect(patches()).toEqual([{ packageManager: 'pnpm' }]);
     });
   });
 
-  it('puts the option back and explains when it cannot be saved', async () => {
+  it('puts the choice back and explains when it cannot be saved', async () => {
     stubSettings(DEFAULTS, 'E011');
     await openSettings();
-    const typecheck = screen.getByRole('switch', {
-      name: 'Check TypeScript types after exporting',
-    });
 
-    fireEvent.click(typecheck);
+    fireEvent.click(screen.getByRole('radio', { name: 'Zed' }));
 
     expect((await screen.findByRole('alert')).textContent).toContain('(E011)');
-    expect(typecheck.getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('radio', { name: 'VS Code' })).toHaveProperty('checked', true);
   });
 });
 

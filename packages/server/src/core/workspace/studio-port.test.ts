@@ -1,9 +1,12 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
+import { newWorkspaceFile, serializeWorkspaceFile, WORKSPACE_FILE } from '@reactcraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { ok } from '../shared/result.ts';
-import { CreateWorkspaceRequestSchema } from './create-workspace.ts';
 import { readRememberedPort, rememberPort, STUDIO_CACHE_FILE } from './studio-port.ts';
-import { fakeSystem, makeTempDir, nodeFs, sequenceIds, silentLogger } from './test-support.ts';
+import { fakeSystem, makeTempDir, nodeFs, silentLogger } from './test-support.ts';
 import { createWorkspaceService } from './workspace-service.ts';
 
 let dir: string;
@@ -36,32 +39,24 @@ describe('studio port', () => {
   });
 
   it('is written when the workspace service takes the lock', async () => {
+    await mkdir(join(dir, '.reactcraft'));
+    const file = newWorkspaceFile({
+      id: 'shop000001',
+      name: 'Shop',
+      createdAt: '2026-10-14T08:00:00.000Z',
+      responsiveMode: 'desktop-first',
+    });
+    await writeFile(join(dir, WORKSPACE_FILE), serializeWorkspaceFile(file));
     const service = createWorkspaceService({
       fs: nodeFs,
       root: dir,
       system: fakeSystem(1, new Set([1])),
-      config: {
-        settings: () => ({
-          ai: {
-            ollamaBaseUrl: 'http://127.0.0.1:11434',
-            keys: {
-              openai: 'missing',
-              anthropic: 'missing',
-              deepseek: 'missing',
-              ollama: 'missing',
-            },
-          },
-          export: { typecheck: true, buildCheck: false },
-        }),
-        isTrusted: () => false,
-        setTrusted: () => Promise.resolve(ok(undefined)),
-      },
+      config: { isTrusted: () => false, setTrusted: () => Promise.resolve(ok(undefined)) },
       logger: silentLogger,
       port: 50123,
-      newId: sequenceIds(),
     });
 
-    await service.create(CreateWorkspaceRequestSchema.parse({ name: 'Shop' }));
+    await service.open();
     await service.close();
 
     expect(await readRememberedPort(nodeFs, dir)).toBe(50123);

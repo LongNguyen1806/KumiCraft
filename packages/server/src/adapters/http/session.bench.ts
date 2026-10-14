@@ -13,7 +13,7 @@ test('GET /api/v1/session with token, Host and Origin checks', async ({ bench })
       version: '0.0.0',
       platform: 'linux',
       features: [],
-      workspace: { state: 'none', directory: '/w' },
+      project: { state: 'none', suggestedPath: '/w' },
     }),
   });
 

@@ -1,4 +1,4 @@
-// Network security of the Local Backend (SPEC-05 sections 5 and 6): loopback only, Host and Origin
+// Network security of the Local Server (SPEC-05 sections 3 and 4): loopback only, Host and Origin
 // checks, session token on every API request, browser security headers.
 import { createHash, timingSafeEqual } from 'node:crypto';
 
@@ -18,8 +18,7 @@ type Rejection = { readonly error: AppError; readonly status?: number };
 
 const LOOPBACK_ADDRESSES = new Set(['127.0.0.1', '::ffff:127.0.0.1']);
 const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
-const ALLOWED_BODY_TYPES = ['application/json', 'multipart/form-data'];
-const CANVAS_FRAME_PATH = '/canvas-frame.html';
+const ALLOWED_BODY_TYPES = ['application/json'];
 const BEARER_PREFIX = 'Bearer ';
 
 const digest = (value: string): Buffer => createHash('sha256').update(value).digest();
@@ -30,22 +29,24 @@ export function isTokenValid(authorization: string | undefined, sessionToken: st
   return timingSafeEqual(digest(authorization.slice(BEARER_PREFIX.length)), digest(sessionToken));
 }
 
-/** S-10, S-11, S-12. The canvas iframe may be framed by the Studio itself, nothing else may be. */
-export function securityHeaders(port: number, path: string): Readonly<Record<string, string>> {
-  const isCanvasFrame = path === CANVAS_FRAME_PATH;
+/**
+ * S-10, S-11, S-12. The Canvas frames the dev server of the project, on another port of 127.0.0.1
+ * (ADR-FE-04); nothing may frame the Studio.
+ */
+export function securityHeaders(port: number): Readonly<Record<string, string>> {
   const csp = [
     "default-src 'self'",
     "script-src 'self'",
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' blob: data: https: http:",
+    "img-src 'self' blob: data:",
     "font-src 'self'",
     `connect-src 'self' ws://127.0.0.1:${String(port)} ws://localhost:${String(port)}`,
-    "frame-src 'self'",
+    'frame-src http://127.0.0.1:*',
     "worker-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'none'",
     "form-action 'none'",
-    isCanvasFrame ? "frame-ancestors 'self'" : "frame-ancestors 'none'",
+    "frame-ancestors 'none'",
   ].join('; ');
   return {
     'Content-Security-Policy': csp,
@@ -54,7 +55,7 @@ export function securityHeaders(port: number, path: string): Readonly<Record<str
     'Cross-Origin-Opener-Policy': 'same-origin',
     'Cross-Origin-Resource-Policy': 'same-origin',
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-    ...(isCanvasFrame ? {} : { 'X-Frame-Options': 'DENY' }),
+    'X-Frame-Options': 'DENY',
   };
 }
 
@@ -114,8 +115,7 @@ export function registerSecurity(app: FastifyInstance, options: SecurityOptions)
   });
 
   app.addHook('onRequest', (request, reply, done) => {
-    const path = request.url.split('?')[0] ?? request.url;
-    void reply.headers(securityHeaders(options.port, path));
+    void reply.headers(securityHeaders(options.port));
     const rejection = checkRequest(request, options, allowed);
     if (rejection === undefined) {
       done();

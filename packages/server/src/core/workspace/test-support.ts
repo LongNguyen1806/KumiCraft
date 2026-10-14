@@ -41,12 +41,6 @@ export function fakeSystem(
   };
 }
 
-/** Deterministic ids: `id0000001`… padded to the requested size. */
-export function sequenceIds(): (size: number) => string {
-  let counter = 0;
-  return (size) => String(++counter).padStart(size, '0');
-}
-
 export async function makeTempDir(): Promise<{ dir: string; cleanup: () => Promise<void> }> {
   const dir = await mkdtemp(join(tmpdir(), 'reactcraft-ws-'));
   return { dir, cleanup: () => rm(dir, { recursive: true, force: true }) };

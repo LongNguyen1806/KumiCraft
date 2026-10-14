@@ -1,5 +1,5 @@
 // Fastify application: API under /api/v1, the built Studio as static files on the same origin
-// (ADR-BE-03, ADR-BE-06, SPEC-03 section 9).
+// (ADR-BE-03, ADR-BE-06, SPEC-03 section 4).
 import { randomBytes } from 'node:crypto';
 
 import fastifyStatic from '@fastify/static';
@@ -14,9 +14,9 @@ import Fastify, {
 
 import type { SessionInfo } from '../../core/shared/session.ts';
 import { type EventRoutesDeps, registerEventRoutes } from './routes/events.ts';
+import { type ProjectRoutesDeps, registerProjectRoutes } from './routes/project.ts';
 import { registerSessionRoutes } from './routes/session.ts';
 import { registerSettingsRoutes, type SettingsRoutesDeps } from './routes/settings.ts';
-import { registerWorkspaceRoutes, type WorkspaceRoutesDeps } from './routes/workspace.ts';
 import { registerSecurity, type SecurityOptions } from './security.ts';
 import { sendError } from './send-error.ts';
 
@@ -26,7 +26,7 @@ export type HttpAppOptions = {
   readonly logLevel: LogLevel;
   readonly security: SecurityOptions;
   readonly getSessionInfo: () => SessionInfo;
-  readonly workspaceRoutes?: WorkspaceRoutesDeps;
+  readonly projectRoutes?: ProjectRoutesDeps;
   readonly eventRoutes?: EventRoutesDeps;
   readonly settingsRoutes?: SettingsRoutesDeps;
   /** Directory of the built Studio. When absent, only the API is served. */
@@ -85,8 +85,8 @@ async function registerApiRoutes(app: FastifyInstance, options: HttpAppOptions):
   await app.register(
     (api, _opts, done) => {
       registerSessionRoutes(api, options.getSessionInfo);
-      if (options.workspaceRoutes !== undefined) {
-        registerWorkspaceRoutes(api, options.workspaceRoutes);
+      if (options.projectRoutes !== undefined) {
+        registerProjectRoutes(api, options.projectRoutes);
       }
       if (options.settingsRoutes !== undefined) {
         registerSettingsRoutes(api, options.settingsRoutes);

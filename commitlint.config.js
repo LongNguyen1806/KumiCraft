@@ -13,7 +13,18 @@ const TYPES = [
   'spike',
 ];
 
-const SCOPES = ['model', 'server', 'studio', 'cli', 'e2e', 'fixtures', 'repo', 'docs'];
+const SCOPES = [
+  'shared',
+  'server',
+  'bridge',
+  'studio',
+  'cli',
+  'e2e',
+  'fixtures',
+  'templates',
+  'repo',
+  'docs',
+];
 
 export default {
   extends: ['@commitlint/config-conventional'],

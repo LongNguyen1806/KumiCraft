@@ -14,7 +14,7 @@ const nodeProject = (name) => ({
 export default defineConfig({
   test: {
     projects: [
-      nodeProject('model'),
+      nodeProject('shared'),
       nodeProject('server'),
       nodeProject('cli'),
       {
@@ -41,10 +41,9 @@ export default defineConfig({
       reporter: ['text-summary', 'json-summary', 'html'],
       thresholds: {
         lines: 70,
-        'packages/model/src/**': { lines: 90 },
+        'packages/shared/src/**': { lines: 90 },
         'packages/server/src/core/**': { lines: 80 },
         'packages/studio/src/store/**': { lines: 80 },
-        'packages/studio/src/features/dnd/**': { lines: 80 },
       },
     },
   },

@@ -7,7 +7,7 @@
     "connecting": "Connecting to ReactCraft…",
     "lost": {
       "title": "Lost connection to ReactCraft",
-      "body": "Trying to reconnect. You can keep editing once the connection is back."
+      "body": "Trying to reconnect. You can keep working once the connection is back."
     }
   },
   "language": {
@@ -15,99 +15,38 @@
     "vi": "Tiếng Việt",
     "en": "English"
   },
-  "welcome": {
-    "title": "Welcome to ReactCraft",
-    "subtitle": "This folder has no workspace yet. Create one to start designing.",
-    "directory": "Folder",
-    "storage": "The design is saved as JSON files in the .reactcraft/ folder right here. You can commit it to Git with your source code.",
-    "form": {
-      "name": "Workspace name",
-      "namePlaceholder": "For example: Fashion store",
-      "mode": "Which screen do you design for first?",
-      "desktopFirst": "Desktop first",
-      "desktopFirstHelp": "Design for large screens, then adjust for tablets and phones.",
-      "mobileFirst": "Mobile first",
-      "mobileFirstHelp": "Design for phones, then expand to larger screens.",
-      "frame": "Primary frame",
-      "custom": "Custom",
-      "width": "Width",
-      "height": "Height",
-      "framesPreview": "The workspace gets these frames:",
-      "frameItem": "{{label}} {{width}} × {{height}}",
-      "locale": "Content language",
-      "localeHelp": "Language of the website you design: used for sample data and for number, currency and date formats. Separate from the Studio interface language.",
-      "locales": {
-        "vi-VN": "Tiếng Việt (vi-VN)",
-        "en-US": "English (en-US)"
-      },
-      "advanced": "Advanced options",
-      "darkMode": "Website dark mode",
-      "dark": {
-        "none": "None",
-        "media": "Follow the system",
-        "class": "Toggle with a class"
-      },
-      "submit": "Create workspace",
-      "submitting": "Creating…",
-      "errors": {
-        "name": "Name the workspace, up to 64 characters.",
-        "frameSize": "Frames are 320 to 3840 px wide and 320 to 2160 px high."
-      }
-    }
+  "noProject": {
+    "title": "No project is open",
+    "body": "ReactCraft opens the project in the folder where you started it. This folder has no ReactCraft project yet (.reactcraft/workspace.json).",
+    "folder": "Folder"
   },
-  "workspaceError": {
-    "title": "Cannot open the workspace",
-    "intro": "Some workspace files are broken. ReactCraft does not open a workspace in part, so nothing is overwritten and lost. Restore from a backup, or fix the file by hand and press Try again.",
-    "files": "Broken files",
-    "restore": "Restore the latest backup",
-    "backupFrom": "Backup from {{time}}",
-    "noBackup": "This file has no backup yet. Fix it by hand.",
-    "retry": "Try again"
+  "projectError": {
+    "title": "Cannot open the project",
+    "oldVersion": "This project was saved by an older ReactCraft that kept the design in JSON files. That format is no longer read.",
+    "howToFix": "ReactCraft never overwrites .reactcraft/workspace.json. Fix or remove the file, then start ReactCraft again."
   },
   "editor": {
     "canvas": "Canvas",
-    "revision": "revision {{revision}}",
-    "page": "Page",
-    "frames": "Design frames",
-    "zoom": "{{percent}}%",
-    "zoomFit": "Zoom to fit the frame",
-    "frameSize": "{{width}} × {{height}}",
+    "canvasPending": "The Canvas will show your project running here, from its own dev server.",
     "undo": "Undo ({{shortcut}})",
     "redo": "Redo ({{shortcut}})",
-    "exportCode": "Export code",
-    "exportLater": "Available from Phase 3",
     "toggleLeft": "Show or hide the left panel ({{shortcut}}: both panels)",
     "toggleRight": "Show or hide the right panel ({{shortcut}}: both panels)",
     "resizeLeft": "Resize the left panel",
     "resizeRight": "Resize the right panel",
-    "leftPanel": "Layers and library",
+    "leftPanel": "Layers",
     "rightPanel": "Properties",
     "layers": "Layers",
-    "library": "Library",
-    "libraryLater": "The library of elements to drag onto the page comes with drag and drop.",
+    "layersHint": "The structure of the page shows here once the Canvas runs your project.",
     "properties": "Properties",
-    "data": "Data",
     "ai": "AI",
-    "selectHint": "Select an element in Layers to see its properties.",
-    "sync": {
-      "saved": "Saved",
-      "saving": "Saving…",
-      "error": "Save failed",
-      "external_conflict": "The design was changed elsewhere"
-    },
-    "mode": {
-      "desktop-first": "Desktop first",
-      "mobile-first": "Mobile first"
-    },
+    "selectHint": "Select an element on the Canvas to edit its Tailwind classes here.",
+    "trusted": "Trusted project",
+    "restricted": "Restricted mode: nothing of this project runs",
     "narrow": {
       "title": "The Studio needs a screen at least 1024 px wide",
-      "body": "Open it on a computer or widen the browser window. Your design keeps being saved."
-    },
-    "notice": {
-      "E017": "The design changed elsewhere, so it was reloaded. Undo history was cleared.",
-      "E005": "The server refused the last change, so the design was reloaded. Undo history was cleared."
-    },
-    "selectedCount": "{{count}} items selected"
+      "body": "Open it on a computer or widen the browser window. Your source code is not affected."
+    }
   },
   "settings": {
     "open": "Settings",
@@ -115,160 +54,30 @@
     "close": "Close",
     "interface": "Interface",
     "language": "Interface language",
-    "languageHelp": "Changes at once, without reloading. Remembered for every workspace on this computer.",
-    "export": "Code export",
-    "exportLater": "Applies once code export is available (Phase 3).",
-    "typecheck": "Check TypeScript types after exporting",
-    "typecheckHelp": "Finds type errors in the exported code before you run the project. Turn off to export a few seconds faster.",
-    "buildCheck": "Test-build the project after exporting",
-    "buildCheckHelp": "Runs the project build to make sure it still builds. The build runs the project's own configuration and plugins, so turn it on only for projects you trust.",
+    "languageHelp": "Changes at once, without reloading. Remembered for every project on this computer.",
+    "tools": "Tools",
+    "editor": "Editor that opens source files",
+    "editorHelp": "\"Open in editor\" jumps to the file and line of the selected element in this editor.",
+    "editors": {
+      "vscode": "VS Code",
+      "cursor": "Cursor",
+      "webstorm": "WebStorm",
+      "zed": "Zed"
+    },
+    "packageManager": "Package manager for new projects",
+    "packageManagerHelp": "Installs the dependencies of a project ReactCraft creates. An existing project keeps its own.",
     "saving": "Saving…",
     "saved": "Saved"
   },
   "trust": {
-    "bar": "This workspace is not trusted: backend scanning, code export and AI are locked. You can still view and edit the design.",
+    "bar": "This project is not trusted: its dev server, dependency installs and AI agents do not run. You can still look around.",
     "review": "Review and trust",
-    "title": "Do you trust this workspace?",
-    "intro": "This workspace is not trusted on this computer yet. When you scan a backend or export code, ReactCraft reads and writes the folders below.",
-    "restricted": "Until you trust it, you can view and edit the design; backend scanning, code export, test builds and sending source code to AI are locked.",
-    "confirm": "Trust this workspace",
-    "later": "Not now, only view and edit the design",
-    "close": "Close",
-    "targetProject": "Target Project (where code is written)",
-    "noLinks": "This workspace points to no other folder.",
-    "outside": "Outside the workspace folder: make sure you know this folder."
-  },
-  "canvas": {
-    "emptyPlaceholder": "Drag elements here",
-    "noActivePage": "No active page selected",
-    "defaultButton": "Button",
-    "defaultLink": "Link",
-    "imagePlaceholder": "Image placeholder",
-    "slot": "Slot: {{name}}",
-    "initiallyHidden": "Hidden on page load"
-  },
-  "overlay": {
-    "textFromData": "Content is bound to data",
-    "textHasFormat": "Formatted content will be editable in rich text",
-    "editFailed": "Failed to save text"
-  },
-  "dnd": {
-    "intoContainer": "Into {{name}}",
-    "dropIndicator": "Drop here",
-    "announcements": {
-      "pickedUp": "Picked up {{name}}",
-      "moved": "At position {{index}} of {{container}}",
-      "dropped": "Dropped {{name}}",
-      "cancelled": "Cancelled drag"
-    }
-  },
-  "library": {
-    "title": "Library",
-    "searchPlaceholder": "Search components…",
-    "noResults": "No components found",
-    "category": {
-      "layout": "Layout",
-      "content": "Content",
-      "form": "Form",
-      "data": "Data",
-      "composite": "Composite"
-    },
-    "presets": {
-      "stackRow": "Stack row",
-      "stackCol": "Stack col",
-      "grid3Col": "3-column grid",
-      "gridAuto": "Auto-fit grid",
-      "section": "Section",
-      "container": "Container",
-      "heading": "Heading",
-      "text": "Text",
-      "image": "Image",
-      "icon": "Icon",
-      "link": "Link",
-      "divider": "Divider",
-      "badge": "Badge",
-      "avatar": "Avatar",
-      "form": "Form",
-      "input": "Input",
-      "textarea": "Textarea",
-      "select": "Select",
-      "checkbox": "Checkbox",
-      "radio": "Radio",
-      "switch": "Switch",
-      "button": "Button",
-      "table": "Table",
-      "list": "List",
-      "detailView": "Detail view",
-      "card": "Card",
-      "navbar": "Navbar",
-      "sidebar": "Sidebar",
-      "footer": "Footer",
-      "modal": "Modal",
-      "tabs": "Tabs",
-      "hero": "Hero"
-    }
-  },
-  "layers": {
-    "title": "Layers",
-    "empty": "No elements",
-    "menu": {
-      "duplicate": "Duplicate",
-      "delete": "Delete",
-      "wrapRow": "Wrap in Row",
-      "wrapColumn": "Wrap in Column",
-      "wrapGrid": "Wrap in Grid",
-      "unwrap": "Unwrap",
-      "rename": "Rename",
-      "copy": "Copy",
-      "pasteInside": "Paste inside"
-    },
-    "actions": {
-      "hide": "Hide layer",
-      "show": "Show layer",
-      "lock": "Lock layer",
-      "unlock": "Unlock layer",
-      "expand": "Expand",
-      "collapse": "Collapse"
-    },
-    "binding": "Bound to data"
-  },
-  "inspector": {
-    "scopePrefix": "Editing:",
-    "base": "Base",
-    "overrideDesktopFirst": "Override < {{min}} px",
-    "overrideMobileFirst": "Override ≥ {{min}} px",
-    "stateLabel": "State",
-    "inherited": "from {{source}}",
-    "baseValue": "Base value:",
-    "clearOverride": "Clear override",
-    "tokenMode": "Token mode",
-    "customMode": "Custom px mode",
-    "selectToken": "-- Select token --",
-    "directionRow": "row",
-    "directionColumn": "column",
-    "states": {
-      "normal": "Normal",
-      "hover": "Hover",
-      "focus": "Focus",
-      "disabled": "Disabled"
-    },
-    "groups": {
-      "layout": "Layout",
-      "spacing": "Spacing",
-      "effects": "Effects"
-    },
-    "fields": {
-      "direction": "Direction",
-      "paddingTop": "Padding top",
-      "paddingRight": "Padding right",
-      "paddingBottom": "Padding bottom",
-      "paddingLeft": "Padding left",
-      "gap": "Gap",
-      "opacity": "Opacity"
-    },
-    "validation": {
-      "pxRange": "Valid px value from 0 to 10000, max 2 decimal places",
-      "opacityRange": "Valid opacity from 0 to 100, multiple of 5"
-    }
+    "title": "Do you trust this project?",
+    "intro": "Running a project runs its own code: the Vite configuration, its plugins and its dependencies. Trust only projects you know.",
+    "project": "Project",
+    "restricted": "Until you trust it, ReactCraft does not start its dev server, install its dependencies or run an AI agent on it.",
+    "confirm": "Trust this project",
+    "later": "Not now",
+    "close": "Close"
   }
 }

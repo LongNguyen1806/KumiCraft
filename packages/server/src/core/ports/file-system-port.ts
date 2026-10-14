@@ -1,4 +1,4 @@
-// FileSystemPort (SPEC-01.1 section 3.2, QC-63): the only way core touches files. Every path is
+// FileSystemPort (SPEC-01 section 3.2, QC-63): the only way core touches files. Every path is
 // relative to an allowed root and checked by the adapter (SPEC-05 S-20 to S-24).
 import type { Result } from '../shared/result.ts';
 

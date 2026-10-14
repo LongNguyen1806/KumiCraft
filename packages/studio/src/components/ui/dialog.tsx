@@ -29,7 +29,7 @@ export function Dialog({ open, title, closeLabel, onClose, children }: DialogPro
       }}
       aria-labelledby={titleId}
       onClose={onClose}
-      className="m-auto w-[min(520px,calc(100vw-32px))] rounded-panel bg-card-solid p-0 text-ink shadow-soft backdrop:bg-wash-cool/60 backdrop:backdrop-blur-sm"
+      className="m-auto w-[min(520px,calc(100vw-32px))] rounded-panel whitespace-normal bg-card-solid p-0 text-ink shadow-soft backdrop:bg-wash-cool/60 backdrop:backdrop-blur-sm"
     >
       <div className="flex items-center gap-3 px-7 pt-6 pb-2">
         <h2 id={titleId} className="text-[22px] font-light tracking-tight">
@@ -43,7 +43,7 @@ export function Dialog({ open, title, closeLabel, onClose, children }: DialogPro
           {closeLabel}
         </button>
       </div>
-      <div className="grid gap-1 px-7 pb-7">{children}</div>
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-1 px-7 pb-7">{children}</div>
     </dialog>
   );
 }

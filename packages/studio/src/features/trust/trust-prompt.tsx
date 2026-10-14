@@ -1,19 +1,13 @@
-// Workspace trust in the Studio (SPEC-05 S-80, S-81, SPEC-04.1 section 6.1): an untrusted workspace
-// opens in restricted mode. The first time in a tab the Studio asks; afterwards a bar stays on top.
-import type { WorkspaceMeta } from '@reactcraft/model';
+// Project trust in the Studio (SPEC-05 S-80, S-81): an untrusted project opens in restricted mode,
+// where nothing of the project runs. The first time in a tab the Studio asks; afterwards a bar
+// stays on top. The list of linked backends comes with GET /project (WP-1.03).
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ApiError } from '../../api/http.ts';
-import { setWorkspaceTrust } from '../../api/workspace-client.ts';
+import { setProjectTrust } from '../../api/project-client.ts';
 import { Dialog } from '../../components/ui/dialog.tsx';
 import { errorText } from '../../routes/error-text.ts';
-
-type Link = { readonly label: string; readonly path: string };
-
-/** An absolute path or one going up leaves the workspace folder (S-80 warning). */
-export const isOutsideWorkspace = (path: string): boolean =>
-  /^([a-zA-Z]:[\\/]|[\\/]|\.\.([\\/]|$))/.test(path);
 
 const askedKey = (id: string) => `reactcraft.trustAsked.${id}`;
 
@@ -34,17 +28,18 @@ function rememberAsked(id: string): void {
 }
 
 type TrustPromptProps = {
-  readonly workspace: WorkspaceMeta;
-  /** Reads the session again once the workspace is trusted. */
+  readonly projectId: string;
+  readonly projectName: string;
+  /** Reads the session again once the project is trusted. */
   readonly onTrusted: () => void;
 };
 
 /** Warning bar of restricted mode, and the trust question (shown once per tab at first). */
-export function TrustPrompt({ workspace, onTrusted }: TrustPromptProps) {
+export function TrustPrompt({ projectId, projectName, onTrusted }: TrustPromptProps) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(() => !wasAsked(workspace.id));
+  const [open, setOpen] = useState(() => !wasAsked(projectId));
   const close = () => {
-    rememberAsked(workspace.id);
+    rememberAsked(projectId);
     setOpen(false);
   };
   return (
@@ -65,23 +60,25 @@ export function TrustPrompt({ workspace, onTrusted }: TrustPromptProps) {
           {t('trust.review')}
         </button>
       </div>
-      <TrustDialog open={open} workspace={workspace} onClose={close} onTrusted={onTrusted} />
+      <TrustDialog open={open} projectName={projectName} onClose={close} onTrusted={onTrusted} />
     </>
   );
 }
 
-type TrustDialogProps = TrustPromptProps & {
+type TrustDialogProps = {
   readonly open: boolean;
+  readonly projectName: string;
   readonly onClose: () => void;
+  readonly onTrusted: () => void;
 };
 
-function TrustDialog({ open, workspace, onClose, onTrusted }: TrustDialogProps) {
+function TrustDialog({ open, projectName, onClose, onTrusted }: TrustDialogProps) {
   const { t } = useTranslation();
   const { t: tError } = useTranslation('errors');
   const [failedCode, setFailedCode] = useState<string>();
   const trust = async () => {
     try {
-      await setWorkspaceTrust(true);
+      await setProjectTrust(true);
       onClose();
       onTrusted();
     } catch (error) {
@@ -91,7 +88,12 @@ function TrustDialog({ open, workspace, onClose, onTrusted }: TrustDialogProps) 
   return (
     <Dialog open={open} title={t('trust.title')} closeLabel={t('trust.close')} onClose={onClose}>
       <p className="text-ink-soft">{t('trust.intro')}</p>
-      <LinkList workspace={workspace} />
+      <p className="grid gap-0.5 rounded-2xl bg-field px-4 py-2.5">
+        <span className="text-xs text-ink-faint">{t('trust.project')}</span>
+        <span className="font-medium break-all" data-testid="trust-project">
+          {projectName}
+        </span>
+      </p>
       <p className="pt-2 text-xs text-ink-faint">{t('trust.restricted')}</p>
       {failedCode !== undefined && (
         <p role="alert" className="text-danger">
@@ -115,33 +117,5 @@ function TrustDialog({ open, workspace, onClose, onTrusted }: TrustDialogProps) 
         </button>
       </div>
     </Dialog>
-  );
-}
-
-/** The folders the workspace points to, with a warning for those outside it (S-80). */
-function LinkList({ workspace }: { readonly workspace: WorkspaceMeta }) {
-  const { t } = useTranslation();
-  const links: Link[] = [
-    ...(workspace.targetProject === undefined
-      ? []
-      : [{ label: t('trust.targetProject'), path: workspace.targetProject.path }]),
-    ...workspace.backends.map((backend) => ({ label: backend.label, path: backend.path })),
-  ];
-  if (links.length === 0) return <p className="pt-2">{t('trust.noLinks')}</p>;
-  return (
-    <ul className="grid gap-2 pt-2" data-testid="trust-links">
-      {links.map((link) => (
-        <li
-          key={`${link.label}:${link.path}`}
-          className="grid gap-0.5 rounded-2xl bg-field px-4 py-2.5"
-        >
-          <span className="text-xs text-ink-faint">{link.label}</span>
-          <span className="font-mono text-xs break-all">{link.path}</span>
-          {isOutsideWorkspace(link.path) && (
-            <span className="text-xs text-danger">{t('trust.outside')}</span>
-          )}
-        </li>
-      ))}
-    </ul>
   );
 }

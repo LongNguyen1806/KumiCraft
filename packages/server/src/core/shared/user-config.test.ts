@@ -20,8 +20,8 @@ const logger: LoggerPort = {
 };
 
 let dir: string;
-const store = (env: Record<string, string> = {}) =>
-  createConfigStore({ fs: createNodeFileSystem(platform), dir, platform, env, logger });
+const store = () =>
+  createConfigStore({ fs: createNodeFileSystem(platform), dir, platform, logger });
 
 beforeEach(async () => {
   dir = await mkdtemp(join(tmpdir(), 'reactcraft-config-'));
@@ -36,33 +36,25 @@ describe('createConfigStore', () => {
   it('starts from defaults without a config file', async () => {
     const settings = (await store()).settings();
 
-    expect(settings).toEqual({
-      ai: {
-        ollamaBaseUrl: 'http://127.0.0.1:11434',
-        keys: { openai: 'missing', anthropic: 'missing', deepseek: 'missing', ollama: 'missing' },
-      },
-      export: { typecheck: true, buildCheck: false },
-    });
+    expect(settings).toEqual({ editor: 'vscode', agent: { preferred: 'auto' } });
     expect(warnings).toEqual([]);
   });
 
   it('merges patches, keeps untouched fields and persists them', async () => {
     const first = await store();
-    await first.updateSettings({ language: 'vi', export: { buildCheck: true } });
-    const updated = await first.updateSettings({ ai: { model: 'gpt-x' } });
+    await first.updateSettings({ language: 'vi', packageManager: 'pnpm' });
+    const updated = await first.updateSettings({ editor: 'cursor', agent: { preferred: 'agy' } });
 
-    expect(updated).toMatchObject({
+    expect(updated).toEqual({
       ok: true,
       value: {
         language: 'vi',
-        ai: { model: 'gpt-x' },
-        export: { typecheck: true, buildCheck: true },
+        editor: 'cursor',
+        packageManager: 'pnpm',
+        agent: { preferred: 'agy' },
       },
     });
-    expect((await store()).settings()).toMatchObject({
-      language: 'vi',
-      export: { buildCheck: true },
-    });
+    expect((await store()).settings()).toMatchObject({ language: 'vi', editor: 'cursor' });
   });
 
   it('writes the file readable by the user only on macOS and Linux', async () => {
@@ -72,9 +64,9 @@ describe('createConfigStore', () => {
     if (platform !== 'win32') expect(mode).toBe(0o600);
   });
 
-  it('remembers trusted workspaces by id, folder and links, outside the workspace [S-82]', async () => {
+  it('remembers trusted projects by id, folder and links, outside the project [S-82]', async () => {
     const config = await store();
-    const key = { id: 'ws00000001', path: 'C:\\Work\\Shop', links: '["",[]]' };
+    const key = { id: 'ws00000001', path: 'C:\\Work\\Shop', links: '[]' };
     await config.setTrusted(key, true);
 
     expect(
@@ -86,36 +78,44 @@ describe('createConfigStore', () => {
     expect((await store()).isTrusted(key)).toBe(false);
   });
 
-  it('stops trusting a workspace whose links changed [S-84]', async () => {
+  it('stops trusting a project whose links changed [S-84]', async () => {
     const config = await store();
-    const key = { id: 'ws00000001', path: 'C:\\Work\\Shop', links: '["../api",[]]' };
+    const key = { id: 'ws00000001', path: 'C:\\Work\\Shop', links: '["../api"]' };
     await config.setTrusted(key, true);
 
-    expect((await store()).isTrusted({ ...key, links: '["C:/Windows",[]]' })).toBe(false);
+    expect((await store()).isTrusted({ ...key, links: '["C:/Windows"]' })).toBe(false);
     expect((await store()).isTrusted(key)).toBe(true);
   });
 
   it('falls back to defaults with a warning when the file is broken', async () => {
     await writeFile(join(dir, CONFIG_FILE), '{ not json');
 
-    expect((await store()).settings().export.typecheck).toBe(true);
+    expect((await store()).settings().editor).toBe('vscode');
     expect(warnings).toHaveLength(1);
   });
 
-  it('reports keys from the environment and never returns key values', async () => {
+  it('reads a 0.18 file: keeps the language, drops AI keys and old trust at the next write [V-107, V-108]', async () => {
     await writeFile(
       join(dir, CONFIG_FILE),
-      JSON.stringify({ ai: { keys: { deepseek: 'sk-stored' } } }),
+      JSON.stringify({
+        language: 'vi',
+        ai: { provider: 'openai', keys: { openai: 'sk-stored' } },
+        export: { typecheck: true, buildCheck: false },
+        trustedWorkspaces: [{ id: 'old', path: '/w', links: '' }],
+      }),
     );
 
-    const settings = (await store({ OPENAI_API_KEY: 'sk-env' })).settings();
+    const config = await store();
+    await config.updateSettings({ editor: 'zed' });
+    const text = await readFile(join(dir, CONFIG_FILE), 'utf8');
 
-    expect(settings.ai.keys).toMatchObject({
-      openai: 'fromEnv',
-      deepseek: 'configured',
-      anthropic: 'missing',
+    expect(config.settings()).toEqual({
+      language: 'vi',
+      editor: 'zed',
+      agent: { preferred: 'auto' },
     });
-    expect(JSON.stringify(settings)).not.toContain('sk-');
-    expect(await readFile(join(dir, CONFIG_FILE), 'utf8')).toContain('sk-stored');
+    expect(warnings).toEqual([]);
+    expect(text).not.toContain('sk-stored');
+    expect(text).not.toContain('trustedWorkspaces');
   });
 });

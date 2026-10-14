@@ -6,21 +6,16 @@ import { SettingsButton } from '../settings/settings-button.tsx';
 
 type TopBarProps = {
   readonly version?: string;
-  /** Workspace name shown next to the brand. */
-  readonly workspaceName?: string;
   readonly children?: ReactNode;
 };
 
 /** Brand pill, screen-specific controls, version and language: the top row of every screen. */
-export function TopBar({ version, workspaceName, children }: TopBarProps) {
+export function TopBar({ version, children }: TopBarProps) {
   const { t } = useTranslation();
   return (
     <header className="flex items-center gap-2.5">
       <div className="flex h-10 items-center gap-2 rounded-full border-[1.5px] border-charcoal px-[18px] text-[17px] tracking-tight">
         {t('app.name')}
-        {workspaceName !== undefined && (
-          <span className="text-xs text-ink-faint">{workspaceName}</span>
-        )}
       </div>
       {children}
       <div className="flex-1" />

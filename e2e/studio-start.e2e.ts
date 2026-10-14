@@ -1,4 +1,4 @@
-// SPEC-07 section 4.6, acceptance scenario of gate G0, steps 2 and 3.
+// Startup of the Studio on the built CLI: name, version, language switch and the session token (SPEC-05 S-05 to S-07).
 import { expect, test } from './support/studio-server.ts';
 
 type ReloadMarker = { reloadMarker?: boolean };
@@ -9,7 +9,8 @@ test('opens the Studio with its name and version and hides the token [S-05, S-06
 }) => {
   await page.goto(studio.studioUrl);
 
-  await expect(page.getByRole('heading', { name: 'ReactCraft' })).toBeVisible();
+  await expect(page.getByText('ReactCraft', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Chưa mở dự án nào' })).toBeVisible();
   await expect(page.getByTestId('studio-version')).toHaveText(/^Phiên bản \d+\.\d+\.\d+/);
   expect(page.url()).not.toContain('#t=');
 });

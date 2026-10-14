@@ -5,7 +5,7 @@ import type { AppError } from '@reactcraft/server';
 
 /**
  * Why the server did not start, and what to do. E018 names the running session, or the lock file
- * to delete when that session is on another machine or no longer answers (SPEC-04.1 section 2.2).
+ * to delete when that session is on another machine or no longer answers (SPEC-03 section 3, E018).
  */
 export function startFailureMessage(error: AppError, workspaceDir: string): string {
   if (error.code !== 'E018') {
@@ -13,7 +13,7 @@ export function startFailureMessage(error: AppError, workspaceDir: string): stri
   }
   const params = error.params ?? {};
   const lock = join(workspaceDir, '.reactcraft', 'lock');
-  const lines = ['this workspace is already open in another ReactCraft session.'];
+  const lines = ['this project is already open in another ReactCraft session.'];
   if (typeof params['port'] === 'number') {
     const where = typeof params['hostname'] === 'string' ? ` on ${params['hostname']}` : '';
     lines.push(`  It runs${where} at http://127.0.0.1:${String(params['port'])}`);

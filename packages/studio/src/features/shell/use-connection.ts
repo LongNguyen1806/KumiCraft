@@ -1,4 +1,4 @@
-// Connection to the server through the event WebSocket (SPEC-04.1 section 6.1, last row).
+// Connection to the server through the event WebSocket (SPEC-03 section 6, ADR-FE-17).
 import { useEffect, useRef, useState } from 'react';
 
 import { createEventsClient } from '../../api/events-client.ts';

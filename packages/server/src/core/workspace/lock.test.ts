@@ -61,7 +61,7 @@ describe('acquireLock', () => {
     });
   });
 
-  it('respects a session that is still starting and not listening yet [R-WS-03]', async () => {
+  it('respects a session that is still starting and not listening yet [R-PJ-19]', async () => {
     await take(1, 5420);
     alive.add(1);
 
@@ -75,7 +75,7 @@ describe('acquireLock', () => {
     expect(await lockOnDisk()).toMatchObject({ pid: 2, port: 5421 });
   });
 
-  it('reclaims the lock after a restart when its pid now belongs to another program [R-WS-03]', async () => {
+  it('reclaims the lock after a restart when its pid now belongs to another program [R-PJ-19]', async () => {
     // Before the restart: ReactCraft ran as pid 1 on port 5420, then the power went off.
     await take(1, 5420);
     // After the restart: another program got pid 1, nothing listens on 5420.
@@ -85,7 +85,7 @@ describe('acquireLock', () => {
     expect(await lockOnDisk()).toMatchObject({ pid: 7, port: 5430 });
   });
 
-  it('never reclaims a lock from another machine (shared folder) [R-WS-04]', async () => {
+  it('never reclaims a lock from another machine (shared folder) [R-PJ-19]', async () => {
     await take(1, 5420, later, 'OTHER-PC');
 
     expect(await take(2, 5421, later)).toMatchObject({

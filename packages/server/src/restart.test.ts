@@ -1,8 +1,10 @@
-// WP-1.05 acceptance (SPEC-07 section 5.2): create a workspace, edit it, stop the server, start it
-// again in the same folder: the design is still there. The Studio version of this scenario is B7.
+// Stopping the server and starting it again in the same folder: the project, its trust decision
+// and the user settings are still there; a second server on the same project is refused.
+import { mkdir, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { join } from 'node:path';
 
+import { newWorkspaceFile, serializeWorkspaceFile, WORKSPACE_FILE } from '@reactcraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { makeTempDir, silentLogger } from './core/workspace/test-support.ts';
@@ -48,15 +50,16 @@ async function call(server: RunningServer, method: string, path: string, body?: 
   return { status: response.status, body: (await response.json()) as Record<string, unknown> };
 }
 
-type DocumentBody = {
-  data: {
-    revision: number;
-    document: {
-      workspace: { name: string; pageOrder: string[] };
-      pages: Record<string, { root: { id: string; children?: { id: string }[] } }>;
-    };
-  };
-};
+async function writeProject() {
+  await mkdir(join(workspace.dir, '.reactcraft'));
+  const file = newWorkspaceFile({
+    id: 'shop000001',
+    name: 'Shop',
+    createdAt: '2026-10-14T08:00:00.000Z',
+    responsiveMode: 'desktop-first',
+  });
+  await writeFile(join(workspace.dir, WORKSPACE_FILE), serializeWorkspaceFile(file));
+}
 
 beforeEach(async () => {
   workspace = await makeTempDir();
@@ -70,49 +73,27 @@ afterEach(async () => {
 });
 
 describe('server restart', () => {
-  it('keeps a created and edited design across a restart', async () => {
+  it('opens the same project, trusted, after a restart [S-82]', async () => {
+    await writeProject();
     const first = await start();
     if (!first.ok) throw new Error(first.error.code);
-    expect((await call(first.value, 'POST', '/workspace', { name: 'Shop' })).status).toBe(201);
-    const created = (await call(first.value, 'GET', '/workspace/document')).body as DocumentBody;
-    const pageId = created.data.document.workspace.pageOrder[0] ?? '';
-    const rootId = created.data.document.pages[pageId]?.root.id ?? '';
-
-    const edited = await call(first.value, 'POST', '/workspace/operations', {
-      baseRevision: created.data.revision,
-      meta: { source: 'user', label: 'Add heading' },
-      ops: [
-        { op: 'workspace.update', name: 'Shop 2' },
-        {
-          op: 'insert',
-          target: { kind: 'page', pageId },
-          parentId: rootId,
-          index: 0,
-          node: {
-            id: 'n_heading001',
-            type: 'Heading',
-            content: { kind: 'heading', text: 'Welcome', level: 1 },
-          },
-        },
-      ],
-    });
-    expect(edited.status).toBe(200);
+    const trusted = await call(first.value, 'POST', '/project/trust', { trusted: true });
+    expect(trusted.status).toBe(200);
     await first.value.close();
     running.length = 0;
 
     const second = await start();
     if (!second.ok) throw new Error(second.error.code);
-    const reopened = (await call(second.value, 'GET', '/workspace/document')).body as DocumentBody;
 
-    expect(reopened.data.revision).toBe(created.data.revision + 1);
-    expect(reopened.data.document.workspace.name).toBe('Shop 2');
-    expect(reopened.data.document.pages[pageId]?.root.children).toHaveLength(1);
+    expect((await call(second.value, 'GET', '/session')).body).toMatchObject({
+      data: { project: { state: 'open', id: 'shop000001', name: 'Shop', trusted: true } },
+    });
   });
 
-  it('refuses a second server on the same workspace while the first runs [E018]', async () => {
+  it('refuses a second server on the same project while the first runs [E018]', async () => {
+    await writeProject();
     const first = await start();
     if (!first.ok) throw new Error(first.error.code);
-    await call(first.value, 'POST', '/workspace', { name: 'Shop' });
 
     expect(await start()).toMatchObject({
       ok: false,

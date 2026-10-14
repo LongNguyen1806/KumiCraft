@@ -98,9 +98,9 @@ describe('events-client', () => {
     // Send valid payload
     const eventPayload: StudioServerEvent = {
       v: 1,
-      type: 'workspace.saved',
+      type: 'project.filesChanged',
       at: '2026-01-01T00:00:00.000Z',
-      payload: { revision: 10, files: ['.reactcraft/pages/p_home.json'] },
+      payload: { files: ['src/pages/Home.tsx'] },
     };
     ws?.onmessage?.({ data: JSON.stringify(eventPayload) });
     expect(received).toEqual(eventPayload);

@@ -1,40 +1,35 @@
-import type { FeatureId } from '@reactcraft/model';
+// GET /session (SPEC-03 section 5.1): which screen the Studio shows follows the project state.
+import type { FeatureId } from '@reactcraft/shared';
 
 import { ApiError, apiGet, isRecord } from './http.ts';
 
-export type StudioWorkspaceState =
-  | { readonly state: 'none'; readonly directory?: string }
+export type ProjectState =
+  | { readonly state: 'none'; readonly suggestedPath?: string }
   | {
       readonly state: 'open';
       readonly id: string;
       readonly name: string;
-      readonly revision: number;
       readonly trusted: boolean;
     }
   | {
       readonly state: 'error';
-      readonly error?: { readonly code: string };
-      /** Every file that stops the workspace from opening (R-WS-01, R-WS-02). */
-      readonly problems?: readonly WorkspaceProblem[];
+      readonly error: {
+        readonly code: string;
+        readonly params?: Readonly<Record<string, unknown>>;
+        readonly details?: readonly { readonly message: string }[];
+      };
     };
-
-export type WorkspaceProblem = { readonly file: string; readonly code: string };
 
 export type SessionInfo = {
   readonly version: string;
-  readonly workspace: StudioWorkspaceState;
-  readonly platform?: 'win32' | 'darwin' | 'linux';
-  readonly features?: readonly FeatureId[];
-};
-
-/** Part of SessionInfo the Studio uses so far. */
-export type SessionSummary = {
-  readonly version: string;
+  readonly platform: 'win32' | 'darwin' | 'linux';
+  readonly features: readonly FeatureId[];
+  readonly project: ProjectState;
 };
 
 export async function fetchSession(): Promise<SessionInfo> {
   const data = await apiGet('session');
-  if (!isRecord(data) || typeof data['version'] !== 'string') {
+  if (!isRecord(data) || typeof data['version'] !== 'string' || !isRecord(data['project'])) {
     throw new ApiError(200, undefined);
   }
   return data as unknown as SessionInfo;

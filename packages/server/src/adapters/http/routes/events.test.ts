@@ -20,7 +20,7 @@ describe('WebSocket /api/v1/events', () => {
         version: '1.0.0',
         platform: 'linux',
         features: [],
-        workspace: { state: 'none', directory: '/w' },
+        project: { state: 'none', suggestedPath: '/w' },
       }),
       eventRoutes: {
         eventBus,
@@ -90,20 +90,19 @@ describe('WebSocket /api/v1/events', () => {
       });
     });
 
-    eventBus.publish('workspace.saved', { revision: 1, files: ['.reactcraft/workspace.json'] });
+    eventBus.publish('project.filesChanged', { files: ['src/App.tsx'] });
 
     const raw = await receivedPromise;
     const event = JSON.parse(raw) as {
       v: number;
       type: string;
       at: string;
-      payload: { revision: number; files: string[] };
+      payload: { files: string[] };
     };
 
     expect(event.v).toBe(1);
-    expect(event.type).toBe('workspace.saved');
-    expect(event.payload.revision).toBe(1);
-    expect(event.payload.files).toEqual(['.reactcraft/workspace.json']);
+    expect(event.type).toBe('project.filesChanged');
+    expect(event.payload.files).toEqual(['src/App.tsx']);
 
     ws.close();
   });

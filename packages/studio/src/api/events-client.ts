@@ -1,19 +1,28 @@
-// WebSocket client for real-time workspace events (SPEC-03 section 11, SPEC-05 section 5.1).
+// WebSocket client for real-time server events (SPEC-03 section 6, SPEC-05 section 3).
 import { readSessionToken } from './session-token.ts';
 
-export type StudioServerEvent =
-  | {
-      readonly v: 1;
-      readonly type: 'workspace.saved';
-      readonly at: string;
-      readonly payload: { readonly revision: number; readonly files: readonly string[] };
-    }
-  | {
-      readonly v: 1;
-      readonly type: 'workspace.externalChange';
-      readonly at: string;
-      readonly payload: { readonly files: readonly string[]; readonly truncated?: boolean };
-    };
+/** Event types of SPEC-03 section 6. Each module parses the payload of its own events. */
+export type ServerEventType =
+  | 'session.changed'
+  | 'project.changed'
+  | 'project.filesChanged'
+  | 'runner.status'
+  | 'runner.log'
+  | 'history.changed'
+  | 'settings.changed'
+  | 'job.progress'
+  | 'job.completed'
+  | 'job.failed'
+  | 'job.cancelled'
+  | 'server.shuttingDown';
+
+export type StudioServerEvent = {
+  readonly v: 1;
+  readonly type: ServerEventType;
+  readonly at: string;
+  readonly correlationId?: string;
+  readonly payload: unknown;
+};
 
 export type EventsClientOptions = {
   readonly url?: string;

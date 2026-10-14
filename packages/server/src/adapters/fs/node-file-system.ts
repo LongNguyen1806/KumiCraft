@@ -37,7 +37,7 @@ const errorCode = (error: unknown): string | undefined =>
     ? error.code
     : undefined;
 
-/** Maps an operating-system error to an AppError (SPEC-03 section 13). */
+/** Maps an operating-system error to an AppError (SPEC-03 section 10). */
 function toAppError(error: unknown, path: string, operation: string): AppError {
   const code = errorCode(error);
   if (code === 'ENOENT')

@@ -1,14 +1,19 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { workspaceFilePath } from '@reactcraft/model';
+import {
+  newWorkspaceFile,
+  serializeWorkspaceFile,
+  WORKSPACE_FILE,
+  type WorkspaceFile,
+} from '@reactcraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { ok } from '../shared/result.ts';
 import type { ConfigStore } from '../shared/user-config.ts';
-import { CreateWorkspaceRequestSchema } from './create-workspace.ts';
 import { LOCK_FILE } from './lock.ts';
-import { fakeSystem, makeTempDir, nodeFs, sequenceIds, silentLogger } from './test-support.ts';
+import { createProjectReader } from './project-reader.ts';
+import { fakeSystem, makeTempDir, nodeFs, silentLogger } from './test-support.ts';
 import { createWorkspaceService } from './workspace-service.ts';
 
 let dir: string;
@@ -16,16 +21,8 @@ let cleanup: () => Promise<void>;
 const alive = new Set<number>();
 let trusted: Set<string>;
 
-/** Trust kept in memory, keyed like the real store (id + path). */
-const config: Pick<ConfigStore, 'settings' | 'isTrusted' | 'setTrusted'> = {
-  settings: () => ({
-    language: 'vi',
-    ai: {
-      ollamaBaseUrl: 'http://127.0.0.1:11434',
-      keys: { openai: 'missing', anthropic: 'missing', deepseek: 'missing', ollama: 'missing' },
-    },
-    export: { typecheck: true, buildCheck: false },
-  }),
+/** Trust kept in memory, keyed like the real store (id + path + links). */
+const config: Pick<ConfigStore, 'isTrusted' | 'setTrusted'> = {
   isTrusted: (key) => trusted.has(`${key.id}|${key.path}|${key.links}`),
   setTrusted: (key, value) => {
     if (value) trusted.add(`${key.id}|${key.path}|${key.links}`);
@@ -42,10 +39,20 @@ const service = (pid = 1) =>
     config,
     logger: silentLogger,
     port: 5420 + pid,
-    newId: sequenceIds(),
   });
 
-const request = CreateWorkspaceRequestSchema.parse({ name: 'Shop' });
+const shop: WorkspaceFile = newWorkspaceFile({
+  id: 'shop000001',
+  name: 'Shop',
+  createdAt: '2026-10-14T08:00:00.000Z',
+  responsiveMode: 'desktop-first',
+});
+
+async function writeWorkspace(content: string | WorkspaceFile = shop) {
+  await mkdir(join(dir, '.reactcraft'), { recursive: true });
+  const text = typeof content === 'string' ? content : serializeWorkspaceFile(content);
+  await writeFile(join(dir, WORKSPACE_FILE), text);
+}
 
 beforeEach(async () => {
   ({ dir, cleanup } = await makeTempDir());
@@ -59,34 +66,34 @@ afterEach(async () => {
 });
 
 describe('workspace service', () => {
-  it('stays in none without .reactcraft and takes no lock', async () => {
+  it('stays in none without workspace.json, takes no lock and suggests the folder [R-PJ-18]', async () => {
     const workspace = service();
 
     expect(await workspace.open()).toEqual({ ok: true, value: { status: 'none' } });
     expect(await nodeFs.exists(dir, LOCK_FILE)).toBe(false);
+    expect(createProjectReader(workspace, dir)()).toEqual({ state: 'none', suggestedPath: dir });
   });
 
-  it('creates a trusted workspace, locks it and refuses to create twice', async () => {
+  it('opens a project untrusted at first and locks it [S-80, S-81]', async () => {
+    await writeWorkspace();
     const workspace = service();
-    await workspace.open();
 
-    const created = await workspace.create(request);
-
-    expect(created).toMatchObject({
+    expect(await workspace.open()).toEqual({
       ok: true,
-      value: { status: 'open', trusted: true, document: { workspace: { contentLocale: 'vi-VN' } } },
+      value: { status: 'open', file: shop, trusted: false },
     });
-    expect(await nodeFs.exists(dir, workspaceFilePath.workspace())).toBe(true);
-    expect(await nodeFs.exists(dir, workspaceFilePath.gitignore())).toBe(true);
     expect(await nodeFs.exists(dir, LOCK_FILE)).toBe(true);
-    expect(await workspace.create(request)).toMatchObject({
-      ok: false,
-      error: { code: 'E018', params: { reason: 'exists' } },
+    expect(createProjectReader(workspace, dir)()).toEqual({
+      state: 'open',
+      id: 'shop000001',
+      name: 'Shop',
+      trusted: false,
     });
   });
 
-  it('refuses to open a workspace another running session holds [E018]', async () => {
-    await service(1).create(request);
+  it('refuses to open a project another running session holds [E018]', async () => {
+    await writeWorkspace();
+    await service(1).open();
 
     expect(await service(2).open()).toMatchObject({
       ok: false,
@@ -94,65 +101,72 @@ describe('workspace service', () => {
     });
   });
 
-  it('reopens after close with the same document and trust', async () => {
+  it('remembers a trust decision across sessions and needs an open project [S-82]', async () => {
+    await writeWorkspace();
     const first = service(1);
-    const created = await first.create(request);
+    expect(await first.setTrusted(true)).toMatchObject({ ok: false, error: { code: 'E021' } });
+    await first.open();
+    await first.setTrusted(true);
     await first.close();
     expect(await nodeFs.exists(dir, LOCK_FILE)).toBe(false);
 
-    const reopened = await service(2).open();
-
-    expect(reopened).toEqual({
-      ok: true,
-      value: created.ok ? { ...created.value, warnings: [] } : undefined,
-    });
+    expect(await service(2).open()).toMatchObject({ ok: true, value: { trusted: true } });
   });
 
-  it('ends in error when a file is broken and recovers on reload', async () => {
+  it('falls back to restricted mode when backends change, running or closed [S-84]', async () => {
+    await writeWorkspace();
     const first = service(1);
-    const created = await first.create(request);
-    await first.close();
-    const pageId =
-      created.ok && created.value.status === 'open'
-        ? created.value.document.workspace.pageOrder[0]
-        : '';
-    const pageFile = join(dir, workspaceFilePath.page(pageId ?? ''));
-    const pageText = await nodeFs.readText(dir, workspaceFilePath.page(pageId ?? ''));
-    await writeFile(pageFile, '{');
-
-    const second = service(2);
-    expect(await second.open()).toMatchObject({ ok: true, value: { status: 'error' } });
-    await writeFile(pageFile, pageText.ok ? pageText.value : '');
-    expect(await second.reload()).toMatchObject({ status: 'open' });
-  });
-
-  it('remembers a trust decision and reports E015 without a workspace', async () => {
-    const workspace = service();
-    expect(await workspace.setTrusted(true)).toMatchObject({ ok: false, error: { code: 'E015' } });
-    await workspace.create(request);
-
-    expect(await workspace.setTrusted(false)).toMatchObject({
-      ok: true,
-      value: { trusted: false },
-    });
-    expect(trusted.size).toBe(0);
-  });
-
-  it('falls back to restricted mode when the links change, running or closed [S-84]', async () => {
-    const first = service(1);
-    await first.create(request);
-    const file = join(dir, workspaceFilePath.workspace());
-    const meta = JSON.parse(await readFile(file, 'utf8')) as Record<string, unknown>;
-    await writeFile(
-      file,
-      JSON.stringify({ ...meta, backends: [{ id: 'b_api0000001', path: '../api', label: 'API' }] }),
-    );
+    await first.open();
+    await first.setTrusted(true);
+    const linked = {
+      ...shop,
+      backends: [{ id: 'api0000001', path: '../api', label: 'API' }],
+    };
+    await writeWorkspace(linked);
 
     expect(await first.reload()).toMatchObject({ status: 'open', trusted: false });
     await first.setTrusted(true);
     await first.close();
-    await writeFile(file, JSON.stringify({ ...meta, targetProject: { path: 'C:/Windows' } }));
+    await writeWorkspace({
+      ...linked,
+      backends: [{ ...linked.backends[0], path: 'C:/Windows' }],
+    } as WorkspaceFile);
 
     expect(await service(2).open()).toMatchObject({ ok: true, value: { trusted: false } });
+  });
+
+  it('ends in error for a broken, a 0.18 or a too deep file, and recovers on reload [V-105, S-29]', async () => {
+    const workspace = service();
+    const cases: [string, string][] = [
+      ['{ "broken', 'invalid'],
+      [JSON.stringify({ schemaVersion: 1, id: 'ws1', name: 'Old' }), 'unsupportedVersion'],
+      [`${'['.repeat(70)}${']'.repeat(70)}`, 'invalid'],
+    ];
+    for (const [text, reason] of cases) {
+      await writeWorkspace(text);
+
+      const state =
+        workspace.state().status === 'none' ? await workspace.open() : ok(await workspace.reload());
+
+      expect(state).toMatchObject({
+        ok: true,
+        value: { status: 'error', error: { code: 'E003', params: { reason } } },
+      });
+      expect(createProjectReader(workspace, dir)()).toMatchObject({
+        state: 'error',
+        error: { code: 'E003' },
+      });
+    }
+    await writeWorkspace();
+    expect(await workspace.reload()).toMatchObject({ status: 'open' });
+  });
+
+  it('never rewrites a broken workspace.json [V-105]', async () => {
+    await writeWorkspace('{ "broken');
+
+    await service().open();
+
+    const text = await nodeFs.readText(dir, WORKSPACE_FILE);
+    expect(text).toEqual({ ok: true, value: '{ "broken' });
   });
 });

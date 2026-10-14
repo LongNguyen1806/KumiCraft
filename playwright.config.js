@@ -21,6 +21,8 @@ export default defineConfig({
   use: {
     // The Studio picks Vietnamese for vi browsers (ADR-FE-16); tests switch to English themselves.
     locale: 'vi-VN',
+    // A click or a fill on a missing element fails after 15 s instead of the whole test timeout.
+    actionTimeout: 15_000,
     trace: 'retain-on-failure',
   },
   projects: [

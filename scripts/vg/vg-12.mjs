@@ -1,6 +1,6 @@
-// VG-12 (SPEC-01.2 section 13), third criterion: every screen of the Studio in `vi` (and `en`)
+// VG-12 (SPEC-01 section 9), third criterion: every screen of the Studio in `vi` (and `en`)
 // without clipped text or broken layout. Runs the built CLI (`pnpm build` first) on a temporary
-// workspace with its own settings, visits every screen at 1024 and 1440 px, saves screenshots to
+// project folder with its own settings, visits every screen at 1024 and 1440 px, saves screenshots to
 // test-results/vg-12/ and reports any text cut off or any page wider than the window.
 // The other criteria run in `pnpm verify`: `pnpm check:i18n` and ESLint `no-literal-string`.
 // Run with: node scripts/vg/vg-12.mjs
@@ -73,6 +73,16 @@ const findProblems = (page) =>
         problems.push(
           `sticks out: ${element.tagName} "${element.textContent.trim().slice(0, 40)}"`,
         );
+      // Text inside a box that grew wider than the dialog or panel clipping it (a fieldset keeps
+      // its content width, so the text itself fits its parent but not the clipping box).
+      let clipper = element.parentElement;
+      while (clipper && getComputedStyle(clipper).overflowX === 'visible')
+        clipper = clipper.parentElement;
+      const clip = clipper ? clipper.getBoundingClientRect() : undefined;
+      if (clip !== undefined && clipper !== document.documentElement && box.right > clip.right + 1)
+        problems.push(
+          `cut by ${clipper.tagName}: ${element.tagName} "${element.textContent.trim().slice(0, 40)}"`,
+        );
     }
     return problems;
   });
@@ -87,69 +97,76 @@ async function check(page, name, results) {
   }
 }
 
-const api = async (url, path, method = 'GET', body) => {
-  const studio = new URL(url);
-  const response = await globalThis.fetch(`${studio.origin}/api/v1/${path}`, {
-    method,
-    headers: {
-      authorization: `Bearer ${studio.hash.slice(3)}`,
-      'content-type': 'application/json',
-    },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-  });
-  return response.json();
-};
+/** A `.reactcraft/workspace.json` (SPEC-03 section 3) written as a project pulled from Git. */
+function writeProject(folder, text) {
+  mkdirSync(join(folder, '.reactcraft'), { recursive: true });
+  const file = {
+    schemaVersion: 2,
+    id: 'vg12000001',
+    name: 'Cửa hàng thời trang mùa thu',
+    createdAt: '2026-10-14T08:00:00.000Z',
+    framework: 'vite-react',
+    sourceDir: 'src',
+    backends: [],
+    responsiveMode: 'desktop-first',
+    frames: [
+      { id: 'desktop', label: 'Desktop', width: 1440, height: 900 },
+      { id: 'tablet', label: 'Tablet', width: 768, height: 1024 },
+      { id: 'mobile', label: 'Mobile', width: 375, height: 812 },
+    ],
+    primaryFrameId: 'desktop',
+  };
+  writeFileSync(join(folder, '.reactcraft', 'workspace.json'), text ?? JSON.stringify(file));
+}
 
-/** Connection lost, then the workspace error screen after a page file breaks and the CLI restarts. */
-async function visitBrokenWorkspace(context, results) {
-  const { browser, page, workspace, config, locale } = context;
-  let { child, url } = context;
-  const document = await api(url, 'workspace/document');
-  const pageId = document.data.document.workspace.pageOrder[0];
+/** Connection lost, then the project error screen after workspace.json breaks and the CLI restarts. */
+async function visitBrokenProject(context, results) {
+  const { browser, page, child, folder, config, locale } = context;
   await stop(child);
   await check(page, 'connection-lost', results);
-  writeFileSync(join(workspace, '.reactcraft', 'pages', `${pageId}.json`), '{ broken');
-  ({ child, url } = await startCli(workspace, config));
+  writeProject(folder, JSON.stringify({ schemaVersion: 1, id: 'old', name: 'Old' }));
+  const restarted = await startCli(folder, config);
   // The CLI opens a new tab for a new session; the old tab keeps the old token.
   await page.close();
   const reopened = await browser.newPage({ locale });
-  await reopened.goto(url);
-  await reopened.getByTestId('problem-file').waitFor();
-  await check(reopened, 'workspace-error', results);
-
+  await reopened.goto(restarted.url);
+  await reopened.getByTestId('project-error').waitFor();
+  await check(reopened, 'project-error', results);
   await reopened.close();
-  await stop(child);
+  await stop(restarted.child);
 }
 
 /** Every screen of one language, in the order a user meets them. */
 async function visitAll(browser, language, results) {
-  const workspace = mkdtempSync(join(tmpdir(), 'vg12-ws-'));
+  const empty = mkdtempSync(join(tmpdir(), 'vg12-empty-'));
+  const folder = mkdtempSync(join(tmpdir(), 'vg12-project-'));
   const config = mkdtempSync(join(tmpdir(), 'vg12-config-'));
   writeFileSync(join(config, 'config.json'), JSON.stringify({ language }));
-  const { child, url } = await startCli(workspace, config);
   const locale = language === 'vi' ? 'vi-VN' : 'en-US';
+
+  const first = await startCli(empty, config);
   // Opened without the token: its own tab, since a hash change alone does not reload a page.
   const tokenless = await browser.newPage({ locale });
-  await tokenless.goto(new URL(url).origin);
+  await tokenless.goto(new URL(first.url).origin);
   await tokenless.getByRole('alert').waitFor();
   await check(tokenless, 'session-error', results);
   await tokenless.close();
+  const welcome = await browser.newPage({ locale });
+  await welcome.goto(first.url);
+  await welcome.getByTestId('project-folder').waitFor();
+  await check(welcome, 'no-project', results);
+  await welcome.close();
+  await stop(first.child);
 
+  writeProject(folder);
+  const { child, url } = await startCli(folder, config);
   const page = await browser.newPage({ locale });
   await page.goto(url);
-  await page.getByTestId('workspace-directory').waitFor();
-  await check(page, 'welcome', results);
-  await page.locator('details summary').click();
-  await page.getByRole('radio', { name: /Custom|Tùy chỉnh/ }).check({ force: true });
-  await page.getByRole('button', { name: /Create workspace|Tạo workspace/ }).click();
-  await check(page, 'welcome-form-errors', results);
-
-  await page.getByLabel(/Workspace name|Tên workspace/).fill('Cửa hàng thời trang mùa thu');
-  await page.getByRole('radio', { name: /Desktop\s*1440/ }).check({ force: true });
-  await page.getByRole('button', { name: /Create workspace|Tạo workspace/ }).click();
-  await page.getByTestId('frame').waitFor();
-  await page.getByTestId('layer-list').getByRole('button').first().click();
-  await check(page, 'editor', results);
+  await page.getByRole('dialog').waitFor();
+  await check(page, 'trust-dialog', results);
+  await page.keyboard.press('Escape');
+  await page.getByTestId('editor').waitFor();
+  await check(page, 'editor-restricted', results);
   await page.getByRole('button', { name: /^(Settings|Cài đặt)$/ }).click();
   await check(page, 'settings', results);
   await page.keyboard.press('Escape');
@@ -163,9 +180,8 @@ async function visitAll(browser, language, results) {
     problems: await findProblems(page),
   });
 
-  await visitBrokenWorkspace({ browser, page, child, url, workspace, config, locale }, results);
-  rmSync(workspace, { recursive: true, force: true });
-  rmSync(config, { recursive: true, force: true });
+  await visitBrokenProject({ browser, page, child, folder, config, locale }, results);
+  for (const dir of [empty, folder, config]) rmSync(dir, { recursive: true, force: true });
 }
 
 async function main() {

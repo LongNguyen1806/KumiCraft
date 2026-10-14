@@ -18,7 +18,7 @@ export async function makeTempDir(label: string): Promise<TempDir> {
 }
 
 /**
- * Copies `fixtures/<name>` (for example `target-projects/vite8-react19-tw4`) into a new temporary
+ * Copies `fixtures/<name>` (for example `projects/vite8-react19-ts`) into a new temporary
  * folder and returns that copy.
  */
 export async function copyFixture(name: string): Promise<TempDir> {

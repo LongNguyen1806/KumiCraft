@@ -1,0 +1,14 @@
+{
+  "name": "@reactcraft/shared",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Schemas and types shared by the Studio, the server and the Bridge: API, errors, workspace file, responsive rules",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "zod": "4.6.5"
+  }
+}

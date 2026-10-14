@@ -32,7 +32,6 @@ beforeEach(async () => {
     fs: nodeFs,
     dir,
     platform,
-    env: { OPENAI_API_KEY: 'sk-env-secret' },
     logger: silentLogger,
   });
   app = await createHttpApp({
@@ -42,7 +41,7 @@ beforeEach(async () => {
       version: '1.0.0',
       platform,
       features: [],
-      readWorkspace: () => ({ state: 'none', directory: dir }),
+      readProject: () => ({ state: 'none', suggestedPath: dir }),
     }),
     settingsRoutes: { config },
   });
@@ -62,25 +61,19 @@ const patch = (payload: unknown) =>
   });
 
 describe('/api/v1/settings', () => {
-  it('returns the settings with key statuses only', async () => {
+  it('returns the settings, never an API key [V-108]', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/v1/settings', headers: HEADERS });
 
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toMatchObject({
-      data: {
-        ai: { keys: { openai: 'fromEnv', anthropic: 'missing' } },
-        export: { typecheck: true },
-      },
-    });
-    expect(res.body).not.toContain('sk-env-secret');
+    expect(res.json()).toEqual({ data: { editor: 'vscode', agent: { preferred: 'auto' } } });
   });
 
   it('saves a patch to config.json and returns the merged settings', async () => {
-    const res = await patch({ language: 'vi', export: { buildCheck: true } });
+    const res = await patch({ language: 'vi', packageManager: 'npm' });
 
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({
-      data: { language: 'vi', export: { typecheck: true, buildCheck: true } },
+      data: { language: 'vi', editor: 'vscode', packageManager: 'npm' },
     });
     expect(JSON.parse(await readFile(join(dir, CONFIG_FILE), 'utf8'))).toMatchObject({
       language: 'vi',
@@ -91,7 +84,9 @@ describe('/api/v1/settings', () => {
     for (const payload of [
       { language: 'fr' },
       { theme: 'dark' },
+      { editor: 'notepad' },
       { ai: { keys: { openai: 'x' } } },
+      { agent: { preferred: 'gpt' } },
     ]) {
       const res = await patch(payload);
       expect(res.statusCode).toBe(400);

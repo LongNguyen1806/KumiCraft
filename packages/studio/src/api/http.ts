@@ -1,5 +1,5 @@
 // REST client of the Studio (ADR-FE-17): adds the session token, unwraps `{ data }`, turns
-// `{ error }` into ApiError (SPEC-03 section 9.2).
+// `{ error }` into ApiError (SPEC-03 section 4.1).
 import { readSessionToken } from './session-token.ts';
 
 /** Failure of an API call: HTTP status, error code and parameter map. */

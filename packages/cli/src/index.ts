@@ -43,7 +43,7 @@ async function start(options: CliOptions, studio: StudioSource): Promise<Running
       ...(process.env.REACTCRAFT_FEATURES === undefined
         ? {}
         : { featureOverride: process.env.REACTCRAFT_FEATURES }),
-      // Tests and side-by-side setups keep their settings apart from the user's (spec-log #87).
+      // Tests and side-by-side setups keep their settings apart from the user's (archive-0.18 spec-log #87).
       ...(process.env.REACTCRAFT_CONFIG_DIR === undefined
         ? {}
         : { deps: { configDir: process.env.REACTCRAFT_CONFIG_DIR } }),
@@ -74,7 +74,7 @@ async function main(): Promise<void> {
     ...(studioDir === undefined ? {} : { studioDir }),
     ...(devStudioUrl === undefined ? {} : { devStudioUrl }),
   });
-  // The token travels in the URL fragment, which browsers never send to a server (SPEC-05 section 5.2).
+  // The token travels in the URL fragment, which browsers never send to a server (SPEC-05 section 3).
   const studioUrl = `${devStudioUrl ?? server.url}/#t=${server.sessionToken}`;
   console.log(`ReactCraft ${packageJson.version} is running at ${server.url}`);
   console.log(`Studio: ${studioUrl}`);

@@ -19,7 +19,7 @@ beforeEach(async () => {
       version: '0.0.0',
       platform: 'linux',
       features: [],
-      workspace: { state: 'none', directory: '/w' },
+      project: { state: 'none', suggestedPath: '/w' },
     }),
   });
 });
@@ -79,15 +79,17 @@ describe('Host and Origin', () => {
     expect([response.statusCode, errorCode(response.body)]).toEqual([401, 'E014']);
   });
 
-  it('rejects state-changing requests that are not JSON [S-04c]', async () => {
-    const response = await app.inject({
-      method: 'POST',
-      url: '/api/v1/session',
-      headers: { host: HOST, ...AUTH, 'content-type': 'text/plain' },
-      payload: 'x',
-    });
+  it('rejects state-changing requests that are not JSON, form uploads included [S-04c]', async () => {
+    for (const contentType of ['text/plain', 'multipart/form-data; boundary=x']) {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/v1/session',
+        headers: { host: HOST, ...AUTH, 'content-type': contentType },
+        payload: 'x',
+      });
 
-    expect([response.statusCode, errorCode(response.body)]).toEqual([400, 'E016']);
+      expect([response.statusCode, errorCode(response.body)]).toEqual([400, 'E016']);
+    }
   });
 
   it('sends no CORS headers [S-04b]', async () => {
@@ -110,14 +112,15 @@ describe('security headers', () => {
     expect(response.headers['permissions-policy']).toContain('camera=()');
   });
 
-  it('forbids framing except the canvas frame by the Studio itself [S-12]', () => {
-    const page = securityHeaders(PORT, '/');
-    const canvasFrame = securityHeaders(PORT, '/canvas-frame.html');
+  it('lets the Studio frame only the dev server on 127.0.0.1, and nothing frame the Studio [S-10, S-12]', async () => {
+    const response = await getSession(AUTH);
+    const csp = String(response.headers['content-security-policy']);
 
-    expect(page['X-Frame-Options']).toBe('DENY');
-    expect(page['Content-Security-Policy']).toContain("frame-ancestors 'none'");
-    expect(canvasFrame['X-Frame-Options']).toBeUndefined();
-    expect(canvasFrame['Content-Security-Policy']).toContain("frame-ancestors 'self'");
+    expect(csp).toContain('frame-src http://127.0.0.1:*');
+    expect(csp).toContain("frame-ancestors 'none'");
+    expect(csp).not.toMatch(/img-src[^;]*https?:/);
+    expect(response.headers['x-frame-options']).toBe('DENY');
+    expect(securityHeaders(PORT)['X-Frame-Options']).toBe('DENY');
   });
 });
 

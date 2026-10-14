@@ -1,4 +1,4 @@
-// Session lock of a workspace (SPEC-04.1 section 2.2, ADR-BE-03 rule 4): one server per workspace.
+// Session lock of a workspace (R-PJ-19, ADR-BE-03): one server per workspace.
 //
 // A lock is held only while its server really runs. After a crash or a power cut the lock stays on
 // disk, and after a restart its pid may belong to another program. So a lock of this machine is
@@ -18,7 +18,7 @@ export type LockInfo = {
 };
 
 export type LockTiming = {
-  /** A server starts listening this long after taking the lock at most (R-WS-03). */
+  /** A server starts listening this long after taking the lock at most (R-PJ-19). */
   readonly startupGraceMs: number;
   /** Wait before reading an unreadable lock again: its writer may be between create and write. */
   readonly settleMs: number;
@@ -59,7 +59,7 @@ async function readHolder(fs: FileSystemPort, root: string): Promise<Holder> {
 
 /** Whether the lock belongs to a server that still runs (or may still be starting). */
 async function isLive(info: LockInfo, system: SystemPort, timing: LockTiming): Promise<boolean> {
-  if (info.hostname !== system.hostname) return true; // R-WS-04: another machine, never reclaimed
+  if (info.hostname !== system.hostname) return true; // R-PJ-19: another machine, never reclaimed
   if (!system.isProcessAlive(info.pid)) return false;
   const age = system.now().getTime() - Date.parse(info.startedAt);
   if (age >= 0 && age < timing.startupGraceMs) return true;

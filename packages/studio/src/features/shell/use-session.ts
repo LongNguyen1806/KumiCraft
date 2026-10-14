@@ -1,4 +1,4 @@
-// Session of the Studio (SPEC-04.1 section 6.1): which screen to show follows its workspace state.
+// Session of the Studio (SPEC-03 section 5.1): which screen to show follows its project state.
 import { useCallback, useEffect, useState } from 'react';
 
 import { ApiError } from '../../api/http.ts';

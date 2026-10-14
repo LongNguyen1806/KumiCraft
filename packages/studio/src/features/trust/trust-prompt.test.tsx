@@ -4,21 +4,6 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { initI18n } from '../../i18n/i18n.ts';
 import { EditorScreen } from '../../routes/editor-screen.tsx';
-import { sampleDocument } from '../../store/test-support.ts';
-import { isOutsideWorkspace } from './trust-prompt.tsx';
-
-/** A workspace pulled from Git that points to folders, one of them outside it. */
-function linkedDocument() {
-  const document = sampleDocument(3);
-  return {
-    ...document,
-    workspace: {
-      ...document.workspace,
-      targetProject: { path: '../web' },
-      backends: [{ id: 'b_api0000001', path: 'C:\\Windows\\System32', label: 'API' }],
-    },
-  };
-}
 
 type Call = { readonly url: string; readonly method: string; readonly body?: string };
 let calls: Call[];
@@ -33,19 +18,21 @@ function stubServer(trustStatus = 200) {
         method: init?.method ?? 'GET',
         ...(init?.body === undefined ? {} : { body: init.body as string }),
       });
-      if (url.endsWith('/workspace/trust')) {
-        const body = trustStatus === 200 ? { data: {} } : { error: { code: 'E011' } };
-        return Promise.resolve(new Response(JSON.stringify(body), { status: trustStatus }));
-      }
-      const data = { document: linkedDocument(), revision: 3 };
-      return Promise.resolve(new Response(JSON.stringify({ data }), { status: 200 }));
+      const body = trustStatus === 200 ? { data: {} } : { error: { code: 'E011' } };
+      return Promise.resolve(new Response(JSON.stringify(body), { status: trustStatus }));
     }),
   );
 }
 
-const openUntrusted = async (onTrusted = vi.fn()) => {
-  render(<EditorScreen trusted={false} onTrusted={onTrusted} />);
-  await screen.findByTestId('frame');
+const openUntrusted = (onTrusted = vi.fn()) => {
+  render(
+    <EditorScreen
+      projectId="shop000001"
+      projectName="Shop"
+      trusted={false}
+      onTrusted={onTrusted}
+    />,
+  );
   return onTrusted;
 };
 
@@ -64,43 +51,42 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('workspace trust in the Studio', () => {
-  it('asks on first open and lists the linked folders, warning about outside ones [S-80]', async () => {
+describe('project trust in the Studio', () => {
+  it('asks on first open, naming the project and what stays locked [S-80]', () => {
     stubServer();
-    await openUntrusted();
+    openUntrusted();
 
-    expect(screen.getByRole('dialog', { name: 'Do you trust this workspace?' })).toBeDefined();
-    const links = screen.getByTestId('trust-links').textContent;
-    expect(links).toContain('../web');
-    expect(links).toContain('C:\\Windows\\System32');
-    expect(screen.getAllByText(/Outside the workspace folder/)).toHaveLength(2);
+    expect(screen.getByRole('dialog', { name: 'Do you trust this project?' })).toBeDefined();
+    expect(screen.getByTestId('trust-project').textContent).toBe('Shop');
+    expect(screen.getByText(/does not start its dev server/)).toBeDefined();
   });
 
-  it('keeps restricted mode with a warning bar when the user declines, and asks once per tab [S-81]', async () => {
+  it('keeps restricted mode with a warning bar when the user declines, and asks once per tab [S-81]', () => {
     stubServer();
-    await openUntrusted();
+    openUntrusted();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Not now, only view and edit the design' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
 
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(screen.getByTestId('trust-bar').textContent).toContain('not trusted');
+    expect(screen.getByTestId('trust-status').textContent).toContain('Restricted mode');
     cleanup();
-    await openUntrusted();
+    openUntrusted();
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('trusts the workspace from the bar and lets the Studio read the session again', async () => {
+  it('trusts the project from the bar and lets the Studio read the session again', async () => {
     stubServer();
-    sessionStorage.setItem('reactcraft.trustAsked.ws00000001', '1');
-    const onTrusted = await openUntrusted();
+    sessionStorage.setItem('reactcraft.trustAsked.shop000001', '1');
+    const onTrusted = openUntrusted();
 
     fireEvent.click(screen.getByRole('button', { name: 'Review and trust' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Trust this workspace' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Trust this project' }));
 
     await vi.waitFor(() => {
       expect(onTrusted).toHaveBeenCalledOnce();
     });
-    expect(calls.find((call) => call.url.endsWith('/workspace/trust'))).toMatchObject({
+    expect(calls.find((call) => call.url.endsWith('/project/trust'))).toMatchObject({
       method: 'POST',
       body: JSON.stringify({ trusted: true }),
     });
@@ -108,48 +94,19 @@ describe('workspace trust in the Studio', () => {
 
   it('says why trusting failed', async () => {
     stubServer(500);
-    const onTrusted = await openUntrusted();
+    const onTrusted = openUntrusted();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Trust this workspace' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Trust this project' }));
 
     expect((await screen.findByRole('alert')).textContent).toContain('(E011)');
     expect(onTrusted).not.toHaveBeenCalled();
   });
 
-  it('shows nothing about trust for a trusted workspace', async () => {
+  it('shows nothing about trust for a trusted project', () => {
     stubServer();
-    render(<EditorScreen trusted onTrusted={vi.fn()} />);
-    await screen.findByTestId('frame');
+    render(<EditorScreen projectId="shop000001" projectName="Shop" trusted onTrusted={vi.fn()} />);
 
     expect(screen.queryByTestId('trust-bar')).toBeNull();
     expect(screen.queryByRole('dialog')).toBeNull();
-  });
-});
-
-describe('isOutsideWorkspace', () => {
-  it('flags absolute paths and paths going up, not folders inside', () => {
-    const paths = [
-      '../api',
-      '..',
-      'C:\\Windows',
-      'D:/data',
-      '/etc',
-      '\\\\server\\share',
-      'backend',
-      './web',
-      'apps/api',
-    ];
-
-    expect(paths.map(isOutsideWorkspace)).toEqual([
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      false,
-      false,
-      false,
-    ]);
   });
 });

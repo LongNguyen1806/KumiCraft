@@ -1,4 +1,4 @@
-// Side panels of the Editor (SPEC-04.1 R-SH-01): 200 to 480 px wide, hidden or shown, remembered by
+// Side panels of the Editor: 200 to 480 px wide, hidden or shown, remembered by
 // the browser. Not sensitive, so localStorage is fine; the address stays the same between sessions
 // (SPEC-05 S-02), so the browser finds them again.
 import { useCallback, useState } from 'react';

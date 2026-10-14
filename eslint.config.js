@@ -1,6 +1,6 @@
 // @ts-check
-// ESLint flat config. Rules come from SPEC-01.1 ADR-BE-27, SPEC-01.1 section 3.2 and SPEC-02 (QC-xx).
-// Studio rules (ADR-FE-19): react-hooks, jsx-a11y and the layering rules of SPEC-01.2 section 3.4.
+// ESLint flat config. Rules come from SPEC-01 ADR-BE-27, SPEC-01 section 3.2 and SPEC-02 (QC-xx).
+// Studio rules (ADR-FE-19): react-hooks, jsx-a11y and the layering rules of SPEC-01 section 3.2.
 import js from '@eslint/js';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import i18next from 'eslint-plugin-i18next';
@@ -122,10 +122,10 @@ export default defineConfig(
     },
   },
 
-  // SPEC-01.1 section 3.2 rule 1: the model runs in both Node and the browser.
+  // SPEC-01 section 3.2 rule 2: shared runs in Node and in the browser, with zod only.
   {
-    files: ['packages/model/src/**/*.ts'],
-    ignores: ['packages/model/src/**/*.test.ts', 'packages/model/src/**/*.bench.ts'],
+    files: ['packages/shared/src/**/*.ts'],
+    ignores: ['packages/shared/src/**/*.test.ts', 'packages/shared/src/**/*.bench.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -133,9 +133,9 @@ export default defineConfig(
           patterns: [
             NO_DEEP_PACKAGE_IMPORT,
             {
-              regex: '^(?!(?:zod|nanoid)(?:/|$)|\\.{1,2}/).*',
+              regex: '^(?!zod(?:/|$)|\\.{1,2}/).*',
               message:
-                '@reactcraft/model may import only zod, nanoid and its own files (SPEC-01.1 section 3.2).',
+                '@reactcraft/shared may import only zod and its own files (SPEC-01 section 3.2).',
             },
           ],
         },
@@ -143,7 +143,7 @@ export default defineConfig(
     },
   },
 
-  // SPEC-01.1 section 3.2 rule 2 and QC-63: the server core talks to the outside through ports.
+  // SPEC-01 section 3.2 rule 1 and QC-63: the server core talks to the outside through ports.
   {
     files: ['packages/server/src/core/**/*.ts'],
     // Integration tests of core services use the real adapters and fixtures.
@@ -158,11 +158,11 @@ export default defineConfig(
           paths: [
             {
               name: 'fastify',
-              message: 'core/ must not depend on Fastify (SPEC-01.1 section 3.2).',
+              message: 'core/ must not depend on Fastify (SPEC-01 section 3.2).',
             },
             {
               name: 'chokidar',
-              message: 'core/ must use FileWatcherPort (SPEC-01.1 section 3.2).',
+              message: 'core/ must use FileWatcherPort (SPEC-01 section 3.2).',
             },
             { name: 'node:fs', message: 'core/ must use FileSystemPort (QC-63).' },
             { name: 'node:fs/promises', message: 'core/ must use FileSystemPort (QC-63).' },
@@ -173,7 +173,7 @@ export default defineConfig(
             NO_DEEP_PACKAGE_IMPORT,
             {
               group: ['**/adapters', '**/adapters/**', '@fastify/*'],
-              message: 'core/ must not import adapters (SPEC-01.1 section 3.2).',
+              message: 'core/ must not import adapters (SPEC-01 section 3.2).',
             },
           ],
         },
@@ -204,7 +204,7 @@ export default defineConfig(
     },
   },
 
-  // SPEC-01.2 section 3.4 rule 4: the backend is called only through src/api/.
+  // Studio: the server is called only through src/api/.
   {
     files: ['packages/studio/src/**/*.{ts,tsx}'],
     ignores: ['packages/studio/src/api/**'],
@@ -213,7 +213,7 @@ export default defineConfig(
         'error',
         {
           name: 'fetch',
-          message: 'Call the backend through src/api/ only (SPEC-01.2 section 3.4).',
+          message: 'Call the backend through src/api/ only (SPEC-01 section 3.2).',
         },
       ],
     },
@@ -236,13 +236,7 @@ export default defineConfig(
 
   // Tool configuration files must use a default export (QC-37 exception).
   {
-    files: [
-      '*.config.js',
-      '*.config.ts',
-      'packages/*/*.config.js',
-      'packages/*/*.config.ts',
-      'packages/*/spikes/*.config.ts',
-    ],
+    files: ['*.config.js', '*.config.ts', 'packages/*/*.config.js', 'packages/*/*.config.ts'],
     rules: {
       'no-restricted-syntax': ['error', ...RESTRICTED_SYNTAX],
     },

@@ -1,6 +1,5 @@
-// User settings endpoints (SPEC-03 section 10.2). API keys never appear in a response: Settings
-// only says whether each key is configured. The AI key routes come with the `ai` feature.
-import { issuesToDetails } from '@reactcraft/model';
+// User settings endpoints (SPEC-03 section 5.2). There is no API key to store or return (V-108).
+import { issuesToDetails } from '@reactcraft/shared';
 import type { FastifyInstance } from 'fastify';
 
 import { type ConfigStore, SettingsPatchSchema } from '../../../core/shared/user-config.ts';

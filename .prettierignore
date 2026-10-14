@@ -4,9 +4,8 @@ coverage/
 pnpm-lock.yaml
 CHANGELOG.md
 
-# Spec documents are formatted by hand: Prettier would realign every table.
+# The SRS is formatted by hand. The spec (docs/spec.md) is formatted by Prettier from 1.0 (SPEC-02 section 10).
 docs/srs.md
-docs/spec.md
 
 # Fixtures and templates mirror third-party projects and keep their own formatting.
 fixtures/
