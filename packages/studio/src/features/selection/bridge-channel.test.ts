@@ -1,6 +1,7 @@
 // Unit tests for BridgeChannel (SPEC-03 V-110..111, SPEC-04 R-BR-30, R-BR-31).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
 import { useHistoryStore } from '../history/history-store.ts';
 import { BridgeChannel } from './bridge-channel.ts';
 import { useSelectionStore } from './selection-store.ts';
@@ -14,6 +15,7 @@ describe('BridgeChannel', () => {
 
   beforeEach(() => {
     useSelectionStore.getState().reset();
+    useCanvasErrorStore.getState().reset();
     fakeIframeWindow = {
       postMessage: vi.fn(),
     };
@@ -149,5 +151,103 @@ describe('BridgeChannel', () => {
     );
 
     expect(undoSpy).toHaveBeenCalled();
+  });
+
+  it('updates canvas error store on valid build-error message [R-RN-25]', () => {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          rc: 1,
+          nonce: currentNonce,
+          type: 'build-error',
+          payload: {
+            message: 'Syntax error: Unexpected token',
+            file: 'src/pages/Home.tsx',
+            line: 42,
+            column: 3,
+          },
+        },
+        origin: runnerOrigin,
+        source: fakeIframeWindow as unknown as Window,
+      }),
+    );
+
+    const buildError = useCanvasErrorStore.getState().buildError;
+    expect(buildError).toEqual({
+      message: 'Syntax error: Unexpected token',
+      file: 'src/pages/Home.tsx',
+      line: 42,
+      column: 3,
+    });
+  });
+
+  it('clears build error on subsequent build-ok message [R-RN-25]', () => {
+    useCanvasErrorStore.getState().setBuildError({ message: 'Build error' });
+
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          rc: 1,
+          nonce: currentNonce,
+          type: 'build-ok',
+          payload: {},
+        },
+        origin: runnerOrigin,
+        source: fakeIframeWindow as unknown as Window,
+      }),
+    );
+
+    expect(useCanvasErrorStore.getState().buildError).toBeUndefined();
+  });
+
+  it('ignores runtime-error with message exceeding 2000 chars [R-RN-25]', () => {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          rc: 1,
+          nonce: currentNonce,
+          type: 'runtime-error',
+          payload: {
+            message: 'Valid runtime error',
+          },
+        },
+        origin: runnerOrigin,
+        source: fakeIframeWindow as unknown as Window,
+      }),
+    );
+
+    const store = useCanvasErrorStore.getState();
+    expect(store.runtimeErrors).toHaveLength(1);
+    expect(store.runtimeErrors[0]?.message).toBe('Valid runtime error');
+
+    const invalidLongMessage = 'a'.repeat(2001);
+
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          rc: 1,
+          nonce: currentNonce,
+          type: 'runtime-error',
+          payload: {
+            message: invalidLongMessage,
+          },
+        },
+        origin: runnerOrigin,
+        source: fakeIframeWindow as unknown as Window,
+      }),
+    );
+
+    expect(store.runtimeErrors).toHaveLength(1);
+    expect(store.runtimeErrors[0]?.message).toBe('Valid runtime error');
+  });
+
+  it('resets canvas error store on detach [R-RN-25]', () => {
+    useCanvasErrorStore.getState().setBuildError({ message: 'Old build error' });
+    useCanvasErrorStore.getState().addRuntimeError({ message: 'Old runtime error' });
+
+    channel.detach();
+
+    expect(useCanvasErrorStore.getState().buildError).toBeUndefined();
+    expect(useCanvasErrorStore.getState().runtimeErrors).toHaveLength(0);
   });
 });

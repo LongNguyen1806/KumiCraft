@@ -261,5 +261,15 @@
       "readonly": "Tập tin chỉ đọc, không thể sửa trực quan",
       "saveFailed": "Không thể lưu nội dung chữ vào mã nguồn"
     }
+  },
+  "canvas": {
+    "buildError": {
+      "title": "Dự án đang lỗi build, Canvas hiện bản cuối chạy được"
+    },
+    "runtimeErrors": {
+      "title_one": "{{count}} lỗi khi chạy trang",
+      "title_other": "{{count}} lỗi khi chạy trang",
+      "dismiss": "Ẩn danh sách lỗi"
+    }
   }
 }

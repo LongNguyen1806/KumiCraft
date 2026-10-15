@@ -1,9 +1,11 @@
 // Bridge postMessage communication channel for Studio (SPEC-04 M-BR, R-BR-30, R-BR-31, V-110..111).
 import {
+  BridgeBuildErrorPayloadSchema,
   BridgeEnvelopeSchema,
   BridgeHoverPayloadSchema,
   BridgeReadyPayloadSchema,
   BridgeRoutePayloadSchema,
+  BridgeRuntimeErrorPayloadSchema,
   BridgeSelectionInfoPayloadSchema,
   BridgeSelectPayloadSchema,
   BridgeShortcutPayloadSchema,
@@ -17,6 +19,7 @@ import {
   type ElementRef,
 } from '@reactcraft/shared';
 
+import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
 import { shortcutFor } from '../editor/use-editor-shortcuts.ts';
 import { useHistoryStore } from '../history/history-store.ts';
 import { type CanvasMode, useSelectionStore } from './selection-store.ts';
@@ -38,7 +41,26 @@ function handleBridgeShortcut(payload: unknown): void {
   }
 }
 
+function handleErrorBridgePayload(type: string, payload: unknown): boolean {
+  if (type === 'build-error') {
+    const res = BridgeBuildErrorPayloadSchema.safeParse(payload);
+    if (res.success) useCanvasErrorStore.getState().setBuildError(res.data);
+    return true;
+  }
+  if (type === 'build-ok') {
+    useCanvasErrorStore.getState().clearBuildError();
+    return true;
+  }
+  if (type === 'runtime-error') {
+    const res = BridgeRuntimeErrorPayloadSchema.safeParse(payload);
+    if (res.success) useCanvasErrorStore.getState().addRuntimeError(res.data);
+    return true;
+  }
+  return false;
+}
+
 function dispatchBridgePayload(type: string, payload: unknown): void {
+  if (handleErrorBridgePayload(type, payload)) return;
   const state = useSelectionStore.getState();
   switch (type) {
     case 'shortcut': {
@@ -48,6 +70,7 @@ function dispatchBridgePayload(type: string, payload: unknown): void {
     case 'ready': {
       const res = BridgeReadyPayloadSchema.safeParse(payload);
       if (res.success) state.setRoute(res.data.route);
+      useCanvasErrorStore.getState().dismissRuntimeErrors();
       break;
     }
     case 'hover': {
@@ -109,6 +132,7 @@ export class BridgeChannel {
     this.iframeWindow = undefined;
     this.runnerOrigin = undefined;
     this.nonce = undefined;
+    useCanvasErrorStore.getState().reset();
   }
 
   registerTextEditListener(listener: BridgeTextEditListener): () => void {

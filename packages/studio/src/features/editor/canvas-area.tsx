@@ -4,6 +4,8 @@ import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { errorText } from '../../routes/error-text.ts';
+import { BuildErrorBanner } from '../canvas-errors/build-error-banner.tsx';
+import { RuntimeErrorList } from '../canvas-errors/runtime-error-list.tsx';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { type TextEditWarning, useCanvasTextEdit } from '../text-edit/use-canvas-text-edit.ts';
 import {
@@ -131,6 +133,7 @@ function CanvasViewport(props: CanvasContentProps) {
       data-testid="canvas-placeholder"
     >
       <CanvasContent {...props} />
+      <RuntimeErrorList />
     </div>
   );
 }
@@ -169,6 +172,7 @@ export function CanvasArea(props: CanvasAreaProps) {
           setMode((m) => (m === 'design' ? 'preview' : 'design'));
         }}
       />
+      <BuildErrorBanner onOpenLoc={editor.open} />
       <TextEditOverlay
         warning={textEdit.warning}
         loopCount={textEdit.loopCount}

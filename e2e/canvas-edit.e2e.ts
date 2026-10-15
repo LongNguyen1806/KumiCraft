@@ -280,3 +280,30 @@ test('dynamic expression className={cn(...)} is locked with reason in inspector 
   await expect(tab.getByText(/biểu thức mã|biểu thức động|dynamic/i)).toBeVisible();
   await expect(lockBanner.getByText(/Mở trong editor|Open in editor/i)).toBeVisible();
 });
+
+test('build error banner shows the file and hides after the fix [R-RN-25]', async ({ page }) => {
+  const session = await start();
+  const tab = await open(page, session);
+  await trustIfAsked(tab);
+
+  const canvas = await getCanvasFrame(tab);
+  await expect(canvas.getByRole('heading', { name: 'Sản phẩm nổi bật' })).toBeVisible({
+    timeout: 25_000,
+  });
+
+  const homeFile = join(folder.path, 'src', 'pages', 'Home.tsx');
+  const original = await readFile(homeFile, 'utf8');
+
+  // Introduce broken JSX
+  await writeFile(homeFile, `${original}\n<div>broken unclosed tag`, 'utf8');
+
+  const buildErrorBanner = tab.getByTestId('canvas-build-error');
+  await expect(buildErrorBanner).toBeVisible({ timeout: 15_000 });
+
+  const openBtn = tab.getByTestId('canvas-build-error-open');
+  await expect(openBtn).toContainText('src/pages/Home.tsx');
+
+  // Fix by writing back original content
+  await writeFile(homeFile, original, 'utf8');
+  await expect(buildErrorBanner).toBeHidden({ timeout: 15_000 });
+});

@@ -150,4 +150,82 @@ describe('build errors [R-BR-17]', () => {
       file: 'C:/other/file.ts',
     });
   });
+
+  it('extracts file, line, column from relative frame in message when loc is missing [R-BR-17]', () => {
+    const res = toBuildError(
+      {
+        err: {
+          message: 'Failed to parse JSX\n╭─[ src/pages/Home.tsx:44:6 ]\n44 │ <div>',
+        },
+      },
+      ROOT,
+    );
+    expect(res).toEqual({
+      message: 'Failed to parse JSX\n╭─[ src/pages/Home.tsx:44:6 ]\n44 │ <div>',
+      file: 'src/pages/Home.tsx',
+      line: 44,
+      column: 6,
+    });
+  });
+
+  it('does not read a plugin tag before the frame as part of the path [R-BR-17]', () => {
+    const message = '[plugin:vite:react] Failed to parse JSX ╭─[ src/pages/Home.tsx:44:6 ]';
+    expect(toBuildError({ err: { message } }, ROOT)).toEqual({
+      message,
+      file: 'src/pages/Home.tsx',
+      line: 44,
+      column: 6,
+    });
+  });
+
+  it('normalizes absolute Windows path in message frame to relative under rootDir [R-BR-17]', () => {
+    const res = toBuildError(
+      {
+        err: {
+          message: 'Syntax error\n╭─[ D:\\work\\shop\\src\\pages\\Home.tsx:44:6 ]',
+        },
+      },
+      ROOT,
+    );
+    expect(res).toEqual({
+      message: 'Syntax error\n╭─[ D:\\work\\shop\\src\\pages\\Home.tsx:44:6 ]',
+      file: 'src/pages/Home.tsx',
+      line: 44,
+      column: 6,
+    });
+  });
+
+  it('ignores frame in message when loc exists [R-BR-17]', () => {
+    const res = toBuildError(
+      {
+        err: {
+          message: 'Error\n╭─[ src/pages/Ignored.tsx:99:99 ]',
+          loc: { file: 'D:/work/shop/src/pages/Home.tsx', line: 10, column: 2 },
+        },
+      },
+      ROOT,
+    );
+    expect(res).toEqual({
+      message: 'Error\n╭─[ src/pages/Ignored.tsx:99:99 ]',
+      file: 'src/pages/Home.tsx',
+      line: 10,
+      column: 3,
+    });
+  });
+
+  it('keeps error without line and column when no frame is found in message [R-BR-17]', () => {
+    const res = toBuildError(
+      {
+        err: {
+          message: 'Generic build error without location frame',
+          id: 'D:/work/shop/src/main.tsx',
+        },
+      },
+      ROOT,
+    );
+    expect(res).toEqual({
+      message: 'Generic build error without location frame',
+      file: 'src/main.tsx',
+    });
+  });
 });

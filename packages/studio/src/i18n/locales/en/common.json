@@ -261,5 +261,15 @@
       "readonly": "File is read-only, cannot edit visually",
       "saveFailed": "Failed to save text edit to source"
     }
+  },
+  "canvas": {
+    "buildError": {
+      "title": "Build error, the canvas shows the last working build"
+    },
+    "runtimeErrors": {
+      "title_one": "{{count}} runtime error",
+      "title_other": "{{count}} runtime errors",
+      "dismiss": "Hide errors"
+    }
   }
 }
