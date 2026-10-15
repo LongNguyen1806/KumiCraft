@@ -1,6 +1,7 @@
 // Project lifecycle, framework detection, creation, installation, backends, theme (SPEC-04 M-PJ).
 import {
   type BackendInfo,
+  type BackendLink,
   type Frame,
   newWorkspaceFile,
   type PackageManager,
@@ -24,6 +25,7 @@ import {
   checkBlockedPath,
   checkPathSyntax,
   isInside,
+  parentPath,
   resolveBackendPath,
   toStoredBackendPath,
 } from '../shared/paths.ts';
@@ -106,26 +108,36 @@ export function createProjectService(deps: ProjectServiceDeps): ProjectService {
     return undefined;
   }
 
+  async function toBackendInfo(
+    root: string,
+    link: BackendLink,
+    platform: Platform,
+    homeDir?: string,
+  ): Promise<BackendInfo> {
+    const resolvedPath = resolveBackendPath(root, link.path);
+    const parent = parentPath(root);
+    const outsideParent =
+      parent === undefined
+        ? !isInside(root, resolvedPath, platform)
+        : !isInside(parent, resolvedPath, platform);
+    const blocked = checkBlockedPath(resolvedPath, platform, homeDir);
+    if (blocked !== undefined) {
+      return { ...link, status: 'blocked', resolvedPath, outsideParent };
+    }
+    const exists = await deps.fs.exists(resolvedPath, '.');
+    if (!exists) {
+      return { ...link, status: 'missing', resolvedPath, outsideParent };
+    }
+    return { ...link, status: 'ok', resolvedPath, outsideParent };
+  }
+
   async function computeBackendInfos(
     root: string,
     file: WorkspaceFile,
     platform: Platform,
     homeDir?: string,
   ): Promise<BackendInfo[]> {
-    return Promise.all(
-      file.backends.map(async (b) => {
-        const resolved = resolveBackendPath(root, b.path);
-        const blocked = checkBlockedPath(resolved, platform, homeDir);
-        if (blocked !== undefined) {
-          return { ...b, status: 'blocked' };
-        }
-        const exists = await deps.fs.exists(resolved, '.');
-        if (!exists) {
-          return { ...b, status: 'missing' };
-        }
-        return { ...b, status: 'ok' };
-      }),
-    );
+    return Promise.all(file.backends.map((b) => toBackendInfo(root, b, platform, homeDir)));
   }
 
   function buildProjectInfo(
@@ -520,7 +532,9 @@ export function createProjectService(deps: ProjectServiceDeps): ProjectService {
       );
 
       const added = backends.find((b) => b.id === newBackend.id);
-      return ok(added ?? { ...newBackend, status: 'ok' });
+      return ok(
+        added ?? (await toBackendInfo(current.root, newBackend, deps.platform, deps.homeDir)),
+      );
     },
 
     async removeBackend(id: string): Promise<Result<void>> {

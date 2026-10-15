@@ -92,7 +92,16 @@ const mockProjectService: ProjectService = {
       }),
     ),
   addBackend: (path, label) =>
-    Promise.resolve(ok({ id: 'back000001', path, label: label ?? 'backend', status: 'ok' })),
+    Promise.resolve(
+      ok({
+        id: 'back000001',
+        path,
+        label: label ?? 'backend',
+        status: 'ok',
+        resolvedPath: path,
+        outsideParent: false,
+      }),
+    ),
   removeBackend: () => Promise.resolve(ok(undefined)),
 };
 

@@ -1,9 +1,11 @@
+import type { BackendInfo } from '@reactcraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { initI18n } from '../../i18n/i18n.ts';
 import { EditorScreen } from '../../routes/editor-screen.tsx';
+import { TrustPrompt } from './trust-prompt.tsx';
 
 type Call = { readonly url: string; readonly method: string; readonly body?: string };
 let calls: Call[];
@@ -108,5 +110,149 @@ describe('project trust in the Studio', () => {
 
     expect(screen.queryByTestId('trust-bar')).toBeNull();
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('displays projectRoot in trust-root when provided [S-80]', () => {
+    stubServer();
+    render(
+      <TrustPrompt
+        projectId="shop000001"
+        projectName="Shop"
+        projectRoot="/path/to/shop"
+        backends={[]}
+        onTrusted={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('trust-root').textContent).toBe('/path/to/shop');
+  });
+
+  it('lists backends with resolvedPath and without relative path [S-80]', () => {
+    stubServer();
+    const backends: BackendInfo[] = [
+      {
+        id: 'api0000001',
+        label: 'Shop API',
+        path: '../api',
+        resolvedPath: '/workspace/work/api',
+        outsideParent: false,
+        status: 'ok',
+      },
+      {
+        id: 'auth000001',
+        label: 'Auth API',
+        path: '../auth',
+        resolvedPath: '/workspace/work/auth',
+        outsideParent: false,
+        status: 'ok',
+      },
+    ];
+
+    render(
+      <TrustPrompt
+        projectId="shop000001"
+        projectName="Shop"
+        backends={backends}
+        onTrusted={vi.fn()}
+      />,
+    );
+
+    const items = screen.getAllByTestId('trust-backend');
+    expect(items).toHaveLength(2);
+    expect(items[0]?.textContent).toContain('Shop API');
+    expect(items[0]?.textContent).toContain('/workspace/work/api');
+    expect(items[0]?.textContent).not.toContain('../api');
+    expect(items[1]?.textContent).toContain('Auth API');
+    expect(items[1]?.textContent).toContain('/workspace/work/auth');
+    expect(items[1]?.textContent).not.toContain('../auth');
+  });
+
+  it('shows warning note for backend outside parent directory [S-80]', () => {
+    stubServer();
+    const backends: BackendInfo[] = [
+      {
+        id: 'api0000001',
+        label: 'Shop API',
+        path: '../api',
+        resolvedPath: '/workspace/work/api',
+        outsideParent: false,
+        status: 'ok',
+      },
+      {
+        id: 'ext0000001',
+        label: 'Secret API',
+        path: '/secrets/api',
+        resolvedPath: '/secrets/api',
+        outsideParent: true,
+        status: 'ok',
+      },
+    ];
+
+    render(
+      <TrustPrompt
+        projectId="shop000001"
+        projectName="Shop"
+        backends={backends}
+        onTrusted={vi.fn()}
+      />,
+    );
+
+    const outsideWarnings = screen.getAllByTestId('trust-backend-outside');
+    expect(outsideWarnings).toHaveLength(1);
+    expect(outsideWarnings[0]?.textContent).toBe(
+      'Outside the folder that holds the project, check carefully',
+    );
+    expect(outsideWarnings[0]?.getAttribute('role')).toBe('note');
+  });
+
+  it('shows no-backends when empty, and loading when backends is undefined [S-80]', () => {
+    stubServer();
+    render(
+      <TrustPrompt projectId="shop000001" projectName="Shop" backends={[]} onTrusted={vi.fn()} />,
+    );
+
+    expect(screen.getByTestId('trust-no-backends').textContent).toBe('No linked backends');
+    expect(screen.queryByTestId('trust-loading')).toBeNull();
+
+    cleanup();
+
+    render(
+      <TrustPrompt
+        projectId="shop000001"
+        projectName="Shop"
+        backends={undefined}
+        onTrusted={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('trust-loading').textContent).toBe('Loading project details…');
+    expect(screen.queryByTestId('trust-no-backends')).toBeNull();
+  });
+
+  it('shows backend status when status is blocked [S-80]', () => {
+    stubServer();
+    const backends: BackendInfo[] = [
+      {
+        id: 'sys0000001',
+        label: 'System Folder',
+        path: '/etc',
+        resolvedPath: '/etc',
+        outsideParent: true,
+        status: 'blocked',
+      },
+    ];
+
+    render(
+      <TrustPrompt
+        projectId="shop000001"
+        projectName="Shop"
+        backends={backends}
+        onTrusted={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('trust-backend-status').textContent).toBe(
+      'Blocked: system or sensitive folder',
+    );
   });
 });

@@ -103,7 +103,16 @@
     "restricted": "Khi chưa tin cậy, ReactCraft không khởi động dev server, không cài dependency và không chạy agent AI trên dự án.",
     "confirm": "Tin cậy dự án này",
     "later": "Để sau",
-    "close": "Đóng"
+    "close": "Đóng",
+    "root": "Thư mục gốc",
+    "backends": "Backend liên kết (agent AI được đọc bản sao chỉ đọc)",
+    "noBackends": "Không có backend liên kết",
+    "backendOutside": "Nằm ngoài thư mục chứa dự án, hãy kiểm tra kỹ",
+    "backendStatus": {
+      "missing": "Không tìm thấy thư mục",
+      "blocked": "Bị chặn vì là thư mục hệ thống hoặc nhạy cảm"
+    },
+    "loading": "Đang tải thông tin dự án…"
   },
   "project": {
     "button": "Project",

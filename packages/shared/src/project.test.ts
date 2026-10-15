@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { DirectoryListingSchema } from './fs.ts';
 import {
+  BackendInfoSchema,
   ProjectInfoSchema,
   ProjectProbeSchema,
   SupportReportSchema,
@@ -58,6 +59,20 @@ describe('SupportReportSchema', () => {
   });
 });
 
+describe('BackendInfoSchema', () => {
+  it('validates a complete backend info [S-80]', () => {
+    const backend = {
+      id: 'api0000001',
+      path: '../api',
+      label: 'Shop API',
+      status: 'ok',
+      resolvedPath: 'D:/projects/api',
+      outsideParent: false,
+    };
+    expect(BackendInfoSchema.safeParse(backend).success).toBe(true);
+  });
+});
+
 describe('ProjectInfoSchema', () => {
   it('validates a complete project info', () => {
     const info = {
@@ -77,7 +92,16 @@ describe('ProjectInfoSchema', () => {
       responsiveMode: 'desktop-first',
       frames: [{ id: 'desktop', label: 'Desktop', width: 1440, height: 900 }],
       primaryFrameId: 'desktop',
-      backends: [],
+      backends: [
+        {
+          id: 'api0000001',
+          path: '../api',
+          label: 'Shop API',
+          status: 'ok',
+          resolvedPath: 'D:/projects/api',
+          outsideParent: false,
+        },
+      ],
       trusted: true,
     };
     expect(ProjectInfoSchema.safeParse(info).success).toBe(true);

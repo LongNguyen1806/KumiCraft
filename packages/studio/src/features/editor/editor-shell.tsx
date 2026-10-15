@@ -173,16 +173,8 @@ export function EditorShell({ projectId, projectName, trusted, onTrusted }: Edit
 
   useEditorShortcuts({
     togglePanels: panels.toggleBoth,
-    undo: canUndo
-      ? () => {
-          void undo();
-        }
-      : undefined,
-    redo: canRedo
-      ? () => {
-          void redo();
-        }
-      : undefined,
+    undo: canUndo ? () => void undo() : undefined,
+    redo: canRedo ? () => void redo() : undefined,
   });
   const loader = useProjectLoader(trusted);
 
@@ -197,7 +189,13 @@ export function EditorShell({ projectId, projectName, trusted, onTrusted }: Edit
         }}
       />
       {!trusted && (
-        <TrustPrompt projectId={projectId} projectName={projectName} onTrusted={onTrusted} />
+        <TrustPrompt
+          projectId={projectId}
+          projectName={projectName}
+          projectRoot={loader.projectInfo?.root}
+          backends={loader.projectInfo?.backends}
+          onTrusted={onTrusted}
+        />
       )}
       <WorkGrid
         panels={panels}

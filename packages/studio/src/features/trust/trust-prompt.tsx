@@ -1,6 +1,7 @@
 // Project trust in the Studio (SPEC-05 S-80, S-81): an untrusted project opens in restricted mode,
 // where nothing of the project runs. The first time in a tab the Studio asks; afterwards a bar
 // stays on top. The list of linked backends comes with GET /project (WP-1.03).
+import type { BackendInfo } from '@reactcraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -30,12 +31,20 @@ function rememberAsked(id: string): void {
 type TrustPromptProps = {
   readonly projectId: string;
   readonly projectName: string;
+  readonly projectRoot?: string | undefined;
+  readonly backends?: readonly BackendInfo[] | undefined;
   /** Reads the session again once the project is trusted. */
   readonly onTrusted: () => void;
 };
 
 /** Warning bar of restricted mode, and the trust question (shown once per tab at first). */
-export function TrustPrompt({ projectId, projectName, onTrusted }: TrustPromptProps) {
+export function TrustPrompt({
+  projectId,
+  projectName,
+  projectRoot,
+  backends,
+  onTrusted,
+}: TrustPromptProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(() => !wasAsked(projectId));
   const close = () => {
@@ -60,21 +69,137 @@ export function TrustPrompt({ projectId, projectName, onTrusted }: TrustPromptPr
           {t('trust.review')}
         </button>
       </div>
-      <TrustDialog open={open} projectName={projectName} onClose={close} onTrusted={onTrusted} />
+      <TrustDialog
+        open={open}
+        projectName={projectName}
+        projectRoot={projectRoot}
+        backends={backends}
+        onClose={close}
+        onTrusted={onTrusted}
+      />
     </>
+  );
+}
+
+function TrustBackendItem({ backend }: { readonly backend: BackendInfo }) {
+  const { t } = useTranslation();
+  return (
+    <li className="flex flex-col gap-0.5" data-testid="trust-backend">
+      <span className="font-medium">{backend.label}</span>
+      <span className="font-mono text-xs text-ink-soft break-all">{backend.resolvedPath}</span>
+      {backend.outsideParent && (
+        <span
+          role="note"
+          className="text-xs font-medium text-amber-700 dark:text-amber-400"
+          data-testid="trust-backend-outside"
+        >
+          {t('trust.backendOutside')}
+        </span>
+      )}
+      {backend.status !== 'ok' && (
+        <span className="text-xs text-danger" data-testid="trust-backend-status">
+          {backend.status === 'missing'
+            ? t('trust.backendStatus.missing')
+            : t('trust.backendStatus.blocked')}
+        </span>
+      )}
+    </li>
+  );
+}
+
+function TrustBackends({ backends }: { readonly backends?: readonly BackendInfo[] | undefined }) {
+  const { t } = useTranslation();
+  if (backends === undefined) {
+    return (
+      <p className="grid gap-0.5 rounded-2xl bg-field px-4 py-2.5">
+        <span className="text-xs text-ink-faint">{t('trust.backends')}</span>
+        <span className="text-xs text-ink-soft" data-testid="trust-loading">
+          {t('trust.loading')}
+        </span>
+      </p>
+    );
+  }
+  if (backends.length === 0) {
+    return (
+      <p className="grid gap-0.5 rounded-2xl bg-field px-4 py-2.5">
+        <span className="text-xs text-ink-faint">{t('trust.backends')}</span>
+        <span className="text-xs text-ink-soft" data-testid="trust-no-backends">
+          {t('trust.noBackends')}
+        </span>
+      </p>
+    );
+  }
+  return (
+    <div className="grid gap-1.5 rounded-2xl bg-field px-4 py-2.5">
+      <span className="text-xs text-ink-faint">{t('trust.backends')}</span>
+      <ul className="flex flex-col gap-2" data-testid="trust-backends">
+        {backends.map((b) => (
+          <TrustBackendItem key={b.id} backend={b} />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function TrustDialogBody({
+  projectName,
+  projectRoot,
+  backends,
+  failedCode,
+}: {
+  readonly projectName: string;
+  readonly projectRoot?: string | undefined;
+  readonly backends?: readonly BackendInfo[] | undefined;
+  readonly failedCode?: string | undefined;
+}) {
+  const { t } = useTranslation();
+  const { t: tError } = useTranslation('errors');
+  return (
+    <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto pr-1">
+      <p className="text-ink-soft">{t('trust.intro')}</p>
+      <p className="grid gap-0.5 rounded-2xl bg-field px-4 py-2.5">
+        <span className="text-xs text-ink-faint">{t('trust.project')}</span>
+        <span className="font-medium break-all" data-testid="trust-project">
+          {projectName}
+        </span>
+      </p>
+      {projectRoot !== undefined && (
+        <p className="grid gap-0.5 rounded-2xl bg-field px-4 py-2.5">
+          <span className="text-xs text-ink-faint">{t('trust.root')}</span>
+          <span className="font-mono text-xs break-all" data-testid="trust-root">
+            {projectRoot}
+          </span>
+        </p>
+      )}
+      <TrustBackends backends={backends} />
+      <p className="pt-1 text-xs text-ink-faint">{t('trust.restricted')}</p>
+      {failedCode !== undefined && (
+        <p role="alert" className="text-danger">
+          {errorText(tError, failedCode)}
+        </p>
+      )}
+    </div>
   );
 }
 
 type TrustDialogProps = {
   readonly open: boolean;
   readonly projectName: string;
+  readonly projectRoot?: string | undefined;
+  readonly backends?: readonly BackendInfo[] | undefined;
   readonly onClose: () => void;
   readonly onTrusted: () => void;
 };
 
-function TrustDialog({ open, projectName, onClose, onTrusted }: TrustDialogProps) {
+function TrustDialog({
+  open,
+  projectName,
+  projectRoot,
+  backends,
+  onClose,
+  onTrusted,
+}: TrustDialogProps) {
   const { t } = useTranslation();
-  const { t: tError } = useTranslation('errors');
   const [failedCode, setFailedCode] = useState<string>();
   const trust = async () => {
     try {
@@ -87,19 +212,12 @@ function TrustDialog({ open, projectName, onClose, onTrusted }: TrustDialogProps
   };
   return (
     <Dialog open={open} title={t('trust.title')} closeLabel={t('trust.close')} onClose={onClose}>
-      <p className="text-ink-soft">{t('trust.intro')}</p>
-      <p className="grid gap-0.5 rounded-2xl bg-field px-4 py-2.5">
-        <span className="text-xs text-ink-faint">{t('trust.project')}</span>
-        <span className="font-medium break-all" data-testid="trust-project">
-          {projectName}
-        </span>
-      </p>
-      <p className="pt-2 text-xs text-ink-faint">{t('trust.restricted')}</p>
-      {failedCode !== undefined && (
-        <p role="alert" className="text-danger">
-          {errorText(tError, failedCode)}
-        </p>
-      )}
+      <TrustDialogBody
+        projectName={projectName}
+        projectRoot={projectRoot}
+        backends={backends}
+        failedCode={failedCode}
+      />
       <div className="flex flex-wrap gap-2 pt-3">
         <button
           type="button"

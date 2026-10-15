@@ -103,7 +103,16 @@
     "restricted": "Until you trust it, ReactCraft does not start its dev server, install its dependencies or run an AI agent on it.",
     "confirm": "Trust this project",
     "later": "Not now",
-    "close": "Close"
+    "close": "Close",
+    "root": "Root folder",
+    "backends": "Linked backends (the AI agent reads a read-only copy)",
+    "noBackends": "No linked backends",
+    "backendOutside": "Outside the folder that holds the project, check carefully",
+    "backendStatus": {
+      "missing": "Folder not found",
+      "blocked": "Blocked: system or sensitive folder"
+    },
+    "loading": "Loading project details…"
   },
   "project": {
     "button": "Project",

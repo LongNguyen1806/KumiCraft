@@ -64,6 +64,10 @@ export type BackendStatus = z.infer<typeof BackendStatusSchema>;
 
 export const BackendInfoSchema = BackendLinkSchema.extend({
   status: BackendStatusSchema,
+  /** Absolute path after resolving the stored path against the project root (S-80). */
+  resolvedPath: z.string().min(1).max(1024),
+  /** True when the backend is not inside the parent folder of the project (S-80). */
+  outsideParent: z.boolean(),
 });
 export type BackendInfo = z.infer<typeof BackendInfoSchema>;
 

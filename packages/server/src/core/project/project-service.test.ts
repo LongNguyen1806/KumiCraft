@@ -190,4 +190,142 @@ describe('ProjectService backends', () => {
       await cleanup();
     }
   });
+
+  it('computes resolvedPath and outsideParent: false for sibling backend [S-80]', async () => {
+    const { dir, cleanup } = await makeTempDir();
+    try {
+      const parentDir = join(dir, 'work');
+      const frontendDir = join(parentDir, 'shop');
+      const backendDir = join(parentDir, 'api');
+      const configDir = join(dir, 'config');
+      await mkdir(frontendDir, { recursive: true });
+      await mkdir(backendDir, { recursive: true });
+      await mkdir(configDir, { recursive: true });
+      await writeWorkspace(frontendDir);
+
+      const fs = createNodeFileSystem(platform);
+      const system = fakeSystem(1, new Set([1]));
+      const configStore = await createConfigStore({
+        fs,
+        dir: configDir,
+        platform,
+        logger: silentLogger,
+      });
+
+      const service = createProjectService({
+        fs,
+        system,
+        process: fakeProcess,
+        config: configStore,
+        logger: silentLogger,
+        port: 50234,
+        platform,
+        templateDir: dir,
+      });
+
+      await service.open(frontendDir);
+      await service.addBackend(backendDir, 'Shop API');
+
+      const reOpen = await service.open(frontendDir);
+      expect(reOpen.ok).toBe(true);
+      if (!reOpen.ok) return;
+
+      const expectedResolved = backendDir.replaceAll('\\', '/');
+      expect(reOpen.value.backends[0]?.resolvedPath).toBe(expectedResolved);
+      expect(reOpen.value.backends[0]?.outsideParent).toBe(false);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it('computes outsideParent: true and resolvedPath for backend outside parent [S-80]', async () => {
+    const { dir, cleanup } = await makeTempDir();
+    try {
+      const frontendDir = join(dir, 'work', 'shop');
+      const externalBackendDir = join(dir, 'other-place', 'analytics-api');
+      const configDir = join(dir, 'config');
+      await mkdir(frontendDir, { recursive: true });
+      await mkdir(externalBackendDir, { recursive: true });
+      await mkdir(configDir, { recursive: true });
+      await writeWorkspace(frontendDir);
+
+      const fs = createNodeFileSystem(platform);
+      const system = fakeSystem(1, new Set([1]));
+      const configStore = await createConfigStore({
+        fs,
+        dir: configDir,
+        platform,
+        logger: silentLogger,
+      });
+
+      const service = createProjectService({
+        fs,
+        system,
+        process: fakeProcess,
+        config: configStore,
+        logger: silentLogger,
+        port: 50234,
+        platform,
+        templateDir: dir,
+      });
+
+      await service.open(frontendDir);
+      await service.addBackend(externalBackendDir, 'Analytics API');
+
+      const reOpen = await service.open(frontendDir);
+      expect(reOpen.ok).toBe(true);
+      if (!reOpen.ok) return;
+
+      const expectedResolved = externalBackendDir.replaceAll('\\', '/');
+      expect(reOpen.value.backends[0]?.resolvedPath).toBe(expectedResolved);
+      expect(reOpen.value.backends[0]?.outsideParent).toBe(true);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it('returns resolvedPath and outsideParent when adding backend [S-80]', async () => {
+    const { dir, cleanup } = await makeTempDir();
+    try {
+      const parentDir = join(dir, 'work');
+      const frontendDir = join(parentDir, 'shop');
+      const backendDir = join(parentDir, 'api');
+      const configDir = join(dir, 'config');
+      await mkdir(frontendDir, { recursive: true });
+      await mkdir(backendDir, { recursive: true });
+      await mkdir(configDir, { recursive: true });
+      await writeWorkspace(frontendDir);
+
+      const fs = createNodeFileSystem(platform);
+      const system = fakeSystem(1, new Set([1]));
+      const configStore = await createConfigStore({
+        fs,
+        dir: configDir,
+        platform,
+        logger: silentLogger,
+      });
+
+      const service = createProjectService({
+        fs,
+        system,
+        process: fakeProcess,
+        config: configStore,
+        logger: silentLogger,
+        port: 50234,
+        platform,
+        templateDir: dir,
+      });
+
+      await service.open(frontendDir);
+      const addRes = await service.addBackend(backendDir, 'Shop API');
+      expect(addRes.ok).toBe(true);
+      if (!addRes.ok) return;
+
+      const expectedResolved = backendDir.replaceAll('\\', '/');
+      expect(addRes.value.resolvedPath).toBe(expectedResolved);
+      expect(addRes.value.outsideParent).toBe(false);
+    } finally {
+      await cleanup();
+    }
+  });
 });
