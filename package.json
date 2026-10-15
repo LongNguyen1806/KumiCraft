@@ -15,7 +15,7 @@
     "build": "pnpm -r build",
     "package": "pnpm build && pnpm --filter @reactcraft/cli pack --pack-destination artifacts",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit -p packages/shared && tsc --noEmit -p packages/server && tsc --noEmit -p packages/studio && tsc --noEmit -p packages/cli && tsc --noEmit -p e2e",
+    "typecheck": "tsc --noEmit -p packages/shared && tsc --noEmit -p packages/bridge && tsc --noEmit -p packages/server && tsc --noEmit -p packages/studio && tsc --noEmit -p packages/cli && tsc --noEmit -p e2e",
     "test": "vitest run",
     "test:e2e": "pnpm build && playwright test",
     "check:i18n": "node scripts/check-i18n.mjs",

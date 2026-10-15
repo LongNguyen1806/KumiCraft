@@ -15,6 +15,7 @@ export default defineConfig({
   test: {
     projects: [
       nodeProject('shared'),
+      nodeProject('bridge'),
       nodeProject('server'),
       nodeProject('cli'),
       {
@@ -37,6 +38,8 @@ export default defineConfig({
         '**/*.d.ts',
         'packages/studio/src/main.tsx',
         'packages/cli/src/index.ts',
+        'packages/bridge/src/client/entry.ts',
+        'packages/bridge/src/client/bridge-client.generated.ts',
       ],
       reporter: ['text-summary', 'json-summary', 'html'],
       thresholds: {

@@ -6,7 +6,7 @@
 // Run with: node scripts/vg/vg-12.mjs
 /* global document, getComputedStyle, window */
 import { spawn } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -14,6 +14,8 @@ import { chromium } from '@playwright/test';
 
 const CLI = join(import.meta.dirname, '..', '..', 'packages', 'cli', 'dist', 'index.js');
 const SHOTS = join(import.meta.dirname, '..', '..', 'test-results', 'vg-12');
+/** A supported project (R-PJ-07): a folder with only workspace.json is refused with E001. */
+const FIXTURE = join(import.meta.dirname, '..', '..', 'fixtures', 'projects', 'vite8-react19-ts');
 const SIZES = [
   { width: 1024, height: 768 },
   { width: 1440, height: 900 },
@@ -99,6 +101,7 @@ async function check(page, name, results) {
 
 /** A `.reactcraft/workspace.json` (SPEC-03 section 3) written as a project pulled from Git. */
 function writeProject(folder, text) {
+  cpSync(FIXTURE, folder, { recursive: true });
   mkdirSync(join(folder, '.reactcraft'), { recursive: true });
   const file = {
     schemaVersion: 2,

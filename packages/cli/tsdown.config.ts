@@ -3,7 +3,10 @@
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: {
+    index: 'src/index.ts',
+    'runners/vite-react': '../server/src/runners/vite-react.ts',
+  },
   format: 'esm',
   platform: 'node',
   target: 'node22.12',
@@ -14,5 +17,9 @@ export default defineConfig({
   // Bundling a third-party CommonJS package breaks it in ESM (write-file-atomic reads __filename):
   // only the internal packages may be bundled, so a missing `dependencies` entry fails the build.
   deps: { alwaysBundle: [/^@reactcraft\//], onlyBundle: [/^@reactcraft\//] },
-  copy: [{ from: '../studio/dist', to: 'dist', rename: 'studio' }],
+  copy: [
+    { from: '../studio/dist', to: 'dist', rename: 'studio' },
+    // ADR-BE-25: the project template ships inside the package (ADR-BE-32).
+    { from: '../../templates', to: 'dist', rename: 'templates' },
+  ],
 });

@@ -1,13 +1,13 @@
-// What remains of the user's main path until M-PJ (WP-1.03): a folder without a project, a project
-// pulled from Git that asks for trust (S-80, S-81) and remembers it (S-82), and a broken or old
-// `.reactcraft/workspace.json` that is shown, never overwritten (V-105). Runs the built CLI.
+// Opening a folder with the built CLI: a folder without a project, a project pulled from Git that
+// asks for trust (S-80, S-81) and remembers it (S-82), and a broken or old `.reactcraft/workspace.json`
+// that is shown, never overwritten (V-105). Projects are copies of the supported fixture (R-PJ-07).
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { expect, type Page, test } from '@playwright/test';
 
 import { type CliSession, startCli } from './support/cli-session.ts';
-import { makeTempDir, type TempDir } from './support/copy-fixture.ts';
+import { copyFixture, makeTempDir, type TempDir } from './support/copy-fixture.ts';
 
 let folder: TempDir;
 let config: TempDir;
@@ -36,7 +36,10 @@ const PROJECT = {
   primaryFrameId: 'desktop',
 };
 
+/** Turns the test folder into a copy of the supported fixture with the given workspace.json. */
 async function writeProject(text = JSON.stringify(PROJECT, undefined, 2)) {
+  await folder.remove();
+  folder = await copyFixture('projects/vite8-react19-ts');
   await mkdir(join(folder.path, '.reactcraft'), { recursive: true });
   const file = join(folder.path, '.reactcraft', 'workspace.json');
   await writeFile(file, text);

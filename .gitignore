@@ -21,8 +21,10 @@ pnpm-debug.log*
 .env.*
 !.env.example
 
-# Workspaces created while trying ReactCraft locally
+# Workspaces created while trying ReactCraft locally. The template and the fixtures ship theirs.
 .reactcraft/
+!templates/*/.reactcraft/
+!fixtures/projects/*/.reactcraft/
 
 # Editors and operating systems
 .vscode/*

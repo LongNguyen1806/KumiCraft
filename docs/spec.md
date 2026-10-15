@@ -28,11 +28,11 @@ SRS v5.0 mô tả **hệ thống phải làm gì**. Tài liệu này mô tả **
 | ------- | ----------------------------------------------------------------- | --------------------------------------------------- |
 | Phần 0  | Hướng dẫn sử dụng tài liệu                                        | Đã viết lại                                         |
 | SPEC-01 | Kiến trúc kỹ thuật & tech stack (gộp backend và Studio)           | Đã viết lại                                         |
-| SPEC-02 | Quy chuẩn code & repo                                             | Đã viết lại (đợt 3a)                                |
+| SPEC-02 | Quy chuẩn code & repo                                             | Đã viết lại                                         |
 | SPEC-03 | Giao tiếp: API REST, sự kiện WebSocket, giao thức cầu nối, mã lỗi | Đã viết lại                                         |
 | SPEC-04 | Đặc tả module theo phase                                          | Đã viết lại (Phase 1–3 chi tiết, Phase 4 mức khung) |
-| SPEC-05 | Bảo mật                                                           | Đã viết lại (đợt 3a)                                |
-| SPEC-06 | Chất lượng & kiểm thử                                             | Đã viết lại (đợt 3a)                                |
+| SPEC-05 | Bảo mật                                                           | Đã viết lại                                         |
+| SPEC-06 | Chất lượng & kiểm thử                                             | Đã viết lại                                         |
 | SPEC-07 | Quy trình thi công, phase, cổng nghiệm thu                        | Đã viết lại                                         |
 
 ---
@@ -50,20 +50,24 @@ SRS v5.0 mô tả **hệ thống phải làm gì**. Tài liệu này mô tả **
 
 ## 0.4. Mã định danh
 
-| Tiền tố                                                                            | Ý nghĩa                                           | Ví dụ     |
-| ---------------------------------------------------------------------------------- | ------------------------------------------------- | --------- |
-| `C-xx`                                                                             | Ràng buộc                                         | C-01      |
-| `ADR-BE-xx`, `ADR-FE-xx`                                                           | Quyết định kiến trúc phía server, phía Studio     | ADR-BE-28 |
-| `VG-xx`                                                                            | Bài kiểm chứng bắt buộc                           | VG-15     |
-| `PB-xx`                                                                            | Ngân sách hiệu năng                               | PB-02     |
-| `QC-xx`                                                                            | Quy chuẩn code (SPEC-02)                          | QC-40     |
-| `V-xx`                                                                             | Quy tắc hợp lệ của dữ liệu và API (SPEC-03)       | V-60      |
-| `E0xx`                                                                             | Mã lỗi (SPEC-03)                                  | E024      |
-| `M-xx`                                                                             | Mã module (SPEC-04)                               | M-SE      |
-| `R-<module>-nn`                                                                    | Quy tắc xử lý của một module                      | R-SE-01   |
-| `S-xx`                                                                             | Biện pháp bảo mật (SPEC-05), có thể có hậu tố chữ | S-04a     |
-| `CW-xx`, `WP-n.nn`, `GC-xx`, `G<n>-xx`, `DR-xx`, `DW-xx`, `RK-xx`, `SEV-n`, `Q-xx` | Như bản 0.18 (SPEC-07)                            | WP-1.03   |
-| `FR / NFR / SEC / AC`                                                              | Mã yêu cầu trong SRS v5.0                         | AC-03     |
+| Tiền tố                  | Ý nghĩa                                                  | Ví dụ     |
+| ------------------------ | -------------------------------------------------------- | --------- |
+| `C-xx`                   | Ràng buộc                                                | C-01      |
+| `ADR-BE-xx`, `ADR-FE-xx` | Quyết định kiến trúc phía server, phía Studio            | ADR-BE-28 |
+| `VG-xx`                  | Bài kiểm chứng bắt buộc                                  | VG-15     |
+| `PB-xx`                  | Ngân sách hiệu năng                                      | PB-02     |
+| `QC-xx`                  | Quy chuẩn code (SPEC-02)                                 | QC-40     |
+| `V-xx`                   | Quy tắc hợp lệ của dữ liệu và API (SPEC-03)              | V-60      |
+| `E0xx`                   | Mã lỗi (SPEC-03)                                         | E024      |
+| `M-xx`                   | Mã module (SPEC-04)                                      | M-SE      |
+| `R-<module>-nn`          | Quy tắc xử lý của một module                             | R-SE-01   |
+| `S-xx`                   | Biện pháp bảo mật (SPEC-05), có thể có hậu tố chữ        | S-04a     |
+| `A-xx`, `T-xx`           | Tài sản, tác nhân đe dọa (SPEC-05 mục 2)                 | T-02      |
+| `CW-xx`                  | Quy tắc thi công (SPEC-07 mục 1, 9)                      | CW-52     |
+| `WP-n.nn`, `G<n>-xx`     | Gói công việc, tiêu chí cổng phase (SPEC-07)             | WP-1.03   |
+| `DR-xx`, `DW-xx`         | Điều kiện bắt đầu, điều kiện xong của WP (SPEC-07 mục 8) | DW-10     |
+| `SEV-n`                  | Mức nghiêm trọng của lỗi (SPEC-07 mục 10)                | SEV-2     |
+| `FR / NFR / SEC / AC`    | Mã yêu cầu trong SRS v5.0                                | AC-03     |
 
 Mã đã dùng trong một phần **đã duyệt** không bao giờ dùng lại. Các mã của bản 0.18 chưa được duyệt; bản 1.0 không dùng lại mã module, `R-…`, `V-…` của hướng cũ cho nghĩa khác.
 
@@ -277,28 +281,28 @@ reactcraft/
 
 Phần giải thích đầy đủ của các ADR này có trong bản 0.18; dưới đây là ràng buộc còn hiệu lực.
 
-| ADR               | Ràng buộc                                                                                                                                                                                                                                                      |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ADR-BE-01         | Import module lõi có tiền tố `node:`. Không dùng API `fs` đồng bộ trên luồng chính trừ lúc khởi động CLI. Tác vụ hủy được dùng `AbortSignal`. So sánh đường dẫn trên Windows và macOS không phân biệt hoa thường                                               |
-| ADR-BE-02         | `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`. Không `any`, không `@ts-ignore`. Kiểu qua ranh giới suy ra từ Zod                                                                                                  |
-| ADR-BE-03         | `npx reactcraft [dir]`, `--port`, `--no-open`, `--log-level`. Chỉ lắng nghe `127.0.0.1`. Tắt sạch khi `SIGINT`/`SIGTERM`: dừng tiến trình con (dev server, agent, cài đặt), hoàn tất ghi file đang dở, giải phóng khóa. Một server trên một dự án (khóa, E018) |
-| ADR-BE-06         | Route chỉ là lớp mỏng: parse bằng Zod, gọi core, trả kết quả. Giới hạn body 10 MB                                                                                                                                                                              |
-| ADR-BE-07         | REST dưới `/api/v1/*`, sự kiện qua `/api/v1/events`. Tác vụ dài trả `jobId` ngay, tiến trình qua WebSocket, hủy được. Server không trả câu đã dịch, chỉ mã lỗi và tham số                                                                                      |
-| ADR-BE-08         | `safeParse` cho mọi dữ liệu vào; schema chặt (`strict`)                                                                                                                                                                                                        |
-| ADR-BE-10         | `nanoid` cho mọi định danh do ReactCraft tạo (workspace, backend, job, lượt AI, mục lịch sử)                                                                                                                                                                   |
-| ADR-BE-15         | Duyệt file bằng `tinyglobby` không theo symlink; áp `.gitignore` và danh sách loại trừ (S-30)                                                                                                                                                                  |
-| ADR-BE-17         | Diff hiển thị cho người dùng dùng `diff` (unified, 3 dòng ngữ cảnh)                                                                                                                                                                                            |
-| ADR-BE-18         | Ghi nguyên tử: file tạm cùng thư mục, `fsync`, `rename` có thử lại khi `EPERM`/`EBUSY`/`EACCES` (tối đa 10 lần). Ghi thất bại: báo lỗi, không để file dở                                                                                                       |
-| ADR-BE-20         | Theo dõi thư mục dự án và `.reactcraft/` bằng `chokidar`, bỏ `node_modules`, `.git`, `dist`; gộp sự kiện 300 ms                                                                                                                                                |
-| ADR-BE-23         | `pino`, xoay vòng log; `redact` token, header xác thực                                                                                                                                                                                                         |
-| ADR-BE-24         | Cấu hình người dùng ở thư mục `env-paths` (`REACTCRAFT_CONFIG_DIR` ghi đè cho test). Không có API key. Lưu: ngôn ngữ, agent ưu tiên, editor để mở file, danh sách dự án đã tin cậy                                                                             |
-| ADR-BE-25         | Phát hành một package `reactcraft` gồm server, Studio đã build, Bridge đã build, template; không có `postinstall`                                                                                                                                              |
-| ADR-BE-26, FE-18  | Vitest cho unit, Playwright (Chromium, Firefox, WebKit) cho E2E chạy trên bản build thật                                                                                                                                                                       |
-| ADR-BE-27, FE-19  | ESLint (QC-40 cấm `null`, QC-42 cấm chuỗi `.then`, hàm ≤ 50 dòng, file ≤ 400 dòng, không chữ cứng trong JSX), Prettier                                                                                                                                         |
-| ADR-FE-01, 02, 03 | React 19, Vite 8, React Compiler (giữ `babel-plugin-react-compiler`), TypeScript                                                                                                                                                                               |
-| ADR-FE-14         | Giao diện Studio dùng Tailwind v4 của Studio với token thiết kế (`wash`, `card`, `ink`, `sun`…), `lucide-react` cho icon, font Be Vietnam Pro và JetBrains Mono đóng gói                                                                                       |
-| ADR-FE-16         | Mọi chữ hiển thị qua i18next, `vi` và `en` đầy đủ (VG-12); đổi ngôn ngữ không tải lại                                                                                                                                                                          |
-| ADR-FE-17         | REST bằng `fetch` có token; WebSocket tự nối lại, sau khi nối lại gọi `GET /session`                                                                                                                                                                           |
+| ADR               | Ràng buộc                                                                                                                                                                                                                                                                                                     |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ADR-BE-01         | Import module lõi có tiền tố `node:`. Không dùng API `fs` đồng bộ trên luồng chính trừ lúc khởi động CLI. Tác vụ hủy được dùng `AbortSignal`. So sánh đường dẫn trên Windows và macOS không phân biệt hoa thường                                                                                              |
+| ADR-BE-02         | `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`. Không `any`, không `@ts-ignore`. Kiểu qua ranh giới suy ra từ Zod                                                                                                                                                 |
+| ADR-BE-03         | `npx reactcraft [dir]`, `--port`, `--no-open`, `--log-level`. Chỉ lắng nghe `127.0.0.1`. Tắt sạch khi `SIGINT`/`SIGTERM`: dừng tiến trình con (dev server, agent, cài đặt), hoàn tất ghi file đang dở, giải phóng khóa. Một server trên một dự án (khóa, E018)                                                |
+| ADR-BE-06         | Route chỉ là lớp mỏng: parse bằng Zod, gọi core, trả kết quả. Giới hạn body 10 MB                                                                                                                                                                                                                             |
+| ADR-BE-07         | REST dưới `/api/v1/*`, sự kiện qua `/api/v1/events`. Tác vụ dài trả `jobId` ngay, tiến trình qua WebSocket, hủy được. Server không trả câu đã dịch, chỉ mã lỗi và tham số                                                                                                                                     |
+| ADR-BE-08         | `safeParse` cho mọi dữ liệu vào; schema chặt (`strict`)                                                                                                                                                                                                                                                       |
+| ADR-BE-10         | `nanoid` cho mọi định danh do ReactCraft tạo (workspace, backend, job, lượt AI, mục lịch sử)                                                                                                                                                                                                                  |
+| ADR-BE-15         | Duyệt file bằng `tinyglobby` không theo symlink; áp `.gitignore` và danh sách loại trừ (S-30)                                                                                                                                                                                                                 |
+| ADR-BE-17         | Diff hiển thị cho người dùng dùng `diff` (unified, 3 dòng ngữ cảnh)                                                                                                                                                                                                                                           |
+| ADR-BE-18         | Ghi nguyên tử: file tạm cùng thư mục, `fsync`, `rename` có thử lại khi `EPERM`/`EBUSY`/`EACCES` (tối đa 10 lần). Ghi thất bại: báo lỗi, không để file dở                                                                                                                                                      |
+| ADR-BE-20         | Theo dõi thư mục dự án và `.reactcraft/` bằng `chokidar`, bỏ `node_modules`, `.git`, `dist`; gộp sự kiện 300 ms                                                                                                                                                                                               |
+| ADR-BE-23         | `pino`, xoay vòng log; `redact` token, header xác thực                                                                                                                                                                                                                                                        |
+| ADR-BE-24         | Cấu hình, dữ liệu (ảnh chụp lượt AI, lịch sử hội thoại), cache (bản sao backend), log ở các thư mục `env-paths`; `REACTCRAFT_CONFIG_DIR`, `REACTCRAFT_DATA_DIR`, `REACTCRAFT_CACHE_DIR` ghi đè (dùng cho test). Không có API key. Lưu: ngôn ngữ, agent ưu tiên, editor để mở file, danh sách dự án đã tin cậy |
+| ADR-BE-25         | Phát hành một package `reactcraft` gồm server, Studio đã build, Bridge đã build, template; không có `postinstall`                                                                                                                                                                                             |
+| ADR-BE-26, FE-18  | Vitest cho unit, Playwright (Chromium, Firefox, WebKit) cho E2E chạy trên bản build thật                                                                                                                                                                                                                      |
+| ADR-BE-27, FE-19  | ESLint (QC-40 cấm `null`, QC-42 cấm chuỗi `.then`, hàm ≤ 50 dòng, file ≤ 400 dòng, không chữ cứng trong JSX), Prettier                                                                                                                                                                                        |
+| ADR-FE-01, 02, 03 | React 19, Vite 8, React Compiler (giữ `babel-plugin-react-compiler`), TypeScript                                                                                                                                                                                                                              |
+| ADR-FE-14         | Giao diện Studio dùng Tailwind v4 của Studio với token thiết kế (`wash`, `card`, `ink`, `sun`…), `lucide-react` cho icon, font Be Vietnam Pro và JetBrains Mono đóng gói                                                                                                                                      |
+| ADR-FE-16         | Mọi chữ hiển thị qua i18next, `vi` và `en` đầy đủ (VG-12); đổi ngôn ngữ không tải lại                                                                                                                                                                                                                         |
+| ADR-FE-17         | REST bằng `fetch` có token; WebSocket tự nối lại, sau khi nối lại gọi `GET /session`                                                                                                                                                                                                                          |
 
 ---
 
@@ -339,12 +343,12 @@ Phần giải thích đầy đủ của các ADR này có trong bản 0.18; dư�
 
 **Quyết định:**
 
-- Kéo **trong** Canvas (di chuyển phần tử): Bridge xử lý bằng Pointer Events, tính vị trí thả (thuật toán của bản 0.18 SPEC-04.1 mục 9.2, đã kiểm ở WP-1.08), gửi ý định `move` cho Studio.
+- Kéo **trong** Canvas (di chuyển phần tử): Bridge xử lý bằng Pointer Events, tính vị trí thả theo SPEC-04 R-DD-11 (thuật toán của bản 0.18, đã kiểm thực tế), gửi ý định `move` cho Studio.
 - Kéo **từ Library vào Canvas**: Studio dùng `@dnd-kit/core`; khi con trỏ vào vùng Canvas, Studio gửi tọa độ (đã quy đổi theo thu phóng) cho Bridge; Bridge trả vị trí thả và vẽ chỉ báo; thả thì Studio gọi server chèn.
 
 ### ADR-FE-10 — State Studio (sửa đổi)
 
-**Quyết định:** Zustand giữ trạng thái giao diện: dự án, trạng thái dev server, khung, thu phóng, vùng chọn (danh sách vị trí nguồn), thông tin phần tử đang chọn (do Bridge gửi), lịch sử hội thoại đang mở. **Không** giữ bản sao mã nguồn. Selector hẹp (R-CV-05 của bản 0.18 vẫn đúng tinh thần: không đọc cả store).
+**Quyết định:** Zustand giữ trạng thái giao diện: dự án, trạng thái dev server, khung, thu phóng, vùng chọn (danh sách vị trí nguồn), thông tin phần tử đang chọn (do Bridge gửi), lịch sử hội thoại đang mở. **Không** giữ bản sao mã nguồn. Component đọc store bằng selector hẹp, không đọc cả store (QC-59).
 
 ---
 
@@ -360,7 +364,7 @@ Phần giải thích đầy đủ của các ADR này có trong bản 0.18; dư�
 
 - Server spawn tiến trình con `node <reactcraft>/runners/<framework>.js` (qua ADR-BE-31) với `cwd` là thư mục dự án, kênh IPC.
 - Tiến trình con nạp `vite` **từ `node_modules` của dự án** (`createRequire(<dự án>/package.json)`), gọi `createServer({ root, server: { host: '127.0.0.1', port: <D>, strictPort: true, cors: false }, plugins: [reactcraftBridge(options)] })`. Cấu hình của dự án (`vite.config.*`) được Vite tự nạp và **gộp** với cấu hình trên; ReactCraft **không ghi** gì vào file cấu hình của dự án.
-- Cổng `<D>` chọn trống trong 49152–65535, dùng lại khi khởi động lại trong phiên; bị chiếm thì đổi cổng một lần (SPEC-04 R-RN-04). CSP `frame-src` của Studio cho phép origin dev server hiện tại (chi tiết S-10 ở SPEC-05, đợt 3).
+- Cổng `<D>` chọn trống trong 49152–65535, dùng lại khi khởi động lại trong phiên; bị chiếm thì đổi cổng một lần (SPEC-04 R-RN-04). CSP `frame-src` của Studio cho phép `http://127.0.0.1:*` để không phải tải lại Studio khi đổi cổng (SPEC-05 S-10).
 - Tiến trình con báo qua IPC: `ready { port }`, `error { message, file?, line? }` (lỗi cấu hình, lỗi build), `exit`. Server chuyển thành sự kiện `runner.*`.
 - Dự án chưa có `node_modules` hoặc thiếu `vite`: không chạy, báo cần cài dependency (M-PJ).
 
@@ -770,17 +774,17 @@ Refs: <mã WP, module, spec>
 
 Workflow có sẵn trong `.github/workflows/` từ Phase 0, chưa chạy (chế độ local).
 
-| Workflow, job      | Môi trường                           | Lệnh                                                                        |
-| ------------------ | ------------------------------------ | --------------------------------------------------------------------------- |
-| `ci.yml` install   | Windows, Ubuntu, macOS · Node 22, 24 | `pnpm install --frozen-lockfile` (S-90)                                     |
-| `ci.yml` lint      | Ubuntu · Node 24                     | `pnpm lint`, `pnpm format:check`, `pnpm trace`                              |
-| `ci.yml` typecheck | Ubuntu · Node 24                     | `pnpm typecheck`                                                            |
-| `ci.yml` i18n      | Ubuntu · Node 24                     | `pnpm check:i18n`                                                           |
-| `ci.yml` test      | Windows, Ubuntu, macOS · Node 22, 24 | `pnpm test --coverage` (ngưỡng mục 9)                                       |
-| `ci.yml` e2e       | Windows, Ubuntu, macOS · Node 24     | `pnpm test:e2e` (Chromium, Firefox, WebKit), bỏ test `@network`             |
-| `ci.yml` build     | Windows, Ubuntu, macOS · Node 24     | `pnpm build`, `pnpm package`, cài tarball, `scripts/smoke-installed.mjs`    |
-| `ci.yml` audit     | Ubuntu · Node 24                     | `pnpm audit --audit-level=high` (S-91)                                      |
-| `nightly.yml`      | Ubuntu · Node 24                     | `pnpm bench`, `pnpm bench:ui`, E2E `@network`; lưu `bench-results/`         |
+| Workflow, job      | Môi trường                           | Lệnh                                                                     |
+| ------------------ | ------------------------------------ | ------------------------------------------------------------------------ |
+| `ci.yml` install   | Windows, Ubuntu, macOS · Node 22, 24 | `pnpm install --frozen-lockfile` (S-90)                                  |
+| `ci.yml` lint      | Ubuntu · Node 24                     | `pnpm lint`, `pnpm format:check`, `pnpm trace`                           |
+| `ci.yml` typecheck | Ubuntu · Node 24                     | `pnpm typecheck`                                                         |
+| `ci.yml` i18n      | Ubuntu · Node 24                     | `pnpm check:i18n`                                                        |
+| `ci.yml` test      | Windows, Ubuntu, macOS · Node 22, 24 | `pnpm test --coverage` (ngưỡng mục 9)                                    |
+| `ci.yml` e2e       | Windows, Ubuntu, macOS · Node 24     | `pnpm test:e2e` (Chromium, Firefox, WebKit), bỏ test `@network`          |
+| `ci.yml` build     | Windows, Ubuntu, macOS · Node 24     | `pnpm build`, `pnpm package`, cài tarball, `scripts/smoke-installed.mjs` |
+| `ci.yml` audit     | Ubuntu · Node 24                     | `pnpm audit --audit-level=high` (S-91)                                   |
+| `nightly.yml`      | Ubuntu · Node 24                     | `pnpm bench`, `pnpm bench:ui`, E2E `@network`; lưu `bench-results/`      |
 
 ---
 
@@ -1937,7 +1941,7 @@ Cạnh riêng của viền và bo góc (`border-t`, `rounded-tl`…) chưa có �
 | Mã      | Quy tắc                                                                                                                                                                                                                                                   |
 | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | R-QA-01 | Fixture dự án nằm trong pnpm workspace của repo để có `node_modules` khi `pnpm install`. Test **không** sửa fixture tại chỗ: chép mã nguồn (trừ `node_modules`) sang thư mục tạm và tạo junction/symlink `node_modules` trỏ về `node_modules` của fixture |
-| R-QA-02 | Test không chạm cấu hình thật của người dùng: đặt `REACTCRAFT_CONFIG_DIR`, thư mục dữ liệu và cache vào thư mục tạm                                                                                                                                       |
+| R-QA-02 | Test không chạm cấu hình thật của người dùng: đặt `REACTCRAFT_CONFIG_DIR`, `REACTCRAFT_DATA_DIR`, `REACTCRAFT_CACHE_DIR` vào thư mục tạm                                                                                                                  |
 | R-QA-03 | Test E2E cần mạng mang nhãn `@network`, chạy ở cổng G1 và theo lịch, không chạy mỗi lần đẩy code                                                                                                                                                          |
 | R-QA-04 | Mỗi test ghi mã quy tắc trong ngoặc vuông (QC-93), ví dụ `[R-SE-05]`, để `pnpm trace` truy vết                                                                                                                                                            |
 
@@ -2632,21 +2636,23 @@ Mỗi module ở SPEC-04 có bảng **Kiểm thử bắt buộc** ghi tầng c�
 
 ### 2.2. Playwright
 
-| Mục         | Giá trị                                                                                     |
-| ----------- | ------------------------------------------------------------------------------------------- |
-| Trình duyệt | Chromium, Firefox, WebKit                                                                   |
-| Worker      | 4 (máy phát triển Windows chịu được; 8 làm chập chờn)                                       |
-| Thời hạn    | test 60 s, `expect` 10 s, mỗi thao tác 15 s                                                 |
-| Thử lại     | 0 trên máy local, 1 trên CI; `trace: 'on-first-retry'`, ảnh chụp khi lỗi                    |
-| Chạy trên   | Bản build thật (`pnpm test:e2e` build trước), server khởi động bằng CLI với cổng ngẫu nhiên |
-| Nhãn        | `@network` (cần mạng), `@perf` (đo hiệu năng, một worker)                                   |
+| Mục         | Giá trị                                                                                      |
+| ----------- | -------------------------------------------------------------------------------------------- |
+| Trình duyệt | Chromium, Firefox, WebKit                                                                    |
+| Worker      | 4 trên máy phát triển (8 làm máy Windows quá tải, test chập chờn), 2 trên CI                 |
+| Thời hạn    | test 60 s, `expect` 10 s, mỗi thao tác 15 s                                                  |
+| Thử lại     | 0 ở mọi nơi: test chập chờn phải sửa (QC-92); `trace: 'retain-on-failure'`, ảnh chụp khi lỗi |
+| Chạy trên   | Bản build thật (`pnpm test:e2e` build trước), server khởi động bằng CLI với cổng ngẫu nhiên  |
+| Nhãn        | `@network` (cần mạng), `@perf` (đo hiệu năng, một worker)                                    |
 
 ### 2.3. Helper E2E bắt buộc
+
+Viết ở WP-1.02, thay các helper của Phase 0 trong `e2e/support/` (`startCli`, `makeTempDir`, `copyFixture`). Server đọc thư mục cấu hình, dữ liệu, cache từ `REACTCRAFT_CONFIG_DIR`, `REACTCRAFT_DATA_DIR`, `REACTCRAFT_CACHE_DIR` khi có (ADR-BE-24), để test không chạm thư mục thật của người dùng.
 
 | Helper                     | Việc làm                                                                                                            |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `copyProjectToTemp(name)`  | Chép `fixtures/projects/<name>` (trừ `node_modules`) vào thư mục tạm, tạo junction/symlink `node_modules` (R-QA-01) |
-| `startStudio(options)`     | Chạy CLI đã build với `REACTCRAFT_CONFIG_DIR`, thư mục dữ liệu, cache trong thư mục tạm (R-QA-02); trả URL có token |
+| `startStudio(options)`     | Chạy CLI đã build với ba biến thư mục trỏ vào thư mục tạm (R-QA-02); trả URL có token                               |
 | `trustAndWaitCanvas()`     | Bấm tin cậy, chờ `runner.status` `ready` và Bridge `ready`                                                          |
 | `canvasFrame(page)`        | `FrameLocator` của iframe Canvas                                                                                    |
 | `readProjectFile(path)`    | Đọc file trong bản chép tạm (so byte, hash)                                                                         |
@@ -2920,3 +2926,4 @@ Tài liệu thi công của hướng cũ (Design Model) được chuyển vào `
 | 2026-10-14 | 1.0 (nháp, đợt 3a) | Viết SPEC-02 (giữ số QC, thêm QC-95 đến QC-98 cho Bridge và ghi file dự án, scope commit mới), SPEC-05 (giữ S-01 đến S-33, S-50 đến S-55, S-80 đến S-96 còn đúng nghĩa; thêm S-100 đến S-105 Canvas và dev server, S-110 đến S-118 agent, S-120 đến S-125 bản sao backend, S-130; liệt kê mã đã bỏ), SPEC-06 (tầng kiểm thử, cấu hình, helper E2E, đo hiệu năng, agent giả lập). SPEC-07 thêm CW-43 đến CW-47 (chế độ local). ADR-FE-04: iframe có `sandbox` theo S-100 Quyền của agent dựa vào cấu hình và rules có sẵn của agent (S-112), không đặt thêm kiểm tra riêng |
 | 2026-10-14 | 1.0 (nháp, đợt 3b) | SPEC-04 thêm Phase 2 (thao tác cấu trúc, Library, kéo thả, sao chép/dán, trang, phím tắt, CLI), Phase 3 (bản sao backend, agent, chat), Phase 4 mức khung. SPEC-03 mục 9 trỏ tới chi tiết, thêm sự kiện `agent.event`. SPEC-07 thêm quy trình WP (DoR, DoD), kiểm soát thay đổi, mức nghiêm trọng, tài liệu thi công, phát hành. Đủ các phần để thay `docs/spec.md` ở WP-1.01                                                                                                                                                                                             |
 | 2026-10-14 | 1.0 (WP-1.01)      | Bản 1.0 thay `docs/spec.md` (bỏ bản 0.18) cùng lúc dọn code của hướng Design Model                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 2026-10-14 | 1.0 (rà soát)      | Sửa tham chiếu còn trỏ về bản 0.18 (bảng mã định danh Phần 0, ADR-FE-09, ADR-FE-10, SPEC-02 mục 11, SPEC-03 mục 1). SPEC-02: bảng script và CI theo workflow thật. SPEC-06: cấu hình Playwright (không thử lại, trace khi lỗi), helper E2E viết ở WP-1.02. ADR-BE-24, R-QA-02: thêm `REACTCRAFT_DATA_DIR`, `REACTCRAFT_CACHE_DIR`                                                                                                                                                                                                                                         |

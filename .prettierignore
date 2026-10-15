@@ -10,3 +10,6 @@ docs/srs.md
 # Fixtures and templates mirror third-party projects and keep their own formatting.
 fixtures/
 templates/
+
+# Built by packages/bridge/scripts/build-client.ts.
+packages/bridge/src/client/bridge-client.generated.ts

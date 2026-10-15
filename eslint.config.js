@@ -50,6 +50,7 @@ export default defineConfig(
     'docs/',
     'fixtures/',
     'templates/',
+    'packages/bridge/src/client/bridge-client.generated.ts',
   ]),
 
   {
@@ -225,9 +226,13 @@ export default defineConfig(
     rules: { 'max-lines-per-function': 'off' },
   },
 
-  // The CLI and repository scripts are the only places allowed to print and exit.
+  // The CLI, runner scripts, and repository scripts are allowed to exit and print (QC-52).
   {
-    files: ['packages/cli/src/**/*.ts', 'scripts/**/*.{mjs,ts}'],
+    files: [
+      'packages/cli/src/**/*.ts',
+      'packages/server/src/runners/**/*.ts',
+      'scripts/**/*.{mjs,ts}',
+    ],
     rules: {
       'no-console': 'off',
       'no-restricted-properties': 'off',

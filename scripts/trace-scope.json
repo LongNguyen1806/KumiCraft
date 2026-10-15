@@ -12,28 +12,69 @@
       "phase": 0,
       "reason": "workspace.json and settings of WP-1.01"
     },
-    { "pattern": "^S-(1[3-4]|2[5-8]|36|5\\d|83|8[67]|10[0-5])$", "phase": 1 },
-    { "pattern": "^S-1[5-6]$", "phase": 3, "reason": "links and diffs of the AI chat" },
-    { "pattern": "^S-17$", "phase": 2, "reason": "clipboard arrives with M-CB" },
+    {
+      "pattern": "^S-(1[3-4]|2[5-8]|36|5\\d|83|8[67]|10[0-5])$",
+      "phase": 1
+    },
+    {
+      "pattern": "^S-1[5-6]$",
+      "phase": 3,
+      "reason": "links and diffs of the AI chat"
+    },
+    {
+      "pattern": "^S-17$",
+      "phase": 2,
+      "reason": "clipboard arrives with M-CB"
+    },
     {
       "pattern": "^S-3[0-3]$",
       "phase": 3,
       "reason": "secrets matter once the backend mirror exists"
     },
-    { "pattern": "^S-1[12]\\d$", "phase": 3 },
+    {
+      "pattern": "^S-1[12]\\d$",
+      "phase": 3
+    },
     {
       "pattern": "^S-(89a|9\\d|130)$",
       "phase": 4,
       "reason": "privacy and supply chain are checked by the release"
     },
-    { "pattern": "^V-", "phase": 1 },
-    { "pattern": "^R-(SE-(2\\d|30)|HI-11)$", "phase": 2 },
-    { "pattern": "^R-QA-1\\d$", "phase": 3 },
-    { "pattern": "^R-(FW|PJ|RN|BR|SL|SE|HI|TW|IN|TX|QA)-", "phase": 1 },
-    { "pattern": "^R-(LB|DD|CB|PG|KB|CL)-", "phase": 2 },
-    { "pattern": "^R-(MR|AG|CH)-", "phase": 3 },
-    { "pattern": "^AC-(0[1-4]|06|1[0-2])$", "phase": 1 },
-    { "pattern": "^AC-0[57]$", "phase": 2 },
-    { "pattern": "^AC-0[89]$", "phase": 3 }
+    {
+      "pattern": "^V-",
+      "phase": 1
+    },
+    {
+      "pattern": "^R-(SE-(2\\d|30)|HI-11)$",
+      "phase": 2
+    },
+    {
+      "pattern": "^R-QA-1\\d$",
+      "phase": 3
+    },
+    {
+      "pattern": "^R-(FW|PJ|RN|BR|SL|SE|HI|TW|IN|TX|QA)-",
+      "phase": 1
+    },
+    {
+      "pattern": "^R-(LB|DD|CB|PG|KB|CL)-",
+      "phase": 2
+    },
+    {
+      "pattern": "^R-(MR|AG|CH)-",
+      "phase": 3
+    },
+    {
+      "pattern": "^AC-(0[1-4]|06|1[0-2])$",
+      "phase": 1
+    },
+    {
+      "pattern": "^AC-0[57]$",
+      "phase": 2
+    },
+    {
+      "pattern": "^AC-0[89]$",
+      "phase": 3
+    }
   ]
 }
