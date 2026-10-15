@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
 // Bridge client runtime: Studio messages (V-110..V-114), navigation (R-BR-19), build errors (R-BR-17).
-import type { BridgeEnvelope } from '@reactcraft/shared';
+import { type BridgeEnvelope, BridgeSelectionInfoPayloadSchema } from '@reactcraft/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { BridgeClientRuntime, type HotContext, toBuildError } from './bridge-client-runtime.ts';
+import { BridgeClientRuntime, type HotContext } from './bridge-client-runtime.ts';
+import { toBuildError } from './build-error.ts';
 
 const NONCE = 'nonce-1234567890';
 const STUDIO = 'http://127.0.0.1:4173';
@@ -44,6 +45,8 @@ function clickIsIntercepted(): boolean {
 }
 
 const sentOfType = (type: string) => sent.filter((m) => m.type === type).map((m) => m.payload);
+const sentSelectionInfo = () =>
+  sentOfType('selection-info').map((p) => BridgeSelectionInfoPayloadSchema.parse(p));
 
 beforeEach(() => {
   sent = [];
@@ -227,5 +230,84 @@ describe('build errors [R-BR-17]', () => {
       message: 'Generic build error without location frame',
       file: 'src/main.tsx',
     });
+  });
+});
+
+describe('selection info [R-BR-16]', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('sends debounced selection-info with found true when element is selected [R-BR-16]', () => {
+    fromStudio('select', { refs: [{ loc: 'src/App.tsx:1:1', index: 0 }], reveal: false });
+    fromStudio('select', { refs: [{ loc: 'src/App.tsx:1:1', index: 0 }], reveal: false });
+
+    expect(sentOfType('selection-info')).toHaveLength(0);
+
+    vi.advanceTimersByTime(16);
+
+    const msgs = sentSelectionInfo();
+    expect(msgs).toHaveLength(1);
+    expect(msgs[0]?.items).toHaveLength(1);
+    expect(msgs[0]?.items[0]?.found).toBe(true);
+  });
+
+  it('reports found false when selected element is removed from DOM [R-BR-16]', async () => {
+    fromStudio('select', { refs: [{ loc: 'src/App.tsx:1:1', index: 0 }], reveal: false });
+    vi.advanceTimersByTime(16);
+
+    const main = document.querySelector('[data-rc-loc="src/App.tsx:1:1"]');
+    main?.remove();
+
+    await Promise.resolve();
+    vi.advanceTimersByTime(16);
+
+    const msgs = sentSelectionInfo();
+    expect(msgs).toHaveLength(2);
+    expect(msgs[1]?.items[0]?.found).toBe(false);
+  });
+
+  it('reports updated domClass when class changes without triggering tree rescan [R-BR-16]', async () => {
+    fromStudio('select', { refs: [{ loc: 'src/App.tsx:1:1', index: 0 }], reveal: false });
+    vi.advanceTimersByTime(16);
+    vi.advanceTimersByTime(100);
+    const initialTreeCount = sentOfType('tree').length;
+
+    const main = document.querySelector('[data-rc-loc="src/App.tsx:1:1"]');
+    main?.setAttribute('class', 'bg-red-500 p-4');
+
+    await Promise.resolve();
+    vi.advanceTimersByTime(16);
+
+    const infoMsgs = sentSelectionInfo();
+    const latest = infoMsgs[infoMsgs.length - 1];
+    expect(latest?.items[0]?.domClass).toBe('bg-red-500 p-4');
+
+    vi.advanceTimersByTime(100);
+    expect(sentOfType('tree')).toHaveLength(initialTreeCount);
+  });
+
+  it('sends selection-info on vite:afterUpdate HMR event [R-BR-16]', () => {
+    fromStudio('select', { refs: [{ loc: 'src/App.tsx:1:1', index: 0 }], reveal: false });
+    vi.advanceTimersByTime(16);
+    const initialCount = sentOfType('selection-info').length;
+
+    hotListeners.get('vite:afterUpdate')?.({ type: 'update', updates: [] });
+    vi.advanceTimersByTime(16);
+
+    expect(sentOfType('selection-info')).toHaveLength(initialCount + 1);
+  });
+
+  it('sends empty items when selection is cleared [R-BR-16]', () => {
+    fromStudio('select', { refs: [], reveal: false });
+    vi.advanceTimersByTime(16);
+
+    const msgs = sentSelectionInfo();
+    expect(msgs).toHaveLength(1);
+    expect(msgs[0]?.items).toEqual([]);
   });
 });

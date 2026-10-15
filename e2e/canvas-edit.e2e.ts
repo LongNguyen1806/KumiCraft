@@ -307,3 +307,63 @@ test('build error banner shows the file and hides after the fix [R-RN-25]', asyn
   await writeFile(homeFile, original, 'utf8');
   await expect(buildErrorBanner).toBeHidden({ timeout: 15_000 });
 });
+
+test('selected element removed by an external edit reports found false [R-BR-16]', async ({
+  page,
+}) => {
+  const session = await start();
+  const tab = await open(page, session);
+  await trustIfAsked(tab);
+
+  const canvas = await getCanvasFrame(tab);
+  const heading = canvas.getByRole('heading', { name: 'Sản phẩm nổi bật' });
+  await expect(heading).toBeVisible({ timeout: 25_000 });
+
+  const homeFile = join(folder.path, 'src', 'pages', 'Home.tsx');
+  const originalCode = await readFile(homeFile, 'utf8');
+
+  await tab.evaluate(() => {
+    window.addEventListener('message', (event: MessageEvent<unknown>) => {
+      const data = event.data;
+      if (
+        data &&
+        typeof data === 'object' &&
+        'type' in data &&
+        data.type === 'selection-info' &&
+        'payload' in data
+      ) {
+        document.body.dataset.rcSelectionInfo = JSON.stringify(data.payload);
+      }
+    });
+  });
+
+  await heading.click();
+
+  await expect
+    .poll(
+      async () => {
+        return tab.evaluate(() => document.body.dataset.rcSelectionInfo ?? '');
+      },
+      { timeout: 10_000 },
+    )
+    .toContain('"found":true');
+
+  try {
+    const modifiedCode = originalCode.replace(
+      '<h1 className="text-hero font-bold text-brand">Sản phẩm nổi bật</h1>',
+      '',
+    );
+    await writeFile(homeFile, modifiedCode, 'utf8');
+
+    await expect
+      .poll(
+        async () => {
+          return tab.evaluate(() => document.body.dataset.rcSelectionInfo ?? '');
+        },
+        { timeout: 15_000 },
+      )
+      .toContain('"found":false');
+  } finally {
+    await writeFile(homeFile, originalCode, 'utf8');
+  }
+});

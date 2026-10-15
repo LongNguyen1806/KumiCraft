@@ -1,15 +1,13 @@
 import {
-  type BridgeBuildErrorPayload,
   type BridgeEnvelope,
   BridgeEnvelopeSchema,
-  type BridgeHoverPayload,
   type BridgeReadyPayload,
-  type BridgeRoutePayload,
   type BridgeSelectPayload,
   type BridgeShortcutPayload,
   type BridgeTextCancelPayload,
   type BridgeTextCommitPayload,
   type BridgeTextEditRequestPayload,
+  type ElementInfo,
   type ElementRef,
   type StudioHighlightPayload,
   StudioHighlightPayloadSchema,
@@ -20,11 +18,12 @@ import {
   type StudioTextEditStartPayload,
   StudioTextEditStartPayloadSchema,
 } from '@reactcraft/shared';
-import { z } from 'zod';
 
+import { toBuildError } from './build-error.ts';
 import { getRefForElement, handleElementClick } from './candidate-chain.ts';
 import { scanDomTree } from './dom-scanner.ts';
 import { BridgeOverlay } from './overlay.ts';
+import { collectSelectionInfo } from './selection-info.ts';
 import { TextEditController } from './text-edit.ts';
 
 const INTERCEPTED_EVENTS = [
@@ -49,59 +48,6 @@ export type BridgeRuntimeConfig = {
   readonly hot?: HotContext | undefined;
 };
 
-const ViteErrorSchema = z.object({
-  err: z.object({
-    message: z.string(),
-    id: z.string().optional(),
-    loc: z.object({ file: z.string().optional(), line: z.number(), column: z.number() }).optional(),
-  }),
-});
-
-function toRelativePath(filePath: string | undefined, rootDir: string): string | undefined {
-  if (filePath === undefined) return undefined;
-  const absolute = filePath.replaceAll('\\', '/');
-  const root = `${rootDir.replaceAll('\\', '/').replace(/\/+$/, '')}/`;
-  return absolute.toLowerCase().startsWith(root.toLowerCase())
-    ? absolute.slice(root.length)
-    : absolute;
-}
-
-/** A Vite build error as the Studio shows it: message, and the file relative to the project (R-BR-17). */
-export function toBuildError(payload: unknown, rootDir: string): BridgeBuildErrorPayload {
-  const parsed = ViteErrorSchema.safeParse(payload);
-  if (!parsed.success) return { message: 'Build error' };
-  const { message, id, loc } = parsed.data.err;
-  if (loc !== undefined) {
-    const file = toRelativePath(loc.file ?? id, rootDir);
-    return {
-      message: message.slice(0, 2000),
-      ...(file === undefined ? {} : { file: file.slice(0, 1024) }),
-      line: Math.max(1, loc.line),
-      column: Math.max(1, loc.column + 1),
-    };
-  }
-
-  const match = /\[\s*([^[\]\n]+?):(\d+):(\d+)\s*\]/.exec(message);
-  if (match) {
-    const rawFile = match[1]?.trim();
-    const file = toRelativePath(rawFile ?? id, rootDir);
-    const line = Number(match[2]);
-    const column = Number(match[3]);
-    return {
-      message: message.slice(0, 2000),
-      ...(file === undefined ? {} : { file: file.slice(0, 1024) }),
-      line: Math.max(1, line),
-      column: Math.max(1, column),
-    };
-  }
-
-  const file = toRelativePath(id, rootDir);
-  return {
-    message: message.slice(0, 2000),
-    ...(file === undefined ? {} : { file: file.slice(0, 1024) }),
-  };
-}
-
 export class BridgeClientRuntime {
   private nonce: string;
   private studioOrigin: string;
@@ -110,7 +56,9 @@ export class BridgeClientRuntime {
   private mode: 'design' | 'preview' = 'design';
   private overlay: BridgeOverlay;
   private selectedRefs: ElementRef[] = [];
+  private lastSelectionInfo: ElementInfo[] = [];
   private treeDebounceTimer: ReturnType<typeof setTimeout> | undefined;
+  private selectionInfoTimer: ReturnType<typeof setTimeout> | undefined;
   private domObserver: MutationObserver;
   private isDestroyed = false;
   private textEdit: TextEditController;
@@ -138,8 +86,14 @@ export class BridgeClientRuntime {
       },
     });
 
-    this.domObserver = new MutationObserver(() => {
-      this.scheduleTreeScan();
+    this.domObserver = new MutationObserver((mutations) => {
+      this.scheduleSelectionInfo();
+      const shouldScanTree = mutations.some(
+        (m) => m.type === 'childList' || m.attributeName === 'data-rc-loc',
+      );
+      if (shouldScanTree) {
+        this.scheduleTreeScan();
+      }
     });
 
     this.init();
@@ -166,18 +120,22 @@ export class BridgeClientRuntime {
     // 6. Error handling (R-BR-17)
     this.attachErrorListeners();
 
-    // 7. Observe DOM changes for tree scanner (R-BR-12)
+    // 7. Observe DOM changes for tree scanner (R-BR-12) and selection info (R-BR-16)
     this.domObserver.observe(document.documentElement, {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['data-rc-loc'],
+      attributeFilter: ['data-rc-loc', 'class'],
     });
 
-    // 8. Listen to Vite HMR events if available (R-BR-17, R-BR-12)
+    // 8. Listen to Vite HMR events if available (R-BR-17, R-BR-12, R-BR-16)
     this.attachViteHmr();
 
-    // 9. Send initial ready & tree messages
+    // 9. Scroll and resize listeners for selection info (R-BR-16)
+    window.addEventListener('scroll', this.handleScrollOrResize, { capture: true, passive: true });
+    window.addEventListener('resize', this.handleScrollOrResize);
+
+    // 10. Send initial ready & tree messages
     const readyPayload: BridgeReadyPayload = {
       bridgeVersion: '1.0.0',
       route: window.location.pathname + window.location.search,
@@ -261,16 +219,14 @@ export class BridgeClientRuntime {
         }
       }
     }
+    this.scheduleSelectionInfo();
   }
 
   private handleHighlightMessage(payload: StudioHighlightPayload): void {
-    if (!payload.ref) {
-      this.overlay.setHover(undefined);
-    } else {
-      const matches = document.querySelectorAll(`[data-rc-loc="${payload.ref.loc}"]`);
-      const el = matches[payload.ref.index];
-      this.overlay.setHover(el);
-    }
+    const el = payload.ref
+      ? document.querySelectorAll(`[data-rc-loc="${payload.ref.loc}"]`)[payload.ref.index]
+      : undefined;
+    this.overlay.setHover(el);
   }
 
   /** R-BR-19: the wrapped pushState reports the new route to the Studio. */
@@ -280,11 +236,10 @@ export class BridgeClientRuntime {
   }
 
   private handleTextEditStartMessage(payload: StudioTextEditStartPayload): void {
-    const matches = document.querySelectorAll(`[data-rc-loc="${payload.ref.loc}"]`);
-    const el = matches[payload.ref.index] as HTMLElement | undefined;
-    if (el) {
-      this.textEdit.start(el, payload.ref);
-    }
+    const el = document.querySelectorAll(`[data-rc-loc="${payload.ref.loc}"]`)[
+      payload.ref.index
+    ] as HTMLElement | undefined;
+    if (el) this.textEdit.start(el, payload.ref);
   }
 
   private getTargetElement(x: number, y: number): Element | undefined {
@@ -352,32 +307,23 @@ export class BridgeClientRuntime {
       this.overlay.setSelection(this.selectedRefs);
       const payload: BridgeSelectPayload = { refs: this.selectedRefs };
       this.sendToStudio('select', payload);
+      this.scheduleSelectionInfo();
     } else {
       // Click on empty space
       this.selectedRefs = [];
       this.overlay.setSelection([]);
       const payload: BridgeSelectPayload = { refs: [] };
       this.sendToStudio('select', payload);
+      this.scheduleSelectionInfo();
     }
   }
 
   private handlePointerMove = (event: PointerEvent): void => {
     if (this.mode !== 'design') return;
-
     const target = this.getTargetElement(event.clientX, event.clientY);
     this.overlay.setHover(target);
-
-    if (target) {
-      const ref = getRefForElement(target, document);
-      if (ref) {
-        const hoverPayload: BridgeHoverPayload = { ref };
-        this.sendToStudio('hover', hoverPayload);
-        return;
-      }
-    }
-
-    const emptyHover: BridgeHoverPayload = {};
-    this.sendToStudio('hover', emptyHover);
+    const ref = target ? getRefForElement(target, document) : undefined;
+    this.sendToStudio('hover', ref ? { ref } : {});
   };
 
   private handleKeyDown = (event: KeyboardEvent): void => {
@@ -421,37 +367,36 @@ export class BridgeClientRuntime {
   }
 
   private wrapHistory(): void {
-    const originalPush = window.history.pushState.bind(window.history);
-    const originalReplace = window.history.replaceState.bind(window.history);
-
-    window.history.pushState = (...args: Parameters<typeof originalPush>) => {
-      originalPush(...args);
-      const payload: BridgeRoutePayload = { route: window.location.pathname };
-      this.sendToStudio('route', payload);
+    const notifyRoute = (): void => {
+      this.sendToStudio('route', { route: window.location.pathname });
     };
-
-    window.history.replaceState = (...args: Parameters<typeof originalReplace>) => {
-      originalReplace(...args);
-      const payload: BridgeRoutePayload = { route: window.location.pathname };
-      this.sendToStudio('route', payload);
+    const origPush = window.history.pushState.bind(window.history);
+    const origReplace = window.history.replaceState.bind(window.history);
+    window.history.pushState = (...args: Parameters<typeof origPush>) => {
+      origPush(...args);
+      notifyRoute();
     };
-
-    window.addEventListener('popstate', () => {
-      const payload: BridgeRoutePayload = { route: window.location.pathname };
-      this.sendToStudio('route', payload);
-    });
+    window.history.replaceState = (...args: Parameters<typeof origReplace>) => {
+      origReplace(...args);
+      notifyRoute();
+    };
+    window.addEventListener('popstate', notifyRoute);
   }
 
   private attachErrorListeners(): void {
+    const reportError = (message: string, stack?: string): void => {
+      this.sendToStudio('runtime-error', {
+        message: message.slice(0, 2000),
+        ...(stack !== undefined ? { stack: stack.slice(0, 8000) } : {}),
+      });
+    };
     window.addEventListener('error', (evt) => {
       const err = evt.error as { stack?: string } | undefined;
-      const stack = typeof err?.stack === 'string' ? err.stack.slice(0, 8000) : undefined;
-      this.sendToStudio('runtime-error', {
-        message: (evt.message || 'Unknown error').slice(0, 2000),
-        ...(stack !== undefined ? { stack } : {}),
-      });
+      reportError(
+        evt.message || 'Unknown error',
+        typeof err?.stack === 'string' ? err.stack : undefined,
+      );
     });
-
     window.addEventListener('unhandledrejection', (evt) => {
       const reason = evt.reason as { message?: string; stack?: string } | undefined;
       const rawMsg =
@@ -460,11 +405,7 @@ export class BridgeClientRuntime {
           : typeof evt.reason === 'string'
             ? evt.reason
             : 'Unhandled promise rejection';
-      const stack = typeof reason?.stack === 'string' ? reason.stack.slice(0, 8000) : undefined;
-      this.sendToStudio('runtime-error', {
-        message: rawMsg.slice(0, 2000),
-        ...(stack !== undefined ? { stack } : {}),
-      });
+      reportError(rawMsg, typeof reason?.stack === 'string' ? reason.stack : undefined);
     });
   }
 
@@ -477,7 +418,24 @@ export class BridgeClientRuntime {
     this.hot.on('vite:afterUpdate', () => {
       this.sendToStudio('build-ok', {});
       this.scheduleTreeScan();
+      this.scheduleSelectionInfo();
     });
+  }
+
+  private handleScrollOrResize = (): void => {
+    this.scheduleSelectionInfo();
+  };
+
+  private scheduleSelectionInfo(): void {
+    if (this.selectionInfoTimer !== undefined) {
+      clearTimeout(this.selectionInfoTimer);
+    }
+    this.selectionInfoTimer = setTimeout(() => {
+      this.selectionInfoTimer = undefined;
+      const items = collectSelectionInfo(this.selectedRefs, document, this.lastSelectionInfo);
+      this.lastSelectionInfo = items;
+      this.sendToStudio('selection-info', { items });
+    }, 16);
   }
 
   public destroy(): void {
@@ -485,6 +443,9 @@ export class BridgeClientRuntime {
     this.textEdit.destroy();
     if (this.treeDebounceTimer !== undefined) {
       clearTimeout(this.treeDebounceTimer);
+    }
+    if (this.selectionInfoTimer !== undefined) {
+      clearTimeout(this.selectionInfoTimer);
     }
     this.domObserver.disconnect();
     this.overlay.destroy();
@@ -494,5 +455,7 @@ export class BridgeClientRuntime {
     }
     window.removeEventListener('pointermove', this.handlePointerMove, true);
     window.removeEventListener('keydown', this.handleKeyDown, true);
+    window.removeEventListener('scroll', this.handleScrollOrResize, true);
+    window.removeEventListener('resize', this.handleScrollOrResize);
   }
 }
