@@ -1,5 +1,6 @@
 // Result and error types shared by the server and the Studio (SPEC-03 sections 4.1 and 10,
 // SPEC-02 section 5). The server maps codes to HTTP statuses; the Studio translates them.
+import { z } from 'zod';
 
 /** Error codes of SPEC-03 section 10. E004 to E010 and E022 are retired and never reused (V-81). */
 export const ERROR_CODES = [
@@ -25,18 +26,28 @@ export const ERROR_CODES = [
   'E028',
 ] as const;
 
-export type ErrorCode = (typeof ERROR_CODES)[number];
+export const ErrorCodeSchema = z.enum(ERROR_CODES);
+export type ErrorCode = z.infer<typeof ErrorCodeSchema>;
 
-/** One sub-error: a rule broken at a path, or a syntax error at a line of a file. */
-export type ErrorDetail = {
-  readonly path?: string;
-  readonly line?: number;
-  readonly column?: number;
-  /** Rule code, for example `V-100`. */
-  readonly rule?: string;
-  /** English, for developers. The Studio shows a translated message for the code. */
-  readonly message: string;
-};
+export const ErrorDetailSchema = z.strictObject({
+  path: z.string().optional(),
+  line: z.number().int().optional(),
+  column: z.number().int().optional(),
+  rule: z.string().optional(),
+  message: z.string(),
+});
+export type ErrorDetail = z.infer<typeof ErrorDetailSchema>;
+
+export const AppErrorSchema = z.strictObject({
+  code: ErrorCodeSchema,
+  params: z
+    .record(
+      z.string(),
+      z.union([z.string(), z.number(), z.boolean(), z.array(z.string()).readonly()]),
+    )
+    .optional(),
+  details: z.array(ErrorDetailSchema).readonly().optional(),
+});
 
 /** Business error. `cause` stays on the server and is never sent to the Studio (QC-51). */
 export type AppError = {

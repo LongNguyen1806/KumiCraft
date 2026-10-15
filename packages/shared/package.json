@@ -6,7 +6,8 @@
   "license": "MIT",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./tailwind": "./src/tailwind/index.ts"
   },
   "dependencies": {
     "zod": "4.6.5"
