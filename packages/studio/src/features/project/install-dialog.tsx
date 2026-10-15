@@ -1,0 +1,107 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { installProject } from '../../api/project-client.ts';
+import { Dialog } from '../../components/ui/dialog.tsx';
+
+type InstallDialogProps = {
+  readonly open: boolean;
+  readonly installCommand?: readonly string[] | undefined;
+  readonly onClose: () => void;
+  readonly onInstalled: () => void;
+};
+
+export function InstallDialog({
+  open,
+  installCommand = ['pnpm', 'install'],
+  onClose,
+  onInstalled,
+}: InstallDialogProps) {
+  const { t } = useTranslation();
+  const [running, setRunning] = useState(false);
+  const [logs, setLogs] = useState<readonly string[]>([]);
+  const [errorText, setErrorText] = useState<string>();
+
+  const handleInstall = async () => {
+    setRunning(true);
+    setErrorText(undefined);
+    setLogs(['Spawning install process…']);
+    try {
+      await installProject(installCommand);
+      setLogs((prev) => [...prev, 'Installation completed successfully!']);
+      onInstalled();
+      setTimeout(onClose, 800);
+    } catch (err) {
+      setErrorText(err instanceof Error ? err.message : t('project.install.failed'));
+      setLogs((prev) => [...prev, 'Error during installation.']);
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} title={t('project.install.title')} closeLabel="✕" onClose={onClose}>
+      <div className="flex flex-col gap-4 text-xs text-ink" data-testid="install-dialog">
+        <p className="text-ink-soft">{t('project.install.description')}</p>
+
+        {/* Command display */}
+        <div className="flex flex-col gap-1">
+          <span className="text-[11px] text-ink-faint font-medium">
+            {t('project.install.command')}:
+          </span>
+          <div
+            className="rounded-lg bg-field px-3 py-2 font-mono text-xs text-ink border border-border"
+            data-testid="install-command"
+          >
+            {installCommand.join(' ')}
+          </div>
+        </div>
+
+        {/* Running logs viewer */}
+        {(running || logs.length > 0) && (
+          <div
+            className="flex max-h-40 flex-col gap-1 overflow-y-auto rounded-lg bg-charcoal p-3 font-mono text-[11px] text-on-charcoal border border-border"
+            data-testid="install-logs"
+          >
+            {logs.slice(-20).map((line, i) => (
+              <span key={i} className="break-all whitespace-pre-wrap">
+                {line}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {errorText && (
+          <p className="text-xs text-rose-600 font-medium" data-testid="install-error">
+            {errorText}
+          </p>
+        )}
+
+        {/* Action buttons */}
+        <div className="flex items-center justify-end gap-2 pt-2">
+          {running ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full bg-field px-4 py-2 text-ink hover:bg-field-hover"
+              data-testid="cancel-install-btn"
+            >
+              {t('project.install.cancel')}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                void handleInstall();
+              }}
+              className="rounded-full bg-primary px-5 py-2 font-medium text-white shadow-sm hover:bg-primary-hover"
+              data-testid="install-btn"
+            >
+              {t('project.install.btn')}
+            </button>
+          )}
+        </div>
+      </div>
+    </Dialog>
+  );
+}

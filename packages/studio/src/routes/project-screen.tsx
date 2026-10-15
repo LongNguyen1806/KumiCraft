@@ -18,6 +18,7 @@ export function ProjectScreen({ session, onRetry }: ProjectScreenProps) {
         <NoProjectScreen
           version={version}
           {...(project.suggestedPath === undefined ? {} : { suggestedPath: project.suggestedPath })}
+          onProjectOpened={onRetry}
         />
       );
     case 'error':

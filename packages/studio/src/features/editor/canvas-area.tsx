@@ -1,20 +1,408 @@
+// Canvas area displaying the live running Vite project (SPEC-04 M-RN, ADR-BE-28, R-RN-20 to R-RN-26).
+import { defaultFrames, type Frame, type ProjectInfo, type RunnerStatus } from '@reactcraft/shared';
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-/**
- * The dotted mat where the running project shows (ADR-FE-04). The iframe on the dev server of the
- * project comes with M-RN (WP-1.04); until then the mat says what will appear here.
- */
-export function CanvasArea() {
+import { errorText } from '../../routes/error-text.ts';
+import { studioBridgeChannel } from '../selection/bridge-channel.ts';
+import { type TextEditWarning, useCanvasTextEdit } from '../text-edit/use-canvas-text-edit.ts';
+import {
+  ErrorView,
+  NeedsInstallPrompt,
+  StartingView,
+  StoppedView,
+  UntrustedPrompt,
+} from './canvas-prompts.tsx';
+import { useOpenInEditor } from './use-open-in-editor.ts';
+import { useRunnerStatus } from './use-runner-status.ts';
+
+export type CanvasAreaProps = {
+  readonly projectInfo?: ProjectInfo | undefined;
+  readonly trusted?: boolean;
+  readonly onTrustRequest?: (() => void) | undefined;
+  readonly onInstallRequest?: (() => void) | undefined;
+};
+
+type CanvasMode = 'design' | 'preview';
+
+const FALLBACK_FRAME: Frame = { id: 'desktop', label: 'Desktop', width: 1280, height: 800 };
+
+function getActiveFrame(frames: readonly Frame[], activeId?: string): Frame {
+  const match = frames.find((f) => f.id === activeId);
+  return match ?? frames[0] ?? FALLBACK_FRAME;
+}
+
+function useCanvasFrames(projectInfo?: ProjectInfo) {
+  const [activeFrameId, setActiveFrameId] = useState<string>(
+    projectInfo?.primaryFrameId ?? 'desktop',
+  );
+
+  const frames = useMemo(() => {
+    if (projectInfo?.frames && projectInfo.frames.length > 0) {
+      return projectInfo.frames;
+    }
+    return defaultFrames('desktop-first').frames;
+  }, [projectInfo]);
+
+  const activeFrame = useMemo(() => getActiveFrame(frames, activeFrameId), [frames, activeFrameId]);
+
+  return { frames, activeFrame, setActiveFrameId };
+}
+
+function TextEditWarningBanner({
+  warning,
+  onOpenEditor,
+  onDismiss,
+}: {
+  readonly warning: TextEditWarning;
+  readonly onOpenEditor: () => void;
+  readonly onDismiss: () => void;
+}) {
   const { t } = useTranslation();
+  return (
+    <div
+      role="alert"
+      data-testid="text-edit-warning-banner"
+      className="absolute top-14 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-lg border border-amber-500/30 bg-card-solid/95 px-4 py-2 text-xs text-amber-500 shadow-xl backdrop-blur-md"
+    >
+      <span>{t(warning.messageKey)}</span>
+      <button
+        type="button"
+        onClick={onOpenEditor}
+        className="font-medium text-primary underline hover:opacity-80"
+        data-testid="text-edit-open-editor-btn"
+      >
+        {t('textEdit.openInEditor')}
+      </button>
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label={t('settings.close')}
+        className="ml-1 text-sm leading-none text-ink-soft hover:text-ink"
+        data-testid="text-edit-dismiss-warning-btn"
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
+function TextEditLoopBanner({ count }: { readonly count: number }) {
+  const { t } = useTranslation();
+  return (
+    <div
+      data-testid="text-edit-loop-banner"
+      className="absolute top-14 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-primary/30 bg-card-solid/95 px-3 py-1 text-xs font-medium text-primary shadow-lg backdrop-blur-md"
+    >
+      <span>{t('textEdit.loopBanner', { count })}</span>
+    </div>
+  );
+}
+
+function TextEditOverlay({
+  warning,
+  loopCount,
+  onOpenEditor,
+  onDismiss,
+}: {
+  readonly warning: TextEditWarning | undefined;
+  readonly loopCount: number | undefined;
+  readonly onOpenEditor: () => void;
+  readonly onDismiss: () => void;
+}) {
+  return (
+    <>
+      {warning && (
+        <TextEditWarningBanner
+          warning={warning}
+          onOpenEditor={onOpenEditor}
+          onDismiss={onDismiss}
+        />
+      )}
+      {loopCount !== undefined && <TextEditLoopBanner count={loopCount} />}
+    </>
+  );
+}
+
+function CanvasViewport(props: CanvasContentProps) {
+  return (
+    <div
+      className="relative grid min-h-0 min-w-0 flex-1 place-items-center overflow-auto p-4"
+      data-testid="canvas-placeholder"
+    >
+      <CanvasContent {...props} />
+    </div>
+  );
+}
+
+export function CanvasArea(props: CanvasAreaProps) {
+  const { projectInfo, trusted = true, onTrustRequest, onInstallRequest } = props;
+  const { t } = useTranslation();
+  const runner = useRunnerStatus();
+  const [mode, setMode] = useState<CanvasMode>('design');
+  const [zoom, setZoom] = useState<number>(1);
+  const { frames, activeFrame, setActiveFrameId } = useCanvasFrames(projectInfo);
+  const { t: tError } = useTranslation('errors');
+  const editor = useOpenInEditor();
+  const textEdit = useCanvasTextEdit({
+    mode,
+    activeFrameId: activeFrame.id,
+    onOpenEditor: (file, line, column) => {
+      editor.open(`${file}:${String(line)}:${String(column)}`);
+    },
+  });
+
   return (
     <main
       aria-label={t('editor.canvas')}
       data-testid="editor"
-      className="relative grid min-h-0 min-w-0 place-items-center overflow-auto rounded-panel bg-card-solid/35 bg-[radial-gradient(rgb(60_52_30/0.14)_1px,transparent_1px)] bg-size-[18px_18px]"
+      className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-panel bg-card-solid/35 bg-[radial-gradient(rgb(60_52_30/0.14)_1px,transparent_1px)] bg-size-[18px_18px]"
     >
-      <p className="max-w-sm px-6 text-center text-ink-soft" data-testid="canvas-placeholder">
-        {t('editor.canvasPending')}
-      </p>
+      <CanvasToolbar
+        frames={frames}
+        activeFrameId={activeFrame.id}
+        onSelectFrame={setActiveFrameId}
+        zoom={zoom}
+        onSelectZoom={setZoom}
+        mode={mode}
+        onToggleMode={() => {
+          setMode((m) => (m === 'design' ? 'preview' : 'design'));
+        }}
+      />
+      <TextEditOverlay
+        warning={textEdit.warning}
+        loopCount={textEdit.loopCount}
+        onOpenEditor={textEdit.openEditorForWarning}
+        onDismiss={textEdit.dismissWarning}
+      />
+      {editor.errorCode !== undefined && (
+        <p role="alert" className="px-4 text-xs text-danger" data-testid="open-editor-error">
+          {errorText(tError, editor.errorCode)}
+        </p>
+      )}
+      <CanvasViewport
+        status={runner.status}
+        trusted={trusted}
+        needsInstall={projectInfo?.needsInstall ?? false}
+        logTail={runner.logTail}
+        frame={activeFrame}
+        zoom={zoom}
+        mode={mode}
+        onTrustRequest={onTrustRequest}
+        onInstallRequest={onInstallRequest}
+        onStart={runner.start}
+        onRestart={runner.restart}
+      />
     </main>
+  );
+}
+
+function FrameSelect({
+  frames,
+  activeId,
+  onChange,
+}: {
+  readonly frames: readonly Frame[];
+  readonly activeId: string;
+  readonly onChange: (id: string) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <label className="flex items-center gap-1.5 text-ink-soft">
+      {t('editor.frame')}
+      <select
+        value={activeId}
+        onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+          onChange(e.target.value);
+        }}
+        className="rounded border border-border bg-field px-2 py-1 text-ink"
+        data-testid="canvas-frame-select"
+      >
+        {frames.map((f) => (
+          <option key={f.id} value={f.id}>
+            {f.label} ({String(f.width)}×{String(f.height)})
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function ZoomSelect({
+  zoom,
+  onChange,
+}: {
+  readonly zoom: number;
+  readonly onChange: (zoom: number) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <label className="flex items-center gap-1.5 text-ink-soft">
+      {t('editor.zoom')}
+      <select
+        value={zoom}
+        onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+          onChange(Number(e.target.value));
+        }}
+        className="rounded border border-border bg-field px-2 py-1 text-ink"
+        data-testid="canvas-zoom-select"
+      >
+        <option value={0.5}>50%</option>
+        <option value={0.75}>75%</option>
+        <option value={1}>100%</option>
+        <option value={1.25}>125%</option>
+        <option value={1.5}>150%</option>
+        <option value={2}>200%</option>
+      </select>
+    </label>
+  );
+}
+
+type CanvasToolbarProps = {
+  readonly frames: readonly Frame[];
+  readonly activeFrameId: string;
+  readonly onSelectFrame: (id: string) => void;
+  readonly zoom: number;
+  readonly onSelectZoom: (zoom: number) => void;
+  readonly mode: CanvasMode;
+  readonly onToggleMode: () => void;
+};
+
+function CanvasToolbar({
+  frames,
+  activeFrameId,
+  onSelectFrame,
+  zoom,
+  onSelectZoom,
+  mode,
+  onToggleMode,
+}: CanvasToolbarProps) {
+  const { t } = useTranslation();
+  return (
+    <header className="flex h-11 items-center justify-between border-b border-line bg-card/60 px-4 text-xs backdrop-blur-md">
+      <div className="flex items-center gap-3">
+        <FrameSelect frames={frames} activeId={activeFrameId} onChange={onSelectFrame} />
+        <ZoomSelect zoom={zoom} onChange={onSelectZoom} />
+      </div>
+      <button
+        type="button"
+        onClick={onToggleMode}
+        className="rounded border border-border bg-field px-3 py-1 font-medium text-ink hover:bg-field-hover"
+        data-testid="canvas-mode-toggle"
+      >
+        {mode === 'design' ? t('editor.modePreview') : t('editor.modeDesign')}
+      </button>
+    </header>
+  );
+}
+
+type CanvasContentProps = {
+  readonly status: RunnerStatus;
+  readonly trusted: boolean;
+  readonly needsInstall: boolean;
+  readonly logTail: readonly string[];
+  readonly frame: Frame;
+  readonly zoom: number;
+  readonly mode: CanvasMode;
+  readonly onTrustRequest?: (() => void) | undefined;
+  readonly onInstallRequest?: (() => void) | undefined;
+  readonly onStart: () => void;
+  readonly onRestart: () => void;
+};
+
+function CanvasContent(props: CanvasContentProps) {
+  if (!props.trusted) {
+    return <UntrustedPrompt onTrust={props.onTrustRequest} />;
+  }
+  if (props.needsInstall) {
+    return <NeedsInstallPrompt onInstall={props.onInstallRequest} />;
+  }
+  if (props.status.state === 'starting') {
+    return <StartingView />;
+  }
+  if (props.status.state === 'stopped') {
+    return <StoppedView onStart={props.onStart} />;
+  }
+  if (props.status.state === 'error' || props.status.state === 'crashed') {
+    return <ErrorView status={props.status} logTail={props.logTail} onRestart={props.onRestart} />;
+  }
+  if (props.status.origin) {
+    return (
+      <IframeFrame
+        origin={props.status.origin}
+        nonce={props.status.nonce}
+        mode={props.mode}
+        frame={props.frame}
+        zoom={props.zoom}
+      />
+    );
+  }
+  return <></>;
+}
+
+function useIframeBridge(
+  iframeRef: { readonly current?: HTMLIFrameElement | undefined },
+  origin: string,
+  nonce: string | undefined,
+  mode: CanvasMode,
+) {
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe || !nonce) return;
+
+    const handleLoad = () => {
+      if (iframe.contentWindow) {
+        studioBridgeChannel.attach(iframe.contentWindow, origin, nonce);
+        studioBridgeChannel.setMode(mode);
+      }
+    };
+
+    iframe.addEventListener('load', handleLoad);
+    if (iframe.contentWindow && iframe.contentDocument?.readyState === 'complete') {
+      handleLoad();
+    }
+
+    return () => {
+      iframe.removeEventListener('load', handleLoad);
+      studioBridgeChannel.detach();
+    };
+  }, [iframeRef, origin, nonce, mode]);
+
+  useEffect(() => {
+    studioBridgeChannel.setMode(mode);
+  }, [mode]);
+}
+
+type IframeFrameProps = {
+  readonly origin: string;
+  readonly frame: Frame;
+  readonly zoom: number;
+  readonly nonce?: string | undefined;
+  readonly mode: CanvasMode;
+};
+
+function IframeFrame({ origin, frame, zoom, nonce, mode }: IframeFrameProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(undefined);
+  useIframeBridge(iframeRef, origin, nonce, mode);
+
+  return (
+    <div
+      className="origin-center transition-transform duration-150"
+      style={{ transform: `scale(${String(zoom)})` }}
+    >
+      <iframe
+        ref={(el) => {
+          iframeRef.current = el ?? undefined;
+        }}
+        src={`${origin}/`}
+        title={frame.label}
+        data-testid="canvas-iframe"
+        className="overflow-auto rounded-lg border border-border bg-white shadow-2xl"
+        style={{
+          width: `${String(frame.width)}px`,
+          height: `${String(frame.height)}px`,
+        }}
+      />
+    </div>
   );
 }

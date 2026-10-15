@@ -5,8 +5,47 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { isApplePlatform, shortcutLabel } from '../../app/platform.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { EditorScreen } from '../../routes/editor-screen.tsx';
+import { useHistoryStore } from '../history/history-store.ts';
 import { shortcutFor } from './use-editor-shortcuts.ts';
 import { clampWidth, readLayout } from './use-panel-layout.ts';
+
+vi.mock('../../api/project-client.ts', () => ({
+  fetchProject: vi.fn().mockResolvedValue({
+    id: 'shop000001',
+    name: 'Shop',
+    root: '/projects/shop',
+    sourceDir: 'src',
+    support: {
+      supported: true,
+      reasons: [],
+      framework: 'vite-react',
+      versions: {},
+      language: 'ts',
+    },
+    needsInstall: false,
+    responsiveMode: 'desktop-first',
+    frames: [{ id: 'desktop', label: 'Desktop', width: 1440, height: 900 }],
+    primaryFrameId: 'desktop',
+    backends: [],
+    trusted: true,
+  }),
+  installProject: vi.fn().mockResolvedValue(undefined),
+  probeProject: vi.fn().mockResolvedValue({ kind: 'empty' }),
+  openProject: vi.fn().mockResolvedValue({}),
+  createProject: vi.fn().mockResolvedValue({}),
+  closeProject: vi.fn().mockResolvedValue(undefined),
+  fetchProjectTheme: vi.fn().mockResolvedValue({
+    colors: [],
+    fontSizes: [],
+    radii: [],
+    fonts: [],
+    shadows: [],
+    breakpoints: [],
+  }),
+  addProjectBackend: vi.fn().mockResolvedValue({}),
+  removeProjectBackend: vi.fn().mockResolvedValue(undefined),
+  fetchDirectories: vi.fn().mockResolvedValue({ path: '/', entries: [] }),
+}));
 
 const press = (key: string, extra: Partial<KeyboardEventInit> = {}) => {
   fireEvent.keyDown(window, { key, ctrlKey: true, ...extra });
@@ -21,6 +60,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
+  useHistoryStore.getState().reset();
   await i18next.changeLanguage('en');
   localStorage.clear();
   sessionStorage.clear();
@@ -61,6 +101,28 @@ describe('Editor frame', () => {
     window.dispatchEvent(event);
 
     expect(event.defaultPrevented).toBe(false);
+  });
+
+  it('enables Undo and Redo and intercepts Ctrl+Z when history exists [R-HI-09]', () => {
+    useHistoryStore.getState().applyState({
+      undoCount: 1,
+      redoCount: 1,
+      undo: { key: 'history:setClassName' },
+      redo: { key: 'history:setText' },
+    });
+    const undoSpy = vi.spyOn(useHistoryStore.getState(), 'undo');
+
+    openEditor();
+
+    const undoBtn = screen.getByRole('button', { name: /Undo.*\(Ctrl\+Z\)/ });
+    const redoBtn = screen.getByRole('button', { name: /Redo.*\(Ctrl\+Y\)/ });
+    expect(undoBtn).toHaveProperty('disabled', false);
+    expect(redoBtn).toHaveProperty('disabled', false);
+
+    const event = new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, cancelable: true });
+    window.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+    expect(undoSpy).toHaveBeenCalled();
   });
 });
 

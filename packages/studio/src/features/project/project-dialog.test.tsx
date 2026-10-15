@@ -1,0 +1,138 @@
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import i18next from 'i18next';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { initI18n } from '../../i18n/i18n.ts';
+import { ProjectDialog } from './project-dialog.tsx';
+
+function stubApi() {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((url: string, init?: RequestInit) => {
+      const urlStr = url;
+      const method = init?.method ?? 'GET';
+
+      if (urlStr.includes('/api/v1/fs/directories')) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                path: '/test/workspace',
+                entries: [
+                  { name: 'app-a', path: '/test/workspace/app-a', isProject: true },
+                  { name: 'notes', path: '/test/workspace/notes', isProject: false },
+                ],
+              },
+            }),
+            { status: 200 },
+          ),
+        );
+      }
+
+      if (urlStr.includes('/api/v1/project/probe')) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                kind: 'project',
+                support: {
+                  supported: true,
+                  reasons: [],
+                  framework: 'vite-react',
+                  versions: {},
+                  language: 'ts',
+                  tailwindCss: 'src/index.css',
+                },
+                hasWorkspace: true,
+              },
+            }),
+            { status: 200 },
+          ),
+        );
+      }
+
+      if (urlStr.includes('/api/v1/project/open') && method === 'POST') {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: 'shop000001',
+                name: 'Shop',
+                root: '/test/workspace',
+                sourceDir: 'src',
+                support: { supported: true, reasons: [], language: 'ts' },
+                needsInstall: false,
+                responsiveMode: 'desktop-first',
+                frames: [],
+                primaryFrameId: 'desktop',
+                backends: [],
+                trusted: true,
+              },
+            }),
+            { status: 200 },
+          ),
+        );
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ data: {} }), { status: 200 }));
+    }),
+  );
+}
+
+beforeAll(async () => {
+  await initI18n();
+});
+
+beforeEach(async () => {
+  await i18next.changeLanguage('en');
+  sessionStorage.setItem('reactcraft.sessionToken', 'tok');
+  stubApi();
+});
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+describe('ProjectDialog', () => {
+  it('renders directory browser and probes initial path', async () => {
+    render(
+      <ProjectDialog
+        open={true}
+        initialPath="/test/workspace"
+        onClose={vi.fn()}
+        onProjectOpened={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('project-dialog')).toBeDefined();
+    expect(screen.getByTestId('directory-browser')).toBeDefined();
+
+    // Wait for probe result
+    await waitFor(() => {
+      expect(screen.getByTestId('open-project-btn')).toBeDefined();
+    });
+  });
+
+  it('triggers onProjectOpened when Open button is clicked', async () => {
+    const onOpened = vi.fn();
+    render(
+      <ProjectDialog
+        open={true}
+        initialPath="/test/workspace"
+        onClose={vi.fn()}
+        onProjectOpened={onOpened}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('open-project-btn')).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByTestId('open-project-btn'));
+
+    await waitFor(() => {
+      expect(onOpened).toHaveBeenCalledWith(expect.objectContaining({ id: 'shop000001' }));
+    });
+  });
+});

@@ -1,9 +1,11 @@
+import type { HistoryLabel } from '@reactcraft/shared';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { LanguageSwitcher } from '../../app/language-switcher.tsx';
 import { shortcutLabel } from '../../app/platform.ts';
 import { PanelLeftIcon, PanelRightIcon, RedoIcon, UndoIcon } from '../../components/ui/icons.tsx';
+import { useHistoryStore } from '../history/history-store.ts';
 import { SettingsButton } from '../settings/settings-button.tsx';
 import type { Side } from './use-panel-layout.ts';
 
@@ -11,7 +13,72 @@ export type EditorToolbarProps = {
   readonly projectName: string;
   readonly visible: Readonly<Record<Side, boolean>>;
   readonly onToggle: (side: Side) => void;
+  readonly onOpenProject?: () => void;
 };
+
+function resolveHistoryLabel(
+  label: HistoryLabel | undefined,
+  t: ReturnType<typeof useTranslation>['t'],
+): string | undefined {
+  if (label === undefined) return undefined;
+  if (label.key === 'history:setClassName' || label.key === 'history.setClassName') {
+    return t('history.setClassName');
+  }
+  if (label.key === 'history:setText' || label.key === 'history.setText') {
+    return t('history.setText');
+  }
+  if (label.key === 'history:setAttribute' || label.key === 'history.setAttribute') {
+    const tag = label.params?.['tag'] ?? '';
+    return t('history.setAttribute', { tag });
+  }
+  return label.key;
+}
+
+function HistoryButtons() {
+  const { t } = useTranslation();
+  const canUndo = useHistoryStore((s) => s.canUndo);
+  const canRedo = useHistoryStore((s) => s.canRedo);
+  const undoLabel = useHistoryStore((s) => s.undoLabel);
+  const redoLabel = useHistoryStore((s) => s.redoLabel);
+  const undo = useHistoryStore((s) => s.undo);
+  const redo = useHistoryStore((s) => s.redo);
+
+  const resolvedUndo = resolveHistoryLabel(undoLabel, t);
+  const resolvedRedo = resolveHistoryLabel(redoLabel, t);
+
+  const undoTooltip =
+    resolvedUndo !== undefined
+      ? t('editor.undoWithLabel', { label: resolvedUndo, shortcut: shortcutLabel('undo') })
+      : t('editor.undo', { shortcut: shortcutLabel('undo') });
+
+  const redoTooltip =
+    resolvedRedo !== undefined
+      ? t('editor.redoWithLabel', { label: resolvedRedo, shortcut: shortcutLabel('redo') })
+      : t('editor.redo', { shortcut: shortcutLabel('redo') });
+
+  return (
+    <>
+      <RoundButton
+        label={undoTooltip}
+        disabled={!canUndo}
+        onClick={() => {
+          void undo();
+        }}
+      >
+        <UndoIcon />
+      </RoundButton>
+      <RoundButton
+        label={redoTooltip}
+        disabled={!canRedo}
+        onClick={() => {
+          void redo();
+        }}
+      >
+        <RedoIcon />
+      </RoundButton>
+    </>
+  );
+}
 
 /**
  * Top row of the Editor: project name, panels, Undo/Redo, language and settings. The frame picker
@@ -19,6 +86,7 @@ export type EditorToolbarProps = {
  */
 export function EditorToolbar(props: EditorToolbarProps) {
   const { t } = useTranslation();
+
   return (
     <header className="flex items-center gap-2.5 whitespace-nowrap [&>*]:shrink-0">
       <div className="flex h-10 max-w-[24rem] min-w-[9rem] !shrink items-center gap-2 rounded-full border-[1.5px] border-charcoal px-[18px] text-[17px] tracking-tight">
@@ -31,14 +99,19 @@ export function EditorToolbar(props: EditorToolbarProps) {
           {props.projectName}
         </span>
       </div>
+      {props.onOpenProject !== undefined && (
+        <button
+          type="button"
+          onClick={props.onOpenProject}
+          className="h-10 rounded-full border border-border bg-field px-4 text-xs font-medium text-ink hover:bg-field-hover"
+          data-testid="project-btn"
+        >
+          {t('project.button')}
+        </button>
+      )}
       <PanelToggle side="left" {...props} />
       <div className="flex-1" />
-      <RoundButton label={t('editor.undo', { shortcut: shortcutLabel('undo') })} disabled>
-        <UndoIcon />
-      </RoundButton>
-      <RoundButton label={t('editor.redo', { shortcut: shortcutLabel('redo') })} disabled>
-        <RedoIcon />
-      </RoundButton>
+      <HistoryButtons />
       <LanguageSwitcher />
       <SettingsButton />
       <PanelToggle side="right" {...props} />

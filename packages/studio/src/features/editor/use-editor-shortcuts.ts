@@ -7,8 +7,8 @@ import { isApplePlatform } from '../../app/platform.ts';
 
 export type ShortcutActions = {
   /** Undo and Redo come with the history of M-HI (WP-1.06). */
-  readonly undo?: () => void;
-  readonly redo?: () => void;
+  readonly undo?: (() => void) | undefined;
+  readonly redo?: (() => void) | undefined;
   readonly togglePanels: () => void;
 };
 

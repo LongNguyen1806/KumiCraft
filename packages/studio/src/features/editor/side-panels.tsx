@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { InspectorPanel } from '../inspector/inspector-panel.tsx';
+import { LayerTree } from '../layers/layer-tree.tsx';
+
 type PanelProps = {
   readonly label: string;
   readonly title: string;
@@ -55,7 +58,7 @@ export function LeftPanel() {
       title={t('editor.layers')}
       tabs={<Tab selected>{t('editor.layers')}</Tab>}
     >
-      <p className="px-1 pt-2 text-ink-faint">{t('editor.layersHint')}</p>
+      <LayerTree />
     </Panel>
   );
 }
@@ -73,7 +76,7 @@ export function RightPanel() {
   );
   return (
     <Panel label={t('editor.rightPanel')} title={t('editor.properties')} tabs={tabs}>
-      <p className="px-1 pt-2 text-ink-faint">{t('editor.selectHint')}</p>
+      <InspectorPanel />
     </Panel>
   );
 }

@@ -1,3 +1,10 @@
+import type { ProjectInfo } from '@reactcraft/shared';
+import { useEffect, useState } from 'react';
+
+import { fetchProject } from '../../api/project-client.ts';
+import { useHistoryStore, useHistorySync } from '../history/history-store.ts';
+import { InstallDialog } from '../project/install-dialog.tsx';
+import { ProjectDialog } from '../project/project-dialog.tsx';
 import { TrustPrompt } from '../trust/trust-prompt.tsx';
 import { CanvasArea } from './canvas-area.tsx';
 import { EditorToolbar } from './editor-toolbar.tsx';
@@ -32,13 +39,30 @@ const SideHandle = ({
 );
 
 /** Left panel, Canvas and right panel, with the resize handles between them. */
-function WorkGrid({ panels }: { readonly panels: ReturnType<typeof usePanelLayout> }) {
+function WorkGrid({
+  panels,
+  projectInfo,
+  trusted,
+  onTrustRequest,
+  onInstallRequest,
+}: {
+  readonly panels: ReturnType<typeof usePanelLayout>;
+  readonly projectInfo?: ProjectInfo | undefined;
+  readonly trusted: boolean;
+  readonly onTrustRequest?: (() => void) | undefined;
+  readonly onInstallRequest?: (() => void) | undefined;
+}) {
   const { layout, resize } = panels;
   return (
     <div className="grid min-h-0 flex-1" style={{ gridTemplateColumns: columns(layout) }}>
       {layout.visible.left ? <LeftPanel /> : <div />}
       <SideHandle side="left" layout={layout} resize={resize} />
-      <CanvasArea />
+      <CanvasArea
+        projectInfo={projectInfo}
+        trusted={trusted}
+        onTrustRequest={onTrustRequest}
+        onInstallRequest={onInstallRequest}
+      />
       <SideHandle side="right" layout={layout} resize={resize} />
       {layout.visible.right ? <RightPanel /> : <div />}
     </div>
@@ -53,22 +77,139 @@ type EditorShellProps = {
   readonly onTrusted: () => void;
 };
 
+function useProjectLoader(trusted: boolean) {
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [projectInfo, setProjectInfo] = useState<ProjectInfo>();
+  const [installDialogOpen, setInstallDialogOpen] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const info = await fetchProject();
+        if (active) {
+          setProjectInfo(info);
+          if (info.needsInstall && trusted) {
+            setInstallDialogOpen(true);
+          }
+        }
+      } catch {
+        // Project might not be open yet or error, ignore
+      }
+    };
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [trusted]);
+
+  const refreshProject = async () => {
+    try {
+      const refreshed = await fetchProject();
+      setProjectInfo(refreshed);
+    } catch {
+      // ignore
+    }
+  };
+
+  return {
+    projectInfo,
+    setProjectInfo,
+    projectDialogOpen,
+    setProjectDialogOpen,
+    installDialogOpen,
+    setInstallDialogOpen,
+    refreshProject,
+  };
+}
+
+function EditorDialogs({
+  loader,
+  onTrusted,
+}: {
+  readonly loader: ReturnType<typeof useProjectLoader>;
+  readonly onTrusted: () => void;
+}) {
+  return (
+    <>
+      <ProjectDialog
+        open={loader.projectDialogOpen}
+        initialPath={loader.projectInfo?.root}
+        currentProject={loader.projectInfo}
+        onClose={() => {
+          loader.setProjectDialogOpen(false);
+        }}
+        onProjectOpened={(info) => {
+          loader.setProjectInfo(info);
+          loader.setProjectDialogOpen(false);
+          onTrusted();
+        }}
+      />
+      {loader.projectInfo?.needsInstall && (
+        <InstallDialog
+          open={loader.installDialogOpen}
+          installCommand={loader.projectInfo.installCommand}
+          onClose={() => {
+            loader.setInstallDialogOpen(false);
+          }}
+          onInstalled={() => {
+            loader.setInstallDialogOpen(false);
+            void loader.refreshProject();
+          }}
+        />
+      )}
+    </>
+  );
+}
+
 /** The Editor of an open project: toolbar, panels, Canvas and status bar. */
 export function EditorShell({ projectId, projectName, trusted, onTrusted }: EditorShellProps) {
   const panels = usePanelLayout();
-  useEditorShortcuts({ togglePanels: panels.toggleBoth });
+  const canUndo = useHistoryStore((s) => s.canUndo);
+  const canRedo = useHistoryStore((s) => s.canRedo);
+  const undo = useHistoryStore((s) => s.undo);
+  const redo = useHistoryStore((s) => s.redo);
+  useHistorySync(true);
+
+  useEditorShortcuts({
+    togglePanels: panels.toggleBoth,
+    undo: canUndo
+      ? () => {
+          void undo();
+        }
+      : undefined,
+    redo: canRedo
+      ? () => {
+          void redo();
+        }
+      : undefined,
+  });
+  const loader = useProjectLoader(trusted);
+
   return (
     <div className="flex h-full flex-col gap-2.5 px-3.5 py-3">
       <EditorToolbar
         projectName={projectName}
         visible={panels.layout.visible}
         onToggle={panels.toggle}
+        onOpenProject={() => {
+          loader.setProjectDialogOpen(true);
+        }}
       />
       {!trusted && (
         <TrustPrompt projectId={projectId} projectName={projectName} onTrusted={onTrusted} />
       )}
-      <WorkGrid panels={panels} />
+      <WorkGrid
+        panels={panels}
+        projectInfo={loader.projectInfo}
+        trusted={trusted}
+        onTrustRequest={onTrusted}
+        onInstallRequest={() => {
+          loader.setInstallDialogOpen(true);
+        }}
+      />
       <StatusBar trusted={trusted} />
+      <EditorDialogs loader={loader} onTrusted={onTrusted} />
     </div>
   );
 }

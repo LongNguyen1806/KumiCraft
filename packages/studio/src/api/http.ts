@@ -40,6 +40,21 @@ function authHeaders(): Record<string, string> {
   return token === undefined ? {} : { Authorization: `Bearer ${token}` };
 }
 
+async function readResponseData(response: Response): Promise<unknown> {
+  if (response.status === 204) return undefined;
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    body = undefined;
+  }
+  if (!response.ok || !isRecord(body)) {
+    const { code, params } = readErrorInfo(body);
+    throw new ApiError(response.status, code, params);
+  }
+  return body['data'];
+}
+
 /** GET `/api/v1/<path>` and return the `data` member of the response. */
 export async function apiGet(path: string): Promise<unknown> {
   const response = await fetch(`/api/v1/${path}`, {
@@ -48,12 +63,7 @@ export async function apiGet(path: string): Promise<unknown> {
       ...authHeaders(),
     },
   });
-  const body: unknown = await response.json();
-  if (!response.ok || !isRecord(body)) {
-    const { code, params } = readErrorInfo(body);
-    throw new ApiError(response.status, code, params);
-  }
-  return body['data'];
+  return readResponseData(response);
 }
 
 /** Sends `payload` as JSON with `method` and returns the `data` member of the response. */
@@ -71,12 +81,7 @@ async function apiSend(
     },
     ...(payload === undefined ? {} : { body: JSON.stringify(payload) }),
   });
-  const body: unknown = await response.json();
-  if (!response.ok || !isRecord(body)) {
-    const { code, params } = readErrorInfo(body);
-    throw new ApiError(response.status, code, params);
-  }
-  return body['data'];
+  return readResponseData(response);
 }
 
 /** POST `/api/v1/<path>` and return the `data` member of the response. */
@@ -86,3 +91,15 @@ export const apiPost = (path: string, payload?: unknown): Promise<unknown> =>
 /** PATCH `/api/v1/<path>` and return the `data` member of the response. */
 export const apiPatch = (path: string, payload: unknown): Promise<unknown> =>
   apiSend('PATCH', path, payload);
+
+/** DELETE `/api/v1/<path>`. */
+export async function apiDelete(path: string): Promise<unknown> {
+  const response = await fetch(`/api/v1/${path}`, {
+    method: 'DELETE',
+    headers: {
+      Accept: 'application/json',
+      ...authHeaders(),
+    },
+  });
+  return readResponseData(response);
+}
