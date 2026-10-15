@@ -13,10 +13,15 @@ import Fastify, {
 } from 'fastify';
 
 import type { SessionInfo } from '../../core/shared/session.ts';
+import { type EditorRoutesDeps, registerEditorRoutes } from './routes/editor.ts';
 import { type EventRoutesDeps, registerEventRoutes } from './routes/events.ts';
+import { type FsRoutesDeps, registerFsRoutes } from './routes/fs.ts';
+import { type HistoryRoutesDeps, registerHistoryRoutes } from './routes/history.ts';
 import { type ProjectRoutesDeps, registerProjectRoutes } from './routes/project.ts';
+import { registerRunnerRoutes, type RunnerRoutesDeps } from './routes/runner.ts';
 import { registerSessionRoutes } from './routes/session.ts';
 import { registerSettingsRoutes, type SettingsRoutesDeps } from './routes/settings.ts';
+import { registerSourceRoutes, type SourceRoutesDeps } from './routes/source.ts';
 import { registerSecurity, type SecurityOptions } from './security.ts';
 import { sendError } from './send-error.ts';
 
@@ -27,8 +32,13 @@ export type HttpAppOptions = {
   readonly security: SecurityOptions;
   readonly getSessionInfo: () => SessionInfo;
   readonly projectRoutes?: ProjectRoutesDeps;
+  readonly runnerRoutes?: RunnerRoutesDeps;
+  readonly fsRoutes?: FsRoutesDeps;
   readonly eventRoutes?: EventRoutesDeps;
   readonly settingsRoutes?: SettingsRoutesDeps;
+  readonly sourceRoutes?: SourceRoutesDeps;
+  readonly historyRoutes?: HistoryRoutesDeps;
+  readonly editorRoutes?: EditorRoutesDeps;
   /** Directory of the built Studio. When absent, only the API is served. */
   readonly studioDir?: string;
 };
@@ -88,8 +98,23 @@ async function registerApiRoutes(app: FastifyInstance, options: HttpAppOptions):
       if (options.projectRoutes !== undefined) {
         registerProjectRoutes(api, options.projectRoutes);
       }
+      if (options.runnerRoutes !== undefined) {
+        registerRunnerRoutes(api, options.runnerRoutes);
+      }
+      if (options.fsRoutes !== undefined) {
+        registerFsRoutes(api, options.fsRoutes);
+      }
       if (options.settingsRoutes !== undefined) {
         registerSettingsRoutes(api, options.settingsRoutes);
+      }
+      if (options.sourceRoutes !== undefined) {
+        registerSourceRoutes(api, options.sourceRoutes);
+      }
+      if (options.historyRoutes !== undefined) {
+        registerHistoryRoutes(api, options.historyRoutes);
+      }
+      if (options.editorRoutes !== undefined) {
+        registerEditorRoutes(api, options.editorRoutes);
       }
       if (options.eventRoutes !== undefined) {
         registerEventRoutes(api, options.eventRoutes);

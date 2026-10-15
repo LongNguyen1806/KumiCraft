@@ -1,5 +1,5 @@
 // Helpers shared by the workspace tests. Not used by production code.
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -44,4 +44,22 @@ export function fakeSystem(
 export async function makeTempDir(): Promise<{ dir: string; cleanup: () => Promise<void> }> {
   const dir = await mkdtemp(join(tmpdir(), 'reactcraft-ws-'));
   return { dir, cleanup: () => rm(dir, { recursive: true, force: true }) };
+}
+
+/**
+ * The smallest folder the vite-react adapter supports (R-PJ-03): package.json with Vite 8, React 19
+ * and Tailwind 4, a Vite config and a CSS file importing Tailwind. Dependencies are not installed.
+ */
+export async function writeSupportedProject(dir: string): Promise<void> {
+  await mkdir(join(dir, 'src'), { recursive: true });
+  const pkg = {
+    name: 'fixture',
+    private: true,
+    type: 'module',
+    dependencies: { react: '^19.0.0', 'react-dom': '^19.0.0' },
+    devDependencies: { vite: '^8.0.0', tailwindcss: '^4.0.0', '@tailwindcss/vite': '^4.0.0' },
+  };
+  await writeFile(join(dir, 'package.json'), `${JSON.stringify(pkg, undefined, 2)}\n`);
+  await writeFile(join(dir, 'vite.config.ts'), 'export default {};\n');
+  await writeFile(join(dir, 'src', 'index.css'), '@import "tailwindcss";\n');
 }

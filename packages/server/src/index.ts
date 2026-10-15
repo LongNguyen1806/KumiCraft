@@ -1,6 +1,10 @@
 // Public entry point of @reactcraft/server (QC-03): composition root of the Local Server.
 import { randomBytes } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { resolveEnabledFeatures } from '@reactcraft/shared';
 import envPaths from 'env-paths';
@@ -9,11 +13,21 @@ import type { FastifyInstance } from 'fastify';
 import { createNodeFileSystem } from './adapters/fs/node-file-system.ts';
 import { createHttpApp, type LogLevel } from './adapters/http/create-http-app.ts';
 import { createServerLogger } from './adapters/log/create-logger.ts';
+import { createNodeProcess } from './adapters/system/node-process.ts';
 import { createNodeSystem } from './adapters/system/node-system.ts';
+import { createHistoryService, type HistoryService } from './core/history/history-service.ts';
 import { createEventBus, type EventBusPort } from './core/ports/event-bus-port.ts';
 import type { FileSystemPort } from './core/ports/file-system-port.ts';
 import type { LoggerPort } from './core/ports/logger-port.ts';
+import type { ProcessPort } from './core/ports/process-port.ts';
 import type { SystemPort } from './core/ports/system-port.ts';
+import { viteReactAdapter } from './core/project/frameworks/vite-react/index.ts';
+import {
+  createProjectService,
+  type ProjectService,
+  type ProjectServiceDeps,
+} from './core/project/project-service.ts';
+import { createRunnerService, type RunnerService } from './core/runner/runner-service.ts';
 import { err, ok, type Result } from './core/shared/result.ts';
 import {
   createSessionInfoProvider,
@@ -21,18 +35,21 @@ import {
   toSupportedPlatform,
 } from './core/shared/session.ts';
 import { type ConfigStore, createConfigStore } from './core/shared/user-config.ts';
+import {
+  createSourceEditorService,
+  type SourceEditorService,
+} from './core/source-editor/source-editor-service.ts';
 import { createProjectReader } from './core/workspace/project-reader.ts';
 import { readRememberedPort } from './core/workspace/studio-port.ts';
-import {
-  createWorkspaceService,
-  type WorkspaceService,
-} from './core/workspace/workspace-service.ts';
 
 export type { LogLevel } from './adapters/http/create-http-app.ts';
+export type { HistoryService } from './core/history/history-service.ts';
 export type { EventBusPort, ServerEvent } from './core/ports/event-bus-port.ts';
+export type { ProjectService } from './core/project/project-service.ts';
+export type { RunnerService } from './core/runner/runner-service.ts';
 export type { AppError, ErrorCode, Result } from './core/shared/result.ts';
 export type { Platform, ProjectState, SessionInfo } from './core/shared/session.ts';
-export type { WorkspaceService } from './core/workspace/workspace-service.ts';
+export type { SourceEditorService } from './core/source-editor/source-editor-service.ts';
 
 /** ADR-BE-03: the server never listens on another interface. */
 export const HOST = '127.0.0.1';
@@ -55,9 +72,13 @@ export type StartServerOptions = {
   readonly deps?: {
     readonly fs?: FileSystemPort;
     readonly system?: SystemPort;
+    readonly process?: ProcessPort;
     readonly configDir?: string;
+    readonly templateDir?: string;
+    readonly homeDir?: string;
     readonly logger?: LoggerPort;
     readonly eventBus?: EventBusPort;
+    readonly runnerScriptPath?: string | undefined;
   };
 };
 
@@ -66,15 +87,25 @@ export type RunningServer = {
   readonly port: number;
   /** Session token. The CLI hands it to the Studio in the URL fragment `#t=` (SPEC-05 S-05). */
   readonly sessionToken: string;
-  readonly workspaceService: WorkspaceService;
+  readonly projectService: ProjectService;
+  readonly runnerService: RunnerService;
+  readonly sourceEditorService: SourceEditorService;
+  readonly historyService: HistoryService;
   readonly eventBus: EventBusPort;
   readonly close: () => Promise<void>;
 };
 
 type InitializedContext = {
-  readonly workspaceService: WorkspaceService;
+  readonly projectService: ProjectService;
+  readonly runnerService: RunnerService;
+  readonly sourceEditorService: SourceEditorService;
+  readonly historyService: HistoryService;
   readonly configStore: ConfigStore;
   readonly eventBus: EventBusPort;
+  readonly fs: FileSystemPort;
+  readonly processPort: ProcessPort;
+  readonly platform: Platform;
+  readonly homeDir: string;
 };
 
 /**
@@ -97,23 +128,152 @@ async function initServerContext(
   const logger =
     options.deps?.logger ?? createServerLogger({ level: options.logLevel ?? 'info' }).port;
   const system = options.deps?.system ?? createNodeSystem();
+  const processPort = options.deps?.process ?? createNodeProcess();
   const configDir = options.deps?.configDir ?? envPaths('reactcraft').config;
   const eventBus = options.deps?.eventBus ?? createEventBus();
-  await ensureConfigDir(configDir, logger);
+  const homeDir = options.deps?.homeDir ?? homedir();
+  const templateDir = options.deps?.templateDir ?? resolveTemplateDir();
 
+  await ensureConfigDir(configDir, logger);
   const configStore = await createConfigStore({ fs, dir: configDir, platform, logger });
-  const workspaceService = createWorkspaceService({
+
+  const { projectService, runnerService, sourceEditorService, historyService } = createServices(
+    {
+      fs,
+      system,
+      process: processPort,
+      config: configStore,
+      logger,
+      eventBus,
+      port: options.port,
+      platform,
+      homeDir,
+      templateDir,
+      initialRoot: options.workspaceDir,
+      runnerScriptPath: options.deps?.runnerScriptPath,
+    },
+    options.port,
+    processPort,
+    eventBus,
     fs,
-    root: options.workspaceDir,
-    system,
-    config: configStore,
-    logger,
-    port: options.port,
+  );
+
+  const autoOpen = await autoOpenProject(fs, projectService, options.workspaceDir);
+  if (!autoOpen.ok) return autoOpen;
+
+  return ok({
+    projectService,
+    runnerService,
+    sourceEditorService,
+    historyService,
+    configStore,
+    eventBus,
+    fs,
+    processPort,
+    platform,
+    homeDir,
+  });
+}
+
+const TEMPLATE_NAME = 'vite-react-ts-tailwind4';
+
+/**
+ * Folder of the project template (ADR-BE-32): next to the built CLI (`dist/templates/`, ADR-BE-25),
+ * or `templates/` of the repository when the server runs from its sources.
+ */
+export function resolveTemplateDir(): string {
+  const candidates = [
+    new URL(`./templates/${TEMPLATE_NAME}`, import.meta.url),
+    new URL(`../../../templates/${TEMPLATE_NAME}`, import.meta.url),
+  ].map((url) => fileURLToPath(url));
+  return candidates.find((dir) => existsSync(join(dir, 'package.json'))) ?? candidates[0] ?? '';
+}
+
+export function resolveRunnerScript(customPath?: string): string {
+  if (customPath && existsSync(customPath)) return customPath;
+  const candidates = [
+    new URL('./runners/vite-react.js', import.meta.url),
+    new URL('./runners/vite-react.ts', import.meta.url),
+    new URL('../runners/vite-react.js', import.meta.url),
+    new URL('../runners/vite-react.ts', import.meta.url),
+    new URL('../../runners/vite-react.js', import.meta.url),
+    new URL('../../runners/vite-react.ts', import.meta.url),
+    new URL('../../../server/src/runners/vite-react.ts', import.meta.url),
+    new URL('../../../../packages/server/src/runners/vite-react.ts', import.meta.url),
+  ];
+  for (const candidate of candidates) {
+    const p = fileURLToPath(candidate);
+    if (existsSync(p)) return p;
+  }
+  return fileURLToPath(candidates[0] ?? new URL('./runners/vite-react.js', import.meta.url));
+}
+
+function createServices(
+  deps: Omit<ProjectServiceDeps, 'runnerService'> & {
+    readonly runnerScriptPath?: string | undefined;
+  },
+  serverPort: number,
+  processPort: ProcessPort,
+  eventBus: EventBusPort,
+  fs: FileSystemPort,
+): {
+  projectService: ProjectService;
+  runnerService: RunnerService;
+  sourceEditorService: SourceEditorService;
+  historyService: HistoryService;
+} {
+  const runnerHolder: { current?: RunnerService | undefined } = {};
+
+  const projectService = createProjectService({
+    ...deps,
+    runnerService: {
+      start: () => runnerHolder.current?.start() ?? Promise.resolve(ok({ state: 'stopped' })),
+      stop: () => runnerHolder.current?.stop() ?? Promise.resolve(ok({ state: 'stopped' })),
+    },
   });
 
-  const opened = await workspaceService.open();
-  if (!opened.ok) return opened;
-  return ok({ workspaceService, configStore, eventBus });
+  const runnerService = createRunnerService({
+    getWorkspaceState: () => projectService.state(),
+    system: deps.system,
+    process: processPort,
+    logger: deps.logger,
+    eventBus,
+    studioOrigin: `http://${HOST}:${String(serverPort)}`,
+    adapter: viteReactAdapter,
+    runnerScriptPath: resolveRunnerScript(deps.runnerScriptPath),
+  });
+
+  const sourceEditorService = createSourceEditorService({ fs });
+  const historyService = createHistoryService({ fs, eventBus });
+
+  runnerHolder.current = runnerService;
+  return { projectService, runnerService, sourceEditorService, historyService };
+}
+
+async function autoOpenProject(
+  fs: FileSystemPort,
+  projectService: ProjectService,
+  workspaceDir?: string,
+): Promise<Result<void>> {
+  if (!workspaceDir) return ok(undefined);
+  const hasWorkspace = await fs.exists(workspaceDir, '.reactcraft/workspace.json');
+  if (hasWorkspace) {
+    const opened = await projectService.open(workspaceDir);
+    if (!opened.ok) {
+      if (opened.error.code === 'E018') return opened;
+      return ok(undefined);
+    }
+    return ok(undefined);
+  }
+  const probe = await projectService.probe(workspaceDir);
+  if (probe.ok && probe.value.kind === 'project' && probe.value.support.supported) {
+    const opened = await projectService.open(workspaceDir);
+    if (!opened.ok) {
+      if (opened.error.code === 'E018') return opened;
+      return ok(undefined);
+    }
+  }
+  return ok(undefined);
 }
 
 function createHttpServer(
@@ -125,16 +285,40 @@ function createHttpServer(
     version: options.version,
     platform: toSupportedPlatform(process.platform) ?? 'linux',
     features: resolveEnabledFeatures(options.featureOverride),
-    readProject: createProjectReader(ctx.workspaceService, options.workspaceDir),
+    readProject: createProjectReader(ctx.projectService, options.workspaceDir),
   });
+
+  const getProjectRoot = () => {
+    const ws = ctx.projectService.state();
+    return ws.status === 'open' ? ws.root : undefined;
+  };
 
   return createHttpApp({
     logLevel: options.logLevel ?? 'info',
     security: { port: options.port, sessionToken, trustedOrigins: options.trustedOrigins ?? [] },
     getSessionInfo,
-    projectRoutes: { workspaceService: ctx.workspaceService, getSessionInfo },
+    projectRoutes: { projectService: ctx.projectService, getSessionInfo },
+    runnerRoutes: { runnerService: ctx.runnerService },
+    fsRoutes: { fs: ctx.fs, platform: ctx.platform, homeDir: ctx.homeDir },
     settingsRoutes: { config: ctx.configStore },
     eventRoutes: { eventBus: ctx.eventBus, sessionToken },
+    sourceRoutes: {
+      sourceEditorService: ctx.sourceEditorService,
+      historyService: ctx.historyService,
+      getProjectRoot,
+      fs: ctx.fs,
+    },
+    historyRoutes: {
+      historyService: ctx.historyService,
+      getProjectRoot,
+    },
+    editorRoutes: {
+      fs: ctx.fs,
+      process: ctx.processPort,
+      platform: ctx.platform,
+      editor: () => ctx.configStore.settings().editor,
+      getProjectRoot,
+    },
     ...(options.studioDir === undefined ? {} : { studioDir: options.studioDir }),
   });
 }
@@ -154,7 +338,9 @@ export async function startServer(options: StartServerOptions): Promise<Result<R
   try {
     await app.listen({ host: HOST, port: options.port });
   } catch (cause) {
-    await ctx.workspaceService.close();
+    await ctx.runnerService.dispose();
+    await ctx.projectService.close();
+    ctx.historyService.clear();
     await app.close();
     return err({ code: 'E002', params: { step: 'listen', port: options.port }, cause });
   }
@@ -163,10 +349,15 @@ export async function startServer(options: StartServerOptions): Promise<Result<R
     url: `http://${HOST}:${String(options.port)}`,
     port: options.port,
     sessionToken,
-    workspaceService: ctx.workspaceService,
+    projectService: ctx.projectService,
+    runnerService: ctx.runnerService,
+    sourceEditorService: ctx.sourceEditorService,
+    historyService: ctx.historyService,
     eventBus: ctx.eventBus,
     close: async () => {
-      await ctx.workspaceService.close();
+      await ctx.runnerService.dispose();
+      await ctx.projectService.close();
+      ctx.historyService.clear();
       await app.close();
     },
   });

@@ -1,13 +1,16 @@
-import { mkdir, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
-
-import { newWorkspaceFile, serializeWorkspaceFile, WORKSPACE_FILE } from '@reactcraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { createProjectService } from '../project/project-service.ts';
 import { ok } from '../shared/result.ts';
 import { readRememberedPort, rememberPort, STUDIO_CACHE_FILE } from './studio-port.ts';
-import { fakeSystem, makeTempDir, nodeFs, silentLogger } from './test-support.ts';
-import { createWorkspaceService } from './workspace-service.ts';
+import {
+  fakeSystem,
+  makeTempDir,
+  nodeFs,
+  platform,
+  silentLogger,
+  writeSupportedProject,
+} from './test-support.ts';
 
 let dir: string;
 let cleanup: () => Promise<void>;
@@ -38,25 +41,24 @@ describe('studio port', () => {
     }
   });
 
-  it('is written when the workspace service takes the lock', async () => {
-    await mkdir(join(dir, '.reactcraft'));
-    const file = newWorkspaceFile({
-      id: 'shop000001',
-      name: 'Shop',
-      createdAt: '2026-10-14T08:00:00.000Z',
-      responsiveMode: 'desktop-first',
-    });
-    await writeFile(join(dir, WORKSPACE_FILE), serializeWorkspaceFile(file));
-    const service = createWorkspaceService({
+  it('is written when the project service takes the lock [S-02]', async () => {
+    await writeSupportedProject(dir);
+    const service = createProjectService({
       fs: nodeFs,
-      root: dir,
       system: fakeSystem(1, new Set([1])),
+      process: {
+        spawn: () => {
+          throw new Error('no process in this test');
+        },
+      },
       config: { isTrusted: () => false, setTrusted: () => Promise.resolve(ok(undefined)) },
       logger: silentLogger,
       port: 50123,
+      platform,
+      templateDir: dir,
     });
 
-    await service.open();
+    await service.open(dir);
     await service.close();
 
     expect(await readRememberedPort(nodeFs, dir)).toBe(50123);

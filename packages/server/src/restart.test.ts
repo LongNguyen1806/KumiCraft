@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { newWorkspaceFile, serializeWorkspaceFile, WORKSPACE_FILE } from '@reactcraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { makeTempDir, silentLogger } from './core/workspace/test-support.ts';
+import { makeTempDir, silentLogger, writeSupportedProject } from './core/workspace/test-support.ts';
 import { type RunningServer, startServer } from './index.ts';
 
 let workspace: { dir: string; cleanup: () => Promise<void> };
@@ -51,6 +51,7 @@ async function call(server: RunningServer, method: string, path: string, body?: 
 }
 
 async function writeProject() {
+  await writeSupportedProject(workspace.dir);
   await mkdir(join(workspace.dir, '.reactcraft'));
   const file = newWorkspaceFile({
     id: 'shop000001',

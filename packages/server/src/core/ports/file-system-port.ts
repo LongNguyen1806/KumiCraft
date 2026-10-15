@@ -7,6 +7,8 @@ export type DirectoryEntry = { readonly name: string; readonly kind: 'file' | 'd
 export type ReadOptions = {
   /** Larger files fail with E003 (`params.reason: 'tooLarge'`). Default: 20 MB (S-29). */
   readonly maxBytes?: number;
+  /** Keep BOM if present (default: false, strips BOM). Needed by M-SE to preserve BOM (R-SE-10). */
+  readonly keepBom?: boolean;
 };
 
 export type WriteOptions = {

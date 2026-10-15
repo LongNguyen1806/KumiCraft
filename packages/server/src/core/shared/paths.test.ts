@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { checkPathSyntax, isInside, jsonDepth, MAX_PATH_LENGTH } from './paths.ts';
+import {
+  checkPathSyntax,
+  isInside,
+  jsonDepth,
+  MAX_PATH_LENGTH,
+  resolveBackendPath,
+  toStoredBackendPath,
+} from './paths.ts';
 
 const reason = (path: string, platform: 'win32' | 'linux' = 'win32') =>
   checkPathSyntax(path, platform)?.params?.['reason'];
@@ -53,5 +60,38 @@ describe('jsonDepth', () => {
     expect(jsonDepth('{"a":"[[[{{{"}')).toBe(1);
     expect(jsonDepth('"\\"["')).toBe(0);
     expect(jsonDepth('['.repeat(70) + ']'.repeat(70))).toBe(70);
+  });
+});
+
+describe('toStoredBackendPath [V-03, V-04]', () => {
+  it('stores relative path with / when backend is inside project parent folder [V-03]', () => {
+    expect(toStoredBackendPath('/work/projects/frontend', '/work/projects/shop-api', 'linux')).toBe(
+      '../shop-api',
+    );
+    expect(toStoredBackendPath('D:\\work\\frontend', 'D:\\work\\services\\api', 'win32')).toBe(
+      '../services/api',
+    );
+  });
+
+  it('stores absolute path with / when backend is outside project parent folder [V-04]', () => {
+    expect(toStoredBackendPath('/work/projects/frontend', '/var/data/api', 'linux')).toBe(
+      '/var/data/api',
+    );
+    expect(toStoredBackendPath('D:\\work\\frontend', 'E:\\external\\api', 'win32')).toBe(
+      'E:/external/api',
+    );
+  });
+});
+
+describe('resolveBackendPath', () => {
+  it('resolves relative path against project root', () => {
+    expect(resolveBackendPath('/work/projects/frontend', '../shop-api')).toBe(
+      '/work/projects/shop-api',
+    );
+    expect(resolveBackendPath('D:/work/frontend', '../services/api')).toBe('D:/work/services/api');
+  });
+
+  it('leaves absolute paths untouched', () => {
+    expect(resolveBackendPath('/work/projects/frontend', '/var/data/api')).toBe('/var/data/api');
   });
 });

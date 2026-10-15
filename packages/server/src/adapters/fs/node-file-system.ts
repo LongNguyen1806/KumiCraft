@@ -133,7 +133,8 @@ async function readText(platform: Platform, root: string, path: string, options:
       return err({ code: 'E003', params: { file: path, reason: 'tooLarge' } });
     }
     const text = await readFile(resolved.value, 'utf8');
-    return ok(text.charCodeAt(0) === BOM ? text.slice(1) : text);
+    const keepBom = options.keepBom ?? false;
+    return ok(!keepBom && text.charCodeAt(0) === BOM ? text.slice(1) : text);
   } catch (error) {
     return err(toAppError(error, path, 'read'));
   }
@@ -177,6 +178,16 @@ async function readDir(
 }
 
 async function exists(platform: Platform, root: string, path: string): Promise<boolean> {
+  const syntax = checkPathSyntax(path, platform);
+  if (syntax !== undefined) return false;
+  if (path === 'node_modules' || path.startsWith('node_modules/')) {
+    try {
+      await stat(resolve(root, path));
+      return true;
+    } catch {
+      return false;
+    }
+  }
   const resolved = await resolveSafe(platform, root, path);
   if (!resolved.ok) return false;
   try {
