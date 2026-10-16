@@ -1,4 +1,4 @@
-// Workspace file loading and creation helpers (M-PJ).
+// Workspace file loading, creation and reload helpers (M-PJ, S-84).
 import {
   newWorkspaceFile,
   serializeWorkspaceFile,
@@ -9,10 +9,16 @@ import {
 import { nanoid } from 'nanoid';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
+import type { LoggerPort } from '../ports/logger-port.ts';
 import type { SystemPort } from '../ports/system-port.ts';
 import { ok, type Result } from '../shared/result.ts';
+import type { Platform } from '../shared/session.ts';
+import type { ConfigStore } from '../shared/user-config.ts';
 import { readWorkspaceFile } from '../workspace/read-workspace.ts';
+import { trustKeyOf } from '../workspace/trust.ts';
 import { detectResponsiveMode } from './detect-responsive.ts';
+import { computeBackendInfos } from './project-backends.ts';
+import type { WorkspaceState } from './project-service.ts';
 
 export type WorkspaceFileDeps = {
   readonly fs: FileSystemPort;
@@ -43,4 +49,40 @@ export async function loadOrCreateWorkspaceFile(
   if (!write.ok) return write;
   await deps.fs.writeTextAtomic(root, '.reactcraft/.gitignore', 'lock\ncache/\n');
   return ok(file);
+}
+
+export type OpenWorkspace = Extract<WorkspaceState, { readonly status: 'open' }>;
+
+export type ReloadWorkspaceDeps = {
+  readonly fs: FileSystemPort;
+  readonly platform: Platform;
+  readonly homeDir?: string | undefined;
+  readonly config: Pick<ConfigStore, 'isTrusted'>;
+  readonly logger: LoggerPort;
+};
+
+/**
+ * `workspace.json` changed on disk (project.changed, S-84): the state read again from it, or
+ * undefined when it is unreadable or equal to what ReactCraft holds (its own write).
+ */
+export async function reloadOpenWorkspace(
+  deps: ReloadWorkspaceDeps,
+  state: OpenWorkspace,
+): Promise<OpenWorkspace | undefined> {
+  const read = await readWorkspaceFile(deps.fs, state.root);
+  if (!read.ok) {
+    deps.logger.warn({ code: read.error.code }, 'workspace.json changed but cannot be read');
+    return undefined;
+  }
+  const file = read.value;
+  if (serializeWorkspaceFile(file) === serializeWorkspaceFile(state.file)) return undefined;
+  const trusted = deps.config.isTrusted(trustKeyOf(file, state.root));
+  const backends = await computeBackendInfos(
+    deps.fs,
+    state.root,
+    file,
+    deps.platform,
+    deps.homeDir,
+  );
+  return { ...state, file, trusted, backends };
 }

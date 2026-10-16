@@ -92,7 +92,7 @@ const mockProjectService: ProjectService = {
     trusted = val;
     return Promise.resolve(ok({ ...projectInfo, trusted: val }));
   },
-  install: () => Promise.resolve(ok(undefined)),
+  install: () => Promise.resolve(ok({ jobId: 'job000000001' })),
   theme: () =>
     Promise.resolve(
       ok({
@@ -116,6 +116,7 @@ const mockProjectService: ProjectService = {
       }),
     ),
   removeBackend: () => Promise.resolve(ok(undefined)),
+  reloadWorkspaceFile: () => Promise.resolve(),
 };
 
 beforeEach(async () => {
@@ -227,5 +228,14 @@ describe('GET /api/v1/project/theme', () => {
     expect(res.json<{ data: ThemeInfo }>().data.colors).toEqual([
       { name: 'brand', value: '#3b82f6' },
     ]);
+  });
+});
+
+describe('POST /api/v1/project/install', () => {
+  it('answers 202 with the id of the install job [R-PJ-13]', async () => {
+    const res = await post('/api/v1/project/install', { command: ['pnpm', 'install'] });
+
+    expect(res.statusCode).toBe(202);
+    expect(res.json()).toEqual({ data: { jobId: 'job000000001' } });
   });
 });

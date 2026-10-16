@@ -62,6 +62,7 @@ export {
   type HistoryStep,
   HistoryStepSchema,
 } from './history.ts';
+export * from './job.ts';
 export {
   BACKEND_STATUSES,
   type BackendInfo,

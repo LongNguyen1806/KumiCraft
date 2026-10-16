@@ -1,6 +1,7 @@
 // Project installation helpers (M-PJ).
 import type { PackageManager } from '@reactcraft/shared';
 
+import type { JobContext, JobService } from '../jobs/job-service.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { ProcessPort } from '../ports/process-port.ts';
 import { err, ok, type Result } from '../shared/result.ts';
@@ -18,12 +19,14 @@ export function getInstallCommand(pm?: PackageManager): string[] | undefined {
   return undefined;
 }
 
-export async function runProjectInstall(
-  process: ProcessPort,
-  root: string,
+/** i18n key of the install step (V-60). */
+export const INSTALL_STEP_KEY = 'jobs:install.running';
+
+/** R-PJ-13: the command must be exactly the install command of the project (E016). */
+export function checkInstallCommand(
   command: readonly string[],
   expectedCommand: readonly string[] | undefined,
-): Promise<Result<void>> {
+): Result<{ readonly exe: string; readonly args: readonly string[] }> {
   const isMismatch =
     !expectedCommand ||
     command.length !== expectedCommand.length ||
@@ -37,26 +40,65 @@ export async function runProjectInstall(
   if (!exe) {
     return err({ code: 'E016', params: { reason: 'commandMismatch' } });
   }
+  return ok({ exe, args: command.slice(1) });
+}
 
-  const handle = process.spawn(exe, command.slice(1), {
+export async function runProjectInstall(
+  process: ProcessPort,
+  root: string,
+  exe: string,
+  args: readonly string[],
+  ctx: JobContext,
+): Promise<Result<void>> {
+  const handle = process.spawn(exe, args, {
     cwd: root,
     timeoutMs: 600_000, // 10 minutes (E020)
   });
+  handle.onLine((line) => {
+    ctx.reportLine(line);
+  });
+  // Cancelling stops the whole process tree (R-PJ-13, E019).
+  const onAbort = () => {
+    void handle.kill();
+  };
+  ctx.signal.addEventListener('abort', onAbort, { once: true });
 
-  const outcome = await handle.wait();
-  if (outcome.exitCode === 124) {
-    return err({ code: 'E020', params: { timeout: 600 } });
+  try {
+    const outcome = await handle.wait();
+    if (outcome.exitCode === 124) {
+      return err({ code: 'E020', params: { timeout: 600 } });
+    }
+    if (outcome.exitCode === 127) {
+      return err({ code: 'E021', params: { missing: 'packageManager' } });
+    }
+    if (outcome.exitCode !== 0) {
+      const details = outcome.lines.slice(-200).map((message) => ({ message }));
+      return err({
+        code: 'E028',
+        details,
+      });
+    }
+    return ok(undefined);
+  } finally {
+    ctx.signal.removeEventListener('abort', onAbort);
   }
-  if (outcome.exitCode === 127) {
-    return err({ code: 'E021', params: { missing: 'packageManager' } });
-  }
-  if (outcome.exitCode !== 0) {
-    const details = outcome.lines.slice(-200).map((message) => ({ message }));
-    return err({
-      code: 'E028',
-      details,
-    });
-  }
+}
 
-  return ok(undefined);
+/** Checks the command at once, then installs as a job (R-PJ-13, SPEC-03 section 4.2). */
+export function startInstallJob(
+  deps: { readonly jobs: JobService; readonly process: ProcessPort },
+  root: string,
+  command: readonly string[],
+  expectedCommand: readonly string[] | undefined,
+  onInstalled: () => Promise<void>,
+): Result<{ readonly jobId: string }> {
+  const checked = checkInstallCommand(command, expectedCommand);
+  if (!checked.ok) return checked;
+  const { exe, args } = checked.value;
+  return deps.jobs.start('project.install', INSTALL_STEP_KEY, async (ctx) => {
+    const installed = await runProjectInstall(deps.process, root, exe, args, ctx);
+    if (!installed.ok) return installed;
+    await onInstalled();
+    return ok(undefined);
+  });
 }

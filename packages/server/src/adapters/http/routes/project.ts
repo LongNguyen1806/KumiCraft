@@ -116,7 +116,7 @@ function registerOpsRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void 
     const result = await deps.projectService.install(parsed.data.command);
     if (!result.ok) return sendError(reply, result.error);
     reply.status(202);
-    return { data: { status: 'started' } };
+    return { data: result.value };
   });
 
   api.get('/project/theme', async (_request, reply) => {

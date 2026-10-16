@@ -57,7 +57,8 @@ export interface HistoryService {
   clear(): void;
 }
 
-function computeSha256(content: string): string {
+/** SHA-256 of a file's text, as History records it (R-HI-04, R-HI-05). */
+export function computeSha256(content: string): string {
   return createHash('sha256').update(content, 'utf8').digest('hex');
 }
 
@@ -366,7 +367,7 @@ export function createHistoryService(deps: HistoryServiceDeps): HistoryService {
       if (discarded) {
         deps.eventBus?.publish('history.changed', getHistoryState(ctx));
       }
-      deps.eventBus?.publish('project.filesChanged', { files: [filePath] });
+      // The project watcher sends one batched `project.filesChanged` for all files (V-70).
       return true;
     },
     clear: () => {

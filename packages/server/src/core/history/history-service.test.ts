@@ -298,7 +298,8 @@ describe('M-HI: History Service', () => {
     const discarded = history.handleExternalChange('src/A.tsx', 'external-hash');
     expect(discarded).toBe(true);
     expect(historyChangedFired).toBe(true);
-    expect(filesChangedFired).toBe(true);
+    // project.filesChanged is batched by the project watcher, not sent per file (V-70).
+    expect(filesChangedFired).toBe(false);
 
     // B.tsx remains in history, A.tsx dropped
     expect(history.getState().undoCount).toBe(1);

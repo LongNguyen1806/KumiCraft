@@ -17,6 +17,7 @@ import { type EditorRoutesDeps, registerEditorRoutes } from './routes/editor.ts'
 import { type EventRoutesDeps, registerEventRoutes } from './routes/events.ts';
 import { type FsRoutesDeps, registerFsRoutes } from './routes/fs.ts';
 import { type HistoryRoutesDeps, registerHistoryRoutes } from './routes/history.ts';
+import { type JobRoutesDeps, registerJobRoutes } from './routes/jobs.ts';
 import { type ProjectRoutesDeps, registerProjectRoutes } from './routes/project.ts';
 import { registerRunnerRoutes, type RunnerRoutesDeps } from './routes/runner.ts';
 import { registerSessionRoutes } from './routes/session.ts';
@@ -39,6 +40,7 @@ export type HttpAppOptions = {
   readonly sourceRoutes?: SourceRoutesDeps;
   readonly historyRoutes?: HistoryRoutesDeps;
   readonly editorRoutes?: EditorRoutesDeps;
+  readonly jobRoutes?: JobRoutesDeps;
   /** Directory of the built Studio. When absent, only the API is served. */
   readonly studioDir?: string;
 };
@@ -115,6 +117,9 @@ async function registerApiRoutes(app: FastifyInstance, options: HttpAppOptions):
       }
       if (options.editorRoutes !== undefined) {
         registerEditorRoutes(api, options.editorRoutes);
+      }
+      if (options.jobRoutes !== undefined) {
+        registerJobRoutes(api, options.jobRoutes);
       }
       if (options.eventRoutes !== undefined) {
         registerEventRoutes(api, options.eventRoutes);

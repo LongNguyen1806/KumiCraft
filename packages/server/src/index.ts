@@ -15,18 +15,22 @@ import { createHttpApp, type LogLevel } from './adapters/http/create-http-app.ts
 import { createServerLogger } from './adapters/log/create-logger.ts';
 import { createNodeProcess } from './adapters/system/node-process.ts';
 import { createNodeSystem } from './adapters/system/node-system.ts';
+import { createChokidarWatcher } from './adapters/watcher/chokidar-watcher.ts';
 import { createHistoryService, type HistoryService } from './core/history/history-service.ts';
+import { createJobService, type JobService } from './core/jobs/job-service.ts';
 import { createEventBus, type EventBusPort } from './core/ports/event-bus-port.ts';
 import type { FileSystemPort } from './core/ports/file-system-port.ts';
 import type { LoggerPort } from './core/ports/logger-port.ts';
 import type { ProcessPort } from './core/ports/process-port.ts';
 import type { SystemPort } from './core/ports/system-port.ts';
+import type { WatcherPort } from './core/ports/watcher-port.ts';
 import { viteReactAdapter } from './core/project/frameworks/vite-react/index.ts';
 import {
   createProjectService,
   type ProjectService,
   type ProjectServiceDeps,
 } from './core/project/project-service.ts';
+import { createProjectWatch, type ProjectWatch } from './core/project/project-watch.ts';
 import { createRunnerService, type RunnerService } from './core/runner/runner-service.ts';
 import { err, ok, type Result } from './core/shared/result.ts';
 import {
@@ -78,6 +82,7 @@ export type StartServerOptions = {
     readonly homeDir?: string;
     readonly logger?: LoggerPort;
     readonly eventBus?: EventBusPort;
+    readonly watcher?: WatcherPort;
     readonly runnerScriptPath?: string | undefined;
   };
 };
@@ -100,6 +105,7 @@ type InitializedContext = {
   readonly runnerService: RunnerService;
   readonly sourceEditorService: SourceEditorService;
   readonly historyService: HistoryService;
+  readonly jobService: JobService;
   readonly configStore: ConfigStore;
   readonly eventBus: EventBusPort;
   readonly fs: FileSystemPort;
@@ -137,7 +143,7 @@ async function initServerContext(
   await ensureConfigDir(configDir, logger);
   const configStore = await createConfigStore({ fs, dir: configDir, platform, logger });
 
-  const { projectService, runnerService, sourceEditorService, historyService } = createServices(
+  const services = createServices(
     {
       fs,
       system,
@@ -156,16 +162,14 @@ async function initServerContext(
     processPort,
     eventBus,
     fs,
+    options.deps?.watcher ?? createChokidarWatcher(),
   );
 
-  const autoOpen = await autoOpenProject(fs, projectService, options.workspaceDir);
+  const autoOpen = await autoOpenProject(fs, services.projectService, options.workspaceDir);
   if (!autoOpen.ok) return autoOpen;
 
   return ok({
-    projectService,
-    runnerService,
-    sourceEditorService,
-    historyService,
+    ...services,
     configStore,
     eventBus,
     fs,
@@ -208,6 +212,26 @@ export function resolveRunnerScript(customPath?: string): string {
   return fileURLToPath(candidates[0] ?? new URL('./runners/vite-react.js', import.meta.url));
 }
 
+/** History, jobs and the watcher that reports files changed outside ReactCraft (R-HI-05). */
+function createFileServices(
+  deps: Pick<ProjectServiceDeps, 'fs' | 'system' | 'logger'>,
+  eventBus: EventBusPort,
+  watcher: WatcherPort,
+  projectHolder: { readonly current?: ProjectService | undefined },
+): { historyService: HistoryService; jobService: JobService; watch: ProjectWatch } {
+  const historyService = createHistoryService({ fs: deps.fs, eventBus });
+  const jobService = createJobService({ system: deps.system, logger: deps.logger, eventBus });
+  const watch = createProjectWatch({
+    watcher,
+    fs: deps.fs,
+    history: historyService,
+    logger: deps.logger,
+    eventBus,
+    onWorkspaceFileChanged: () => projectHolder.current?.reloadWorkspaceFile() ?? Promise.resolve(),
+  });
+  return { historyService, jobService, watch };
+}
+
 function createServices(
   deps: Omit<ProjectServiceDeps, 'runnerService'> & {
     readonly runnerScriptPath?: string | undefined;
@@ -216,21 +240,33 @@ function createServices(
   processPort: ProcessPort,
   eventBus: EventBusPort,
   fs: FileSystemPort,
+  watcher: WatcherPort,
 ): {
   projectService: ProjectService;
   runnerService: RunnerService;
   sourceEditorService: SourceEditorService;
   historyService: HistoryService;
+  jobService: JobService;
 } {
   const runnerHolder: { current?: RunnerService | undefined } = {};
+  const projectHolder: { current?: ProjectService | undefined } = {};
+  const { historyService, jobService, watch } = createFileServices(
+    deps,
+    eventBus,
+    watcher,
+    projectHolder,
+  );
 
   const projectService = createProjectService({
     ...deps,
+    watch,
+    jobs: jobService,
     runnerService: {
       start: () => runnerHolder.current?.start() ?? Promise.resolve(ok({ state: 'stopped' })),
       stop: () => runnerHolder.current?.stop() ?? Promise.resolve(ok({ state: 'stopped' })),
     },
   });
+  projectHolder.current = projectService;
 
   const runnerService = createRunnerService({
     getWorkspaceState: () => projectService.state(),
@@ -244,10 +280,9 @@ function createServices(
   });
 
   const sourceEditorService = createSourceEditorService({ fs });
-  const historyService = createHistoryService({ fs, eventBus });
 
   runnerHolder.current = runnerService;
-  return { projectService, runnerService, sourceEditorService, historyService };
+  return { projectService, runnerService, sourceEditorService, historyService, jobService };
 }
 
 async function autoOpenProject(
@@ -308,6 +343,7 @@ function createHttpServer(
       getProjectRoot,
       fs: ctx.fs,
     },
+    jobRoutes: { jobService: ctx.jobService },
     historyRoutes: {
       historyService: ctx.historyService,
       getProjectRoot,

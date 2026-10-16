@@ -13,6 +13,7 @@ import {
   type WorkspaceFile,
 } from '@reactcraft/shared';
 
+import { createJobService, type JobService } from '../jobs/job-service.ts';
 import type { EventBusPort } from '../ports/event-bus-port.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { LoggerPort } from '../ports/logger-port.ts';
@@ -31,8 +32,9 @@ import {
   executeAddBackend,
   executeRemoveBackend,
 } from './project-backends.ts';
-import { checkNeedsInstall, getInstallCommand, runProjectInstall } from './project-install.ts';
-import { loadOrCreateWorkspaceFile } from './project-workspace-file.ts';
+import { projectInfoOf } from './project-info.ts';
+import { checkNeedsInstall, getInstallCommand, startInstallJob } from './project-install.ts';
+import { loadOrCreateWorkspaceFile, reloadOpenWorkspace } from './project-workspace-file.ts';
 import { readThemeTokens } from './theme.ts';
 
 export type WorkspaceState =
@@ -61,6 +63,10 @@ export type ProjectServiceDeps = {
   readonly templateDir: string;
   readonly initialRoot?: string | undefined;
   readonly runnerService?: { start(): Promise<unknown>; stop(): Promise<unknown> } | undefined;
+  /** Runs the install job; the HTTP routes read and cancel jobs through the same service. */
+  readonly jobs?: JobService | undefined;
+  /** Watches the open project's files (R-HI-05). */
+  readonly watch?: { start(root: string): void; stop(): Promise<void> } | undefined;
 };
 
 export type ProjectService = {
@@ -77,10 +83,13 @@ export type ProjectService = {
     readonly primaryFrameId?: string | undefined;
   }): Promise<Result<ProjectInfo>>;
   setTrusted(trusted: boolean): Promise<Result<ProjectInfo>>;
-  install(command: readonly string[]): Promise<Result<void>>;
+  /** Starts installing dependencies as a job (R-PJ-13); checks fail at once. */
+  install(command: readonly string[]): Promise<Result<{ readonly jobId: string }>>;
   theme(): Promise<Result<ThemeInfo>>;
   addBackend(path: string, label?: string): Promise<Result<BackendInfo>>;
   removeBackend(id: string): Promise<Result<void>>;
+  /** `workspace.json` changed on disk: read it again (project.changed, S-84). */
+  reloadWorkspaceFile(): Promise<void>;
 };
 
 function normalizeRoot(path: string, platform: Platform): string {
@@ -88,38 +97,18 @@ function normalizeRoot(path: string, platform: Platform): string {
   return platform === 'linux' ? unified : unified.toLowerCase();
 }
 
-function buildProjectInfo(
-  root: string,
-  file: WorkspaceFile,
-  support: SupportReport,
-  trusted: boolean,
-  needsInstall: boolean,
-  backends: readonly BackendInfo[],
-): ProjectInfo {
-  return {
-    id: file.id,
-    name: file.name,
-    root,
-    sourceDir: file.sourceDir,
-    support,
-    needsInstall,
-    installCommand: getInstallCommand(support.packageManager),
-    responsiveMode: file.responsiveMode,
-    frames: file.frames,
-    primaryFrameId: file.primaryFrameId,
-    backends,
-    trusted,
-  };
-}
-
 class ProjectServiceImpl implements ProjectService {
   private current: WorkspaceState;
   private heldLock: { root: string; info: LockInfo } | undefined;
   private readonly createdPackageManagers = new Map<string, PackageManager>();
   private readonly deps: ProjectServiceDeps;
+  private readonly jobs: JobService;
 
   constructor(deps: ProjectServiceDeps) {
     this.deps = deps;
+    this.jobs =
+      deps.jobs ??
+      createJobService({ system: deps.system, logger: deps.logger, eventBus: deps.eventBus });
     this.current = deps.initialRoot
       ? { status: 'none', suggestedPath: deps.initialRoot }
       : { status: 'none' };
@@ -207,7 +196,8 @@ class ProjectServiceImpl implements ProjectService {
     );
 
     this.current = { status: 'open', root, file, support, trusted, needsInstall, backends };
-    const info = buildProjectInfo(root, file, support, trusted, needsInstall, backends);
+    this.deps.watch?.start(root);
+    const info = projectInfoOf(this.current);
     this.deps.eventBus?.publish('session.changed', undefined);
     this.deps.eventBus?.publish('project.changed', info);
     if (trusted && !needsInstall && support.supported) {
@@ -235,6 +225,8 @@ class ProjectServiceImpl implements ProjectService {
   }
 
   async close(): Promise<void> {
+    this.jobs.cancelKind('project.install');
+    await this.deps.watch?.stop();
     await this.deps.runnerService?.stop();
     await this.releaseCurrentLock();
     this.current = { status: 'none' };
@@ -245,16 +237,7 @@ class ProjectServiceImpl implements ProjectService {
     if (this.current.status !== 'open') {
       return err({ code: 'E021', params: { missing: 'project' } });
     }
-    return ok(
-      buildProjectInfo(
-        this.current.root,
-        this.current.file,
-        this.current.support,
-        this.current.trusted,
-        this.current.needsInstall,
-        this.current.backends,
-      ),
-    );
+    return ok(projectInfoOf(this.current));
   }
 
   async patchProject(updates: {
@@ -283,14 +266,7 @@ class ProjectServiceImpl implements ProjectService {
     if (!write.ok) return write;
 
     this.current = { ...this.current, file: updatedFile };
-    const info = buildProjectInfo(
-      this.current.root,
-      updatedFile,
-      this.current.support,
-      this.current.trusted,
-      this.current.needsInstall,
-      this.current.backends,
-    );
+    const info = projectInfoOf(this.current);
     this.deps.eventBus?.publish('project.changed', info);
     return ok(info);
   }
@@ -307,14 +283,7 @@ class ProjectServiceImpl implements ProjectService {
     if (!saved.ok) return saved;
 
     this.current = { ...this.current, trusted };
-    const info = buildProjectInfo(
-      this.current.root,
-      this.current.file,
-      this.current.support,
-      trusted,
-      this.current.needsInstall,
-      this.current.backends,
-    );
+    const info = projectInfoOf(this.current);
     this.deps.eventBus?.publish('session.changed', undefined);
     this.deps.eventBus?.publish('project.changed', info);
     if (trusted && !this.current.needsInstall && this.current.support.supported) {
@@ -323,7 +292,11 @@ class ProjectServiceImpl implements ProjectService {
     return ok(info);
   }
 
-  async install(command: readonly string[]): Promise<Result<void>> {
+  install(command: readonly string[]): Promise<Result<{ readonly jobId: string }>> {
+    return Promise.resolve(this.startInstall(command));
+  }
+
+  private startInstall(command: readonly string[]): Result<{ readonly jobId: string }> {
     if (this.current.status !== 'open') {
       return err({ code: 'E021', params: { missing: 'project' } });
     }
@@ -334,30 +307,27 @@ class ProjectServiceImpl implements ProjectService {
       return err({ code: 'E021', params: { missing: 'packageManager' } });
     }
 
+    const { root } = this.current;
     const expectedCommand = getInstallCommand(this.current.support.packageManager);
-    const installRes = await runProjectInstall(
-      this.deps.process,
-      this.current.root,
+    return startInstallJob(
+      { jobs: this.jobs, process: this.deps.process },
+      root,
       command,
       expectedCommand,
+      () => this.afterInstall(root),
     );
-    if (!installRes.ok) return installRes;
+  }
 
-    const needsInstall = await checkNeedsInstall(this.deps.fs, this.current.root);
+  /** Install done: needsInstall again, project.changed, dev server (R-PJ-13). */
+  private async afterInstall(root: string): Promise<void> {
+    const needsInstall = await checkNeedsInstall(this.deps.fs, root);
+    if (this.current.status !== 'open' || this.current.root !== root) return;
     this.current = { ...this.current, needsInstall };
-    const info = buildProjectInfo(
-      this.current.root,
-      this.current.file,
-      this.current.support,
-      this.current.trusted,
-      needsInstall,
-      this.current.backends,
-    );
+    const info = projectInfoOf(this.current);
     this.deps.eventBus?.publish('project.changed', info);
     if (!needsInstall && this.current.trusted && this.current.support.supported) {
       void this.deps.runnerService?.start();
     }
-    return ok(undefined);
   }
 
   async theme(): Promise<Result<ThemeInfo>> {
@@ -393,17 +363,7 @@ class ProjectServiceImpl implements ProjectService {
     if (!res.ok) return res;
 
     this.current = { ...this.current, file: res.value.updatedFile, backends: res.value.backends };
-    this.deps.eventBus?.publish(
-      'project.changed',
-      buildProjectInfo(
-        this.current.root,
-        res.value.updatedFile,
-        this.current.support,
-        this.current.trusted,
-        this.current.needsInstall,
-        res.value.backends,
-      ),
-    );
+    this.deps.eventBus?.publish('project.changed', projectInfoOf(this.current));
     return ok(res.value.added);
   }
 
@@ -422,18 +382,22 @@ class ProjectServiceImpl implements ProjectService {
     if (!res.ok) return res;
 
     this.current = { ...this.current, file: res.value.updatedFile, backends: res.value.backends };
-    this.deps.eventBus?.publish(
-      'project.changed',
-      buildProjectInfo(
-        this.current.root,
-        res.value.updatedFile,
-        this.current.support,
-        this.current.trusted,
-        this.current.needsInstall,
-        res.value.backends,
-      ),
-    );
+    this.deps.eventBus?.publish('project.changed', projectInfoOf(this.current));
     return ok(undefined);
+  }
+
+  async reloadWorkspaceFile(): Promise<void> {
+    if (this.current.status !== 'open') return;
+    const before = this.current;
+    const next = await reloadOpenWorkspace(this.deps, before);
+    // Skip when nothing changed, or the project was closed or switched meanwhile.
+    if (next === undefined || this.current !== before) return;
+    this.current = next;
+    this.deps.eventBus?.publish('project.changed', projectInfoOf(next));
+    if (next.trusted === before.trusted) return;
+    this.deps.eventBus?.publish('session.changed', undefined);
+    // S-84: links changed from outside put the project back in restricted mode (S-81).
+    if (!next.trusted) await this.deps.runnerService?.stop();
   }
 }
 
