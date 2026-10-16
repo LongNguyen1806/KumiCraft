@@ -1,13 +1,14 @@
 // Opening a folder with the built CLI: a folder without a project, a project pulled from Git that
 // asks for trust (S-80, S-81) and remembers it (S-82), and a broken or old `.reactcraft/workspace.json`
 // that is shown, never overwritten (V-105). Projects are copies of the supported fixture (R-PJ-07).
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { expect, type Page, test } from '@playwright/test';
 
 import { type CliSession, startCli } from './support/cli-session.ts';
 import { copyFixture, makeTempDir, type TempDir } from './support/copy-fixture.ts';
+import { getCanvasFrame, trustIfAsked } from './support/trust.ts';
 
 let folder: TempDir;
 let config: TempDir;
@@ -109,4 +110,55 @@ test('a second ReactCraft on the same project is refused while the first runs [E
   await start();
 
   await expect(start()).rejects.toThrow(/already open in another ReactCraft session/);
+});
+
+test('a new project is created, trusted, installed and shown on the canvas [AC-01] @network', async ({
+  page,
+}) => {
+  test.setTimeout(300_000);
+
+  const session = await start();
+  const tab = await open(page, session);
+
+  await expect(tab.getByRole('heading', { name: 'Chưa mở dự án nào' })).toBeVisible({
+    timeout: 20_000,
+  });
+  await tab.getByTestId('no-project-open-btn').click();
+
+  const nameInput = tab.getByTestId('create-project-name');
+  await expect(nameInput).toBeVisible({ timeout: 10_000 });
+  await nameInput.fill('shop');
+  await tab.getByTestId('create-project-pm').selectOption('pnpm');
+  await tab.getByTestId('create-project-btn').click();
+
+  await trustIfAsked(tab);
+
+  const installDialog = tab.getByTestId('install-dialog');
+  await expect(installDialog).toBeVisible({ timeout: 20_000 });
+  await expect(tab.getByTestId('install-command')).toContainText('pnpm install');
+  await tab.getByTestId('install-btn').click();
+
+  // Waits until the install ends either way, then fails at once with the error text if it failed.
+  const installError = tab.getByTestId('install-error');
+  const installState = async (): Promise<string> => {
+    if (await installError.isVisible())
+      return `failed: ${(await installError.textContent()) ?? ''}`;
+    return (await installDialog.isVisible()) ? 'installing' : 'done';
+  };
+  await expect.poll(installState, { timeout: 240_000, intervals: [1_000] }).not.toBe('installing');
+  expect(await installState()).toBe('done');
+
+  const canvas = await getCanvasFrame(tab);
+  const welcomeHeading = canvas.getByRole('heading', { name: 'Welcome' });
+  await expect(welcomeHeading).toBeVisible({ timeout: 60_000 });
+
+  const pkgJsonText = await readFile(join(folder.path, 'package.json'), 'utf8');
+  const pkgJson = JSON.parse(pkgJsonText) as { name?: string };
+  expect(pkgJson.name).toBe('shop');
+
+  const wsStat = await stat(join(folder.path, '.reactcraft', 'workspace.json'));
+  expect(wsStat.isFile()).toBe(true);
+
+  const viteStat = await stat(join(folder.path, 'node_modules', 'vite'));
+  expect(viteStat.isDirectory()).toBe(true);
 });

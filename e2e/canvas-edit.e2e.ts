@@ -3,10 +3,11 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { expect, type FrameLocator, type Page, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 import { type CliSession, startCli } from './support/cli-session.ts';
 import { copyFixture, makeTempDir, type TempDir } from './support/copy-fixture.ts';
+import { getCanvasFrame, trustIfAsked } from './support/trust.ts';
 
 let folder: TempDir;
 let config: TempDir;
@@ -22,31 +23,6 @@ async function open(page: Page, session: CliSession): Promise<Page> {
   const tab = await page.context().newPage();
   await tab.goto(session.studioUrl);
   return tab;
-}
-
-async function trustIfAsked(tab: Page): Promise<void> {
-  const confirmBtn = tab.getByRole('button', { name: 'Tin cậy dự án này' });
-  try {
-    await confirmBtn.click({ timeout: 10_000 });
-    await expect(confirmBtn).toHaveCount(0, { timeout: 10_000 });
-    return;
-  } catch {
-    // Confirm button not directly clickable, check review button
-  }
-  const reviewBtn = tab.getByRole('button', { name: 'Xem và tin cậy' });
-  try {
-    await reviewBtn.click({ timeout: 3_000 });
-    await confirmBtn.click();
-    await expect(confirmBtn).toHaveCount(0, { timeout: 10_000 });
-  } catch {
-    // Prompt did not appear
-  }
-}
-
-async function getCanvasFrame(tab: Page): Promise<FrameLocator> {
-  const iframeLocator = tab.locator('iframe[data-testid="canvas-iframe"]');
-  await expect(iframeLocator).toBeVisible({ timeout: 20_000 });
-  return tab.frameLocator('iframe[data-testid="canvas-iframe"]');
 }
 
 async function triggerUndo(tab: Page, browserName: string): Promise<void> {

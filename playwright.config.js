@@ -2,11 +2,14 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const isPerf = process.argv.some((arg) => arg.includes('perf'));
+const isNetwork = process.env.RC_E2E_NETWORK === '1';
 
 export default defineConfig({
   testDir: 'e2e',
   testMatch: '**/*.e2e.ts',
   testIgnore: isPerf ? [] : ['**/perf/**'],
+  grep: isNetwork ? /@network/ : undefined,
+  grepInvert: isNetwork ? undefined : /@network/,
   fullyParallel: true,
   // Each test starts its own CLI server and browser; more workers than this overload a dev machine
   // and make slow steps (WebKit typing, Firefox screenshots) time out.
