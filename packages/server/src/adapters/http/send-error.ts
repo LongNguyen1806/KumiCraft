@@ -16,6 +16,13 @@ export function sendError(reply: FastifyReply, error: AppError, status?: number)
       'request failed',
     );
   }
+  if (error.code === 'E012') {
+    // S-26: a refused path is logged with the normalized path only, never file content.
+    reply.request.log.warn(
+      { code: error.code, path: error.params?.['path'], reason: error.params?.['reason'] },
+      'path refused',
+    );
+  }
   return reply.status(httpStatus).send({
     error: {
       code: error.code,

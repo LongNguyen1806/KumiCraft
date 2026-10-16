@@ -74,19 +74,17 @@ export function detectIndentation(code: string, targetLine: number): IndentInfo 
     return { useTab: true, step: 1, openingIndent };
   }
 
-  // Find minimum non-zero indentation step across file lines, default 2
-  let minStep = 2;
+  // Smallest non-zero indentation in spaces across the file, default 2. Lines of a block comment
+  // (` * text`) sit one space in and say nothing about the code's step.
+  let minStep: number | undefined;
   for (const line of lines) {
-    const spaceMatch = line.match(/^( +)[^ ]/);
-    if (spaceMatch) {
-      const len = spaceMatch[1]?.length ?? 0;
-      if (len > 0 && len % 2 === 0) {
-        minStep = Math.min(minStep, 2);
-      }
-    }
+    const spaceMatch = /^( +)([^ ])/.exec(line);
+    if (!spaceMatch || spaceMatch[2] === '*') continue;
+    const len = spaceMatch[1]?.length ?? 0;
+    minStep = minStep === undefined ? len : Math.min(minStep, len);
   }
 
-  return { useTab: false, step: minStep, openingIndent };
+  return { useTab: false, step: minStep ?? 2, openingIndent };
 }
 
 /**
