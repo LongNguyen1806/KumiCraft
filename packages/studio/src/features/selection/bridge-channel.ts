@@ -154,6 +154,11 @@ export class BridgeChannel {
     this.sendMessage('select', { refs, reveal });
   }
 
+  /** Shows another page of the project in the Canvas (R-PG-15, R-BR-19). */
+  navigate(route: string): void {
+    this.sendMessage('navigate', { route });
+  }
+
   highlight(ref: ElementRef | undefined): void {
     this.sendMessage('highlight', ref === undefined ? {} : { ref });
   }

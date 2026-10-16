@@ -16,6 +16,7 @@ import {
   StoppedView,
   UntrustedPrompt,
 } from './canvas-prompts.tsx';
+import { PageSelect } from './page-select.tsx';
 import { useOpenInEditor } from './use-open-in-editor.ts';
 import { useRunnerStatus } from './use-runner-status.ts';
 
@@ -306,6 +307,7 @@ function CanvasToolbar({
       <div className="flex min-w-0 items-center gap-3">
         <FrameSelect frames={frames} activeId={activeFrameId} onChange={onSelectFrame} />
         <ZoomSelect zoom={zoom} onChange={onSelectZoom} />
+        <PageSelect />
         <span
           className="min-w-0 truncate font-mono text-ink-soft"
           title={route}

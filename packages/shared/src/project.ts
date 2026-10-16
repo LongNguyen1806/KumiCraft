@@ -103,3 +103,21 @@ export const ThemeInfoSchema = z.strictObject({
   breakpoints: z.array(ThemeTokenSchema).readonly(),
 });
 export type ThemeInfo = z.infer<typeof ThemeInfoSchema>;
+
+/** A page of the project as its router declares it (SPEC-04 M-PG). */
+export const PageInfoSchema = z.strictObject({
+  path: z.string().min(1),
+  component: z.string().optional(),
+  file: RelPathSchema.optional(),
+  /** The path has `:param`; the user gives a value before navigating (R-PG-15). */
+  dynamic: z.boolean(),
+});
+export type PageInfo = z.infer<typeof PageInfoSchema>;
+
+export const PagesInfoSchema = z.strictObject({
+  /** The project follows R-PG-10, so pages can be added, renamed and removed (Phase 2). */
+  convention: z.boolean(),
+  routesFile: RelPathSchema.optional(),
+  pages: z.array(PageInfoSchema),
+});
+export type PagesInfo = z.infer<typeof PagesInfoSchema>;

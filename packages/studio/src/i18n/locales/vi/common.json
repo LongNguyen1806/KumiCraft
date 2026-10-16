@@ -74,7 +74,11 @@
       "ready": "Đang chạy",
       "error": "Lỗi",
       "crashed": "Dừng đột ngột"
-    }
+    },
+    "page": "Trang",
+    "pageChoose": "Chọn trang",
+    "noPages": "Chưa đọc được trang nào",
+    "pageParamHint": "Thay :tham số bằng giá trị rồi nhấn Enter"
   },
   "history": {
     "setClassName": "đổi class",

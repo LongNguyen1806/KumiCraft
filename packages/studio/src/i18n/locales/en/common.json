@@ -74,7 +74,11 @@
       "ready": "Running",
       "error": "Error",
       "crashed": "Crashed"
-    }
+    },
+    "page": "Page",
+    "pageChoose": "Choose a page",
+    "noPages": "No pages found",
+    "pageParamHint": "Replace :params with values, then press Enter"
   },
   "history": {
     "setClassName": "class change",

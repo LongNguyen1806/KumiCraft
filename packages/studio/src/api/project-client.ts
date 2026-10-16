@@ -5,6 +5,8 @@ import {
   type JobStarted,
   JobStartedSchema,
   type PackageManager,
+  type PagesInfo,
+  PagesInfoSchema,
   type ProjectInfo,
   type ProjectProbe,
   type ThemeInfo,
@@ -45,6 +47,11 @@ export async function closeProject(): Promise<void> {
 /** Starts installing dependencies; progress comes as `job.*` events (R-PJ-13). */
 export async function installProject(command: readonly string[]): Promise<JobStarted> {
   return JobStartedSchema.parse(await apiPost('project/install', { command }));
+}
+
+/** Pages read from the project's router (R-PG-10, R-PG-15). */
+export async function fetchPages(): Promise<PagesInfo> {
+  return PagesInfoSchema.parse(await apiGet('project/pages'));
 }
 
 export async function fetchProjectTheme(): Promise<ThemeInfo> {

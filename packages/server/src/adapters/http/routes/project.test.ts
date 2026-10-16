@@ -117,6 +117,10 @@ const mockProjectService: ProjectService = {
     ),
   removeBackend: () => Promise.resolve(ok(undefined)),
   reloadWorkspaceFile: () => Promise.resolve(),
+  pages: () =>
+    Promise.resolve(
+      ok({ convention: true, pages: [{ path: '/', component: 'Home', dynamic: false }] }),
+    ),
 };
 
 beforeEach(async () => {

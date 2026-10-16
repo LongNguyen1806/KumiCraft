@@ -3,6 +3,7 @@ import {
   type BackendInfo,
   type Frame,
   type PackageManager,
+  type PagesInfo,
   type ProjectInfo,
   type ProjectProbe,
   type ResponsiveMode,
@@ -26,6 +27,7 @@ import { acquireLock, type LockInfo, releaseLock } from '../workspace/lock.ts';
 import { rememberPort } from '../workspace/studio-port.ts';
 import { trustKeyOf } from '../workspace/trust.ts';
 import { createProject } from './create.ts';
+import { readPages } from './pages.ts';
 import { probeProject } from './probe.ts';
 import {
   computeBackendInfos,
@@ -88,6 +90,8 @@ export type ProjectService = {
   /** Starts installing dependencies as a job (R-PJ-13); checks fail at once. */
   install(command: readonly string[]): Promise<Result<{ readonly jobId: string }>>;
   theme(): Promise<Result<ThemeInfo>>;
+  /** Pages read from the project's router (R-PG-10, R-PG-15). */
+  pages(): Promise<Result<PagesInfo>>;
   addBackend(path: string, label?: string): Promise<Result<BackendInfo>>;
   removeBackend(id: string): Promise<Result<void>>;
   /** `workspace.json` changed on disk: read it again (project.changed, S-84). */
@@ -335,6 +339,13 @@ class ProjectServiceImpl implements ProjectService {
     if (!needsInstall && this.current.trusted && this.current.support.supported) {
       void this.deps.runnerService?.start();
     }
+  }
+
+  async pages(): Promise<Result<PagesInfo>> {
+    if (this.current.status !== 'open') {
+      return err({ code: 'E021', params: { missing: 'project' } });
+    }
+    return ok(await readPages(this.deps.fs, this.current.root, this.current.file.sourceDir));
   }
 
   async theme(): Promise<Result<ThemeInfo>> {

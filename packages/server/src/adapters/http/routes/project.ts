@@ -119,6 +119,12 @@ function registerOpsRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void 
     return { data: result.value };
   });
 
+  api.get('/project/pages', async (_request, reply) => {
+    const result = await deps.projectService.pages();
+    if (!result.ok) return sendError(reply, result.error);
+    return { data: result.value };
+  });
+
   api.get('/project/theme', async (_request, reply) => {
     const result = await deps.projectService.theme();
     if (!result.ok) return sendError(reply, result.error);
