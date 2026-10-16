@@ -1,6 +1,4 @@
 // Project scaffolding from template (SPEC-04 R-PJ-10, R-PJ-11).
-import type { PackageManager } from '@reactcraft/shared';
-
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { parentPath } from '../shared/paths.ts';
 import { type AppError, err, ok, type Result } from '../shared/result.ts';
@@ -66,7 +64,6 @@ const TEMPLATE_FILES: readonly (readonly [string, string])[] = [
 export async function createProject(
   targetPath: string,
   name: string,
-  _packageManager: PackageManager | undefined,
   deps: CreateProjectDeps,
 ): Promise<Result<void>> {
   const probe = await probeProject(targetPath, {

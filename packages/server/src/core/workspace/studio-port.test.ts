@@ -51,7 +51,11 @@ describe('studio port', () => {
           throw new Error('no process in this test');
         },
       },
-      config: { isTrusted: () => false, setTrusted: () => Promise.resolve(ok(undefined)) },
+      config: {
+        isTrusted: () => false,
+        setTrusted: () => Promise.resolve(ok(undefined)),
+        settings: () => ({ editor: 'vscode', agent: { preferred: 'auto' } }),
+      },
       logger: silentLogger,
       port: 50123,
       platform,

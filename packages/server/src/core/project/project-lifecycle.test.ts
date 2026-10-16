@@ -29,13 +29,14 @@ let cleanup: () => Promise<void>;
 let trusted: Set<string>;
 let runnerStarts: number;
 
-const config: Pick<ConfigStore, 'isTrusted' | 'setTrusted'> = {
+const config: Pick<ConfigStore, 'isTrusted' | 'setTrusted' | 'settings'> = {
   isTrusted: (key) => trusted.has(`${key.id}|${key.path}|${key.links}`),
   setTrusted: (key, value) => {
     if (value) trusted.add(`${key.id}|${key.path}|${key.links}`);
     else trusted.delete(`${key.id}|${key.path}|${key.links}`);
     return Promise.resolve(ok(undefined));
   },
+  settings: () => ({ editor: 'vscode', agent: { preferred: 'auto' } }),
 };
 
 const service = (pid = 1) =>

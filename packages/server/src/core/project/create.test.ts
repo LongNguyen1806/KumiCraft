@@ -25,7 +25,7 @@ describe('createProject with the real template', () => {
   it('makes a project the vite-react adapter supports, with the routes convention [R-PJ-10]', async () => {
     const target = join(dir, 'shop');
 
-    const created = await createProject(target, 'Cửa hàng <Gỗ> & "Đẹp"', 'pnpm', deps());
+    const created = await createProject(target, 'Cửa hàng <Gỗ> & "Đẹp"', deps());
     const probe = await probeProject(target, { fs: nodeFs, platform });
 
     expect(created).toEqual({ ok: true, value: undefined });
@@ -44,7 +44,7 @@ describe('createProject with the real template', () => {
   it('names the package from the project name and escapes the title [R-PJ-11]', async () => {
     const target = join(dir, 'shop');
 
-    await createProject(target, 'Cửa hàng <Gỗ> & "Đẹp"', 'pnpm', deps());
+    await createProject(target, 'Cửa hàng <Gỗ> & "Đẹp"', deps());
 
     const pkg = JSON.parse(await readFile(join(target, 'package.json'), 'utf8')) as {
       name: string;
@@ -61,7 +61,7 @@ describe('createProject with the real template', () => {
     await writeFile(join(target, 'README.md'), '# My shop\n');
     await writeFile(join(target, '.gitignore'), 'secret.txt\n');
 
-    const created = await createProject(target, 'Shop', 'npm', deps());
+    const created = await createProject(target, 'Shop', deps());
 
     expect(created.ok).toBe(true);
     expect(await readFile(join(target, 'README.md'), 'utf8')).toBe('# My shop\n');
@@ -72,7 +72,7 @@ describe('createProject with the real template', () => {
     const target = join(dir, 'shop');
     await mkdir(join(target, 'src'), { recursive: true });
 
-    const created = await createProject(target, 'Shop', 'npm', deps());
+    const created = await createProject(target, 'Shop', deps());
 
     expect(created).toMatchObject({
       ok: false,
@@ -83,7 +83,7 @@ describe('createProject with the real template', () => {
   it('has no unreplaced placeholder outside package.json and index.html', async () => {
     const target = join(dir, 'shop');
 
-    await createProject(target, 'Shop', 'npm', deps());
+    await createProject(target, 'Shop', deps());
 
     for (const file of ['src/main.tsx', 'src/routes.tsx', 'src/pages/Home.tsx', 'vite.config.ts']) {
       expect(await readFile(join(target, file), 'utf8')).not.toContain('{{');

@@ -58,7 +58,7 @@ export type ProjectServiceDeps = {
   readonly fs: FileSystemPort;
   readonly system: SystemPort;
   readonly process: ProcessPort;
-  readonly config: Pick<ConfigStore, 'isTrusted' | 'setTrusted'>;
+  readonly config: Pick<ConfigStore, 'isTrusted' | 'setTrusted' | 'settings'>;
   readonly logger: LoggerPort;
   readonly eventBus?: EventBusPort | undefined;
   readonly port: number;
@@ -89,11 +89,17 @@ export type ProjectService = {
   removeBackend(id: string): Promise<Result<void>>;
 };
 
+function normalizeRoot(path: string, platform: Platform): string {
+  const unified = path.replaceAll('\\', '/').replace(/\/+$/, '');
+  return platform === 'linux' ? unified : unified.toLowerCase();
+}
+
 export function createProjectService(deps: ProjectServiceDeps): ProjectService {
   let current: WorkspaceState = deps.initialRoot
     ? { status: 'none', suggestedPath: deps.initialRoot }
     : { status: 'none' };
   let heldLock: { root: string; info: LockInfo } | undefined;
+  const createdPackageManagers = new Map<string, PackageManager>();
 
   async function checkNeedsInstall(root: string): Promise<boolean> {
     const hasVite = await deps.fs.exists(root, 'node_modules/vite/package.json');
@@ -202,7 +208,14 @@ export function createProjectService(deps: ProjectServiceDeps): ProjectService {
       if (!probed.value.support.supported) {
         return err({ code: 'E001', params: { reasons: probed.value.support.reasons } });
       }
-      const support: SupportReport = probed.value.support;
+      let support: SupportReport = probed.value.support;
+      if (support.packageManager === undefined) {
+        const fromCreated = createdPackageManagers.get(normalizeRoot(root, deps.platform));
+        const resolvedPm = fromCreated ?? deps.config.settings().packageManager;
+        if (resolvedPm !== undefined) {
+          support = { ...support, packageManager: resolvedPm };
+        }
+      }
 
       // Close previous if already holding a lock
       if (heldLock !== undefined) {
@@ -271,7 +284,7 @@ export function createProjectService(deps: ProjectServiceDeps): ProjectService {
       name: string,
       packageManager?: PackageManager,
     ): Promise<Result<ProjectInfo>> {
-      const created = await createProject(path, name, packageManager, {
+      const created = await createProject(path, name, {
         fs: deps.fs,
         platform: deps.platform,
         templateDir: deps.templateDir,
@@ -279,6 +292,9 @@ export function createProjectService(deps: ProjectServiceDeps): ProjectService {
       });
 
       if (!created.ok) return created;
+      if (packageManager !== undefined) {
+        createdPackageManagers.set(normalizeRoot(path, deps.platform), packageManager);
+      }
       return this.open(path);
     },
 
