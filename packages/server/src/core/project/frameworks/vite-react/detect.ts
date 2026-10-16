@@ -132,20 +132,13 @@ async function detectPackageManager(
   return undefined;
 }
 
-export async function detectViteReact(input: DetectInput): Promise<SupportReport> {
+function checkDependencyReasons(
+  allDeps: Record<string, string>,
+  viteInfo: { readonly major?: number | undefined },
+  reactInfo: { readonly major?: number | undefined },
+  tailwindInfo: { readonly major?: number | undefined },
+): UnsupportedReason[] {
   const reasons: UnsupportedReason[] = [];
-  const pkg = (input.packageJson ?? {}) as PackageJsonLike;
-  const allDeps: Record<string, string> = {
-    ...(pkg.dependencies ?? {}),
-    ...(pkg.devDependencies ?? {}),
-  };
-
-  const [viteInfo, reactInfo, tailwindInfo] = await Promise.all([
-    resolvePackageVersion(input.fs, input.root, 'vite', allDeps['vite']),
-    resolvePackageVersion(input.fs, input.root, 'react', allDeps['react']),
-    resolvePackageVersion(input.fs, input.root, 'tailwindcss', allDeps['tailwindcss']),
-  ]);
-
   if (allDeps['vite'] === undefined) {
     reasons.push('noVite');
   } else if (viteInfo.major !== 7 && viteInfo.major !== 8) {
@@ -163,6 +156,23 @@ export async function detectViteReact(input: DetectInput): Promise<SupportReport
   } else if (tailwindInfo.major !== 4) {
     reasons.push('tailwindVersion');
   }
+  return reasons;
+}
+
+export async function detectViteReact(input: DetectInput): Promise<SupportReport> {
+  const pkg = (input.packageJson ?? {}) as PackageJsonLike;
+  const allDeps: Record<string, string> = {
+    ...(pkg.dependencies ?? {}),
+    ...(pkg.devDependencies ?? {}),
+  };
+
+  const [viteInfo, reactInfo, tailwindInfo] = await Promise.all([
+    resolvePackageVersion(input.fs, input.root, 'vite', allDeps['vite']),
+    resolvePackageVersion(input.fs, input.root, 'react', allDeps['react']),
+    resolvePackageVersion(input.fs, input.root, 'tailwindcss', allDeps['tailwindcss']),
+  ]);
+
+  const reasons = checkDependencyReasons(allDeps, viteInfo, reactInfo, tailwindInfo);
 
   let viteConfig: RelPath | undefined;
   for (const candidate of VITE_CONFIG_CANDIDATES) {

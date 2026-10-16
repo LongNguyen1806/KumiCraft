@@ -124,61 +124,76 @@ function spawnChild(
       });
 }
 
+function setupExitPromise(child: ChildProcess, cancelTimeout: () => void): Promise<number> {
+  let spawnFailed = false;
+  return new Promise<number>((resolve) => {
+    child.on('error', () => {
+      spawnFailed = true;
+      cancelTimeout();
+      resolve(127);
+    });
+    child.on('close', (code) => {
+      cancelTimeout();
+      if (!spawnFailed) resolve(code ?? 1);
+    });
+  });
+}
+
+function createProcessHandle(
+  child: ChildProcess,
+  buffer: ReturnType<typeof setupOutputBuffer>,
+  options: SpawnOptions,
+  isWin: boolean,
+): ChildProcessHandle {
+  let timeoutTimer: NodeJS.Timeout | undefined;
+  let timedOut = false;
+  const cancelTimeout = () => {
+    if (timeoutTimer !== undefined) clearTimeout(timeoutTimer);
+  };
+
+  const exitPromise = setupExitPromise(child, cancelTimeout);
+
+  if (options.timeoutMs !== undefined && options.timeoutMs > 0) {
+    timeoutTimer = setTimeout(() => {
+      timedOut = true;
+      void killProcessTree(child.pid, isWin);
+    }, options.timeoutMs);
+  }
+
+  return {
+    pid: child.pid,
+    onLine(cb) {
+      buffer.addListener(cb);
+    },
+    send(message: unknown): boolean {
+      return typeof child.send === 'function' ? child.send(message as Serializable) : false;
+    },
+    onMessage(cb: (message: unknown) => void) {
+      child.on('message', cb);
+    },
+    async wait(): Promise<ProcessOutput> {
+      const exitCode = await exitPromise;
+      return {
+        exitCode: timedOut ? 124 : exitCode,
+        stdout: buffer.getStdout(),
+        stderr: buffer.getStderr(),
+        lines: [...buffer.lines],
+      };
+    },
+    async kill(): Promise<void> {
+      cancelTimeout();
+      await killProcessTree(child.pid, isWin);
+    },
+  };
+}
+
 export function createNodeProcess(): ProcessPort {
   return {
     spawn(command: string, args: readonly string[], options: SpawnOptions): ChildProcessHandle {
       const isWin = process.platform === 'win32';
       const child = spawnChild(command, args, options, isWin);
       const buffer = setupOutputBuffer(child);
-
-      let timeoutTimer: NodeJS.Timeout | undefined;
-      let timedOut = false;
-      let spawnFailed = false;
-
-      const exitPromise = new Promise<number>((resolve) => {
-        child.on('error', () => {
-          spawnFailed = true;
-          if (timeoutTimer !== undefined) clearTimeout(timeoutTimer);
-          resolve(127);
-        });
-        child.on('close', (code) => {
-          if (timeoutTimer !== undefined) clearTimeout(timeoutTimer);
-          if (!spawnFailed) resolve(code ?? 1);
-        });
-      });
-
-      if (options.timeoutMs !== undefined && options.timeoutMs > 0) {
-        timeoutTimer = setTimeout(() => {
-          timedOut = true;
-          void killProcessTree(child.pid, isWin);
-        }, options.timeoutMs);
-      }
-
-      return {
-        pid: child.pid,
-        onLine(cb) {
-          buffer.addListener(cb);
-        },
-        send(message: unknown): boolean {
-          return typeof child.send === 'function' ? child.send(message as Serializable) : false;
-        },
-        onMessage(cb: (message: unknown) => void) {
-          child.on('message', cb);
-        },
-        async wait(): Promise<ProcessOutput> {
-          const exitCode = await exitPromise;
-          return {
-            exitCode: timedOut ? 124 : exitCode,
-            stdout: buffer.getStdout(),
-            stderr: buffer.getStderr(),
-            lines: [...buffer.lines],
-          };
-        },
-        async kill(): Promise<void> {
-          if (timeoutTimer !== undefined) clearTimeout(timeoutTimer);
-          await killProcessTree(child.pid, isWin);
-        },
-      };
+      return createProcessHandle(child, buffer, options, isWin);
     },
   };
 }
