@@ -336,6 +336,21 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
     }
   });
 
+  it('sends Vite output without terminal colour codes [V-71]', async () => {
+    const runner = createRunnerService(makeDeps());
+    await runner.start();
+    mockHandle.triggerMessage({ type: 'ready', port: 52123 });
+
+    mockHandle.triggerLine('[2m12:45:01 am[22m [32mhmr update[39m /src/App.tsx');
+    await new Promise((r) => setTimeout(r, 250));
+
+    const lines = events
+      .filter((e) => e.type === 'runner.log')
+      .flatMap((e) => (e.payload as { lines: string[] }).lines);
+    expect(lines).toContain('12:45:01 am hmr update /src/App.tsx');
+    expect(lines.some((line) => line.includes(''))).toBe(false);
+  });
+
   it('runs the dev server in the project root [S-52]', async () => {
     const runner = createRunnerService(makeDeps());
     await runner.start();

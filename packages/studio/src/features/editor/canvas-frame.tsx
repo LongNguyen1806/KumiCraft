@@ -41,10 +41,12 @@ function useIframeBridge(
     const iframe = iframeRef.current;
     if (!iframe || !nonce) return undefined;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    // Listen before the page runs: the Bridge says `ready` while its script loads, before `load`.
+    // The iframe keeps the same window object while it navigates to the page.
+    if (iframe.contentWindow) studioBridgeChannel.attach(iframe.contentWindow, origin, nonce);
 
     const handleLoad = () => {
       if (!iframe.contentWindow) return;
-      studioBridgeChannel.attach(iframe.contentWindow, origin, nonce);
       studioBridgeChannel.setMode(modeRef.current);
       if (timer !== undefined) clearTimeout(timer);
       timer = setTimeout(() => {

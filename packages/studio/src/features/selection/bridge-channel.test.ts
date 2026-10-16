@@ -257,4 +257,30 @@ describe('BridgeChannel', () => {
     expect(useCanvasErrorStore.getState().buildError).toBeUndefined();
     expect(useCanvasErrorStore.getState().runtimeErrors).toHaveLength(0);
   });
+
+  it('counts any verified Bridge message as connected, even when ready came early [R-RN-24]', () => {
+    expect(useSelectionStore.getState().bridgeReady).toBe(false);
+
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: { rc: 1, nonce: currentNonce, type: 'tree', payload: { nodes: [] } },
+        origin: runnerOrigin,
+        source: fakeIframeWindow,
+      }),
+    );
+
+    expect(useSelectionStore.getState().bridgeReady).toBe(true);
+  });
+
+  it('ignores an unverified message for the connection state [R-RN-24, V-111]', () => {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: { rc: 1, nonce: 'other-nonce', type: 'tree', payload: { nodes: [] } },
+        origin: runnerOrigin,
+        source: fakeIframeWindow,
+      }),
+    );
+
+    expect(useSelectionStore.getState().bridgeReady).toBe(false);
+  });
 });

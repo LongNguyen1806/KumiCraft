@@ -175,6 +175,8 @@ export class BridgeChannel {
     if (!envelopeRes.success) return;
     if (this.nonce === undefined || envelopeRes.data.nonce !== this.nonce) return;
 
+    // Any verified message proves the Bridge runs (R-RN-24), even if `ready` came too early.
+    useSelectionStore.getState().setBridgeReady(true);
     dispatchBridgePayload(envelopeRes.data.type, envelopeRes.data.payload);
     this.handleTextEditMessage(envelopeRes.data.type, envelopeRes.data.payload);
   }

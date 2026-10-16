@@ -1,3 +1,5 @@
+import { stripVTControlCharacters } from 'node:util';
+
 import {
   type AppError,
   err,
@@ -51,7 +53,9 @@ class RunnerLogBuffer {
     this.eventBus = eventBus;
   }
 
-  push(rawLine: string): void {
+  push(colouredLine: string): void {
+    // Vite colours its log for terminals; the Studio shows plain text.
+    const rawLine = stripVTControlCharacters(colouredLine);
     const truncated = rawLine.length > 2000 ? rawLine.slice(0, 2000) : rawLine;
     const redacted = redactSecrets(truncated);
     this.buffer.push(redacted);

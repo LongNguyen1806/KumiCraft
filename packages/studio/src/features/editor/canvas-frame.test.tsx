@@ -100,6 +100,14 @@ describe('IframeFrame', () => {
     expect(attach).toHaveBeenCalledTimes(1);
   });
 
+  it('listens to the page before it loads, so an early ready is not lost [R-RN-24]', () => {
+    const attach = vi.spyOn(studioBridgeChannel, 'attach').mockImplementation(() => undefined);
+
+    renderFrame();
+
+    expect(attach).toHaveBeenCalledTimes(1);
+  });
+
   it('warns with the dev server log when the Bridge stays silent for 10 s [R-RN-24]', () => {
     vi.useFakeTimers();
     vi.spyOn(studioBridgeChannel, 'attach').mockImplementation(() => undefined);
