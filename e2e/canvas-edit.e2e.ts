@@ -8,6 +8,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { type CliSession, startCli } from './support/cli-session.ts';
 import { copyFixture, makeTempDir, type TempDir } from './support/copy-fixture.ts';
 import { getCanvasFrame, trustIfAsked } from './support/trust.ts';
+import { ui } from './support/ui-text.ts';
 
 let folder: TempDir;
 let config: TempDir;
@@ -50,8 +51,8 @@ test('untrusted project blocks dev server and shows restricted prompt [AC-11]', 
   const session = await start();
   const tab = await open(page, session);
 
-  await expect(tab.getByRole('dialog', { name: 'Bạn có tin tưởng dự án này?' })).toBeVisible();
-  await tab.getByRole('button', { name: 'Để sau' }).click();
+  await expect(tab.getByRole('dialog', { name: ui('trust.title') })).toBeVisible();
+  await tab.getByRole('button', { name: ui('trust.later') }).click();
 
   await expect(tab.getByTestId('canvas-untrusted')).toBeVisible();
   await expect(tab.locator('iframe[data-testid="canvas-iframe"]')).toHaveCount(0);
@@ -66,7 +67,7 @@ test('runner dev server starts up, loads canvas iframe with bridge [AC-02]', asy
   await expect(canvas.getByRole('heading', { name: 'Sản phẩm nổi bật' })).toBeVisible({
     timeout: 15_000,
   });
-  await expect(tab.getByRole('complementary', { name: 'Lớp' })).toBeVisible();
+  await expect(tab.getByRole('complementary', { name: ui('editor.layers') })).toBeVisible();
 });
 
 test('select element and edit tailwind class with byte-exact undo [AC-03]', async ({
@@ -253,8 +254,8 @@ test('dynamic expression className={cn(...)} is locked with reason in inspector 
 
   const lockBanner = tab.getByTestId('lock-banner');
   await expect(lockBanner).toBeVisible({ timeout: 5_000 });
-  await expect(tab.getByText(/biểu thức mã|biểu thức động|dynamic/i)).toBeVisible();
-  await expect(lockBanner.getByText(/Mở trong editor|Open in editor/i)).toBeVisible();
+  await expect(lockBanner.getByText(ui('inspector.lockReason.classExpression'))).toBeVisible();
+  await expect(lockBanner.getByText(ui('inspector.openInEditor'))).toBeVisible();
 });
 
 test('build error banner shows the file and hides after the fix [R-RN-25]', async ({ page }) => {

@@ -9,6 +9,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { type CliSession, startCli } from './support/cli-session.ts';
 import { copyFixture, makeTempDir, type TempDir } from './support/copy-fixture.ts';
 import { getCanvasFrame, trustIfAsked } from './support/trust.ts';
+import { ui } from './support/ui-text.ts';
 
 let folder: TempDir;
 let config: TempDir;
@@ -69,7 +70,7 @@ test('a folder without a project says so and shows the folder [R-PJ-18]', async 
   const session = await start();
   await page.goto(session.studioUrl);
 
-  await expect(page.getByRole('heading', { name: 'Chưa mở dự án nào' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: ui('noProject.title') })).toBeVisible();
   await expect(page.getByTestId('project-folder')).toHaveText(folder.path);
 });
 
@@ -79,20 +80,20 @@ test('a project pulled from Git asks for trust, and the answer is remembered [S-
   await writeProject();
   const tab = await open(page, await start());
 
-  await expect(tab.getByRole('dialog', { name: 'Bạn có tin tưởng dự án này?' })).toBeVisible();
+  await expect(tab.getByRole('dialog', { name: ui('trust.title') })).toBeVisible();
   await expect(tab.getByTestId('trust-project')).toHaveText('Cửa hàng');
-  await tab.getByRole('button', { name: 'Để sau' }).click();
+  await tab.getByRole('button', { name: ui('trust.later') }).click();
   await expect(tab.getByTestId('trust-bar')).toBeVisible();
-  await expect(tab.getByTestId('trust-status')).toContainText('Chế độ hạn chế');
-  await tab.getByRole('button', { name: 'Xem và tin cậy' }).click();
-  await tab.getByRole('button', { name: 'Tin cậy dự án này' }).click();
+  await expect(tab.getByTestId('trust-status')).toContainText(ui('editor.restricted'));
+  await tab.getByRole('button', { name: ui('trust.review') }).click();
+  await tab.getByRole('button', { name: ui('trust.confirm') }).click();
   await expect(tab.getByTestId('trust-bar')).toHaveCount(0);
 
   for (const session of sessions.splice(0)) await session.stop();
   const again = await open(page, await start());
   await expect(again.getByTestId('project-name')).toHaveText('Cửa hàng');
   await expect(again.getByTestId('trust-bar')).toHaveCount(0);
-  await expect(again.getByTestId('trust-status')).toContainText('Dự án đã tin cậy');
+  await expect(again.getByTestId('trust-status')).toContainText(ui('editor.trusted'));
 });
 
 test('a 0.18 workspace.json is reported and left untouched [V-105]', async ({ page }) => {
@@ -101,7 +102,7 @@ test('a 0.18 workspace.json is reported and left untouched [V-105]', async ({ pa
   const tab = await open(page, await start());
 
   await expect(tab.getByTestId('project-error')).toContainText('E003');
-  await expect(tab.getByText(/ReactCraft bản cũ/)).toBeVisible();
+  await expect(tab.getByText(ui('projectError.oldVersion'))).toBeVisible();
   expect(await readFile(file, 'utf8')).toBe(old);
 });
 
@@ -112,7 +113,7 @@ test('a second ReactCraft on the same project is refused while the first runs [E
   await expect(start()).rejects.toThrow(/already open in another ReactCraft session/);
 });
 
-test('a new project is created, trusted, installed and shown on the canvas [AC-01] @network', async ({
+test('a new project is created, trusted, installed and shown on the canvas [AC-01, R-QA-03] @network', async ({
   page,
 }) => {
   test.setTimeout(300_000);
@@ -120,7 +121,7 @@ test('a new project is created, trusted, installed and shown on the canvas [AC-0
   const session = await start();
   const tab = await open(page, session);
 
-  await expect(tab.getByRole('heading', { name: 'Chưa mở dự án nào' })).toBeVisible({
+  await expect(tab.getByRole('heading', { name: ui('noProject.title') })).toBeVisible({
     timeout: 20_000,
   });
   await tab.getByTestId('no-project-open-btn').click();

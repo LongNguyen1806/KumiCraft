@@ -9,7 +9,7 @@ export default defineConfig({
   testMatch: '**/*.e2e.ts',
   testIgnore: isPerf ? [] : ['**/perf/**'],
   grep: isNetwork ? /@network/ : undefined,
-  grepInvert: isNetwork ? undefined : /@network/,
+  grepInvert: isNetwork ? /@perf/ : /(@network|@perf)/,
   fullyParallel: true,
   // Each test starts its own CLI server and browser; more workers than this overload a dev machine
   // and make slow steps (WebKit typing, Firefox screenshots) time out.
@@ -33,5 +33,23 @@ export default defineConfig({
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
     // The engine of Safari, the default browser of macOS users.
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+    {
+      name: 'chromium-en',
+      use: { ...devices['Desktop Chrome'], locale: 'en-US' },
+      grep: isNetwork ? /(?=.*\[AC-)(?=.*@network)/ : /\[AC-/,
+      grepInvert: isNetwork ? /@perf/ : /(@network|@perf)/,
+    },
+    {
+      name: 'firefox-en',
+      use: { ...devices['Desktop Firefox'], locale: 'en-US' },
+      grep: isNetwork ? /(?=.*\[AC-)(?=.*@network)/ : /\[AC-/,
+      grepInvert: isNetwork ? /@perf/ : /(@network|@perf)/,
+    },
+    {
+      name: 'webkit-en',
+      use: { ...devices['Desktop Safari'], locale: 'en-US' },
+      grep: isNetwork ? /(?=.*\[AC-)(?=.*@network)/ : /\[AC-/,
+      grepInvert: isNetwork ? /@perf/ : /(@network|@perf)/,
+    },
   ],
 });

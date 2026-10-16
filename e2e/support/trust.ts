@@ -1,7 +1,9 @@
 import { expect, type FrameLocator, type Page } from '@playwright/test';
 
+import { ui } from './ui-text.ts';
+
 export async function trustIfAsked(tab: Page): Promise<void> {
-  const confirmBtn = tab.getByRole('button', { name: 'Tin cậy dự án này' });
+  const confirmBtn = tab.getByRole('button', { name: ui('trust.confirm') });
   try {
     await confirmBtn.click({ timeout: 10_000 });
     await expect(confirmBtn).toHaveCount(0, { timeout: 10_000 });
@@ -9,7 +11,7 @@ export async function trustIfAsked(tab: Page): Promise<void> {
   } catch {
     // Confirm button not directly clickable, check review button
   }
-  const reviewBtn = tab.getByRole('button', { name: 'Xem và tin cậy' });
+  const reviewBtn = tab.getByRole('button', { name: ui('trust.review') });
   try {
     await reviewBtn.click({ timeout: 3_000 });
     await confirmBtn.click();
