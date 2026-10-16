@@ -72,7 +72,7 @@
       "phase": 1
     },
     {
-      "pattern": "^R-(LB|DD|CB|PG|KB|CL)-",
+      "pattern": "^R-(LB|DD|CB|PG|KB|CL|CP)-",
       "phase": 2
     },
     {

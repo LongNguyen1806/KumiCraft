@@ -410,7 +410,30 @@ Phần giải thích đầy đủ của các ADR này có trong bản 0.18; dư�
 **Quyết định:**
 
 - Template nội bộ `templates/vite-react-ts-tailwind4/` (Vite 8, React 19, TypeScript, Tailwind v4 qua `@tailwindcss/vite`, `react-router` 7), không tải template qua mạng.
-- Cấu trúc bắt buộc của template: `src/main.tsx`, `src/routes.tsx` (`createBrowserRouter` với mảng route tĩnh), `src/pages/Home.tsx`, `src/index.css` (`@import "tailwindcss"` và khối `@theme`), `src/api/` (trống, nơi agent viết lớp gọi API), `.reactcraft/agent-guide.md` (quy ước cho agent, người dùng sửa được).
+- Tạo dự án mới là **tính năng chính** của ReactCraft (người dùng tạo rồi thiết kế ngay). Template phải là một website mẫu đầy đủ, có cấu trúc thư mục như dự án React + Vite thật, đủ phần tử để dùng mọi công cụ thiết kế (bản 1.0 cũ chỉ có một trang "Welcome", không đủ).
+- Cấu trúc bắt buộc của template:
+
+  ```text
+  public/                     favicon.svg, ảnh mẫu (SVG, không tải từ mạng)
+  src/
+    main.tsx
+    routes.tsx                createBrowserRouter: một mục '/' có element <MainLayout /> và children là các trang (R-PG-10)
+    index.css                 @import "tailwindcss"; @theme có màu thương hiệu (--color-brand, --color-brand-soft…), font, bo góc, bóng
+    layouts/MainLayout.tsx    Header + <Outlet /> + Footer            (vùng "bố cục", R-CP-10)
+    components/Header.tsx     logo, menu tới các trang                (vùng "component")
+    components/Footer.tsx
+    components/ProductCard.tsx
+    components/ui/Button.tsx  Card.tsx, Input.tsx, Badge.tsx (chỉ class Tailwind, props đơn giản)
+    pages/Home.tsx            hero (tiêu đề, mô tả, nút), lưới 3 ProductCard, khối giới thiệu   (vùng "trang")
+    pages/About.tsx
+    pages/NotFound.tsx
+    lib/utils.ts              cn() gộp class
+    api/                      trống, nơi lập trình viên hoặc agent viết lớp gọi API (ReactCraft không sửa, R-CP-10)
+  .env.example, eslint.config.js, README.md (tiếng Anh, mô tả cấu trúc và ba vùng thiết kế)
+  .reactcraft/agent-guide.md  quy ước cho agent, người dùng sửa được
+  ```
+
+- Mọi chữ trong template là tiếng Anh trung tính; class chỉ dùng Tailwind v4 chuẩn và token của `@theme` trong template. Template phải qua `pnpm build`, ESLint của chính nó, và được ReactCraft mở với `support.supported: true`.
 - Cài dependency bằng package manager người dùng chọn (pnpm, npm, yarn) sau khi người dùng xem lệnh và đồng ý (S-54). Cần mạng.
 
 ### ADR-BE-33 — AI qua agent dòng lệnh trên máy
@@ -885,9 +908,14 @@ type WorkspaceFile = {
   responsiveMode: ResponsiveMode;
   frames: Frame[];
   primaryFrameId: string;
+  designDirs?: DesignDirs; // ba vùng thiết kế (SPEC-04 R-CP-10); không có thì dùng mặc định
 };
 
 type BackendLink = { id: BackendId; path: string; label: string }; // label 1..64 ký tự
+
+// Mặc định: { pages: 'src/pages', layouts: 'src/layouts', components: 'src/components' }.
+// Mỗi đường dẫn là RelPath nằm trong sourceDir; ba đường dẫn khác nhau, không lồng nhau.
+type DesignDirs = { pages: RelPath; layouts: RelPath; components: RelPath };
 ```
 
 | Mã    | Quy tắc                                                                                                                                                                                            |
@@ -1987,15 +2015,16 @@ Cạnh riêng của viền và bo góc (`border-t`, `rounded-tl`…) chưa có �
 
 ## 13. PHASE 2 — DANH SÁCH MODULE
 
-| Mã   | Module                           | Nơi đặt chính                                                                           | WP      |
-| ---- | -------------------------------- | --------------------------------------------------------------------------------------- | ------- |
-| M-SE | Source Editor: thao tác cấu trúc | `server/src/core/source-editor/structure/`                                              | WP-2.02 |
-| M-LB | Library                          | `shared/src/library/`, `studio/src/features/library/`                                   | WP-2.03 |
-| M-DD | Kéo thả                          | `bridge/src/client/drag.ts`, `studio/src/features/dnd/`                                 | WP-2.04 |
-| M-CB | Sao chép, cắt, dán, chọn nhiều   | `studio/src/features/clipboard/`, `server/src/core/source-editor/`                      | WP-2.04 |
-| M-PG | Trang                            | `server/src/core/project/frameworks/vite-react/routes.ts`, `studio/src/features/pages/` | WP-2.05 |
-| M-KB | Phím tắt                         | `studio/src/features/shortcuts/`                                                        | WP-2.06 |
-| M-CL | CLI và gói cài                   | `packages/cli/`                                                                         | WP-2.07 |
+| Mã   | Module                             | Nơi đặt chính                                                                           | WP      |
+| ---- | ---------------------------------- | --------------------------------------------------------------------------------------- | ------- |
+| M-SE | Source Editor: thao tác cấu trúc   | `server/src/core/source-editor/structure/`                                              | WP-2.02 |
+| M-LB | Library                            | `shared/src/library/`, `studio/src/features/library/`                                   | WP-2.03 |
+| M-DD | Kéo thả                            | `bridge/src/client/drag.ts`, `studio/src/features/dnd/`                                 | WP-2.04 |
+| M-CB | Sao chép, cắt, dán, chọn nhiều     | `studio/src/features/clipboard/`, `server/src/core/source-editor/`                      | WP-2.04 |
+| M-PG | Trang                              | `server/src/core/project/frameworks/vite-react/routes.ts`, `studio/src/features/pages/` | WP-2.05 |
+| M-CP | Component của dự án, vùng thiết kế | `server/src/core/project/components.ts`, `studio/src/features/components/`              | WP-2.08 |
+| M-KB | Phím tắt                           | `studio/src/features/shortcuts/`                                                        | WP-2.06 |
+| M-CL | CLI và gói cài                     | `packages/cli/`                                                                         | WP-2.07 |
 
 Mã module trùng bản 0.18 (`M-LB`, `M-DD`, `M-CB`, `M-PG`, `M-KB`, `M-AG`) đánh số quy tắc từ `10` (như mục 0).
 
@@ -2146,7 +2175,7 @@ type PagesInfo = { convention: boolean; routesFile?: RelPath; pages: PageInfo[] 
 | Mã      | Quy tắc                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | R-PG-10 | Quy ước (adapter `vite-react`): `src/routes.tsx` (hoặc `.jsx`) có lời gọi `createBrowserRouter([...])` với mảng **viết sẵn**; mỗi mục là object có `path` là chuỗi và `element` là một thẻ component viết hoa được import từ `./pages/…`; `children` lồng nhau được nối đường dẫn. Khác quy ước: `convention: false` (L-07), danh sách trang lấy từ những gì đọc được, thêm/sửa/xóa bị khóa |
-| R-PG-11 | Thêm trang: tên → tên component PascalCase không dấu (`Giới thiệu` → `GioiThieu`), file `src/pages/<Tên>.tsx` (`.jsx` với dự án JS), đường dẫn theo R-PJ-11 (`/gioi-thieu`). Nội dung file mới: component trả `<main className="mx-auto max-w-5xl p-8"><h1 className="text-3xl font-bold">{tên}</h1></main>`                                                                                |
+| R-PG-11 | Thêm trang: tên → tên component PascalCase không dấu (`Giới thiệu` → `GioiThieu`), file `<designDirs.pages>/<Tên>.tsx` (mặc định `src/pages/`, `.jsx` với dự án JS), đường dẫn theo R-PJ-11 (`/gioi-thieu`). Nội dung file mới: component trả `<main className="mx-auto max-w-5xl p-8"><h1 className="text-3xl font-bold">{tên}</h1></main>`                                                |
 | R-PG-12 | Thêm import sau import cuối của `routes`; thêm mục route vào cuối mảng gốc; mảng gốc chỉ có một mục `path: '/'` có `children` (bố cục chung) thì thêm vào cuối `children` với đường dẫn tương đối                                                                                                                                                                                           |
 | R-PG-13 | Đường dẫn đã có: E016 `pathExists`; file đã có: E016 `fileExists`. Mọi thao tác trang là một mục lịch sử (có thể gồm tạo, xóa file — R-HI-11)                                                                                                                                                                                                                                               |
 | R-PG-14 | Đổi tên: đổi `path` trong route; `newName` đổi tên component, tên file (tạo file mới, xóa file cũ), câu import. Xóa: cần xác nhận; xóa mục route, câu import, file trang; trang cuối cùng không xóa được (E016 `lastPage`)                                                                                                                                                                  |
@@ -2156,6 +2185,44 @@ type PagesInfo = { convention: boolean; routesFile?: RelPath; pages: PageInfo[] 
 **Kiểm thử bắt buộc:** phân tích `routes.tsx` của template, có `children`, có route động, dùng `useRoutes` (không quy ước); thêm "Giới thiệu" (AC-07, E2E: Canvas mở được `/gioi-thieu`); trùng đường dẫn, trùng file; đổi tên; xóa rồi Undo (file trở lại đúng từng byte); xóa trang cuối.
 
 ---
+
+## 18A. M-CP — COMPONENT CỦA DỰ ÁN VÀ VÙNG THIẾT KẾ
+
+**Mục đích:** người dùng tạo trang, thiết kế, gom phần đã thiết kế thành component và dùng lại ở trang khác, luôn biết mình đang sửa file nào. Bổ sung 2026-10-17 theo quyết định của chủ dự án (tạo và thiết kế dự án mới là tính năng chính).
+
+```ts
+type ProjectComponent = {
+  name: string; // tên component viết hoa
+  file: RelPath;
+  kind: 'component' | 'layout';
+  usages: number; // số chỗ dùng trong sourceDir
+  preview?: string; // data: URI ảnh PNG chụp từ Canvas, có khi component đang hiện trên một trang
+};
+// GET /project/components → { components: ProjectComponent[] }
+// POST /project/components/extract { loc, name } → StructureResult   (R-CP-14)
+// PATCH /project { designDirs } → ProjectInfo                          (R-CP-16)
+```
+
+| Mã      | Quy tắc                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-CP-10 | Ba vùng thiết kế lấy từ `designDirs` của `workspace.json` (mặc định `src/pages`, `src/layouts`, `src/components`). Thao tác thiết kế (tạo trang, chèn, tạo component) chỉ tạo hoặc sửa file `.tsx`/`.jsx` trong ba vùng này. Thư mục khác (`hooks/`, `api/`, `services/`, `stores/`…) là của lập trình viên hoặc agent; ReactCraft chỉ đọc để hiển thị, không ghi                                 |
+| R-CP-11 | Thanh **"Đang thiết kế"** ở đầu Canvas hiện loại (Trang, Bố cục, Component), tên và đường dẫn file đang sửa. Khối chèn từ Library hoặc panel Component được ghi vào file đó. Phần tử thuộc một component khác trên Canvas có khung màu riêng và nhãn tên component                                                                                                                                |
+| R-CP-12 | Panel **Component** (cạnh Library) liệt kê component của vùng `components` và `layouts`: file export một hàm hoặc hằng React tên viết hoa. Mỗi mục: tên, file, số chỗ dùng, ảnh xem trước (chưa có thì biểu tượng). Tìm theo tên. Danh sách cập nhật khi `project.filesChanged` có file trong hai vùng                                                                                            |
+| R-CP-13 | Chèn component: kéo vào Canvas (M-DD) hoặc bấm mục → chèn `<Tên />` theo vị trí như R-LB-14 và thêm câu `import` nếu file đích chưa có (dùng alias `@/` nếu `tsconfig`/`vite.config` của dự án có, ngược lại đường dẫn tương đối). Là một mục lịch sử                                                                                                                                             |
+| R-CP-14 | **Tạo component** từ phần tử đang chọn: tên → PascalCase không dấu; tạo `<designDirs.components>/<Tên>.tsx` (`.jsx` với dự án JS) chứa JSX của phần tử, giữ nguyên class; thay phần tử bằng `<Tên />` và thêm `import`. Phần tử dùng biến, props hoặc hàm của component đang chứa nó: E023 `usesLocalScope`. File đã có: E016 `fileExists`. Là một mục lịch sử gồm tạo file và sửa file (R-HI-11) |
+| R-CP-15 | **Chế độ sửa component**: bấm đúp phần tử là component của dự án (thẻ viết hoa trỏ tới file trong `components`/`layouts`) → thanh "Đang thiết kế" chuyển sang component đó; Canvas vẫn hiện trang hiện tại, làm mờ phần ngoài component; mọi sửa ghi vào file component; cảnh báo "dùng ở N chỗ" như R-IN-16. Esc hoặc nút quay lại để về trang                                                   |
+| R-CP-16 | Hộp thoại Project có mục **Vùng thiết kế** để đổi ba đường dẫn (dự án có sẵn với cấu trúc khác, ví dụ trang ở `src/views/`). Đường dẫn phải là thư mục trong `sourceDir`, ba đường dẫn khác nhau và không lồng nhau (sai: E016 `designDirs`). Ghi vào `workspace.json`                                                                                                                            |
+
+**Kịch bản kiểm thử M-CP:**
+
+| #   | Kịch bản                                                                                                         | Kết quả                                                                 | Loại       |
+| --- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ---------- |
+| 1   | Template mới: panel Component có `Header`, `Footer`, `ProductCard`, `Button`, `Card`; `MainLayout` loại `layout` | Đúng tên, file, số chỗ dùng                                             | Unit + E2E |
+| 2   | Kéo `ProductCard` vào trang About                                                                                | `<ProductCard />` đúng vị trí, có `import`, Undo xóa cả hai             | E2E        |
+| 3   | Chọn một khối trên Home, Tạo component `PromoBox`                                                                | File mới đúng nội dung, Home dùng `<PromoBox />`; Undo trả về từng byte | E2E        |
+| 4   | Tạo component từ phần tử có `{product.name}`                                                                     | E023 `usesLocalScope`, không ghi                                        | Unit       |
+| 5   | Bấm đúp `Header` trên Canvas, đổi màu nền                                                                        | Ghi vào `components/Header.tsx`; mọi trang đổi theo                     | E2E        |
+| 6   | Đổi vùng trang thành `src/views`, tạo trang mới                                                                  | File ở `src/views/`                                                     | Unit       |
 
 ## 19. M-KB — PHÍM TẮT
 
@@ -2781,15 +2848,17 @@ Quy trình giao việc và kiểm tra (Claude viết test và hợp đồng, Gem
 
 ## 4. PHASE 2 — CẤU TRÚC VÀ TRANG
 
-| Mã      | Nội dung                                                                          | Đầu ra                                       |
-| ------- | --------------------------------------------------------------------------------- | -------------------------------------------- |
-| WP-2.01 | Bộ test nghiệm thu Phase 2                                                        | Có, đỏ đúng lý do                            |
-| WP-2.02 | M-SE mở rộng: chèn, di chuyển, xóa, nhân bản, bọc, bỏ bọc thẻ JSX                 | Unit + VG-16 mở rộng                         |
-| WP-2.03 | M-LB: Library khối JSX + Tailwind, tìm kiếm `vi`/`en`, kéo vào Canvas             | AC-05                                        |
-| WP-2.04 | Kéo thả trong Canvas (Bridge), chọn nhiều, sao chép/dán                           | AC-05                                        |
-| WP-2.05 | M-PG: trang theo `src/routes.tsx` (thêm, đổi tên, xóa), điều hướng trong Canvas   | AC-07                                        |
-| WP-2.06 | M-KB: phím tắt Windows và macOS                                                   | Test cả hai nền                              |
-| WP-2.07 | CLI hoàn chỉnh (tham số, tắt an toàn dừng tiến trình con), gói cài `pnpm package` | Cài và chạy từ tarball trên Windows và macOS |
+| Mã      | Nội dung                                                                                  | Đầu ra                                       |
+| ------- | ----------------------------------------------------------------------------------------- | -------------------------------------------- |
+| WP-2.01 | Bộ test nghiệm thu Phase 2                                                                | Có, đỏ đúng lý do                            |
+| WP-2.02 | M-SE mở rộng: chèn, di chuyển, xóa, nhân bản, bọc, bỏ bọc thẻ JSX                         | Unit + VG-16 mở rộng                         |
+| WP-2.03 | M-LB: Library khối JSX + Tailwind, tìm kiếm `vi`/`en`, kéo vào Canvas                     | AC-05                                        |
+| WP-2.04 | Kéo thả trong Canvas (Bridge), chọn nhiều, sao chép/dán                                   | AC-05                                        |
+| WP-2.05 | M-PG: trang theo `src/routes.tsx` (thêm, đổi tên, xóa), điều hướng trong Canvas           | AC-07                                        |
+| WP-2.06 | M-KB: phím tắt Windows và macOS                                                           | Test cả hai nền                              |
+| WP-2.07 | CLI hoàn chỉnh (tham số, tắt an toàn dừng tiến trình con), gói cài `pnpm package`         | Cài và chạy từ tarball trên Windows và macOS |
+| WP-2.00 | Template dự án mới đầy đủ theo ADR-BE-32 (làm đầu tiên của Phase 2)                       | Template build được, mở được, có đủ ba vùng  |
+| WP-2.08 | M-CP: vùng thiết kế, thanh "Đang thiết kế", panel Component, tạo component, sửa component | Kịch bản M-CP 1–6                            |
 
 Cổng G2: AC-05, AC-07 và mọi E2E của Phase 1 vẫn xanh.
 
@@ -2927,3 +2996,4 @@ Tài liệu thi công của hướng cũ (Design Model) được chuyển vào `
 | 2026-10-14 | 1.0 (nháp, đợt 3b) | SPEC-04 thêm Phase 2 (thao tác cấu trúc, Library, kéo thả, sao chép/dán, trang, phím tắt, CLI), Phase 3 (bản sao backend, agent, chat), Phase 4 mức khung. SPEC-03 mục 9 trỏ tới chi tiết, thêm sự kiện `agent.event`. SPEC-07 thêm quy trình WP (DoR, DoD), kiểm soát thay đổi, mức nghiêm trọng, tài liệu thi công, phát hành. Đủ các phần để thay `docs/spec.md` ở WP-1.01                                                                                                                                                                                             |
 | 2026-10-14 | 1.0 (WP-1.01)      | Bản 1.0 thay `docs/spec.md` (bỏ bản 0.18) cùng lúc dọn code của hướng Design Model                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | 2026-10-14 | 1.0 (rà soát)      | Sửa tham chiếu còn trỏ về bản 0.18 (bảng mã định danh Phần 0, ADR-FE-09, ADR-FE-10, SPEC-02 mục 11, SPEC-03 mục 1). SPEC-02: bảng script và CI theo workflow thật. SPEC-06: cấu hình Playwright (không thử lại, trace khi lỗi), helper E2E viết ở WP-1.02. ADR-BE-24, R-QA-02: thêm `REACTCRAFT_DATA_DIR`, `REACTCRAFT_CACHE_DIR`                                                                                                                                                                                                                                         |
+| 2026-10-17 | 1.0 (bổ sung)      | Theo chủ dự án: tạo và thiết kế dự án mới là tính năng chính. ADR-BE-32 đổi sang template website mẫu đầy đủ (ba vùng `pages`, `layouts`, `components`, bộ component UI, `@theme` có màu thương hiệu). Thêm `designDirs` vào `workspace.json`, module M-CP (vùng thiết kế, thanh "Đang thiết kế", panel Component, tạo component, chế độ sửa component), WP-2.00 và WP-2.08; R-PG-11 dùng `designDirs.pages`                                                                                                                                                              |
