@@ -290,7 +290,8 @@ class RunnerExecution {
     }
     this.rememberedPort = port;
     this.isStopping = false;
-    const nonce = nanoid();
+    // V-114: 22 random characters, new for every dev server start.
+    const nonce = nanoid(22);
     this.currentStatus = {
       state: 'starting',
       origin: `http://127.0.0.1:${String(port)}`,

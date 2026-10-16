@@ -1,6 +1,7 @@
 // Property field control in Inspector: value display, inheritance indicator, and override controls (SPEC-04 M-IN, R-IN-11).
 import type { ClassContext, ClassToken, ClassValue, PropertyId, Scope } from '@reactcraft/shared';
 import { readValue } from '@reactcraft/shared';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 type PropertyFieldProps = {
@@ -104,14 +105,49 @@ function PropertyInputControl({
   }
 
   return (
+    <TextValueInput
+      property={property}
+      currentValStr={currentValStr}
+      disabled={disabled}
+      onChange={onChange}
+    />
+  );
+}
+
+/**
+ * R-IN-20: while the field has focus it shows what the user types; a refreshed source does not
+ * overwrite it until focus leaves. Every change is still sent at once (R-IN-13, R-IN-14).
+ */
+function TextValueInput({
+  property,
+  currentValStr,
+  disabled,
+  onChange,
+}: {
+  readonly property: PropertyId;
+  readonly currentValStr: string;
+  readonly disabled: boolean;
+  readonly onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
+  const [draft, setDraft] = useState<string>();
+  return (
     <input
       id={`field-${property}`}
       data-testid={`input-${property}`}
       type="text"
       disabled={disabled}
-      value={currentValStr}
+      value={draft ?? currentValStr}
       placeholder="—"
-      onChange={onChange}
+      onFocus={() => {
+        setDraft(currentValStr);
+      }}
+      onBlur={() => {
+        setDraft(undefined);
+      }}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        onChange(e);
+      }}
       className="h-7 w-full rounded border border-border/60 bg-field px-2 font-mono text-xs text-ink focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
     />
   );

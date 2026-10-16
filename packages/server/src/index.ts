@@ -261,6 +261,7 @@ function createServices(
     ...deps,
     watch,
     jobs: jobService,
+    history: historyService,
     runnerService: {
       start: () => runnerHolder.current?.start() ?? Promise.resolve(ok({ state: 'stopped' })),
       stop: () => runnerHolder.current?.stop() ?? Promise.resolve(ok({ state: 'stopped' })),

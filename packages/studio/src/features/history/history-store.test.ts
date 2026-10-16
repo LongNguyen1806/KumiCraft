@@ -131,7 +131,7 @@ describe('HistoryStore', () => {
     expect(state.isApplying).toBe(false);
     expect(state.error?.code).toBe('E017');
     expect(state.error?.file).toBe('src/Button.tsx');
-    expect(state.error?.message).toContain('src/Button.tsx');
+    expect(state.error?.params).toEqual({ file: 'src/Button.tsx', reason: 'fileChanged' });
 
     state.clearError();
     expect(useHistoryStore.getState().error).toBeUndefined();

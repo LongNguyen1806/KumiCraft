@@ -22,6 +22,7 @@ import {
 import { toBuildError } from './build-error.ts';
 import { getRefForElement, handleElementClick } from './candidate-chain.ts';
 import { scanDomTree } from './dom-scanner.ts';
+import { fitsMessageLimit } from './message-size.ts';
 import { BridgeOverlay } from './overlay.ts';
 import { collectSelectionInfo } from './selection-info.ts';
 import { TextEditController } from './text-edit.ts';
@@ -152,6 +153,7 @@ export class BridgeClientRuntime {
       type,
       payload,
     };
+    if (!fitsMessageLimit(envelope)) return;
     window.parent.postMessage(envelope, this.studioOrigin);
   }
 

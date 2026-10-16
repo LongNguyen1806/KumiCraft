@@ -49,7 +49,12 @@ const API_PREFIX = '/api/v1';
 const BODY_LIMIT_BYTES = 10 * 1024 * 1024;
 
 // ADR-BE-23: never log the session token, wherever a client puts it.
-const REDACTED_PATHS = ['req.headers.authorization', 'req.headers["sec-websocket-protocol"]'];
+// S-36: the session token never reaches a log line.
+const REDACTED_PATHS = [
+  'req.headers.authorization',
+  'req.headers["sec-websocket-protocol"]',
+  '*.token',
+];
 
 const createRequestId = (): string => `req_${randomBytes(8).toString('base64url')}`;
 

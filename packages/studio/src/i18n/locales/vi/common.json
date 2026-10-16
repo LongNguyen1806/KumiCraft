@@ -41,6 +41,8 @@
     "frame": "Khung",
     "zoom": "Thu phóng",
     "zoomFit": "Vừa khung",
+    "bridgeSilent": "Bridge của trang chưa kết nối sau 10 giây. Trang có thể đang lỗi hoặc thiếu plugin Bridge.",
+    "showLog": "Xem log",
     "modeDesign": "Thiết kế",
     "modePreview": "Xem thử",
     "undo": "Hoàn tác ({{shortcut}})",
@@ -71,6 +73,7 @@
     "setClassName": "đổi class",
     "setText": "đổi chữ",
     "setAttribute": "đổi thuộc tính <{{tag}}>",
+    "dismissError": "Đóng thông báo",
     "errorFileChanged": "File {{file}} đã bị sửa từ nơi khác, không hoàn tác được bước này"
   },
   "settings": {

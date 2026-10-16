@@ -11,6 +11,8 @@ import type {
   RunnerToParentMessage,
 } from '@reactcraft/shared';
 
+import { devServerOptions } from './vite-server-config.ts';
+
 interface ViteDevServer {
   readonly config: { readonly server: { readonly port?: number | undefined } };
   listen(): Promise<void>;
@@ -77,12 +79,7 @@ async function createAndListenVite(vitePath: string, options: RunnerOptions): Pr
 
   const server = await vite.createServer({
     root: options.root,
-    server: {
-      host: options.host,
-      port: options.port,
-      strictPort: true,
-      open: false,
-    },
+    server: devServerOptions(options),
     clearScreen: false,
     plugins: [bridgePlugin],
   });

@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { initI18n } from '../../i18n/i18n.ts';
+import { useSelectionStore } from '../selection/selection-store.ts';
 import { CanvasArea } from './canvas-area.tsx';
 
 let mockRunnerState: {
@@ -115,6 +116,40 @@ describe('CanvasArea', () => {
     const iframe = screen.getByTestId('canvas-iframe');
     expect(iframe).toBeDefined();
     expect(iframe.getAttribute('src')).toBe('http://127.0.0.1:5173/');
+  });
+
+  it('shows the current page path on the Canvas toolbar [R-RN-26]', () => {
+    useSelectionStore.getState().setRoute('/products/42');
+
+    render(<CanvasArea projectInfo={mockProject} trusted />);
+
+    expect(screen.getByTestId('canvas-route').textContent).toBe('/products/42');
+    expect(screen.getByTestId('canvas-frame-select')).toBeDefined();
+    expect(screen.getByTestId('canvas-zoom-select')).toBeDefined();
+  });
+
+  it('sandboxes the project page so it cannot navigate the Studio [S-100]', () => {
+    mockRunnerState = {
+      status: { state: 'ready', origin: 'http://127.0.0.1:5173' },
+      logTail: [],
+      start: vi.fn(),
+      restart: vi.fn(),
+    };
+    render(<CanvasArea projectInfo={mockProject} trusted />);
+
+    const tokens = (screen.getByTestId('canvas-iframe').getAttribute('sandbox') ?? '').split(' ');
+    expect(tokens.sort()).toEqual(
+      [
+        'allow-downloads',
+        'allow-forms',
+        'allow-modals',
+        'allow-popups',
+        'allow-popups-to-escape-sandbox',
+        'allow-same-origin',
+        'allow-scripts',
+      ].sort(),
+    );
+    expect(tokens.some((token) => token.startsWith('allow-top-navigation'))).toBe(false);
   });
 
   it('renders error view with restart button when runner fails', () => {

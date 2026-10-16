@@ -69,7 +69,10 @@ function dispatchBridgePayload(type: string, payload: unknown): void {
     }
     case 'ready': {
       const res = BridgeReadyPayloadSchema.safeParse(payload);
-      if (res.success) state.setRoute(res.data.route);
+      if (res.success) {
+        state.setRoute(res.data.route);
+        state.setBridgeReady(true);
+      }
       useCanvasErrorStore.getState().dismissRuntimeErrors();
       break;
     }
@@ -133,6 +136,7 @@ export class BridgeChannel {
     this.runnerOrigin = undefined;
     this.nonce = undefined;
     useCanvasErrorStore.getState().reset();
+    useSelectionStore.getState().setBridgeReady(false);
   }
 
   registerTextEditListener(listener: BridgeTextEditListener): () => void {

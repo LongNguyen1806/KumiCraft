@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '../../app/language-switcher.tsx';
 import { shortcutLabel } from '../../app/platform.ts';
 import { PanelLeftIcon, PanelRightIcon, RedoIcon, UndoIcon } from '../../components/ui/icons.tsx';
+import { HistoryErrorNotice } from '../history/history-error-notice.tsx';
 import { useHistoryStore } from '../history/history-store.ts';
 import { SettingsButton } from '../settings/settings-button.tsx';
 import type { Side } from './use-panel-layout.ts';
@@ -111,6 +112,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
       )}
       <PanelToggle side="left" {...props} />
       <div className="flex-1" />
+      <HistoryErrorNotice />
       <HistoryButtons />
       <LanguageSwitcher />
       <SettingsButton />

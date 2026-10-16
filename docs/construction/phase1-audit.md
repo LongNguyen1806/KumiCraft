@@ -10,6 +10,32 @@ Phân loại:
 - **(d)** Lệch có chủ đích, ghi spec-log, không sửa code.
 - **(p)** Quy tắc hiệu năng, đo ở cổng G1-03 (PB).
 
+## 0. Đã xử lý (2026-10-16)
+
+- **R-HI-08**: đóng dự án và mở dự án khác đều xóa lịch sử (`project-service.ts`), test `project-service-watch.test.ts`.
+- **S-100**: iframe Canvas có `sandbox` đúng spec (`canvas-area.tsx`), test `canvas-area.test.tsx`.
+- **S-104**: runner ép `cors: false` (`runners/vite-server-config.ts`), test `vite-server-config.test.ts`.
+- **V-114**: nonce 22 ký tự (`runner-service.ts`), test trong `runner-service.test.ts`.
+- **S-36**: logger Fastify che thêm `*.token`; logger server đã che `token` (test `create-logger.test.ts` gắn thêm `[S-36]`).
+- **R-FW-05**, **R-QA-01**: chuyển sang (d), ghi spec-log.
+- Sửa tag: R-RN-05, R-RN-06, R-RN-01 (`, Test n` bỏ), S-105.
+- **S-13**: luật ESLint chặn `dangerouslySetInnerHTML`, `innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write` trong Studio; test lint trên code thật `studio/src/security/no-html-injection.test.ts`.
+- **S-102**: Studio không đọc `contentDocument` của iframe nữa; đổi chế độ Thiết kế/Xem thử chỉ gửi `set-mode`, không gỡ kênh (trước đây có thể làm mất kênh vì iframe khác origin). Code iframe chuyển sang `editor/canvas-frame.tsx`.
+- **R-RN-21**: iframe mở đúng trang đang xem khi tải lại; **R-RN-22** đổi khung không tải lại; dev server khởi động lại thì iframe mới (khóa theo origin, nonce).
+- **R-RN-24**: dải cảnh báo khi Bridge im lặng 10 s, nút xem log.
+- **R-RN-26**: thanh công cụ Canvas hiện đường dẫn trang.
+- **R-SL-10**: cây mới bỏ ref đã mất, phần tử chính là ref còn lại sau cùng; cây bị cắt (V-113) giữ nguyên vùng chọn.
+- **R-HI-10**: lỗi Undo/Redo trước đây không hiện ở đâu; giờ thanh công cụ hiện câu đã dịch (vi, en) kèm nút đóng.
+- **R-IN-20**: ô Inspector đang có tiêu điểm giữ giá trị đang gõ, rời ô mới hiện giá trị nguồn.
+- **V-112**: Bridge không gửi thông điệp quá 1 MB (đếm byte UTF-8).
+
+Còn mở sau đợt này:
+
+- **R-IN-19** (chưa làm): ô màu, cỡ chữ, bo góc, bóng, font chưa ưu tiên token `@theme` và bảng màu; cần một gói giao diện riêng.
+- **R-PJ-24** (thiếu một phần): thanh công cụ chưa hiện trạng thái dev server; cần dùng chung luồng trạng thái runner (hiện mỗi nơi gọi `useRunnerStatus` mở một WebSocket).
+- **R-SE-16**, **R-SL-12**: quyết theo bài đo PB-03, PB/R-SL-12.
+- Mục 3 (sửa tag) và mục 4 (viết test) còn lại, cổng G1.
+
 ## 1. Tóm tắt
 
 | Loại                    | Số mã | Việc cần làm                                    |

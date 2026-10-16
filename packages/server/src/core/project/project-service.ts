@@ -65,6 +65,8 @@ export type ProjectServiceDeps = {
   readonly runnerService?: { start(): Promise<unknown>; stop(): Promise<unknown> } | undefined;
   /** Runs the install job; the HTTP routes read and cancel jobs through the same service. */
   readonly jobs?: JobService | undefined;
+  /** History of the open project; it belongs to that project only (R-HI-08). */
+  readonly history?: { clear(): void } | undefined;
   /** Watches the open project's files (R-HI-05). */
   readonly watch?: { start(root: string): void; stop(): Promise<void> } | undefined;
 };
@@ -172,6 +174,10 @@ class ProjectServiceImpl implements ProjectService {
       await this.releaseCurrentLock();
     }
 
+    // R-HI-08: steps of another project must never be undone into this one.
+    if (this.current.status === 'open' && this.current.root !== root) {
+      this.deps.history?.clear();
+    }
     const lockTaken = await acquireLock(this.deps.fs, root, this.deps.system, this.deps.port);
     if (!lockTaken.ok) return lockTaken;
     this.heldLock = { root, info: lockTaken.value };
@@ -227,6 +233,7 @@ class ProjectServiceImpl implements ProjectService {
   async close(): Promise<void> {
     this.jobs.cancelKind('project.install');
     await this.deps.watch?.stop();
+    this.deps.history?.clear();
     await this.deps.runnerService?.stop();
     await this.releaseCurrentLock();
     this.current = { status: 'none' };

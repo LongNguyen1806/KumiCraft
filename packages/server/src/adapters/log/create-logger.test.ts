@@ -32,7 +32,7 @@ describe('createRotatingFile', () => {
 });
 
 describe('createServerLogger', () => {
-  it('redacts tokens, keys and authorization headers in terminal and file [S-89]', async () => {
+  it('redacts tokens, keys and authorization headers in terminal and file [S-89, S-36]', async () => {
     const lines: string[] = [];
     const logger = createServerLogger({
       level: 'info',

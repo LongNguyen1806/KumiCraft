@@ -1,13 +1,14 @@
 // Canvas area displaying the live running Vite project (SPEC-04 M-RN, ADR-BE-28, R-RN-20 to R-RN-26).
 import { defaultFrames, type Frame, type ProjectInfo, type RunnerStatus } from '@reactcraft/shared';
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { type ChangeEvent, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { errorText } from '../../routes/error-text.ts';
 import { BuildErrorBanner } from '../canvas-errors/build-error-banner.tsx';
 import { RuntimeErrorList } from '../canvas-errors/runtime-error-list.tsx';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
+import { useSelectionStore } from '../selection/selection-store.ts';
 import { type TextEditWarning, useCanvasTextEdit } from '../text-edit/use-canvas-text-edit.ts';
+import { IframeFrame } from './canvas-frame.tsx';
 import {
   ErrorView,
   NeedsInstallPrompt,
@@ -299,11 +300,19 @@ function CanvasToolbar({
   onToggleMode,
 }: CanvasToolbarProps) {
   const { t } = useTranslation();
+  const route = useSelectionStore((s) => s.currentRoute);
   return (
     <header className="flex h-11 items-center justify-between border-b border-line bg-card/60 px-4 text-xs backdrop-blur-md">
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <FrameSelect frames={frames} activeId={activeFrameId} onChange={onSelectFrame} />
         <ZoomSelect zoom={zoom} onChange={onSelectZoom} />
+        <span
+          className="min-w-0 truncate font-mono text-ink-soft"
+          title={route}
+          data-testid="canvas-route"
+        >
+          {route}
+        </span>
       </div>
       <button
         type="button"
@@ -350,80 +359,15 @@ function CanvasContent(props: CanvasContentProps) {
   if (props.status.origin) {
     return (
       <IframeFrame
+        key={`${props.status.origin}|${props.status.nonce ?? ''}`}
         origin={props.status.origin}
         nonce={props.status.nonce}
         mode={props.mode}
         frame={props.frame}
         zoom={props.zoom}
+        logTail={props.logTail}
       />
     );
   }
   return <></>;
-}
-
-function useIframeBridge(
-  iframeRef: { readonly current?: HTMLIFrameElement | undefined },
-  origin: string,
-  nonce: string | undefined,
-  mode: CanvasMode,
-) {
-  useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe || !nonce) return;
-
-    const handleLoad = () => {
-      if (iframe.contentWindow) {
-        studioBridgeChannel.attach(iframe.contentWindow, origin, nonce);
-        studioBridgeChannel.setMode(mode);
-      }
-    };
-
-    iframe.addEventListener('load', handleLoad);
-    if (iframe.contentWindow && iframe.contentDocument?.readyState === 'complete') {
-      handleLoad();
-    }
-
-    return () => {
-      iframe.removeEventListener('load', handleLoad);
-      studioBridgeChannel.detach();
-    };
-  }, [iframeRef, origin, nonce, mode]);
-
-  useEffect(() => {
-    studioBridgeChannel.setMode(mode);
-  }, [mode]);
-}
-
-type IframeFrameProps = {
-  readonly origin: string;
-  readonly frame: Frame;
-  readonly zoom: number;
-  readonly nonce?: string | undefined;
-  readonly mode: CanvasMode;
-};
-
-function IframeFrame({ origin, frame, zoom, nonce, mode }: IframeFrameProps) {
-  const iframeRef = useRef<HTMLIFrameElement>(undefined);
-  useIframeBridge(iframeRef, origin, nonce, mode);
-
-  return (
-    <div
-      className="origin-center transition-transform duration-150"
-      style={{ transform: `scale(${String(zoom)})` }}
-    >
-      <iframe
-        ref={(el) => {
-          iframeRef.current = el ?? undefined;
-        }}
-        src={`${origin}/`}
-        title={frame.label}
-        data-testid="canvas-iframe"
-        className="overflow-auto rounded-lg border border-border bg-white shadow-2xl"
-        style={{
-          width: `${String(frame.width)}px`,
-          height: `${String(frame.height)}px`,
-        }}
-      />
-    </div>
-  );
 }

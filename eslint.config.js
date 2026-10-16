@@ -37,6 +37,26 @@ const RESTRICTED_SYNTAX = [
   },
 ];
 
+const NO_PROCESS_EXIT = {
+  object: 'process',
+  property: 'exit',
+  message: 'Only packages/cli may call process.exit() (QC-52).',
+};
+
+// S-13: the Studio never turns strings into HTML; React escapes everything it renders (S-14).
+const HTML_INJECTION_MESSAGE = 'Do not inject HTML; render text through React (S-13).';
+const NO_HTML_INJECTION_JSX = {
+  selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+  message: HTML_INJECTION_MESSAGE,
+};
+const NO_HTML_INJECTION_PROPERTIES = [
+  { property: 'innerHTML', message: HTML_INJECTION_MESSAGE },
+  { property: 'outerHTML', message: HTML_INJECTION_MESSAGE },
+  { property: 'insertAdjacentHTML', message: HTML_INJECTION_MESSAGE },
+  { object: 'document', property: 'write', message: HTML_INJECTION_MESSAGE },
+  { object: 'document', property: 'writeln', message: HTML_INJECTION_MESSAGE },
+];
+
 const NO_DEFAULT_EXPORT = {
   selector: 'ExportDefaultDeclaration',
   message: 'Use named exports only (QC-37).',
@@ -68,14 +88,7 @@ export default defineConfig(
       'no-console': 'error', // ADR-BE-23: log through LoggerPort
       'no-empty': ['error', { allowEmptyCatch: false }], // QC-49
       'no-restricted-imports': ['error', { patterns: [NO_DEEP_PACKAGE_IMPORT] }],
-      'no-restricted-properties': [
-        'error',
-        {
-          object: 'process',
-          property: 'exit',
-          message: 'Only packages/cli may call process.exit() (QC-52).',
-        },
-      ],
+      'no-restricted-properties': ['error', NO_PROCESS_EXIT],
       'no-restricted-syntax': ['error', NO_DEFAULT_EXPORT, ...RESTRICTED_SYNTAX],
       'max-lines': ['warn', { max: 400, skipBlankLines: true, skipComments: true }], // QC-44
       'max-lines-per-function': ['warn', { max: 50, skipBlankLines: true, skipComments: true }],
@@ -186,6 +199,20 @@ export default defineConfig(
   {
     files: ['packages/studio/src/**/*.{ts,tsx}'],
     extends: [reactHooks.configs.flat['recommended-latest'], jsxA11y.flatConfigs.recommended],
+  },
+
+  // S-13: no HTML injection anywhere in the Studio, tests included.
+  {
+    files: ['packages/studio/src/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        NO_DEFAULT_EXPORT,
+        ...RESTRICTED_SYNTAX,
+        NO_HTML_INJECTION_JSX,
+      ],
+      'no-restricted-properties': ['error', NO_PROCESS_EXIT, ...NO_HTML_INJECTION_PROPERTIES],
+    },
   },
 
   // ADR-FE-16, VG-12: no user-facing text written in JSX; it goes through t().

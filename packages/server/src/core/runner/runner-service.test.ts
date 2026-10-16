@@ -154,7 +154,7 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
     if (!result.ok) expect(result.error.code).toBe('E021');
   });
 
-  it('rejects start if project is untrusted [E011 untrusted]', async () => {
+  it('rejects start if project is untrusted, E011 untrusted [S-105]', async () => {
     workspaceState = { ...openState, trusted: false };
     const runner = createRunnerService(makeDeps());
     const result = await runner.start();
@@ -176,13 +176,13 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
     }
   });
 
-  it('transitions stopped -> starting -> ready upon child IPC ready [R-RN-01, R-RN-09]', async () => {
+  it('transitions stopped -> starting -> ready upon child IPC ready [R-RN-01, R-RN-09, V-114]', async () => {
     const runner = createRunnerService(makeDeps());
     expect(runner.getStatus().state).toBe('stopped');
 
     await runner.start();
     expect(runner.getStatus().state).toBe('starting');
-    expect(runner.getStatus().nonce).toBeDefined();
+    expect(runner.getStatus().nonce).toMatch(/^[A-Za-z0-9_-]{22}$/);
     expect(runner.getStatus().origin).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
 
     expect(spawnedCalls).toHaveLength(1);
@@ -200,7 +200,7 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
     expect(statusEvents.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('ignores consecutive start calls when already starting or ready [R-RN-01, Test 3]', async () => {
+  it('ignores consecutive start calls when already starting or ready [R-RN-01]', async () => {
     const runner = createRunnerService(makeDeps());
     await runner.start();
     mockHandle.triggerMessage({ type: 'ready', port: 52123 });
@@ -210,7 +210,7 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
     expect(spawnedCalls).toHaveLength(1); // Only 1 process spawned
   });
 
-  it('handles child config error by transitioning to error and killing process [R-RN-06, Test 1]', async () => {
+  it('handles child config error by transitioning to error and killing process [R-RN-06]', async () => {
     const runner = createRunnerService(makeDeps());
     await runner.start();
 
@@ -229,7 +229,7 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
     expect(mockHandle.killed).toBe(true);
   });
 
-  it('handles unexpected child exit as crashed without auto-restart [R-RN-06, Test 1]', async () => {
+  it('handles unexpected child exit as crashed without auto-restart [R-RN-06]', async () => {
     const runner = createRunnerService(makeDeps());
     await runner.start();
     mockHandle.triggerMessage({ type: 'ready', port: 52123 });
@@ -250,7 +250,7 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
     expect(spawnedCalls).toHaveLength(1); // Did NOT auto-restart
   });
 
-  it('triggers error timeout when child does not report ready in time [R-RN-05, Test 1]', async () => {
+  it('triggers error timeout when child does not report ready in time [R-RN-05]', async () => {
     const runner = createRunnerService(makeDeps({ startupTimeoutMs: 20 }));
     await runner.start();
 
@@ -262,7 +262,7 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
     expect(mockHandle.killed).toBe(true);
   });
 
-  it('stops cleanly with IPC stop and force kills after grace period [R-RN-07, Test 1]', async () => {
+  it('stops cleanly with IPC stop and force kills after grace period [R-RN-07]', async () => {
     const runner = createRunnerService(makeDeps({ stopGracePeriodMs: 20 }));
     await runner.start();
     mockHandle.triggerMessage({ type: 'ready', port: 52123 });
@@ -278,7 +278,7 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
     expect(runner.getStatus().state).toBe('stopped');
   });
 
-  it('reuses port on restart, falls back to new port if occupied [R-RN-04, Test 4]', async () => {
+  it('reuses port on restart, falls back to new port if occupied [R-RN-04]', async () => {
     const runner = createRunnerService(makeDeps());
     await runner.start();
     const firstOrigin = runner.getStatus().origin;
@@ -299,7 +299,7 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
     expect(secondPort).toBeGreaterThanOrEqual(49152);
   });
 
-  it('verifies spawned child environment has NODE_ENV=development and no secrets [S-53, Test 8]', async () => {
+  it('verifies spawned child environment has NODE_ENV=development and no secrets [S-53]', async () => {
     const runner = createRunnerService(makeDeps());
     await runner.start();
 

@@ -54,6 +54,7 @@ async function setup() {
   bus.subscribe((event) => events.push(event));
   const watch = { start: vi.fn(), stop: vi.fn(() => Promise.resolve()) };
   const runner = { start: vi.fn(() => Promise.resolve()), stop: vi.fn(() => Promise.resolve()) };
+  const history = { clear: vi.fn() };
   const config = await createConfigStore({
     fs: nodeFs,
     dir: configDir,
@@ -72,8 +73,9 @@ async function setup() {
     templateDir: temp.dir,
     runnerService: runner,
     watch,
+    history,
   });
-  return { ...temp, projectDir, events, watch, runner, service };
+  return { ...temp, projectDir, events, watch, runner, history, service };
 }
 
 describe('ProjectService and files changed on disk', () => {
@@ -124,6 +126,42 @@ describe('ProjectService and files changed on disk', () => {
       await t.service.reloadWorkspaceFile();
 
       expect(t.events).toHaveLength(0);
+    } finally {
+      await t.cleanup();
+    }
+  });
+
+  it('closing the project clears its history [R-HI-08]', async () => {
+    const t = await setup();
+    try {
+      await t.service.open(t.projectDir);
+      expect(t.history.clear).not.toHaveBeenCalled();
+
+      await t.service.close();
+
+      expect(t.history.clear).toHaveBeenCalledTimes(1);
+    } finally {
+      await t.cleanup();
+    }
+  });
+
+  it('opening another project clears the history, opening the same one keeps it [R-HI-08]', async () => {
+    const t = await setup();
+    try {
+      const otherDir = join(t.dir, 'work', 'admin');
+      await mkdir(join(otherDir, '.reactcraft'), { recursive: true });
+      await writeSupportedProject(otherDir);
+      await writeFile(
+        join(otherDir, WORKSPACE_FILE),
+        serializeWorkspaceFile({ ...sampleFile, id: 'proj000002', name: 'Admin' }),
+      );
+
+      await t.service.open(t.projectDir);
+      await t.service.open(t.projectDir);
+      expect(t.history.clear).not.toHaveBeenCalled();
+
+      await t.service.open(otherDir);
+      expect(t.history.clear).toHaveBeenCalledTimes(1);
     } finally {
       await t.cleanup();
     }

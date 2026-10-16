@@ -5,12 +5,13 @@ import { create } from 'zustand';
 
 import { createEventsClient, type StudioServerEvent } from '../../api/events-client.ts';
 import { fetchHistoryState, redoHistory, undoHistory } from '../../api/history-client.ts';
-import { ApiError } from '../../api/http.ts';
+import { toErrorInfo } from '../../routes/error-text.ts';
 
+/** The failed Undo/Redo; the Studio translates it where it is shown (R-HI-10, V-80). */
 export type HistoryError = {
   readonly code: string;
   readonly file?: string | undefined;
-  readonly message: string;
+  readonly params?: Readonly<Record<string, unknown>> | undefined;
 };
 
 export type HistoryStoreState = {
@@ -32,18 +33,9 @@ export type HistoryStoreState = {
 };
 
 function parseHistoryError(err: unknown): HistoryError {
-  if (err instanceof ApiError && err.code === 'E017') {
-    const file = typeof err.params?.['file'] === 'string' ? err.params['file'] : undefined;
-    const message =
-      file !== undefined
-        ? `File ${file} đã bị sửa từ nơi khác, không hoàn tác được bước này`
-        : 'File đã bị sửa từ nơi khác, không hoàn tác được bước này';
-    return { code: 'E017', file, message };
-  }
-  return {
-    code: err instanceof ApiError ? (err.code ?? 'API_ERROR') : 'UNKNOWN',
-    message: err instanceof Error ? err.message : 'Unknown error',
-  };
+  const info = toErrorInfo(err);
+  const file = typeof info.params?.['file'] === 'string' ? info.params['file'] : undefined;
+  return { code: info.code, file, params: info.params };
 }
 
 function stateToStore(

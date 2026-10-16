@@ -41,6 +41,8 @@
     "frame": "Frame",
     "zoom": "Zoom",
     "zoomFit": "Fit",
+    "bridgeSilent": "The page Bridge has not connected after 10 seconds. The page may be failing or missing the Bridge plugin.",
+    "showLog": "Show log",
     "modeDesign": "Design",
     "modePreview": "Preview",
     "undo": "Undo ({{shortcut}})",
@@ -71,6 +73,7 @@
     "setClassName": "class change",
     "setText": "text change",
     "setAttribute": "attribute change <{{tag}}>",
+    "dismissError": "Dismiss",
     "errorFileChanged": "File {{file}} was modified externally, cannot undo this step"
   },
   "settings": {
