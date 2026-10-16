@@ -23,7 +23,7 @@ export function ProjectErrorScreen({ version, error }: ProjectErrorScreenProps) 
       <main className="mx-auto grid w-full max-w-2xl flex-1 content-center gap-5 px-2 py-8">
         <h1 className="text-4xl font-light tracking-tight">{t('projectError.title')}</h1>
         <p role="alert" className="text-danger" data-testid="project-error">
-          {errorText(tError, error.code)}
+          {errorText(tError, error.code, error.params)}
         </p>
         {reason === 'unsupportedVersion' && (
           <p className="text-ink-soft">{t('projectError.oldVersion')}</p>

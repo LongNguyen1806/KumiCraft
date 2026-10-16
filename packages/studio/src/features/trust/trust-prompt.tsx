@@ -5,10 +5,9 @@ import type { BackendInfo } from '@reactcraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ApiError } from '../../api/http.ts';
 import { setProjectTrust } from '../../api/project-client.ts';
 import { Dialog } from '../../components/ui/dialog.tsx';
-import { errorText } from '../../routes/error-text.ts';
+import { type ErrorInfo, errorText, toErrorInfo } from '../../routes/error-text.ts';
 
 const askedKey = (id: string) => `reactcraft.trustAsked.${id}`;
 
@@ -145,12 +144,12 @@ function TrustDialogBody({
   projectName,
   projectRoot,
   backends,
-  failedCode,
+  failedInfo,
 }: {
   readonly projectName: string;
   readonly projectRoot?: string | undefined;
   readonly backends?: readonly BackendInfo[] | undefined;
-  readonly failedCode?: string | undefined;
+  readonly failedInfo?: ErrorInfo | undefined;
 }) {
   const { t } = useTranslation();
   const { t: tError } = useTranslation('errors');
@@ -173,9 +172,9 @@ function TrustDialogBody({
       )}
       <TrustBackends backends={backends} />
       <p className="pt-1 text-xs text-ink-faint">{t('trust.restricted')}</p>
-      {failedCode !== undefined && (
+      {failedInfo !== undefined && (
         <p role="alert" className="text-danger">
-          {errorText(tError, failedCode)}
+          {errorText(tError, failedInfo.code, failedInfo.params)}
         </p>
       )}
     </div>
@@ -200,14 +199,14 @@ function TrustDialog({
   onTrusted,
 }: TrustDialogProps) {
   const { t } = useTranslation();
-  const [failedCode, setFailedCode] = useState<string>();
+  const [failedInfo, setFailedInfo] = useState<ErrorInfo>();
   const trust = async () => {
     try {
       await setProjectTrust(true);
       onClose();
       onTrusted();
     } catch (error) {
-      setFailedCode(error instanceof ApiError ? (error.code ?? String(error.status)) : 'network');
+      setFailedInfo(toErrorInfo(error));
     }
   };
   return (
@@ -216,7 +215,7 @@ function TrustDialog({
         projectName={projectName}
         projectRoot={projectRoot}
         backends={backends}
-        failedCode={failedCode}
+        failedInfo={failedInfo}
       />
       <div className="flex flex-wrap gap-2 pt-3">
         <button

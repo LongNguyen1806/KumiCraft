@@ -14,7 +14,7 @@ import {
 
 describe('source schemas and utilities', () => {
   describe('parseLocString', () => {
-    it('parses valid loc string from right to left (V-101, V-102)', () => {
+    it('parses valid loc string from right to left [V-101, V-102]', () => {
       const parsed = parseLocString('src/App.tsx:12:5');
       expect(parsed).toEqual({
         file: 'src/App.tsx',

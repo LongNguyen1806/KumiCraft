@@ -21,7 +21,7 @@ describe('M-SE: Source Editor Service', () => {
     await fs.rm(tmpDir, { recursive: true, force: true });
   });
 
-  it('reads className in static and expression formats (R-SE-04)', async () => {
+  it('reads className in static and expression formats [R-SE-04]', async () => {
     const code = `
 export function Page() {
   return (
@@ -98,7 +98,7 @@ export function Page() {
     }
   });
 
-  it('updates class in static formats preserving quotes (R-SE-05)', async () => {
+  it('updates class in static formats preserving quotes [R-SE-05]', async () => {
     const code = `export function Card() {
   return <div className="p-2 text-white">Hello</div>;
 }`;
@@ -124,7 +124,7 @@ export function Page() {
 }`);
   });
 
-  it('switches to braces when new class contains quotes (R-SE-05)', async () => {
+  it('switches to braces when new class contains quotes [R-SE-05]', async () => {
     const code = `export function Card() {
   return <div className="content-none">Hello</div>;
 }`;
@@ -143,7 +143,7 @@ export function Page() {
     expect(updated).toContain('className={"content-[\\"x\\"]"}');
   });
 
-  it('inserts className when missing and deletes when empty (R-SE-06)', async () => {
+  it('inserts className when missing and deletes when empty [R-SE-06]', async () => {
     const code = `export function Box() {
   return (
     <div>
@@ -179,7 +179,7 @@ export function Page() {
     expect(updated).toContain('<span>text</span>');
   });
 
-  it('validates before matching and tag matching (R-SE-02)', async () => {
+  it('validates before matching and tag matching [R-SE-02]', async () => {
     const code = `export function Button() {
   return <button className="btn-primary">Click</button>;
 }`;
@@ -214,7 +214,7 @@ export function Page() {
     }
   });
 
-  it('reads and edits text with entity encoding and whitespace normalization (R-SE-07, R-SE-08)', async () => {
+  it('reads and edits text with entity encoding and whitespace normalization [R-SE-07, R-SE-08]', async () => {
     const code = `export function Heading() {
   return (
     <h1>
@@ -244,7 +244,7 @@ export function Page() {
     expect(updated).toContain('&lt;Lập trình viên&gt; &#123;2026&#125;');
   });
 
-  it('preserves BOM and CRLF line endings (R-SE-10)', async () => {
+  it('preserves BOM and CRLF line endings [R-SE-10]', async () => {
     const crlfCode =
       '\uFEFFexport function App() {\r\n  return <div className="crlf">CRLF</div>;\r\n}\r\n';
     await fs.writeFile(path.join(tmpDir, 'src/App.tsx'), crlfCode, 'utf8');
@@ -263,7 +263,7 @@ export function Page() {
     expect(updated).toContain('\r\n');
   });
 
-  it('returns changed: false when value is identical (R-SE-12)', async () => {
+  it('returns changed: false when value is identical [R-SE-12]', async () => {
     const code = `export function Test() {
   return <div className="same">test</div>;
 }`;
@@ -283,7 +283,7 @@ export function Page() {
     }
   });
 
-  it('handles editable attributes href, alt, src (R-SE-06)', async () => {
+  it('handles editable attributes href, alt, src [R-SE-06]', async () => {
     const code = `export function LinkImage() {
   return (
     <a href="https://old.com">
@@ -319,7 +319,7 @@ export function Page() {
     expect(updated).toContain('alt="User Avatar"');
   });
 
-  it('rejects invalid syntax modifications with E024 (R-SE-11)', async () => {
+  it('rejects invalid syntax modifications with E024 [R-SE-11]', async () => {
     const code = `export function Safe() {
   return <div className="valid">Safe</div>;
 }`;
@@ -338,7 +338,7 @@ export function Page() {
     expect(res.ok).toBe(true);
   });
 
-  it('detects inLoop when inside map (R-SE-15)', async () => {
+  it('detects inLoop when inside map [R-SE-15]', async () => {
     const code = `export function List({ items }: { items: string[] }) {
   return (
     <ul>
@@ -365,7 +365,7 @@ export function Page() {
     }
   });
 
-  it('rejects files outside sourceDir or not jsx (R-SE-01)', async () => {
+  it('rejects files outside sourceDir or not jsx [R-SE-01]', async () => {
     await fs.writeFile(path.join(tmpDir, 'src/utils.ts'), 'export const a = 1;', 'utf8');
     await fs.writeFile(path.join(tmpDir, 'outside.tsx'), 'export const a = 1;', 'utf8');
 

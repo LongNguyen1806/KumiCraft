@@ -61,7 +61,7 @@ describe('scanDomTree', () => {
     expect(pNode?.parent).toBe(0);
   });
 
-  it('handles multiple instances of the same loc (V-113: instances count, subtree only for first instance)', () => {
+  it('handles multiple instances of the same loc (instances count, subtree only for first instance) [V-113]', () => {
     const root = document.createElement('div');
     root.innerHTML = `
       <div data-rc-loc="List.tsx:1:1">

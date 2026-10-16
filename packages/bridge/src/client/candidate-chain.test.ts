@@ -33,7 +33,7 @@ describe('candidate-chain', () => {
     expect(chain.map((el) => el.id)).toEqual(['outer', 'mid', 'inner', 'target']);
   });
 
-  it('identifies chain root as outermost with >= 2 bridge children (R-SL-01)', () => {
+  it('identifies chain root as outermost with >= 2 bridge children [R-SL-01]', () => {
     document.body.innerHTML = `
       <div id="single-parent" data-rc-loc="App.tsx:1:1">
         <div id="multi-parent" data-rc-loc="App.tsx:2:1">
@@ -65,7 +65,7 @@ describe('candidate-chain', () => {
     expect(root?.id).toBe('outer');
   });
 
-  it('handles normal click progression through candidate chain (R-SL-02)', () => {
+  it('handles normal click progression through candidate chain [R-SL-02]', () => {
     document.body.innerHTML = `
       <div id="container" data-rc-loc="App.tsx:1:1">
         <div id="card" data-rc-loc="App.tsx:2:1">
@@ -97,7 +97,7 @@ describe('candidate-chain', () => {
     expect(siblingSelect?.id).toBe('card');
   });
 
-  it('handles Ctrl/Cmd + click selecting the deepest element (R-SL-03)', () => {
+  it('handles Ctrl/Cmd + click selecting the deepest element [R-SL-03]', () => {
     document.body.innerHTML = `
       <div id="container" data-rc-loc="App.tsx:1:1">
         <div id="card" data-rc-loc="App.tsx:2:1">
@@ -112,7 +112,7 @@ describe('candidate-chain', () => {
     expect(refs).toEqual([{ loc: 'App.tsx:3:1', index: 0 }]);
   });
 
-  it('handles Shift + click toggling elements in selection (R-SL-03)', () => {
+  it('handles Shift + click toggling elements in selection [R-SL-03]', () => {
     document.body.innerHTML = `
       <div id="container" data-rc-loc="App.tsx:1:1">
         <button id="btn1" data-rc-loc="App.tsx:2:1">Btn 1</button>

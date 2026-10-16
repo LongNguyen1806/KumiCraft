@@ -23,7 +23,7 @@ describe('TextEditController [SPEC-04 section 10 M-TX]', () => {
     vi.restoreAllMocks();
   });
 
-  describe('normalizeText (R-SE-08, R-TX-04)', () => {
+  describe('normalizeText [R-SE-08, R-TX-04]', () => {
     it('collapses newlines and multiple spaces, trims whitespace', () => {
       expect(normalizeText('  Hello\nworld  ')).toBe('Hello world');
       expect(normalizeText('\n\n  Multiple   spaces\r\nand tabs\t  ')).toBe(

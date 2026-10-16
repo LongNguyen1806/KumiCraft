@@ -132,9 +132,9 @@ function ElementSections({
           editor.open(source.loc);
         }}
       />
-      {editor.errorCode !== undefined && (
+      {editor.errorInfo !== undefined && (
         <p role="alert" className="text-xs text-danger">
-          {errorText(tError, editor.errorCode)}
+          {errorText(tError, editor.errorInfo.code, editor.errorInfo.params)}
         </p>
       )}
       <OtherClassesSection

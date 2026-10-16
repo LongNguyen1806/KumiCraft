@@ -1,24 +1,156 @@
 {
-  "E001": "Dự án này chưa được hỗ trợ. ReactCraft cần Vite 7 hoặc 8, React 18 hoặc 19 và Tailwind CSS 4.",
-  "E002": "ReactCraft không khởi động được. Xem chi tiết trong terminal.",
-  "E003": "Không đọc được file dự án .reactcraft/workspace.json.",
-  "E011": "Không được phép: hệ điều hành từ chối, hoặc dự án chưa được tin cậy.",
-  "E012": "Đường dẫn này nằm ngoài các thư mục được phép.",
-  "E013": "ReactCraft gặp lỗi bên trong. Chi tiết có trong log ở terminal.",
-  "E014": "Phiên không hợp lệ hoặc đã hết hạn. Hãy mở lại ReactCraft từ đường dẫn in trong terminal.",
-  "E015": "Không tìm thấy mục được yêu cầu.",
-  "E016": "Yêu cầu không hợp lệ.",
-  "E017": "Mã nguồn đã được sửa ở nơi khác sau khi đọc. Đã tải lại.",
-  "E018": "Dự án đang bận hoặc đang mở ở phiên khác.",
-  "E019": "Tác vụ đã bị hủy.",
-  "E020": "Tác vụ chạy quá lâu nên đã dừng.",
-  "E021": "Còn thiếu thứ cần thiết: hãy mở dự án, hoặc cài editor, package manager.",
-  "E023": "Phần tử này không sửa trực quan được. Hãy mở trong editor.",
-  "E024": "Thay đổi này sẽ làm hỏng mã nguồn nên chưa ghi gì cả.",
-  "E025": "Dev server của dự án không khởi động được hoặc đã dừng.",
-  "E026": "Máy này chưa cài hoặc chưa đăng nhập agent AI nào.",
-  "E027": "Agent AI dừng vì lỗi.",
-  "E028": "Cài dependency thất bại.",
-  "network": "Không kết nối được tới server ReactCraft. Server còn chạy không?",
-  "unknown": "Lỗi không xác định ({{code}})."
+  "E001": {
+    "title": "Dự án không được hỗ trợ",
+    "message": "Dự án này chưa được hỗ trợ. ReactCraft cần Vite 7 hoặc 8, React 18 hoặc 19 và Tailwind CSS 4.",
+    "reasons": {
+      "noPackageJson": "Không tìm thấy file package.json.",
+      "noVite": "Dự án chưa cài Vite.",
+      "viteVersion": "Phiên bản Vite không được hỗ trợ.",
+      "noReact": "Dự án chưa cài React.",
+      "reactVersion": "Phiên bản React không được hỗ trợ.",
+      "noTailwind": "Dự án chưa cài Tailwind CSS.",
+      "tailwindVersion": "Phiên bản Tailwind CSS không được hỗ trợ.",
+      "noViteConfig": "Không tìm thấy file cấu hình Vite.",
+      "noTailwindCss": "Không tìm thấy file CSS của Tailwind."
+    }
+  },
+  "E002": {
+    "title": "Khởi động server thất bại",
+    "message": "ReactCraft không khởi động được. Xem chi tiết trong terminal."
+  },
+  "E003": {
+    "title": "Đọc file dự án thất bại",
+    "message": "Không đọc được file dự án .reactcraft/workspace.json.",
+    "reasons": {
+      "tooLarge": "File vượt quá giới hạn kích thước.",
+      "invalid": "Nội dung file không hợp lệ."
+    }
+  },
+  "E011": {
+    "title": "Lỗi phân quyền",
+    "message": "Không được phép: hệ điều hành từ chối, hoặc dự án chưa được tin cậy.",
+    "reasons": {
+      "untrusted": "Dự án chưa được đánh dấu tin cậy."
+    }
+  },
+  "E012": {
+    "title": "Vi phạm an toàn đường dẫn",
+    "message": "Đường dẫn này nằm ngoài các thư mục được phép.",
+    "reasons": {
+      "outsideRoot": "Đường dẫn nằm ngoài thư mục dự án.",
+      "symlink": "Đường dẫn chứa liên kết tượng trưng (symlink).",
+      "tooLong": "Đường dẫn quá dài.",
+      "controlCharacter": "Đường dẫn chứa ký tự điều khiển.",
+      "uncOrDevicePath": "Đường dẫn thiết bị hoặc UNC không được phép.",
+      "driveRelative": "Đường dẫn tương đối với ổ đĩa không được phép.",
+      "alternateDataStream": "Đường dẫn luồng dữ liệu thay thế (ADS) không được phép.",
+      "reservedName": "Tên đường dẫn trùng với tên dành riêng của hệ điều hành.",
+      "driveRoot": "Không được sử dụng thư mục gốc của ổ đĩa.",
+      "homeDir": "Không được sử dụng thư mục người dùng cá nhân (home).",
+      "systemFolder": "Không được sử dụng thư mục hệ thống."
+    }
+  },
+  "E013": {
+    "title": "Lỗi nội bộ",
+    "message": "ReactCraft gặp lỗi bên trong. Chi tiết có trong log ở terminal."
+  },
+  "E014": {
+    "title": "Chưa xác thực",
+    "message": "Phiên không hợp lệ hoặc đã hết hạn. Hãy mở lại ReactCraft từ đường dẫn in trong terminal."
+  },
+  "E015": {
+    "title": "Không tìm thấy",
+    "message": "Không tìm thấy mục được yêu cầu."
+  },
+  "E016": {
+    "title": "Yêu cầu không hợp lệ",
+    "message": "Yêu cầu không hợp lệ.",
+    "reasons": {
+      "notEmpty": "Thư mục đích không trống.",
+      "commandMismatch": "Lệnh cài đặt không khớp với package manager đã cấu hình.",
+      "cannotMatchProjectRoot": "Backend không được trùng với thư mục gốc của dự án.",
+      "duplicateBackend": "Đã có backend trỏ tới đường dẫn này.",
+      "maxBackendsExceeded": "Đã vượt quá số lượng backend tối đa cho phép."
+    }
+  },
+  "E017": {
+    "title": "Mã nguồn đã đổi",
+    "message": "Mã nguồn đã được sửa ở nơi khác sau khi đọc. Đã tải lại.",
+    "reasons": {
+      "moved": "Phần tử đã bị di chuyển hoặc xóa trong mã nguồn.",
+      "valueChanged": "Giá trị thuộc tính trong mã nguồn đã thay đổi.",
+      "fileChanged": "File đã bị thay đổi bên ngoài."
+    }
+  },
+  "E018": {
+    "title": "Hệ thống bận",
+    "message": "Dự án đang bận hoặc đang mở ở phiên khác."
+  },
+  "E019": {
+    "title": "Tác vụ đã hủy",
+    "message": "Tác vụ đã bị hủy."
+  },
+  "E020": {
+    "title": "Hết thời gian xử lý",
+    "message": "Tác vụ chạy quá lâu nên đã dừng."
+  },
+  "E021": {
+    "title": "Chưa cấu hình",
+    "message": "Còn thiếu thứ cần thiết: hãy mở dự án, hoặc cài editor, package manager."
+  },
+  "E023": {
+    "title": "Không thể sửa trực quan",
+    "message": "Phần tử này không sửa trực quan được. Hãy mở trong editor.",
+    "reasons": {
+      "classExpression": "Thuộc tính className sử dụng biểu thức động phức tạp.",
+      "textExpression": "Nội dung văn bản sử dụng biểu thức JSX.",
+      "textMixed": "Văn bản xen lẫn giữa chuỗi tĩnh và biểu thức.",
+      "selfClosing": "Thẻ tự đóng không thể chứa văn bản trực tiếp.",
+      "attrExpression": "Giá trị thuộc tính là một biểu thức động.",
+      "duplicateAttr": "Phần tử có nhiều thuộc tính trùng tên.",
+      "outsideSource": "Phần tử nằm ngoài thư mục mã nguồn được phép sửa.",
+      "tooLarge": "File mã nguồn vượt quá giới hạn kích thước cho phép sửa.",
+      "notJsxFile": "Định dạng file không phải JSX hoặc TSX hợp lệ."
+    }
+  },
+  "E024": {
+    "title": "Sửa làm hỏng mã nguồn",
+    "message": "Thay đổi này sẽ làm hỏng mã nguồn nên chưa ghi gì cả."
+  },
+  "E025": {
+    "title": "Lỗi dev server",
+    "message": "Dev server của dự án không khởi động được hoặc đã dừng.",
+    "reasons": {
+      "notInstalled": "Dự án chưa cài dependencies.",
+      "viteNotFound": "Không tìm thấy binary của Vite.",
+      "config": "Lỗi trong file cấu hình dev server.",
+      "portInUse": "Cổng mạng của dev server đang bị ứng dụng khác sử dụng.",
+      "timeout": "Dev server khởi động quá thời gian cho phép.",
+      "crashed": "Tiến trình dev server bị tắt đột ngột."
+    }
+  },
+  "E026": {
+    "title": "Agent không khả dụng",
+    "message": "Máy này chưa cài hoặc chưa đăng nhập agent AI nào.",
+    "reasons": {
+      "notInstalled": "CLI của agent AI chưa được cài đặt.",
+      "notLoggedIn": "Chưa đăng nhập tài khoản cho agent AI."
+    }
+  },
+  "E027": {
+    "title": "Chạy agent thất bại",
+    "message": "Agent AI dừng vì lỗi."
+  },
+  "E028": {
+    "title": "Cài dependency thất bại",
+    "message": "Cài dependency thất bại."
+  },
+  "network": {
+    "title": "Lỗi kết nối",
+    "message": "Không kết nối được tới server ReactCraft. Server còn chạy không?"
+  },
+  "unknown": {
+    "title": "Lỗi không xác định",
+    "message": "Lỗi không xác định ({{code}})."
+  }
 }

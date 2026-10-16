@@ -1,4 +1,9 @@
-import { execFile, type Serializable, spawn as nodeSpawn } from 'node:child_process';
+import {
+  type ChildProcess,
+  execFile,
+  type Serializable,
+  spawn as nodeSpawn,
+} from 'node:child_process';
 import { createInterface } from 'node:readline';
 
 import crossSpawn from 'cross-spawn';
@@ -29,57 +34,102 @@ export function sanitizeEnvironment(
   return result;
 }
 
-export function createNodeProcess(): ProcessPort {
-  return {
-    spawn(command: string, args: readonly string[], options: SpawnOptions): ChildProcessHandle {
-      const isWin = process.platform === 'win32';
-      const env = sanitizeEnvironment(process.env, options.env);
+async function killProcessTree(pid: number | undefined, isWin: boolean): Promise<void> {
+  if (pid === undefined || pid <= 0) return;
+  if (isWin) {
+    await new Promise<void>((res) => {
+      execFile('taskkill', ['/T', '/F', '/PID', pid.toString()], () => {
+        res();
+      });
+    });
+  } else {
+    try {
+      process.kill(-pid, 'SIGKILL');
+    } catch {
+      try {
+        process.kill(pid, 'SIGKILL');
+      } catch {
+        // ignore
+      }
+    }
+  }
+}
 
-      // S-51: Fixed argument array, no shell; on Windows use cross-spawn to resolve batch files
-      // If IPC is requested, nodeSpawn is used with an 'ipc' channel (R-RN-02)
-      const stdio = options.ipc
-        ? (['ignore', 'pipe', 'pipe', 'ipc'] as const)
-        : (['ignore', 'pipe', 'pipe'] as const);
-      const spawnFn = options.ipc ? nodeSpawn : isWin ? crossSpawn : nodeSpawn;
-      const child = spawnFn(command, [...args], {
+type OutputBuffer = {
+  readonly lines: readonly string[];
+  readonly getStdout: () => string;
+  readonly getStderr: () => string;
+  readonly addListener: (cb: (line: string) => void) => void;
+};
+
+function setupOutputBuffer(child: ChildProcess): OutputBuffer {
+  const lines: string[] = [];
+  const listeners: ((line: string) => void)[] = [];
+  let stdoutAccum = '';
+  let stderrAccum = '';
+
+  const handleLine = (line: string) => {
+    lines.push(line);
+    if (lines.length > 500) lines.shift();
+    for (const cb of listeners) cb(line);
+  };
+
+  if (child.stdout) {
+    const rlOut = createInterface({ input: child.stdout });
+    rlOut.on('line', (line) => {
+      stdoutAccum += `${line}\n`;
+      handleLine(line);
+    });
+  }
+
+  if (child.stderr) {
+    const rlErr = createInterface({ input: child.stderr });
+    rlErr.on('line', (line) => {
+      stderrAccum += `${line}\n`;
+      handleLine(line);
+    });
+  }
+
+  return {
+    lines,
+    getStdout: () => stdoutAccum,
+    getStderr: () => stderrAccum,
+    addListener: (cb) => {
+      listeners.push(cb);
+    },
+  };
+}
+
+function spawnChild(
+  command: string,
+  args: readonly string[],
+  options: SpawnOptions,
+  isWin: boolean,
+): ChildProcess {
+  const env = sanitizeEnvironment(process.env, options.env);
+  return options.ipc
+    ? nodeSpawn(command, [...args], {
         cwd: options.cwd,
         env,
         shell: false,
         windowsHide: true,
-        stdio: stdio as unknown as ['ignore', 'pipe', 'pipe'],
+        stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
+      })
+    : (isWin ? crossSpawn : nodeSpawn)(command, [...args], {
+        cwd: options.cwd,
+        env,
+        shell: false,
+        windowsHide: true,
+        stdio: ['ignore', 'pipe', 'pipe'],
       });
+}
 
-      const lines: string[] = [];
-      const listeners: ((line: string) => void)[] = [];
-
-      let stdoutAccum = '';
-      let stderrAccum = '';
-
-      const handleLine = (line: string) => {
-        lines.push(line);
-        if (lines.length > 500) {
-          lines.shift();
-        }
-        for (const cb of listeners) {
-          cb(line);
-        }
-      };
-
-      if (child.stdout) {
-        const rlOut = createInterface({ input: child.stdout });
-        rlOut.on('line', (line) => {
-          stdoutAccum += `${line}\n`;
-          handleLine(line);
-        });
-      }
-
-      if (child.stderr) {
-        const rlErr = createInterface({ input: child.stderr });
-        rlErr.on('line', (line) => {
-          stderrAccum += `${line}\n`;
-          handleLine(line);
-        });
-      }
+export function createNodeProcess(): ProcessPort {
+  return {
+    spawn(command: string, args: readonly string[], options: SpawnOptions): ChildProcessHandle {
+      const isWin = process.platform === 'win32';
+      const child = spawnChild(command, args, options, isWin);
+      const buffer = setupOutputBuffer(child);
 
       let timeoutTimer: NodeJS.Timeout | undefined;
       let timedOut = false;
@@ -89,54 +139,28 @@ export function createNodeProcess(): ProcessPort {
         child.on('error', () => {
           spawnFailed = true;
           if (timeoutTimer !== undefined) clearTimeout(timeoutTimer);
-          resolve(127); // Command not found / failed to spawn
+          resolve(127);
         });
         child.on('close', (code) => {
           if (timeoutTimer !== undefined) clearTimeout(timeoutTimer);
-          if (!spawnFailed) {
-            resolve(code ?? 1);
-          }
+          if (!spawnFailed) resolve(code ?? 1);
         });
       });
 
       if (options.timeoutMs !== undefined && options.timeoutMs > 0) {
         timeoutTimer = setTimeout(() => {
           timedOut = true;
-          void killProcessTree(child.pid);
+          void killProcessTree(child.pid, isWin);
         }, options.timeoutMs);
-      }
-
-      async function killProcessTree(pid?: number): Promise<void> {
-        if (pid === undefined || pid <= 0) return;
-        if (isWin) {
-          await new Promise<void>((res) => {
-            execFile('taskkill', ['/T', '/F', '/PID', pid.toString()], () => {
-              res();
-            });
-          });
-        } else {
-          try {
-            process.kill(-pid, 'SIGKILL');
-          } catch {
-            try {
-              process.kill(pid, 'SIGKILL');
-            } catch {
-              // ignore
-            }
-          }
-        }
       }
 
       return {
         pid: child.pid,
         onLine(cb) {
-          listeners.push(cb);
+          buffer.addListener(cb);
         },
         send(message: unknown): boolean {
-          if (typeof child.send === 'function') {
-            return child.send(message as Serializable);
-          }
-          return false;
+          return typeof child.send === 'function' ? child.send(message as Serializable) : false;
         },
         onMessage(cb: (message: unknown) => void) {
           child.on('message', cb);
@@ -145,14 +169,14 @@ export function createNodeProcess(): ProcessPort {
           const exitCode = await exitPromise;
           return {
             exitCode: timedOut ? 124 : exitCode,
-            stdout: stdoutAccum,
-            stderr: stderrAccum,
-            lines: [...lines],
+            stdout: buffer.getStdout(),
+            stderr: buffer.getStderr(),
+            lines: [...buffer.lines],
           };
         },
         async kill(): Promise<void> {
           if (timeoutTimer !== undefined) clearTimeout(timeoutTimer);
-          await killProcessTree(child.pid);
+          await killProcessTree(child.pid, isWin);
         },
       };
     },

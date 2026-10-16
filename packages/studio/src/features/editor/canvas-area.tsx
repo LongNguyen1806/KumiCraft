@@ -179,9 +179,9 @@ export function CanvasArea(props: CanvasAreaProps) {
         onOpenEditor={textEdit.openEditorForWarning}
         onDismiss={textEdit.dismissWarning}
       />
-      {editor.errorCode !== undefined && (
+      {editor.errorInfo !== undefined && (
         <p role="alert" className="px-4 text-xs text-danger" data-testid="open-editor-error">
-          {errorText(tError, editor.errorCode)}
+          {errorText(tError, editor.errorInfo.code, editor.errorInfo.params)}
         </p>
       )}
       <CanvasViewport

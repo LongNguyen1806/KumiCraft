@@ -29,7 +29,7 @@ describe('M-HI: History Service', () => {
     await fs.rm(tmpDir, { recursive: true, force: true });
   });
 
-  it('handles 3 edits → Undo ×3 → Redo ×3 preserving exact byte content (R-HI-01, R-HI-06)', async () => {
+  it('handles 3 edits → Undo ×3 → Redo ×3 preserving exact byte content [R-HI-01, R-HI-06]', async () => {
     const filePath = 'src/App.tsx';
     const fullPath = path.join(tmpDir, filePath);
     await fs.mkdir(path.dirname(fullPath), { recursive: true });
@@ -120,7 +120,7 @@ describe('M-HI: History Service', () => {
     expect(history.getState().redoCount).toBe(0);
   });
 
-  it('coalesces edits with same key within 500 ms (R-HI-02)', () => {
+  it('coalesces edits with same key within 500 ms [R-HI-02]', () => {
     const history = createHistoryService({ fs: nodeFs, now: fakeNow });
     const filePath = 'src/App.tsx';
 
@@ -163,7 +163,7 @@ describe('M-HI: History Service', () => {
     expect(history.getState().undoCount).toBe(2);
   });
 
-  it('does not coalesce if an undo happened in between (R-HI-02)', async () => {
+  it('does not coalesce if an undo happened in between [R-HI-02]', async () => {
     const filePath = 'src/App.tsx';
     const fullPath = path.join(tmpDir, filePath);
     await fs.mkdir(path.dirname(fullPath), { recursive: true });
@@ -209,7 +209,7 @@ describe('M-HI: History Service', () => {
     expect(history.getState().redoCount).toBe(0);
   });
 
-  it('clears redo stack on new edit (R-HI-03)', async () => {
+  it('clears redo stack on new edit [R-HI-03]', async () => {
     const filePath = 'src/App.tsx';
     const fullPath = path.join(tmpDir, filePath);
     await fs.mkdir(path.dirname(fullPath), { recursive: true });
@@ -251,7 +251,7 @@ describe('M-HI: History Service', () => {
     expect(history.getState().undoCount).toBe(1);
   });
 
-  it('discards steps of file A when file A is edited externally (R-HI-04, R-HI-05)', () => {
+  it('discards steps of file A when file A is edited externally [R-HI-04, R-HI-05]', () => {
     const bus = createEventBus();
     let historyChangedFired = false;
     let filesChangedFired = false;
@@ -304,7 +304,7 @@ describe('M-HI: History Service', () => {
     expect(history.getState().undoCount).toBe(1);
   });
 
-  it('ignores external change event when hash matches ReactCraft last write (R-HI-05)', () => {
+  it('ignores external change event when hash matches ReactCraft last write [R-HI-05]', () => {
     const bus = createEventBus();
     let filesChangedFired = false;
     bus.subscribe((e) => {
@@ -334,7 +334,7 @@ describe('M-HI: History Service', () => {
     expect(history.getState().undoCount).toBe(1);
   });
 
-  it('detects file change on Undo when watcher has not reported yet (R-HI-04, R-HI-07)', async () => {
+  it('detects file change on Undo when watcher has not reported yet [R-HI-04, R-HI-07]', async () => {
     const filePath = 'src/App.tsx';
     const fullPath = path.join(tmpDir, filePath);
     await fs.mkdir(path.dirname(fullPath), { recursive: true });
@@ -369,7 +369,7 @@ describe('M-HI: History Service', () => {
     expect(history.getState().undoCount).toBe(0);
   });
 
-  it('limits history to 200 items (R-HI-07)', () => {
+  it('limits history to 200 items [R-HI-07]', () => {
     const history = createHistoryService({ fs: nodeFs, now: fakeNow });
     for (let i = 0; i < 210; i++) {
       currentTime += 1000;
@@ -401,7 +401,7 @@ describe('M-HI: History Service', () => {
     if (!r.ok) expect(r.error.code).toBe('E015');
   });
 
-  it('rolls back already written files if multi-file undo fails (R-HI-06)', async () => {
+  it('rolls back already written files if multi-file undo fails [R-HI-06]', async () => {
     const f1 = 'src/F1.tsx';
     const f2 = 'src/F2.tsx';
     const full1 = path.join(tmpDir, f1);

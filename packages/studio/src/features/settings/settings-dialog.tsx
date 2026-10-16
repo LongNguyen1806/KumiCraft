@@ -137,7 +137,7 @@ function SaveStatus() {
   if (save.status === 'failed') {
     return (
       <p role="alert" className="pt-2 text-danger">
-        {errorText(tError, save.code)}
+        {errorText(tError, save.info.code, save.info.params)}
       </p>
     );
   }

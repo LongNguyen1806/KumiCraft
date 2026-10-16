@@ -55,9 +55,18 @@ function sendToParent(message: RunnerToParentMessage): void {
 
 let devServer: ViteDevServer | undefined;
 
+function isViteModule(value: unknown): value is ViteModule {
+  if (!value || typeof value !== 'object') return false;
+  return 'createServer' in value && typeof value.createServer === 'function';
+}
+
 async function createAndListenVite(vitePath: string, options: RunnerOptions): Promise<void> {
   const viteUrl = pathToFileURL(vitePath).href;
-  const vite = (await import(viteUrl)) as unknown as ViteModule;
+  const rawModule: unknown = await import(viteUrl);
+  if (!isViteModule(rawModule)) {
+    throw new Error(`Invalid Vite module at ${vitePath}`);
+  }
+  const vite = rawModule;
 
   const bridgePlugin = createReactCraftBridgePlugin({
     rootDir: options.root,

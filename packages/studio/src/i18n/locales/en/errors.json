@@ -1,24 +1,156 @@
 {
-  "E001": "This project is not supported. ReactCraft needs Vite 7 or 8, React 18 or 19 and Tailwind CSS 4.",
-  "E002": "ReactCraft could not start. Check the terminal for details.",
-  "E003": "The project file .reactcraft/workspace.json could not be read.",
-  "E011": "Access was refused: the operating system denied it, or the project is not trusted yet.",
-  "E012": "This path is outside the allowed folders.",
-  "E013": "Something went wrong inside ReactCraft. Details are in the terminal log.",
-  "E014": "This session is invalid or has expired. Open ReactCraft again from the link shown in the terminal.",
-  "E015": "The requested item was not found.",
-  "E016": "The request is invalid.",
-  "E017": "The source code changed elsewhere since it was read. It was reloaded.",
-  "E018": "The project is busy or open in another session.",
-  "E019": "The task was cancelled.",
-  "E020": "The task took too long and was stopped.",
-  "E021": "Something required is missing: open a project, or install the editor or package manager.",
-  "E023": "This element cannot be edited visually. Open it in your editor.",
-  "E024": "The change would break the source code, so nothing was written.",
-  "E025": "The dev server of the project could not start or stopped.",
-  "E026": "No AI agent is installed or signed in on this computer.",
-  "E027": "The AI agent stopped with an error.",
-  "E028": "Installing the dependencies failed.",
-  "network": "Cannot reach the ReactCraft server. Is it still running?",
-  "unknown": "Unexpected error ({{code}})."
+  "E001": {
+    "title": "Unsupported Project",
+    "message": "This project is not supported. ReactCraft needs Vite 7 or 8, React 18 or 19 and Tailwind CSS 4.",
+    "reasons": {
+      "noPackageJson": "No package.json file found.",
+      "noVite": "Vite is not installed.",
+      "viteVersion": "Vite version is not supported.",
+      "noReact": "React is not installed.",
+      "reactVersion": "React version is not supported.",
+      "noTailwind": "Tailwind CSS is not installed.",
+      "tailwindVersion": "Tailwind CSS version is not supported.",
+      "noViteConfig": "Vite configuration file not found.",
+      "noTailwindCss": "Tailwind CSS file not found."
+    }
+  },
+  "E002": {
+    "title": "Server Init Failed",
+    "message": "ReactCraft could not start. Check the terminal for details."
+  },
+  "E003": {
+    "title": "Workspace Load Failed",
+    "message": "The project file .reactcraft/workspace.json could not be read.",
+    "reasons": {
+      "tooLarge": "File exceeds the size limit.",
+      "invalid": "File content is invalid."
+    }
+  },
+  "E011": {
+    "title": "Permission Error",
+    "message": "Access was refused: the operating system denied it, or the project is not trusted yet.",
+    "reasons": {
+      "untrusted": "The project is not trusted yet."
+    }
+  },
+  "E012": {
+    "title": "Path Security Violation",
+    "message": "This path is outside the allowed folders.",
+    "reasons": {
+      "outsideRoot": "Path is outside the project root.",
+      "symlink": "Path contains a symbolic link.",
+      "tooLong": "Path is too long.",
+      "controlCharacter": "Path contains control characters.",
+      "uncOrDevicePath": "UNC or device path is not allowed.",
+      "driveRelative": "Drive-relative path is not allowed.",
+      "alternateDataStream": "Alternate data stream path is not allowed.",
+      "reservedName": "Path name is reserved by the operating system.",
+      "driveRoot": "Drive root directory is not allowed.",
+      "homeDir": "Home directory is not allowed.",
+      "systemFolder": "System folder is not allowed."
+    }
+  },
+  "E013": {
+    "title": "Internal Error",
+    "message": "Something went wrong inside ReactCraft. Details are in the terminal log."
+  },
+  "E014": {
+    "title": "Unauthorized",
+    "message": "This session is invalid or has expired. Open ReactCraft again from the link shown in the terminal."
+  },
+  "E015": {
+    "title": "Not Found",
+    "message": "The requested item was not found."
+  },
+  "E016": {
+    "title": "Invalid Request",
+    "message": "The request is invalid.",
+    "reasons": {
+      "notEmpty": "Target directory is not empty.",
+      "commandMismatch": "Install command does not match the configured package manager.",
+      "cannotMatchProjectRoot": "Backend directory cannot match the project root.",
+      "duplicateBackend": "A backend already exists for this path.",
+      "maxBackendsExceeded": "Maximum number of backends exceeded."
+    }
+  },
+  "E017": {
+    "title": "Source Changed",
+    "message": "The source code changed elsewhere since it was read. It was reloaded.",
+    "reasons": {
+      "moved": "Element was moved or deleted in the source code.",
+      "valueChanged": "Attribute value changed in the source code.",
+      "fileChanged": "File was modified externally."
+    }
+  },
+  "E018": {
+    "title": "Busy",
+    "message": "The project is busy or open in another session."
+  },
+  "E019": {
+    "title": "Cancelled",
+    "message": "The task was cancelled."
+  },
+  "E020": {
+    "title": "Timeout",
+    "message": "The task took too long and was stopped."
+  },
+  "E021": {
+    "title": "Not Configured",
+    "message": "Something required is missing: open a project, or install the editor or package manager."
+  },
+  "E023": {
+    "title": "Source Not Editable",
+    "message": "This element cannot be edited visually. Open it in your editor.",
+    "reasons": {
+      "classExpression": "The className attribute uses a dynamic expression.",
+      "textExpression": "Text content uses a JSX expression.",
+      "textMixed": "Text contains a mix of static text and expressions.",
+      "selfClosing": "Self-closing tag cannot contain direct text.",
+      "attrExpression": "Attribute value is a dynamic expression.",
+      "duplicateAttr": "Element has duplicate attribute names.",
+      "outsideSource": "Element is outside the allowed source directory.",
+      "tooLarge": "Source file exceeds the maximum editable size limit.",
+      "notJsxFile": "File is not a valid JSX or TSX file."
+    }
+  },
+  "E024": {
+    "title": "Edit Breaks Source",
+    "message": "The change would break the source code, so nothing was written."
+  },
+  "E025": {
+    "title": "Dev Server Error",
+    "message": "The dev server of the project could not start or stopped.",
+    "reasons": {
+      "notInstalled": "Project dependencies are not installed.",
+      "viteNotFound": "Vite binary was not found.",
+      "config": "Error in dev server configuration.",
+      "portInUse": "Dev server port is already in use.",
+      "timeout": "Dev server timed out during startup.",
+      "crashed": "Dev server process terminated unexpectedly."
+    }
+  },
+  "E026": {
+    "title": "Agent Not Available",
+    "message": "No AI agent is installed or signed in on this computer.",
+    "reasons": {
+      "notInstalled": "AI agent CLI is not installed.",
+      "notLoggedIn": "Not logged in to the AI agent account."
+    }
+  },
+  "E027": {
+    "title": "Agent Run Failed",
+    "message": "The AI agent stopped with an error."
+  },
+  "E028": {
+    "title": "Install Failed",
+    "message": "Installing the dependencies failed."
+  },
+  "network": {
+    "title": "Network Error",
+    "message": "Cannot reach the ReactCraft server. Is it still running?"
+  },
+  "unknown": {
+    "title": "Unknown Error",
+    "message": "Unexpected error ({{code}})."
+  }
 }

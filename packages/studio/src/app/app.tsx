@@ -11,7 +11,9 @@ export function App() {
   const connection = useConnection(state.status === 'ready', reload);
 
   if (state.status === 'loading') return <LoadingScreen />;
-  if (state.status === 'failed') return <SessionErrorScreen code={state.code} />;
+  if (state.status === 'failed') {
+    return <SessionErrorScreen code={state.code} errorInfo={state.info} />;
+  }
 
   const isOffline = connection === 'offline';
   return (

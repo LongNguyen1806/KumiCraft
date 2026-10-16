@@ -49,7 +49,7 @@ describe('LayerTree', () => {
     expect(screen.getByText('editor.layersHint')).toBeDefined();
   });
 
-  it('renders nodes with tag, label, instances badge, and component badge (R-SL-08)', () => {
+  it('renders nodes with tag, label, instances badge, and component badge [R-SL-08]', () => {
     act(() => {
       useSelectionStore.getState().setTree(sampleNodes);
     });
@@ -76,7 +76,7 @@ describe('LayerTree', () => {
     expect(componentBadges.some((b) => b.textContent === 'Card')).toBe(true);
   });
 
-  it('collapses and expands child nodes (R-SL-07)', () => {
+  it('collapses and expands child nodes [R-SL-07]', () => {
     act(() => {
       useSelectionStore.getState().setTree(sampleNodes);
     });
@@ -98,7 +98,7 @@ describe('LayerTree', () => {
     expect(screen.queryByText('h1')).toBeNull();
   });
 
-  it('notifies onSelect and onHover with 2-way sync (R-SL-09)', () => {
+  it('notifies onSelect and onHover with 2-way sync [R-SL-09]', () => {
     const handleSelect = vi.fn();
     const handleHover = vi.fn();
 
@@ -133,7 +133,7 @@ describe('LayerTree', () => {
     expect(handleHover).toHaveBeenCalledWith(undefined);
   });
 
-  it('handles Escape key to select parent node (R-SL-04)', () => {
+  it('handles Escape key to select parent node [R-SL-04]', () => {
     const handleSelect = vi.fn();
     const h1Node = sampleNodes[2];
 

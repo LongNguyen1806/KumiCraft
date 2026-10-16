@@ -39,13 +39,26 @@ const projectInfo = {
   trusted: false,
 };
 
+const mockWorkspaceFile: WorkspaceFile = {
+  schemaVersion: 2,
+  id: 'shop000001',
+  name: 'Shop',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  framework: 'vite-react',
+  sourceDir: 'src',
+  backends: [],
+  responsiveMode: 'desktop-first',
+  frames: [{ id: 'desktop', label: 'Desktop', width: 1440, height: 900 }],
+  primaryFrameId: 'desktop',
+};
+
 const mockProjectService: ProjectService = {
   state: () =>
     isOpen
       ? {
           status: 'open',
           root: '/projects/shop',
-          file: {} as unknown as WorkspaceFile,
+          file: mockWorkspaceFile,
           support: projectInfo.support,
           trusted: trusted ?? false,
           needsInstall: false,

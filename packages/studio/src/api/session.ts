@@ -27,10 +27,42 @@ export type SessionInfo = {
   readonly project: ProjectState;
 };
 
+function isProjectState(value: unknown): value is ProjectState {
+  if (!isRecord(value) || typeof value['state'] !== 'string') return false;
+  if (value['state'] === 'none') {
+    return value['suggestedPath'] === undefined || typeof value['suggestedPath'] === 'string';
+  }
+  if (value['state'] === 'open') {
+    return (
+      typeof value['id'] === 'string' &&
+      typeof value['name'] === 'string' &&
+      typeof value['trusted'] === 'boolean'
+    );
+  }
+  if (value['state'] === 'error') {
+    return isRecord(value['error']) && typeof value['error']['code'] === 'string';
+  }
+  return false;
+}
+
+function isPlatform(value: unknown): value is 'win32' | 'darwin' | 'linux' {
+  return value === 'win32' || value === 'darwin' || value === 'linux';
+}
+
+function isSessionInfo(data: unknown): data is SessionInfo {
+  return (
+    isRecord(data) &&
+    typeof data['version'] === 'string' &&
+    isPlatform(data['platform']) &&
+    Array.isArray(data['features']) &&
+    isProjectState(data['project'])
+  );
+}
+
 export async function fetchSession(): Promise<SessionInfo> {
   const data = await apiGet('session');
-  if (!isRecord(data) || typeof data['version'] !== 'string' || !isRecord(data['project'])) {
+  if (!isSessionInfo(data)) {
     throw new ApiError(200, undefined);
   }
-  return data as unknown as SessionInfo;
+  return data;
 }

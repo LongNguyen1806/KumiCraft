@@ -30,12 +30,6 @@ const STATIC_SOURCE: ElementSource = {
   inLoop: false,
 };
 
-function createMockIframeWindow(): Window {
-  return {
-    postMessage: vi.fn(),
-  } as unknown as Window;
-}
-
 describe('useCanvasTextEdit (SPEC-04 section 10 M-TX, R-TX-01..08)', () => {
   let channel: BridgeChannel;
   let mockWindow: Window;
@@ -46,8 +40,9 @@ describe('useCanvasTextEdit (SPEC-04 section 10 M-TX, R-TX-01..08)', () => {
     vi.clearAllMocks();
     useSelectionStore.getState().reset();
     channel = new BridgeChannel();
-    mockWindow = createMockIframeWindow();
-    channel.attach(mockWindow, 'http://localhost:3000', 'test-nonce');
+    mockWindow = window;
+    vi.spyOn(mockWindow, 'postMessage').mockImplementation(() => {});
+    channel.attach(mockWindow, window.location.origin, 'test-nonce');
     startTextEditSpy = vi.spyOn(channel, 'startTextEdit');
     endTextEditSpy = vi.spyOn(channel, 'endTextEdit');
   });

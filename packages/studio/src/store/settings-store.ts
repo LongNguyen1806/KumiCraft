@@ -3,7 +3,6 @@
 import i18next from 'i18next';
 import { create } from 'zustand';
 
-import { ApiError } from '../api/http.ts';
 import {
   fetchSettings,
   type InterfaceLanguage,
@@ -11,10 +10,11 @@ import {
   type SettingsPatch,
   updateSettings,
 } from '../api/settings-client.ts';
+import { type ErrorInfo, toErrorInfo } from '../routes/error-text.ts';
 
 export type SaveState =
   | { readonly status: 'idle' | 'saving' | 'saved' }
-  | { readonly status: 'failed'; readonly code: string };
+  | { readonly status: 'failed'; readonly info: ErrorInfo; readonly code: string };
 
 export type SettingsState = {
   readonly settings: Settings | undefined;
@@ -25,9 +25,6 @@ export type SettingsState = {
   /** Switches the interface at once (no reload, ADR-FE-16) and remembers the choice. */
   readonly setLanguage: (language: InterfaceLanguage) => Promise<void>;
 };
-
-const codeOf = (error: unknown): string =>
-  error instanceof ApiError ? (error.code ?? String(error.status)) : 'network';
 
 function merge(settings: Settings | undefined, patch: SettingsPatch): Settings | undefined {
   if (settings === undefined) return undefined;
@@ -60,7 +57,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     try {
       set({ settings: await updateSettings(patch), save: { status: 'saved' } });
     } catch (error) {
-      set({ settings: before, save: { status: 'failed', code: codeOf(error) } });
+      const info = toErrorInfo(error);
+      set({ settings: before, save: { status: 'failed', info, code: info.code } });
     }
   },
   setLanguage: async (language) => {

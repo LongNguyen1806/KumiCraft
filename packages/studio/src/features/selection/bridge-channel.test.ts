@@ -11,25 +11,32 @@ const currentNonce = 'nonce-abc1234567890123';
 
 describe('BridgeChannel', () => {
   let channel: BridgeChannel;
-  let fakeIframeWindow: { postMessage: ReturnType<typeof vi.fn> };
+  let iframe: HTMLIFrameElement;
+  let fakeIframeWindow: Window;
+  let postMessageSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     useSelectionStore.getState().reset();
     useCanvasErrorStore.getState().reset();
-    fakeIframeWindow = {
-      postMessage: vi.fn(),
-    };
+    iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    if (!iframe.contentWindow) {
+      throw new Error('Missing iframe contentWindow');
+    }
+    fakeIframeWindow = iframe.contentWindow;
+    postMessageSpy = vi.spyOn(fakeIframeWindow, 'postMessage').mockImplementation(() => {});
     channel = new BridgeChannel();
-    channel.attach(fakeIframeWindow as unknown as Window, runnerOrigin, currentNonce);
+    channel.attach(fakeIframeWindow, runnerOrigin, currentNonce);
   });
 
   afterEach(() => {
     channel.detach();
+    iframe.remove();
   });
 
   it('sends messages with correct envelope and target origin [V-110]', () => {
     channel.setMode('preview');
-    expect(fakeIframeWindow.postMessage).toHaveBeenCalledWith(
+    expect(postMessageSpy).toHaveBeenCalledWith(
       {
         rc: 1,
         nonce: currentNonce,
@@ -63,7 +70,7 @@ describe('BridgeChannel', () => {
       new MessageEvent('message', {
         data: validPayload,
         origin: 'http://malicious-site.com',
-        source: fakeIframeWindow as unknown as Window,
+        source: fakeIframeWindow,
       }),
     );
     expect(useSelectionStore.getState().hoveredRef).toBeUndefined();
@@ -73,7 +80,7 @@ describe('BridgeChannel', () => {
       new MessageEvent('message', {
         data: { ...validPayload, nonce: 'wrong-nonce' },
         origin: runnerOrigin,
-        source: fakeIframeWindow as unknown as Window,
+        source: fakeIframeWindow,
       }),
     );
     expect(useSelectionStore.getState().hoveredRef).toBeUndefined();
@@ -99,7 +106,7 @@ describe('BridgeChannel', () => {
           },
         },
         origin: runnerOrigin,
-        source: fakeIframeWindow as unknown as Window,
+        source: fakeIframeWindow,
       }),
     );
     expect(useSelectionStore.getState().treeNodes).toHaveLength(1);
@@ -117,7 +124,7 @@ describe('BridgeChannel', () => {
           },
         },
         origin: runnerOrigin,
-        source: fakeIframeWindow as unknown as Window,
+        source: fakeIframeWindow,
       }),
     );
     expect(useSelectionStore.getState().selectedRefs).toHaveLength(1);
@@ -146,7 +153,7 @@ describe('BridgeChannel', () => {
           },
         },
         origin: runnerOrigin,
-        source: fakeIframeWindow as unknown as Window,
+        source: fakeIframeWindow,
       }),
     );
 
@@ -168,7 +175,7 @@ describe('BridgeChannel', () => {
           },
         },
         origin: runnerOrigin,
-        source: fakeIframeWindow as unknown as Window,
+        source: fakeIframeWindow,
       }),
     );
 
@@ -193,7 +200,7 @@ describe('BridgeChannel', () => {
           payload: {},
         },
         origin: runnerOrigin,
-        source: fakeIframeWindow as unknown as Window,
+        source: fakeIframeWindow,
       }),
     );
 
@@ -212,7 +219,7 @@ describe('BridgeChannel', () => {
           },
         },
         origin: runnerOrigin,
-        source: fakeIframeWindow as unknown as Window,
+        source: fakeIframeWindow,
       }),
     );
 
@@ -233,7 +240,7 @@ describe('BridgeChannel', () => {
           },
         },
         origin: runnerOrigin,
-        source: fakeIframeWindow as unknown as Window,
+        source: fakeIframeWindow,
       }),
     );
 

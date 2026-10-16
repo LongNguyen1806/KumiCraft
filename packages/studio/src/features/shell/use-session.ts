@@ -1,17 +1,14 @@
 // Session of the Studio (SPEC-03 section 5.1): which screen to show follows its project state.
 import { useCallback, useEffect, useState } from 'react';
 
-import { ApiError } from '../../api/http.ts';
 import { fetchSession, type SessionInfo } from '../../api/session.ts';
+import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';
 import { useSettingsStore } from '../../store/settings-store.ts';
 
 export type SessionState =
   | { readonly status: 'loading' }
   | { readonly status: 'ready'; readonly session: SessionInfo }
-  | { readonly status: 'failed'; readonly code: string };
-
-const errorCode = (error: unknown): string =>
-  error instanceof ApiError ? (error.code ?? String(error.status)) : 'network';
+  | { readonly status: 'failed'; readonly info: ErrorInfo; readonly code: string };
 
 /**
  * Loads `GET /session`. `reload` refreshes it in place: the current screen stays until the new
@@ -29,7 +26,10 @@ export function useSession(): { readonly state: SessionState; readonly reload: (
         const [session] = await Promise.all([fetchSession(), useSettingsStore.getState().load()]);
         if (isActive) setState({ status: 'ready', session });
       } catch (error) {
-        if (isActive) setState({ status: 'failed', code: errorCode(error) });
+        if (isActive) {
+          const info = toErrorInfo(error);
+          setState({ status: 'failed', info, code: info.code });
+        }
       }
     };
     void load();

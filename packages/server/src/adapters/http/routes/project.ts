@@ -36,7 +36,7 @@ const AddBackendSchema = z.strictObject({
   label: z.string().min(1).max(64).optional(),
 });
 
-export function registerProjectRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
+function registerOpenCreateRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
   api.get('/project/probe', async (request, reply) => {
     const query = request.query as { path?: string };
     if (!query.path || query.path.trim().length === 0) {
@@ -71,7 +71,9 @@ export function registerProjectRoutes(api: FastifyInstance, deps: ProjectRoutesD
     reply.status(201);
     return { data: result.value };
   });
+}
 
+function registerStateRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
   api.get('/project', async (_request, reply) => {
     const result = deps.projectService.getProjectInfo();
     if (!result.ok) return sendError(reply, result.error);
@@ -93,7 +95,9 @@ export function registerProjectRoutes(api: FastifyInstance, deps: ProjectRoutesD
     reply.status(204);
     return undefined;
   });
+}
 
+function registerOpsRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
   api.post('/project/trust', async (request, reply) => {
     const parsed = TrustSchema.safeParse(request.body);
     if (!parsed.success) {
@@ -142,4 +146,10 @@ export function registerProjectRoutes(api: FastifyInstance, deps: ProjectRoutesD
     reply.status(204);
     return undefined;
   });
+}
+
+export function registerProjectRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
+  registerOpenCreateRoutes(api, deps);
+  registerStateRoutes(api, deps);
+  registerOpsRoutes(api, deps);
 }

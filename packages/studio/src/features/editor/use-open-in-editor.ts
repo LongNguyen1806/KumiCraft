@@ -3,25 +3,26 @@
 import { useState } from 'react';
 
 import { openInEditor } from '../../api/editor-client.ts';
-import { ApiError } from '../../api/http.ts';
+import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';
 
 export type OpenInEditor = {
   readonly open: (loc: string) => void;
+  readonly errorInfo: ErrorInfo | undefined;
   /** Error code of the last attempt, until the next one. */
   readonly errorCode: string | undefined;
 };
 
 export function useOpenInEditor(): OpenInEditor {
-  const [errorCode, setErrorCode] = useState<string>();
+  const [errorInfo, setErrorInfo] = useState<ErrorInfo>();
   const open = (loc: string) => {
-    setErrorCode(undefined);
+    setErrorInfo(undefined);
     void (async () => {
       try {
         await openInEditor(loc);
       } catch (error) {
-        setErrorCode(error instanceof ApiError ? (error.code ?? String(error.status)) : 'network');
+        setErrorInfo(toErrorInfo(error));
       }
     })();
   };
-  return { open, errorCode };
+  return { open, errorInfo, errorCode: errorInfo?.code };
 }
