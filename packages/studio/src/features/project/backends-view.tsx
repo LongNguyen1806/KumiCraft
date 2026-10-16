@@ -2,6 +2,8 @@ import type { BackendInfo } from '@reactcraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { errorText, toErrorInfo } from '../../routes/error-text.ts';
+
 function getStatusBadgeStyle(status: BackendInfo['status']): string {
   if (status === 'ok') return 'bg-emerald-50 text-emerald-700';
   if (status === 'blocked') return 'bg-rose-50 text-rose-700';
@@ -57,7 +59,7 @@ function BackendItem({
 }
 
 function useAddBackendState(onAdd: (path: string, label?: string) => Promise<void>) {
-  const { t } = useTranslation();
+  const { t: tError } = useTranslation('errors');
   const [newPath, setNewPath] = useState('');
   const [newLabel, setNewLabel] = useState('');
   const [busy, setBusy] = useState(false);
@@ -73,7 +75,8 @@ function useAddBackendState(onAdd: (path: string, label?: string) => Promise<voi
       setNewPath('');
       setNewLabel('');
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : t('project.backends.addFailed'));
+      const info = toErrorInfo(err);
+      setErrorMsg(errorText(tError, info.code, info.params));
     } finally {
       setBusy(false);
     }

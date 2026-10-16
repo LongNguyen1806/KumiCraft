@@ -134,7 +134,7 @@
     "packageManager": "Package Manager",
     "isProject": "Project",
     "drives": "Drives",
-    "notProject": "Directory is not a project and not empty",
+    "notProject": "This folder has files but is not a Vite + React project. Pick an empty folder to create a project, or a folder with a Vite + React project to open it.",
     "supported": "✓ Valid project",
     "unsupported": "Project not supported",
     "cssPath": "CSS: {{path}}",

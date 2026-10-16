@@ -45,9 +45,9 @@
       "driveRelative": "Drive-relative path is not allowed.",
       "alternateDataStream": "Alternate data stream path is not allowed.",
       "reservedName": "Path name is reserved by the operating system.",
-      "driveRoot": "Drive root directory is not allowed.",
-      "homeDir": "Home directory is not allowed.",
-      "systemFolder": "System folder is not allowed."
+      "driveRoot": "A drive root cannot be a project; pick or create a subfolder.",
+      "homeDir": "Your home folder cannot be a project; pick a subfolder.",
+      "systemFolder": "This is a system folder; ReactCraft does not use it."
     }
   },
   "E013": {

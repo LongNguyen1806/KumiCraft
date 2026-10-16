@@ -10,6 +10,7 @@ import {
   removeProjectBackend,
 } from '../../api/project-client.ts';
 import { Dialog } from '../../components/ui/dialog.tsx';
+import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { BackendsView } from './backends-view.tsx';
 import { DirectoryBrowser } from './directory-browser.tsx';
 import { ProjectProbeResultView } from './project-dialog-probe-view.tsx';
@@ -57,7 +58,17 @@ function ProjectDialogTabs({
   );
 }
 
+/** A failed request as the user reads it: translated message and reason (V-80). */
+function errorMessage(
+  tError: ReturnType<typeof useTranslation<'errors'>>['t'],
+  err: unknown,
+): string {
+  const info = toErrorInfo(err);
+  return errorText(tError, info.code, info.params);
+}
+
 function useProjectProbe(selectedPath: string) {
+  const { t: tError } = useTranslation('errors');
   const [probe, setProbe] = useState<ProjectProbe>();
   const [probing, setProbing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>();
@@ -74,7 +85,7 @@ function useProjectProbe(selectedPath: string) {
       } catch (err) {
         if (active) {
           setProbe(undefined);
-          setErrorMsg(err instanceof Error ? err.message : 'Failed to probe folder');
+          setErrorMsg(errorMessage(tError, err));
         }
       } finally {
         if (active) setProbing(false);
@@ -84,9 +95,13 @@ function useProjectProbe(selectedPath: string) {
     return () => {
       active = false;
     };
-  }, [selectedPath]);
+  }, [selectedPath, tError]);
 
-  return { probe, probing, errorMsg, setErrorMsg, setProbe };
+  const reportError = (err: unknown) => {
+    setErrorMsg(errorMessage(tError, err));
+  };
+
+  return { probe, probing, errorMsg, setErrorMsg, setProbe, reportError };
 }
 
 function useProjectBackendsState(currentProject?: ProjectInfo) {
@@ -124,7 +139,7 @@ function useProjectDialogState(
       onProjectOpened(info);
       onClose();
     } catch (err) {
-      probeState.setErrorMsg(err instanceof Error ? err.message : 'Failed to open project');
+      probeState.reportError(err);
     } finally {
       setBusy(false);
     }
@@ -138,7 +153,7 @@ function useProjectDialogState(
       onProjectOpened(info);
       onClose();
     } catch (err) {
-      probeState.setErrorMsg(err instanceof Error ? err.message : 'Failed to create project');
+      probeState.reportError(err);
     } finally {
       setBusy(false);
     }

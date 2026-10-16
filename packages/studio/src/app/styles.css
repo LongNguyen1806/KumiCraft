@@ -25,6 +25,15 @@
   --color-sun-soft: #fbf0c4;
   --color-leaf: #6aa84f;
   --color-danger: #c2410c;
+  /* Used by buttons, inputs and links across the Studio; they were referenced without a value, so
+     primary buttons rendered white on white. */
+  --color-primary: #2a2a28;
+  --color-primary-hover: #3f3f3c;
+  --color-primary-soft: #eceadf;
+  --color-accent: #a16207;
+  --color-border: #d9d4c5;
+  --color-field-hover: #e9e7df;
+  --color-ink-strong: #121211;
 
   --font-sans: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;

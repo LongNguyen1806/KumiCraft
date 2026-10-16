@@ -45,9 +45,9 @@
       "driveRelative": "Đường dẫn tương đối với ổ đĩa không được phép.",
       "alternateDataStream": "Đường dẫn luồng dữ liệu thay thế (ADS) không được phép.",
       "reservedName": "Tên đường dẫn trùng với tên dành riêng của hệ điều hành.",
-      "driveRoot": "Không được sử dụng thư mục gốc của ổ đĩa.",
-      "homeDir": "Không được sử dụng thư mục người dùng cá nhân (home).",
-      "systemFolder": "Không được sử dụng thư mục hệ thống."
+      "driveRoot": "Gốc ổ đĩa không dùng làm dự án được; hãy chọn hoặc tạo một thư mục con.",
+      "homeDir": "Thư mục người dùng không dùng làm dự án được; hãy chọn một thư mục con.",
+      "systemFolder": "Đây là thư mục hệ thống, ReactCraft không dùng nó."
     }
   },
   "E013": {

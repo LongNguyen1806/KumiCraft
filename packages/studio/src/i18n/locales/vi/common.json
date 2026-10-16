@@ -134,7 +134,7 @@
     "packageManager": "Package Manager",
     "isProject": "Dự án",
     "drives": "Ổ đĩa",
-    "notProject": "Thư mục không phải dự án và không trống",
+    "notProject": "Thư mục này đã có file nhưng không phải dự án Vite + React. Chọn một thư mục trống để tạo dự án mới, hoặc thư mục chứa dự án Vite + React để mở.",
     "supported": "✓ Dự án hợp lệ",
     "unsupported": "Dự án không được hỗ trợ",
     "cssPath": "CSS: {{path}}",
