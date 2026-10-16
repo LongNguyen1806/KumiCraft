@@ -5,7 +5,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { initI18n } from '../../../i18n/i18n.ts';
 import { TagAttributesSection } from './tag-attributes-section.tsx';
 
-describe('TagAttributesSection [SPEC-04 R-IN-18]', () => {
+describe('TagAttributesSection [R-IN-18]', () => {
   beforeAll(async () => {
     await initI18n();
   });

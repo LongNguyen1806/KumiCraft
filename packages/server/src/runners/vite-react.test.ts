@@ -87,7 +87,7 @@ afterEach(async () => {
   await cleanup();
 });
 
-describe('vite-react runner', () => {
+describe('vite-react runner [R-RN-03]', () => {
   it.skipIf(!existsSync(NODE_MODULES))(
     'stops Vite and exits when the server process is gone, so no dev server is left behind [R-RN-07]',
     async () => {

@@ -163,3 +163,11 @@ test('a new project is created, trusted, installed and shown on the canvas [AC-0
   const viteStat = await stat(join(folder.path, 'node_modules', 'vite'));
   expect(viteStat.isDirectory()).toBe(true);
 });
+
+test('keeps the Studio settings in the test config folder [R-QA-02]', async () => {
+  const session = await start();
+  await session.api('settings', 'PATCH', { language: 'en' });
+  const raw = await readFile(join(config.path, 'config.json'), 'utf8');
+  const json = JSON.parse(raw) as { language?: string };
+  expect(json.language).toBe('en');
+});

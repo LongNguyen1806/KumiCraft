@@ -43,7 +43,7 @@ const okResult: EditResult = {
   element: { ...linkSource, attributes: { href: { kind: 'static', value: '/new' } } },
 };
 
-describe('useAttributeEdit [SPEC-04 R-IN-18]', () => {
+describe('useAttributeEdit [R-IN-18]', () => {
   beforeAll(async () => {
     await initI18n();
   });

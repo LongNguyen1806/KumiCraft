@@ -95,7 +95,7 @@ afterEach(() => {
 });
 
 describe('ProjectDialog', () => {
-  it('renders directory browser and probes initial path', async () => {
+  it('renders directory browser and probes initial path [R-PJ-20]', async () => {
     render(
       <ProjectDialog
         open={true}
@@ -134,5 +134,64 @@ describe('ProjectDialog', () => {
     await waitFor(() => {
       expect(onOpened).toHaveBeenCalledWith(expect.objectContaining({ id: 'shop000001' }));
     });
+  });
+
+  it('lists translated reasons for an unsupported folder [R-PJ-21]', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        if (url.includes('/api/v1/fs/directories')) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                data: {
+                  path: '/test/workspace',
+                  entries: [],
+                },
+              }),
+              { status: 200 },
+            ),
+          );
+        }
+
+        if (url.includes('/api/v1/project/probe')) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                data: {
+                  kind: 'project',
+                  support: {
+                    supported: false,
+                    reasons: ['noVite', 'noTailwind'],
+                    versions: {},
+                    language: 'js',
+                  },
+                  hasWorkspace: false,
+                },
+              }),
+              { status: 200 },
+            ),
+          );
+        }
+
+        return Promise.resolve(new Response(JSON.stringify({ data: {} }), { status: 200 }));
+      }),
+    );
+
+    render(
+      <ProjectDialog
+        open={true}
+        initialPath="/test/workspace"
+        onClose={vi.fn()}
+        onProjectOpened={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(i18next.t('project.reasons.noVite'))).toBeDefined();
+      expect(screen.getByText(i18next.t('project.reasons.noTailwind'))).toBeDefined();
+    });
+
+    expect(screen.queryByTestId('open-project-btn')).toBeNull();
   });
 });

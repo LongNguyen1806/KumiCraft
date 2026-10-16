@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 // Bridge client runtime: Studio messages (V-110..V-114), navigation (R-BR-19), build errors (R-BR-17).
 import { type BridgeEnvelope, BridgeSelectionInfoPayloadSchema } from '@reactcraft/shared';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 
 import { BridgeClientRuntime, type HotContext } from './bridge-client-runtime.ts';
 import { toBuildError } from './build-error.ts';
@@ -13,6 +13,7 @@ const ROOT = 'D:/work/shop';
 let runtime: BridgeClientRuntime;
 let sent: BridgeEnvelope[];
 let hotListeners: Map<string, (payload: unknown) => void>;
+let postMessageSpy: MockInstance<Window['postMessage']>;
 
 const hot: HotContext = {
   on: (event, callback) => {
@@ -52,7 +53,7 @@ beforeEach(() => {
   sent = [];
   hotListeners = new Map();
   // The parent window is the Studio; its postMessage is where the Bridge output goes.
-  vi.spyOn(window.parent, 'postMessage').mockImplementation((message: unknown) => {
+  postMessageSpy = vi.spyOn(window.parent, 'postMessage').mockImplementation((message: unknown) => {
     sent.push(message as BridgeEnvelope);
   });
   document.body.innerHTML = '<main data-rc-loc="src/App.tsx:1:1"><p>Hi</p></main>';
@@ -65,7 +66,7 @@ afterEach(() => {
 });
 
 describe('Studio messages [V-111]', () => {
-  it('applies a valid message from the parent window', () => {
+  it('applies a valid message from the parent window [R-BR-13]', () => {
     expect(clickIsIntercepted()).toBe(true);
 
     fromStudio('set-mode', { mode: 'preview' });
@@ -309,5 +310,96 @@ describe('selection info [R-BR-16]', () => {
     const msgs = sentSelectionInfo();
     expect(msgs).toHaveLength(1);
     expect(msgs[0]?.items).toEqual([]);
+  });
+});
+
+describe('core behaviour', () => {
+  it('puts the overlay in a closed shadow root and puts it back when removed [R-BR-11]', async () => {
+    const host = document.getElementById('__rc_overlay_host');
+    if (!host) throw new Error('Missing __rc_overlay_host');
+    expect(host.style.position).toBe('fixed');
+    expect(host.style.zIndex).toBe('2147483647');
+    expect(host.style.pointerEvents).toBe('none');
+    expect(host.shadowRoot).toBeNull();
+    host.remove();
+    await Promise.resolve();
+    expect(document.documentElement.contains(host)).toBe(true);
+  });
+
+  it('sends one tree with the new element 100 ms after the DOM changes [R-BR-12]', async () => {
+    vi.useFakeTimers();
+    vi.advanceTimersByTime(200);
+    const before = sentOfType('tree').length;
+    const main = document.querySelector('main');
+    if (!main) throw new Error('Missing main');
+    const sec = document.createElement('section');
+    sec.setAttribute('data-rc-loc', 'src/App.tsx:9:1');
+    main.appendChild(sec);
+    await Promise.resolve();
+    vi.advanceTimersByTime(99);
+    expect(sentOfType('tree')).toHaveLength(before);
+    vi.advanceTimersByTime(1);
+    expect(sentOfType('tree')).toHaveLength(before + 1);
+    const latestTree = sentOfType('tree')[sentOfType('tree').length - 1] as {
+      nodes: Array<{ ref: { loc: string } }>;
+    };
+    expect(latestTree.nodes.some((n) => n.ref.loc === 'src/App.tsx:9:1')).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it('targets the nearest element with data-rc-loc under the pointer, skipping the overlay [R-BR-14]', () => {
+    const overlayHost = document.getElementById('__rc_overlay_host');
+    const main = document.querySelector('main');
+    const p = document.querySelector('p');
+    if (!overlayHost || !main || !p) throw new Error('Missing DOM elements');
+    Object.defineProperty(document, 'elementsFromPoint', {
+      configurable: true,
+      value: () => [overlayHost, p, main, document.body],
+    });
+    try {
+      window.dispatchEvent(new PointerEvent('pointermove', { clientX: 5, clientY: 5 }));
+      const hoverMsgs = sentOfType('hover');
+      expect(hoverMsgs[hoverMsgs.length - 1]).toEqual({
+        ref: { loc: 'src/App.tsx:1:1', index: 0 },
+      });
+    } finally {
+      Reflect.deleteProperty(document, 'elementsFromPoint');
+    }
+  });
+
+  it('draws overlay changes once per animation frame [R-BR-15]', () => {
+    const raf = vi.spyOn(window, 'requestAnimationFrame');
+    const caf = vi.spyOn(window, 'cancelAnimationFrame');
+    fromStudio('highlight', { ref: { loc: 'src/App.tsx:1:1', index: 0 } });
+    fromStudio('highlight', { ref: { loc: 'src/App.tsx:1:1', index: 0 } });
+    expect(raf).toHaveBeenCalledTimes(2);
+    expect(caf).toHaveBeenCalledWith(raf.mock.results[0]?.value);
+  });
+
+  it('sends Undo shortcuts to the Studio in design mode [R-BR-18]', () => {
+    const event = new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, cancelable: true });
+    window.dispatchEvent(event);
+    expect(sentOfType('shortcut')).toEqual([
+      { key: 'Undo', ctrl: true, meta: false, shift: false, alt: false },
+    ]);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('scrolls the primary element into view when the Studio asks [R-BR-20]', () => {
+    const main = document.querySelector('main');
+    if (!main) throw new Error('Missing main');
+    const scrollSpy = vi.fn();
+    main.scrollIntoView = scrollSpy;
+    fromStudio('select', { refs: [{ loc: 'src/App.tsx:1:1', index: 0 }], reveal: true });
+    expect(scrollSpy).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
+    fromStudio('select', { refs: [{ loc: 'src/App.tsx:1:1', index: 0 }], reveal: false });
+    expect(scrollSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('posts only to the Studio origin [S-101]', () => {
+    expect(sent.length).toBeGreaterThan(0);
+    for (const call of postMessageSpy.mock.calls) {
+      expect(call[1]).toBe(STUDIO);
+    }
   });
 });

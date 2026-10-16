@@ -33,7 +33,7 @@ describe('TextEditController [SPEC-04 section 10 M-TX]', () => {
     });
   });
 
-  it('R-TX-02: sets contenteditable and focuses when started', () => {
+  it('sets contenteditable and focuses when started [R-TX-02]', () => {
     const onStart = vi.fn();
     const controller = new TextEditController({
       onCommit: vi.fn(),
@@ -119,7 +119,7 @@ describe('TextEditController [SPEC-04 section 10 M-TX]', () => {
     expect(controller.isActive()).toBe(false);
   });
 
-  it('R-TX-08 & Scenario 7: does not commit on Enter when IME is composing Vietnamese text', () => {
+  it('Scenario 7: does not commit on Enter when IME is composing Vietnamese text [R-TX-08]', () => {
     const onCommit = vi.fn();
     const controller = new TextEditController({ onCommit, onCancel: vi.fn() });
 

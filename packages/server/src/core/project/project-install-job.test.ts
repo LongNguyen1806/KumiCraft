@@ -151,7 +151,7 @@ describe('ProjectService install job', () => {
     }
   });
 
-  it('a wrong command fails at once, without a job [R-PJ-13]', async () => {
+  it('a wrong command fails at once, without a job [R-PJ-13, S-54]', async () => {
     const t = await setup();
     try {
       const started = await t.service.install(['npm', 'install']);
@@ -174,6 +174,20 @@ describe('ProjectService install job', () => {
       await vi.waitFor(() => {
         expect(t.ofType('job.cancelled')).toHaveLength(1);
       });
+    } finally {
+      await t.cleanup();
+    }
+  });
+
+  it('installs in the project root with a 10 minute limit [S-50, S-52, S-55]', async () => {
+    const t = await setup();
+    try {
+      await t.service.install(['pnpm', 'install']);
+      expect(t.pm.spawn).toHaveBeenCalledWith(
+        'pnpm',
+        ['install'],
+        expect.objectContaining({ cwd: t.projectDir, timeoutMs: 600000 }),
+      );
     } finally {
       await t.cleanup();
     }

@@ -28,16 +28,16 @@ export async function makeTempDir(label: string): Promise<TempDir> {
 }
 
 /**
- * Gives the copy its own node_modules folder whose packages link to the Studio's. Vite keeps its
+ * Gives the copy its own node_modules folder whose packages link to the source's. Vite keeps its
  * caches in `<project>/node_modules/.vite*`, so each copy gets its own instead of all dev servers
- * of a test run sharing (and racing on) the Studio's.
+ * of a test run sharing (and racing on) the source's.
  */
-async function linkStudioPackages(target: string): Promise<void> {
+async function linkPackages(sourceModules: string, target: string): Promise<void> {
   const own = join(target, 'node_modules');
   await mkdir(own);
-  for (const entry of await readdir(STUDIO_NODE_MODULES, { withFileTypes: true })) {
+  for (const entry of await readdir(sourceModules, { withFileTypes: true })) {
     if (entry.name.startsWith('.vite') || entry.isFile()) continue;
-    await symlink(join(STUDIO_NODE_MODULES, entry.name), join(own, entry.name), 'junction');
+    await symlink(join(sourceModules, entry.name), join(own, entry.name), 'junction');
   }
 }
 
@@ -51,6 +51,8 @@ export async function copyFixture(name: string): Promise<TempDir> {
     recursive: true,
     filter: (source) => !source.includes('node_modules'),
   });
-  if (existsSync(STUDIO_NODE_MODULES)) await linkStudioPackages(target.path);
+  const fixtureModules = join(FIXTURES_DIR, name, 'node_modules');
+  const sourceModules = existsSync(fixtureModules) ? fixtureModules : STUDIO_NODE_MODULES;
+  if (existsSync(sourceModules)) await linkPackages(sourceModules, target.path);
   return target;
 }

@@ -1,5 +1,6 @@
 packages:
   - packages/*
+  - fixtures/projects/vite7-react18-js
 
 # Pin exact versions when adding dependencies (SPEC-01.1 section 13.3).
 saveExact: true

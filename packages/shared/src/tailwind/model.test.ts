@@ -181,7 +181,7 @@ describe('M-TW Table 8.2 properties & scenarios [SPEC-04 section 8]', () => {
     }
   });
 
-  it('Scenario 3: R-TW-09 disambiguation for text-* and border-*', () => {
+  it('Scenario 3: R-TW-09 disambiguation for text-* and border-* [R-TW-09]', () => {
     const textSamples = parseClasses(
       'text-lg text-center text-brand text-hero text-[14px] text-[#fff]',
       defaultContext,
@@ -226,7 +226,7 @@ describe('M-TW Table 8.2 properties & scenarios [SPEC-04 section 8]', () => {
     });
   });
 
-  it('Scenario 4: readValue p-4 max-md:p-2 max-sm:p-1 at 1440, 700, 500 (desktop-first)', () => {
+  it('Scenario 4: readValue p-4 max-md:p-2 max-sm:p-1 at 1440, 700, 500 (desktop-first) [R-TW-04]', () => {
     const input = 'p-4 max-md:p-2 max-sm:p-1';
     const tokens = parseClasses(input, desktopContext);
 
@@ -243,7 +243,7 @@ describe('M-TW Table 8.2 properties & scenarios [SPEC-04 section 8]', () => {
     expect(r500.from?.breakpoint).toBe('sm');
   });
 
-  it('Scenario 5: readValue p-1 md:p-2 lg:p-3 at 375, 800, 1200 (mobile-first)', () => {
+  it('Scenario 5: readValue p-1 md:p-2 lg:p-3 at 375, 800, 1200 (mobile-first) [R-TW-04]', () => {
     const input = 'p-1 md:p-2 lg:p-3';
     const tokens = parseClasses(input, defaultContext);
 
@@ -272,7 +272,7 @@ describe('M-TW Table 8.2 properties & scenarios [SPEC-04 section 8]', () => {
     expect(withoutHover.value).toEqual({ kind: 'scale', token: 'white' });
   });
 
-  it('Scenario 7: p-4 pt-2 reads paddingTop/Bottom; px-3 pl-1 reads paddingLeft/Right', () => {
+  it('Scenario 7: p-4 pt-2 reads paddingTop/Bottom; px-3 pl-1 reads paddingLeft/Right [R-TW-07]', () => {
     const t1 = parseClasses('p-4 pt-2', defaultContext);
     expect(readValue(t1, 'paddingTop', { width: 1024 }, defaultContext).value).toEqual({
       kind: 'scale',
@@ -301,7 +301,7 @@ describe('M-TW Table 8.2 properties & scenarios [SPEC-04 section 8]', () => {
     expect(read.conflict).toBe(true);
   });
 
-  it('Scenario 9: writeValue replaces in-place flex p-4 text-sm -> padding = 6', () => {
+  it('Scenario 9: writeValue replaces in-place flex p-4 text-sm -> padding = 6 [R-TW-05]', () => {
     const res = writeValue(
       'flex p-4 text-sm',
       'padding',
@@ -312,7 +312,7 @@ describe('M-TW Table 8.2 properties & scenarios [SPEC-04 section 8]', () => {
     expect(res).toBe('flex p-6 text-sm');
   });
 
-  it('Scenario 10: writeValue scope sm desktop-first when not present, when present, and undefined', () => {
+  it('Scenario 10: writeValue scope sm desktop-first when not present, when present, and undefined [R-TW-05]', () => {
     const added = writeValue(
       'flex text-sm',
       'padding',
@@ -341,7 +341,7 @@ describe('M-TW Table 8.2 properties & scenarios [SPEC-04 section 8]', () => {
     expect(deleted).toBe('flex text-sm');
   });
 
-  it('Scenario 11: writeValue scope { breakpoint: md, state: hover } mobile-first', () => {
+  it('Scenario 11: writeValue scope { breakpoint: md, state: hover } mobile-first [R-TW-05]', () => {
     const res = writeValue(
       'p-4',
       'padding',
@@ -352,7 +352,7 @@ describe('M-TW Table 8.2 properties & scenarios [SPEC-04 section 8]', () => {
     expect(res).toBe('p-4 md:hover:p-6');
   });
 
-  it('Scenario 12: writeValue all deletes side/axis tokens in px-2 pt-1 md:pt-3', () => {
+  it('Scenario 12: writeValue all deletes side/axis tokens in px-2 pt-1 md:pt-3 [R-TW-07]', () => {
     const res = writeValue(
       'px-2 pt-1 md:pt-3',
       'padding',
@@ -363,7 +363,7 @@ describe('M-TW Table 8.2 properties & scenarios [SPEC-04 section 8]', () => {
     expect(res).toBe('p-4 md:pt-3');
   });
 
-  it('Scenario 13: pxToSpacing conversions with default 4px and custom 8px spacing', () => {
+  it('Scenario 13: pxToSpacing conversions with default 4px and custom 8px spacing [R-TW-08]', () => {
     expect(pxToSpacing(40)).toEqual({ kind: 'scale', token: '10' });
     expect(pxToSpacing(13)).toEqual({ kind: 'arbitrary', css: '13px' });
     expect(pxToSpacing(10)).toEqual({ kind: 'scale', token: '2.5' });
@@ -372,7 +372,7 @@ describe('M-TW Table 8.2 properties & scenarios [SPEC-04 section 8]', () => {
     expect(pxToSpacing(40, 8)).toEqual({ kind: 'scale', token: '5' });
   });
 
-  it('Scenario 14: preserves arbitrary whitespace and newlines between unrelated classes', () => {
+  it('Scenario 14: preserves arbitrary whitespace and newlines between unrelated classes [R-TW-06]', () => {
     const input = '   flex   \n\t  p-4   \n   text-sm   ';
     const res = writeValue(
       input,
@@ -384,7 +384,7 @@ describe('M-TW Table 8.2 properties & scenarios [SPEC-04 section 8]', () => {
     expect(res).toBe('   flex   \n\t  p-8   \n   text-sm   ');
   });
 
-  it('Scenario 15: roundtrip R-TW-11 on diverse class strings', () => {
+  it('Scenario 15: roundtrip R-TW-11 on diverse class strings [R-TW-11]', () => {
     const testCases: [string, string][] = [
       ['p-4 flex text-sm', 'padding'],
       ['w-full h-16 bg-white', 'width'],
@@ -402,5 +402,51 @@ describe('M-TW Table 8.2 properties & scenarios [SPEC-04 section 8]', () => {
         expect(roundtripped).toBe(classStr);
       }
     }
+  });
+
+  it('keeps variants it does not know as tokens without property [R-TW-03]', () => {
+    const tokens = parseClasses(
+      'dark:bg-black group-hover:p-2 aria-checked:p-1 [&>*]:p-2 md:p-4 max-sm:p-1 hover:p-2 focus:p-3 disabled:p-1 lg:hover:p-6 foo-bar',
+      desktopContext,
+    );
+    const mapped = tokens.map((t) => [t.raw, t.property]);
+    expect(mapped).toEqual([
+      ['dark:bg-black', undefined],
+      ['group-hover:p-2', undefined],
+      ['aria-checked:p-1', undefined],
+      ['[&>*]:p-2', undefined],
+      ['md:p-4', 'padding'],
+      ['max-sm:p-1', 'padding'],
+      ['hover:p-2', 'padding'],
+      ['focus:p-3', 'padding'],
+      ['disabled:p-1', 'padding'],
+      ['lg:hover:p-6', 'padding'],
+      ['foo-bar', undefined],
+    ]);
+  });
+
+  it('reads and writes arbitrary values with spaces as underscores [R-TW-10]', () => {
+    const tokens = parseClasses('w-[calc(100%_-_2rem)]', desktopContext);
+    expect(tokens[0]).toMatchObject({
+      property: 'width',
+      value: { kind: 'arbitrary', css: 'calc(100% - 2rem)' },
+    });
+    const written = writeValue(
+      'flex',
+      'width',
+      { breakpoint: 'base' },
+      { kind: 'arbitrary', css: 'calc(100% - 2rem)' },
+      desktopContext,
+    );
+    expect(written).toBe('flex w-[calc(100%_-_2rem)]');
+  });
+
+  it('converts px to the spacing scale or an arbitrary value [R-TW-08]', () => {
+    expect(pxToSpacing(40)).toEqual({ kind: 'scale', token: '10' });
+    expect(pxToSpacing(13)).toEqual({ kind: 'arbitrary', css: '13px' });
+    expect(pxToSpacing(0)).toEqual({ kind: 'scale', token: '0' });
+    expect(pxToSpacing(1)).toEqual({ kind: 'scale', token: 'px' });
+    expect(pxToSpacing(6)).toEqual({ kind: 'scale', token: '1.5' });
+    expect(pxToSpacing(16, 8)).toEqual({ kind: 'scale', token: '2' });
   });
 });

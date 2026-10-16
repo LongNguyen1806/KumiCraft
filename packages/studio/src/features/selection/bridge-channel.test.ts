@@ -34,7 +34,7 @@ describe('BridgeChannel', () => {
     iframe.remove();
   });
 
-  it('sends messages with correct envelope and target origin [V-110]', () => {
+  it('sends messages with correct envelope and target origin [V-110, S-101]', () => {
     channel.setMode('preview');
     expect(postMessageSpy).toHaveBeenCalledWith(
       {
@@ -47,7 +47,7 @@ describe('BridgeChannel', () => {
     );
   });
 
-  it('ignores messages with wrong source, origin, or nonce [V-111]', () => {
+  it('ignores messages with wrong source, origin, or nonce [V-111, R-BR-30]', () => {
     const validPayload = {
       rc: 1,
       nonce: currentNonce,

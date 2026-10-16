@@ -26,6 +26,13 @@ export default defineConfig({
           environment: 'happy-dom',
         },
       },
+      {
+        test: {
+          name: 'scripts',
+          include: ['scripts/**/*.test.mjs'],
+          environment: 'node',
+        },
+      },
     ],
     coverage: {
       provider: 'v8',

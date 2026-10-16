@@ -1,6 +1,6 @@
 // Component tests for InspectorPanel (SPEC-04 section 9 M-IN, scenarios 1, 2, 5, 6, 7).
 import type { ElementSource, Frame } from '@reactcraft/shared';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as eventsClient from '../../api/events-client.ts';
@@ -41,7 +41,7 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
     vi.restoreAllMocks();
   });
 
-  it('Scenario 7: renders "Selected 2 elements" and no property inputs when multiple elements selected', () => {
+  it('Scenario 7: renders "Selected 2 elements" and no property inputs when multiple elements selected [R-IN-10]', () => {
     act(() => {
       useSelectionStore.getState().setSelectedRefs([
         { loc: 'src/App.tsx:10:2', index: 0 },
@@ -57,7 +57,7 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
     expect(screen.queryByTestId('inspector-panel')).toBeNull();
   });
 
-  it('Scenario 1: renders all groups and matching values for flex flex-col gap-4 p-6 text-lg font-bold bg-white rounded-xl shadow-md', async () => {
+  it('Scenario 1: renders all groups and matching values for flex flex-col gap-4 p-6 text-lg font-bold bg-white rounded-xl shadow-md [R-IN-10]', async () => {
     const sampleSource: ElementSource = {
       loc: 'src/App.tsx:15:3',
       tag: 'div',
@@ -125,7 +125,7 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
     expect(shadowInput.value).toBe('md');
   });
 
-  it('Scenario 2: Mobile frame desktop-first with p-6 shows "inherited from base" and max-sm: prefix', async () => {
+  it('Scenario 2: Mobile frame desktop-first with p-6 shows "inherited from base" and max-sm: prefix [R-IN-11]', async () => {
     const sampleSource: ElementSource = {
       loc: 'src/App.tsx:25:2',
       tag: 'div',
@@ -163,7 +163,7 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
     expect(inheritedBadge.textContent).toContain('base');
   });
 
-  it('Scenario 5: locks all inputs when className is expression with code preview and open editor button', async () => {
+  it('Scenario 5: locks all inputs when className is expression with code preview and open editor button [R-IN-15]', async () => {
     const exprSource: ElementSource = {
       loc: 'src/App.tsx:30:5',
       tag: 'div',
@@ -199,7 +199,7 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
     );
   });
 
-  it('Scenario 6: displays warning banners when component.usages > 1 and inLoop / instances > 1', async () => {
+  it('Scenario 6: displays warning banners when component.usages > 1 and inLoop / instances > 1 [R-IN-16]', async () => {
     const loopSource: ElementSource = {
       loc: 'src/components/Card.tsx:10:4',
       tag: 'article',
@@ -236,5 +236,50 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
 
     expect(screen.getByTestId('warning-usages').textContent).toContain('Card');
     expect(screen.getByTestId('warning-loop').textContent).toContain('3');
+  });
+
+  it('writes with the hover prefix after choosing Hover [R-IN-12]', async () => {
+    const sampleSource: ElementSource = {
+      loc: 'src/App.tsx:15:3',
+      tag: 'div',
+      fileHash: 'b'.repeat(64),
+      className: { kind: 'static', value: 'p-4' },
+      text: { kind: 'none' },
+      attributes: {},
+      inLoop: false,
+    };
+
+    vi.spyOn(sourceClient, 'fetchElementSource').mockResolvedValue(sampleSource);
+
+    act(() => {
+      useSelectionStore.getState().setSelectedRefs([{ loc: 'src/App.tsx:15:3', index: 0 }]);
+      useSelectionStore
+        .getState()
+        .setSelectionInfo([
+          { ref: { loc: 'src/App.tsx:15:3', index: 0 }, found: true, tag: 'div', instances: 1 },
+        ]);
+    });
+
+    render(
+      <InspectorPanel
+        options={{
+          frame: mockDesktopFrame,
+          primaryFrame: mockDesktopFrame,
+          responsiveMode: 'desktop-first',
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('interaction-state-select')).toBeDefined();
+    });
+
+    const badge = screen.getByTestId('write-prefix-badge');
+    expect(badge.textContent).toBe('Base');
+
+    const select = screen.getByTestId('interaction-state-select');
+    fireEvent.change(select, { target: { value: 'hover' } });
+
+    expect(badge.textContent).toBe('hover:');
   });
 });

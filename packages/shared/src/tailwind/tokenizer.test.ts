@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { parseRawClasses, tokenizeClasses } from './tokenizer.ts';
 
-describe('M-TW Tokenizer [SPEC-04 section 8, R-TW-01, R-TW-02]', () => {
+describe('M-TW Tokenizer [R-TW-01, R-TW-02]', () => {
   it('Scenario 1 (Table 8.1): parses 6 tokens with variants, important, negative, opacity', () => {
     const input =
       "p-4 md:hover:bg-[url('a b')] !font-bold -mt-2 grid-cols-[repeat(2,minmax(0,1fr))] bg-red-500/50";

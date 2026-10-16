@@ -130,7 +130,7 @@ describe('opening a project', () => {
     expect(await readFile(join(dir, '.reactcraft', '.gitignore'), 'utf8')).toBe('lock\ncache/\n');
   });
 
-  it('opens untrusted at first, locks the project and runs nothing [S-80, S-81]', async () => {
+  it('opens untrusted at first, locks the project and runs nothing [S-80, S-81, R-PJ-15]', async () => {
     await writeSupportedProject(dir);
     await writeWorkspace();
     const project = service();

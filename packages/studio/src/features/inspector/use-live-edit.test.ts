@@ -67,7 +67,7 @@ function makeEditResult(loc: string, tag: string, nextClass: string): EditResult
   };
 }
 
-describe('useLiveEdit [SPEC-04 R-IN-13, R-IN-14, R-IN-20]', () => {
+describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
   beforeAll(async () => {
     await initI18n();
   });

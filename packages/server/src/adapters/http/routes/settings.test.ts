@@ -103,4 +103,19 @@ describe('/api/v1/settings', () => {
 
     expect(res.statusCode).toBe(401);
   });
+
+  it('refuses a body over 10 MB with E016 before parsing [S-87]', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/v1/settings',
+      headers: HEADERS,
+      payload: '{"x":"' + 'a'.repeat(10 * 1024 * 1024) + '"}',
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toMatchObject({
+      error: { code: 'E016', params: { reason: 'FST_ERR_CTP_BODY_TOO_LARGE' } },
+    });
+    expect(await nodeFs.exists(dir, CONFIG_FILE)).toBe(false);
+  });
 });

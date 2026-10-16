@@ -307,4 +307,39 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
     expect(spawnOpts?.env?.NODE_ENV).toBe('development');
     expect(spawnOpts?.env?.REACTCRAFT_SESSION_TOKEN).toBeUndefined();
   });
+
+  it('cuts long lines and keeps the last 500 lines for E025 [R-RN-08, V-71]', async () => {
+    const runner = createRunnerService(makeDeps());
+    await runner.start();
+    mockHandle.triggerMessage({ type: 'ready', port: 52123 });
+    expect(runner.getStatus().state).toBe('ready');
+
+    for (let i = 1; i <= 600; i++) {
+      mockHandle.triggerLine(`line ${String(i)}`);
+    }
+    mockHandle.triggerLine('x'.repeat(2500));
+
+    await new Promise((r) => setTimeout(r, 250));
+    mockHandle.triggerExit(1);
+    await new Promise((r) => setTimeout(r, 50));
+
+    const status = runner.getStatus();
+    expect(status.state).toBe('crashed');
+    expect(status.error?.details).toHaveLength(50);
+
+    const logEvents = events.filter((e) => e.type === 'runner.log');
+    const allLines = logEvents.flatMap((e) => (e.payload as { lines: string[] }).lines);
+    const truncatedLine = allLines.find((l) => l.startsWith('xxxx'));
+    expect(truncatedLine?.length).toBe(2000);
+    for (const line of allLines) {
+      expect(line.length).toBeLessThanOrEqual(2000);
+    }
+  });
+
+  it('runs the dev server in the project root [S-52]', async () => {
+    const runner = createRunnerService(makeDeps());
+    await runner.start();
+    const spawnOpts = spawnedCalls[0]?.options as { cwd?: string } | undefined;
+    expect(spawnOpts?.cwd).toBe(openState.root);
+  });
 });

@@ -4,11 +4,12 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
+import { CODE, readTags } from './trace-tags.mjs';
+
 const SPEC = 'docs/spec.md';
 const SCOPE = 'scripts/trace-scope.json';
-const SEARCH_ROOTS = ['packages', 'e2e'];
-const TEST_FILE = /\.(test\.tsx?|e2e\.ts)$/;
-const CODE = String.raw`(?:R-[A-Z]{2}-\d{2}|V-\d{2,3}|S-\d{2,3}[a-z]?|AC-\d{2})`;
+const SEARCH_ROOTS = ['packages', 'e2e', 'scripts'];
+const TEST_FILE = /\.(test\.(tsx?|mjs)|e2e\.ts)$/;
 
 const scope = JSON.parse(readFileSync(SCOPE, 'utf8'));
 const rules = scope.rules.map((rule) => ({ ...rule, regex: new RegExp(rule.pattern) }));
@@ -33,11 +34,9 @@ const testFiles = (dir) =>
 const tested = new Map(); // code -> test files
 for (const file of SEARCH_ROOTS.flatMap(testFiles)) {
   const text = readFileSync(file, 'utf8');
-  for (const tag of text.matchAll(new RegExp(String.raw`\[(${CODE}(?:,\s*${CODE})*)\]`, 'g'))) {
-    for (const code of tag[1].split(/,\s*/)) {
-      if (!tested.has(code)) tested.set(code, new Set());
-      tested.get(code).add(relative('.', file).replaceAll('\\', '/'));
-    }
+  for (const code of readTags(text)) {
+    if (!tested.has(code)) tested.set(code, new Set());
+    tested.get(code).add(relative('.', file).replaceAll('\\', '/'));
   }
 }
 

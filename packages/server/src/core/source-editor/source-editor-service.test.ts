@@ -383,4 +383,83 @@ export function Page() {
       expect(r2.error.params?.reason).toBe('outsideSource');
     }
   });
+
+  it('refuses values that are not static, with the reason [R-SE-03]', async () => {
+    const code = `export function P({ url, name }: { url: string; name: string }) {
+  return (
+    <main className={cn("a")}>
+      <a href={url}>{name}</a>
+      <p>Hi {name}</p>
+      <img src="/x.png" />
+      <b className="x" className="y">t</b>
+    </main>
+  );
+}`;
+    const pPath = path.join(tmpDir, 'src/P.tsx');
+    await fs.writeFile(pPath, code, 'utf8');
+
+    const cases = [
+      {
+        edit: { kind: 'setClassName' as const, loc: 'src/P.tsx:3:5', tag: 'main', after: 'p-4' },
+        reason: 'classExpression',
+      },
+      {
+        edit: {
+          kind: 'setAttribute' as const,
+          loc: 'src/P.tsx:4:7',
+          tag: 'a',
+          name: 'href' as const,
+          after: '/x',
+        },
+        reason: 'attrExpression',
+      },
+      {
+        edit: { kind: 'setText' as const, loc: 'src/P.tsx:4:7', tag: 'a', before: '', after: 'x' },
+        reason: 'textExpression',
+      },
+      {
+        edit: { kind: 'setText' as const, loc: 'src/P.tsx:5:7', tag: 'p', before: '', after: 'x' },
+        reason: 'textMixed',
+      },
+      {
+        edit: {
+          kind: 'setText' as const,
+          loc: 'src/P.tsx:6:7',
+          tag: 'img',
+          before: '',
+          after: 'x',
+        },
+        reason: 'selfClosing',
+      },
+      {
+        edit: { kind: 'setClassName' as const, loc: 'src/P.tsx:7:7', tag: 'b', after: 'z' },
+        reason: 'duplicateAttr',
+      },
+    ];
+
+    for (const c of cases) {
+      const res = await service.applyEdit(tmpDir, c.edit);
+      expect(res).toEqual({ ok: false, error: { code: 'E023', params: { reason: c.reason } } });
+      const current = await fs.readFile(pPath, 'utf8');
+      expect(current).toBe(code);
+    }
+  });
+
+  it('keeps every byte outside the edited value [R-SE-17]', async () => {
+    const original =
+      '// keep   this\r\nexport function K() {\r\n  return <div   id="k"  className="p-4"   data-x=\'1\'>\r\n    t\r\n  </div>;\r\n}\r\n';
+    await fs.writeFile(path.join(tmpDir, 'src/K.tsx'), original, 'utf8');
+
+    const res = await service.applyEdit(tmpDir, {
+      kind: 'setClassName',
+      loc: 'src/K.tsx:3:10',
+      tag: 'div',
+      before: 'p-4',
+      after: 'p-6',
+    });
+    expect(res.ok).toBe(true);
+
+    const updated = await fs.readFile(path.join(tmpDir, 'src/K.tsx'), 'utf8');
+    expect(updated).toBe(original.replace('"p-4"', '"p-6"'));
+  });
 });

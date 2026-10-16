@@ -111,4 +111,17 @@ describe('NodeFileSystem', () => {
     await fs.remove(root, 'backups');
     expect(await fs.exists(root, 'backups')).toBe(false);
   });
+
+  it('lists neither files nor folders behind a link [S-25]', async () => {
+    await mkdir(join(root, 'real'));
+    await writeFile(join(root, 'a.txt'), 'hello');
+    await symlink(outside, join(root, 'link'), isWindows ? 'junction' : 'dir');
+
+    const listed = await fs.readDir(root, '.');
+    expect(listed.ok).toBe(true);
+    if (listed.ok) {
+      const names = listed.value.map((e) => e.name).sort();
+      expect(names).toEqual(['a.txt', 'real']);
+    }
+  });
 });

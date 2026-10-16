@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  checkBlockedPath,
   checkPathSyntax,
   isInside,
   jsonDepth,
@@ -93,5 +94,27 @@ describe('resolveBackendPath', () => {
 
   it('leaves absolute paths untouched', () => {
     expect(resolveBackendPath('/work/projects/frontend', '/var/data/api')).toBe('/var/data/api');
+  });
+});
+
+describe('checkBlockedPath', () => {
+  it('refuses drive roots, the home folder and system folders [S-28]', () => {
+    expect(checkBlockedPath('C:/', 'win32')).toEqual({
+      code: 'E012',
+      params: { path: 'C:/', reason: 'driveRoot' },
+    });
+    expect(checkBlockedPath('C:\\Windows\\System32', 'win32')).toEqual({
+      code: 'E012',
+      params: { path: 'C:\\Windows\\System32', reason: 'systemFolder' },
+    });
+    expect(checkBlockedPath('C:/Users/me', 'win32', 'C:\\Users\\me')).toEqual({
+      code: 'E012',
+      params: { path: 'C:/Users/me', reason: 'homeDir' },
+    });
+    expect(checkBlockedPath('/etc/nginx', 'linux')).toEqual({
+      code: 'E012',
+      params: { path: '/etc/nginx', reason: 'systemFolder' },
+    });
+    expect(checkBlockedPath('D:/work/shop', 'win32', 'C:/Users/me')).toBeUndefined();
   });
 });

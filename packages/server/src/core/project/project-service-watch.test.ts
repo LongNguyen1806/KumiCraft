@@ -92,7 +92,7 @@ describe('ProjectService and files changed on disk', () => {
     }
   });
 
-  it('a backend linked from outside puts the project back in restricted mode [S-84]', async () => {
+  it('a backend linked from outside puts the project back in restricted mode [S-84, R-PJ-16]', async () => {
     const t = await setup();
     try {
       await t.service.open(t.projectDir);

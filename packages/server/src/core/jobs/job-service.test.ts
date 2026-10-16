@@ -42,7 +42,7 @@ afterEach(() => {
 });
 
 describe('job service', () => {
-  it('sends the newest 20 output lines, then completed [R-PJ-13]', async () => {
+  it('sends the newest 20 output lines, then completed [R-PJ-13, V-60]', async () => {
     vi.useFakeTimers();
     const t = setup();
     const done = gate();

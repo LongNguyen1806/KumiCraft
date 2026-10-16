@@ -55,7 +55,7 @@ describe('CanvasArea', () => {
     vi.clearAllMocks();
   });
 
-  it('renders untrusted prompt when trusted is false', () => {
+  it('renders untrusted prompt when trusted is false [R-RN-20]', () => {
     const onTrust = vi.fn();
     render(<CanvasArea projectInfo={mockProject} trusted={false} onTrustRequest={onTrust} />);
     expect(screen.getByTestId('canvas-untrusted')).toBeDefined();
@@ -64,7 +64,7 @@ describe('CanvasArea', () => {
     expect(onTrust).toHaveBeenCalledTimes(1);
   });
 
-  it('renders needs-install prompt when project needs install', () => {
+  it('renders needs-install prompt when project needs install [R-RN-20]', () => {
     const onInstall = vi.fn();
     render(
       <CanvasArea
@@ -79,7 +79,7 @@ describe('CanvasArea', () => {
     expect(onInstall).toHaveBeenCalledTimes(1);
   });
 
-  it('renders stopped view with run button when runner is stopped', () => {
+  it('renders stopped view with run button when runner is stopped [R-RN-20]', () => {
     const start = vi.fn();
     mockRunnerState = {
       status: { state: 'stopped' },
@@ -94,7 +94,7 @@ describe('CanvasArea', () => {
     expect(start).toHaveBeenCalledTimes(1);
   });
 
-  it('renders loading spinner when runner is starting', () => {
+  it('renders loading spinner when runner is starting [R-RN-20]', () => {
     mockRunnerState = {
       status: { state: 'starting' },
       logTail: [],
@@ -105,7 +105,7 @@ describe('CanvasArea', () => {
     expect(screen.getByTestId('canvas-loading')).toBeDefined();
   });
 
-  it('renders iframe when runner is ready', () => {
+  it('renders iframe when runner is ready [R-RN-20]', () => {
     mockRunnerState = {
       status: { state: 'ready', origin: 'http://127.0.0.1:5173' },
       logTail: [],
@@ -152,7 +152,7 @@ describe('CanvasArea', () => {
     expect(tokens.some((token) => token.startsWith('allow-top-navigation'))).toBe(false);
   });
 
-  it('renders error view with restart button when runner fails', () => {
+  it('renders error view with restart button when runner fails [R-RN-20]', () => {
     const restart = vi.fn();
     mockRunnerState = {
       status: {

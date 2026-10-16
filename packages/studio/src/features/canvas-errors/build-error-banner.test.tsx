@@ -50,7 +50,7 @@ describe('BuildErrorBanner [R-RN-25]', () => {
     expect(screen.queryByTestId('canvas-build-error-open')).toBeNull();
   });
 
-  it('safely renders untrusted text without executing HTML tags [R-RN-25]', () => {
+  it('safely renders untrusted text without executing HTML tags [R-RN-25, S-14]', () => {
     const maliciousMsg = '<img src=x onerror=alert(1)>';
     useCanvasErrorStore.getState().setBuildError({
       message: maliciousMsg,
