@@ -12,17 +12,19 @@ const options = {
 };
 
 describe('createReactCraftBridgePlugin', () => {
-  it('configures plugin metadata for dev server only [R-BR-04]', () => {
+  it('configures plugin metadata for dev server only [R-BR-04, S-103]', () => {
     const plugin = createReactCraftBridgePlugin(options);
     expect(plugin.name).toBe('reactcraft:bridge');
     expect(plugin.apply).toBe('serve');
     expect(plugin.enforce).toBe('pre');
+    // Before transforms of other plugins such as React Fast Refresh (R-BR-02, VG-15).
+    expect(plugin.transform.order).toBe('pre');
   });
 
   it('transforms JSX files in sourceDir [R-BR-02]', () => {
     const plugin = createReactCraftBridgePlugin(options);
     const code = 'export function App() { return <div>Hello</div>; }';
-    const result = plugin.transform(code, 'D:/test-project/src/App.tsx');
+    const result = plugin.transform.handler(code, 'D:/test-project/src/App.tsx');
     expect(result).toBeDefined();
     expect(result?.code).toContain('data-rc-loc="src/App.tsx:1:32"');
   });
@@ -30,7 +32,7 @@ describe('createReactCraftBridgePlugin', () => {
   it('skips transformation for files outside sourceDir [R-BR-01]', () => {
     const plugin = createReactCraftBridgePlugin(options);
     const code = 'export function App() { return <div>Hello</div>; }';
-    const result = plugin.transform(code, 'D:/test-project/scripts/run.ts');
+    const result = plugin.transform.handler(code, 'D:/test-project/scripts/run.ts');
     expect(result).toBeUndefined();
   });
 

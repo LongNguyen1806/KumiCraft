@@ -53,14 +53,20 @@ export function createReactCraftBridgePlugin(options: BridgePluginOptions) {
     apply: 'serve' as const,
     enforce: 'pre' as const,
 
-    transform(code: string, id: string) {
-      return transformJsx(code, id, {
-        rootDir: options.rootDir,
-        sourceDir: options.sourceDir,
-        ...(options.sourceExtensions === undefined
-          ? {}
-          : { sourceExtensions: options.sourceExtensions }),
-      });
+    // R-BR-02, VG-15: run before every other transform. With Vite 7, @vitejs/plugin-react (also
+    // `enforce: 'pre'`, listed first by the project's config) prepends the Fast Refresh preamble;
+    // reading that code would put every `data-rc-loc` some 19 lines off the file on disk.
+    transform: {
+      order: 'pre' as const,
+      handler(code: string, id: string) {
+        return transformJsx(code, id, {
+          rootDir: options.rootDir,
+          sourceDir: options.sourceDir,
+          ...(options.sourceExtensions === undefined
+            ? {}
+            : { sourceExtensions: options.sourceExtensions }),
+        });
+      },
     },
 
     resolveId(id: string): string | undefined {
