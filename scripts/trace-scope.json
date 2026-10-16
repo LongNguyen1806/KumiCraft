@@ -1,7 +1,22 @@
 {
   "$comment": "Phase in which each R-xx, V-xx, S-xx, AC-xx code of docs/spec.md 1.0 must have a test (SPEC-06 section 6, SPEC-07 sections 3 to 6). First matching pattern wins. Update in the same change as the spec.",
-  "currentPhase": 0,
+  "currentPhase": 1,
   "rules": [
+    {
+      "pattern": "^(R-IN-21|R-SL-12|S-86|R-SE-16)$",
+      "phase": 4,
+      "reason": "performance targets (PB-01 to PB-05); the owner chose to ship Phase 1 working and tune speed later (2026-10-17, spec-log). PB-03 already passes in vg-16"
+    },
+    {
+      "pattern": "^R-FW-05$",
+      "phase": 4,
+      "reason": "needs a second framework adapter (Next.js); with only vite-react the detected and stored framework cannot differ (spec-log)"
+    },
+    {
+      "pattern": "^R-QA-01$",
+      "phase": 4,
+      "reason": "only the Vite 7 fixture is a pnpm workspace package; the Vite 8 fixture links the Studio's node_modules (spec-log)"
+    },
     {
       "pattern": "^S-(0[1-8]|04[a-c]|1[0-2]|2[0-4]|29|8[0-2]|84|8[89])$",
       "phase": 0,

@@ -23,6 +23,7 @@
     "bench": "vitest bench --run --reporter=default --reporter=json --outputFile.json=bench-results/bench.json",
     "bench:ui": "pnpm build && playwright test e2e/perf --workers=1",
     "trace": "node scripts/trace.mjs",
+    "gen:palette": "node scripts/gen-tailwind-palette.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "verify": "pnpm lint && pnpm typecheck && pnpm format:check && pnpm check:i18n && pnpm test && pnpm trace && pnpm build",

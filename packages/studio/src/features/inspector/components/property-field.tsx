@@ -23,7 +23,7 @@ function formatScopeName(scope: Scope): string {
   return scope.state ? `${scope.breakpoint}:${scope.state}` : scope.breakpoint;
 }
 
-function PropertyHeader({
+export function PropertyHeader({
   property,
   label,
   isInherited,

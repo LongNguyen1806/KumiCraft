@@ -8,6 +8,7 @@ import { PanelLeftIcon, PanelRightIcon, RedoIcon, UndoIcon } from '../../compone
 import { HistoryErrorNotice } from '../history/history-error-notice.tsx';
 import { useHistoryStore } from '../history/history-store.ts';
 import { SettingsButton } from '../settings/settings-button.tsx';
+import { RunnerStatusBadge } from './runner-status-badge.tsx';
 import type { Side } from './use-panel-layout.ts';
 
 export type EditorToolbarProps = {
@@ -99,6 +100,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
         >
           {props.projectName}
         </span>
+        <RunnerStatusBadge />
       </div>
       {props.onOpenProject !== undefined && (
         <button

@@ -9,6 +9,15 @@ import { useHistoryStore } from '../history/history-store.ts';
 import { shortcutFor } from './use-editor-shortcuts.ts';
 import { clampWidth, readLayout } from './use-panel-layout.ts';
 
+vi.mock('./use-runner-status.ts', () => ({
+  useRunnerStatus: () => ({
+    status: { state: 'stopped' },
+    logTail: [],
+    start: vi.fn(),
+    restart: vi.fn(),
+  }),
+}));
+
 vi.mock('../../api/project-client.ts', () => ({
   fetchProject: vi.fn().mockResolvedValue({
     id: 'shop000001',

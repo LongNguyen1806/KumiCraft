@@ -67,6 +67,13 @@
     "narrow": {
       "title": "The Studio needs a screen at least 1024 px wide",
       "body": "Open it on a computer or widen the browser window. Your source code is not affected."
+    },
+    "runnerState": {
+      "stopped": "Stopped",
+      "starting": "Starting",
+      "ready": "Running",
+      "error": "Error",
+      "crashed": "Crashed"
     }
   },
   "history": {
@@ -197,6 +204,14 @@
     "errors": {
       "sourceConflict": "Source file was modified externally, reloaded",
       "editFailed": "Failed to update property"
+    },
+    "color": {
+      "project": "Project colors",
+      "palette": "Tailwind palette",
+      "custom": "Color code",
+      "apply": "Apply",
+      "invalid": "Invalid color code",
+      "noProjectColors": "The project declares no @theme colors"
     },
     "groups": {
       "layout": "Layout",

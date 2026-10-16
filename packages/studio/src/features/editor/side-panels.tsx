@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { InspectorPanel } from '../inspector/inspector-panel.tsx';
+import { useProjectTheme } from '../inspector/use-project-theme.ts';
 import { LayerTree } from '../layers/layer-tree.tsx';
 
 type PanelProps = {
@@ -66,6 +67,7 @@ export function LeftPanel() {
 /** Inspector of the selected element (M-IN, WP-1.07); the AI chat tab comes in Phase 3. */
 export function RightPanel() {
   const { t } = useTranslation();
+  const theme = useProjectTheme();
   const tabs = (
     <>
       <Tab selected>{t('editor.properties')}</Tab>
@@ -76,7 +78,7 @@ export function RightPanel() {
   );
   return (
     <Panel label={t('editor.rightPanel')} title={t('editor.properties')} tabs={tabs}>
-      <InspectorPanel />
+      <InspectorPanel theme={theme} />
     </Panel>
   );
 }

@@ -115,8 +115,7 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
     const fontWeightInput = screen.getByTestId<HTMLSelectElement>('input-fontWeight');
     expect(fontWeightInput.value).toBe('bold');
 
-    const bgInput = screen.getByTestId<HTMLInputElement>('input-backgroundColor');
-    expect(bgInput.value).toBe('white');
+    expect(screen.getByTestId('color-field-backgroundColor').textContent).toContain('white');
 
     const roundedInput = screen.getByTestId<HTMLSelectElement>('input-borderRadius');
     expect(roundedInput.value).toBe('xl');
@@ -281,5 +280,101 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
     fireEvent.change(select, { target: { value: 'hover' } });
 
     expect(badge.textContent).toBe('hover:');
+  });
+
+  it('lists project font sizes first [R-IN-19]', async () => {
+    const sampleSource: ElementSource = {
+      loc: 'src/App.tsx:15:3',
+      tag: 'div',
+      fileHash: 'b'.repeat(64),
+      className: { kind: 'static', value: 'p-4' },
+      text: { kind: 'none' },
+      attributes: {},
+      inLoop: false,
+    };
+
+    vi.spyOn(sourceClient, 'fetchElementSource').mockResolvedValue(sampleSource);
+
+    act(() => {
+      useSelectionStore.getState().setSelectedRefs([{ loc: 'src/App.tsx:15:3', index: 0 }]);
+      useSelectionStore
+        .getState()
+        .setSelectionInfo([
+          { ref: { loc: 'src/App.tsx:15:3', index: 0 }, found: true, tag: 'div', instances: 1 },
+        ]);
+    });
+
+    render(
+      <InspectorPanel
+        options={{
+          frame: mockDesktopFrame,
+          primaryFrame: mockDesktopFrame,
+          responsiveMode: 'desktop-first',
+        }}
+        theme={{
+          colors: [],
+          fontSizes: [{ name: 'hero', value: '3rem' }],
+          radii: [],
+          fonts: [],
+          shadows: [],
+          breakpoints: [],
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-fontSize')).toBeDefined();
+    });
+
+    const fontSizeSelect = screen.getByTestId<HTMLSelectElement>('input-fontSize');
+    expect(fontSizeSelect.options[1]?.value).toBe('hero');
+  });
+
+  it('reads text-brand as the project color brand [R-IN-19]', async () => {
+    const sampleSource: ElementSource = {
+      loc: 'src/App.tsx:15:3',
+      tag: 'div',
+      fileHash: 'b'.repeat(64),
+      className: { kind: 'static', value: 'text-brand p-4' },
+      text: { kind: 'none' },
+      attributes: {},
+      inLoop: false,
+    };
+
+    vi.spyOn(sourceClient, 'fetchElementSource').mockResolvedValue(sampleSource);
+
+    act(() => {
+      useSelectionStore.getState().setSelectedRefs([{ loc: 'src/App.tsx:15:3', index: 0 }]);
+      useSelectionStore
+        .getState()
+        .setSelectionInfo([
+          { ref: { loc: 'src/App.tsx:15:3', index: 0 }, found: true, tag: 'div', instances: 1 },
+        ]);
+    });
+
+    render(
+      <InspectorPanel
+        options={{
+          frame: mockDesktopFrame,
+          primaryFrame: mockDesktopFrame,
+          responsiveMode: 'desktop-first',
+        }}
+        theme={{
+          colors: [{ name: 'brand', value: '#ff0000' }],
+          fontSizes: [],
+          radii: [],
+          fonts: [],
+          shadows: [],
+          breakpoints: [],
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('color-field-textColor')).toBeDefined();
+    });
+
+    const textColorBtn = screen.getByTestId('color-field-textColor');
+    expect(textColorBtn.textContent).toContain('brand');
   });
 });

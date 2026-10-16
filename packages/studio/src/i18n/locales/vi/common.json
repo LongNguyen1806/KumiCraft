@@ -67,6 +67,13 @@
     "narrow": {
       "title": "Studio cần màn hình rộng tối thiểu 1024 px",
       "body": "Hãy mở trên máy tính hoặc kéo rộng cửa sổ trình duyệt. Mã nguồn của bạn không bị ảnh hưởng."
+    },
+    "runnerState": {
+      "stopped": "Đã dừng",
+      "starting": "Đang khởi động",
+      "ready": "Đang chạy",
+      "error": "Lỗi",
+      "crashed": "Dừng đột ngột"
     }
   },
   "history": {
@@ -197,6 +204,14 @@
     "errors": {
       "sourceConflict": "Mã nguồn đã thay đổi từ bên ngoài, đã tải lại",
       "editFailed": "Chỉnh sửa thuộc tính thất bại"
+    },
+    "color": {
+      "project": "Màu của dự án",
+      "palette": "Bảng màu Tailwind",
+      "custom": "Mã màu",
+      "apply": "Áp dụng",
+      "invalid": "Mã màu không hợp lệ",
+      "noProjectColors": "Dự án chưa khai báo màu trong @theme"
     },
     "groups": {
       "layout": "Bố cục",

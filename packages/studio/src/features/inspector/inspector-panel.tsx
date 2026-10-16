@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 
 import { errorText } from '../../routes/error-text.ts';
 import { useOpenInEditor } from '../editor/use-open-in-editor.ts';
+import { ColorField } from './components/color-field.tsx';
 import { InspectorHeader } from './components/inspector-header.tsx';
 import { OtherClassesSection } from './components/other-classes-section.tsx';
 import { PropertyField } from './components/property-field.tsx';
@@ -25,6 +26,7 @@ import { useAttributeEdit } from './use-attribute-edit.ts';
 import type { UseInspectorTargetOptions } from './use-inspector-target.ts';
 import { useInspectorTarget } from './use-inspector-target.ts';
 import { useLiveEdit } from './use-live-edit.ts';
+import { DEFAULT_THEME } from './use-project-theme.ts';
 
 type InspectorPanelProps = {
   readonly options?: UseInspectorTargetOptions | undefined;
@@ -32,14 +34,79 @@ type InspectorPanelProps = {
   readonly onClassStringChange?: (newString: string) => void;
 };
 
-const DEFAULT_THEME: ThemeInfo = {
-  colors: [],
-  fontSizes: [],
-  radii: [],
-  fonts: [],
-  shadows: [],
-  breakpoints: [],
+function resolveThemeTokens(property: PropertyId, theme: ThemeInfo): readonly string[] | undefined {
+  switch (property) {
+    case 'fontSize':
+      return theme.fontSizes.map((t) => t.name);
+    case 'borderRadius':
+      return theme.radii.map((t) => t.name);
+    case 'boxShadow':
+      return theme.shadows.map((t) => t.name);
+    case 'fontFamily':
+      return theme.fonts.map((t) => t.name);
+    default:
+      return undefined;
+  }
+}
+
+function resolveFieldOptions(
+  property: PropertyId,
+  baseOptions: readonly string[] | undefined,
+  theme: ThemeInfo,
+): readonly string[] | undefined {
+  const themeNames = resolveThemeTokens(property, theme);
+  if (themeNames === undefined) return baseOptions;
+  return Array.from(new Set([...themeNames, ...(baseOptions ?? [])]));
+}
+
+function isColorProperty(p: PropertyId): boolean {
+  return p === 'textColor' || p === 'backgroundColor' || p === 'borderColor';
+}
+
+type GroupFieldRendererProps = {
+  readonly field: (typeof PROPERTY_GROUPS)[number]['fields'][number];
+  readonly tokens: readonly ClassToken[];
+  readonly currentScope: Scope;
+  readonly frameWidth: number;
+  readonly ctx: ClassContext;
+  readonly isLocked: boolean;
+  readonly onPropertyValueChange: (property: PropertyId, value: ClassValue | undefined) => void;
 };
+
+function GroupFieldRenderer(props: GroupFieldRendererProps) {
+  const { field, tokens, currentScope, frameWidth, ctx, isLocked, onPropertyValueChange } = props;
+  const { t } = useTranslation();
+
+  if (isColorProperty(field.property)) {
+    return (
+      <ColorField
+        property={field.property}
+        label={t(field.labelKey)}
+        tokens={tokens}
+        currentScope={currentScope}
+        frameWidth={frameWidth}
+        ctx={ctx}
+        onValueChange={onPropertyValueChange}
+        disabled={isLocked}
+      />
+    );
+  }
+
+  const options = resolveFieldOptions(field.property, field.options, ctx.theme);
+  return (
+    <PropertyField
+      property={field.property}
+      label={t(field.labelKey)}
+      tokens={tokens}
+      currentScope={currentScope}
+      frameWidth={frameWidth}
+      ctx={ctx}
+      onValueChange={onPropertyValueChange}
+      options={options}
+      disabled={isLocked}
+    />
+  );
+}
 
 function InspectorPropertyGroups({
   tokens,
@@ -66,17 +133,15 @@ function InspectorPropertyGroups({
           </h3>
           <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
             {group.fields.map((f) => (
-              <PropertyField
+              <GroupFieldRenderer
                 key={f.property}
-                property={f.property}
-                label={t(f.labelKey)}
+                field={f}
                 tokens={tokens}
                 currentScope={currentScope}
                 frameWidth={frameWidth}
                 ctx={ctx}
-                onValueChange={onPropertyValueChange}
-                options={f.options}
-                disabled={isLocked}
+                isLocked={isLocked}
+                onPropertyValueChange={onPropertyValueChange}
               />
             ))}
           </div>
