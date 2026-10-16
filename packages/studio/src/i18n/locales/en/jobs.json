@@ -1,0 +1,6 @@
+{
+  "install": {
+    "running": "Installing dependencies…",
+    "cancelled": "Install cancelled. You can install again."
+  }
+}

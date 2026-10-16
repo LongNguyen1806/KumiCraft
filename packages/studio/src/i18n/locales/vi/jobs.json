@@ -1,0 +1,6 @@
+{
+  "install": {
+    "running": "Đang cài thư viện…",
+    "cancelled": "Đã hủy cài đặt. Bạn có thể cài lại."
+  }
+}

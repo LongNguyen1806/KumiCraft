@@ -1,11 +1,13 @@
 // Project endpoints (SPEC-03 section 5.3, SPEC-04 M-PJ).
-import type {
-  BackendInfo,
-  DirectoryListing,
-  PackageManager,
-  ProjectInfo,
-  ProjectProbe,
-  ThemeInfo,
+import {
+  type BackendInfo,
+  type DirectoryListing,
+  type JobStarted,
+  JobStartedSchema,
+  type PackageManager,
+  type ProjectInfo,
+  type ProjectProbe,
+  type ThemeInfo,
 } from '@reactcraft/shared';
 
 import { apiDelete, apiGet, apiPost } from './http.ts';
@@ -40,8 +42,9 @@ export async function closeProject(): Promise<void> {
   await apiPost('project/close');
 }
 
-export async function installProject(command: readonly string[]): Promise<void> {
-  await apiPost('project/install', { command });
+/** Starts installing dependencies; progress comes as `job.*` events (R-PJ-13). */
+export async function installProject(command: readonly string[]): Promise<JobStarted> {
+  return JobStartedSchema.parse(await apiPost('project/install', { command }));
 }
 
 export async function fetchProjectTheme(): Promise<ThemeInfo> {
