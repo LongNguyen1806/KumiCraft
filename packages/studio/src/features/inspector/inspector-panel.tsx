@@ -86,6 +86,20 @@ function InspectorPropertyGroups({
   );
 }
 
+type ElementSectionsProps = {
+  readonly source: ElementSource;
+  readonly tokens: readonly ClassToken[];
+  readonly currentScope: Scope;
+  readonly frameWidth: number;
+  readonly ctx: ClassContext;
+  readonly isLocked: boolean;
+  readonly rawClassString: string;
+  readonly onPropChange: (property: PropertyId, value: ClassValue | undefined) => void;
+  readonly onRawChange: (raw: string) => void;
+  readonly isAttrLocked: boolean;
+  readonly onAttributeChange: (name: EditableAttr, value: string | undefined) => void;
+};
+
 function ElementSections({
   source,
   tokens,
@@ -98,19 +112,7 @@ function ElementSections({
   onPropChange,
   onRawChange,
   onAttributeChange,
-}: {
-  readonly source: ElementSource;
-  readonly tokens: readonly ClassToken[];
-  readonly currentScope: Scope;
-  readonly frameWidth: number;
-  readonly ctx: ClassContext;
-  readonly isLocked: boolean;
-  readonly rawClassString: string;
-  readonly onPropChange: (property: PropertyId, value: ClassValue | undefined) => void;
-  readonly onRawChange: (raw: string) => void;
-  readonly isAttrLocked: boolean;
-  readonly onAttributeChange: (name: EditableAttr, value: string | undefined) => void;
-}) {
+}: ElementSectionsProps) {
   const { t: tError } = useTranslation('errors');
   const editor = useOpenInEditor();
   return (
@@ -147,33 +149,37 @@ function ElementSections({
   );
 }
 
-function InspectorSingleTargetView({
-  target,
-  ctx,
-  frameWidth,
-  onClassStringChange,
-}: {
+type InspectorSingleTargetViewProps = {
   readonly target: Extract<InspectorTarget, { readonly kind: 'element' }>;
   readonly ctx: ClassContext;
   readonly frameWidth: number;
   readonly onClassStringChange?: ((newString: string) => void) | undefined;
-}) {
-  const liveEdit = useLiveEdit({ target, ctx });
-  const tokens = parseClasses(liveEdit.classString, ctx);
-  const attrEdit = useAttributeEdit(target);
+};
+
+function computeTargetLocks(
+  target: Extract<InspectorTarget, { readonly kind: 'element' }>,
+  isSaving: boolean,
+): { readonly isLocked: boolean; readonly isAttrLocked: boolean } {
   const isLocked = target.lockReason !== undefined || target.source?.readonly !== undefined;
   // Class locks (classExpression, classDuplicate) do not block tag attributes (R-IN-18).
   const isAttrLocked =
     target.source?.readonly !== undefined ||
     target.lockReason === 'outsideSource' ||
     target.lockReason === 'tooLarge' ||
-    attrEdit.isSaving;
-  const displayedError = liveEdit.error ?? attrEdit.error ?? target.error;
+    isSaving;
+  return { isLocked, isAttrLocked };
+}
 
+function InspectorStatusFeedback({
+  loading,
+  error,
+}: {
+  readonly loading?: boolean | undefined;
+  readonly error?: string | undefined;
+}) {
   return (
-    <div className="flex flex-col gap-2" data-testid="inspector-panel">
-      <InspectorHeader target={target} />
-      {target.loading && (
+    <>
+      {loading && (
         <div
           data-testid="inspector-loading"
           className="py-2 text-center text-xs text-ink-faint animate-pulse"
@@ -181,11 +187,31 @@ function InspectorSingleTargetView({
           …
         </div>
       )}
-      {displayedError && (
+      {error && (
         <div data-testid="inspector-error" className="py-2 text-xs text-red-500 font-medium">
-          {displayedError}
+          {error}
         </div>
       )}
+    </>
+  );
+}
+
+function InspectorSingleTargetView({
+  target,
+  ctx,
+  frameWidth,
+  onClassStringChange,
+}: InspectorSingleTargetViewProps) {
+  const liveEdit = useLiveEdit({ target, ctx });
+  const tokens = parseClasses(liveEdit.classString, ctx);
+  const attrEdit = useAttributeEdit(target);
+  const { isLocked, isAttrLocked } = computeTargetLocks(target, attrEdit.isSaving);
+  const displayedError = liveEdit.error ?? attrEdit.error ?? target.error;
+
+  return (
+    <div className="flex flex-col gap-2" data-testid="inspector-panel">
+      <InspectorHeader target={target} />
+      <InspectorStatusFeedback loading={target.loading} error={displayedError} />
       {target.source && (
         <ElementSections
           source={target.source}

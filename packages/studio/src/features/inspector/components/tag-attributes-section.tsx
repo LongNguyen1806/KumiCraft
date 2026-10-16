@@ -41,6 +41,48 @@ function useAttrDraft(
   return { draft, setDraft, commit };
 }
 
+function AttrInput({
+  id,
+  testId,
+  disabled,
+  draft,
+  val,
+  setDraft,
+  commit,
+}: {
+  readonly id: string;
+  readonly testId: string;
+  readonly disabled: boolean;
+  readonly draft: string;
+  readonly val: string;
+  readonly setDraft: (v: string) => void;
+  readonly commit: () => void;
+}) {
+  return (
+    <input
+      id={id}
+      data-testid={testId}
+      type="text"
+      disabled={disabled}
+      value={draft}
+      placeholder="—"
+      onChange={(e) => {
+        setDraft(e.target.value);
+      }}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          // Blur triggers the single commit, so Enter and blur never send twice.
+          e.currentTarget.blur();
+        } else if (e.key === 'Escape') {
+          setDraft(val);
+        }
+      }}
+      className="h-7 w-full rounded border border-border/60 bg-field px-2 font-mono text-xs text-ink focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
+    />
+  );
+}
+
 function TagAttrRow({
   attrName,
   attributes,
@@ -80,26 +122,14 @@ function TagAttrRow({
           </button>
         )}
       </div>
-      <input
+      <AttrInput
         id={`attr-${attrName}`}
-        data-testid={`attr-input-${attrName}`}
-        type="text"
+        testId={`attr-input-${attrName}`}
         disabled={disabled || isExpression}
-        value={draft}
-        placeholder="—"
-        onChange={(e) => {
-          setDraft(e.target.value);
-        }}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            // Blur triggers the single commit, so Enter and blur never send twice.
-            e.currentTarget.blur();
-          } else if (e.key === 'Escape') {
-            setDraft(val);
-          }
-        }}
-        className="h-7 w-full rounded border border-border/60 bg-field px-2 font-mono text-xs text-ink focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
+        draft={draft}
+        val={val}
+        setDraft={setDraft}
+        commit={commit}
       />
     </div>
   );

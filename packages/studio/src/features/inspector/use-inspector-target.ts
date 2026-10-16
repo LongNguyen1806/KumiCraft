@@ -82,6 +82,26 @@ type LoaderState = {
   readonly error?: string | undefined;
 };
 
+async function queryElementSource(loc: {
+  readonly file: string;
+  readonly line: number;
+  readonly column: number;
+}): Promise<{ readonly source?: ElementSource | undefined; readonly error?: string | undefined }> {
+  try {
+    const res = await fetchElementSource({
+      file: loc.file,
+      line: loc.line,
+      column: loc.column,
+    });
+    return { source: res, error: undefined };
+  } catch (err: unknown) {
+    return {
+      source: undefined,
+      error: err instanceof Error ? err.message : 'Lỗi nạp mã nguồn',
+    };
+  }
+}
+
 function useElementSourceLoader(
   enabled: boolean,
   loc: { readonly file: string; readonly line: number; readonly column: number } | undefined,
@@ -101,24 +121,9 @@ function useElementSourceLoader(
     let cancelled = false;
 
     async function load(): Promise<void> {
-      try {
-        const res = await fetchElementSource({
-          file: activeLoc.file,
-          line: activeLoc.line,
-          column: activeLoc.column,
-        });
-        if (!cancelled) {
-          setData({ locKey: currentLocKey, refreshKey, source: res, error: undefined });
-        }
-      } catch (err: unknown) {
-        if (!cancelled) {
-          setData({
-            locKey: currentLocKey,
-            refreshKey,
-            source: undefined,
-            error: err instanceof Error ? err.message : 'Lỗi nạp mã nguồn',
-          });
-        }
+      const result = await queryElementSource(activeLoc);
+      if (!cancelled) {
+        setData({ locKey: currentLocKey, refreshKey, source: result.source, error: result.error });
       }
     }
 

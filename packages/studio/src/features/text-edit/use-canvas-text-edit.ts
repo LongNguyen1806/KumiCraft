@@ -186,10 +186,7 @@ function useTextEditBridge(
   }, [channel, activeRef, onCancel]);
 }
 
-export function useCanvasTextEdit(options: UseCanvasTextEditOptions = {}): UseCanvasTextEditReturn {
-  const channel = options.channel ?? studioBridgeChannel;
-  const onOpenEditor = options.onOpenEditor;
-
+function useTextEditState() {
   const [editingRef, setEditingRef] = useState<ElementRef | undefined>(undefined);
   const [warning, setWarning] = useState<TextEditWarning | undefined>(undefined);
   const [loopCount, setLoopCount] = useState<number | undefined>(undefined);
@@ -203,6 +200,23 @@ export function useCanvasTextEdit(options: UseCanvasTextEditOptions = {}): UseCa
     setLoopCount(undefined);
   }, []);
 
+  return {
+    editingRef,
+    setEditingRef,
+    warning,
+    setWarning,
+    loopCount,
+    setLoopCount,
+    activeSessionRef,
+    resetEditing,
+  };
+}
+
+type TextEditState = ReturnType<typeof useTextEditState>;
+
+function useTextEditHandlers(channel: BridgeChannel, state: TextEditState) {
+  const { activeSessionRef, resetEditing, setWarning, setLoopCount, setEditingRef } = state;
+
   const handleCommit = useCallback(
     async (ref: ElementRef, text: string) => {
       try {
@@ -212,7 +226,7 @@ export function useCanvasTextEdit(options: UseCanvasTextEditOptions = {}): UseCa
       }
       resetEditing();
     },
-    [resetEditing],
+    [activeSessionRef, resetEditing],
   );
 
   const handleRequest = useCallback(
@@ -226,22 +240,37 @@ export function useCanvasTextEdit(options: UseCanvasTextEditOptions = {}): UseCa
         },
       });
     },
-    [channel],
+    [channel, activeSessionRef, setEditingRef, setLoopCount, setWarning],
   );
 
-  const getActiveRef = useCallback(() => activeSessionRef.current?.ref, []);
-  useTextEditBridge(channel, handleRequest, handleCommit, resetEditing, getActiveRef);
+  const getActiveRef = useCallback(() => activeSessionRef.current?.ref, [activeSessionRef]);
+
+  return { handleCommit, handleRequest, getActiveRef };
+}
+
+export function useCanvasTextEdit(options: UseCanvasTextEditOptions = {}): UseCanvasTextEditReturn {
+  const channel = options.channel ?? studioBridgeChannel;
+  const onOpenEditor = options.onOpenEditor;
+  const state = useTextEditState();
+  const { warning, setWarning } = state;
+  const { handleCommit, handleRequest, getActiveRef } = useTextEditHandlers(channel, state);
+
+  useTextEditBridge(channel, handleRequest, handleCommit, state.resetEditing, getActiveRef);
+
+  const dismissWarning = useCallback(() => {
+    setWarning(undefined);
+  }, [setWarning]);
+
+  const openEditorForWarning = useCallback(() => {
+    openEditorAt(warning, onOpenEditor);
+  }, [warning, onOpenEditor]);
 
   return {
-    editingRef,
+    editingRef: state.editingRef,
     warning,
-    loopCount,
-    isEditing: editingRef !== undefined,
-    dismissWarning: useCallback(() => {
-      setWarning(undefined);
-    }, []),
-    openEditorForWarning: useCallback(() => {
-      openEditorAt(warning, onOpenEditor);
-    }, [warning, onOpenEditor]),
+    loopCount: state.loopCount,
+    isEditing: state.editingRef !== undefined,
+    dismissWarning,
+    openEditorForWarning,
   };
 }

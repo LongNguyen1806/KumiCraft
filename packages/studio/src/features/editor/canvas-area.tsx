@@ -138,14 +138,11 @@ function CanvasViewport(props: CanvasContentProps) {
   );
 }
 
-export function CanvasArea(props: CanvasAreaProps) {
-  const { projectInfo, trusted = true, onTrustRequest, onInstallRequest } = props;
-  const { t } = useTranslation();
+function useCanvasAreaState(projectInfo?: ProjectInfo) {
   const runner = useRunnerStatus();
   const [mode, setMode] = useState<CanvasMode>('design');
   const [zoom, setZoom] = useState<number>(1);
   const { frames, activeFrame, setActiveFrameId } = useCanvasFrames(projectInfo);
-  const { t: tError } = useTranslation('errors');
   const editor = useOpenInEditor();
   const textEdit = useCanvasTextEdit({
     mode,
@@ -155,6 +152,26 @@ export function CanvasArea(props: CanvasAreaProps) {
     },
   });
 
+  return {
+    runner,
+    mode,
+    setMode,
+    zoom,
+    setZoom,
+    frames,
+    activeFrame,
+    setActiveFrameId,
+    editor,
+    textEdit,
+  };
+}
+
+export function CanvasArea(props: CanvasAreaProps) {
+  const { projectInfo, trusted = true, onTrustRequest, onInstallRequest } = props;
+  const { t } = useTranslation();
+  const { t: tError } = useTranslation('errors');
+  const s = useCanvasAreaState(projectInfo);
+
   return (
     <main
       aria-label={t('editor.canvas')}
@@ -162,40 +179,40 @@ export function CanvasArea(props: CanvasAreaProps) {
       className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-panel bg-card-solid/35 bg-[radial-gradient(rgb(60_52_30/0.14)_1px,transparent_1px)] bg-size-[18px_18px]"
     >
       <CanvasToolbar
-        frames={frames}
-        activeFrameId={activeFrame.id}
-        onSelectFrame={setActiveFrameId}
-        zoom={zoom}
-        onSelectZoom={setZoom}
-        mode={mode}
+        frames={s.frames}
+        activeFrameId={s.activeFrame.id}
+        onSelectFrame={s.setActiveFrameId}
+        zoom={s.zoom}
+        onSelectZoom={s.setZoom}
+        mode={s.mode}
         onToggleMode={() => {
-          setMode((m) => (m === 'design' ? 'preview' : 'design'));
+          s.setMode((m) => (m === 'design' ? 'preview' : 'design'));
         }}
       />
-      <BuildErrorBanner onOpenLoc={editor.open} />
+      <BuildErrorBanner onOpenLoc={s.editor.open} />
       <TextEditOverlay
-        warning={textEdit.warning}
-        loopCount={textEdit.loopCount}
-        onOpenEditor={textEdit.openEditorForWarning}
-        onDismiss={textEdit.dismissWarning}
+        warning={s.textEdit.warning}
+        loopCount={s.textEdit.loopCount}
+        onOpenEditor={s.textEdit.openEditorForWarning}
+        onDismiss={s.textEdit.dismissWarning}
       />
-      {editor.errorInfo !== undefined && (
+      {s.editor.errorInfo !== undefined && (
         <p role="alert" className="px-4 text-xs text-danger" data-testid="open-editor-error">
-          {errorText(tError, editor.errorInfo.code, editor.errorInfo.params)}
+          {errorText(tError, s.editor.errorInfo.code, s.editor.errorInfo.params)}
         </p>
       )}
       <CanvasViewport
-        status={runner.status}
+        status={s.runner.status}
         trusted={trusted}
         needsInstall={projectInfo?.needsInstall ?? false}
-        logTail={runner.logTail}
-        frame={activeFrame}
-        zoom={zoom}
-        mode={mode}
+        logTail={s.runner.logTail}
+        frame={s.activeFrame}
+        zoom={s.zoom}
+        mode={s.mode}
         onTrustRequest={onTrustRequest}
         onInstallRequest={onInstallRequest}
-        onStart={runner.start}
-        onRestart={runner.restart}
+        onStart={s.runner.start}
+        onRestart={s.runner.restart}
       />
     </main>
   );

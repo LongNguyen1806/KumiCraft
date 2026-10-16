@@ -1,0 +1,163 @@
+// LayerTree row rendering component (SPEC-04 M-LT).
+import type { TreeNode } from '@reactcraft/shared';
+import { useTranslation } from 'react-i18next';
+
+import type { VisibleNodeMeta } from './layer-tree-utils.ts';
+
+const CHEVRON_EXPANDED = '▾';
+const CHEVRON_COLLAPSED = '▸';
+
+export type LayerTreeRowProps = {
+  readonly meta: VisibleNodeMeta;
+  readonly isSelected: boolean;
+  readonly isHovered: boolean;
+  readonly isCollapsed: boolean;
+  readonly rowRef?: React.Ref<HTMLDivElement> | undefined;
+  readonly onNodeClick: (node: TreeNode) => void;
+  readonly onNodeHover: (node: TreeNode) => void;
+  readonly onMouseLeave: () => void;
+  readonly onToggleCollapse: (loc: string, e: React.MouseEvent) => void;
+};
+
+function LayerTreeRowBadges({
+  instances,
+  isBoundary,
+  componentName,
+}: {
+  readonly instances: number;
+  readonly isBoundary?: boolean | undefined;
+  readonly componentName?: string | undefined;
+}) {
+  return (
+    <div className="ml-auto flex items-center gap-1">
+      {instances > 1 && (
+        <span
+          data-testid="instances-badge"
+          className="rounded bg-field px-1 py-0.5 font-mono text-[10px] text-ink-faint"
+        >
+          {`×${String(instances)}`}
+        </span>
+      )}
+      {isBoundary && componentName && (
+        <span
+          data-testid="component-badge"
+          className="rounded bg-primary/10 px-1 py-0.5 text-[10px] font-medium text-primary"
+        >
+          {componentName}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function LayerTreeChevronButton({
+  hasChildren,
+  isCollapsed,
+  loc,
+  onToggleCollapse,
+}: {
+  readonly hasChildren: boolean;
+  readonly isCollapsed: boolean;
+  readonly loc: string;
+  readonly onToggleCollapse: (loc: string, e: React.MouseEvent) => void;
+}) {
+  const { t } = useTranslation();
+  if (!hasChildren) {
+    return <span className="w-4" />;
+  }
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        onToggleCollapse(loc, e);
+      }}
+      className="flex h-4 w-4 items-center justify-center rounded text-ink-faint hover:text-ink"
+      aria-label={isCollapsed ? t('editor.expand') : t('editor.collapse')}
+    >
+      <span className="text-[10px]" aria-hidden="true">
+        {isCollapsed ? CHEVRON_COLLAPSED : CHEVRON_EXPANDED}
+      </span>
+    </button>
+  );
+}
+
+function getRowClassName(isSelected: boolean, isHovered: boolean): string {
+  const base =
+    'group flex h-7 items-center gap-1.5 rounded-md px-1.5 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-primary';
+  if (isSelected) {
+    return `${base} bg-card-solid text-ink font-medium shadow-[0_1px_2px_rgba(60,52,30,0.1)]`;
+  }
+  if (isHovered) return `${base} bg-field-hover text-ink`;
+  return `${base} text-ink-soft hover:bg-field hover:text-ink`;
+}
+
+function LayerTreeRowLabel({
+  tag,
+  label,
+}: {
+  readonly tag: string;
+  readonly label?: string | undefined;
+}) {
+  return (
+    <>
+      <span className="font-mono text-[11px] text-ink">{tag}</span>
+      {label && (
+        <span className="truncate text-[11px] text-ink-faint group-hover:text-ink-soft">
+          {label}
+        </span>
+      )}
+    </>
+  );
+}
+
+export function LayerTreeRow({
+  meta,
+  isSelected,
+  isHovered,
+  isCollapsed,
+  rowRef,
+  onNodeClick,
+  onNodeHover,
+  onMouseLeave,
+  onToggleCollapse,
+}: LayerTreeRowProps) {
+  const { node, depth, hasChildren, isBoundary, componentName } = meta;
+
+  return (
+    <div
+      ref={rowRef}
+      role="treeitem"
+      tabIndex={0}
+      aria-selected={isSelected}
+      aria-expanded={hasChildren ? !isCollapsed : undefined}
+      onClick={() => {
+        onNodeClick(node);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onNodeClick(node);
+        }
+      }}
+      onMouseEnter={() => {
+        onNodeHover(node);
+      }}
+      onMouseLeave={onMouseLeave}
+      style={{ paddingLeft: `${String(depth * 12 + 6)}px` }}
+      className={getRowClassName(isSelected, isHovered)}
+    >
+      <LayerTreeChevronButton
+        hasChildren={hasChildren}
+        isCollapsed={isCollapsed}
+        loc={node.ref.loc}
+        onToggleCollapse={onToggleCollapse}
+      />
+      <LayerTreeRowLabel tag={node.tag} label={node.label} />
+      <LayerTreeRowBadges
+        instances={node.instances}
+        isBoundary={isBoundary}
+        componentName={componentName}
+      />
+    </div>
+  );
+}
