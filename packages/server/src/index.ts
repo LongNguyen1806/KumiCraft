@@ -1,5 +1,4 @@
 // Public entry point of @reactcraft/server (QC-03): composition root of the Local Server.
-import { randomBytes } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
@@ -38,6 +37,7 @@ import {
   type Platform,
   toSupportedPlatform,
 } from './core/shared/session.ts';
+import { loadSessionToken } from './core/shared/session-token-store.ts';
 import { type ConfigStore, createConfigStore } from './core/shared/user-config.ts';
 import {
   createSourceEditorService,
@@ -112,6 +112,8 @@ type InitializedContext = {
   readonly processPort: ProcessPort;
   readonly platform: Platform;
   readonly homeDir: string;
+  readonly configDir: string;
+  readonly logger: LoggerPort;
 };
 
 /**
@@ -176,6 +178,8 @@ async function initServerContext(
     processPort,
     platform,
     homeDir,
+    configDir,
+    logger,
   });
 }
 
@@ -370,7 +374,12 @@ export async function startServer(options: StartServerOptions): Promise<Result<R
   if (!contextRes.ok) return contextRes;
   const ctx = contextRes.value;
 
-  const sessionToken = randomBytes(32).toString('base64url');
+  // S-05a: the token of the last run, so a Studio tab still open reconnects on its own.
+  const sessionToken = await loadSessionToken({
+    fs: ctx.fs,
+    dir: ctx.configDir,
+    logger: ctx.logger,
+  });
   const app = await createHttpServer(options, ctx, sessionToken);
   try {
     await app.listen({ host: HOST, port: options.port });

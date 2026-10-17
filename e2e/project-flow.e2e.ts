@@ -171,3 +171,21 @@ test('keeps the Studio settings in the test config folder [R-QA-02]', async () =
   const json = JSON.parse(raw) as { language?: string };
   expect(json.language).toBe('en');
 });
+
+test('a Studio tab still open reconnects when ReactCraft runs again [S-05a]', async ({ page }) => {
+  await writeProject();
+  const first = await start();
+  await first.api('project/trust', 'POST', { trusted: true });
+  const tab = await open(page, first);
+  await expect(tab.getByTestId('project-name')).toHaveText('Cửa hàng');
+
+  await first.stop();
+  await expect(tab.getByTestId('connection-lost')).toBeVisible();
+
+  // Same address and the same token: the tab needs nothing new.
+  const again = await start();
+  expect(again.studioUrl).toBe(first.studioUrl);
+  await expect(tab.getByTestId('connection-lost')).toHaveCount(0, { timeout: 15_000 });
+  await expect(tab.getByTestId('project-name')).toHaveText('Cửa hàng');
+  await expect(tab.getByTestId('trust-status')).toContainText(ui('editor.trusted'));
+});

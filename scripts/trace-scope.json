@@ -18,7 +18,7 @@
       "reason": "only the Vite 7 fixture is a pnpm workspace package; the Vite 8 fixture links the Studio's node_modules (spec-log)"
     },
     {
-      "pattern": "^S-(0[1-8]|04[a-c]|1[0-2]|2[0-4]|29|8[0-2]|84|8[89])$",
+      "pattern": "^S-(0[1-8]|04[a-c]|05a|1[0-2]|2[0-4]|29|8[0-2]|84|8[89])$",
       "phase": 0,
       "reason": "server security, paths and trust kept from Phase 0"
     },
