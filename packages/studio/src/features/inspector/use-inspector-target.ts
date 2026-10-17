@@ -137,9 +137,12 @@ function useElementSourceLoader(
     return { source: undefined, loading: false, error: undefined };
   }
 
-  const isUpToDate = data.locKey === currentLocKey && data.refreshKey === refreshKey;
+  const sameElement = data.locKey === currentLocKey;
+  const isUpToDate = sameElement && data.refreshKey === refreshKey;
+  // While the same element reloads after a save, keep showing its last source: clearing it would
+  // unmount every field and scroll the panel back to the top.
   return {
-    source: isUpToDate ? data.source : undefined,
+    source: sameElement ? data.source : undefined,
     loading: !isUpToDate,
     error: isUpToDate ? data.error : undefined,
   };

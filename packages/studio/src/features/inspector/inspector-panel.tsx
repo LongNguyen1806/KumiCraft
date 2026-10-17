@@ -276,7 +276,10 @@ function InspectorSingleTargetView({
   return (
     <div className="flex flex-col gap-2" data-testid="inspector-panel">
       <InspectorHeader target={target} />
-      <InspectorStatusFeedback loading={target.loading} error={displayedError} />
+      <InspectorStatusFeedback
+        loading={target.loading && target.source === undefined}
+        error={displayedError}
+      />
       {target.source && (
         <ElementSections
           source={target.source}

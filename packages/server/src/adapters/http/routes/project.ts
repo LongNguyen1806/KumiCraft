@@ -97,6 +97,21 @@ function registerStateRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): voi
   });
 }
 
+/** What Studio reads from the project's code: its pages and its Tailwind theme. */
+function registerCodeInfoRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
+  api.get('/project/pages', async (_request, reply) => {
+    const result = await deps.projectService.pages();
+    if (!result.ok) return sendError(reply, result.error);
+    return { data: result.value };
+  });
+
+  api.get('/project/theme', async (_request, reply) => {
+    const result = await deps.projectService.theme();
+    if (!result.ok) return sendError(reply, result.error);
+    return { data: result.value };
+  });
+}
+
 function registerOpsRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
   api.post('/project/trust', async (request, reply) => {
     const parsed = TrustSchema.safeParse(request.body);
@@ -116,18 +131,6 @@ function registerOpsRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void 
     const result = await deps.projectService.install(parsed.data.command);
     if (!result.ok) return sendError(reply, result.error);
     reply.status(202);
-    return { data: result.value };
-  });
-
-  api.get('/project/pages', async (_request, reply) => {
-    const result = await deps.projectService.pages();
-    if (!result.ok) return sendError(reply, result.error);
-    return { data: result.value };
-  });
-
-  api.get('/project/theme', async (_request, reply) => {
-    const result = await deps.projectService.theme();
-    if (!result.ok) return sendError(reply, result.error);
     return { data: result.value };
   });
 
@@ -158,4 +161,5 @@ export function registerProjectRoutes(api: FastifyInstance, deps: ProjectRoutesD
   registerOpenCreateRoutes(api, deps);
   registerStateRoutes(api, deps);
   registerOpsRoutes(api, deps);
+  registerCodeInfoRoutes(api, deps);
 }

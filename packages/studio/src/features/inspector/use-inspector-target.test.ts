@@ -187,5 +187,24 @@ describe('useInspectorTarget and helpers [SPEC-04 section 9 M-IN]', () => {
         expect(result.current.writePrefix).toBe('max-sm:hover:');
       }
     });
+
+    it('keeps the shown source while the same element reloads after a save', async () => {
+      act(() => {
+        useSelectionStore.getState().setSelectedRefs([{ loc: 'src/App.tsx:12:5', index: 0 }]);
+      });
+      const { result } = renderHook(() => useInspectorTarget());
+      await waitFor(() => {
+        expect(result.current.kind === 'element' && result.current.loading).toBe(false);
+      });
+
+      vi.spyOn(sourceClient, 'fetchElementSource').mockReturnValue(new Promise(() => undefined));
+      const target = result.current;
+      act(() => {
+        if (target.kind === 'element') target.refresh();
+      });
+
+      expect(result.current.kind === 'element' && result.current.loading).toBe(true);
+      expect(result.current.kind === 'element' && result.current.source).toEqual(mockElementSource);
+    });
   });
 });
