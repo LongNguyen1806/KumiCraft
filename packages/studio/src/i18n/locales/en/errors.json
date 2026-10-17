@@ -70,7 +70,9 @@
       "commandMismatch": "Install command does not match the configured package manager.",
       "cannotMatchProjectRoot": "Backend directory cannot match the project root.",
       "duplicateBackend": "A backend already exists for this path.",
-      "maxBackendsExceeded": "Maximum number of backends exceeded."
+      "maxBackendsExceeded": "Maximum number of backends exceeded.",
+      "notJsx": "Inserted JSX snippet is not valid.",
+      "overlap": "Source code edits overlap."
     }
   },
   "E017": {
@@ -110,7 +112,11 @@
       "duplicateAttr": "Element has duplicate attribute names.",
       "outsideSource": "Element is outside the allowed source directory.",
       "tooLarge": "Source file exceeds the maximum editable size limit.",
-      "notJsxFile": "File is not a valid JSX or TSX file."
+      "notJsxFile": "File is not a valid JSX or TSX file.",
+      "rootElement": "Cannot remove or duplicate the root element of a component.",
+      "loopRoot": "Cannot remove or duplicate the root element of a loop.",
+      "expressionChild": "Element is inside a dynamic expression; edit it in your editor.",
+      "componentSlot": "Component receives children via prop; cannot insert directly into its template."
     }
   },
   "E024": {

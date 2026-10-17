@@ -201,4 +201,112 @@ export function Card() {
     ]);
     expect(await fs.readFile(file, 'utf8')).toBe(code);
   });
+
+  it('#15 POST /api/v1/source/edits supports insert, duplicate, remove and Undo/Redo [R-SE-22, R-SE-25, R-SE-26]', async () => {
+    const code = [
+      'export function Card() {',
+      '  return (',
+      '    <div>',
+      '      <p>Base</p>',
+      '    </div>',
+      '  );',
+      '}',
+      '',
+    ].join('\n');
+    const file = path.join(tmpDir, 'src/Card.tsx');
+    await fs.writeFile(file, code, 'utf8');
+
+    // 1. Insert sibling after <p>
+    const insRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/source/edits',
+      headers: HEADERS,
+      payload: {
+        edit: {
+          kind: 'insert',
+          target: {
+            kind: 'sibling',
+            ref: { loc: 'src/Card.tsx:4:7', tag: 'p' },
+            where: 'after',
+          },
+          jsx: '<span>Added</span>',
+        },
+      },
+    });
+    expect(insRes.statusCode).toBe(200);
+    const insBody = insRes.json<{
+      data: { changed: boolean; files: string[]; locs: string[] };
+    }>();
+    expect(insBody.data).toEqual({
+      changed: true,
+      files: ['src/Card.tsx'],
+      locs: ['src/Card.tsx:5:7'],
+    });
+    const afterInsert = await fs.readFile(file, 'utf8');
+
+    // 2. Duplicate the newly inserted <span>
+    const dupRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/source/edits',
+      headers: HEADERS,
+      payload: {
+        edit: {
+          kind: 'duplicate',
+          elements: [{ loc: 'src/Card.tsx:5:7', tag: 'span' }],
+        },
+      },
+    });
+    expect(dupRes.statusCode).toBe(200);
+    const dupBody = dupRes.json<{
+      data: { changed: boolean; files: string[]; locs: string[] };
+    }>();
+    expect(dupBody.data).toEqual({
+      changed: true,
+      files: ['src/Card.tsx'],
+      locs: ['src/Card.tsx:6:7'],
+    });
+
+    // 3. Remove the duplicate
+    const rmRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/source/edits',
+      headers: HEADERS,
+      payload: {
+        edit: {
+          kind: 'remove',
+          elements: [{ loc: 'src/Card.tsx:6:7', tag: 'span' }],
+        },
+      },
+    });
+    expect(rmRes.statusCode).toBe(200);
+    const rmBody = rmRes.json<{
+      data: { changed: boolean; files: string[]; locs: string[] };
+    }>();
+    expect(rmBody.data).toEqual({
+      changed: true,
+      files: ['src/Card.tsx'],
+      locs: [],
+    });
+    expect(await fs.readFile(file, 'utf8')).toBe(afterInsert);
+
+    // Undo all 3 structural operations -> back to original code
+    for (let i = 0; i < 3; i++) {
+      const u = await app.inject({
+        method: 'POST',
+        url: '/api/v1/history/undo',
+        headers: HEADERS,
+      });
+      expect(u.statusCode).toBe(200);
+    }
+    expect(await fs.readFile(file, 'utf8')).toBe(code);
+
+    // Redo 1 step (insert) -> matches afterInsert
+    const redoRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/history/redo',
+      headers: HEADERS,
+    });
+    expect(redoRes.statusCode).toBe(200);
+    expect(await fs.readFile(file, 'utf8')).toBe(afterInsert);
+  });
 });

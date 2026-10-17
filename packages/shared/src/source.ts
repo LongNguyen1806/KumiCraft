@@ -129,8 +129,67 @@ export const SourceEditSchema = z.discriminatedUnion('kind', [
 ]);
 export type SourceEdit = z.infer<typeof SourceEditSchema>;
 
+export const ElementGuardSchema = z.strictObject({
+  loc: z.string().min(1),
+  tag: z.string().min(1),
+});
+export type ElementGuard = z.infer<typeof ElementGuardSchema>;
+
+export const InsertTargetSchema = z.discriminatedUnion('kind', [
+  z.strictObject({
+    kind: z.literal('sibling'),
+    ref: ElementGuardSchema,
+    where: z.enum(['before', 'after']),
+  }),
+  z.strictObject({
+    kind: z.literal('child'),
+    parent: ElementGuardSchema,
+    where: z.enum(['start', 'end']),
+  }),
+]);
+export type InsertTarget = z.infer<typeof InsertTargetSchema>;
+
+export const InsertEditSchema = z.strictObject({
+  kind: z.literal('insert'),
+  target: InsertTargetSchema,
+  jsx: z
+    .string()
+    .min(1)
+    .max(256 * 1024),
+});
+export type InsertEdit = z.infer<typeof InsertEditSchema>;
+
+export const RemoveEditSchema = z.strictObject({
+  kind: z.literal('remove'),
+  elements: z.array(ElementGuardSchema).min(1).max(50),
+});
+export type RemoveEdit = z.infer<typeof RemoveEditSchema>;
+
+export const DuplicateEditSchema = z.strictObject({
+  kind: z.literal('duplicate'),
+  elements: z.array(ElementGuardSchema).min(1).max(50),
+});
+export type DuplicateEdit = z.infer<typeof DuplicateEditSchema>;
+
+export const StructureEditSchema = z.discriminatedUnion('kind', [
+  InsertEditSchema,
+  RemoveEditSchema,
+  DuplicateEditSchema,
+]);
+export type StructureEdit = z.infer<typeof StructureEditSchema>;
+
+export const AnyEditSchema = z.discriminatedUnion('kind', [
+  SetClassNameEditSchema,
+  SetTextEditSchema,
+  SetAttributeEditSchema,
+  InsertEditSchema,
+  RemoveEditSchema,
+  DuplicateEditSchema,
+]);
+export type AnyEdit = z.infer<typeof AnyEditSchema>;
+
 export const EditRequestSchema = z.strictObject({
-  edit: SourceEditSchema,
+  edit: AnyEditSchema,
   coalesceKey: z.string().max(200).optional(),
 });
 export type EditRequest = z.infer<typeof EditRequestSchema>;
@@ -143,3 +202,11 @@ export const EditResultSchema = z.strictObject({
   element: ElementSourceSchema,
 });
 export type EditResult = z.infer<typeof EditResultSchema>;
+
+export const StructureResultSchema = z.strictObject({
+  changed: z.boolean(),
+  files: z.array(RelPathSchema),
+  locs: z.array(z.string()),
+  warnings: z.array(z.string()).optional(),
+});
+export type StructureResult = z.infer<typeof StructureResultSchema>;

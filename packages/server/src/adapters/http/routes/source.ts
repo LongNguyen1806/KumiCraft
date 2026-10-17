@@ -1,11 +1,12 @@
 // Source Editor HTTP endpoints (SPEC-03 section 5.5, SPEC-04 section 6).
-import type { HistoryLabel } from '@reactcraft/shared';
+import type { HistoryLabel, StructureEdit } from '@reactcraft/shared';
 import { EditRequestSchema, issuesToDetails } from '@reactcraft/shared';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import type { HistoryService } from '../../../core/history/history-service.ts';
 import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
 import type { SourceEditorService } from '../../../core/source-editor/source-editor-service.ts';
+import { validateInsertedJsx } from '../../../core/source-editor/structure/structure-ops.ts';
 import { sendError } from '../send-error.ts';
 
 export type SourceRoutesDeps = {
@@ -35,6 +36,21 @@ async function handleGetElement(
   return reply.status(200).send({ data: result.value });
 }
 
+function buildStructureHistoryLabel(edit: StructureEdit): HistoryLabel {
+  if (edit.kind === 'insert') {
+    const jsxRes = validateInsertedJsx(edit.jsx);
+    const fallbackTag =
+      edit.target.kind === 'sibling' ? edit.target.ref.tag : edit.target.parent.tag;
+    const tag = jsxRes.ok ? jsxRes.value.firstTag : fallbackTag;
+    return { key: 'history:insert', params: { tag, count: '1' } };
+  }
+  const tag = edit.elements[0]?.tag ?? 'div';
+  return {
+    key: `history:${edit.kind}`,
+    params: { tag, count: String(edit.elements.length) },
+  };
+}
+
 /**
  * One edit, recorded in the history from inside the queue of the file (R-SE-13, R-HI-01): the
  * entry holds exactly the bytes this edit replaced, even when edits of the same file overlap.
@@ -53,6 +69,15 @@ async function handleApplyEdit(
   }
 
   const { edit, coalesceKey } = parsed.data;
+  if (edit.kind === 'insert' || edit.kind === 'remove' || edit.kind === 'duplicate') {
+    const label = buildStructureHistoryLabel(edit);
+    const edited = await deps.sourceEditorService.applyStructureEdit(projectRoot, edit, (files) => {
+      deps.historyService.push({ label, coalesceKey, files });
+    });
+    if (!edited.ok) return sendError(reply, edited.error);
+    return reply.status(200).send({ data: edited.value });
+  }
+
   const label: HistoryLabel = { key: `history:${edit.kind}`, params: { tag: edit.tag } };
   const edited = await deps.sourceEditorService.applyEdit(projectRoot, edit, (file) => {
     deps.historyService.push({ label, coalesceKey, files: [file] });

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { errorText } from '../../../routes/error-text.ts';
 import { useOpenInEditor } from '../../editor/use-open-in-editor.ts';
 import type { InspectorLockReason, InspectorTarget, InspectorWarning } from '../types.ts';
+import { StructureActions } from './structure-actions.tsx';
 
 type InspectorHeaderProps = {
   readonly target: Extract<InspectorTarget, { readonly kind: 'element' }>;
@@ -145,6 +146,7 @@ export function InspectorHeader({ target }: InspectorHeaderProps) {
         interactionState={target.interactionState}
         onStateChange={target.setInteractionState}
       />
+      <StructureActions target={target} />
       {target.lockReason !== undefined && (
         <LockBanner
           reason={target.lockReason}

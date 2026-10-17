@@ -84,6 +84,9 @@
     "setClassName": "đổi class",
     "setText": "đổi chữ",
     "setAttribute": "đổi thuộc tính <{{tag}}>",
+    "insert": "chèn <{{tag}}>",
+    "remove": "xóa <{{tag}}>",
+    "duplicate": "nhân bản <{{tag}}>",
     "dismissError": "Đóng thông báo",
     "errorFileChanged": "File {{file}} đã bị sửa từ nơi khác, không hoàn tác được bước này"
   },
@@ -202,6 +205,8 @@
     "inheritedFrom": "kế thừa từ {{scope}}",
     "removeOverride": "Bỏ ghi đè",
     "openInEditor": "Mở trong editor",
+    "duplicate": "Nhân bản",
+    "remove": "Xóa",
     "lockReason": {
       "classExpression": "Class là biểu thức mã, không thể sửa trực quan",
       "classDuplicate": "Trùng lặp class trên phần tử",

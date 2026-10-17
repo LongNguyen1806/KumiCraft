@@ -7,6 +7,8 @@ import type {
   SetClassNameEdit,
   SetTextEdit,
   SourceEdit,
+  StructureEdit,
+  StructureResult,
 } from '@reactcraft/shared';
 import { err, ok, parseLocString } from '@reactcraft/shared';
 import MagicString from 'magic-string';
@@ -27,6 +29,7 @@ import {
   validateLocAndExt,
 } from './source-editor-lookup.ts';
 import { mutateAttribute, mutateText } from './source-mutator.ts';
+import { executeStructureEdit } from './structure/structure-runner.ts';
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB (R-SE-01)
 
@@ -59,6 +62,11 @@ export interface SourceEditorService {
     edit: SourceEdit,
     onWritten?: (file: WrittenFile) => void,
   ): Promise<Result<EditResult>>;
+  applyStructureEdit(
+    projectRoot: string,
+    edit: StructureEdit,
+    onWritten?: (files: readonly WrittenFile[]) => void,
+  ): Promise<Result<StructureResult>>;
 }
 
 function applyClassNameMutation(
@@ -339,6 +347,16 @@ export function createSourceEditorService(
       );
       if (!edited.ok) return edited;
       return ok({ ...edited.value, element: await withUsages(projectRoot, edited.value.element) });
+    },
+    applyStructureEdit(projectRoot, edit, onWritten) {
+      return executeStructureEdit(
+        deps.fs,
+        projectRoot,
+        sourceDir,
+        sourceExtensions,
+        edit,
+        onWritten,
+      );
     },
   };
 }

@@ -132,6 +132,10 @@ export {
   RunnerToParentMessageSchema,
 } from './runner.ts';
 export {
+  type AnyEdit,
+  AnyEditSchema,
+  type DuplicateEdit,
+  DuplicateEditSchema,
   EDITABLE_ATTRS,
   type EditableAttr,
   EditableAttrSchema,
@@ -143,11 +147,19 @@ export {
   ElementAttributesSchema,
   type ElementClassName,
   ElementClassNameSchema,
+  type ElementGuard,
+  ElementGuardSchema,
   type ElementSource,
   ElementSourceSchema,
   type ElementText,
   ElementTextSchema,
+  type InsertEdit,
+  InsertEditSchema,
+  type InsertTarget,
+  InsertTargetSchema,
   parseLocString,
+  type RemoveEdit,
+  RemoveEditSchema,
   type SetAttributeEdit,
   SetAttributeEditSchema,
   type SetClassNameEdit,
@@ -159,6 +171,10 @@ export {
   type SourceLoc,
   type StaticOrString,
   StaticOrStringSchema,
+  type StructureEdit,
+  StructureEditSchema,
+  type StructureResult,
+  StructureResultSchema,
 } from './source.ts';
 export * from './tailwind/index.ts';
 export { TAILWIND_COLORS } from './tailwind/palette.generated.ts';

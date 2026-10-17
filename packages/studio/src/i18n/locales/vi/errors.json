@@ -70,7 +70,9 @@
       "commandMismatch": "Lệnh cài đặt không khớp với package manager đã cấu hình.",
       "cannotMatchProjectRoot": "Backend không được trùng với thư mục gốc của dự án.",
       "duplicateBackend": "Đã có backend trỏ tới đường dẫn này.",
-      "maxBackendsExceeded": "Đã vượt quá số lượng backend tối đa cho phép."
+      "maxBackendsExceeded": "Đã vượt quá số lượng backend tối đa cho phép.",
+      "notJsx": "Mã JSX chèn vào không hợp lệ.",
+      "overlap": "Các thao tác sửa mã nguồn bị chồng lấn."
     }
   },
   "E017": {
@@ -110,7 +112,11 @@
       "duplicateAttr": "Phần tử có nhiều thuộc tính trùng tên.",
       "outsideSource": "Phần tử nằm ngoài thư mục mã nguồn được phép sửa.",
       "tooLarge": "File mã nguồn vượt quá giới hạn kích thước cho phép sửa.",
-      "notJsxFile": "Định dạng file không phải JSX hoặc TSX hợp lệ."
+      "notJsxFile": "Định dạng file không phải JSX hoặc TSX hợp lệ.",
+      "rootElement": "Không thể xóa hoặc nhân bản phần tử gốc của component.",
+      "loopRoot": "Không thể xóa hoặc nhân bản phần tử gốc của vòng lặp.",
+      "expressionChild": "Phần tử nằm trong biểu thức động, hãy sửa trong editor.",
+      "componentSlot": "Component nhận children qua prop, không chèn trực tiếp vào mẫu."
     }
   },
   "E024": {

@@ -84,6 +84,9 @@
     "setClassName": "class change",
     "setText": "text change",
     "setAttribute": "attribute change <{{tag}}>",
+    "insert": "insert <{{tag}}>",
+    "remove": "remove <{{tag}}>",
+    "duplicate": "duplicate <{{tag}}>",
     "dismissError": "Dismiss",
     "errorFileChanged": "File {{file}} was modified externally, cannot undo this step"
   },
@@ -202,6 +205,8 @@
     "inheritedFrom": "inherited from {{scope}}",
     "removeOverride": "Remove override",
     "openInEditor": "Open in editor",
+    "duplicate": "Duplicate",
+    "remove": "Remove",
     "lockReason": {
       "classExpression": "ClassName is an expression, cannot edit visually",
       "classDuplicate": "Duplicate className attribute",
