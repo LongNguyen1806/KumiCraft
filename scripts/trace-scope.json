@@ -64,6 +64,11 @@
       "phase": 2
     },
     {
+      "pattern": "^R-QA-2\\d$",
+      "phase": 99,
+      "reason": "manual-check process rules (SPEC-06 section 7): followed by people in each round, no automated test"
+    },
+    {
       "pattern": "^R-QA-1\\d$",
       "phase": 3
     },

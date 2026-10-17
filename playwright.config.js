@@ -29,25 +29,11 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   projects: [
+    // SPEC-06 2.2: the E2E suite is a regression check on Chromium only, run at the end of a phase.
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-    // The engine of Safari, the default browser of macOS users.
-    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
     {
       name: 'chromium-en',
       use: { ...devices['Desktop Chrome'], locale: 'en-US' },
-      grep: isNetwork ? /(?=.*\[AC-)(?=.*@network)/ : /\[AC-/,
-      grepInvert: isNetwork ? /@perf/ : /(@network|@perf)/,
-    },
-    {
-      name: 'firefox-en',
-      use: { ...devices['Desktop Firefox'], locale: 'en-US' },
-      grep: isNetwork ? /(?=.*\[AC-)(?=.*@network)/ : /\[AC-/,
-      grepInvert: isNetwork ? /@perf/ : /(@network|@perf)/,
-    },
-    {
-      name: 'webkit-en',
-      use: { ...devices['Desktop Safari'], locale: 'en-US' },
       grep: isNetwork ? /(?=.*\[AC-)(?=.*@network)/ : /\[AC-/,
       grepInvert: isNetwork ? /@perf/ : /(@network|@perf)/,
     },

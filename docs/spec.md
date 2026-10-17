@@ -2750,18 +2750,19 @@ S-09 (ảnh trong workspace), S-29a, S-29b, S-29c (ảnh tải lên), S-34 (dữ
 
 ## 1. CÁC TẦNG KIỂM THỬ
 
-| Tầng        | Công cụ                         | Phạm vi                                                                                             | Đặt ở                                         |
-| ----------- | ------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| Unit        | Vitest                          | Logic thuần: M-TW, biến đổi Bridge, Source Editor, lịch sử, phát hiện dự án, chọn phần tử (DOM giả) | Cạnh file nguồn (QC-01)                       |
-| Component   | Vitest + Testing Library        | Component Studio (Inspector, Layer Tree, hộp thoại Project) với store và API giả                    | Cạnh file nguồn                               |
-| Contract    | Vitest + Fastify `inject`       | Route + core với port giả (`FileSystemPort` trên thư mục tạm, `ProcessPort` giả, đồng hồ giả)       | `packages/server/src/adapters/http/…`         |
-| Integration | Vitest                          | Runner thật trên fixture, `vite build` của fixture, tiến trình con thật                             | `packages/server/src/…/*.integration.test.ts` |
-| E2E         | Playwright                      | CLI đã build + Studio + dự án mẫu chạy thật trên Chromium, Firefox, WebKit                          | `e2e/`                                        |
-| Bench       | `vitest bench`, Playwright perf | PB-01 đến PB-09                                                                                     | `*.bench.ts`, `e2e/perf/`                     |
-| VG          | Script trong `scripts/vg/`      | Kiểm chứng ADR (VG-15 đến VG-18)                                                                    | `scripts/vg/`                                 |
-| Tĩnh        | `pnpm verify`                   | Lint, kiểu, định dạng, i18n, truy vết, build                                                        | —                                             |
+| Tầng        | Công cụ                         | Phạm vi                                                                                                                                                  | Đặt ở                                         |
+| ----------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| Unit        | Vitest                          | Logic thuần: M-TW, biến đổi Bridge, Source Editor, lịch sử, phát hiện dự án, chọn phần tử (DOM giả)                                                      | Cạnh file nguồn (QC-01)                       |
+| Component   | Vitest + Testing Library        | Component Studio (Inspector, Layer Tree, hộp thoại Project) với store và API giả                                                                         | Cạnh file nguồn                               |
+| Contract    | Vitest + Fastify `inject`       | Route + core với port giả (`FileSystemPort` trên thư mục tạm, `ProcessPort` giả, đồng hồ giả)                                                            | `packages/server/src/adapters/http/…`         |
+| Integration | Vitest                          | Runner thật trên fixture, `vite build` của fixture, tiến trình con thật                                                                                  | `packages/server/src/…/*.integration.test.ts` |
+| E2E         | Playwright                      | CLI đã build + Studio + dự án mẫu chạy thật trên Chromium. Từ Phase 2 **không viết E2E mới**: bộ có sẵn là kiểm tra hồi quy, chạy ở cuối phase (mục 2.2) | `e2e/`                                        |
+| Bench       | `vitest bench`, Playwright perf | PB-01 đến PB-09                                                                                                                                          | `*.bench.ts`, `e2e/perf/`                     |
+| VG          | Script trong `scripts/vg/`      | Kiểm chứng ADR (VG-15 đến VG-18)                                                                                                                         | `scripts/vg/`                                 |
+| Tĩnh        | `pnpm verify`                   | Lint, kiểu, định dạng, i18n, truy vết, build                                                                                                             | —                                             |
+| Kiểm tay    | Danh sách kiểm tay (mục 7)      | Chủ dự án thử trên dự án thật và dự án mới tạo: luồng người dùng, giao diện, backend thật                                                                | Bản giao việc của từng lượt                   |
 
-Mỗi module ở SPEC-04 có bảng **Kiểm thử bắt buộc** ghi tầng của từng tình huống.
+Mỗi module ở SPEC-04 có bảng **Kiểm thử bắt buộc** ghi tầng của từng tình huống. Từ Phase 2 (quyết định của chủ dự án 2026-10-17), tình huống ghi tầng **E2E** được làm bằng Unit, Component hoặc Integration cho phần logic, cộng một mục trong danh sách kiểm tay (mục 7) cho phần người dùng thấy.
 
 ---
 
@@ -2777,7 +2778,7 @@ Mỗi module ở SPEC-04 có bảng **Kiểm thử bắt buộc** ghi tầng c�
 
 | Mục         | Giá trị                                                                                      |
 | ----------- | -------------------------------------------------------------------------------------------- |
-| Trình duyệt | Chromium, Firefox, WebKit                                                                    |
+| Trình duyệt | Chromium (`vi`, và `en` cho test `[AC-…]`). Firefox, WebKit bỏ từ Phase 2 (2026-10-17)       |
 | Worker      | 4 trên máy phát triển (8 làm máy Windows quá tải, test chập chờn), 2 trên CI                 |
 | Thời hạn    | test 60 s, `expect` 10 s, mỗi thao tác 15 s                                                  |
 | Thử lại     | 0 ở mọi nơi: test chập chờn phải sửa (QC-92); `trace: 'retain-on-failure'`, ảnh chụp khi lỗi |
@@ -2848,6 +2849,19 @@ Kết quả ghi `bench-results/`; vượt ngân sách là lỗi ở cổng phase
 
 ---
 
+## 7. KIỂM TAY
+
+Bổ sung 2026-10-17 theo chủ dự án: phần lớn lỗi Phase 1 chỉ lộ ra khi thử trên dự án thật (backend thật, chạy lại CLI, giao diện), không phải trong E2E.
+
+| Mã      | Quy tắc                                                                                                                                                                                                                         |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-QA-20 | Mỗi bản giao việc có mục **Kiểm tay**: 5–10 bước người dùng làm và kết quả phải thấy, viết theo ngôn ngữ người dùng (không mã test)                                                                                             |
+| R-QA-21 | Kiểm tay chạy trên **hai** dự án: một dự án mới tạo bằng ReactCraft (template ADR-BE-32) và một dự án có sẵn của chủ dự án (ví dụ WorkTracker: React + backend Django). Bước nào không áp dụng được cho dự án có sẵn thì ghi rõ |
+| R-QA-22 | Claude QA chạy `pnpm verify` và đọc code; chủ dự án chạy kiểm tay rồi mới commit. Lỗi tìm thấy khi kiểm tay được sửa **trước** lượt kế tiếp, kèm unit test tái hiện lỗi khi tái hiện được                                       |
+| R-QA-23 | `pnpm test:e2e` (bộ hồi quy, Chromium) chạy ở cổng phase và khi một lượt sửa Bridge, runner hoặc phiên; không chạy ở mọi lượt                                                                                                   |
+
+---
+
 # SPEC-07 — QUY TRÌNH THI CÔNG (LỘ TRÌNH BẢN 1.0)
 
 **Phiên bản phần:** 1.0
@@ -2856,17 +2870,17 @@ Kết quả ghi `bench-results/`; vượt ngân sách là lỗi ở cổng phase
 
 ## 1. QUY TẮC THI CÔNG MỚI
 
-| Mã    | Quy tắc                                                                                                                                                                                                                                          |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| CW-43 | **Chế độ local:** Claude **KHÔNG** commit, **KHÔNG** tạo nhánh, **KHÔNG** sửa thư mục `.git`; xem trạng thái Git chỉ bằng lệnh đọc có `--no-optional-locks`                                                                                      |
-| CW-44 | Mỗi bộ thay đổi có báo cáo trong `docs/construction/`: việc đã làm, file tạo và sửa, lệnh kiểm chứng và kết quả, commit message gợi ý, trạng thái `Chờ commit` hoặc `Đã commit <hash>`                                                           |
-| CW-45 | Commit message gợi ý theo SPEC-02 mục 11, đã qua `commitlint`. **KHÔNG** thêm dòng ghi công cho công cụ AI (`Co-Authored-By` và tương tự). Người commit là chủ sản phẩm                                                                          |
-| CW-46 | Chủ sản phẩm báo đã commit (hoặc thấy commit qua lệnh đọc) thì báo cáo đổi trạng thái thành `Đã commit <hash>`                                                                                                                                   |
-| CW-47 | Khi chuyển lên GitHub: bật CI (SPEC-02 mục 12), bảo vệ nhánh, chạy CI cho mọi tiêu chí đang "chạy tay ở cổng"                                                                                                                                    |
-| CW-50 | **Test của cả phase viết trước:** đầu mỗi phase, bộ test nghiệm thu của phase (E2E cho mọi AC của cổng, unit và hợp đồng cho từng module) được viết, kiểm bằng bản cài đặt nháp khi khả thi, và khóa lại. Code của phase làm cho bộ test đó xanh |
-| CW-51 | **Chạy test một lần:** trong lúc làm chỉ chạy test của phần đang sửa; bộ đầy đủ của phase chạy ở cuối mỗi lần giao và ở cổng                                                                                                                     |
-| CW-52 | **Đọc trước khi sửa:** trước khi sửa một file, đọc file đó và các file liên quan (nơi gọi, nơi được gọi, test). Không đoán                                                                                                                       |
-| CW-53 | **Xong là đúng:** một lần giao chỉ xong khi `pnpm verify` và bộ E2E của phase đã viết xanh trên 3 trình duyệt                                                                                                                                    |
+| Mã    | Quy tắc                                                                                                                                                                                                                                                     |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CW-43 | **Chế độ local:** Claude **KHÔNG** commit, **KHÔNG** tạo nhánh, **KHÔNG** sửa thư mục `.git`; xem trạng thái Git chỉ bằng lệnh đọc có `--no-optional-locks`                                                                                                 |
+| CW-44 | Mỗi bộ thay đổi có báo cáo trong `docs/construction/`: việc đã làm, file tạo và sửa, lệnh kiểm chứng và kết quả, commit message gợi ý, trạng thái `Chờ commit` hoặc `Đã commit <hash>`                                                                      |
+| CW-45 | Commit message gợi ý theo SPEC-02 mục 11, đã qua `commitlint`. **KHÔNG** thêm dòng ghi công cho công cụ AI (`Co-Authored-By` và tương tự). Người commit là chủ sản phẩm                                                                                     |
+| CW-46 | Chủ sản phẩm báo đã commit (hoặc thấy commit qua lệnh đọc) thì báo cáo đổi trạng thái thành `Đã commit <hash>`                                                                                                                                              |
+| CW-47 | Khi chuyển lên GitHub: bật CI (SPEC-02 mục 12), bảo vệ nhánh, chạy CI cho mọi tiêu chí đang "chạy tay ở cổng"                                                                                                                                               |
+| CW-50 | **Test theo lượt:** bản giao việc ghi danh sách tình huống test (đầu vào, kết quả) lấy từ bảng Kiểm thử bắt buộc của module; Gemini viết test đó cùng code, Claude QA đối chiếu từng tình huống. Từ Phase 2 không viết bộ E2E nghiệm thu (SPEC-06 mục 1, 7) |
+| CW-51 | **Chạy test một lần:** trong lúc làm chỉ chạy test của phần đang sửa; bộ đầy đủ của phase chạy ở cuối mỗi lần giao và ở cổng                                                                                                                                |
+| CW-52 | **Đọc trước khi sửa:** trước khi sửa một file, đọc file đó và các file liên quan (nơi gọi, nơi được gọi, test). Không đoán                                                                                                                                  |
+| CW-53 | **Xong là đúng:** một lần giao chỉ xong khi `pnpm verify` xanh và danh sách kiểm tay đạt (SPEC-06 R-QA-22); bộ E2E hồi quy xanh trên Chromium ở cổng phase                                                                                                  |
 
 Quy trình giao việc và kiểm tra (Claude viết test và hợp đồng, Gemini viết code, Claude QA) ghi ở `docs/construction/giao-viec/README.md`.
 
@@ -2920,21 +2934,21 @@ Quy trình giao việc và kiểm tra (Claude viết test và hợp đồng, Gem
 
 ## 4. PHASE 2 — CẤU TRÚC VÀ TRANG
 
-| Mã      | Nội dung                                                                                  | Đầu ra                                       |
-| ------- | ----------------------------------------------------------------------------------------- | -------------------------------------------- |
-| WP-2.01 | Bộ test nghiệm thu Phase 2                                                                | Có, đỏ đúng lý do                            |
-| WP-2.02 | M-SE mở rộng: chèn, di chuyển, xóa, nhân bản, bọc, bỏ bọc thẻ JSX                         | Unit + VG-16 mở rộng                         |
-| WP-2.03 | M-LB: Library khối JSX + Tailwind, tìm kiếm `vi`/`en`, kéo vào Canvas                     | AC-05                                        |
-| WP-2.04 | Kéo thả trong Canvas (Bridge), chọn nhiều, sao chép/dán                                   | AC-05                                        |
-| WP-2.05 | M-PG: trang theo `src/routes.tsx` (thêm, đổi tên, xóa), điều hướng trong Canvas           | AC-07                                        |
-| WP-2.06 | M-KB: phím tắt Windows và macOS                                                           | Test cả hai nền                              |
-| WP-2.07 | CLI hoàn chỉnh (tham số, tắt an toàn dừng tiến trình con), gói cài `pnpm package`         | Cài và chạy từ tarball trên Windows và macOS |
-| WP-2.00 | Template dự án mới đầy đủ theo ADR-BE-32 (làm đầu tiên của Phase 2)                       | Template build được, mở được, có đủ ba vùng  |
-| WP-2.09 | M-DT: công cụ Khung, Chữ, Ảnh trên Canvas, tải ảnh vào `public/images/`                   | Kịch bản M-DT 1–5                            |
-| WP-2.10 | M-TH: panel Brand sửa, thêm, xóa token `@theme`                                           | Kịch bản M-TH 1–5                            |
-| WP-2.08 | M-CP: vùng thiết kế, thanh "Đang thiết kế", panel Component, tạo component, sửa component | Kịch bản M-CP 1–6                            |
+| Mã      | Nội dung                                                                                        | Đầu ra                                       |
+| ------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| WP-2.01 | Kế hoạch giao việc Phase 2 và danh sách kiểm tay (`docs/construction/giao-viec/p2-ke-hoach.md`) | Có                                           |
+| WP-2.02 | M-SE mở rộng: chèn, di chuyển, xóa, nhân bản, bọc, bỏ bọc thẻ JSX                               | Unit + VG-16 mở rộng                         |
+| WP-2.03 | M-LB: Library khối JSX + Tailwind, tìm kiếm `vi`/`en`, kéo vào Canvas                           | AC-05                                        |
+| WP-2.04 | Kéo thả trong Canvas (Bridge), chọn nhiều, sao chép/dán                                         | AC-05                                        |
+| WP-2.05 | M-PG: trang theo `src/routes.tsx` (thêm, đổi tên, xóa), điều hướng trong Canvas                 | AC-07                                        |
+| WP-2.06 | M-KB: phím tắt Windows và macOS                                                                 | Test cả hai nền                              |
+| WP-2.07 | CLI hoàn chỉnh (tham số, tắt an toàn dừng tiến trình con), gói cài `pnpm package`               | Cài và chạy từ tarball trên Windows và macOS |
+| WP-2.00 | Template dự án mới đầy đủ theo ADR-BE-32 (làm đầu tiên của Phase 2)                             | Template build được, mở được, có đủ ba vùng  |
+| WP-2.09 | M-DT: công cụ Khung, Chữ, Ảnh trên Canvas, tải ảnh vào `public/images/`                         | Kịch bản M-DT 1–5                            |
+| WP-2.10 | M-TH: panel Brand sửa, thêm, xóa token `@theme`                                                 | Kịch bản M-TH 1–5                            |
+| WP-2.08 | M-CP: vùng thiết kế, thanh "Đang thiết kế", panel Component, tạo component, sửa component       | Kịch bản M-CP 1–6                            |
 
-Cổng G2: AC-05, AC-07 và mọi E2E của Phase 1 vẫn xanh.
+Cổng G2: `pnpm verify` xanh với trace Phase 2; AC-05, AC-07 và kịch bản kiểm tay G2 đạt trên dự án mới và dự án có sẵn; bộ E2E hồi quy của Phase 1 vẫn xanh trên Chromium.
 
 ---
 
@@ -3075,3 +3089,4 @@ Tài liệu thi công của hướng cũ (Design Model) được chuyển vào `
 | 2026-10-17 | 1.0 (bổ sung 3)    | Theo chủ dự án: thêm M-DT (công cụ Khung, Chữ, Ảnh vẽ trực tiếp trên Canvas, tải ảnh vào `public/images/`) và M-TH (panel Brand sửa, thêm, xóa token `@theme`); WP-2.09, WP-2.10. Không làm nhiều khung Canvas cạnh nhau (giữ thiết kế tập trung một khung)                                                                                                                                                                                                                                                                                                               |
 | 2026-10-17 | 1.0 (bổ sung 4)    | Theo chủ dự án: Canvas chạy ở cổng của dự án (R-RN-04: `devPort`, `--port` trong script `dev`, `vite.config`, 5173) để backend có CORS theo cổng vẫn đăng nhập được; `WorkspaceFile.devPort`, `RunnerStatus.busyPort`, R-RN-27 (cảnh báo cổng bận, ô Cổng chạy)                                                                                                                                                                                                                                                                                                           |
 | 2026-10-17 | 1.0 (bổ sung 5)    | Theo chủ dự án: S-05a giữ token phiên qua các lần chạy (thư mục cấu hình người dùng, 7 ngày) để tab Studio đang mở tự kết nối lại sau khi chạy lại ReactCraft                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 2026-10-17 | 1.0 (bổ sung 6)    | Theo chủ dự án: từ Phase 2 không viết E2E mới; tình huống E2E làm bằng Unit/Integration + kiểm tay (SPEC-06 mục 7, R-QA-20 đến R-QA-23); Playwright chỉ Chromium, chạy ở cổng; CW-50, CW-53, WP-2.01, cổng G2 sửa theo                                                                                                                                                                                                                                                                                                                                                    |
