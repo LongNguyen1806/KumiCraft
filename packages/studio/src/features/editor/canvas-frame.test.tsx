@@ -45,6 +45,14 @@ describe('IframeFrame', () => {
     vi.useRealTimers();
   });
 
+  it('takes the zoomed size so a 75% frame needs no horizontal scroll [R-RN-21]', () => {
+    renderFrame({ zoom: 0.75 });
+
+    const box = screen.getByTestId('canvas-zoom-box');
+    expect(box.style.width).toBe('1080px');
+    expect(box.style.height).toBe('675px');
+  });
+
   it('opens the page the user was on [R-RN-21]', () => {
     useSelectionStore.getState().setRoute('/products?page=2');
 

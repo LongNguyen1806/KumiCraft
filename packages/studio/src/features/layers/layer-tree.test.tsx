@@ -98,6 +98,31 @@ describe('LayerTree', () => {
     expect(screen.queryByText('h1')).toBeNull();
   });
 
+  it('folds the inside of an svg until the user opens it [R-SL-07]', () => {
+    const icon: TreeNode[] = [
+      { ref: { loc: 'src/App.tsx:5:3', index: 0 }, tag: 'div', instances: 1 },
+      { ref: { loc: 'src/App.tsx:6:5', index: 0 }, parent: 0, tag: 'svg', instances: 1 },
+      { ref: { loc: 'src/App.tsx:7:7', index: 0 }, parent: 1, tag: 'path', instances: 1 },
+    ];
+    act(() => {
+      useSelectionStore.getState().setTree(icon);
+    });
+    render(<LayerTree />);
+
+    expect(screen.getByText('svg')).toBeDefined();
+    expect(screen.queryByText('path')).toBeNull();
+
+    const expand = screen.getAllByRole('button', { name: /expand/i })[0];
+    if (expand !== undefined) fireEvent.click(expand);
+    expect(screen.getByText('path')).toBeDefined();
+
+    // A new tree from the Bridge (after an edit) keeps the svg the user opened.
+    act(() => {
+      useSelectionStore.getState().setTree([...icon]);
+    });
+    expect(screen.getByText('path')).toBeDefined();
+  });
+
   it('notifies onSelect and onHover with 2-way sync [R-SL-09]', () => {
     const handleSelect = vi.fn();
     const handleHover = vi.fn();

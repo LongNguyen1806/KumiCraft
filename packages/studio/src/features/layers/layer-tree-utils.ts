@@ -21,6 +21,13 @@ export function getComponentName(filePath: string): string {
   return fileName.replace(/\.[^.]+$/, '');
 }
 
+/** Tags whose inside is drawing detail (`defs`, `path`, `stop`…), folded until the user opens them. */
+const FOLDED_TAGS = new Set(['svg']);
+
+export function foldedByDefault(treeNodes: readonly TreeNode[]): ReadonlySet<string> {
+  return new Set(treeNodes.filter((n) => FOLDED_TAGS.has(n.tag)).map((n) => n.ref.loc));
+}
+
 export function computeVisibleNodes(
   treeNodes: readonly TreeNode[],
   collapsedLocs: ReadonlySet<string>,

@@ -123,24 +123,34 @@ export function IframeFrame({ origin, frame, zoom, nonce, mode, logTail }: Ifram
   return (
     <>
       {silent && !bridgeReady && <BridgeSilentBanner logTail={logTail} />}
+      {/* R-RN-21: scale() leaves the layout size alone, so the outer box takes the zoomed size;
+          the Canvas then scrolls only when the zoomed frame is really larger. */}
       <div
-        className="origin-center transition-transform duration-150"
-        style={{ transform: `scale(${String(zoom)})` }}
+        data-testid="canvas-zoom-box"
+        style={{
+          width: `${String(frame.width * zoom)}px`,
+          height: `${String(frame.height * zoom)}px`,
+        }}
       >
-        <iframe
-          ref={(el) => {
-            iframeRef.current = el ?? undefined;
-          }}
-          src={src}
-          sandbox={IFRAME_SANDBOX}
-          title={frame.label}
-          data-testid="canvas-iframe"
-          className="overflow-auto rounded-lg border border-border bg-white shadow-2xl"
-          style={{
-            width: `${String(frame.width)}px`,
-            height: `${String(frame.height)}px`,
-          }}
-        />
+        <div
+          className="origin-top-left transition-transform duration-150"
+          style={{ transform: `scale(${String(zoom)})` }}
+        >
+          <iframe
+            ref={(el) => {
+              iframeRef.current = el ?? undefined;
+            }}
+            src={src}
+            sandbox={IFRAME_SANDBOX}
+            title={frame.label}
+            data-testid="canvas-iframe"
+            className="overflow-auto rounded-lg border border-border bg-white shadow-2xl"
+            style={{
+              width: `${String(frame.width)}px`,
+              height: `${String(frame.height)}px`,
+            }}
+          />
+        </div>
       </div>
     </>
   );

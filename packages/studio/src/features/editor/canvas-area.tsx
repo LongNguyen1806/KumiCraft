@@ -1,6 +1,6 @@
 // Canvas area displaying the live running Vite project (SPEC-04 M-RN, ADR-BE-28, R-RN-20 to R-RN-26).
 import { defaultFrames, type Frame, type ProjectInfo, type RunnerStatus } from '@reactcraft/shared';
-import { type ChangeEvent, useMemo, useState } from 'react';
+import { type ChangeEvent, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { errorText } from '../../routes/error-text.ts';
@@ -16,6 +16,7 @@ import {
   StoppedView,
   UntrustedPrompt,
 } from './canvas-prompts.tsx';
+import { fitZoom, useElementWidth, type Zoom, ZoomSelect } from './canvas-zoom.tsx';
 import { PageSelect } from './page-select.tsx';
 import { PortBusyBanner } from './port-busy-banner.tsx';
 import { useOpenInEditor } from './use-open-in-editor.ts';
@@ -129,13 +130,20 @@ function TextEditOverlay({
   );
 }
 
-function CanvasViewport(props: CanvasContentProps) {
+function CanvasViewport(props: Omit<CanvasContentProps, 'zoom'> & { readonly zoom: Zoom }) {
+  const viewport = useRef<HTMLDivElement>(undefined);
+  const width = useElementWidth(viewport);
+  const zoom = props.zoom === 'fit' ? fitZoom(width, props.frame.width) : props.zoom;
   return (
     <div
-      className="relative grid min-h-0 min-w-0 flex-1 place-items-center overflow-auto p-4"
+      ref={(el) => {
+        viewport.current = el ?? undefined;
+      }}
+      // `safe`: a frame wider than the Canvas scrolls from its left edge instead of being cut.
+      className="relative grid min-h-0 min-w-0 flex-1 place-items-center-safe overflow-auto p-4"
       data-testid="canvas-placeholder"
     >
-      <CanvasContent {...props} />
+      <CanvasContent {...props} zoom={zoom} />
       <RuntimeErrorList />
     </div>
   );
@@ -154,7 +162,7 @@ function CanvasNotices({ onOpenLoc }: { readonly onOpenLoc: (loc: string) => voi
 function useCanvasAreaState(projectInfo?: ProjectInfo) {
   const runner = useRunnerStatus();
   const [mode, setMode] = useState<CanvasMode>('design');
-  const [zoom, setZoom] = useState<number>(1);
+  const [zoom, setZoom] = useState<Zoom>('fit');
   const { frames, activeFrame, setActiveFrameId } = useCanvasFrames(projectInfo);
   const editor = useOpenInEditor();
   const textEdit = useCanvasTextEdit({
@@ -262,42 +270,12 @@ function FrameSelect({
   );
 }
 
-function ZoomSelect({
-  zoom,
-  onChange,
-}: {
-  readonly zoom: number;
-  readonly onChange: (zoom: number) => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <label className="flex items-center gap-1.5 text-ink-soft">
-      {t('editor.zoom')}
-      <select
-        value={zoom}
-        onChange={(e: ChangeEvent<HTMLSelectElement>) => {
-          onChange(Number(e.target.value));
-        }}
-        className="rounded border border-border bg-field px-2 py-1 text-ink"
-        data-testid="canvas-zoom-select"
-      >
-        <option value={0.5}>50%</option>
-        <option value={0.75}>75%</option>
-        <option value={1}>100%</option>
-        <option value={1.25}>125%</option>
-        <option value={1.5}>150%</option>
-        <option value={2}>200%</option>
-      </select>
-    </label>
-  );
-}
-
 type CanvasToolbarProps = {
   readonly frames: readonly Frame[];
   readonly activeFrameId: string;
   readonly onSelectFrame: (id: string) => void;
-  readonly zoom: number;
-  readonly onSelectZoom: (zoom: number) => void;
+  readonly zoom: Zoom;
+  readonly onSelectZoom: (zoom: Zoom) => void;
   readonly mode: CanvasMode;
   readonly onToggleMode: () => void;
 };
