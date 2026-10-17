@@ -1,8 +1,8 @@
 // The Vite runner child process with a real Vite dev server (SPEC-04 M-RN, R-RN-03, R-RN-07).
 import { type ChildProcess, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { cp, mkdir, readdir, symlink } from 'node:fs/promises';
-import { connect, createServer } from 'node:net';
+import { cp, mkdir, readdir, readFile, symlink, writeFile } from 'node:fs/promises';
+import { connect, createServer, type Server } from 'node:net';
 import { join, resolve } from 'node:path';
 
 import type { RunnerToChildMessage } from '@reactcraft/shared';
@@ -46,6 +46,54 @@ function isListening(port: number): Promise<boolean> {
       done(false);
     });
   });
+}
+
+/** Gives the copied fixture its own dev port, as `server.port` in its vite.config. */
+async function setProjectPort(port: number): Promise<void> {
+  const file = join(root, 'vite.config.ts');
+  const text = await readFile(file, 'utf8');
+  await writeFile(
+    file,
+    text.replace(
+      'defineConfig({',
+      `defineConfig({
+  server: { port: ${String(port)} },`,
+    ),
+  );
+}
+
+function occupy(port: number): Promise<Server> {
+  return new Promise((done, fail) => {
+    const server = createServer();
+    server.once('error', fail);
+    server.listen(port, '127.0.0.1', () => {
+      done(server);
+    });
+  });
+}
+
+/** Starts the runner with `port` as the ReactCraft fallback port; resolves its first message. */
+function startRunner(port: number, projectPort?: number): Promise<unknown> {
+  const runner = spawn(process.execPath, [RUNNER], {
+    cwd: root,
+    stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
+  });
+  child = { process: runner, exited: exitCode(runner) };
+  const start: RunnerToChildMessage = {
+    type: 'start',
+    options: {
+      root,
+      sourceDir: 'src',
+      port,
+      ...(projectPort === undefined ? {} : { projectPort }),
+      nonce: 'nonce-1234567890',
+      studioOrigin: 'http://127.0.0.1:4173',
+      host: '127.0.0.1',
+    },
+  };
+  const ready = nextMessage(runner);
+  runner.send(start);
+  return ready;
 }
 
 function nextMessage(process: ChildProcess): Promise<unknown> {
@@ -92,35 +140,49 @@ describe('vite-react runner [R-RN-03]', () => {
     'stops Vite and exits when the server process is gone, so no dev server is left behind [R-RN-07]',
     async () => {
       const port = await freePort();
-      const runner = spawn(process.execPath, [RUNNER], {
-        cwd: root,
-        stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
-      });
-      const exited = exitCode(runner);
-      child = { process: runner, exited };
-      const start: RunnerToChildMessage = {
-        type: 'start',
-        options: {
-          root,
-          sourceDir: 'src',
-          port,
-          nonce: 'nonce-1234567890',
-          studioOrigin: 'http://127.0.0.1:4173',
-          host: '127.0.0.1',
-        },
-      };
+      await setProjectPort(port);
 
-      const ready = nextMessage(runner);
-      runner.send(start);
-      expect(await ready).toEqual({ type: 'ready', port });
+      expect(await startRunner(await freePort())).toEqual({ type: 'ready', port });
       expect(await isListening(port)).toBe(true);
 
       // A server killed without its shutdown (Windows ends processes at once) only closes the
       // IPC channel.
-      runner.disconnect();
+      child?.process.disconnect();
 
-      expect(await exited).toBe(0);
+      expect(await child?.exited).toBe(0);
       expect(await isListening(port)).toBe(false);
+    },
+    30_000,
+  );
+
+  it.skipIf(!existsSync(NODE_MODULES))(
+    "runs on the project's own port, and on the ReactCraft port when that one is taken [R-RN-04]",
+    async () => {
+      const projectPort = await freePort();
+      await setProjectPort(projectPort);
+      const busy = await occupy(projectPort);
+      try {
+        const fallback = await freePort();
+        expect(await startRunner(fallback)).toEqual({
+          type: 'ready',
+          port: fallback,
+          busyPort: projectPort,
+        });
+        expect(await isListening(fallback)).toBe(true);
+      } finally {
+        busy.close();
+      }
+    },
+    30_000,
+  );
+
+  it.skipIf(!existsSync(NODE_MODULES))(
+    'runs on the port the user picked over the one in vite.config [R-RN-04, R-RN-27]',
+    async () => {
+      await setProjectPort(await freePort());
+      const picked = await freePort();
+
+      expect(await startRunner(await freePort(), picked)).toEqual({ type: 'ready', port: picked });
     },
     30_000,
   );

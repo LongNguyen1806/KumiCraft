@@ -8,11 +8,12 @@ import {
   type PagesInfo,
   PagesInfoSchema,
   type ProjectInfo,
+  ProjectInfoSchema,
   type ProjectProbe,
   type ThemeInfo,
 } from '@reactcraft/shared';
 
-import { apiDelete, apiGet, apiPost } from './http.ts';
+import { apiDelete, apiGet, apiPatch, apiPost } from './http.ts';
 import type { SessionInfo } from './session.ts';
 
 /** S-80: saves the trust decision for the open project and returns the new session. */
@@ -34,6 +35,11 @@ export async function createProject(
   packageManager?: PackageManager,
 ): Promise<ProjectInfo> {
   return (await apiPost('project/create', { path, name, packageManager })) as ProjectInfo;
+}
+
+/** R-RN-27: saves the Canvas dev port; 'auto' goes back to the project's own. */
+export async function saveDevPort(devPort: number | 'auto'): Promise<ProjectInfo> {
+  return ProjectInfoSchema.parse(await apiPatch('project', { devPort }));
 }
 
 export async function fetchProject(): Promise<ProjectInfo> {

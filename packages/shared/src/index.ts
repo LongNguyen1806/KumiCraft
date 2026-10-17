@@ -166,6 +166,7 @@ export {
   type BackendLink,
   BackendLinkSchema,
   defaultFrames,
+  DevPortSchema,
   type Frame,
   frameRuleProblems,
   FrameSchema,

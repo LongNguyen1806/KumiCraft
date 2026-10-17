@@ -24,13 +24,18 @@ export const RunnerStatusSchema = z.strictObject({
   nonce: z.string().optional(),
   error: AppErrorSchema.optional(),
   startedAt: z.string().optional(),
+  /** When ready: the project's own port was busy, so the Canvas runs on another (R-RN-04). */
+  busyPort: z.number().int().optional(),
 });
 export type RunnerStatus = z.infer<typeof RunnerStatusSchema>;
 
 export const RunnerOptionsSchema = z.strictObject({
   root: z.string().min(1),
   sourceDir: z.string().min(1),
+  /** Used when the project's own port is busy (R-RN-04). */
   port: z.number().int().min(1024).max(65535),
+  /** The port the user picked (`devPort`); absent: the runner reads it from the project. */
+  projectPort: z.number().int().min(1024).max(65535).optional(),
   nonce: z.string().min(1),
   studioOrigin: z.url(),
   host: z.literal('127.0.0.1'),
@@ -53,6 +58,7 @@ export const RunnerToParentMessageSchema = z.discriminatedUnion('type', [
   z.strictObject({
     type: z.literal('ready'),
     port: z.number().int(),
+    busyPort: z.number().int().optional(),
   }),
   z.strictObject({
     type: z.literal('error'),

@@ -18,5 +18,6 @@ export function projectInfoOf(state: OpenWorkspace): ProjectInfo {
     primaryFrameId: state.file.primaryFrameId,
     backends: state.backends,
     trusted: state.trusted,
+    ...(state.file.devPort === undefined ? {} : { devPort: state.file.devPort }),
   };
 }

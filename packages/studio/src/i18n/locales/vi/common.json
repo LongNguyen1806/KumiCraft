@@ -180,6 +180,13 @@
       "statusOk": "Hoạt động",
       "statusMissing": "Không tồn tại",
       "statusBlocked": "Bị chặn"
+    },
+    "devPort": {
+      "title": "Cổng chạy frontend trong Canvas",
+      "placeholder": "Tự đọc (vd: 5173)",
+      "hint": "Để trống: ReactCraft đọc cổng của dự án (--port trong script dev, vite.config, mặc định 5173) để backend chấp nhận kết nối như khi chạy npm run dev. Lưu xong dev server chạy lại.",
+      "save": "Lưu và chạy lại",
+      "invalid": "Cổng phải là số từ 1024 đến 65535, hoặc để trống"
     }
   },
   "inspector": {
@@ -301,6 +308,10 @@
       "title_one": "{{count}} lỗi khi chạy trang",
       "title_other": "{{count}} lỗi khi chạy trang",
       "dismiss": "Ẩn danh sách lỗi"
+    },
+    "portBusy": {
+      "message": "Cổng {{port}} của dự án đang bận (có thể npm run dev đang chạy), Canvas đang chạy ở cổng khác nên backend có thể từ chối kết nối. Tắt chương trình đang giữ cổng rồi bấm Chạy lại.",
+      "restart": "Chạy lại"
     }
   }
 }

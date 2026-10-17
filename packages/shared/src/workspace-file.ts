@@ -27,6 +27,9 @@ export const BackendLinkSchema = z.strictObject({
 });
 export type BackendLink = z.infer<typeof BackendLinkSchema>;
 
+/** A port the user picks for the project's dev server in the Canvas (SPEC-04 R-RN-04). */
+export const DevPortSchema = z.int().min(1024).max(65535);
+
 export const FRAMEWORK_IDS = ['vite-react'] as const;
 export type FrameworkId = (typeof FRAMEWORK_IDS)[number];
 
@@ -69,6 +72,7 @@ export const WorkspaceFileSchema = z
     responsiveMode: ResponsiveModeSchema,
     frames: z.array(FrameSchema).min(1).max(8),
     primaryFrameId: z.string(),
+    devPort: DevPortSchema.optional(),
   })
   .superRefine((value, ctx) => {
     for (const problem of frameRuleProblems(value)) {

@@ -209,3 +209,23 @@ describe('trust', () => {
     expect(await service(2).open(dir)).toMatchObject({ ok: true, value: { trusted: false } });
   });
 });
+
+describe('the dev port of the Canvas', () => {
+  it("saves the user's port in workspace.json and forgets it with 'auto' [R-RN-27]", async () => {
+    await writeSupportedProject(dir);
+    const project = service();
+    await project.open(dir);
+
+    expect(await project.patchProject({ devPort: 3000 })).toMatchObject({
+      ok: true,
+      value: { devPort: 3000 },
+    });
+    expect(JSON.parse(await readFile(join(dir, WORKSPACE_FILE), 'utf8'))).toMatchObject({
+      devPort: 3000,
+    });
+
+    const cleared = await project.patchProject({ devPort: 'auto' });
+    expect(cleared.ok && cleared.value.devPort).toBeUndefined();
+    expect(await readFile(join(dir, WORKSPACE_FILE), 'utf8')).not.toContain('devPort');
+  });
+});

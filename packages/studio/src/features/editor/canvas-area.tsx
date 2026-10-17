@@ -17,6 +17,7 @@ import {
   UntrustedPrompt,
 } from './canvas-prompts.tsx';
 import { PageSelect } from './page-select.tsx';
+import { PortBusyBanner } from './port-busy-banner.tsx';
 import { useOpenInEditor } from './use-open-in-editor.ts';
 import { useRunnerStatus } from './use-runner-status.ts';
 
@@ -140,6 +141,16 @@ function CanvasViewport(props: CanvasContentProps) {
   );
 }
 
+/** Dev server and build notices above the Canvas (R-RN-25, R-RN-27). */
+function CanvasNotices({ onOpenLoc }: { readonly onOpenLoc: (loc: string) => void }) {
+  return (
+    <>
+      <PortBusyBanner />
+      <BuildErrorBanner onOpenLoc={onOpenLoc} />
+    </>
+  );
+}
+
 function useCanvasAreaState(projectInfo?: ProjectInfo) {
   const runner = useRunnerStatus();
   const [mode, setMode] = useState<CanvasMode>('design');
@@ -191,7 +202,7 @@ export function CanvasArea(props: CanvasAreaProps) {
           s.setMode((m) => (m === 'design' ? 'preview' : 'design'));
         }}
       />
-      <BuildErrorBanner onOpenLoc={s.editor.open} />
+      <CanvasNotices onOpenLoc={s.editor.open} />
       <TextEditOverlay
         warning={s.textEdit.warning}
         loopCount={s.textEdit.loopCount}

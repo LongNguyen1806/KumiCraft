@@ -85,6 +85,7 @@ export type ProjectService = {
     readonly responsiveMode?: ResponsiveMode | undefined;
     readonly frames?: readonly Frame[] | undefined;
     readonly primaryFrameId?: string | undefined;
+    readonly devPort?: number | 'auto' | undefined;
   }): Promise<Result<ProjectInfo>>;
   setTrusted(trusted: boolean): Promise<Result<ProjectInfo>>;
   /** Starts installing dependencies as a job (R-PJ-13); checks fail at once. */
@@ -256,17 +257,22 @@ class ProjectServiceImpl implements ProjectService {
     readonly responsiveMode?: ResponsiveMode | undefined;
     readonly frames?: readonly Frame[] | undefined;
     readonly primaryFrameId?: string | undefined;
+    readonly devPort?: number | 'auto' | undefined;
   }): Promise<Result<ProjectInfo>> {
     if (this.current.status !== 'open') {
       return err({ code: 'E021', params: { missing: 'project' } });
     }
 
+    const { devPort: savedPort, ...file } = this.current.file;
+    // R-RN-27: 'auto' forgets the saved port; the runner reads the project's own again.
+    const devPort = updates.devPort === 'auto' ? undefined : (updates.devPort ?? savedPort);
     const updatedFile: WorkspaceFile = {
-      ...this.current.file,
-      name: updates.name ?? this.current.file.name,
-      responsiveMode: updates.responsiveMode ?? this.current.file.responsiveMode,
-      frames: updates.frames ? [...updates.frames] : this.current.file.frames,
-      primaryFrameId: updates.primaryFrameId ?? this.current.file.primaryFrameId,
+      ...file,
+      name: updates.name ?? file.name,
+      responsiveMode: updates.responsiveMode ?? file.responsiveMode,
+      frames: updates.frames ? [...updates.frames] : file.frames,
+      primaryFrameId: updates.primaryFrameId ?? file.primaryFrameId,
+      ...(devPort === undefined ? {} : { devPort }),
     };
 
     const write = await this.deps.fs.writeTextAtomic(

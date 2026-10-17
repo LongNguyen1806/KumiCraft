@@ -1,5 +1,6 @@
 // Child process runner for Vite + React projects (SPEC-04 M-RN, ADR-BE-28, R-RN-03).
 // QC-52: This file is an isolated child process runner and is allowed to call process.exit().
+import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -11,10 +12,11 @@ import type {
   RunnerToParentMessage,
 } from '@reactcraft/shared';
 
+import { devScriptPort, portInMessage } from './dev-script-port.ts';
 import { devServerOptions } from './vite-server-config.ts';
 
 interface ViteDevServer {
-  readonly config: { readonly server: { readonly port?: number | undefined } };
+  readonly httpServer?: { address(): unknown } | undefined;
   listen(): Promise<void>;
   close(): Promise<void>;
 }
@@ -62,33 +64,84 @@ function isViteModule(value: unknown): value is ViteModule {
   return 'createServer' in value && typeof value.createServer === 'function';
 }
 
+/** Vite throws this when `strictPort` is set and the port is taken. */
+const isPortTaken = (err: unknown): boolean =>
+  err instanceof Error && /already in use/i.test(err.message);
+
+function listeningPort(server: ViteDevServer): number | undefined {
+  const address = server.httpServer?.address();
+  return address instanceof Object && 'port' in address && typeof address.port === 'number'
+    ? address.port
+    : undefined;
+}
+
+async function listenVite(
+  vite: ViteModule,
+  options: RunnerOptions,
+  port: number | undefined,
+): Promise<ViteDevServer> {
+  const server = await vite.createServer({
+    root: options.root,
+    server: devServerOptions(options, port),
+    clearScreen: false,
+    plugins: [
+      createReactCraftBridgePlugin({
+        rootDir: options.root,
+        sourceDir: options.sourceDir,
+        nonce: options.nonce,
+        studioOrigin: options.studioOrigin,
+      }),
+    ],
+  });
+  try {
+    await server.listen();
+  } catch (err: unknown) {
+    await server.close();
+    throw err;
+  }
+  return server;
+}
+
+/** The port the user picked, else the one in the `dev` script; undefined: Vite's config decides. */
+async function wantedPort(options: RunnerOptions): Promise<number | undefined> {
+  if (options.projectPort !== undefined) return options.projectPort;
+  try {
+    const text = await readFile(join(options.root, 'package.json'), 'utf8');
+    return devScriptPort(JSON.parse(text));
+  } catch {
+    return undefined; // no readable package.json: Vite's config decides
+  }
+}
+
 async function createAndListenVite(vitePath: string, options: RunnerOptions): Promise<void> {
   const viteUrl = pathToFileURL(vitePath).href;
   const rawModule: unknown = await import(viteUrl);
   if (!isViteModule(rawModule)) {
     throw new Error(`Invalid Vite module at ${vitePath}`);
   }
-  const vite = rawModule;
 
-  const bridgePlugin = createReactCraftBridgePlugin({
-    rootDir: options.root,
-    sourceDir: options.sourceDir,
-    nonce: options.nonce,
-    studioOrigin: options.studioOrigin,
-  });
-
-  const server = await vite.createServer({
-    root: options.root,
-    server: devServerOptions(options),
-    clearScreen: false,
-    plugins: [bridgePlugin],
-  });
+  // R-RN-04: the project's own port first, so a backend that only allows that origin (CORS) and
+  // the logins the browser saved for it work in the Canvas as with `npm run dev`.
+  const wanted = await wantedPort(options);
+  let server: ViteDevServer;
+  let busyPort: number | undefined;
+  try {
+    server = await listenVite(rawModule, options, wanted);
+  } catch (err: unknown) {
+    if (!isPortTaken(err)) throw err;
+    busyPort = wanted ?? (err instanceof Error ? portInMessage(err.message) : undefined);
+    console.warn(
+      `[reactcraft] Port ${String(busyPort)} of the project is in use (is \`npm run dev\` still running?), so the Canvas uses port ${String(options.port)}. A backend that only allows the project's port will refuse its requests.`,
+    );
+    server = await listenVite(rawModule, options, options.port);
+  }
 
   devServer = server;
-  await server.listen();
-
-  const actualPort = server.config.server.port ?? options.port;
-  sendToParent({ type: 'ready', port: actualPort });
+  sendToParent({
+    type: 'ready',
+    port: listeningPort(server) ?? options.port,
+    ...(busyPort === undefined ? {} : { busyPort }),
+  });
 }
 
 async function startServer(options: RunnerOptions): Promise<void> {

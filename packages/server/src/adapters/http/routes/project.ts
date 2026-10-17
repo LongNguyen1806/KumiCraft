@@ -1,5 +1,6 @@
 // Project endpoints (SPEC-03 section 5.3).
 import {
+  DevPortSchema,
   FrameSchema,
   issuesToDetails,
   PackageManagerSchema,
@@ -28,6 +29,8 @@ const PatchSchema = z.strictObject({
   responsiveMode: ResponsiveModeSchema.optional(),
   frames: z.array(FrameSchema).min(1).max(8).optional(),
   primaryFrameId: z.string().optional(),
+  // R-RN-27: 'auto' removes the saved port so the runner reads it from the project again.
+  devPort: z.union([DevPortSchema, z.literal('auto')]).optional(),
 });
 const TrustSchema = z.strictObject({ trusted: z.boolean() });
 const InstallSchema = z.strictObject({ command: z.array(z.string()).min(1) });

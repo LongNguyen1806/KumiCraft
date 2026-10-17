@@ -10,6 +10,7 @@ import {
   type RunnerStatus,
   type RunnerToChildMessage,
   type RunnerToParentMessage,
+  type WorkspaceFile,
 } from '@reactcraft/shared';
 import { nanoid } from 'nanoid';
 
@@ -185,6 +186,7 @@ class RunnerExecution {
         origin: `http://127.0.0.1:${String(msg.port)}`,
         nonce: this.currentStatus.nonce,
         startedAt: this.currentStatus.startedAt,
+        ...(msg.busyPort === undefined ? {} : { busyPort: msg.busyPort }),
       };
       this.emitStatus();
     } else {
@@ -246,17 +248,18 @@ class RunnerExecution {
   }
 
   private spawnProcess(
-    root: string,
-    sourceDir: string,
+    project: { readonly root: string; readonly file: WorkspaceFile },
     port: number,
     nonce: string,
   ): ChildProcessHandle {
     const entryPath = this.deps.runnerScriptPath ?? '';
+    const { root } = project;
 
     const runnerOptions: RunnerOptions = this.deps.adapter.runner.options({
       root,
-      sourceDir,
+      sourceDir: project.file.sourceDir,
       port,
+      ...(project.file.devPort === undefined ? {} : { projectPort: project.file.devPort }),
       nonce,
       studioOrigin: this.deps.studioOrigin,
     });
@@ -304,7 +307,7 @@ class RunnerExecution {
     };
     this.emitStatus();
 
-    this.activeHandle = this.spawnProcess(project.root, project.file.sourceDir, port, nonce);
+    this.activeHandle = this.spawnProcess(project, port, nonce);
     return ok(this.currentStatus);
   }
 

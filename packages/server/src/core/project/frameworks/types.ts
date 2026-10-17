@@ -13,6 +13,8 @@ export type RunnerContext = {
   readonly root: string;
   readonly sourceDir: RelPath;
   readonly port: number;
+  /** The port the user picked (`devPort`, R-RN-04); absent: the runner reads the project's. */
+  readonly projectPort?: number;
   readonly nonce: string;
   readonly studioOrigin: string;
 };

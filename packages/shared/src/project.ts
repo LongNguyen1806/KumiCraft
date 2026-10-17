@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { RelPathSchema } from './rel-path.ts';
 import { ResponsiveModeSchema } from './responsive.ts';
-import { BackendLinkSchema, FrameSchema, FRAMEWORK_IDS } from './workspace-file.ts';
+import { BackendLinkSchema, DevPortSchema, FrameSchema, FRAMEWORK_IDS } from './workspace-file.ts';
 
 export const UNSUPPORTED_REASONS = [
   'noPackageJson',
@@ -84,6 +84,8 @@ export const ProjectInfoSchema = z.strictObject({
   primaryFrameId: z.string(),
   backends: z.array(BackendInfoSchema).readonly(),
   trusted: z.boolean(),
+  /** The port saved in workspace.json; absent: read from the project (R-RN-04). */
+  devPort: DevPortSchema.optional(),
 });
 export type ProjectInfo = z.infer<typeof ProjectInfoSchema>;
 

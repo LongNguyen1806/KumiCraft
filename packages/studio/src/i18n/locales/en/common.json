@@ -180,6 +180,13 @@
       "statusOk": "Active",
       "statusMissing": "Missing",
       "statusBlocked": "Blocked"
+    },
+    "devPort": {
+      "title": "Frontend port in the Canvas",
+      "placeholder": "Read from the project (e.g. 5173)",
+      "hint": "Empty: ReactCraft reads the project's port (--port in the dev script, vite.config, 5173 by default) so the backend accepts it as with npm run dev. Saving restarts the dev server.",
+      "save": "Save and restart",
+      "invalid": "The port must be a number from 1024 to 65535, or empty"
     }
   },
   "inspector": {
@@ -301,6 +308,10 @@
       "title_one": "{{count}} runtime error",
       "title_other": "{{count}} runtime errors",
       "dismiss": "Hide errors"
+    },
+    "portBusy": {
+      "message": "Port {{port}} of the project is busy (npm run dev may be running), so the Canvas runs on another port and the backend may refuse its requests. Stop the program that holds the port, then restart.",
+      "restart": "Restart"
     }
   }
 }

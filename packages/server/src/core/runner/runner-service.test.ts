@@ -357,4 +357,20 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
     const spawnOpts = spawnedCalls[0]?.options as { cwd?: string } | undefined;
     expect(spawnOpts?.cwd).toBe(openState.root);
   });
+
+  it("passes the user's port to the runner and reports when the project's port is busy [R-RN-04, R-RN-27]", async () => {
+    workspaceState = { ...openState, file: { ...openState.file, devPort: 3000 } };
+    const runner = createRunnerService(makeDeps());
+    await runner.start();
+
+    const startMsg = mockHandle.sentMessages[0] as RunnerToChildMessage;
+    expect(startMsg.type === 'start' && startMsg.options.projectPort).toBe(3000);
+
+    mockHandle.triggerMessage({ type: 'ready', port: 52123, busyPort: 3000 });
+    expect(runner.getStatus()).toMatchObject({
+      state: 'ready',
+      origin: 'http://127.0.0.1:52123',
+      busyPort: 3000,
+    });
+  });
 });

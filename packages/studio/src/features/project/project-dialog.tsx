@@ -12,6 +12,7 @@ import {
 import { Dialog } from '../../components/ui/dialog.tsx';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { BackendsView } from './backends-view.tsx';
+import { DevPortForm } from './dev-port-form.tsx';
 import { DirectoryBrowser } from './directory-browser.tsx';
 import { ProjectProbeResultView } from './project-dialog-probe-view.tsx';
 
@@ -203,11 +204,14 @@ export function ProjectDialog({
         />
 
         {activeTab === 'backends' ? (
-          <BackendsView
-            backends={s.backends}
-            onAddBackend={s.handleAddBackend}
-            onRemoveBackend={s.handleRemoveBackend}
-          />
+          <div className="flex flex-col gap-4">
+            <DevPortForm devPort={currentProject?.devPort} />
+            <BackendsView
+              backends={s.backends}
+              onAddBackend={s.handleAddBackend}
+              onRemoveBackend={s.handleRemoveBackend}
+            />
+          </div>
         ) : (
           <div className="flex flex-col gap-4">
             <DirectoryBrowser currentPath={s.selectedPath} onSelectPath={s.setSelectedPath} />
