@@ -8,6 +8,11 @@ pre-commit:
       stage_fixed: true
     lint:
       glob: '*.{ts,tsx}'
+      # Templates and fixtures are whole projects with their own ESLint config, which ESLint 10
+      # would pick for their files; the repository lint skips them (eslint.config.js ignores).
+      exclude:
+        - 'templates/**'
+        - 'fixtures/**'
       run: pnpm eslint {staged_files}
 commit-msg:
   commands:

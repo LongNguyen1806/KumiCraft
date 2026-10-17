@@ -44,22 +44,37 @@ function escapeHtml(text: string): string {
 }
 
 /**
- * Files of the template (ADR-BE-32), as `[file in the template, file in the new project]`. npm
- * renames a published `.gitignore`, so the template keeps it as `_gitignore`.
+ * Template filenames that must be renamed in the created project (ADR-BE-32). npm renames a
+ * published `.gitignore`, so the template keeps it as `_gitignore`.
  */
-const TEMPLATE_FILES: readonly (readonly [string, string])[] = [
-  ['package.json', 'package.json'],
-  ['index.html', 'index.html'],
-  ['vite.config.ts', 'vite.config.ts'],
-  ['tsconfig.json', 'tsconfig.json'],
-  ['_gitignore', '.gitignore'],
-  ['src/index.css', 'src/index.css'],
-  ['src/main.tsx', 'src/main.tsx'],
-  ['src/routes.tsx', 'src/routes.tsx'],
-  ['src/pages/Home.tsx', 'src/pages/Home.tsx'],
-  ['src/api/.gitkeep', 'src/api/.gitkeep'],
-  ['.reactcraft/agent-guide.md', '.reactcraft/agent-guide.md'],
-];
+const TEMPLATE_RENAMES: Readonly<Record<string, string>> = {
+  _gitignore: '.gitignore',
+};
+
+async function listTemplateFiles(
+  fs: FileSystemPort,
+  templateDir: string,
+  dir = '',
+): Promise<Result<readonly (readonly [string, string])[]>> {
+  const entries = await fs.readDir(templateDir, dir === '' ? '.' : dir);
+  if (!entries.ok) return entries;
+
+  const files: (readonly [string, string])[] = [];
+  for (const entry of entries.value) {
+    const templatePath = dir === '' ? entry.name : `${dir}/${entry.name}`;
+    if (entry.kind === 'directory') {
+      const sub = await listTemplateFiles(fs, templateDir, templatePath);
+      if (!sub.ok) return sub;
+      files.push(...sub.value);
+    } else {
+      const targetName = TEMPLATE_RENAMES[entry.name] ?? entry.name;
+      const targetPath = dir === '' ? targetName : `${dir}/${targetName}`;
+      files.push([templatePath, targetPath]);
+    }
+  }
+  files.sort((a, b) => a[0].localeCompare(b[0]));
+  return ok(files);
+}
 
 export async function createProject(
   targetPath: string,
@@ -118,7 +133,10 @@ async function copyTemplate(
   deps: CreateProjectDeps,
 ): Promise<{ readonly ok: true } | { readonly ok: false; readonly error: CopyFailure }> {
   const created: string[] = [];
-  for (const [templatePath, relPath] of TEMPLATE_FILES) {
+  const listed = await listTemplateFiles(deps.fs, deps.templateDir);
+  if (!listed.ok) return { ok: false, error: { created, cause: listed.error } };
+
+  for (const [templatePath, relPath] of listed.value) {
     const file = `${target.prefix}${relPath}`;
     if (!target.isNew && (await deps.fs.exists(target.root, file))) continue;
 
