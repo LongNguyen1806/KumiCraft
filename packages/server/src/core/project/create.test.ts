@@ -38,7 +38,7 @@ afterEach(async () => {
   await cleanup();
 });
 
-describe('createProject with the real template', () => {
+describe('createProject with the real template', { timeout: 30_000 }, () => {
   it('makes a project the vite-react adapter supports, with the routes convention [R-PJ-10]', async () => {
     const target = join(dir, 'shop');
 

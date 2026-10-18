@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ComponentsPanel } from '../components-panel/components-panel.tsx';
 import { InspectorPanel } from '../inspector/inspector-panel.tsx';
 import { useProjectTheme } from '../inspector/use-project-theme.ts';
 import { LayerTree } from '../layers/layer-tree.tsx';
@@ -55,16 +56,19 @@ function Tab({ selected, disabled = false, onClick, children }: TabProps) {
 
 const LEFT_PANEL_KEY = 'reactcraft.leftPanelTab';
 
-function readLeftPanelTab(): 'layers' | 'library' {
+export type LeftPanelTab = 'layers' | 'library' | 'components';
+
+function readLeftPanelTab(): LeftPanelTab {
   try {
     const saved = localStorage.getItem(LEFT_PANEL_KEY);
-    return saved === 'library' ? 'library' : 'layers';
+    if (saved === 'library' || saved === 'components') return saved;
+    return 'layers';
   } catch {
     return 'layers';
   }
 }
 
-function saveLeftPanelTab(tab: 'layers' | 'library'): void {
+function saveLeftPanelTab(tab: LeftPanelTab): void {
   try {
     localStorage.setItem(LEFT_PANEL_KEY, tab);
   } catch {
@@ -72,42 +76,69 @@ function saveLeftPanelTab(tab: 'layers' | 'library'): void {
   }
 }
 
-/** Layer Tree or Library of the running page (M-SL, M-LB, WP-1.05, WP-2.03). */
+type LeftPanelTabsProps = {
+  readonly tab: LeftPanelTab;
+  readonly onSelectTab: (tab: LeftPanelTab) => void;
+};
+
+function LeftPanelTabs({ tab, onSelectTab }: LeftPanelTabsProps) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <Tab
+        selected={tab === 'layers'}
+        onClick={() => {
+          onSelectTab('layers');
+        }}
+      >
+        {t('editor.layers')}
+      </Tab>
+      <Tab
+        selected={tab === 'library'}
+        onClick={() => {
+          onSelectTab('library');
+        }}
+      >
+        {t('editor.library')}
+      </Tab>
+      <Tab
+        selected={tab === 'components'}
+        onClick={() => {
+          onSelectTab('components');
+        }}
+      >
+        {t('editor.components')}
+      </Tab>
+    </>
+  );
+}
+
+/** Layer Tree, Library, or Components of the running page (M-SL, M-LB, WP-1.05, WP-2.03, WP-2.08a). */
 export function LeftPanel() {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<'layers' | 'library'>(readLeftPanelTab);
+  const [tab, setTab] = useState<LeftPanelTab>(readLeftPanelTab);
 
-  const handleSetTab = (nextTab: 'layers' | 'library') => {
+  const handleSetTab = (nextTab: LeftPanelTab) => {
     setTab(nextTab);
     saveLeftPanelTab(nextTab);
   };
 
+  const title =
+    tab === 'layers'
+      ? t('editor.layers')
+      : tab === 'library'
+        ? t('editor.library')
+        : t('editor.components');
+
   return (
     <Panel
       label={t('editor.leftPanel')}
-      title={tab === 'layers' ? t('editor.layers') : t('editor.library')}
-      tabs={
-        <>
-          <Tab
-            selected={tab === 'layers'}
-            onClick={() => {
-              handleSetTab('layers');
-            }}
-          >
-            {t('editor.layers')}
-          </Tab>
-          <Tab
-            selected={tab === 'library'}
-            onClick={() => {
-              handleSetTab('library');
-            }}
-          >
-            {t('editor.library')}
-          </Tab>
-        </>
-      }
+      title={title}
+      tabs={<LeftPanelTabs tab={tab} onSelectTab={handleSetTab} />}
     >
-      {tab === 'layers' ? <LayerTree /> : <LibraryPanel />}
+      {tab === 'layers' && <LayerTree />}
+      {tab === 'library' && <LibraryPanel />}
+      {tab === 'components' && <ComponentsPanel />}
     </Panel>
   );
 }

@@ -1,6 +1,7 @@
 // Schemas and types for Bridge protocol (SPEC-03 section 7, V-110..114).
 import { z } from 'zod';
 
+import { RelPathSchema } from './rel-path.ts';
 import { ElementGuardSchema, InsertTargetSchema } from './source.ts';
 
 export const ElementRefSchema = z.strictObject({
@@ -183,3 +184,9 @@ export type StudioDragOverPayload = z.infer<typeof StudioDragOverPayloadSchema>;
 
 export const StudioDragEndPayloadSchema = z.strictObject({ drop: z.boolean() });
 export type StudioDragEndPayload = z.infer<typeof StudioDragEndPayloadSchema>;
+
+// Studio -> Bridge (R-CP-11). file missing/undefined: unknown design file.
+export const StudioDesignFilePayloadSchema = z.strictObject({
+  file: RelPathSchema.optional(),
+});
+export type StudioDesignFilePayload = z.infer<typeof StudioDesignFilePayloadSchema>;

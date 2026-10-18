@@ -140,6 +140,8 @@ export class BridgeChannel {
   private iframeWindow: Window | undefined;
   private runnerOrigin: string | undefined;
   private nonce: string | undefined;
+  /** Last file sent with `design-file`, sent again to a Bridge that just started (R-CP-11). */
+  private designFile: string | undefined;
   private readonly listener: (e: MessageEvent) => void;
   private readonly textEditListeners = new Set<BridgeTextEditListener>();
 
@@ -206,6 +208,11 @@ export class BridgeChannel {
     this.sendMessage('drag-end', { drop });
   }
 
+  setDesignFile(file?: string): void {
+    this.designFile = file;
+    this.sendMessage('design-file', { file });
+  }
+
   private handleMessage(event: MessageEvent): void {
     // V-111: verify event.source, event.origin, nonce, and envelope schema
     if (this.iframeWindow === undefined || event.source !== this.iframeWindow) return;
@@ -218,6 +225,9 @@ export class BridgeChannel {
     // Any verified message proves the Bridge runs (R-RN-24), even if `ready` came too early.
     useSelectionStore.getState().setBridgeReady(true);
     dispatchBridgePayload(envelopeRes.data.type, envelopeRes.data.payload);
+    // A full reload of the page starts a new Bridge that does not know the design file yet.
+    if (envelopeRes.data.type === 'ready')
+      this.sendMessage('design-file', { file: this.designFile });
     this.handleTextEditMessage(envelopeRes.data.type, envelopeRes.data.payload);
   }
 

@@ -47,6 +47,31 @@ describe('BridgeChannel', () => {
     );
   });
 
+  it('sends the design file again to a Bridge that restarted after a full reload [R-CP-11]', () => {
+    channel.setDesignFile('src/pages/Home.tsx');
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          rc: 1,
+          nonce: currentNonce,
+          type: 'ready',
+          payload: { bridgeVersion: '1.0.0', route: '/' },
+        },
+        origin: runnerOrigin,
+        source: fakeIframeWindow,
+      }),
+    );
+    const designFileMessage = {
+      rc: 1,
+      nonce: currentNonce,
+      type: 'design-file',
+      payload: { file: 'src/pages/Home.tsx' },
+    };
+    // Once from setDesignFile, once more for the Bridge that just said ready.
+    expect(postMessageSpy).toHaveBeenNthCalledWith(1, designFileMessage, runnerOrigin);
+    expect(postMessageSpy).toHaveBeenNthCalledWith(2, designFileMessage, runnerOrigin);
+  });
+
   it('ignores messages with wrong source, origin, or nonce [V-111, R-BR-30]', () => {
     const validPayload = {
       rc: 1,

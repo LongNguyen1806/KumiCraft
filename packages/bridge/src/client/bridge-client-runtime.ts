@@ -8,6 +8,7 @@ import {
   type StudioTextEditStartPayload,
 } from '@reactcraft/shared';
 
+import { INTERCEPTED_EVENTS, isOverlayHost } from './bridge-events.ts';
 import { toBuildError } from './build-error.ts';
 import { getRefForElement, handleElementClick } from './candidate-chain.ts';
 import { scanDomTree } from './dom-scanner.ts';
@@ -21,21 +22,6 @@ import { wrapBrowserHistory } from './runtime-history.ts';
 import { collectSelectionInfo } from './selection-info.ts';
 import { dispatchStudioMessage } from './studio-messages.ts';
 import { TextEditController } from './text-edit.ts';
-
-const INTERCEPTED_EVENTS = [
-  'pointerdown',
-  'pointerup',
-  'click',
-  'dblclick',
-  'auxclick',
-  'contextmenu',
-  'submit',
-  'dragstart',
-] as const;
-
-function isOverlayHost(target: unknown): boolean {
-  return target instanceof Element && target.id === '__rc_overlay_host';
-}
 
 /** The part of Vite's `import.meta.hot` the Bridge uses (R-BR-17). */
 export type HotContext = { on(event: string, callback: (payload: unknown) => void): void };
@@ -197,6 +183,9 @@ export class BridgeClientRuntime {
       },
       handleDragEnd: (data) => {
         this.drag.studioDragEnd(data.drop);
+      },
+      handleDesignFile: (file) => {
+        this.overlay.setDesignFile(file);
       },
     });
   };
@@ -375,6 +364,10 @@ export class BridgeClientRuntime {
       this.lastSelectionInfo = items;
       this.sendToStudio('selection-info', { items });
     }, 16);
+  }
+
+  public setDesignFile(file?: string): void {
+    this.overlay.setDesignFile(file);
   }
 
   public destroy(): void {

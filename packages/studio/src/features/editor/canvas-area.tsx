@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { errorText } from '../../routes/error-text.ts';
 import { BuildErrorBanner } from '../canvas-errors/build-error-banner.tsx';
 import { RuntimeErrorList } from '../canvas-errors/runtime-error-list.tsx';
+import { DesignBar } from '../design/design-bar.tsx';
 import { DndErrorBanner } from '../dnd/dnd-error-banner.tsx';
 import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
 import { type TextEditWarning, useCanvasTextEdit } from '../text-edit/use-canvas-text-edit.ts';
@@ -189,6 +190,26 @@ function useCanvasAreaState(projectInfo?: ProjectInfo) {
   };
 }
 
+function CanvasToolbarSection({
+  state: s,
+}: {
+  readonly state: ReturnType<typeof useCanvasAreaState>;
+}) {
+  return (
+    <CanvasToolbar
+      frames={s.frames}
+      activeFrameId={s.activeFrame.id}
+      onSelectFrame={s.setActiveFrameId}
+      zoom={s.zoom}
+      onSelectZoom={s.setZoom}
+      mode={s.mode}
+      onToggleMode={() => {
+        s.setMode((m) => (m === 'design' ? 'preview' : 'design'));
+      }}
+    />
+  );
+}
+
 export function CanvasArea(props: CanvasAreaProps) {
   const { projectInfo, trusted = true, onTrustRequest, onInstallRequest } = props;
   const { t } = useTranslation();
@@ -201,17 +222,8 @@ export function CanvasArea(props: CanvasAreaProps) {
       data-testid="editor"
       className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-panel bg-card-solid/35 bg-[radial-gradient(rgb(60_52_30/0.14)_1px,transparent_1px)] bg-size-[18px_18px]"
     >
-      <CanvasToolbar
-        frames={s.frames}
-        activeFrameId={s.activeFrame.id}
-        onSelectFrame={s.setActiveFrameId}
-        zoom={s.zoom}
-        onSelectZoom={s.setZoom}
-        mode={s.mode}
-        onToggleMode={() => {
-          s.setMode((m) => (m === 'design' ? 'preview' : 'design'));
-        }}
-      />
+      <CanvasToolbarSection state={s} />
+      <DesignBar />
       <CanvasNotices onOpenLoc={s.editor.open} />
       <TextEditOverlay
         warning={s.textEdit.warning}

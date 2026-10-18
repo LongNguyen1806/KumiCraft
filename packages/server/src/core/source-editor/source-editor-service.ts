@@ -16,7 +16,7 @@ import MagicString from 'magic-string';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { AstNode } from './ast-helpers.ts';
 import { asAstNode, detectFormat, getJsxTagName } from './ast-helpers.ts';
-import { createUsageCounter } from './component-usages.ts';
+import { createUsageCounter, type UsageCounter } from './component-usages.ts';
 import { executeEditBatch } from './edit-batch.ts';
 import { executeEditMutation, parseModifiedCode } from './edit-mutations.ts';
 import { fileQueueKey, queueFileTask } from './file-queue.ts';
@@ -35,6 +35,7 @@ const MAX_FILE_SIZE = 1024 * 1024; // 1 MB (R-SE-01)
 
 export type SourceEditorDeps = {
   readonly fs: FileSystemPort;
+  readonly usageCounter?: UsageCounter | undefined;
 };
 
 export type SourceEditorConfig = {
@@ -262,7 +263,7 @@ export function createSourceEditorService(
 ): SourceEditorService {
   const sourceDir = config.sourceDir ?? 'src';
   const sourceExtensions = config.sourceExtensions ?? ['.jsx', '.tsx'];
-  const usageCounter = createUsageCounter(deps.fs);
+  const usageCounter = deps.usageCounter ?? createUsageCounter(deps.fs);
 
   /** R-SE-14: replaces the usages of the enclosing component by its count over the project. */
   const withUsages = async (

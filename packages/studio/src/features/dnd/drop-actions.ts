@@ -1,9 +1,14 @@
-// Drop execution actions for Canvas drag-and-drop (SPEC-04 section 16 M-DD, R-DD-14).
-import type { ElementGuard, InsertTarget, LibraryBlock } from '@reactcraft/shared';
+import type {
+  ElementGuard,
+  InsertTarget,
+  LibraryBlock,
+  ProjectComponent,
+} from '@reactcraft/shared';
 import i18next from 'i18next';
 
 import { applyStructureEdit } from '../../api/source-client.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';
+import { insertComponentAt } from '../components-panel/insert-component.ts';
 import { insertBlockAt } from '../library/insert-block.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { useDndStore } from './dnd-store.ts';
@@ -46,6 +51,21 @@ export async function executeDropInsert(
   return true;
 }
 
+export async function executeDropComponent(
+  component: ProjectComponent,
+  target: InsertTarget,
+): Promise<boolean> {
+  useDndStore.getState().setError(undefined);
+  const res = await insertComponentAt(component, target);
+  if (!res.ok) {
+    if (res.error) {
+      useDndStore.getState().setError(res.error);
+    }
+    return false;
+  }
+  return true;
+}
+
 export async function handleDrop(lang = i18next.language): Promise<boolean> {
   const { drag, dropTarget, endDrag } = useDndStore.getState();
   endDrag();
@@ -53,6 +73,9 @@ export async function handleDrop(lang = i18next.language): Promise<boolean> {
 
   if (drag.source === 'library') {
     return executeDropInsert(drag.block, dropTarget, lang);
+  }
+  if (drag.source === 'component') {
+    return executeDropComponent(drag.component, dropTarget);
   }
   return executeDropMove([{ loc: drag.ref.loc, tag: drag.tag }], dropTarget);
 }

@@ -58,6 +58,7 @@
     "layers": "Layers",
     "layersHint": "The structure of the page shows here once the Canvas runs your project.",
     "library": "Library",
+    "components": "Components",
     "collapse": "Collapse",
     "expand": "Expand",
     "properties": "Properties",
@@ -405,5 +406,22 @@
     "save": "Save",
     "newPath": "New URL path",
     "newName": "New component name"
+  },
+  "design": {
+    "kind": {
+      "page": "Page",
+      "layout": "Layout",
+      "component": "Component"
+    },
+    "unknownFile": "The file of this page is unknown",
+    "selectInFile": "Select an element in {{file}}"
+  },
+  "components": {
+    "title": "Components",
+    "search": "Search components…",
+    "usages": "Used in {{count}} places",
+    "layout": "Layout",
+    "empty": "This project has no components yet",
+    "selfInsert": "A component cannot be inserted into itself"
   }
 }

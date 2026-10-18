@@ -2,6 +2,7 @@ import type { ProjectInfo } from '@reactcraft/shared';
 import { useEffect, useState } from 'react';
 
 import { fetchProject } from '../../api/project-client.ts';
+import { useDesignTargetSync } from '../design/design-store.ts';
 import { useHistorySync } from '../history/history-store.ts';
 import { InstallDialog } from '../project/install-dialog.tsx';
 import { ProjectDialog } from '../project/project-dialog.tsx';
@@ -168,6 +169,7 @@ export function EditorShell({ projectId, projectName, trusted, onTrusted }: Edit
   const panels = usePanelLayout();
   useHistorySync(true);
   useShortcuts();
+  useDesignTargetSync();
   const loader = useProjectLoader(trusted);
 
   return (

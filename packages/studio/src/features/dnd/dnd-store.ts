@@ -1,12 +1,12 @@
-// Zustand store for Canvas drag-and-drop state (SPEC-04 section 16 M-DD, R-DD-10..14).
-import type { ElementRef, InsertTarget, LibraryBlock } from '@reactcraft/shared';
+import type { ElementRef, InsertTarget, LibraryBlock, ProjectComponent } from '@reactcraft/shared';
 import { create } from 'zustand';
 
 import type { ErrorInfo } from '../../routes/error-text.ts';
 
 export type DragSource =
   | { readonly source: 'library'; readonly block: LibraryBlock }
-  | { readonly source: 'layer'; readonly ref: ElementRef; readonly tag: string };
+  | { readonly source: 'layer'; readonly ref: ElementRef; readonly tag: string }
+  | { readonly source: 'component'; readonly component: ProjectComponent };
 
 export type DndState = {
   readonly drag?: DragSource | undefined;

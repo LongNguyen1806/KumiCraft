@@ -5,12 +5,10 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { resolveEnabledFeatures } from '@reactcraft/shared';
 import envPaths from 'env-paths';
-import type { FastifyInstance } from 'fastify';
 
 import { createNodeFileSystem } from './adapters/fs/node-file-system.ts';
-import { createHttpApp, type LogLevel } from './adapters/http/create-http-app.ts';
+import type { LogLevel } from './adapters/http/create-http-app.ts';
 import { createServerLogger } from './adapters/log/create-logger.ts';
 import { createNodeProcess } from './adapters/system/node-process.ts';
 import { createNodeSystem } from './adapters/system/node-system.ts';
@@ -32,19 +30,16 @@ import {
 import { createProjectWatch, type ProjectWatch } from './core/project/project-watch.ts';
 import { createRunnerService, type RunnerService } from './core/runner/runner-service.ts';
 import { err, ok, type Result } from './core/shared/result.ts';
-import {
-  createSessionInfoProvider,
-  type Platform,
-  toSupportedPlatform,
-} from './core/shared/session.ts';
+import { type Platform, toSupportedPlatform } from './core/shared/session.ts';
 import { loadSessionToken } from './core/shared/session-token-store.ts';
 import { type ConfigStore, createConfigStore } from './core/shared/user-config.ts';
+import { createUsageCounter, type UsageCounter } from './core/source-editor/component-usages.ts';
 import {
   createSourceEditorService,
   type SourceEditorService,
 } from './core/source-editor/source-editor-service.ts';
-import { createProjectReader } from './core/workspace/project-reader.ts';
 import { readRememberedPort } from './core/workspace/studio-port.ts';
+import { autoOpenProject, createHttpServer } from './server-http.ts';
 
 export type { LogLevel } from './adapters/http/create-http-app.ts';
 export type { HistoryService } from './core/history/history-service.ts';
@@ -100,7 +95,7 @@ export type RunningServer = {
   readonly close: () => Promise<void>;
 };
 
-type InitializedContext = {
+export type InitializedContext = {
   readonly projectService: ProjectService;
   readonly runnerService: RunnerService;
   readonly sourceEditorService: SourceEditorService;
@@ -114,6 +109,7 @@ type InitializedContext = {
   readonly homeDir: string;
   readonly configDir: string;
   readonly logger: LoggerPort;
+  readonly usageCounter: UsageCounter;
 };
 
 /**
@@ -216,6 +212,16 @@ export function resolveRunnerScript(customPath?: string): string {
   return fileURLToPath(candidates[0] ?? new URL('./runners/vite-react.js', import.meta.url));
 }
 
+/**
+ * Where the Studio page runs, the only parent the Bridge in the Canvas answers. With `pnpm dev`
+ * the Studio is the Vite dev server (the trusted origin), not the server itself.
+ */
+export function studioOriginOf(
+  options: Pick<StartServerOptions, 'port' | 'trustedOrigins'>,
+): string {
+  return options.trustedOrigins?.[0] ?? `http://${HOST}:${String(options.port)}`;
+}
+
 /** History, jobs and the watcher that reports files changed outside ReactCraft (R-HI-05). */
 function createFileServices(
   deps: Pick<ProjectServiceDeps, 'fs' | 'system' | 'logger'>,
@@ -236,14 +242,25 @@ function createFileServices(
   return { historyService, jobService, watch };
 }
 
-/**
- * Where the Studio page runs, the only parent the Bridge in the Canvas answers. With `pnpm dev`
- * the Studio is the Vite dev server (the trusted origin), not the server itself.
- */
-export function studioOriginOf(
-  options: Pick<StartServerOptions, 'port' | 'trustedOrigins'>,
-): string {
-  return options.trustedOrigins?.[0] ?? `http://${HOST}:${String(options.port)}`;
+function createProjectRunner(
+  deps: Pick<ProjectServiceDeps, 'system' | 'logger'> & {
+    readonly runnerScriptPath?: string | undefined;
+  },
+  projectService: ProjectService,
+  processPort: ProcessPort,
+  eventBus: EventBusPort,
+  studioOrigin: string,
+): RunnerService {
+  return createRunnerService({
+    getWorkspaceState: () => projectService.state(),
+    system: deps.system,
+    process: processPort,
+    logger: deps.logger,
+    eventBus,
+    studioOrigin,
+    adapter: viteReactAdapter,
+    runnerScriptPath: resolveRunnerScript(deps.runnerScriptPath),
+  });
 }
 
 function createServices(
@@ -261,6 +278,7 @@ function createServices(
   sourceEditorService: SourceEditorService;
   historyService: HistoryService;
   jobService: JobService;
+  usageCounter: UsageCounter;
 } {
   const runnerHolder: { current?: RunnerService | undefined } = {};
   const projectHolder: { current?: ProjectService | undefined } = {};
@@ -283,95 +301,25 @@ function createServices(
   });
   projectHolder.current = projectService;
 
-  const runnerService = createRunnerService({
-    getWorkspaceState: () => projectService.state(),
-    system: deps.system,
-    process: processPort,
-    logger: deps.logger,
+  const runnerService = createProjectRunner(
+    deps,
+    projectService,
+    processPort,
     eventBus,
     studioOrigin,
-    adapter: viteReactAdapter,
-    runnerScriptPath: resolveRunnerScript(deps.runnerScriptPath),
-  });
-
-  const sourceEditorService = createSourceEditorService({ fs });
-
+  );
+  const usageCounter = createUsageCounter(fs);
+  const sourceEditorService = createSourceEditorService({ fs, usageCounter });
   runnerHolder.current = runnerService;
-  return { projectService, runnerService, sourceEditorService, historyService, jobService };
-}
 
-async function autoOpenProject(
-  fs: FileSystemPort,
-  projectService: ProjectService,
-  workspaceDir?: string,
-): Promise<Result<void>> {
-  if (!workspaceDir) return ok(undefined);
-  const hasWorkspace = await fs.exists(workspaceDir, '.reactcraft/workspace.json');
-  if (hasWorkspace) {
-    const opened = await projectService.open(workspaceDir);
-    if (!opened.ok) {
-      if (opened.error.code === 'E018') return opened;
-      return ok(undefined);
-    }
-    return ok(undefined);
-  }
-  const probe = await projectService.probe(workspaceDir);
-  if (probe.ok && probe.value.kind === 'project' && probe.value.support.supported) {
-    const opened = await projectService.open(workspaceDir);
-    if (!opened.ok) {
-      if (opened.error.code === 'E018') return opened;
-      return ok(undefined);
-    }
-  }
-  return ok(undefined);
-}
-
-function createHttpServer(
-  options: StartServerOptions,
-  ctx: InitializedContext,
-  sessionToken: string,
-): Promise<FastifyInstance> {
-  const getSessionInfo = createSessionInfoProvider({
-    version: options.version,
-    platform: toSupportedPlatform(process.platform) ?? 'linux',
-    features: resolveEnabledFeatures(options.featureOverride),
-    readProject: createProjectReader(ctx.projectService, options.workspaceDir),
-  });
-
-  const getProjectRoot = () => {
-    const ws = ctx.projectService.state();
-    return ws.status === 'open' ? ws.root : undefined;
+  return {
+    projectService,
+    runnerService,
+    sourceEditorService,
+    historyService,
+    jobService,
+    usageCounter,
   };
-
-  return createHttpApp({
-    logLevel: options.logLevel ?? 'info',
-    security: { port: options.port, sessionToken, trustedOrigins: options.trustedOrigins ?? [] },
-    getSessionInfo,
-    projectRoutes: { projectService: ctx.projectService, getSessionInfo },
-    runnerRoutes: { runnerService: ctx.runnerService },
-    fsRoutes: { fs: ctx.fs, platform: ctx.platform, homeDir: ctx.homeDir },
-    settingsRoutes: { config: ctx.configStore },
-    eventRoutes: { eventBus: ctx.eventBus, sessionToken },
-    sourceRoutes: {
-      sourceEditorService: ctx.sourceEditorService,
-      historyService: ctx.historyService,
-      getProjectRoot,
-      fs: ctx.fs,
-    },
-    jobRoutes: { jobService: ctx.jobService },
-    historyRoutes: {
-      historyService: ctx.historyService,
-      getProjectRoot,
-    },
-    editorRoutes: {
-      fs: ctx.fs,
-      process: ctx.processPort,
-      platform: ctx.platform,
-      editor: () => ctx.configStore.settings().editor,
-      getProjectRoot,
-    },
-    ...(options.studioDir === undefined ? {} : { studioDir: options.studioDir }),
-  });
 }
 
 export async function startServer(options: StartServerOptions): Promise<Result<RunningServer>> {

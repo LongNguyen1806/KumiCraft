@@ -13,13 +13,18 @@ import {
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
+import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
+import { listProjectComponents } from '../../../core/project/components-list.ts';
 import type { ProjectService } from '../../../core/project/project-service.ts';
 import type { SessionInfo } from '../../../core/shared/session.ts';
+import type { UsageCounter } from '../../../core/source-editor/component-usages.ts';
 import { sendError } from '../send-error.ts';
 
 export type ProjectRoutesDeps = {
   readonly projectService: ProjectService;
   readonly getSessionInfo: () => SessionInfo;
+  readonly fs?: FileSystemPort | undefined;
+  readonly usageCounter?: UsageCounter | undefined;
 };
 
 const OpenSchema = z.strictObject({ path: z.string().min(1) });
@@ -117,6 +122,18 @@ function registerCodeInfoRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): 
     const result = await deps.projectService.theme();
     if (!result.ok) return sendError(reply, result.error);
     return { data: result.value };
+  });
+
+  api.get('/project/components', async (_request, reply) => {
+    const infoRes = deps.projectService.getProjectInfo();
+    if (!infoRes.ok) return sendError(reply, infoRes.error);
+    if (!deps.fs) return sendError(reply, { code: 'E021' });
+    const components = await listProjectComponents(
+      { fs: deps.fs, usageCounter: deps.usageCounter },
+      infoRes.value.root,
+      infoRes.value,
+    );
+    return { data: { components } };
   });
 }
 

@@ -2,89 +2,7 @@
 import type { ElementRef } from '@reactcraft/shared';
 
 import type { DropResult } from './drop-target.ts';
-
-const OVERLAY_CSS = `
-:host {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2147483647;
-  overflow: hidden;
-}
-
-.box {
-  position: absolute;
-  pointer-events: none;
-  box-sizing: border-box;
-  transition: top 60ms ease-out, left 60ms ease-out, width 60ms ease-out, height 60ms ease-out;
-}
-
-.hover-box {
-  border: 1px solid #3b82f6;
-  background: rgba(59, 130, 246, 0.08);
-}
-
-.select-box-primary {
-  border: 2px solid #2563eb;
-  background: rgba(37, 99, 235, 0.12);
-}
-
-.select-box-secondary {
-  border: 1.5px dashed rgba(37, 99, 235, 0.45);
-  background: rgba(37, 99, 235, 0.04);
-}
-
-.tag-label {
-  position: absolute;
-  top: -20px;
-  left: -2px;
-  background: #2563eb;
-  color: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1;
-  padding: 3px 6px;
-  border-radius: 3px;
-  white-space: nowrap;
-  pointer-events: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.drag-handle {
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  background: #2563eb;
-  color: #ffffff;
-  border-radius: 3px;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  line-height: 1;
-  pointer-events: auto;
-  cursor: grab;
-  user-select: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-}
-
-.drop-line {
-  position: absolute;
-  pointer-events: none;
-  background: #2563eb;
-  display: none;
-}
-
-.drop-box {
-  position: absolute;
-  pointer-events: none;
-  box-sizing: border-box;
-  border: 2px dashed #2563eb;
-  background: rgba(37, 99, 235, 0.06);
-  display: none;
-}
-`;
+import { foreignLabel, OVERLAY_CSS } from './overlay-foreign.ts';
 
 export type OverlayState = {
   hoverEl?: Element | undefined;
@@ -113,6 +31,7 @@ export class BridgeOverlay {
   private host: HTMLElement;
   private shadow: ShadowRoot;
   private hoverBox: HTMLDivElement;
+  private hoverBoxLabel: HTMLSpanElement;
   private selectionContainer: HTMLDivElement;
   private dragHandle: HTMLDivElement;
   private dropLine: HTMLDivElement;
@@ -123,6 +42,7 @@ export class BridgeOverlay {
   private rafId: number | undefined;
   private visible = true;
   private handleListener: ((x: number, y: number) => void) | undefined;
+  private designFile: string | undefined;
 
   constructor(onHandleDown?: (x: number, y: number) => void) {
     this.handleListener = onHandleDown;
@@ -142,6 +62,10 @@ export class BridgeOverlay {
     this.hoverBox = document.createElement('div');
     this.hoverBox.className = 'box hover-box';
     this.hoverBox.style.display = 'none';
+    this.hoverBoxLabel = document.createElement('span');
+    this.hoverBoxLabel.className = 'tag-label foreign';
+    this.hoverBoxLabel.style.display = 'none';
+    this.hoverBox.appendChild(this.hoverBoxLabel);
     this.shadow.appendChild(this.hoverBox);
 
     this.selectionContainer = document.createElement('div');
@@ -221,6 +145,11 @@ export class BridgeOverlay {
     this.host.style.display = visible ? 'block' : 'none';
   }
 
+  public setDesignFile(file?: string): void {
+    this.designFile = file;
+    this.requestRender();
+  }
+
   public setHover(el?: Element): void {
     this.state.hoverEl = el;
     this.requestRender();
@@ -261,13 +190,23 @@ export class BridgeOverlay {
   }
 
   private renderHover(): void {
+    const hoverEl = this.state.hoverEl;
     if (
       this.state.dropIndicator === undefined &&
-      this.state.hoverEl &&
-      document.documentElement.contains(this.state.hoverEl)
+      hoverEl &&
+      document.documentElement.contains(hoverEl)
     ) {
-      const rect = this.state.hoverEl.getBoundingClientRect();
+      const rect = hoverEl.getBoundingClientRect();
+      const loc = hoverEl.getAttribute('data-rc-loc') ?? '';
+      const fLabel = foreignLabel(loc, this.designFile);
       this.hoverBox.style.display = 'block';
+      this.hoverBox.className = `box hover-box${fLabel !== undefined ? ' foreign' : ''}`;
+      if (fLabel !== undefined) {
+        this.hoverBoxLabel.style.display = 'block';
+        this.hoverBoxLabel.textContent = fLabel;
+      } else {
+        this.hoverBoxLabel.style.display = 'none';
+      }
       applyRectStyle(this.hoverBox, rect);
     } else {
       this.hoverBox.style.display = 'none';
@@ -286,15 +225,18 @@ export class BridgeOverlay {
 
       const isPrimary = ref === primaryRef;
       const rect = targetEl.getBoundingClientRect();
+      const fLabel = foreignLabel(ref.loc, this.designFile);
+      const isForeign = fLabel !== undefined;
 
       const box = document.createElement('div');
-      box.className = `box ${isPrimary ? 'select-box-primary' : 'select-box-secondary'}`;
+      const baseClass = isPrimary ? 'select-box-primary' : 'select-box-secondary';
+      box.className = `box ${baseClass}${isForeign ? ' foreign' : ''}`;
       applyRectStyle(box, rect);
 
       if (isPrimary) {
         const label = document.createElement('span');
-        label.className = 'tag-label';
-        label.textContent = targetEl.tagName.toLowerCase();
+        label.className = `tag-label${isForeign ? ' foreign' : ''}`;
+        label.textContent = fLabel ?? targetEl.tagName.toLowerCase();
         box.appendChild(label);
       }
       this.selectionContainer.appendChild(box);

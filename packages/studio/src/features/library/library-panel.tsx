@@ -111,6 +111,7 @@ function LibrarySearchHeader({
 }: LibrarySearchHeaderProps) {
   const { t } = useTranslation('library');
   const { t: tError } = useTranslation('errors');
+  const { t: tCommon } = useTranslation('common');
 
   return (
     <div className="p-3 border-b border-border/40 space-y-2">
@@ -134,7 +135,16 @@ function LibrarySearchHeader({
         </p>
       )}
 
-      {errorInfo !== undefined && (
+      {errorInfo !== undefined && errorInfo.code === 'design.selectInFile' && (
+        <p
+          data-testid="library-hint"
+          className="rounded bg-amber-500/10 border border-amber-500/20 p-2 text-[11px] text-amber-900 dark:text-amber-200"
+        >
+          {tCommon('design.selectInFile', errorInfo.params ?? {})}
+        </p>
+      )}
+
+      {errorInfo !== undefined && errorInfo.code !== 'design.selectInFile' && (
         <p role="alert" className="text-xs text-danger" data-testid="library-error">
           {errorText(tError, errorInfo.code, errorInfo.params)}
         </p>

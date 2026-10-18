@@ -58,6 +58,7 @@
     "layers": "Lớp",
     "layersHint": "Cấu trúc của trang hiện ở đây khi Canvas chạy dự án của bạn.",
     "library": "Thư viện",
+    "components": "Component",
     "collapse": "Thu gọn",
     "expand": "Mở rộng",
     "properties": "Thuộc tính",
@@ -405,5 +406,22 @@
     "save": "Lưu",
     "newPath": "Đường dẫn URL mới",
     "newName": "Tên component mới"
+  },
+  "design": {
+    "kind": {
+      "page": "Trang",
+      "layout": "Bố cục",
+      "component": "Component"
+    },
+    "unknownFile": "Chưa biết file của trang này",
+    "selectInFile": "Chọn một phần tử trong {{file}}"
+  },
+  "components": {
+    "title": "Component",
+    "search": "Tìm component…",
+    "usages": "Dùng ở {{count}} chỗ",
+    "layout": "Bố cục",
+    "empty": "Dự án chưa có component",
+    "selfInsert": "Không chèn component vào chính nó"
   }
 }

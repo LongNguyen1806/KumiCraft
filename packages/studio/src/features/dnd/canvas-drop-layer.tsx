@@ -50,7 +50,7 @@ function scheduleDragOver(
     studioBridgeChannel.dragOver({
       x,
       y,
-      source: currentDrag.source,
+      source: currentDrag.source === 'layer' ? 'layer' : 'library',
       ...(currentDrag.source === 'layer' ? { refs: [currentDrag.ref] } : {}),
     });
   });

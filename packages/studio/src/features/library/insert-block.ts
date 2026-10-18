@@ -3,6 +3,8 @@ import type { ElementRef, InsertTarget, LibraryBlock } from '@reactcraft/shared'
 
 import { applyStructureEdit } from '../../api/source-client.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';
+import { useDesignStore } from '../design/design-store.ts';
+import { insertAnchor } from '../design/design-target.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
 
@@ -76,7 +78,20 @@ export async function insertBlock(block: LibraryBlock, lang: string): Promise<In
     return { ok: false, skipped: true };
   }
 
-  const tag = resolveTargetTag(ref) ?? 'div';
-  const target = determineInsertTarget(ref, tag);
+  const treeNodes = useSelectionStore.getState().treeNodes;
+  const designFile = useDesignStore.getState().target?.file;
+  const anchor = insertAnchor(ref, treeNodes, designFile);
+  if (!anchor) {
+    return {
+      ok: false,
+      error: {
+        code: 'design.selectInFile',
+        params: { file: designFile ?? '' },
+      },
+    };
+  }
+
+  const tag = resolveTargetTag(anchor) ?? 'div';
+  const target = determineInsertTarget(anchor, tag);
   return insertBlockAt(block, target, lang);
 }

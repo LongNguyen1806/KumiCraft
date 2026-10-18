@@ -60,7 +60,14 @@ function importsOf(node: AstNode): ImportBinding[] {
 }
 
 function exportedNames(node: AstNode): string[] {
+  if (node['exportKind'] === 'type') return [];
   const declaration = asAstNode(node['declaration']);
+  if (
+    declaration?.type === 'TSTypeAliasDeclaration' ||
+    declaration?.type === 'TSInterfaceDeclaration'
+  ) {
+    return [];
+  }
   const declared = nameOf(declaration?.['id']);
   if (declared !== undefined) return [declared];
   const declarators = Array.isArray(declaration?.['declarations'])
@@ -69,7 +76,9 @@ function exportedNames(node: AstNode): string[] {
   const specifiers = Array.isArray(node['specifiers']) ? node['specifiers'] : [];
   return [
     ...declarators.map((d) => nameOf(asAstNode(d)?.['id'])),
-    ...specifiers.map((s) => nameOf(asAstNode(s)?.['local'])),
+    ...specifiers
+      .filter((s) => asAstNode(s)?.['exportKind'] !== 'type')
+      .map((s) => nameOf(asAstNode(s)?.['local'])),
   ].filter((name): name is string => name !== undefined);
 }
 
@@ -102,7 +111,10 @@ export function summarize(code: string): FileSummary | undefined {
 }
 
 /** `@/*` → target prefix from tsconfig.json `compilerOptions.paths`, without comments. */
-async function readAliasPrefix(fs: FileSystemPort, root: string): Promise<string | undefined> {
+export async function readAliasPrefix(
+  fs: FileSystemPort,
+  root: string,
+): Promise<string | undefined> {
   const read = await fs.readText(root, 'tsconfig.json', { maxBytes: MAX_FILE_BYTES });
   if (!read.ok) return undefined;
   const withoutComments = read.value.replace(/\/\*[\s\S]*?\*\/|(^|[^:"])\/\/.*$/gm, '$1');
@@ -142,7 +154,7 @@ function importBase(
   return undefined;
 }
 
-async function listSourceFiles(
+export async function listSourceFiles(
   fs: FileSystemPort,
   root: string,
   sourceDir: string,

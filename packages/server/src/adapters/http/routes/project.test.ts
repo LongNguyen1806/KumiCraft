@@ -292,4 +292,11 @@ describe('Page routes: /api/v1/project/dirs and /api/v1/project/pages', () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ data: { changed: true, files: ['src/routes.tsx'], locs: [] } });
   });
+
+  it('[R-CP-12] GET /api/v1/project/components returns E021 when no project is opened', async () => {
+    isOpen = false;
+    const res = await get('/api/v1/project/components');
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: { code: 'E021' } });
+  });
 });

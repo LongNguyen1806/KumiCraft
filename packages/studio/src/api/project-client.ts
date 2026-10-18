@@ -10,6 +10,8 @@ import {
   type PackageManager,
   type PagesInfo,
   PagesInfoSchema,
+  type ProjectComponent,
+  ProjectComponentsSchema,
   type ProjectInfo,
   ProjectInfoSchema,
   type ProjectProbe,
@@ -102,4 +104,9 @@ export async function renameProjectPage(payload: RenamePage): Promise<StructureR
 
 export async function deleteProjectPage(payload: DeletePage): Promise<StructureResult> {
   return StructureResultSchema.parse(await apiDelete('project/pages', payload));
+}
+
+export async function fetchComponents(): Promise<ProjectComponent[]> {
+  const res = (await apiGet('project/components')) as { components: ProjectComponent[] };
+  return ProjectComponentsSchema.parse(res).components;
 }

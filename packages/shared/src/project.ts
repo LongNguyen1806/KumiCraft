@@ -154,3 +154,17 @@ export const ProjectDirsResponseSchema = z.strictObject({
   dirs: z.array(RelPathSchema),
 });
 export type ProjectDirsResponse = z.infer<typeof ProjectDirsResponseSchema>;
+
+export const ProjectComponentSchema = z.strictObject({
+  name: z.string().min(1),
+  file: RelPathSchema,
+  kind: z.enum(['component', 'layout']),
+  usages: z.number().int().min(0),
+  importStatement: z.string(),
+});
+export type ProjectComponent = z.infer<typeof ProjectComponentSchema>;
+
+export const ProjectComponentsSchema = z.strictObject({
+  components: z.array(ProjectComponentSchema),
+});
+export type ProjectComponents = z.infer<typeof ProjectComponentsSchema>;
