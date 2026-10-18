@@ -2,6 +2,7 @@
 import type {
   EditResult,
   ElementSource,
+  ElementText,
   Result,
   SetAttributeEdit,
   SetClassNameEdit,
@@ -29,6 +30,7 @@ import {
   validateLocAndExt,
 } from './source-editor-lookup.ts';
 import { mutateAttribute, mutateText } from './source-mutator.ts';
+import { getElementTextFromAst } from './structure/element-text.ts';
 import { executeStructureEdit } from './structure/structure-runner.ts';
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB (R-SE-01)
@@ -53,6 +55,7 @@ export type WrittenFile = {
 
 export interface SourceEditorService {
   getElement(projectRoot: string, loc: string): Promise<Result<ElementSource>>;
+  getElementText(projectRoot: string, loc: string): Promise<Result<ElementText>>;
   /**
    * Applies one edit. `onWritten` runs inside the queue of the file, right after the write, so the
    * history records exactly the bytes this edit replaced, even when edits of the file overlap.
@@ -312,6 +315,37 @@ async function performEditOnFile(
   return ok({ changed: true, file: rel, fileHash: nextHash, element: nextElement });
 }
 
+async function executeGetElementText(
+  deps: SourceEditorDeps,
+  projectRoot: string,
+  loc: string,
+  sourceDir: string,
+  sourceExtensions: readonly string[],
+): Promise<Result<ElementText>> {
+  const valRes = validateLocAndExt(loc, sourceDir, sourceExtensions);
+  if (!valRes.ok) return valRes;
+
+  const { rel, line, column } = valRes.value;
+  const readRes = await deps.fs.readText(projectRoot, rel, {
+    maxBytes: MAX_FILE_SIZE,
+    keepBom: true,
+  });
+  if (!readRes.ok) {
+    if (readRes.error.params?.['reason'] === 'tooLarge') {
+      return err({ code: 'E023', params: { file: rel, reason: 'tooLarge' } });
+    }
+    return readRes;
+  }
+
+  const rawContent = readRes.value;
+  const { hasBom } = detectFormat(rawContent);
+  const code = hasBom ? rawContent.slice(1) : rawContent;
+  const fileHash = computeSha256(rawContent);
+  const ast = getCachedAst(rel, code, fileHash);
+
+  return getElementTextFromAst(code, ast, rel, line, column);
+}
+
 export function createSourceEditorService(
   deps: SourceEditorDeps,
   config: SourceEditorConfig = {},
@@ -336,6 +370,9 @@ export function createSourceEditorService(
     async getElement(projectRoot, loc) {
       const found = await executeGetElement(deps, projectRoot, loc, sourceDir, sourceExtensions);
       return found.ok ? ok(await withUsages(projectRoot, found.value)) : found;
+    },
+    getElementText(projectRoot, loc) {
+      return executeGetElementText(deps, projectRoot, loc, sourceDir, sourceExtensions);
     },
     async applyEdit(projectRoot, edit, onWritten) {
       const valRes = validateLocAndExt(edit.loc, sourceDir, sourceExtensions);

@@ -113,4 +113,84 @@ describe('StructureActions Component [Scenario #16]', () => {
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toMatch(/root element of a component|phần tử gốc của component/);
   });
+
+  it('calls applyStructureEdit move with target calculated from tree when clicking Up [Scenario #18]', async () => {
+    const n1 = {
+      tag: 'h1',
+      instances: 1,
+      ref: { loc: 'src/Home.tsx:5:5', index: 0 },
+      parent: 0,
+    };
+    const n2 = {
+      tag: 'div',
+      instances: 1,
+      ref: { loc: 'src/Home.tsx:10:5', index: 0 },
+      parent: 0,
+    };
+    useSelectionStore.getState().setTree([n1, n2]);
+
+    const spy = vi.spyOn(sourceClient, 'applyStructureEdit').mockResolvedValue({
+      changed: true,
+      files: ['src/Home.tsx'],
+      locs: ['src/Home.tsx:5:5'],
+    });
+
+    render(<StructureActions target={makeTarget()} />);
+
+    const upButton = screen.getByTestId('inspector-move-up');
+    expect(upButton.hasAttribute('disabled')).toBe(false);
+    fireEvent.click(upButton);
+
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalledWith({
+        kind: 'move',
+        elements: [{ loc: 'src/Home.tsx:10:5', tag: 'div' }],
+        target: {
+          kind: 'sibling',
+          ref: { loc: 'src/Home.tsx:5:5', tag: 'h1' },
+          where: 'before',
+        },
+      });
+    });
+  });
+
+  it('calls applyStructureEdit wrap grid when selecting grid [Scenario #18]', async () => {
+    const spy = vi.spyOn(sourceClient, 'applyStructureEdit').mockResolvedValue({
+      changed: true,
+      files: ['src/Home.tsx'],
+      locs: ['src/Home.tsx:10:5'],
+    });
+
+    render(<StructureActions target={makeTarget()} />);
+
+    const wrapSelect = screen.getByTestId('inspector-wrap');
+    fireEvent.change(wrapSelect, { target: { value: 'grid' } });
+
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalledWith({
+        kind: 'wrap',
+        elements: [{ loc: 'src/Home.tsx:10:5', tag: 'div' }],
+        wrapper: 'grid',
+      });
+    });
+  });
+
+  it('disables unwrap button when element has component tag Card [Scenario #18]', () => {
+    const target = makeTarget({
+      source: {
+        loc: 'src/Home.tsx:10:5',
+        tag: 'Card',
+        fileHash: 'a'.repeat(64),
+        className: { kind: 'static', value: '' },
+        text: { kind: 'none' },
+        attributes: {},
+        inLoop: false,
+      },
+    });
+
+    render(<StructureActions target={target} />);
+
+    const unwrapBtn = screen.getByTestId('inspector-unwrap');
+    expect(unwrapBtn.hasAttribute('disabled')).toBe(true);
+  });
 });

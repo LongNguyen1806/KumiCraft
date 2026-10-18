@@ -151,12 +151,16 @@ export {
   ElementGuardSchema,
   type ElementSource,
   ElementSourceSchema,
+  type ElementSourceText,
+  ElementSourceTextSchema,
   type ElementText,
   ElementTextSchema,
   type InsertEdit,
   InsertEditSchema,
   type InsertTarget,
   InsertTargetSchema,
+  type MoveEdit,
+  MoveEditSchema,
   parseLocString,
   type RemoveEdit,
   RemoveEditSchema,
@@ -175,6 +179,10 @@ export {
   StructureEditSchema,
   type StructureResult,
   StructureResultSchema,
+  type UnwrapEdit,
+  UnwrapEditSchema,
+  type WrapEdit,
+  WrapEditSchema,
 } from './source.ts';
 export * from './tailwind/index.ts';
 export { TAILWIND_COLORS } from './tailwind/palette.generated.ts';

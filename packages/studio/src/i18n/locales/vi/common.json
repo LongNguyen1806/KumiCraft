@@ -87,6 +87,9 @@
     "insert": "chèn <{{tag}}>",
     "remove": "xóa <{{tag}}>",
     "duplicate": "nhân bản <{{tag}}>",
+    "move": "di chuyển <{{tag}}>",
+    "wrap": "bọc <{{tag}}>",
+    "unwrap": "bỏ bọc <{{tag}}>",
     "dismissError": "Đóng thông báo",
     "errorFileChanged": "File {{file}} đã bị sửa từ nơi khác, không hoàn tác được bước này"
   },
@@ -205,6 +208,13 @@
     "inheritedFrom": "kế thừa từ {{scope}}",
     "removeOverride": "Bỏ ghi đè",
     "openInEditor": "Mở trong editor",
+    "moveUp": "↑ Lên",
+    "moveDown": "↓ Xuống",
+    "wrap": "Bọc ▾",
+    "wrapRow": "Hàng",
+    "wrapColumn": "Cột",
+    "wrapGrid": "Lưới",
+    "unwrap": "Bỏ bọc",
     "duplicate": "Nhân bản",
     "remove": "Xóa",
     "lockReason": {
@@ -215,7 +225,9 @@
     },
     "warning": {
       "usages": "Thay đổi áp dụng cho mọi nơi dùng {{name}} ({{count}} chỗ)",
-      "loop": "Lặp {{count}} lần: sửa áp dụng cho mọi bản lặp"
+      "loop": "Lặp {{count}} lần: sửa áp dụng cho mọi bản lặp",
+      "missingImport": "Đoạn chèn thiếu câu import, hãy kiểm tra lại file",
+      "attributesDropped": "Đã bỏ các thuộc tính khác className khi bỏ bọc"
     },
     "errors": {
       "sourceConflict": "Mã nguồn đã thay đổi từ bên ngoài, đã tải lại",

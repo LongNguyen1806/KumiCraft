@@ -87,6 +87,9 @@
     "insert": "insert <{{tag}}>",
     "remove": "remove <{{tag}}>",
     "duplicate": "duplicate <{{tag}}>",
+    "move": "move <{{tag}}>",
+    "wrap": "wrap <{{tag}}>",
+    "unwrap": "unwrap <{{tag}}>",
     "dismissError": "Dismiss",
     "errorFileChanged": "File {{file}} was modified externally, cannot undo this step"
   },
@@ -205,6 +208,13 @@
     "inheritedFrom": "inherited from {{scope}}",
     "removeOverride": "Remove override",
     "openInEditor": "Open in editor",
+    "moveUp": "↑ Up",
+    "moveDown": "↓ Down",
+    "wrap": "Wrap ▾",
+    "wrapRow": "Row",
+    "wrapColumn": "Column",
+    "wrapGrid": "Grid",
+    "unwrap": "Unwrap",
     "duplicate": "Duplicate",
     "remove": "Remove",
     "lockReason": {
@@ -215,7 +225,9 @@
     },
     "warning": {
       "usages": "Changes apply to all usages of {{name}} ({{count}} places)",
-      "loop": "Repeated {{count}} times: edits apply to all instances"
+      "loop": "Repeated {{count}} times: edits apply to all instances",
+      "missingImport": "Missing import for inserted component, please check the file",
+      "attributesDropped": "Attributes other than className were dropped upon unwrap"
     },
     "errors": {
       "sourceConflict": "Source file was modified externally, reloaded",

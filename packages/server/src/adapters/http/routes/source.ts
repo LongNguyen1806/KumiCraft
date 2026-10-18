@@ -44,11 +44,35 @@ function buildStructureHistoryLabel(edit: StructureEdit): HistoryLabel {
     const tag = jsxRes.ok ? jsxRes.value.firstTag : fallbackTag;
     return { key: 'history:insert', params: { tag, count: '1' } };
   }
+  if (edit.kind === 'unwrap') {
+    return {
+      key: 'history:unwrap',
+      params: { tag: edit.element.tag, count: '1' },
+    };
+  }
   const tag = edit.elements[0]?.tag ?? 'div';
   return {
     key: `history:${edit.kind}`,
     params: { tag, count: String(edit.elements.length) },
   };
+}
+
+async function handleGetElementText(
+  deps: SourceRoutesDeps,
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const projectRoot = deps.getProjectRoot();
+  if (!projectRoot) return sendError(reply, NO_PROJECT);
+
+  const { loc } = request.query as { loc?: unknown };
+  if (typeof loc !== 'string' || loc === '') {
+    return sendError(reply, { code: 'E016', params: { field: 'loc' } });
+  }
+
+  const result = await deps.sourceEditorService.getElementText(projectRoot, loc);
+  if (!result.ok) return sendError(reply, result.error);
+  return reply.status(200).send({ data: result.value });
 }
 
 /**
@@ -69,7 +93,14 @@ async function handleApplyEdit(
   }
 
   const { edit, coalesceKey } = parsed.data;
-  if (edit.kind === 'insert' || edit.kind === 'remove' || edit.kind === 'duplicate') {
+  if (
+    edit.kind === 'insert' ||
+    edit.kind === 'remove' ||
+    edit.kind === 'duplicate' ||
+    edit.kind === 'move' ||
+    edit.kind === 'wrap' ||
+    edit.kind === 'unwrap'
+  ) {
     const label = buildStructureHistoryLabel(edit);
     const edited = await deps.sourceEditorService.applyStructureEdit(projectRoot, edit, (files) => {
       deps.historyService.push({ label, coalesceKey, files });
@@ -88,5 +119,6 @@ async function handleApplyEdit(
 
 export function registerSourceRoutes(api: FastifyInstance, deps: SourceRoutesDeps): void {
   api.get('/source/element', (req, rep) => handleGetElement(deps, req, rep));
+  api.get('/source/element-text', (req, rep) => handleGetElementText(deps, req, rep));
   api.post('/source/edits', (req, rep) => handleApplyEdit(deps, req, rep));
 }

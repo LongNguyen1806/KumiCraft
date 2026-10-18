@@ -2,7 +2,7 @@
 import { createHash } from 'node:crypto';
 import * as path from 'node:path';
 
-import type { ElementSource, ElementText } from '@reactcraft/shared';
+import type { ElementSource, ElementSourceText } from '@reactcraft/shared';
 import { err, ok, parseLocString, relPathProblem, type Result } from '@reactcraft/shared';
 
 import type { AstNode } from './ast-helpers.ts';
@@ -72,7 +72,7 @@ export function findNodeAt(ast: AstNode, line: number, column: number): AstNode 
   return targetNode;
 }
 
-export function parseText(children: readonly unknown[]): ElementText {
+export function parseText(children: readonly unknown[]): ElementSourceText {
   if (children.length === 0) return { kind: 'static', value: '' };
 
   const astChildren = children.map(asAstNode).filter((c): c is AstNode => c !== undefined);
@@ -110,7 +110,7 @@ export function buildElementSource(
   const rawChildren = Array.isArray(targetNode['children']) ? targetNode['children'] : [];
 
   const className = readClassName(rawAttrs, code);
-  const text: ElementText = isSelfClosing ? { kind: 'selfClosing' } : parseText(rawChildren);
+  const text: ElementSourceText = isSelfClosing ? { kind: 'selfClosing' } : parseText(rawChildren);
   const attributes = readEditableAttributes(rawAttrs, code);
   const componentName = findEnclosingComponent(ast, targetNode);
   const inLoop = checkInLoop(ast, targetNode);

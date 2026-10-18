@@ -72,7 +72,11 @@
       "duplicateBackend": "Đã có backend trỏ tới đường dẫn này.",
       "maxBackendsExceeded": "Đã vượt quá số lượng backend tối đa cho phép.",
       "notJsx": "Mã JSX chèn vào không hợp lệ.",
-      "overlap": "Các thao tác sửa mã nguồn bị chồng lấn."
+      "overlap": "Các thao tác sửa mã nguồn bị chồng lấn.",
+      "moveIntoSelf": "Không thể di chuyển phần tử vào chính nó hoặc vào con cháu của nó.",
+      "notSameParent": "Các phần tử phải có cùng phần tử cha.",
+      "notContiguous": "Các phần tử phải nằm liền kề nhau.",
+      "nothingToUnwrap": "Phần tử không có con để bỏ bọc."
     }
   },
   "E017": {
@@ -116,7 +120,8 @@
       "rootElement": "Không thể xóa hoặc nhân bản phần tử gốc của component.",
       "loopRoot": "Không thể xóa hoặc nhân bản phần tử gốc của vòng lặp.",
       "expressionChild": "Phần tử nằm trong biểu thức động, hãy sửa trong editor.",
-      "componentSlot": "Component nhận children qua prop, không chèn trực tiếp vào mẫu."
+      "componentSlot": "Component nhận children qua prop, không chèn trực tiếp vào mẫu.",
+      "componentTag": "Không thể bỏ bọc component viết hoa."
     }
   },
   "E024": {

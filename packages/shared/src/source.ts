@@ -58,13 +58,20 @@ export const ElementClassNameSchema = z.discriminatedUnion('kind', [
 ]);
 export type ElementClassName = z.infer<typeof ElementClassNameSchema>;
 
-export const ElementTextSchema = z.discriminatedUnion('kind', [
+export const ElementSourceTextSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('static'), value: z.string() }),
   z.strictObject({ kind: z.literal('expression'), code: z.string().max(200) }),
   z.strictObject({ kind: z.literal('none') }),
   z.strictObject({ kind: z.literal('mixed') }),
   z.strictObject({ kind: z.literal('selfClosing') }),
 ]);
+export type ElementSourceText = z.infer<typeof ElementSourceTextSchema>;
+
+export const ElementTextSchema = z.strictObject({
+  jsx: z.string(),
+  file: RelPathSchema,
+  imports: z.array(z.string()).readonly(),
+});
 export type ElementText = z.infer<typeof ElementTextSchema>;
 
 export const ElementAttributesSchema = z.strictObject({
@@ -82,7 +89,7 @@ export const ElementSourceSchema = z.strictObject({
   fileHash: z.string().regex(/^[0-9a-f]{64}$/),
   readonly: z.enum(['outsideSource', 'tooLarge']).optional(),
   className: ElementClassNameSchema,
-  text: ElementTextSchema,
+  text: ElementSourceTextSchema,
   attributes: ElementAttributesSchema,
   component: z
     .strictObject({
@@ -156,6 +163,12 @@ export const InsertEditSchema = z.strictObject({
     .string()
     .min(1)
     .max(256 * 1024),
+  from: z
+    .strictObject({
+      file: RelPathSchema,
+      imports: z.array(z.string().max(2000)).max(50),
+    })
+    .optional(),
 });
 export type InsertEdit = z.infer<typeof InsertEditSchema>;
 
@@ -171,10 +184,33 @@ export const DuplicateEditSchema = z.strictObject({
 });
 export type DuplicateEdit = z.infer<typeof DuplicateEditSchema>;
 
+export const MoveEditSchema = z.strictObject({
+  kind: z.literal('move'),
+  elements: z.array(ElementGuardSchema).min(1).max(50),
+  target: InsertTargetSchema,
+});
+export type MoveEdit = z.infer<typeof MoveEditSchema>;
+
+export const WrapEditSchema = z.strictObject({
+  kind: z.literal('wrap'),
+  elements: z.array(ElementGuardSchema).min(1).max(50),
+  wrapper: z.enum(['row', 'column', 'grid']),
+});
+export type WrapEdit = z.infer<typeof WrapEditSchema>;
+
+export const UnwrapEditSchema = z.strictObject({
+  kind: z.literal('unwrap'),
+  element: ElementGuardSchema,
+});
+export type UnwrapEdit = z.infer<typeof UnwrapEditSchema>;
+
 export const StructureEditSchema = z.discriminatedUnion('kind', [
   InsertEditSchema,
   RemoveEditSchema,
   DuplicateEditSchema,
+  MoveEditSchema,
+  WrapEditSchema,
+  UnwrapEditSchema,
 ]);
 export type StructureEdit = z.infer<typeof StructureEditSchema>;
 
@@ -185,6 +221,9 @@ export const AnyEditSchema = z.discriminatedUnion('kind', [
   InsertEditSchema,
   RemoveEditSchema,
   DuplicateEditSchema,
+  MoveEditSchema,
+  WrapEditSchema,
+  UnwrapEditSchema,
 ]);
 export type AnyEdit = z.infer<typeof AnyEditSchema>;
 
