@@ -1,12 +1,11 @@
 // Source Editor Service implementing M-SE (SPEC-03 section 5.5, SPEC-04 section 6).
 import type {
+  AttributeLevelEdit,
+  BatchEditResult,
   EditResult,
   ElementSource,
   ElementText,
   Result,
-  SetAttributeEdit,
-  SetClassNameEdit,
-  SetTextEdit,
   SourceEdit,
   StructureEdit,
   StructureResult,
@@ -16,9 +15,10 @@ import MagicString from 'magic-string';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { AstNode } from './ast-helpers.ts';
-import { asAstNode, detectFormat, getJsxTagName, parseJsxAst } from './ast-helpers.ts';
-import { readClassName, readEditableAttributes } from './attribute-reader.ts';
+import { asAstNode, detectFormat, getJsxTagName } from './ast-helpers.ts';
 import { createUsageCounter } from './component-usages.ts';
+import { executeEditBatch } from './edit-batch.ts';
+import { executeEditMutation, parseModifiedCode } from './edit-mutations.ts';
 import { fileQueueKey, queueFileTask } from './file-queue.ts';
 import {
   buildElementSource,
@@ -26,10 +26,8 @@ import {
   computeSha256,
   findNodeAt,
   getCachedAst,
-  parseText,
   validateLocAndExt,
 } from './source-editor-lookup.ts';
-import { mutateAttribute, mutateText } from './source-mutator.ts';
 import { getElementTextFromAst } from './structure/element-text.ts';
 import { executeStructureEdit } from './structure/structure-runner.ts';
 
@@ -70,99 +68,11 @@ export interface SourceEditorService {
     edit: StructureEdit,
     onWritten?: (files: readonly WrittenFile[]) => void,
   ): Promise<Result<StructureResult>>;
-}
-
-function applyClassNameMutation(
-  edit: SetClassNameEdit,
-  rawAttrs: readonly unknown[],
-  opening: AstNode,
-  code: string,
-  s: MagicString,
-): Result<{ unchanged?: boolean }> {
-  const currentClass = readClassName(rawAttrs, code);
-  if (currentClass.kind === 'expression')
-    return err({ code: 'E023', params: { reason: 'classExpression' } });
-  if (currentClass.kind === 'duplicate')
-    return err({ code: 'E023', params: { reason: 'duplicateAttr' } });
-  const currentVal = currentClass.kind === 'static' ? currentClass.value : undefined;
-  if (edit.before !== undefined && edit.before !== currentVal)
-    return err({ code: 'E017', params: { reason: 'valueChanged' } });
-  if (currentVal === edit.after) return ok({ unchanged: true });
-  mutateAttribute(s, code, opening, 'className', edit.after);
-  return ok({});
-}
-
-function applyAttributeMutation(
-  edit: SetAttributeEdit,
-  rawAttrs: readonly unknown[],
-  opening: AstNode,
-  code: string,
-  s: MagicString,
-): Result<{ unchanged?: boolean }> {
-  const attrs = readEditableAttributes(rawAttrs, code);
-  const currentAttr = attrs[edit.name];
-  if (currentAttr?.kind === 'expression')
-    return err({ code: 'E023', params: { reason: 'attrExpression' } });
-  const currentVal = currentAttr?.kind === 'static' ? currentAttr.value : undefined;
-  if (edit.before !== undefined && edit.before !== currentVal)
-    return err({ code: 'E017', params: { reason: 'valueChanged' } });
-  if (currentVal === edit.after) return ok({ unchanged: true });
-  mutateAttribute(s, code, opening, edit.name, edit.after);
-  return ok({});
-}
-
-function applyTextMutation(
-  edit: SetTextEdit,
-  targetNode: AstNode,
-  opening: AstNode,
-  code: string,
-  s: MagicString,
-  newline: '\r\n' | '\n',
-): Result<{ unchanged?: boolean }> {
-  if (opening['selfClosing']) return err({ code: 'E023', params: { reason: 'selfClosing' } });
-  const rawChildren = Array.isArray(targetNode['children']) ? targetNode['children'] : [];
-  const currentText = parseText(rawChildren);
-  if (currentText.kind === 'expression')
-    return err({ code: 'E023', params: { reason: 'textExpression' } });
-  if (currentText.kind === 'mixed') return err({ code: 'E023', params: { reason: 'textMixed' } });
-  const currentVal = currentText.kind === 'static' ? currentText.value : '';
-  if (edit.before !== currentVal) return err({ code: 'E017', params: { reason: 'valueChanged' } });
-  if (currentVal === edit.after) return ok({ unchanged: true });
-  mutateText(s, code, targetNode, edit.after, newline);
-  return ok({});
-}
-
-function executeEditMutation(
-  edit: SourceEdit,
-  targetNode: AstNode,
-  opening: AstNode,
-  code: string,
-  s: MagicString,
-  newline: '\r\n' | '\n',
-): Result<{ unchanged?: boolean }> {
-  const rawAttrs = Array.isArray(opening['attributes']) ? opening['attributes'] : [];
-  if (edit.kind === 'setClassName') {
-    return applyClassNameMutation(edit, rawAttrs, opening, code, s);
-  }
-  if (edit.kind === 'setAttribute') {
-    return applyAttributeMutation(edit, rawAttrs, opening, code, s);
-  }
-  return applyTextMutation(edit, targetNode, opening, code, s, newline);
-}
-
-function parseModifiedCode(code: string): Result<AstNode> {
-  try {
-    return ok(parseJsxAst(code));
-  } catch (e) {
-    const syntaxErr = e as { loc?: { line?: number; column?: number } };
-    return err({
-      code: 'E024',
-      params: {
-        line: syntaxErr.loc?.line ?? 1,
-        column: (syntaxErr.loc?.column ?? 0) + 1,
-      },
-    });
-  }
+  applyEditBatch(
+    projectRoot: string,
+    edits: readonly AttributeLevelEdit[],
+    onWritten?: (files: readonly WrittenFile[]) => void,
+  ): Promise<Result<BatchEditResult>>;
 }
 
 async function executeGetElement(
@@ -394,6 +304,9 @@ export function createSourceEditorService(
         edit,
         onWritten,
       );
+    },
+    applyEditBatch(projectRoot, edits, onWritten) {
+      return executeEditBatch(deps.fs, projectRoot, sourceDir, sourceExtensions, edits, onWritten);
     },
   };
 }

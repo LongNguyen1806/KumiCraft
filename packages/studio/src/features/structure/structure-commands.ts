@@ -27,7 +27,7 @@ export type StructureTargetInput = {
   readonly tag?: string | undefined;
 };
 
-type CommandTarget = {
+export type CommandTarget = {
   readonly ref: ElementRef;
   readonly tag: string;
 };
@@ -45,7 +45,7 @@ function resolveSingleTarget(target?: StructureTargetInput): CommandTarget | und
   return tag ? { ref, tag } : undefined;
 }
 
-async function runStructureOp(
+export async function runStructureOp(
   target: CommandTarget,
   fn: () => Promise<StructureResult>,
   onSuccess: (res: StructureResult) => void,

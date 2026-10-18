@@ -44,6 +44,28 @@ export type InsertBlockResult =
   | { readonly ok: true; readonly locs: readonly string[] }
   | { readonly ok: false; readonly error?: ErrorInfo | undefined; readonly skipped?: boolean };
 
+export function localizedBlockJsx(block: LibraryBlock, lang: string): string {
+  return lang.toLowerCase().startsWith('vi') ? block.jsx.vi : block.jsx.en;
+}
+
+export async function insertBlockAt(
+  block: LibraryBlock,
+  target: InsertTarget,
+  lang: string,
+): Promise<InsertBlockResult> {
+  const jsx = localizedBlockJsx(block, lang);
+  try {
+    const res = await applyStructureEdit({ kind: 'insert', target, jsx });
+    const newLoc = res.locs[0];
+    if (newLoc) {
+      useSelectionStore.getState().setSelectedRefs([{ loc: newLoc, index: 0 }]);
+    }
+    return { ok: true, locs: res.locs };
+  } catch (err) {
+    return { ok: false, error: toErrorInfo(err) };
+  }
+}
+
 export async function insertBlock(block: LibraryBlock, lang: string): Promise<InsertBlockResult> {
   const selectedRefs = useSelectionStore.getState().selectedRefs;
   if (selectedRefs.length !== 1) {
@@ -56,16 +78,5 @@ export async function insertBlock(block: LibraryBlock, lang: string): Promise<In
 
   const tag = resolveTargetTag(ref) ?? 'div';
   const target = determineInsertTarget(ref, tag);
-  const jsx = lang.toLowerCase().startsWith('vi') ? block.jsx.vi : block.jsx.en;
-
-  try {
-    const res = await applyStructureEdit({ kind: 'insert', target, jsx });
-    const newLoc = res.locs[0];
-    if (newLoc) {
-      useSelectionStore.getState().setSelectedRefs([{ loc: newLoc, index: 0 }]);
-    }
-    return { ok: true, locs: res.locs };
-  } catch (err) {
-    return { ok: false, error: toErrorInfo(err) };
-  }
+  return insertBlockAt(block, target, lang);
 }

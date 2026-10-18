@@ -79,7 +79,10 @@
     "page": "Page",
     "pageChoose": "Choose a page",
     "noPages": "No pages found",
-    "pageParamHint": "Replace :params with values, then press Enter"
+    "pageParamHint": "Replace :params with values, then press Enter",
+    "dnd": {
+      "dismiss": "Dismiss"
+    }
   },
   "history": {
     "setClassName": "class change",
@@ -94,6 +97,7 @@
     "pageAdd": "add page {{name}}",
     "pageRename": "rename page {{name}}",
     "pageDelete": "delete page {{name}}",
+    "batch": "edit {{count}} elements",
     "dismissError": "Dismiss",
     "errorFileChanged": "File {{file}} was modified externally, cannot undo this step"
   },
@@ -211,6 +215,8 @@
   "inspector": {
     "title": "Properties",
     "selectedMultiple": "Selected {{count}} elements",
+    "mixed": "Mixed",
+    "multiLocked": "Cannot edit together: <{{tag}}> at {{loc}} has className defined by an expression",
     "scope": "Scope",
     "scopeBase": "Base",
     "state": "State",
@@ -240,6 +246,7 @@
       "usages": "Changes apply to all usages of {{name}} ({{count}} places)",
       "loop": "Repeated {{count}} times: edits apply to all instances",
       "missingImport": "Missing import for inserted component, please check the file",
+      "foreignExpression": "The pasted code uses variables from its original file and may need changes",
       "attributesDropped": "Attributes other than className were dropped upon unwrap"
     },
     "errors": {
@@ -356,6 +363,9 @@
     "actions": {
       "undo": "Undo",
       "redo": "Redo",
+      "copy": "Copy",
+      "cut": "Cut",
+      "paste": "Paste",
       "duplicate": "Duplicate",
       "remove": "Delete",
       "wrap": "Wrap in column",

@@ -38,6 +38,13 @@ export function useShortcuts(): void {
       const action = matchShortcut(press, apple);
       if (!action) return;
 
+      if (action === 'copy') {
+        const selection = typeof window !== 'undefined' ? window.getSelection()?.toString() : '';
+        if (selection && selection.length > 0) {
+          return;
+        }
+      }
+
       if (isTypingTarget(event.target) && !WORKS_WHILE_TYPING.includes(action)) {
         return;
       }

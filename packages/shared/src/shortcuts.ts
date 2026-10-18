@@ -26,6 +26,9 @@ export const SHORTCUT_ACTIONS = [
   'frame8',
   'togglePanels',
   'showShortcuts',
+  'copy',
+  'cut',
+  'paste',
 ] as const;
 
 export type ShortcutAction = (typeof SHORTCUT_ACTIONS)[number];
@@ -42,6 +45,15 @@ export type KeyPress = {
 export const WORKS_WHILE_TYPING: readonly ShortcutAction[] = ['togglePreview', 'showShortcuts'];
 
 function matchModKey(k: string, press: KeyPress, apple: boolean): ShortcutAction | undefined {
+  if (k === 'c' && !press.shift) {
+    return 'copy';
+  }
+  if (k === 'x' && !press.shift) {
+    return 'cut';
+  }
+  if (k === 'v' && !press.shift) {
+    return 'paste';
+  }
   if (k === 'z') {
     return press.shift ? 'redo' : 'undo';
   }
@@ -137,6 +149,9 @@ const LABELS_APPLE: Record<ShortcutAction, string> = {
   frame8: '8',
   togglePanels: '⌘\\',
   showShortcuts: '⌘/',
+  copy: '⌘C',
+  cut: '⌘X',
+  paste: '⌘V',
 };
 
 const LABELS_OTHER: Record<ShortcutAction, string> = {
@@ -165,6 +180,9 @@ const LABELS_OTHER: Record<ShortcutAction, string> = {
   frame8: '8',
   togglePanels: 'Ctrl+\\',
   showShortcuts: 'Ctrl+/',
+  copy: 'Ctrl+C',
+  cut: 'Ctrl+X',
+  paste: 'Ctrl+V',
 };
 
 /** Label of the keys for the help dialog: `⌘⇧Z` on macOS, `Ctrl+Shift+Z` elsewhere. */

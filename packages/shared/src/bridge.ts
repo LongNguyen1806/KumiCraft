@@ -1,6 +1,8 @@
 // Schemas and types for Bridge protocol (SPEC-03 section 7, V-110..114).
 import { z } from 'zod';
 
+import { ElementGuardSchema, InsertTargetSchema } from './source.ts';
+
 export const ElementRefSchema = z.strictObject({
   loc: z.string().min(1),
   index: z.number().int().min(0),
@@ -147,3 +149,37 @@ export const StudioNavigatePayloadSchema = z.strictObject({
   route: z.string().min(1).max(2048),
 });
 export type StudioNavigatePayload = z.infer<typeof StudioNavigatePayloadSchema>;
+
+export const DropRectSchema = z.strictObject({
+  x: z.number(),
+  y: z.number(),
+  width: z.number(),
+  height: z.number(),
+});
+export type DropRect = z.infer<typeof DropRectSchema>;
+
+// Bridge -> Studio. {} = currently no valid drop target (spec-log #21).
+export const BridgeDropTargetPayloadSchema = z.union([
+  z.strictObject({ target: InsertTargetSchema, rect: DropRectSchema, label: z.string().max(100) }),
+  z.strictObject({}),
+]);
+export type BridgeDropTargetPayload = z.infer<typeof BridgeDropTargetPayloadSchema>;
+
+// Bridge -> Studio, when dropping a drag inside Canvas (R-DD-14).
+export const BridgeMoveIntentPayloadSchema = z.strictObject({
+  elements: z.array(ElementGuardSchema).min(1).max(50),
+  target: InsertTargetSchema,
+});
+export type BridgeMoveIntentPayload = z.infer<typeof BridgeMoveIntentPayloadSchema>;
+
+// Studio -> Bridge (R-DD-10). x, y are iframe viewport coords, already divided by zoom.
+export const StudioDragOverPayloadSchema = z.strictObject({
+  x: z.number(),
+  y: z.number(),
+  source: z.enum(['library', 'layer']),
+  refs: z.array(ElementRefSchema).max(50).optional(),
+});
+export type StudioDragOverPayload = z.infer<typeof StudioDragOverPayloadSchema>;
+
+export const StudioDragEndPayloadSchema = z.strictObject({ drop: z.boolean() });
+export type StudioDragEndPayload = z.infer<typeof StudioDragEndPayloadSchema>;

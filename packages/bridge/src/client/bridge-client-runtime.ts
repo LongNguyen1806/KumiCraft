@@ -1,12 +1,6 @@
 import {
   type BridgeEnvelope,
   BridgeEnvelopeSchema,
-  type BridgeReadyPayload,
-  type BridgeSelectPayload,
-  type BridgeShortcutPayload,
-  type BridgeTextCancelPayload,
-  type BridgeTextCommitPayload,
-  type BridgeTextEditRequestPayload,
   type ElementInfo,
   type ElementRef,
   type StudioHighlightPayload,
@@ -17,6 +11,8 @@ import {
 import { toBuildError } from './build-error.ts';
 import { getRefForElement, handleElementClick } from './candidate-chain.ts';
 import { scanDomTree } from './dom-scanner.ts';
+import { computeDragHandleTarget, DragController, resolveElementsByRefs } from './drag.ts';
+import { browserDropEnv } from './drop-target.ts';
 import { shouldForwardShortcut } from './keyboard.ts';
 import { fitsMessageLimit } from './message-size.ts';
 import { BridgeOverlay } from './overlay.ts';
@@ -37,6 +33,10 @@ const INTERCEPTED_EVENTS = [
   'dragstart',
 ] as const;
 
+function isOverlayHost(target: unknown): boolean {
+  return target instanceof Element && target.id === '__rc_overlay_host';
+}
+
 /** The part of Vite's `import.meta.hot` the Bridge uses (R-BR-17). */
 export type HotContext = { on(event: string, callback: (payload: unknown) => void): void };
 
@@ -55,6 +55,7 @@ export class BridgeClientRuntime {
   private readonly hot: HotContext | undefined;
   private mode: 'design' | 'preview' = 'design';
   private overlay: BridgeOverlay;
+  private drag: DragController;
   private selectedRefs: ElementRef[] = [];
   private lastSelectionInfo: ElementInfo[] = [];
   private treeDebounceTimer: ReturnType<typeof setTimeout> | undefined;
@@ -70,58 +71,68 @@ export class BridgeClientRuntime {
     this.studioOrigin = config.studioOrigin;
     this.rootDir = config.rootDir;
     this.hot = config.hot;
-    this.overlay = new BridgeOverlay();
-    this.textEdit = new TextEditController({
-      onCommit: (ref, text) => {
-        const payload: BridgeTextCommitPayload = { ref, text };
-        this.sendToStudio('text-commit', payload);
-      },
-      onCancel: (ref) => {
-        const payload: BridgeTextCancelPayload = { ref };
-        this.sendToStudio('text-cancel', payload);
-      },
-      onStart: (el) => {
-        this.overlay.setTextEditing(el);
-      },
-      onEnd: () => {
-        this.overlay.setTextEditing(undefined);
-      },
+    this.overlay = new BridgeOverlay((x, y) => {
+      if (this.mode !== 'design' || this.textEdit.isActive()) return;
+      this.drag.beginCanvasDrag(resolveElementsByRefs(this.selectedRefs, document), x, y);
     });
-
+    this.drag = new DragController(
+      browserDropEnv(document),
+      {
+        sendDropTarget: (p) => {
+          this.sendToStudio('drop-target', p);
+        },
+        sendMoveIntent: (p) => {
+          this.sendToStudio('move-intent', p);
+        },
+        showIndicator: (d) => {
+          this.overlay.setDropIndicator(d);
+        },
+      },
+      window,
+    );
+    this.textEdit = this.createTextEditController();
     this.domObserver = new MutationObserver((mutations) => {
       this.scheduleSelectionInfo();
       const shouldScanTree = mutations.some(
         (m) => m.type === 'childList' || m.attributeName === 'data-rc-loc',
       );
-      if (shouldScanTree) {
-        this.scheduleTreeScan();
-      }
+      if (shouldScanTree) this.scheduleTreeScan();
     });
 
     this.init();
   }
 
-  private init(): void {
-    // 1. Listen for Studio messages
-    window.addEventListener('message', this.handleStudioMessage);
+  private createTextEditController(): TextEditController {
+    return new TextEditController({
+      onCommit: (ref, text) => {
+        this.sendToStudio('text-commit', { ref, text });
+      },
+      onCancel: (ref) => {
+        this.sendToStudio('text-cancel', { ref });
+      },
+      onStart: (el) => {
+        this.overlay.setTextEditing(el);
+        this.syncDragHandle();
+      },
+      onEnd: () => {
+        this.overlay.setTextEditing(undefined);
+        this.syncDragHandle();
+      },
+    });
+  }
 
-    // 2. Intercept capture events in design mode (R-BR-13)
+  private init(): void {
+    window.addEventListener('message', this.handleStudioMessage);
     for (const evtName of INTERCEPTED_EVENTS) {
       window.addEventListener(evtName, this.handleCapturedEvent, true);
     }
-
-    // 3. Pointer move for hover tracking
     window.addEventListener('pointermove', this.handlePointerMove, true);
-
-    // 4. Keyboard shortcuts (R-BR-18)
     window.addEventListener('keydown', this.handleKeyDown, true);
 
-    // 5. Route sync (R-BR-19)
     this.historyTeardown = wrapBrowserHistory(() => {
       this.sendToStudio('route', { route: window.location.pathname });
     });
 
-    // 6. Error handling (R-BR-17)
     this.errorTeardown = attachRuntimeErrorListeners((message, stack) => {
       this.sendToStudio('runtime-error', {
         message: message.slice(0, 2000),
@@ -129,7 +140,6 @@ export class BridgeClientRuntime {
       });
     });
 
-    // 7. Observe DOM changes for tree scanner (R-BR-12) and selection info (R-BR-16)
     this.domObserver.observe(document.documentElement, {
       childList: true,
       subtree: true,
@@ -137,30 +147,20 @@ export class BridgeClientRuntime {
       attributeFilter: ['data-rc-loc', 'class'],
     });
 
-    // 8. Listen to Vite HMR events if available (R-BR-17, R-BR-12, R-BR-16)
     this.attachViteHmr();
-
-    // 9. Scroll and resize listeners for selection info (R-BR-16)
     window.addEventListener('scroll', this.handleScrollOrResize, { capture: true, passive: true });
     window.addEventListener('resize', this.handleScrollOrResize);
 
-    // 10. Send initial ready & tree messages
-    const readyPayload: BridgeReadyPayload = {
+    this.sendToStudio('ready', {
       bridgeVersion: '1.0.0',
       route: window.location.pathname + window.location.search,
-    };
-    this.sendToStudio('ready', readyPayload);
+    });
     this.scheduleTreeScan();
   }
 
   private sendToStudio(type: string, payload: unknown): void {
     if (this.isDestroyed) return;
-    const envelope: BridgeEnvelope = {
-      rc: 1,
-      nonce: this.nonce,
-      type,
-      payload,
-    };
+    const envelope: BridgeEnvelope = { rc: 1, nonce: this.nonce, type, payload };
     if (!fitsMessageLimit(envelope)) return;
     window.parent.postMessage(envelope, this.studioOrigin);
   }
@@ -192,24 +192,40 @@ export class BridgeClientRuntime {
       commitTextEdit: () => {
         this.textEdit.commit();
       },
+      handleDragOver: (data) => {
+        if (this.mode === 'design' && !this.textEdit.isActive()) this.drag.studioDragOver(data);
+      },
+      handleDragEnd: (data) => {
+        this.drag.studioDragEnd(data.drop);
+      },
     });
   };
 
   private setMode(mode: 'design' | 'preview'): void {
-    if (this.mode === 'design' && mode !== 'design') this.textEdit.commit();
+    if (this.mode === 'design' && mode !== 'design') {
+      this.textEdit.commit();
+      this.drag.cancel();
+    }
     this.mode = mode;
     this.overlay.setVisible(mode === 'design');
+    this.syncDragHandle();
+  }
+
+  private syncDragHandle(): void {
+    this.overlay.setDragHandle(
+      computeDragHandleTarget(this.selectedRefs, this.mode, this.textEdit.isActive(), document),
+    );
   }
 
   private handleSelectMessage(payload: StudioSelectPayload): void {
     this.selectedRefs = [...payload.refs];
     this.overlay.setSelection(this.selectedRefs);
+    this.syncDragHandle();
 
     if (payload.reveal && this.selectedRefs.length > 0) {
       const primary = this.selectedRefs[this.selectedRefs.length - 1];
       if (primary) {
-        const matches = document.querySelectorAll(`[data-rc-loc="${primary.loc}"]`);
-        const el = matches[primary.index];
+        const el = document.querySelectorAll(`[data-rc-loc="${primary.loc}"]`)[primary.index];
         if (el && typeof el.scrollIntoView === 'function') {
           el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
         }
@@ -225,7 +241,6 @@ export class BridgeClientRuntime {
     this.overlay.setHover(el);
   }
 
-  /** R-BR-19: the wrapped pushState reports the new route to the Studio. */
   private handleNavigateMessage(route: string): void {
     window.history.pushState(undefined, '', route);
     window.dispatchEvent(new PopStateEvent('popstate'));
@@ -239,83 +254,68 @@ export class BridgeClientRuntime {
   }
 
   private getTargetElement(x: number, y: number): Element | undefined {
-    const elements = document.elementsFromPoint(x, y);
-    for (const el of elements) {
-      if (el.id === '__rc_overlay_host' || el.closest('#__rc_overlay_host')) {
-        continue;
-      }
+    for (const el of document.elementsFromPoint(x, y)) {
+      if (el.id === '__rc_overlay_host' || el.closest('#__rc_overlay_host')) continue;
       const bridgeEl = el.closest('[data-rc-loc]');
-      if (bridgeEl) {
-        return bridgeEl;
-      }
+      if (bridgeEl) return bridgeEl;
     }
     return undefined;
   }
 
   private handleCapturedEvent = (event: Event): void => {
     if (this.mode !== 'design') return;
-
+    // The drag handle sits in the overlay's closed shadow root (R-DD-10): stopping the press here
+    // would keep it from the handle's own listener, which swallows it itself.
+    if (event.type === 'pointerdown' && isOverlayHost(event.target)) return;
     if (this.textEdit.isActive()) {
       const editingEl = this.textEdit.getEditingElement();
       if (
         editingEl !== undefined &&
         (event.target === editingEl || editingEl.contains(event.target as Node))
       ) {
-        return; // R-TX-03: DO NOT intercept inside active editing element!
+        return;
       }
     }
 
-    // Prevent default and stop propagation so app links/buttons don't fire (R-BR-13)
     event.preventDefault();
     event.stopPropagation();
 
     if (event.type === 'dblclick') {
       const mouseEvt = event as MouseEvent;
       const target = this.getTargetElement(mouseEvt.clientX, mouseEvt.clientY);
-      if (target) {
-        const ref = getRefForElement(target, document);
-        if (ref) {
-          const payload: BridgeTextEditRequestPayload = { ref };
-          this.sendToStudio('text-edit-request', payload);
-        }
-      }
+      const ref = target ? getRefForElement(target, document) : undefined;
+      if (ref) this.sendToStudio('text-edit-request', { ref });
       return;
     }
 
     if (event.type === 'click') {
+      if (this.drag.consumeClickSuppression()) return;
       this.handleClick(event as MouseEvent);
     }
   };
 
   private handleClick(mouseEvt: MouseEvent): void {
     const target = this.getTargetElement(mouseEvt.clientX, mouseEvt.clientY);
-    if (target) {
-      this.selectedRefs = handleElementClick(
-        target,
-        this.selectedRefs,
-        {
-          ctrlKey: mouseEvt.ctrlKey,
-          metaKey: mouseEvt.metaKey,
-          shiftKey: mouseEvt.shiftKey,
-        },
-        document,
-      );
-      this.overlay.setSelection(this.selectedRefs);
-      const payload: BridgeSelectPayload = { refs: this.selectedRefs };
-      this.sendToStudio('select', payload);
-      this.scheduleSelectionInfo();
-    } else {
-      // Click on empty space
-      this.selectedRefs = [];
-      this.overlay.setSelection([]);
-      const payload: BridgeSelectPayload = { refs: [] };
-      this.sendToStudio('select', payload);
-      this.scheduleSelectionInfo();
-    }
+    this.selectedRefs = target
+      ? handleElementClick(
+          target,
+          this.selectedRefs,
+          {
+            ctrlKey: mouseEvt.ctrlKey,
+            metaKey: mouseEvt.metaKey,
+            shiftKey: mouseEvt.shiftKey,
+          },
+          document,
+        )
+      : [];
+    this.overlay.setSelection(this.selectedRefs);
+    this.syncDragHandle();
+    this.sendToStudio('select', { refs: this.selectedRefs });
+    this.scheduleSelectionInfo();
   }
 
   private handlePointerMove = (event: PointerEvent): void => {
-    if (this.mode !== 'design') return;
+    if (this.mode !== 'design' || this.drag.isDragging()) return;
     const target = this.getTargetElement(event.clientX, event.clientY);
     this.overlay.setHover(target);
     const ref = target ? getRefForElement(target, document) : undefined;
@@ -323,34 +323,33 @@ export class BridgeClientRuntime {
   };
 
   private handleKeyDown = (event: KeyboardEvent): void => {
-    const isMac = navigator.platform.toUpperCase().includes('MAC');
-    if (!shouldForwardShortcut(event, this.mode, this.textEdit.isActive(), isMac)) {
+    if (event.key === 'Escape' && this.drag.isDragging()) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.drag.cancel();
       return;
     }
+    const isMac = navigator.platform.toUpperCase().includes('MAC');
+    if (!shouldForwardShortcut(event, this.mode, this.textEdit.isActive(), isMac)) return;
 
     event.preventDefault();
-    const shortcutPayload: BridgeShortcutPayload = {
+    this.sendToStudio('shortcut', {
       key: event.key,
       ctrl: event.ctrlKey,
       meta: event.metaKey,
       shift: event.shiftKey,
       alt: event.altKey,
-    };
-    this.sendToStudio('shortcut', shortcutPayload);
+    });
   };
 
   private scheduleTreeScan(): void {
-    if (this.treeDebounceTimer !== undefined) {
-      clearTimeout(this.treeDebounceTimer);
-    }
+    if (this.treeDebounceTimer !== undefined) clearTimeout(this.treeDebounceTimer);
     this.treeDebounceTimer = setTimeout(() => {
-      const payload = scanDomTree(document.body);
-      this.sendToStudio('tree', payload);
+      this.sendToStudio('tree', scanDomTree(document.body));
       this.treeDebounceTimer = undefined;
     }, 100);
   }
 
-  /** R-BR-17, R-BR-12: build errors and successful updates come from Vite's HMR channel. */
   private attachViteHmr(): void {
     if (this.hot === undefined) return;
     this.hot.on('vite:error', (payload) => {
@@ -368,11 +367,10 @@ export class BridgeClientRuntime {
   };
 
   private scheduleSelectionInfo(): void {
-    if (this.selectionInfoTimer !== undefined) {
-      clearTimeout(this.selectionInfoTimer);
-    }
+    if (this.selectionInfoTimer !== undefined) clearTimeout(this.selectionInfoTimer);
     this.selectionInfoTimer = setTimeout(() => {
       this.selectionInfoTimer = undefined;
+      this.syncDragHandle();
       const items = collectSelectionInfo(this.selectedRefs, document, this.lastSelectionInfo);
       this.lastSelectionInfo = items;
       this.sendToStudio('selection-info', { items });
@@ -381,15 +379,12 @@ export class BridgeClientRuntime {
 
   public destroy(): void {
     this.isDestroyed = true;
+    this.drag.destroy();
     this.textEdit.destroy();
     this.historyTeardown?.();
     this.errorTeardown?.();
-    if (this.treeDebounceTimer !== undefined) {
-      clearTimeout(this.treeDebounceTimer);
-    }
-    if (this.selectionInfoTimer !== undefined) {
-      clearTimeout(this.selectionInfoTimer);
-    }
+    if (this.treeDebounceTimer !== undefined) clearTimeout(this.treeDebounceTimer);
+    if (this.selectionInfoTimer !== undefined) clearTimeout(this.selectionInfoTimer);
     this.domObserver.disconnect();
     this.overlay.destroy();
     window.removeEventListener('message', this.handleStudioMessage);

@@ -15,6 +15,7 @@ export type ColorFieldProps = {
   readonly ctx: ClassContext;
   readonly onValueChange: (property: PropertyId, value: ClassValue | undefined) => void;
   readonly disabled?: boolean | undefined;
+  readonly mixed?: boolean | undefined;
 };
 
 export function isValidColorString(val: string): boolean {
@@ -262,28 +263,44 @@ function useColorFieldState(
   return { read, isInherited, canRemoveOverride, displayValue, swatchColor };
 }
 
-export function ColorField(props: ColorFieldProps) {
-  const {
-    property,
-    label,
-    tokens,
-    currentScope,
-    frameWidth,
-    ctx,
-    onValueChange,
-    disabled = false,
-  } = props;
+function resolveColorDisplay(
+  state: ReturnType<typeof useColorFieldState>,
+  mixed: boolean,
+  mixedLabel: string,
+) {
+  return {
+    displayValue: mixed ? mixedLabel : state.displayValue,
+    swatchColor: mixed ? undefined : state.swatchColor,
+    isInherited: mixed ? false : state.isInherited,
+    canRemoveOverride: mixed ? false : state.canRemoveOverride,
+    fromScope: mixed ? undefined : state.read.from,
+  };
+}
+
+export function ColorField({
+  property,
+  label,
+  tokens,
+  currentScope,
+  frameWidth,
+  ctx,
+  onValueChange,
+  disabled = false,
+  mixed = false,
+}: ColorFieldProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const state = useColorFieldState(tokens, property, currentScope, frameWidth, ctx);
+  const display = resolveColorDisplay(state, mixed, t('inspector.mixed'));
 
   return (
     <div className="flex flex-col gap-1 py-1" data-testid={`property-field-${property}`}>
       <PropertyHeader
         property={property}
         label={label}
-        isInherited={state.isInherited}
-        canRemoveOverride={state.canRemoveOverride}
-        fromScope={state.read.from}
+        isInherited={display.isInherited}
+        canRemoveOverride={display.canRemoveOverride}
+        fromScope={display.fromScope}
         disabled={disabled}
         onRemoveOverride={() => {
           onValueChange(property, undefined);
@@ -292,8 +309,8 @@ export function ColorField(props: ColorFieldProps) {
       <ColorTriggerButton
         property={property}
         disabled={disabled}
-        displayValue={state.displayValue}
-        swatchColor={state.swatchColor}
+        displayValue={display.displayValue}
+        swatchColor={display.swatchColor}
         onClick={() => {
           setOpen((prev) => !prev);
         }}

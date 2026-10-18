@@ -10,6 +10,8 @@ import { useTranslation } from 'react-i18next';
 
 import { resources } from '../../i18n/i18n.ts';
 import { type ErrorInfo, errorText } from '../../routes/error-text.ts';
+import { useDndStore } from '../dnd/dnd-store.ts';
+import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { insertBlock } from './insert-block.ts';
 import { getBlockIcon } from './library-icons.ts';
@@ -47,11 +49,23 @@ function BlockItem({ block, disabled, onSelect }: BlockItemProps) {
     <button
       type="button"
       data-testid={`library-block-${block.id}`}
-      disabled={disabled}
+      aria-disabled={disabled}
+      draggable
       onClick={() => {
-        onSelect(block);
+        if (!disabled) onSelect(block);
       }}
-      className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border/50 bg-field/50 p-3 text-center transition-all hover:border-accent hover:bg-accent/5 disabled:cursor-not-allowed disabled:opacity-40"
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', block.id);
+        e.dataTransfer.effectAllowed = 'copy';
+        useDndStore.getState().startDrag({ source: 'library', block });
+      }}
+      onDragEnd={() => {
+        if (useDndStore.getState().drag !== undefined) {
+          studioBridgeChannel.dragEnd(false);
+          useDndStore.getState().endDrag();
+        }
+      }}
+      className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border/50 bg-field/50 p-3 text-center transition-all hover:border-accent hover:bg-accent/5 aria-disabled:opacity-40"
     >
       <BlockIcon name={block.icon} className="h-5 w-5 text-ink-soft" />
       <span className="text-xs font-medium text-ink leading-tight">{label}</span>

@@ -79,7 +79,10 @@
     "page": "Trang",
     "pageChoose": "Chọn trang",
     "noPages": "Chưa đọc được trang nào",
-    "pageParamHint": "Thay :tham số bằng giá trị rồi nhấn Enter"
+    "pageParamHint": "Thay :tham số bằng giá trị rồi nhấn Enter",
+    "dnd": {
+      "dismiss": "Đóng"
+    }
   },
   "history": {
     "setClassName": "đổi class",
@@ -94,6 +97,7 @@
     "pageAdd": "thêm trang {{name}}",
     "pageRename": "đổi tên trang {{name}}",
     "pageDelete": "xóa trang {{name}}",
+    "batch": "sửa {{count}} phần tử",
     "dismissError": "Đóng thông báo",
     "errorFileChanged": "File {{file}} đã bị sửa từ nơi khác, không hoàn tác được bước này"
   },
@@ -211,6 +215,8 @@
   "inspector": {
     "title": "Thuộc tính",
     "selectedMultiple": "Đã chọn {{count}} phần tử",
+    "mixed": "Hỗn hợp",
+    "multiLocked": "Không sửa chung được: <{{tag}}> ở {{loc}} có class tính bằng biểu thức",
     "scope": "Phạm vi",
     "scopeBase": "Cơ sở (base)",
     "state": "Trạng thái",
@@ -240,6 +246,7 @@
       "usages": "Thay đổi áp dụng cho mọi nơi dùng {{name}} ({{count}} chỗ)",
       "loop": "Lặp {{count}} lần: sửa áp dụng cho mọi bản lặp",
       "missingImport": "Đoạn chèn thiếu câu import, hãy kiểm tra lại file",
+      "foreignExpression": "Đoạn dán dùng biến của file gốc, có thể cần sửa",
       "attributesDropped": "Đã bỏ các thuộc tính khác className khi bỏ bọc"
     },
     "errors": {
@@ -356,6 +363,9 @@
     "actions": {
       "undo": "Hoàn tác",
       "redo": "Làm lại",
+      "copy": "Sao chép",
+      "cut": "Cắt",
+      "paste": "Dán",
       "duplicate": "Nhân bản",
       "remove": "Xóa",
       "wrap": "Bọc cột",

@@ -1,13 +1,11 @@
 // Hook managing Inspector target selection, source fetching, and scope (SPEC-04 M-IN, R-IN-10..16, R-IN-20).
 import {
-  editBreakpoint,
   type ElementRef,
   type ElementSource,
   type Frame,
   type InteractionState,
   parseLocString,
   type ResponsiveMode,
-  type Scope,
 } from '@reactcraft/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -16,6 +14,7 @@ import { fetchElementSource } from '../../api/source-client.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { useStructureErrorStore } from '../structure/structure-error-store.ts';
 import type { InspectorLockReason, InspectorTarget, InspectorWarning } from './types.ts';
+import { useMultiInspectorTarget } from './use-multi-inspector-target.ts';
 
 export type UseInspectorTargetOptions = {
   readonly frame?: Frame | undefined;
@@ -24,16 +23,8 @@ export type UseInspectorTargetOptions = {
   readonly enabled?: boolean | undefined;
 };
 
-export function computeWritePrefix(scope: Scope, mode: ResponsiveMode): string {
-  const parts: string[] = [];
-  if (scope.breakpoint !== 'base') {
-    parts.push(mode === 'desktop-first' ? `max-${scope.breakpoint}` : scope.breakpoint);
-  }
-  if (scope.state !== undefined) {
-    parts.push(scope.state);
-  }
-  return parts.length > 0 ? `${parts.join(':')}:` : '';
-}
+import { computeWritePrefix, useScopeCalculation } from './inspector-scope.ts';
+export { computeWritePrefix, useScopeCalculation };
 
 export function deriveLockReason(source: ElementSource | undefined): {
   readonly lockReason?: InspectorLockReason | undefined;
@@ -150,24 +141,6 @@ function useElementSourceLoader(
   };
 }
 
-function useScopeCalculation(
-  frame: Frame | undefined,
-  primaryFrame: Frame | undefined,
-  responsiveMode: ResponsiveMode,
-  interactionState: InteractionState | undefined,
-): { readonly currentScope: Scope; readonly writePrefix: string } {
-  return useMemo(() => {
-    const frameW = frame?.width ?? 1440;
-    const primW = primaryFrame?.width ?? 1440;
-    const breakpoint = editBreakpoint(frameW, primW, responsiveMode);
-    const scope: Scope = { breakpoint, state: interactionState };
-    return {
-      currentScope: scope,
-      writePrefix: computeWritePrefix(scope, responsiveMode),
-    };
-  }, [frame?.width, primaryFrame?.width, responsiveMode, interactionState]);
-}
-
 function useSyncActiveSource(singleRef: ElementRef | undefined, tag: string | undefined): void {
   const loc = singleRef?.loc;
   useEffect(() => {
@@ -179,9 +152,11 @@ function useSyncActiveSource(singleRef: ElementRef | undefined, tag: string | un
   }, [loc, tag]);
 }
 
-export function useInspectorTarget(options: UseInspectorTargetOptions = {}): InspectorTarget {
+function useSingleInspectorTarget(
+  options: UseInspectorTargetOptions,
+  singleRef: ElementRef | undefined,
+): InspectorTarget {
   const { frame, primaryFrame, responsiveMode = 'desktop-first', enabled = true } = options;
-  const selectedRefs = useSelectionStore((s) => s.selectedRefs);
   const selectionInfo = useSelectionStore((s) => s.selectionInfo);
   const [interactionState, setInteractionState] = useState<InteractionState | undefined>(undefined);
   const [refreshKey, setRefreshKey] = useState<number>(0);
@@ -190,7 +165,6 @@ export function useInspectorTarget(options: UseInspectorTargetOptions = {}): Ins
     setRefreshKey((k) => k + 1);
   }, []);
 
-  const singleRef = selectedRefs.length === 1 ? selectedRefs[0] : undefined;
   const locParsed = useMemo(
     () => (singleRef !== undefined ? parseLocString(singleRef.loc) : undefined),
     [singleRef],
@@ -205,8 +179,6 @@ export function useInspectorTarget(options: UseInspectorTargetOptions = {}): Ins
   useServerRefresh(enabled, locParsed?.file, refresh);
   useSyncActiveSource(singleRef, source?.tag);
 
-  if (selectedRefs.length === 0) return { kind: 'empty' };
-  if (selectedRefs.length > 1) return { kind: 'multiple', count: selectedRefs.length };
   if (singleRef === undefined) return { kind: 'empty' };
 
   const info = selectionInfo.find(
@@ -233,6 +205,20 @@ export function useInspectorTarget(options: UseInspectorTargetOptions = {}): Ins
     setInteractionState,
     refresh,
   };
+}
+
+export function useInspectorTarget(options: UseInspectorTargetOptions = {}): InspectorTarget {
+  const selectedRefs = useSelectionStore((s) => s.selectedRefs);
+  const singleRef = selectedRefs.length === 1 ? selectedRefs[0] : undefined;
+  const singleTarget = useSingleInspectorTarget(options, singleRef);
+  const multiTarget = useMultiInspectorTarget({
+    ...options,
+    enabled: (options.enabled ?? true) && selectedRefs.length > 1,
+  });
+
+  if (selectedRefs.length === 0) return { kind: 'empty' };
+  if (selectedRefs.length > 1) return multiTarget;
+  return singleTarget;
 }
 
 function useServerRefresh(

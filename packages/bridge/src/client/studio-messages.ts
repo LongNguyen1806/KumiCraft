@@ -1,5 +1,9 @@
 // Studio message dispatcher (V-111).
 import {
+  type StudioDragEndPayload,
+  StudioDragEndPayloadSchema,
+  type StudioDragOverPayload,
+  StudioDragOverPayloadSchema,
   type StudioHighlightPayload,
   StudioHighlightPayloadSchema,
   StudioNavigatePayloadSchema,
@@ -17,6 +21,8 @@ export type StudioMessageHandlers = {
   handleNavigate: (route: string) => void;
   handleTextEditStart: (data: StudioTextEditStartPayload) => void;
   commitTextEdit: () => void;
+  handleDragOver: (data: StudioDragOverPayload) => void;
+  handleDragEnd: (data: StudioDragEndPayload) => void;
 };
 
 export function dispatchStudioMessage(
@@ -53,5 +59,15 @@ export function dispatchStudioMessage(
     case 'text-edit-end':
       handlers.commitTextEdit();
       break;
+    case 'drag-over': {
+      const parsed = StudioDragOverPayloadSchema.safeParse(payload);
+      if (parsed.success) handlers.handleDragOver(parsed.data);
+      break;
+    }
+    case 'drag-end': {
+      const parsed = StudioDragEndPayloadSchema.safeParse(payload);
+      if (parsed.success) handlers.handleDragEnd(parsed.data);
+      break;
+    }
   }
 }

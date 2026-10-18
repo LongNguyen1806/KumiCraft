@@ -250,3 +250,22 @@ export const StructureResultSchema = z.strictObject({
   pagePath: z.string().optional(),
 });
 export type StructureResult = z.infer<typeof StructureResultSchema>;
+
+export const AttributeLevelEditSchema = z.discriminatedUnion('kind', [
+  SetClassNameEditSchema,
+  SetAttributeEditSchema,
+  SetTextEditSchema,
+]);
+export type AttributeLevelEdit = z.infer<typeof AttributeLevelEditSchema>;
+
+export const BatchEditRequestSchema = z.strictObject({
+  edits: z.array(AttributeLevelEditSchema).min(1).max(50),
+  coalesceKey: z.string().max(200).optional(),
+});
+export type BatchEditRequest = z.infer<typeof BatchEditRequestSchema>;
+
+export const BatchEditResultSchema = z.strictObject({
+  changed: z.boolean(),
+  files: z.array(RelPathSchema),
+});
+export type BatchEditResult = z.infer<typeof BatchEditResultSchema>;

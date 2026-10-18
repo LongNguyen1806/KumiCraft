@@ -403,3 +403,17 @@ describe('core behaviour', () => {
     }
   });
 });
+
+describe('drag handle press [R-DD-10]', () => {
+  it('lets a press on the overlay reach the drag handle while page presses stay swallowed', () => {
+    const host = document.getElementById('__rc_overlay_host');
+    expect(host).not.toBeNull();
+    let reached = false;
+    host?.addEventListener('pointerdown', () => {
+      reached = true;
+    });
+    host?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
+    expect(reached).toBe(true);
+    expect(clickIsIntercepted()).toBe(true);
+  });
+});

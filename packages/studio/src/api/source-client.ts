@@ -1,7 +1,11 @@
-// Source Editor REST client (SPEC-03 section 5.5, R-SE-01..13, R-SE-22..29).
 import {
+  type BatchEditRequest,
+  type BatchEditResult,
+  BatchEditResultSchema,
   type EditResult,
   type ElementSource,
+  type ElementText,
+  ElementTextSchema,
   type SourceEdit,
   type StructureEdit,
   type StructureResult,
@@ -33,9 +37,20 @@ export async function fetchElementSource(params: FetchElementSourceParams): Prom
   return result as ElementSource;
 }
 
+export async function fetchElementText(loc: string): Promise<ElementText> {
+  const query = new URLSearchParams({ loc });
+  const result = await apiGet(`source/element-text?${query.toString()}`);
+  return ElementTextSchema.parse(result);
+}
+
 export async function editSource(request: SingleFileEditRequest): Promise<EditResult> {
   const result = await apiPost('source/edits', request);
   return result as EditResult;
+}
+
+export async function editSourceBatch(request: BatchEditRequest): Promise<BatchEditResult> {
+  const result = await apiPost('source/edits/batch', request);
+  return BatchEditResultSchema.parse(result);
 }
 
 export async function applyStructureEdit(edit: StructureEdit): Promise<StructureResult> {

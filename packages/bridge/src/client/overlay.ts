@@ -1,4 +1,7 @@
+// Bridge overlay in closed shadow root (SPEC-04 R-BR-11, R-BR-15, R-DD-10, R-DD-13).
 import type { ElementRef } from '@reactcraft/shared';
+
+import type { DropResult } from './drop-target.ts';
 
 const OVERLAY_CSS = `
 :host {
@@ -47,25 +50,82 @@ const OVERLAY_CSS = `
   pointer-events: none;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
+
+.drag-handle {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: #2563eb;
+  color: #ffffff;
+  border-radius: 3px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  pointer-events: auto;
+  cursor: grab;
+  user-select: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.drop-line {
+  position: absolute;
+  pointer-events: none;
+  background: #2563eb;
+  display: none;
+}
+
+.drop-box {
+  position: absolute;
+  pointer-events: none;
+  box-sizing: border-box;
+  border: 2px dashed #2563eb;
+  background: rgba(37, 99, 235, 0.06);
+  display: none;
+}
 `;
 
 export type OverlayState = {
   hoverEl?: Element | undefined;
   selectedRefs: readonly ElementRef[];
   textEditingEl?: HTMLElement | undefined;
+  dragHandleEl?: Element | undefined;
+  dropIndicator?: DropResult | undefined;
 };
+
+function applyRectStyle(
+  el: HTMLElement,
+  rect: {
+    readonly top: number;
+    readonly left: number;
+    readonly width: number;
+    readonly height: number;
+  },
+): void {
+  el.style.top = `${String(rect.top)}px`;
+  el.style.left = `${String(rect.left)}px`;
+  el.style.width = `${String(rect.width)}px`;
+  el.style.height = `${String(rect.height)}px`;
+}
 
 export class BridgeOverlay {
   private host: HTMLElement;
   private shadow: ShadowRoot;
   private hoverBox: HTMLDivElement;
   private selectionContainer: HTMLDivElement;
+  private dragHandle: HTMLDivElement;
+  private dropLine: HTMLDivElement;
+  private dropBox: HTMLDivElement;
+  private dropBoxLabel: HTMLSpanElement;
   private observer: MutationObserver;
   private state: OverlayState = { selectedRefs: [] };
   private rafId: number | undefined;
   private visible = true;
+  private handleListener: ((x: number, y: number) => void) | undefined;
 
-  constructor() {
+  constructor(onHandleDown?: (x: number, y: number) => void) {
+    this.handleListener = onHandleDown;
     this.host = document.createElement('div');
     this.host.id = '__rc_overlay_host';
     this.host.style.position = 'fixed';
@@ -87,12 +147,44 @@ export class BridgeOverlay {
     this.selectionContainer = document.createElement('div');
     this.shadow.appendChild(this.selectionContainer);
 
+    this.dropLine = document.createElement('div');
+    this.dropLine.className = 'drop-line';
+    this.shadow.appendChild(this.dropLine);
+
+    this.dropBox = document.createElement('div');
+    this.dropBox.className = 'drop-box';
+    this.dropBoxLabel = document.createElement('span');
+    this.dropBoxLabel.className = 'tag-label';
+    this.dropBox.appendChild(this.dropBoxLabel);
+    this.shadow.appendChild(this.dropBox);
+
+    this.dragHandle = this.createDragHandleElement();
+    this.shadow.appendChild(this.dragHandle);
+
     this.observer = new MutationObserver(() => {
       this.ensureAttached();
       this.requestRender();
     });
 
     this.attach();
+  }
+
+  private createDragHandleElement(): HTMLDivElement {
+    const handle = document.createElement('div');
+    handle.className = 'drag-handle';
+    handle.textContent = '⠿';
+    handle.addEventListener('pointerdown', (event: PointerEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      // Keep the drag's pointerup even when the pointer is released outside the iframe.
+      try {
+        handle.setPointerCapture(event.pointerId);
+      } catch {
+        // No active pointer with this id (synthetic events): the drag still works inside the page.
+      }
+      this.handleListener?.(event.clientX, event.clientY);
+    });
+    return handle;
   }
 
   private attach(): void {
@@ -120,6 +212,10 @@ export class BridgeOverlay {
     }
   }
 
+  public setHandleListener(fn: ((x: number, y: number) => void) | undefined): void {
+    this.handleListener = fn;
+  }
+
   public setVisible(visible: boolean): void {
     this.visible = visible;
     this.host.style.display = visible ? 'block' : 'none';
@@ -140,6 +236,20 @@ export class BridgeOverlay {
     this.requestRender();
   }
 
+  public setDragHandle(el?: Element): void {
+    this.state.dragHandleEl = el;
+    this.requestRender();
+  }
+
+  public setDropIndicator(d?: DropResult): void {
+    this.state.dropIndicator = d;
+    if (this.visible) {
+      this.renderHover();
+      this.renderDropIndicator();
+    }
+    this.requestRender();
+  }
+
   public requestRender(): void {
     if (this.rafId !== undefined) {
       cancelAnimationFrame(this.rafId);
@@ -151,13 +261,14 @@ export class BridgeOverlay {
   }
 
   private renderHover(): void {
-    if (this.state.hoverEl && document.documentElement.contains(this.state.hoverEl)) {
+    if (
+      this.state.dropIndicator === undefined &&
+      this.state.hoverEl &&
+      document.documentElement.contains(this.state.hoverEl)
+    ) {
       const rect = this.state.hoverEl.getBoundingClientRect();
       this.hoverBox.style.display = 'block';
-      this.hoverBox.style.top = `${String(rect.top)}px`;
-      this.hoverBox.style.left = `${String(rect.left)}px`;
-      this.hoverBox.style.width = `${String(rect.width)}px`;
-      this.hoverBox.style.height = `${String(rect.height)}px`;
+      applyRectStyle(this.hoverBox, rect);
     } else {
       this.hoverBox.style.display = 'none';
     }
@@ -178,10 +289,7 @@ export class BridgeOverlay {
 
       const box = document.createElement('div');
       box.className = `box ${isPrimary ? 'select-box-primary' : 'select-box-secondary'}`;
-      box.style.top = `${String(rect.top)}px`;
-      box.style.left = `${String(rect.left)}px`;
-      box.style.width = `${String(rect.width)}px`;
-      box.style.height = `${String(rect.height)}px`;
+      applyRectStyle(box, rect);
 
       if (isPrimary) {
         const label = document.createElement('span');
@@ -190,22 +298,62 @@ export class BridgeOverlay {
         box.appendChild(label);
       }
       this.selectionContainer.appendChild(box);
+      this.renderFaintInstances(elements, targetIndex);
+    }
+  }
 
-      if (elements.length > 1) {
-        for (let i = 0; i < elements.length; i++) {
-          if (i === targetIndex) continue;
-          const otherEl = elements[i];
-          if (!otherEl) continue;
-          const otherRect = otherEl.getBoundingClientRect();
-          const faintBox = document.createElement('div');
-          faintBox.className = 'box select-box-secondary';
-          faintBox.style.top = `${String(otherRect.top)}px`;
-          faintBox.style.left = `${String(otherRect.left)}px`;
-          faintBox.style.width = `${String(otherRect.width)}px`;
-          faintBox.style.height = `${String(otherRect.height)}px`;
-          this.selectionContainer.appendChild(faintBox);
-        }
-      }
+  private renderFaintInstances(elements: NodeListOf<Element>, skipIndex: number): void {
+    if (elements.length <= 1) return;
+    for (let i = 0; i < elements.length; i++) {
+      if (i === skipIndex) continue;
+      const otherEl = elements[i];
+      if (!otherEl) continue;
+      const otherRect = otherEl.getBoundingClientRect();
+      const faintBox = document.createElement('div');
+      faintBox.className = 'box select-box-secondary';
+      applyRectStyle(faintBox, otherRect);
+      this.selectionContainer.appendChild(faintBox);
+    }
+  }
+
+  private renderDragHandle(): void {
+    const el = this.state.dragHandleEl;
+    if (el && !this.state.textEditingEl && document.documentElement.contains(el)) {
+      const rect = el.getBoundingClientRect();
+      this.dragHandle.style.display = 'flex';
+      this.dragHandle.style.top = `${String(rect.top - 2)}px`;
+      this.dragHandle.style.left = `${String(rect.left + rect.width - 14)}px`;
+    } else {
+      this.dragHandle.style.display = 'none';
+    }
+  }
+
+  private renderDropIndicator(): void {
+    const d = this.state.dropIndicator;
+    if (!d) {
+      this.dropLine.style.display = 'none';
+      this.dropBox.style.display = 'none';
+      return;
+    }
+    if (d.indicator === 'line') {
+      this.dropBox.style.display = 'none';
+      this.dropLine.style.display = 'block';
+      applyRectStyle(this.dropLine, {
+        top: d.rect.y,
+        left: d.rect.x,
+        width: d.rect.width,
+        height: d.rect.height,
+      });
+    } else {
+      this.dropLine.style.display = 'none';
+      this.dropBox.style.display = 'block';
+      this.dropBoxLabel.textContent = `↳ ${d.label}`;
+      applyRectStyle(this.dropBox, {
+        top: d.rect.y,
+        left: d.rect.x,
+        width: d.rect.width,
+        height: d.rect.height,
+      });
     }
   }
 
@@ -213,6 +361,8 @@ export class BridgeOverlay {
     if (!this.visible) return;
     this.renderHover();
     this.renderSelections();
+    this.renderDragHandle();
+    this.renderDropIndicator();
   }
 
   public destroy(): void {

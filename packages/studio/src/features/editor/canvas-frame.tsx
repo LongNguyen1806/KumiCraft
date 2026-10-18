@@ -3,6 +3,7 @@ import type { Frame } from '@reactcraft/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { CanvasDropLayer } from '../dnd/canvas-drop-layer.tsx';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
 
@@ -133,7 +134,7 @@ export function IframeFrame({ origin, frame, zoom, nonce, mode, logTail }: Ifram
         }}
       >
         <div
-          className="origin-top-left transition-transform duration-150"
+          className="relative origin-top-left transition-transform duration-150"
           style={{ transform: `scale(${String(zoom)})` }}
         >
           <iframe
@@ -150,6 +151,7 @@ export function IframeFrame({ origin, frame, zoom, nonce, mode, logTail }: Ifram
               height: `${String(frame.height)}px`,
             }}
           />
+          <CanvasDropLayer iframeRef={iframeRef} zoom={zoom} />
         </div>
       </div>
     </>

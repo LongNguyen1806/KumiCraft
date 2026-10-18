@@ -129,7 +129,7 @@ describe('useInspectorTarget and helpers [SPEC-04 section 9 M-IN]', () => {
       expect(result.current.kind).toBe('empty');
     });
 
-    it('returns multiple when more than 1 element is selected', () => {
+    it('returns multi when more than 1 element is selected', () => {
       act(() => {
         useSelectionStore.getState().setSelectedRefs([
           { loc: 'src/App.tsx:10:2', index: 0 },
@@ -137,10 +137,7 @@ describe('useInspectorTarget and helpers [SPEC-04 section 9 M-IN]', () => {
         ]);
       });
       const { result } = renderHook(() => useInspectorTarget());
-      expect(result.current.kind).toBe('multiple');
-      if (result.current.kind === 'multiple') {
-        expect(result.current.count).toBe(2);
-      }
+      expect(result.current.kind).toBe('multi');
     });
 
     it('fetches source and computes scope for a single selected element', async () => {

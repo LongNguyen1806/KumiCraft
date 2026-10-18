@@ -1,6 +1,6 @@
 // Source Editor HTTP endpoints (SPEC-03 section 5.5, SPEC-04 section 6).
 import type { HistoryLabel, StructureEdit } from '@reactcraft/shared';
-import { EditRequestSchema, issuesToDetails } from '@reactcraft/shared';
+import { BatchEditRequestSchema, EditRequestSchema, issuesToDetails } from '@reactcraft/shared';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import type { HistoryService } from '../../../core/history/history-service.ts';
@@ -117,8 +117,35 @@ async function handleApplyEdit(
   return reply.status(200).send({ data: edited.value });
 }
 
+async function handleApplyBatchEdit(
+  deps: SourceRoutesDeps,
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const projectRoot = deps.getProjectRoot();
+  if (!projectRoot) return sendError(reply, NO_PROJECT);
+
+  const parsed = BatchEditRequestSchema.safeParse(request.body);
+  if (!parsed.success) {
+    return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
+  }
+
+  const { edits, coalesceKey } = parsed.data;
+  const label: HistoryLabel = {
+    key: 'history:batch',
+    params: { count: String(edits.length) },
+  };
+
+  const edited = await deps.sourceEditorService.applyEditBatch(projectRoot, edits, (files) => {
+    deps.historyService.push({ label, coalesceKey, files });
+  });
+  if (!edited.ok) return sendError(reply, edited.error);
+  return reply.status(200).send({ data: edited.value });
+}
+
 export function registerSourceRoutes(api: FastifyInstance, deps: SourceRoutesDeps): void {
   api.get('/source/element', (req, rep) => handleGetElement(deps, req, rep));
   api.get('/source/element-text', (req, rep) => handleGetElementText(deps, req, rep));
   api.post('/source/edits', (req, rep) => handleApplyEdit(deps, req, rep));
+  api.post('/source/edits/batch', (req, rep) => handleApplyBatchEdit(deps, req, rep));
 }

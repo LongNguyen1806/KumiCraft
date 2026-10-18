@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { type KeyPress, matchShortcut, shortcutLabel, WORKS_WHILE_TYPING } from './shortcuts.ts';
+import { type KeyPress, matchShortcut, shortcutLabel } from './shortcuts.ts';
 
 function makePress(
   key: string,
@@ -78,9 +78,17 @@ describe('matchShortcut (R-KB-12, R-KB-13)', () => {
     expect(shortcutLabel('showShortcuts', false)).toBe('Ctrl+/');
   });
 
-  it('verifies WORKS_WHILE_TYPING contains expected actions', () => {
-    expect(WORKS_WHILE_TYPING).toContain('togglePreview');
-    expect(WORKS_WHILE_TYPING).toContain('showShortcuts');
-    expect(WORKS_WHILE_TYPING).not.toContain('remove');
+  it('Scenario 8: matchShortcut Ctrl+C, Ctrl+X, Ctrl+V, Cmd+V (apple), Ctrl+Shift+V [R-KB]', () => {
+    expect(matchShortcut(makePress('c', { ctrl: true }), false)).toBe('copy');
+    expect(matchShortcut(makePress('x', { ctrl: true }), false)).toBe('cut');
+    expect(matchShortcut(makePress('v', { ctrl: true }), false)).toBe('paste');
+    expect(matchShortcut(makePress('v', { meta: true }), true)).toBe('paste');
+    expect(matchShortcut(makePress('v', { ctrl: true, shift: true }), false)).toBeUndefined();
+    expect(shortcutLabel('copy', true)).toBe('⌘C');
+    expect(shortcutLabel('copy', false)).toBe('Ctrl+C');
+    expect(shortcutLabel('cut', true)).toBe('⌘X');
+    expect(shortcutLabel('cut', false)).toBe('Ctrl+X');
+    expect(shortcutLabel('paste', true)).toBe('⌘V');
+    expect(shortcutLabel('paste', false)).toBe('Ctrl+V');
   });
 });

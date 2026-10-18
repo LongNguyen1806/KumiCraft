@@ -1,8 +1,10 @@
 // Bridge postMessage communication channel for Studio (SPEC-04 M-BR, R-BR-30, R-BR-31, V-110..111).
 import {
   BridgeBuildErrorPayloadSchema,
+  BridgeDropTargetPayloadSchema,
   BridgeEnvelopeSchema,
   BridgeHoverPayloadSchema,
+  BridgeMoveIntentPayloadSchema,
   BridgeReadyPayloadSchema,
   BridgeRoutePayloadSchema,
   BridgeRuntimeErrorPayloadSchema,
@@ -19,10 +21,13 @@ import {
   type ElementRef,
   type KeyPress,
   matchShortcut,
+  type StudioDragOverPayload,
 } from '@reactcraft/shared';
 
 import { isApplePlatform } from '../../app/platform.ts';
 import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
+import { useDndStore } from '../dnd/dnd-store.ts';
+import { executeDropMove } from '../dnd/drop-actions.ts';
 import { runShortcut } from '../shortcuts/shortcut-actions.ts';
 import { type CanvasMode, useSelectionStore } from './selection-store.ts';
 
@@ -61,8 +66,27 @@ function handleErrorBridgePayload(type: string, payload: unknown): boolean {
   return false;
 }
 
+function handleDndBridgePayload(type: string, payload: unknown): boolean {
+  if (type === 'drop-target') {
+    const res = BridgeDropTargetPayloadSchema.safeParse(payload);
+    if (res.success) {
+      useDndStore.getState().setDropTarget('target' in res.data ? res.data.target : undefined);
+    }
+    return true;
+  }
+  if (type === 'move-intent') {
+    const res = BridgeMoveIntentPayloadSchema.safeParse(payload);
+    if (res.success) {
+      void executeDropMove(res.data.elements, res.data.target);
+    }
+    return true;
+  }
+  return false;
+}
+
 function dispatchBridgePayload(type: string, payload: unknown): void {
   if (handleErrorBridgePayload(type, payload)) return;
+  if (handleDndBridgePayload(type, payload)) return;
   const state = useSelectionStore.getState();
   switch (type) {
     case 'shortcut': {
@@ -138,6 +162,7 @@ export class BridgeChannel {
     this.runnerOrigin = undefined;
     this.nonce = undefined;
     useCanvasErrorStore.getState().reset();
+    useDndStore.getState().endDrag();
     useSelectionStore.getState().setBridgeReady(false);
   }
 
@@ -171,6 +196,14 @@ export class BridgeChannel {
 
   endTextEdit(ref: ElementRef): void {
     this.sendMessage('text-edit-end', { ref });
+  }
+
+  dragOver(payload: StudioDragOverPayload): void {
+    this.sendMessage('drag-over', payload);
+  }
+
+  dragEnd(drop: boolean): void {
+    this.sendMessage('drag-end', { drop });
   }
 
   private handleMessage(event: MessageEvent): void {

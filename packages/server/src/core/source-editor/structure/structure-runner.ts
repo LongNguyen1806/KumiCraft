@@ -4,8 +4,8 @@ import { err, ok } from '@reactcraft/shared';
 
 import type { FileSystemPort } from '../../ports/file-system-port.ts';
 import { type AstNode, detectFormat, parseJsxAst } from '../ast-helpers.ts';
-import { fileQueueKey, queueFileTask } from '../file-queue.ts';
-import { cacheAst, computeSha256, getCachedAst } from '../source-editor-lookup.ts';
+import { commitPreparedFiles, type PreparedFileWrite, withFileLocks } from '../file-commit.ts';
+import { computeSha256, getCachedAst } from '../source-editor-lookup.ts';
 import type { WrittenFile } from '../source-editor-service.ts';
 import {
   collectComponentTags,
@@ -24,17 +24,6 @@ import {
 import { applyTextEdits } from './text-edits.ts';
 
 const MAX_FILE_SIZE = 1024 * 1024;
-
-type PreparedFileWrite = {
-  readonly rel: string;
-  readonly rawBefore: string;
-  readonly beforeHash: string;
-  readonly modifiedCode: string;
-  readonly finalContent: string;
-  readonly nextAst: AstNode;
-  readonly locs: readonly string[];
-  readonly warnings: readonly string[];
-};
 
 function offsetToLoc(rel: string, code: string, offset: number): string {
   let line = 1;
@@ -106,50 +95,6 @@ async function loadFileContext(
     ast,
     resolved: resolvedRes.value,
   });
-}
-
-async function commitPreparedFiles(
-  fs: FileSystemPort,
-  projectRoot: string,
-  prepared: readonly PreparedFileWrite[],
-): Promise<Result<readonly WrittenFile[]>> {
-  const written: WrittenFile[] = [];
-  const committed: PreparedFileWrite[] = [];
-
-  for (const item of prepared) {
-    const writeRes = await fs.writeTextAtomic(projectRoot, item.rel, item.finalContent);
-    if (!writeRes.ok) {
-      for (const prev of committed) {
-        await fs.writeTextAtomic(projectRoot, prev.rel, prev.rawBefore);
-      }
-      return writeRes;
-    }
-    const afterHash = computeSha256(item.finalContent);
-    cacheAst(item.rel, item.modifiedCode, afterHash, item.nextAst);
-    committed.push(item);
-    written.push({
-      path: item.rel,
-      before: item.rawBefore,
-      after: item.finalContent,
-      beforeHash: item.beforeHash,
-      afterHash,
-    });
-  }
-
-  return ok(written);
-}
-
-async function withFileLocks<T>(
-  projectRoot: string,
-  sortedFiles: readonly string[],
-  task: () => Promise<T>,
-  index = 0,
-): Promise<T> {
-  const file = sortedFiles[index];
-  if (file === undefined) return task();
-  return queueFileTask(fileQueueKey(projectRoot, file), () =>
-    withFileLocks(projectRoot, sortedFiles, task, index + 1),
-  );
 }
 
 function collectGuardsForEdit(edit: StructureEdit): readonly ElementGuard[] {

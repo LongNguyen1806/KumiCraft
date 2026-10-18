@@ -2,6 +2,7 @@
 import type { ShortcutAction } from '@reactcraft/shared';
 
 import { openInEditor } from '../../api/editor-client.ts';
+import { copySelection, cutSelection, pasteClipboard } from '../clipboard/clipboard-actions.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { usePanelLayoutStore } from '../editor/use-panel-layout.ts';
 import { useHistoryStore } from '../history/history-store.ts';
@@ -132,6 +133,15 @@ export function runShortcut(action: ShortcutAction): boolean {
       void openInEditor(selected[0].loc);
       return true;
     }
+    case 'copy':
+      void copySelection();
+      return true;
+    case 'cut':
+      void cutSelection();
+      return true;
+    case 'paste':
+      void pasteClipboard();
+      return true;
     default:
       if (runStructureShortcut(action)) return true;
       return runZoomOrFrame(action);

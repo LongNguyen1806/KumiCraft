@@ -2,6 +2,8 @@
 import type { TreeNode } from '@reactcraft/shared';
 import { useTranslation } from 'react-i18next';
 
+import { useDndStore } from '../dnd/dnd-store.ts';
+import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import type { VisibleNodeMeta } from './layer-tree-utils.ts';
 
 const CHEVRON_EXPANDED = '▾';
@@ -110,17 +112,22 @@ function LayerTreeRowLabel({
   );
 }
 
-export function LayerTreeRow({
-  meta,
-  isSelected,
-  isHovered,
-  isCollapsed,
-  rowRef,
-  onNodeClick,
-  onNodeHover,
-  onMouseLeave,
-  onToggleCollapse,
-}: LayerTreeRowProps) {
+function handleLayerDragStart(e: React.DragEvent, node: TreeNode): void {
+  e.dataTransfer.setData('text/plain', node.tag);
+  e.dataTransfer.effectAllowed = 'move';
+  useDndStore.getState().startDrag({ source: 'layer', ref: node.ref, tag: node.tag });
+}
+
+function handleLayerDragEnd(): void {
+  if (useDndStore.getState().drag !== undefined) {
+    studioBridgeChannel.dragEnd(false);
+    useDndStore.getState().endDrag();
+  }
+}
+
+export function LayerTreeRow(props: LayerTreeRowProps) {
+  const { meta, isSelected, isHovered, isCollapsed, rowRef, onMouseLeave, onToggleCollapse } =
+    props;
   const { node, depth, hasChildren, isBoundary, componentName } = meta;
 
   return (
@@ -128,21 +135,26 @@ export function LayerTreeRow({
       ref={rowRef}
       role="treeitem"
       tabIndex={0}
+      draggable
       aria-selected={isSelected}
       aria-expanded={hasChildren ? !isCollapsed : undefined}
       onClick={() => {
-        onNodeClick(node);
+        props.onNodeClick(node);
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onNodeClick(node);
+          props.onNodeClick(node);
         }
       }}
       onMouseEnter={() => {
-        onNodeHover(node);
+        props.onNodeHover(node);
       }}
       onMouseLeave={onMouseLeave}
+      onDragStart={(e) => {
+        handleLayerDragStart(e, node);
+      }}
+      onDragEnd={handleLayerDragEnd}
       style={{ paddingLeft: `${String(depth * 12 + 6)}px` }}
       className={getRowClassName(isSelected, isHovered)}
     >

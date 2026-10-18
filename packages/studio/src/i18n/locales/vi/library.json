@@ -1,7 +1,7 @@
 {
   "title": "Thư viện",
   "search": "Tìm kiếm khối…",
-  "hint": "Chọn một phần tử trên Canvas để chèn khối.",
+  "hint": "Chọn một phần tử rồi bấm khối, hoặc kéo khối vào Canvas",
   "categories": {
     "layout": "Bố cục",
     "content": "Nội dung",

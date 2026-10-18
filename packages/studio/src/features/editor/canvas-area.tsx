@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { errorText } from '../../routes/error-text.ts';
 import { BuildErrorBanner } from '../canvas-errors/build-error-banner.tsx';
 import { RuntimeErrorList } from '../canvas-errors/runtime-error-list.tsx';
+import { DndErrorBanner } from '../dnd/dnd-error-banner.tsx';
 import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
 import { type TextEditWarning, useCanvasTextEdit } from '../text-edit/use-canvas-text-edit.ts';
 import { IframeFrame } from './canvas-frame.tsx';
@@ -142,6 +143,7 @@ function CanvasNotices({ onOpenLoc }: { readonly onOpenLoc: (loc: string) => voi
     <>
       <PortBusyBanner />
       <BuildErrorBanner onOpenLoc={onOpenLoc} />
+      <DndErrorBanner />
     </>
   );
 }

@@ -85,6 +85,45 @@ export type PlanContext = {
   readonly movingTags?: readonly string[] | undefined;
 };
 
+function isHarmlessExpression(expr: AstNode | undefined): boolean {
+  if (!expr) return true;
+  if (expr.type === 'JSXEmptyExpression') return true;
+  if (expr.type === 'StringLiteral' || expr.type === 'NumericLiteral') return true;
+  if (
+    expr.type === 'Literal' &&
+    (typeof expr['value'] === 'string' || typeof expr['value'] === 'number')
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function hasForeignExpression(root: AstNode): boolean {
+  let found = false;
+  const walk = (node: unknown) => {
+    if (found || !node || typeof node !== 'object') return;
+    if (Array.isArray(node)) {
+      for (const item of node) walk(item);
+      return;
+    }
+    const astNode = node as AstNode;
+    if (astNode.type === 'JSXExpressionContainer') {
+      const expr = asAstNode(astNode['expression']);
+      if (!isHarmlessExpression(expr)) {
+        found = true;
+        return;
+      }
+    }
+    for (const key of Object.keys(astNode)) {
+      if (key !== 'parent' && key !== 'loc') {
+        walk(astNode[key]);
+      }
+    }
+  };
+  walk(root);
+  return found;
+}
+
 function planInsert(
   ast: AstNode,
   code: string,
@@ -116,9 +155,16 @@ function planInsert(
   const snippetTags = astSnippet ? collectComponentTags(astSnippet) : [];
   const autoImports = buildMissingImportsEdits(ast, code, rel, snippetTags, edit.from, nl);
 
+  const warnings = [...autoImports.warnings];
+  if (edit.from && edit.from.file !== rel && astSnippet && hasForeignExpression(astSnippet)) {
+    if (!warnings.includes('foreignExpression')) {
+      warnings.push('foreignExpression');
+    }
+  }
+
   return ok({
     edits: [...autoImports.edits, insertEditRes.value],
-    warnings: autoImports.warnings,
+    warnings,
     locsFromMarks: true,
   });
 }

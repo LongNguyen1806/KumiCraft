@@ -10,9 +10,24 @@ export type InspectorWarning = {
   readonly name?: string | undefined;
 };
 
+export type MultiTargetItem = {
+  readonly ref: ElementRef;
+  readonly source?: ElementSource | undefined;
+};
+
+export type MultiTarget = {
+  readonly kind: 'multi';
+  readonly items: readonly MultiTargetItem[];
+  readonly loading: boolean;
+  readonly lock?: { readonly tag: string; readonly loc: string } | undefined;
+  readonly currentScope: Scope;
+  readonly writePrefix: string;
+  readonly refresh: () => void;
+};
+
 export type InspectorTarget =
   | { readonly kind: 'empty' }
-  | { readonly kind: 'multiple'; readonly count: number }
+  | MultiTarget
   | {
       readonly kind: 'element';
       readonly ref: ElementRef;

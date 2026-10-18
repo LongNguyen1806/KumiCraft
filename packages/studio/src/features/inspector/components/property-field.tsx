@@ -14,6 +14,7 @@ type PropertyFieldProps = {
   readonly onValueChange: (property: PropertyId, value: ClassValue | undefined) => void;
   readonly options?: readonly string[] | undefined;
   readonly disabled?: boolean | undefined;
+  readonly mixed?: boolean | undefined;
 };
 
 function formatScopeName(scope: Scope): string {
@@ -75,15 +76,18 @@ function PropertyInputControl({
   property,
   currentValStr,
   disabled,
+  mixed,
   options,
   onChange,
 }: {
   readonly property: PropertyId;
   readonly currentValStr: string;
   readonly disabled: boolean;
+  readonly mixed?: boolean | undefined;
   readonly options?: readonly string[] | undefined;
   readonly onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
 }) {
+  const { t } = useTranslation();
   if (options && options.length > 0) {
     return (
       <select
@@ -94,7 +98,7 @@ function PropertyInputControl({
         onChange={onChange}
         className="h-7 w-full rounded border border-border/60 bg-field px-2 text-xs text-ink focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
       >
-        <option value="">—</option>
+        <option value="">{mixed ? t('inspector.mixed') : '—'}</option>
         {options.map((opt) => (
           <option key={opt} value={opt}>
             {opt}
@@ -109,6 +113,7 @@ function PropertyInputControl({
       property={property}
       currentValStr={currentValStr}
       disabled={disabled}
+      mixed={mixed}
       onChange={onChange}
     />
   );
@@ -122,13 +127,16 @@ function TextValueInput({
   property,
   currentValStr,
   disabled,
+  mixed,
   onChange,
 }: {
   readonly property: PropertyId;
   readonly currentValStr: string;
   readonly disabled: boolean;
+  readonly mixed?: boolean | undefined;
   readonly onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
+  const { t } = useTranslation();
   const [draft, setDraft] = useState<string>();
   return (
     <input
@@ -137,7 +145,7 @@ function TextValueInput({
       type="text"
       disabled={disabled}
       value={draft ?? currentValStr}
-      placeholder="—"
+      placeholder={mixed ? t('inspector.mixed') : '—'}
       onFocus={() => {
         setDraft(currentValStr);
       }}
@@ -179,17 +187,19 @@ export function PropertyField({
   onValueChange,
   options,
   disabled = false,
+  mixed = false,
 }: PropertyFieldProps) {
   const read = readValue(tokens, property, { width: frameWidth, state: currentScope.state }, ctx);
 
   const isInherited =
+    !mixed &&
     read.from !== undefined &&
     (read.from.breakpoint !== currentScope.breakpoint || read.from.state !== currentScope.state);
 
   const canRemoveOverride =
-    !isInherited && currentScope.breakpoint !== 'base' && read.value !== undefined;
+    !mixed && !isInherited && currentScope.breakpoint !== 'base' && read.value !== undefined;
 
-  const currentValStr = formatClassValueString(read.value);
+  const currentValStr = mixed ? '' : formatClassValueString(read.value);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     onValueChange(property, parseInputToClassValue(e.target.value));
@@ -202,7 +212,7 @@ export function PropertyField({
         label={label}
         isInherited={isInherited}
         canRemoveOverride={canRemoveOverride}
-        fromScope={read.from}
+        fromScope={mixed ? undefined : read.from}
         disabled={disabled}
         onRemoveOverride={() => {
           onValueChange(property, undefined);
@@ -212,6 +222,7 @@ export function PropertyField({
         property={property}
         currentValStr={currentValStr}
         disabled={disabled}
+        mixed={mixed}
         options={options}
         onChange={handleChange}
       />

@@ -20,6 +20,7 @@ import { InspectorHeader } from './components/inspector-header.tsx';
 import { OtherClassesSection } from './components/other-classes-section.tsx';
 import { PropertyField } from './components/property-field.tsx';
 import { TagAttributesSection } from './components/tag-attributes-section.tsx';
+import { MultiInspectorView } from './multi-inspector-view.tsx';
 import { PROPERTY_GROUPS } from './property-groups-config.ts';
 import type { InspectorTarget } from './types.ts';
 import { useAttributeEdit } from './use-attribute-edit.ts';
@@ -49,7 +50,7 @@ function resolveThemeTokens(property: PropertyId, theme: ThemeInfo): readonly st
   }
 }
 
-function resolveFieldOptions(
+export function resolveFieldOptions(
   property: PropertyId,
   baseOptions: readonly string[] | undefined,
   theme: ThemeInfo,
@@ -59,7 +60,7 @@ function resolveFieldOptions(
   return Array.from(new Set([...themeNames, ...(baseOptions ?? [])]));
 }
 
-function isColorProperty(p: PropertyId): boolean {
+export function isColorProperty(p: PropertyId): boolean {
   return p === 'textColor' || p === 'backgroundColor' || p === 'borderColor';
 }
 
@@ -328,15 +329,8 @@ export function InspectorPanel({
     return <p className="px-1 pt-2 text-xs text-ink-faint">{t('editor.selectHint')}</p>;
   }
 
-  if (target.kind === 'multiple') {
-    return (
-      <div
-        data-testid="selected-multiple-message"
-        className="px-1 pt-2 text-xs text-ink-soft font-medium"
-      >
-        {t('inspector.selectedMultiple', { count: target.count })}
-      </div>
-    );
+  if (target.kind === 'multi') {
+    return <MultiInspectorView target={target} ctx={ctx} frameWidth={frameWidth} />;
   }
 
   return (

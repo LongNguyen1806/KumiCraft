@@ -41,7 +41,7 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
     vi.restoreAllMocks();
   });
 
-  it('Scenario 7: renders "Selected 2 elements" and no property inputs when multiple elements selected [R-IN-10]', () => {
+  it('Scenario 7: renders MultiInspectorView when multiple elements selected [R-IN-10, R-CB-15]', () => {
     act(() => {
       useSelectionStore.getState().setSelectedRefs([
         { loc: 'src/App.tsx:10:2', index: 0 },
@@ -51,9 +51,9 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
 
     render(<InspectorPanel />);
 
-    const msg = screen.getByTestId('selected-multiple-message');
-    expect(msg).toBeDefined();
-    expect(msg.textContent).toContain('2');
+    const multi = screen.getByTestId('inspector-multi');
+    expect(multi).toBeDefined();
+    expect(multi.textContent).toContain('2');
     expect(screen.queryByTestId('inspector-panel')).toBeNull();
   });
 
