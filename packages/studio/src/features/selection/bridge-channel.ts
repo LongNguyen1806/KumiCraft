@@ -17,27 +17,29 @@ import {
   BridgeTextEditRequestPayloadSchema,
   BridgeTreePayloadSchema,
   type ElementRef,
+  type KeyPress,
+  matchShortcut,
 } from '@reactcraft/shared';
 
+import { isApplePlatform } from '../../app/platform.ts';
 import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
-import { shortcutFor } from '../editor/use-editor-shortcuts.ts';
-import { useHistoryStore } from '../history/history-store.ts';
+import { runShortcut } from '../shortcuts/shortcut-actions.ts';
 import { type CanvasMode, useSelectionStore } from './selection-store.ts';
 
 function handleBridgeShortcut(payload: unknown): void {
   const res = BridgeShortcutPayloadSchema.safeParse(payload);
   if (!res.success) return;
-  const action = shortcutFor({
+  const press: KeyPress = {
     key: res.data.key,
-    ctrlKey: res.data.ctrl,
-    metaKey: res.data.meta,
-    shiftKey: res.data.shift,
-    altKey: res.data.alt,
-  });
-  if (action === 'undo') {
-    void useHistoryStore.getState().undo();
-  } else if (action === 'redo') {
-    void useHistoryStore.getState().redo();
+    ctrl: res.data.ctrl,
+    meta: res.data.meta,
+    shift: res.data.shift,
+    alt: res.data.alt,
+  };
+  const apple = isApplePlatform();
+  const action = matchShortcut(press, apple);
+  if (action) {
+    runShortcut(action);
   }
 }
 

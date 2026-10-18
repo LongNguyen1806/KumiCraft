@@ -1,7 +1,6 @@
 // Side panels of the Editor: 200 to 480 px wide, hidden or shown, remembered by
-// the browser. Not sensitive, so localStorage is fine; the address stays the same between sessions
-// (SPEC-05 S-02), so the browser finds them again.
-import { useCallback, useState } from 'react';
+// the browser. Not sensitive, so localStorage is fine (SPEC-05 S-02).
+import { create } from 'zustand';
 
 export type Side = 'left' | 'right';
 
@@ -46,41 +45,52 @@ function saveLayout(layout: PanelLayout): void {
   }
 }
 
-export function usePanelLayout() {
-  const [layout, setLayout] = useState<PanelLayout>(readLayout);
+export type PanelStore = {
+  readonly layout: PanelLayout;
+  readonly toggle: (side: Side) => void;
+  readonly toggleBoth: () => void;
+  readonly resize: (side: Side, width: number) => void;
+};
 
-  const update = useCallback((change: (current: PanelLayout) => PanelLayout) => {
-    setLayout((current) => {
-      const next = change(current);
+export const usePanelLayoutStore = create<PanelStore>((set) => ({
+  layout: readLayout(),
+  toggle: (side) => {
+    set((state) => {
+      const next: PanelLayout = {
+        ...state.layout,
+        visible: { ...state.layout.visible, [side]: !state.layout.visible[side] },
+      };
       saveLayout(next);
-      return next;
+      return { layout: next };
     });
-  }, []);
-
-  const toggle = useCallback(
-    (side: Side) => {
-      update((current) => ({
-        ...current,
-        visible: { ...current.visible, [side]: !current.visible[side] },
-      }));
-    },
-    [update],
-  );
-
-  /** Both hidden → show both; otherwise hide both (Mod+\). */
-  const toggleBoth = useCallback(() => {
-    update((current) => {
-      const show = !current.visible.left && !current.visible.right;
-      return { ...current, visible: { left: show, right: show } };
+  },
+  toggleBoth: () => {
+    set((state) => {
+      const show = !state.layout.visible.left && !state.layout.visible.right;
+      const next: PanelLayout = {
+        ...state.layout,
+        visible: { left: show, right: show },
+      };
+      saveLayout(next);
+      return { layout: next };
     });
-  }, [update]);
+  },
+  resize: (side, width) => {
+    set((state) => {
+      const next: PanelLayout = {
+        ...state.layout,
+        width: { ...state.layout.width, [side]: clampWidth(width) },
+      };
+      saveLayout(next);
+      return { layout: next };
+    });
+  },
+}));
 
-  const resize = useCallback(
-    (side: Side, width: number) => {
-      update((current) => ({ ...current, width: { ...current.width, [side]: clampWidth(width) } }));
-    },
-    [update],
-  );
-
+export function usePanelLayout() {
+  const layout = usePanelLayoutStore((s) => s.layout);
+  const toggle = usePanelLayoutStore((s) => s.toggle);
+  const toggleBoth = usePanelLayoutStore((s) => s.toggleBoth);
+  const resize = usePanelLayoutStore((s) => s.resize);
   return { layout, toggle, toggleBoth, resize };
 }

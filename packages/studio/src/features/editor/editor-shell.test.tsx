@@ -1,3 +1,4 @@
+import { matchShortcut } from '@reactcraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -6,7 +7,6 @@ import { isApplePlatform, shortcutLabel } from '../../app/platform.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { EditorScreen } from '../../routes/editor-screen.tsx';
 import { useHistoryStore } from '../history/history-store.ts';
-import { shortcutFor } from './use-editor-shortcuts.ts';
 import { clampWidth, readLayout } from './use-panel-layout.ts';
 
 vi.mock('./use-runner-status.ts', () => ({
@@ -137,37 +137,39 @@ describe('Editor frame', () => {
 
 describe('frame helpers', () => {
   it('uses Ctrl on Windows and Linux, Cmd on macOS', () => {
-    const key = (k: string, mods: Partial<KeyboardEvent> = {}) => ({
+    const key = (
+      k: string,
+      mods: { ctrl?: boolean; meta?: boolean; shift?: boolean; alt?: boolean } = {},
+    ) => ({
       key: k,
-      ctrlKey: false,
-      metaKey: false,
-      shiftKey: false,
-      altKey: false,
-      ...mods,
+      ctrl: mods.ctrl ?? false,
+      meta: mods.meta ?? false,
+      shift: mods.shift ?? false,
+      alt: mods.alt ?? false,
     });
-    expect(shortcutFor(key('z', { ctrlKey: true }), false)).toBe('undo');
-    expect(shortcutFor(key('y', { ctrlKey: true }), false)).toBe('redo');
-    expect(shortcutFor(key('\\', { ctrlKey: true }), false)).toBe('togglePanels');
-    expect(shortcutFor(key('z', { metaKey: true }), false)).toBeUndefined();
+    expect(matchShortcut(key('z', { ctrl: true }), false)).toBe('undo');
+    expect(matchShortcut(key('y', { ctrl: true }), false)).toBe('redo');
+    expect(matchShortcut(key('\\', { ctrl: true }), false)).toBe('togglePanels');
+    expect(matchShortcut(key('z', { meta: true }), false)).toBeUndefined();
 
-    expect(shortcutFor(key('z', { metaKey: true }), true)).toBe('undo');
-    expect(shortcutFor(key('Z', { metaKey: true, shiftKey: true }), true)).toBe('redo');
-    expect(shortcutFor(key('z', { ctrlKey: true }), true)).toBeUndefined();
+    expect(matchShortcut(key('z', { meta: true }), true)).toBe('undo');
+    expect(matchShortcut(key('Z', { meta: true, shift: true }), true)).toBe('redo');
+    expect(matchShortcut(key('z', { ctrl: true }), true)).toBeUndefined();
   });
 
   it('leaves the keys the browser keeps on macOS alone (back, forward, history) [R-KB-13]', () => {
     const cmd = (k: string) => ({
       key: k,
-      ctrlKey: false,
-      metaKey: true,
-      shiftKey: false,
-      altKey: false,
+      ctrl: false,
+      meta: true,
+      shift: false,
+      alt: false,
     });
 
     expect([
-      shortcutFor(cmd('['), true),
-      shortcutFor(cmd(']'), true),
-      shortcutFor(cmd('y'), true),
+      matchShortcut(cmd('['), true),
+      matchShortcut(cmd(']'), true),
+      matchShortcut(cmd('y'), true),
     ]).toEqual([undefined, undefined, undefined]);
   });
 

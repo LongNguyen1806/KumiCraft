@@ -1,0 +1,30 @@
+{
+  "title": "Library",
+  "search": "Search blocks…",
+  "hint": "Select an element on Canvas to insert a block.",
+  "categories": {
+    "layout": "Layout",
+    "content": "Content",
+    "form": "Form",
+    "data": "Data",
+    "composite": "Composite"
+  },
+  "blocks": {
+    "row": "Row",
+    "column": "Column",
+    "grid": "Grid",
+    "section": "Section",
+    "heading": "Heading",
+    "paragraph": "Paragraph",
+    "image": "Image",
+    "link": "Link",
+    "button": "Button",
+    "input": "Input",
+    "form": "Form",
+    "table": "Table",
+    "card": "Card",
+    "navbar": "Navbar",
+    "footer": "Footer",
+    "hero": "Hero"
+  }
+}

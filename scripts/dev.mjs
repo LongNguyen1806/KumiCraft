@@ -3,7 +3,8 @@
 import { spawn } from 'node:child_process';
 
 const API_PORT = '4310';
-const STUDIO_URL = 'http://127.0.0.1:5173';
+// Not 5173, which the Canvas keeps for the project's own dev server (R-RN-04).
+const STUDIO_URL = 'http://127.0.0.1:4311';
 const isWindows = process.platform === 'win32';
 
 const children = [

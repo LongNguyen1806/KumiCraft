@@ -57,6 +57,7 @@
     "rightPanel": "Thuộc tính",
     "layers": "Lớp",
     "layersHint": "Cấu trúc của trang hiện ở đây khi Canvas chạy dự án của bạn.",
+    "library": "Thư viện",
     "collapse": "Thu gọn",
     "expand": "Mở rộng",
     "properties": "Thuộc tính",
@@ -90,6 +91,9 @@
     "move": "di chuyển <{{tag}}>",
     "wrap": "bọc <{{tag}}>",
     "unwrap": "bỏ bọc <{{tag}}>",
+    "pageAdd": "thêm trang {{name}}",
+    "pageRename": "đổi tên trang {{name}}",
+    "pageDelete": "xóa trang {{name}}",
     "dismissError": "Đóng thông báo",
     "errorFileChanged": "File {{file}} đã bị sửa từ nơi khác, không hoàn tác được bước này"
   },
@@ -193,6 +197,15 @@
       "hint": "Để trống: ReactCraft đọc cổng của dự án (--port trong script dev, vite.config, mặc định 5173) để backend chấp nhận kết nối như khi chạy npm run dev. Lưu xong dev server chạy lại.",
       "save": "Lưu và chạy lại",
       "invalid": "Cổng phải là số từ 1024 đến 65535, hoặc để trống"
+    },
+    "designDirs": {
+      "title": "Thư mục mặc định",
+      "hint": "Thư mục mặc định cho trang, bố cục và component (tương đối từ gốc dự án).",
+      "pages": "Trang",
+      "layouts": "Bố cục",
+      "components": "Component",
+      "save": "Lưu thư mục",
+      "saved": "Đã lưu thư mục"
     }
   },
   "inspector": {
@@ -330,5 +343,57 @@
       "message": "Cổng {{port}} của dự án đang bận (có thể npm run dev đang chạy), Canvas đang chạy ở cổng khác nên backend có thể từ chối kết nối. Tắt chương trình đang giữ cổng rồi bấm Chạy lại.",
       "restart": "Chạy lại"
     }
+  },
+  "shortcuts": {
+    "title": "Bảng phím tắt",
+    "close": "Đóng",
+    "groups": {
+      "general": "Chung",
+      "structure": "Cấu trúc",
+      "canvas": "Canvas",
+      "frames": "Khung"
+    },
+    "actions": {
+      "undo": "Hoàn tác",
+      "redo": "Làm lại",
+      "duplicate": "Nhân bản",
+      "remove": "Xóa",
+      "wrap": "Bọc cột",
+      "unwrap": "Bỏ bọc",
+      "moveUp": "Lên trên",
+      "moveDown": "Xuống dưới",
+      "selectParent": "Chọn phần tử cha",
+      "zoomIn": "Phóng to",
+      "zoomOut": "Thu nhỏ",
+      "zoomReset": "100%",
+      "zoomFit": "Vừa khung",
+      "togglePreview": "Xem thử",
+      "openInEditor": "Mở trong editor",
+      "togglePanels": "Ẩn/hiện panel",
+      "showShortcuts": "Bảng phím tắt",
+      "frames": "Chuyển khung 1–8"
+    }
+  },
+  "pages": {
+    "title": "Quản lý trang",
+    "manage": "Quản lý trang",
+    "add": "Thêm trang",
+    "adding": "Đang thêm…",
+    "rename": "Đổi tên",
+    "renaming": "Đang đổi…",
+    "delete": "Xóa",
+    "deleting": "Đang xóa…",
+    "deleteConfirm": "Bạn có chắc muốn xóa trang \"{{path}}\"? Thao tác này sẽ xóa route, component và file của trang.",
+    "notConvention": "Dự án không theo quy ước routes.tsx nên chỉ hỗ trợ xem và chuyển trang.",
+    "name": "Tên trang",
+    "namePlaceholder": "Ví dụ: Giới thiệu",
+    "path": "Đường dẫn URL",
+    "dir": "Thư mục",
+    "file": "Tên file",
+    "filePlaceholder": "Name.tsx",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "newPath": "Đường dẫn URL mới",
+    "newName": "Tên component mới"
   }
 }

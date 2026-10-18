@@ -1,6 +1,7 @@
 // Hook managing Inspector target selection, source fetching, and scope (SPEC-04 M-IN, R-IN-10..16, R-IN-20).
 import {
   editBreakpoint,
+  type ElementRef,
   type ElementSource,
   type Frame,
   type InteractionState,
@@ -13,6 +14,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createEventsClient, type StudioServerEvent } from '../../api/events-client.ts';
 import { fetchElementSource } from '../../api/source-client.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
+import { useStructureErrorStore } from '../structure/structure-error-store.ts';
 import type { InspectorLockReason, InspectorTarget, InspectorWarning } from './types.ts';
 
 export type UseInspectorTargetOptions = {
@@ -166,6 +168,17 @@ function useScopeCalculation(
   }, [frame?.width, primaryFrame?.width, responsiveMode, interactionState]);
 }
 
+function useSyncActiveSource(singleRef: ElementRef | undefined, tag: string | undefined): void {
+  const loc = singleRef?.loc;
+  useEffect(() => {
+    if (loc && tag) {
+      useStructureErrorStore.getState().setActiveSource({ loc, tag });
+    } else {
+      useStructureErrorStore.getState().setActiveSource(undefined);
+    }
+  }, [loc, tag]);
+}
+
 export function useInspectorTarget(options: UseInspectorTargetOptions = {}): InspectorTarget {
   const { frame, primaryFrame, responsiveMode = 'desktop-first', enabled = true } = options;
   const selectedRefs = useSelectionStore((s) => s.selectedRefs);
@@ -190,6 +203,7 @@ export function useInspectorTarget(options: UseInspectorTargetOptions = {}): Ins
     interactionState,
   );
   useServerRefresh(enabled, locParsed?.file, refresh);
+  useSyncActiveSource(singleRef, source?.tag);
 
   if (selectedRefs.length === 0) return { kind: 'empty' };
   if (selectedRefs.length > 1) return { kind: 'multiple', count: selectedRefs.length };

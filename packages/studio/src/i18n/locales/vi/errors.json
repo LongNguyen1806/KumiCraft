@@ -76,7 +76,16 @@
       "moveIntoSelf": "Không thể di chuyển phần tử vào chính nó hoặc vào con cháu của nó.",
       "notSameParent": "Các phần tử phải có cùng phần tử cha.",
       "notContiguous": "Các phần tử phải nằm liền kề nhau.",
-      "nothingToUnwrap": "Phần tử không có con để bỏ bọc."
+      "nothingToUnwrap": "Phần tử không có con để bỏ bọc.",
+      "invalidPath": "Đường dẫn URL của trang không hợp lệ.",
+      "pathExists": "Đã có trang sử dụng đường dẫn URL này.",
+      "fileExists": "File đích đã tồn tại.",
+      "invalidFileName": "Tên file không hợp lệ.",
+      "nameExists": "Tên component đã tồn tại trong routes.",
+      "lastPage": "Không thể xóa trang cuối cùng của dự án.",
+      "indexPage": "Không thể đổi đường dẫn URL của trang index.",
+      "notConvention": "Dự án không theo quy ước routes.tsx chuẩn.",
+      "designDirs": "Thư mục thiết kế phải nằm trong thư mục mã nguồn và không được lồng nhau hoặc trùng nhau."
     }
   },
   "E017": {
@@ -121,7 +130,8 @@
       "loopRoot": "Không thể xóa hoặc nhân bản phần tử gốc của vòng lặp.",
       "expressionChild": "Phần tử nằm trong biểu thức động, hãy sửa trong editor.",
       "componentSlot": "Component nhận children qua prop, không chèn trực tiếp vào mẫu.",
-      "componentTag": "Không thể bỏ bọc component viết hoa."
+      "componentTag": "Không thể bỏ bọc component viết hoa.",
+      "componentNotFound": "Không tìm thấy khai báo component hoặc file của trang."
     }
   },
   "E024": {

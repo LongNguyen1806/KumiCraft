@@ -57,6 +57,7 @@
     "rightPanel": "Properties",
     "layers": "Layers",
     "layersHint": "The structure of the page shows here once the Canvas runs your project.",
+    "library": "Library",
     "collapse": "Collapse",
     "expand": "Expand",
     "properties": "Properties",
@@ -90,6 +91,9 @@
     "move": "move <{{tag}}>",
     "wrap": "wrap <{{tag}}>",
     "unwrap": "unwrap <{{tag}}>",
+    "pageAdd": "add page {{name}}",
+    "pageRename": "rename page {{name}}",
+    "pageDelete": "delete page {{name}}",
     "dismissError": "Dismiss",
     "errorFileChanged": "File {{file}} was modified externally, cannot undo this step"
   },
@@ -193,6 +197,15 @@
       "hint": "Empty: ReactCraft reads the project's port (--port in the dev script, vite.config, 5173 by default) so the backend accepts it as with npm run dev. Saving restarts the dev server.",
       "save": "Save and restart",
       "invalid": "The port must be a number from 1024 to 65535, or empty"
+    },
+    "designDirs": {
+      "title": "Default design directories",
+      "hint": "Default directories for pages, layouts, and components (relative to project root).",
+      "pages": "Pages",
+      "layouts": "Layouts",
+      "components": "Components",
+      "save": "Save directories",
+      "saved": "Directories saved"
     }
   },
   "inspector": {
@@ -330,5 +343,57 @@
       "message": "Port {{port}} of the project is busy (npm run dev may be running), so the Canvas runs on another port and the backend may refuse its requests. Stop the program that holds the port, then restart.",
       "restart": "Restart"
     }
+  },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "close": "Close",
+    "groups": {
+      "general": "General",
+      "structure": "Structure",
+      "canvas": "Canvas",
+      "frames": "Frames"
+    },
+    "actions": {
+      "undo": "Undo",
+      "redo": "Redo",
+      "duplicate": "Duplicate",
+      "remove": "Delete",
+      "wrap": "Wrap in column",
+      "unwrap": "Unwrap",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "selectParent": "Select parent",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "zoomReset": "100%",
+      "zoomFit": "Fit to canvas",
+      "togglePreview": "Preview mode",
+      "openInEditor": "Open in editor",
+      "togglePanels": "Toggle panels",
+      "showShortcuts": "Keyboard shortcuts",
+      "frames": "Switch frames 1–8"
+    }
+  },
+  "pages": {
+    "title": "Pages",
+    "manage": "Manage pages",
+    "add": "Add page",
+    "adding": "Adding…",
+    "rename": "Rename",
+    "renaming": "Renaming…",
+    "delete": "Delete",
+    "deleting": "Deleting…",
+    "deleteConfirm": "Are you sure you want to delete page \"{{path}}\"? This will remove its route, component, and file.",
+    "notConvention": "The project does not follow the routes.tsx convention. Adding, renaming, and deleting pages are disabled.",
+    "name": "Page name",
+    "namePlaceholder": "e.g. About",
+    "path": "URL path",
+    "dir": "Directory",
+    "file": "File name",
+    "filePlaceholder": "Name.tsx",
+    "cancel": "Cancel",
+    "save": "Save",
+    "newPath": "New URL path",
+    "newName": "New component name"
   }
 }

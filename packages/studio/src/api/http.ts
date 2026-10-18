@@ -68,7 +68,7 @@ export async function apiGet(path: string): Promise<unknown> {
 
 /** Sends `payload` as JSON with `method` and returns the `data` member of the response. */
 async function apiSend(
-  method: 'POST' | 'PATCH',
+  method: 'POST' | 'PATCH' | 'DELETE',
   path: string,
   payload?: unknown,
 ): Promise<unknown> {
@@ -93,13 +93,5 @@ export const apiPatch = (path: string, payload: unknown): Promise<unknown> =>
   apiSend('PATCH', path, payload);
 
 /** DELETE `/api/v1/<path>`. */
-export async function apiDelete(path: string): Promise<unknown> {
-  const response = await fetch(`/api/v1/${path}`, {
-    method: 'DELETE',
-    headers: {
-      Accept: 'application/json',
-      ...authHeaders(),
-    },
-  });
-  return readResponseData(response);
-}
+export const apiDelete = (path: string, payload?: unknown): Promise<unknown> =>
+  apiSend('DELETE', path, payload);

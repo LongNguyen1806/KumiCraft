@@ -1,4 +1,4 @@
-import type { RunnerToChildMessage, RunnerToParentMessage } from '@reactcraft/shared';
+import type { RunnerToChildMessage } from '@reactcraft/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ServerEvent } from '../ports/event-bus-port.ts';
@@ -9,7 +9,7 @@ import { createRunnerService, type RunnerServiceDeps } from './runner-service.ts
 
 type MockProcessHandle = ChildProcessHandle & {
   triggerLine(line: string): void;
-  triggerMessage(msg: RunnerToParentMessage): void;
+  triggerMessage(msg: unknown): void;
   triggerExit(code?: number): void;
   sentMessages: unknown[];
   killed: boolean;
@@ -58,7 +58,7 @@ function createMockHandle(): MockProcessHandle {
     triggerLine(line: string) {
       for (const cb of lineListeners) cb(line);
     },
-    triggerMessage(msg: RunnerToParentMessage) {
+    triggerMessage(msg: unknown) {
       for (const cb of messageListeners) cb(msg);
     },
     triggerExit(code = 0) {
@@ -372,5 +372,23 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
       origin: 'http://127.0.0.1:52123',
       busyPort: 3000,
     });
+  });
+
+  it('ignores messages on the channel that the runner did not send, instead of failing [R-RN-06]', async () => {
+    const runner = createRunnerService(makeDeps());
+    await runner.start();
+
+    mockHandle.triggerMessage({ type: 'progress', percent: 40 });
+    mockHandle.triggerMessage({ cmd: 'NODE_SOMETHING' });
+    expect(runner.getStatus().state).toBe('starting');
+
+    mockHandle.triggerMessage({ type: 'ready', port: 52123 });
+    expect(runner.getStatus().state).toBe('ready');
+
+    await new Promise((r) => setTimeout(r, 250));
+    const lines = events
+      .filter((e) => e.type === 'runner.log')
+      .flatMap((e) => (e.payload as { lines: string[] }).lines);
+    expect(lines.filter((l) => l.includes('does not know'))).toHaveLength(2);
   });
 });

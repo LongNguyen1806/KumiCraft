@@ -7,6 +7,7 @@ import { ApiError } from '../../../api/http.ts';
 import * as sourceClient from '../../../api/source-client.ts';
 import { initI18n } from '../../../i18n/i18n.ts';
 import { useSelectionStore } from '../../selection/selection-store.ts';
+import { useStructureErrorStore } from '../../structure/structure-error-store.ts';
 import type { InspectorTarget } from '../types.ts';
 import { StructureActions } from './structure-actions.tsx';
 
@@ -108,6 +109,23 @@ describe('StructureActions Component [Scenario #16]', () => {
 
     act(() => {
       fireEvent.click(screen.getByTestId('inspector-remove'));
+    });
+
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toMatch(/root element of a component|phần tử gốc của component/);
+  });
+
+  it('Scenario 16: StructureActions displays E023 error when error is populated via store (from shortcut)', async () => {
+    render(<StructureActions target={makeTarget()} />);
+
+    act(() => {
+      useStructureErrorStore.getState().setError({
+        targetKey: 'src/Home.tsx:10:5#0',
+        info: {
+          code: 'E023',
+          params: { reason: 'rootElement', loc: 'src/Home.tsx:10:5' },
+        },
+      });
     });
 
     const alert = await screen.findByRole('alert');

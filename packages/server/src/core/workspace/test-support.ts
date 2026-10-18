@@ -1,15 +1,31 @@
 // Helpers shared by the workspace tests. Not used by production code.
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 import { createNodeFileSystem } from '../../adapters/fs/node-file-system.ts';
+import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { LoggerPort } from '../ports/logger-port.ts';
 import type { SystemPort } from '../ports/system-port.ts';
+import { ok } from '../shared/result.ts';
 import { toSupportedPlatform } from '../shared/session.ts';
 
 export const platform = toSupportedPlatform(process.platform) ?? 'linux';
 export const nodeFs = createNodeFileSystem(platform);
+
+/**
+ * `nodeFs` that writes straight to the file, without the fsync and rename of `writeTextAtomic`.
+ * For tests that write hundreds of times (walks over real files): atomic writes there saturate
+ * the disk and slow every other test of the run.
+ */
+export const directWriteFs: FileSystemPort = {
+  ...nodeFs,
+  writeTextAtomic: async (root, path, content) => {
+    await mkdir(dirname(join(root, path)), { recursive: true });
+    await writeFile(join(root, path), content, 'utf8');
+    return ok(undefined);
+  },
+};
 
 export const silentLogger: LoggerPort = {
   debug: () => undefined,

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { nodeFs } from '../../workspace/test-support.ts';
+import { directWriteFs, nodeFs } from '../../workspace/test-support.ts';
 import { asAstNode, type AstNode, getJsxTagName, parseJsxAst } from '../ast-helpers.ts';
 import { createSourceEditorService } from '../source-editor-service.ts';
 import { checkElementStructureGuard } from './structure-guard.ts';
@@ -352,6 +352,7 @@ describe('M-SE: Wrap and Unwrap [WP-2.02b]', () => {
   });
 
   it('#16 [R-SE-27, R-SE-28] round-trips wrap column then unwrap on every valid JSXElement in real files', async () => {
+    const fast = createSourceEditorService({ fs: directWriteFs });
     const roots = [
       path.join(REPO_ROOT, 'fixtures/projects/vite8-react19-ts/src'),
       path.join(REPO_ROOT, 'templates/vite-react-ts-tailwind4/src'),
@@ -370,7 +371,7 @@ describe('M-SE: Wrap and Unwrap [WP-2.02b]', () => {
           const validElements = collectAllValidJsxElements(ast, rel);
           for (const el of validElements) {
             totalElements++;
-            const wrapRes = await service.applyStructureEdit(workDir, {
+            const wrapRes = await fast.applyStructureEdit(workDir, {
               kind: 'wrap',
               elements: [el],
               wrapper: 'column',
@@ -378,7 +379,7 @@ describe('M-SE: Wrap and Unwrap [WP-2.02b]', () => {
             expect(wrapRes.ok, `wrap failed at ${el.loc}`).toBe(true);
             if (!wrapRes.ok || !wrapRes.value.locs[0]) continue;
 
-            const unwrapRes = await service.applyStructureEdit(workDir, {
+            const unwrapRes = await fast.applyStructureEdit(workDir, {
               kind: 'unwrap',
               element: { loc: wrapRes.value.locs[0], tag: 'div' },
             });

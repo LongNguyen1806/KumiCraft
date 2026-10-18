@@ -37,6 +37,11 @@ const projectInfo = {
   primaryFrameId: 'desktop',
   backends: [],
   trusted: false,
+  designDirs: {
+    pages: 'src/pages',
+    layouts: 'src/layouts',
+    components: 'src/components',
+  },
 };
 
 const mockWorkspaceFile: WorkspaceFile = {
@@ -121,6 +126,13 @@ const mockProjectService: ProjectService = {
     Promise.resolve(
       ok({ convention: true, pages: [{ path: '/', component: 'Home', dynamic: false }] }),
     ),
+  addPage: () =>
+    Promise.resolve(
+      ok({ changed: true, files: ['src/routes.tsx', 'src/pages/About.tsx'], locs: [] }),
+    ),
+  renamePage: () => Promise.resolve(ok({ changed: true, files: ['src/routes.tsx'], locs: [] })),
+  deletePage: () => Promise.resolve(ok({ changed: true, files: ['src/routes.tsx'], locs: [] })),
+  dirs: () => Promise.resolve(ok(['src/pages', 'src/components'])),
 };
 
 beforeEach(async () => {
@@ -241,5 +253,43 @@ describe('POST /api/v1/project/install', () => {
 
     expect(res.statusCode).toBe(202);
     expect(res.json()).toEqual({ data: { jobId: 'job000000001' } });
+  });
+});
+
+describe('Page routes: /api/v1/project/dirs and /api/v1/project/pages', () => {
+  it('GET /api/v1/project/dirs returns directory list', async () => {
+    const res = await get('/api/v1/project/dirs');
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ data: { dirs: ['src/pages', 'src/components'] } });
+  });
+
+  it('POST /api/v1/project/pages creates a new page', async () => {
+    const res = await post('/api/v1/project/pages', { name: 'Giới thiệu' });
+    expect(res.statusCode).toBe(201);
+    expect(res.json()).toEqual({
+      data: { changed: true, files: ['src/routes.tsx', 'src/pages/About.tsx'], locs: [] },
+    });
+  });
+
+  it('PATCH /api/v1/project/pages renames a page', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/v1/project/pages',
+      headers: HEADERS,
+      payload: { path: '/about', newName: 'Company' },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ data: { changed: true, files: ['src/routes.tsx'], locs: [] } });
+  });
+
+  it('DELETE /api/v1/project/pages deletes a page', async () => {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/v1/project/pages',
+      headers: HEADERS,
+      payload: { path: '/about' },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ data: { changed: true, files: ['src/routes.tsx'], locs: [] } });
   });
 });

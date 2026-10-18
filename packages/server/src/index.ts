@@ -160,7 +160,7 @@ async function initServerContext(
       initialRoot: options.workspaceDir,
       runnerScriptPath: options.deps?.runnerScriptPath,
     },
-    options.port,
+    studioOriginOf(options),
     processPort,
     eventBus,
     fs,
@@ -236,11 +236,21 @@ function createFileServices(
   return { historyService, jobService, watch };
 }
 
+/**
+ * Where the Studio page runs, the only parent the Bridge in the Canvas answers. With `pnpm dev`
+ * the Studio is the Vite dev server (the trusted origin), not the server itself.
+ */
+export function studioOriginOf(
+  options: Pick<StartServerOptions, 'port' | 'trustedOrigins'>,
+): string {
+  return options.trustedOrigins?.[0] ?? `http://${HOST}:${String(options.port)}`;
+}
+
 function createServices(
   deps: Omit<ProjectServiceDeps, 'runnerService'> & {
     readonly runnerScriptPath?: string | undefined;
   },
-  serverPort: number,
+  studioOrigin: string,
   processPort: ProcessPort,
   eventBus: EventBusPort,
   fs: FileSystemPort,
@@ -279,7 +289,7 @@ function createServices(
     process: processPort,
     logger: deps.logger,
     eventBus,
-    studioOrigin: `http://${HOST}:${String(serverPort)}`,
+    studioOrigin,
     adapter: viteReactAdapter,
     runnerScriptPath: resolveRunnerScript(deps.runnerScriptPath),
   });

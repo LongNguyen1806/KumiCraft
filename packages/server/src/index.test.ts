@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { makeTempDir, silentLogger } from './core/workspace/test-support.ts';
-import { startServer } from './index.ts';
+import { startServer, studioOriginOf } from './index.ts';
 
 /** Never the settings folder of the machine running the tests. */
 let config: { dir: string; cleanup: () => Promise<void> };
@@ -64,5 +64,15 @@ describe('startServer', () => {
       error: { code: 'E002', params: { step: 'listen' } },
     });
     if (first.ok) await first.value.close();
+  });
+});
+
+describe('studioOriginOf', () => {
+  it('gives the Bridge the dev Studio of `pnpm dev`, else the server itself [S-102]', () => {
+    const base = { port: 4310 };
+    expect(studioOriginOf(base)).toBe('http://127.0.0.1:4310');
+    expect(studioOriginOf({ ...base, trustedOrigins: ['http://127.0.0.1:4311'] })).toBe(
+      'http://127.0.0.1:4311',
+    );
   });
 });

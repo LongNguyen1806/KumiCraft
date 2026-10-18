@@ -1,5 +1,4 @@
-// Probe project folder without modifying anything (SPEC-04 R-PJ-01, R-PJ-02, SPEC-03 section 5.3).
-import { type ProjectProbe, WORKSPACE_FILE } from '@reactcraft/shared';
+import { type ProjectProbe, type SupportReport, WORKSPACE_FILE } from '@reactcraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { checkBlockedPath, checkPathSyntax, parentPath } from '../shared/paths.ts';
@@ -70,4 +69,19 @@ export async function probeProject(path: string, deps: ProbeDeps): Promise<Resul
 
   const isEmpty = entriesResult.value.every((entry) => EMPTY_ALLOWED_NAMES.has(entry.name));
   return isEmpty ? ok({ kind: 'empty' }) : ok({ kind: 'other' });
+}
+
+export async function probeSupportedProject(
+  root: string,
+  deps: ProbeDeps,
+): Promise<Result<SupportReport>> {
+  const probed = await probeProject(root, deps);
+  if (!probed.ok) return probed;
+  if (probed.value.kind !== 'project') {
+    return err({ code: 'E001', params: { reasons: ['noPackageJson'] } });
+  }
+  if (!probed.value.support.supported) {
+    return err({ code: 'E001', params: { reasons: probed.value.support.reasons } });
+  }
+  return ok(probed.value.support);
 }

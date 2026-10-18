@@ -1,34 +1,35 @@
-// Project lifecycle, framework detection, creation, installation, backends, theme (SPEC-04 M-PJ).
 import {
   type BackendInfo,
+  DEFAULT_DESIGN_DIRS,
+  type DesignDirs,
   type Frame,
   type PackageManager,
   type PagesInfo,
   type ProjectInfo,
   type ProjectProbe,
   type ResponsiveMode,
-  serializeWorkspaceFile,
+  type StructureResult,
   type SupportReport,
   type ThemeInfo,
-  WORKSPACE_FILE,
-  type WorkspaceFile,
 } from '@reactcraft/shared';
 
 import { createJobService, type JobService } from '../jobs/job-service.ts';
-import type { EventBusPort } from '../ports/event-bus-port.ts';
-import type { FileSystemPort } from '../ports/file-system-port.ts';
-import type { LoggerPort } from '../ports/logger-port.ts';
-import type { ProcessPort } from '../ports/process-port.ts';
-import type { SystemPort } from '../ports/system-port.ts';
-import { type AppError, err, ok, type Result } from '../shared/result.ts';
+import { err, ok, type Result } from '../shared/result.ts';
 import type { Platform } from '../shared/session.ts';
-import type { ConfigStore } from '../shared/user-config.ts';
 import { acquireLock, type LockInfo, releaseLock } from '../workspace/lock.ts';
 import { rememberPort } from '../workspace/studio-port.ts';
 import { trustKeyOf } from '../workspace/trust.ts';
 import { createProject } from './create.ts';
+import {
+  type AddPageInput,
+  type DeletePageInput,
+  listProjectDirs,
+  type PageEditDeps,
+  type RenamePageInput,
+} from './page-common.ts';
+import { addPage, deletePage, renamePage } from './page-edits.ts';
 import { readPages } from './pages.ts';
-import { probeProject } from './probe.ts';
+import { probeProject, probeSupportedProject } from './probe.ts';
 import {
   computeBackendInfos,
   executeAddBackend,
@@ -36,42 +37,15 @@ import {
 } from './project-backends.ts';
 import { projectInfoOf } from './project-info.ts';
 import { checkNeedsInstall, getInstallCommand, startInstallJob } from './project-install.ts';
-import { loadOrCreateWorkspaceFile, reloadOpenWorkspace } from './project-workspace-file.ts';
+import type { ProjectServiceDeps, WorkspaceState } from './project-types.ts';
+import {
+  executePatchWorkspaceFile,
+  loadOrCreateWorkspaceFile,
+  type PatchWorkspaceUpdates,
+  reloadOpenWorkspace,
+} from './project-workspace-file.ts';
 import { readThemeTokens } from './theme.ts';
-
-export type WorkspaceState =
-  | { readonly status: 'none'; readonly suggestedPath?: string | undefined }
-  | {
-      readonly status: 'open';
-      readonly root: string;
-      readonly file: WorkspaceFile;
-      readonly support: SupportReport;
-      readonly trusted: boolean;
-      readonly needsInstall: boolean;
-      readonly backends: readonly BackendInfo[];
-    }
-  | { readonly status: 'error'; readonly error: AppError; readonly root: string };
-
-export type ProjectServiceDeps = {
-  readonly fs: FileSystemPort;
-  readonly system: SystemPort;
-  readonly process: ProcessPort;
-  readonly config: Pick<ConfigStore, 'isTrusted' | 'setTrusted' | 'settings'>;
-  readonly logger: LoggerPort;
-  readonly eventBus?: EventBusPort | undefined;
-  readonly port: number;
-  readonly platform: Platform;
-  readonly homeDir?: string | undefined;
-  readonly templateDir: string;
-  readonly initialRoot?: string | undefined;
-  readonly runnerService?: { start(): Promise<unknown>; stop(): Promise<unknown> } | undefined;
-  /** Runs the install job; the HTTP routes read and cancel jobs through the same service. */
-  readonly jobs?: JobService | undefined;
-  /** History of the open project; it belongs to that project only (R-HI-08). */
-  readonly history?: { clear(): void } | undefined;
-  /** Watches the open project's files (R-HI-05). */
-  readonly watch?: { start(root: string): void; stop(): Promise<void> } | undefined;
-};
+export type { ProjectServiceDeps, WorkspaceState };
 
 export type ProjectService = {
   state(): WorkspaceState;
@@ -86,6 +60,7 @@ export type ProjectService = {
     readonly frames?: readonly Frame[] | undefined;
     readonly primaryFrameId?: string | undefined;
     readonly devPort?: number | 'auto' | undefined;
+    readonly designDirs?: DesignDirs | undefined;
   }): Promise<Result<ProjectInfo>>;
   setTrusted(trusted: boolean): Promise<Result<ProjectInfo>>;
   /** Starts installing dependencies as a job (R-PJ-13); checks fail at once. */
@@ -93,6 +68,10 @@ export type ProjectService = {
   theme(): Promise<Result<ThemeInfo>>;
   /** Pages read from the project's router (R-PG-10, R-PG-15). */
   pages(): Promise<Result<PagesInfo>>;
+  addPage(input: AddPageInput): Promise<Result<StructureResult>>;
+  renamePage(input: RenamePageInput): Promise<Result<StructureResult>>;
+  deletePage(input: DeletePageInput): Promise<Result<StructureResult>>;
+  dirs(): Promise<Result<readonly string[]>>;
   addBackend(path: string, label?: string): Promise<Result<BackendInfo>>;
   removeBackend(id: string): Promise<Result<void>>;
   /** `workspace.json` changed on disk: read it again (project.changed, S-84). */
@@ -147,23 +126,6 @@ class ProjectServiceImpl implements ProjectService {
     }
   }
 
-  /** Probes the folder; anything but a supported project is E001 (R-PJ-07). */
-  private async probeSupported(root: string): Promise<Result<SupportReport>> {
-    const probed = await probeProject(root, {
-      fs: this.deps.fs,
-      platform: this.deps.platform,
-      homeDir: this.deps.homeDir,
-    });
-    if (!probed.ok) return probed;
-    if (probed.value.kind !== 'project') {
-      return err({ code: 'E001', params: { reasons: ['noPackageJson'] } });
-    }
-    if (!probed.value.support.supported) {
-      return err({ code: 'E001', params: { reasons: probed.value.support.reasons } });
-    }
-    return ok(probed.value.support);
-  }
-
   async open(targetPath?: string): Promise<Result<ProjectInfo>> {
     const root =
       targetPath ?? (this.current.status === 'open' ? this.current.root : this.deps.initialRoot);
@@ -171,7 +133,11 @@ class ProjectServiceImpl implements ProjectService {
       return err({ code: 'E021', params: { missing: 'project' } });
     }
 
-    const probed = await this.probeSupported(root);
+    const probed = await probeSupportedProject(root, {
+      fs: this.deps.fs,
+      platform: this.deps.platform,
+      homeDir: this.deps.homeDir,
+    });
     if (!probed.ok) return probed;
 
     const support = this.resolveOpenSupport(root, probed.value);
@@ -252,37 +218,22 @@ class ProjectServiceImpl implements ProjectService {
     return ok(projectInfoOf(this.current));
   }
 
-  async patchProject(updates: {
-    readonly name?: string | undefined;
-    readonly responsiveMode?: ResponsiveMode | undefined;
-    readonly frames?: readonly Frame[] | undefined;
-    readonly primaryFrameId?: string | undefined;
-    readonly devPort?: number | 'auto' | undefined;
-  }): Promise<Result<ProjectInfo>> {
+  async patchProject(updates: PatchWorkspaceUpdates): Promise<Result<ProjectInfo>> {
     if (this.current.status !== 'open') {
       return err({ code: 'E021', params: { missing: 'project' } });
     }
 
-    const { devPort: savedPort, ...file } = this.current.file;
-    // R-RN-27: 'auto' forgets the saved port; the runner reads the project's own again.
-    const devPort = updates.devPort === 'auto' ? undefined : (updates.devPort ?? savedPort);
-    const updatedFile: WorkspaceFile = {
-      ...file,
-      name: updates.name ?? file.name,
-      responsiveMode: updates.responsiveMode ?? file.responsiveMode,
-      frames: updates.frames ? [...updates.frames] : file.frames,
-      primaryFrameId: updates.primaryFrameId ?? file.primaryFrameId,
-      ...(devPort === undefined ? {} : { devPort }),
-    };
-
-    const write = await this.deps.fs.writeTextAtomic(
+    const write = await executePatchWorkspaceFile(
+      this.deps.fs,
       this.current.root,
-      WORKSPACE_FILE,
-      serializeWorkspaceFile(updatedFile),
+      this.current.file,
+      this.current.file.sourceDir,
+      this.deps.platform,
+      updates,
     );
     if (!write.ok) return write;
 
-    this.current = { ...this.current, file: updatedFile };
+    this.current = { ...this.current, file: write.value };
     const info = projectInfoOf(this.current);
     this.deps.eventBus?.publish('project.changed', info);
     return ok(info);
@@ -352,6 +303,55 @@ class ProjectServiceImpl implements ProjectService {
       return err({ code: 'E021', params: { missing: 'project' } });
     }
     return ok(await readPages(this.deps.fs, this.current.root, this.current.file.sourceDir));
+  }
+
+  private getPageEditDeps(): Result<PageEditDeps> {
+    if (this.current.status !== 'open') {
+      return err({ code: 'E021', params: { missing: 'project' } });
+    }
+    const history = this.deps.history;
+    if (!history || !('push' in history)) {
+      return err({ code: 'E021', params: { missing: 'history' } });
+    }
+    return ok({
+      fs: this.deps.fs,
+      history,
+      projectRoot: this.current.root,
+      sourceDir: this.current.file.sourceDir,
+      platform: this.deps.platform,
+      language: this.current.support.language,
+      designDirs: this.current.file.designDirs ?? DEFAULT_DESIGN_DIRS,
+    });
+  }
+
+  async addPage(input: AddPageInput): Promise<Result<StructureResult>> {
+    const deps = this.getPageEditDeps();
+    if (!deps.ok) return deps;
+    return addPage(deps.value, input);
+  }
+
+  async renamePage(input: RenamePageInput): Promise<Result<StructureResult>> {
+    const deps = this.getPageEditDeps();
+    if (!deps.ok) return deps;
+    return renamePage(deps.value, input);
+  }
+
+  async deletePage(input: DeletePageInput): Promise<Result<StructureResult>> {
+    const deps = this.getPageEditDeps();
+    if (!deps.ok) return deps;
+    return deletePage(deps.value, input);
+  }
+
+  async dirs(): Promise<Result<readonly string[]>> {
+    if (this.current.status !== 'open') {
+      return err({ code: 'E021', params: { missing: 'project' } });
+    }
+    const dirs = await listProjectDirs(
+      this.deps.fs,
+      this.current.root,
+      this.current.file.sourceDir,
+    );
+    return ok(dirs);
   }
 
   async theme(): Promise<Result<ThemeInfo>> {

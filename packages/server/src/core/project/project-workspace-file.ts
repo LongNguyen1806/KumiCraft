@@ -1,4 +1,5 @@
 // Workspace file loading, creation and reload helpers (M-PJ, S-84).
+import type { DesignDirs, Frame, ResponsiveMode } from '@reactcraft/shared';
 import {
   newWorkspaceFile,
   serializeWorkspaceFile,
@@ -11,14 +12,55 @@ import { nanoid } from 'nanoid';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { LoggerPort } from '../ports/logger-port.ts';
 import type { SystemPort } from '../ports/system-port.ts';
-import { ok, type Result } from '../shared/result.ts';
+import { err, ok, type Result } from '../shared/result.ts';
 import type { Platform } from '../shared/session.ts';
 import type { ConfigStore } from '../shared/user-config.ts';
 import { readWorkspaceFile } from '../workspace/read-workspace.ts';
 import { trustKeyOf } from '../workspace/trust.ts';
 import { detectResponsiveMode } from './detect-responsive.ts';
+import { validateDesignDirs } from './page-common.ts';
 import { computeBackendInfos } from './project-backends.ts';
 import type { WorkspaceState } from './project-service.ts';
+
+export type PatchWorkspaceUpdates = {
+  readonly name?: string | undefined;
+  readonly responsiveMode?: ResponsiveMode | undefined;
+  readonly frames?: readonly Frame[] | undefined;
+  readonly primaryFrameId?: string | undefined;
+  readonly devPort?: number | 'auto' | undefined;
+  readonly designDirs?: DesignDirs | undefined;
+};
+
+export async function executePatchWorkspaceFile(
+  fs: FileSystemPort,
+  root: string,
+  currentFile: WorkspaceFile,
+  sourceDir: string,
+  platform: Platform,
+  updates: PatchWorkspaceUpdates,
+): Promise<Result<WorkspaceFile>> {
+  if (updates.designDirs !== undefined) {
+    if (!validateDesignDirs(updates.designDirs, sourceDir, platform)) {
+      return err({ code: 'E016', params: { reason: 'designDirs' } });
+    }
+  }
+
+  const { devPort: savedPort, ...file } = currentFile;
+  const devPort = updates.devPort === 'auto' ? undefined : (updates.devPort ?? savedPort);
+  const updatedFile: WorkspaceFile = {
+    ...file,
+    name: updates.name ?? file.name,
+    responsiveMode: updates.responsiveMode ?? file.responsiveMode,
+    frames: updates.frames ? [...updates.frames] : file.frames,
+    primaryFrameId: updates.primaryFrameId ?? file.primaryFrameId,
+    ...(devPort === undefined ? {} : { devPort }),
+    ...(updates.designDirs !== undefined ? { designDirs: updates.designDirs } : {}),
+  };
+
+  const write = await fs.writeTextAtomic(root, WORKSPACE_FILE, serializeWorkspaceFile(updatedFile));
+  if (!write.ok) return write;
+  return ok(updatedFile);
+}
 
 export type WorkspaceFileDeps = {
   readonly fs: FileSystemPort;

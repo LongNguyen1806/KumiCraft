@@ -1,4 +1,4 @@
-import type { ProjectInfo, RunnerStatus } from '@reactcraft/shared';
+import { DEFAULT_DESIGN_DIRS, type ProjectInfo, type RunnerStatus } from '@reactcraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -43,6 +43,7 @@ const mockProject: ProjectInfo = {
   primaryFrameId: 'desktop',
   backends: [],
   trusted: true,
+  designDirs: DEFAULT_DESIGN_DIRS,
 };
 
 describe('CanvasArea', () => {

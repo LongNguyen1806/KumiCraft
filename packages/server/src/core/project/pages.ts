@@ -1,5 +1,5 @@
-// Pages of the project read from its router (SPEC-04 M-PG R-PG-10, R-PG-15): enough to list and
-// navigate pages in the Canvas, whatever folder layout the project uses.
+import * as path from 'node:path';
+
 import type { PageInfo, PagesInfo } from '@reactcraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
@@ -172,13 +172,56 @@ function isConventionFile(file: string, sourceDir: string, text: string): boolea
   );
 }
 
+function extractImportedFiles(ast: AstNode, file: string): Map<string, string> {
+  const map = new Map<string, string>();
+  const program = asAstNode(ast['program']);
+  const body = Array.isArray(program?.['body']) ? program['body'] : [];
+  const fileDir = path.posix.dirname(file);
+
+  for (const item of body) {
+    const stmt = asAstNode(item);
+    if (stmt?.type !== 'ImportDeclaration') continue;
+    const sourceNode = asAstNode(stmt['source']);
+    const source = typeof sourceNode?.['value'] === 'string' ? sourceNode['value'] : '';
+    if (!source.startsWith('.')) continue;
+
+    const resolved = path.posix.normalize(path.posix.join(fileDir, source));
+    const specifiers = Array.isArray(stmt['specifiers']) ? stmt['specifiers'] : [];
+    for (const raw of specifiers) {
+      const spec = asAstNode(raw);
+      const local = asAstNode(spec?.['local']);
+      if (typeof local?.['name'] === 'string') {
+        map.set(local['name'], resolved);
+      }
+    }
+  }
+  return map;
+}
+
+const CANDIDATE_EXTS = ['', '.tsx', '.jsx', '.ts', '.js'] as const;
+
+async function resolvePageFile(
+  fs: FileSystemPort,
+  root: string,
+  importPath: string | undefined,
+): Promise<string | undefined> {
+  if (importPath === undefined) return undefined;
+  for (const ext of CANDIDATE_EXTS) {
+    const candidate = ext === '' ? importPath : `${importPath}${ext}`;
+    if (await fs.exists(root, candidate)) return candidate;
+  }
+  return undefined;
+}
+
 export async function readPages(
   fs: FileSystemPort,
   root: string,
   sourceDir: string,
 ): Promise<PagesInfo> {
   const found: Found[] = [];
+  const importsByFile = new Map<string, Map<string, string>>();
   let routesFile: string | undefined;
+
   for (const file of await listCodeFiles(fs, root, sourceDir)) {
     const read = await fs.readText(root, file, { maxBytes: MAX_BYTES });
     if (!read.ok || !HINT.test(read.value)) continue;
@@ -188,18 +231,27 @@ export async function readPages(
     } catch {
       continue; // a file that does not parse lists no pages; the dev server reports it
     }
-    if (routesFile === undefined && isConventionFile(file, sourceDir, read.value))
+    if (routesFile === undefined && isConventionFile(file, sourceDir, read.value)) {
       routesFile = file;
+    }
+    importsByFile.set(file, extractImportedFiles(ast, file));
     walk(ast, file, found);
   }
+
   const seen = new Set<string>();
   const pages: PageInfo[] = [];
   for (const page of found) {
     if (page.path.includes('*') || seen.has(page.path)) continue;
     seen.add(page.path);
+
+    const fileMap = importsByFile.get(page.file);
+    const rawImport = page.component !== undefined ? fileMap?.get(page.component) : undefined;
+    const resolvedFile = await resolvePageFile(fs, root, rawImport);
+
     pages.push({
       path: page.path,
       ...(page.component === undefined ? {} : { component: page.component }),
+      ...(resolvedFile === undefined ? {} : { file: resolvedFile }),
       dynamic: page.path.includes(':'),
     });
   }

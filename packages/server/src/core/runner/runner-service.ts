@@ -10,6 +10,7 @@ import {
   type RunnerStatus,
   type RunnerToChildMessage,
   type RunnerToParentMessage,
+  RunnerToParentMessageSchema,
   type WorkspaceFile,
 } from '@reactcraft/shared';
 import { nanoid } from 'nanoid';
@@ -223,9 +224,15 @@ class RunnerExecution {
       this.logs.push(line);
     });
     handle.onMessage?.((raw: unknown) => {
-      const msg = raw as RunnerToParentMessage | undefined;
-      if (msg && typeof msg === 'object') {
-        this.onChildMessage(msg);
+      // Only the runner's own messages count. Anything else on the channel (a plugin or library
+      // of the project calling process.send) must not turn into a dev server error.
+      const parsed = RunnerToParentMessageSchema.safeParse(raw);
+      if (parsed.success) {
+        this.onChildMessage(parsed.data);
+      } else {
+        this.logs.push(
+          '[reactcraft] ignored a message from the dev server process it does not know',
+        );
       }
     });
     void (async () => {

@@ -3,7 +3,13 @@ import { z } from 'zod';
 
 import { RelPathSchema } from './rel-path.ts';
 import { ResponsiveModeSchema } from './responsive.ts';
-import { BackendLinkSchema, DevPortSchema, FrameSchema, FRAMEWORK_IDS } from './workspace-file.ts';
+import {
+  BackendLinkSchema,
+  DesignDirsSchema,
+  DevPortSchema,
+  FrameSchema,
+  FRAMEWORK_IDS,
+} from './workspace-file.ts';
 
 export const UNSUPPORTED_REASONS = [
   'noPackageJson',
@@ -86,6 +92,8 @@ export const ProjectInfoSchema = z.strictObject({
   trusted: z.boolean(),
   /** The port saved in workspace.json; absent: read from the project (R-RN-04). */
   devPort: DevPortSchema.optional(),
+  /** Default design directories (R-CP-16). */
+  designDirs: DesignDirsSchema,
 });
 export type ProjectInfo = z.infer<typeof ProjectInfoSchema>;
 
@@ -123,3 +131,26 @@ export const PagesInfoSchema = z.strictObject({
   pages: z.array(PageInfoSchema),
 });
 export type PagesInfo = z.infer<typeof PagesInfoSchema>;
+
+export const AddPageSchema = z.strictObject({
+  name: z.string().trim().min(1).max(64),
+  path: z.string().max(200).optional(),
+  dir: RelPathSchema.optional(),
+  fileName: z.string().max(100).optional(),
+});
+export type AddPage = z.infer<typeof AddPageSchema>;
+
+export const RenamePageSchema = z.strictObject({
+  path: z.string().min(1),
+  newPath: z.string().max(200).optional(),
+  newName: z.string().trim().min(1).max(64).optional(),
+});
+export type RenamePage = z.infer<typeof RenamePageSchema>;
+
+export const DeletePageSchema = z.strictObject({ path: z.string().min(1) });
+export type DeletePage = z.infer<typeof DeletePageSchema>;
+
+export const ProjectDirsResponseSchema = z.strictObject({
+  dirs: z.array(RelPathSchema),
+});
+export type ProjectDirsResponse = z.infer<typeof ProjectDirsResponseSchema>;

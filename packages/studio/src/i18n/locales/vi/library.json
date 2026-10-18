@@ -1,0 +1,30 @@
+{
+  "title": "Thư viện",
+  "search": "Tìm kiếm khối…",
+  "hint": "Chọn một phần tử trên Canvas để chèn khối.",
+  "categories": {
+    "layout": "Bố cục",
+    "content": "Nội dung",
+    "form": "Biểu mẫu",
+    "data": "Dữ liệu",
+    "composite": "Tổ hợp"
+  },
+  "blocks": {
+    "row": "Hàng",
+    "column": "Cột",
+    "grid": "Lưới",
+    "section": "Phần",
+    "heading": "Tiêu đề",
+    "paragraph": "Đoạn văn",
+    "image": "Ảnh",
+    "link": "Liên kết",
+    "button": "Nút",
+    "input": "Ô nhập",
+    "form": "Biểu mẫu",
+    "table": "Bảng",
+    "card": "Thẻ",
+    "navbar": "Thanh điều hướng",
+    "footer": "Chân trang",
+    "hero": "Hero"
+  }
+}

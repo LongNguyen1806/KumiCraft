@@ -9,6 +9,7 @@ import {
   SupportReportSchema,
   ThemeInfoSchema,
 } from './project.ts';
+import { DEFAULT_DESIGN_DIRS } from './workspace-file.ts';
 
 describe('ProjectProbeSchema', () => {
   it('parses valid missing probe', () => {
@@ -103,6 +104,7 @@ describe('ProjectInfoSchema', () => {
         },
       ],
       trusted: true,
+      designDirs: DEFAULT_DESIGN_DIRS,
     };
     expect(ProjectInfoSchema.safeParse(info).success).toBe(true);
   });

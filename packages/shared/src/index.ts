@@ -63,12 +63,19 @@ export {
   HistoryStepSchema,
 } from './history.ts';
 export * from './job.ts';
+export { LIBRARY_BLOCKS, type LibraryBlock, type LibraryBlockCategory } from './library/blocks.ts';
+export { type LibraryBlockLabelsResolver, normalizeText, searchBlocks } from './library/search.ts';
+export { pageNames, type PageNamesResult, toComponentName, toRoutePath } from './page-names.ts';
 export {
+  type AddPage,
+  AddPageSchema,
   BACKEND_STATUSES,
   type BackendInfo,
   BackendInfoSchema,
   type BackendStatus,
   BackendStatusSchema,
+  type DeletePage,
+  DeletePageSchema,
   PACKAGE_MANAGERS,
   type PackageManager,
   PackageManagerSchema,
@@ -76,10 +83,14 @@ export {
   PageInfoSchema,
   type PagesInfo,
   PagesInfoSchema,
+  type ProjectDirsResponse,
+  ProjectDirsResponseSchema,
   type ProjectInfo,
   ProjectInfoSchema,
   type ProjectProbe,
   ProjectProbeSchema,
+  type RenamePage,
+  RenamePageSchema,
   type SupportReport,
   SupportReportSchema,
   type ThemeInfo,
@@ -131,6 +142,14 @@ export {
   type RunnerToParentMessage,
   RunnerToParentMessageSchema,
 } from './runner.ts';
+export {
+  type KeyPress,
+  matchShortcut,
+  SHORTCUT_ACTIONS,
+  type ShortcutAction,
+  shortcutLabel,
+  WORKS_WHILE_TYPING,
+} from './shortcuts.ts';
 export {
   type AnyEdit,
   AnyEditSchema,
@@ -189,7 +208,10 @@ export { TAILWIND_COLORS } from './tailwind/palette.generated.ts';
 export {
   type BackendLink,
   BackendLinkSchema,
+  DEFAULT_DESIGN_DIRS,
   defaultFrames,
+  type DesignDirs,
+  DesignDirsSchema,
   DevPortSchema,
   type Frame,
   frameRuleProblems,

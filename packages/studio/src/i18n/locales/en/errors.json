@@ -76,7 +76,16 @@
       "moveIntoSelf": "Cannot move an element into itself or its descendants.",
       "notSameParent": "Elements must share the same parent element.",
       "notContiguous": "Elements must be contiguous siblings.",
-      "nothingToUnwrap": "Element has no children to unwrap."
+      "nothingToUnwrap": "Element has no children to unwrap.",
+      "invalidPath": "Route URL path is invalid.",
+      "pathExists": "A page with this URL path already exists.",
+      "fileExists": "Target file already exists.",
+      "invalidFileName": "File name is invalid.",
+      "nameExists": "Component name already exists in routes.",
+      "lastPage": "Cannot delete the last page of the project.",
+      "indexPage": "Cannot change the path of an index page.",
+      "notConvention": "Project does not follow the standard routes.tsx convention.",
+      "designDirs": "Design directories must be within the source directory and cannot nest or overlap."
     }
   },
   "E017": {
@@ -121,7 +130,8 @@
       "loopRoot": "Cannot remove or duplicate the root element of a loop.",
       "expressionChild": "Element is inside a dynamic expression; edit it in your editor.",
       "componentSlot": "Component receives children via prop; cannot insert directly into its template.",
-      "componentTag": "Cannot unwrap an uppercase component tag."
+      "componentTag": "Cannot unwrap an uppercase component tag.",
+      "componentNotFound": "Page component declaration or file could not be found."
     }
   },
   "E024": {

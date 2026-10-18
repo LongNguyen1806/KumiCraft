@@ -120,7 +120,7 @@ describe('keyboard while text is edited [R-TX-03]', () => {
     pressCtrlZ();
 
     expect(sentOfType('shortcut')).toEqual([
-      { key: 'Undo', ctrl: true, meta: false, shift: false, alt: false },
+      { key: 'z', ctrl: true, meta: false, shift: false, alt: false },
     ]);
   });
 });
@@ -380,7 +380,7 @@ describe('core behaviour', () => {
     const event = new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, cancelable: true });
     window.dispatchEvent(event);
     expect(sentOfType('shortcut')).toEqual([
-      { key: 'Undo', ctrl: true, meta: false, shift: false, alt: false },
+      { key: 'z', ctrl: true, meta: false, shift: false, alt: false },
     ]);
     expect(event.defaultPrevented).toBe(true);
   });

@@ -33,6 +33,18 @@ function resolveHistoryLabel(
     const tag = label.params?.['tag'] ?? '';
     return t('history.setAttribute', { tag });
   }
+  if (label.key === 'history:pageAdd' || label.key === 'history.pageAdd') {
+    const name = label.params?.['name'] ?? '';
+    return t('history.pageAdd', { name });
+  }
+  if (label.key === 'history:pageRename' || label.key === 'history.pageRename') {
+    const name = label.params?.['name'] ?? '';
+    return t('history.pageRename', { name });
+  }
+  if (label.key === 'history:pageDelete' || label.key === 'history.pageDelete') {
+    const name = label.params?.['name'] ?? '';
+    return t('history.pageDelete', { name });
+  }
   return label.key;
 }
 

@@ -1,5 +1,5 @@
 // ProjectInfo of the open project as the API returns it (SPEC-03 section 5.3).
-import type { ProjectInfo } from '@reactcraft/shared';
+import { DEFAULT_DESIGN_DIRS, type ProjectInfo } from '@reactcraft/shared';
 
 import { getInstallCommand } from './project-install.ts';
 import type { OpenWorkspace } from './project-workspace-file.ts';
@@ -19,5 +19,6 @@ export function projectInfoOf(state: OpenWorkspace): ProjectInfo {
     backends: state.backends,
     trusted: state.trusted,
     ...(state.file.devPort === undefined ? {} : { devPort: state.file.devPort }),
+    designDirs: state.file.designDirs ?? DEFAULT_DESIGN_DIRS,
   };
 }

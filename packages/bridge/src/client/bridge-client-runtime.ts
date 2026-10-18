@@ -10,21 +10,20 @@ import {
   type ElementInfo,
   type ElementRef,
   type StudioHighlightPayload,
-  StudioHighlightPayloadSchema,
-  StudioNavigatePayloadSchema,
   type StudioSelectPayload,
-  StudioSelectPayloadSchema,
-  StudioSetModePayloadSchema,
   type StudioTextEditStartPayload,
-  StudioTextEditStartPayloadSchema,
 } from '@reactcraft/shared';
 
 import { toBuildError } from './build-error.ts';
 import { getRefForElement, handleElementClick } from './candidate-chain.ts';
 import { scanDomTree } from './dom-scanner.ts';
+import { shouldForwardShortcut } from './keyboard.ts';
 import { fitsMessageLimit } from './message-size.ts';
 import { BridgeOverlay } from './overlay.ts';
+import { attachRuntimeErrorListeners } from './runtime-errors.ts';
+import { wrapBrowserHistory } from './runtime-history.ts';
 import { collectSelectionInfo } from './selection-info.ts';
+import { dispatchStudioMessage } from './studio-messages.ts';
 import { TextEditController } from './text-edit.ts';
 
 const INTERCEPTED_EVENTS = [
@@ -63,6 +62,8 @@ export class BridgeClientRuntime {
   private domObserver: MutationObserver;
   private isDestroyed = false;
   private textEdit: TextEditController;
+  private historyTeardown?: () => void;
+  private errorTeardown?: () => void;
 
   constructor(config: BridgeRuntimeConfig) {
     this.nonce = config.nonce;
@@ -116,10 +117,17 @@ export class BridgeClientRuntime {
     window.addEventListener('keydown', this.handleKeyDown, true);
 
     // 5. Route sync (R-BR-19)
-    this.wrapHistory();
+    this.historyTeardown = wrapBrowserHistory(() => {
+      this.sendToStudio('route', { route: window.location.pathname });
+    });
 
     // 6. Error handling (R-BR-17)
-    this.attachErrorListeners();
+    this.errorTeardown = attachRuntimeErrorListeners((message, stack) => {
+      this.sendToStudio('runtime-error', {
+        message: message.slice(0, 2000),
+        ...(stack !== undefined ? { stack: stack.slice(0, 8000) } : {}),
+      });
+    });
 
     // 7. Observe DOM changes for tree scanner (R-BR-12) and selection info (R-BR-16)
     this.domObserver.observe(document.documentElement, {
@@ -165,41 +173,27 @@ export class BridgeClientRuntime {
     if (event.source !== window.parent || event.origin !== this.studioOrigin) return;
     const envelope = BridgeEnvelopeSchema.safeParse(event.data);
     if (!envelope.success || envelope.data.nonce !== this.nonce) return;
-    this.dispatchStudioMessage(envelope.data.type, envelope.data.payload);
-  };
-
-  private dispatchStudioMessage(type: string, payload: unknown): void {
-    switch (type) {
-      case 'set-mode': {
-        const parsed = StudioSetModePayloadSchema.safeParse(payload);
-        if (parsed.success) this.setMode(parsed.data.mode);
-        break;
-      }
-      case 'select': {
-        const parsed = StudioSelectPayloadSchema.safeParse(payload);
-        if (parsed.success) this.handleSelectMessage(parsed.data);
-        break;
-      }
-      case 'highlight': {
-        const parsed = StudioHighlightPayloadSchema.safeParse(payload);
-        if (parsed.success) this.handleHighlightMessage(parsed.data);
-        break;
-      }
-      case 'navigate': {
-        const parsed = StudioNavigatePayloadSchema.safeParse(payload);
-        if (parsed.success) this.handleNavigateMessage(parsed.data.route);
-        break;
-      }
-      case 'text-edit-start': {
-        const parsed = StudioTextEditStartPayloadSchema.safeParse(payload);
-        if (parsed.success) this.handleTextEditStartMessage(parsed.data);
-        break;
-      }
-      case 'text-edit-end':
+    dispatchStudioMessage(envelope.data.type, envelope.data.payload, {
+      setMode: (mode) => {
+        this.setMode(mode);
+      },
+      handleSelect: (data) => {
+        this.handleSelectMessage(data);
+      },
+      handleHighlight: (data) => {
+        this.handleHighlightMessage(data);
+      },
+      handleNavigate: (route) => {
+        this.handleNavigateMessage(route);
+      },
+      handleTextEditStart: (data) => {
+        this.handleTextEditStartMessage(data);
+      },
+      commitTextEdit: () => {
         this.textEdit.commit();
-        break;
-    }
-  }
+      },
+    });
+  };
 
   private setMode(mode: 'design' | 'preview'): void {
     if (this.mode === 'design' && mode !== 'design') this.textEdit.commit();
@@ -329,32 +323,20 @@ export class BridgeClientRuntime {
   };
 
   private handleKeyDown = (event: KeyboardEvent): void => {
-    // R-TX-03: while text is edited, keys belong to the text (Esc, Enter and native undo).
-    if (this.mode !== 'design' || this.textEdit.isActive()) return;
-
     const isMac = navigator.platform.toUpperCase().includes('MAC');
-    const cmdOrCtrl = isMac ? event.metaKey : event.ctrlKey;
-
-    let shortcutKey: string | undefined;
-    if (event.key === 'Escape') {
-      shortcutKey = 'Escape';
-    } else if (cmdOrCtrl && event.key.toLowerCase() === 'z') {
-      shortcutKey = event.shiftKey ? 'Redo' : 'Undo';
-    } else if (cmdOrCtrl && event.key.toLowerCase() === 'y') {
-      shortcutKey = 'Redo';
+    if (!shouldForwardShortcut(event, this.mode, this.textEdit.isActive(), isMac)) {
+      return;
     }
 
-    if (shortcutKey) {
-      event.preventDefault();
-      const shortcutPayload: BridgeShortcutPayload = {
-        key: shortcutKey,
-        ctrl: event.ctrlKey,
-        meta: event.metaKey,
-        shift: event.shiftKey,
-        alt: event.altKey,
-      };
-      this.sendToStudio('shortcut', shortcutPayload);
-    }
+    event.preventDefault();
+    const shortcutPayload: BridgeShortcutPayload = {
+      key: event.key,
+      ctrl: event.ctrlKey,
+      meta: event.metaKey,
+      shift: event.shiftKey,
+      alt: event.altKey,
+    };
+    this.sendToStudio('shortcut', shortcutPayload);
   };
 
   private scheduleTreeScan(): void {
@@ -366,49 +348,6 @@ export class BridgeClientRuntime {
       this.sendToStudio('tree', payload);
       this.treeDebounceTimer = undefined;
     }, 100);
-  }
-
-  private wrapHistory(): void {
-    const notifyRoute = (): void => {
-      this.sendToStudio('route', { route: window.location.pathname });
-    };
-    const origPush = window.history.pushState.bind(window.history);
-    const origReplace = window.history.replaceState.bind(window.history);
-    window.history.pushState = (...args: Parameters<typeof origPush>) => {
-      origPush(...args);
-      notifyRoute();
-    };
-    window.history.replaceState = (...args: Parameters<typeof origReplace>) => {
-      origReplace(...args);
-      notifyRoute();
-    };
-    window.addEventListener('popstate', notifyRoute);
-  }
-
-  private attachErrorListeners(): void {
-    const reportError = (message: string, stack?: string): void => {
-      this.sendToStudio('runtime-error', {
-        message: message.slice(0, 2000),
-        ...(stack !== undefined ? { stack: stack.slice(0, 8000) } : {}),
-      });
-    };
-    window.addEventListener('error', (evt) => {
-      const err = evt.error as { stack?: string } | undefined;
-      reportError(
-        evt.message || 'Unknown error',
-        typeof err?.stack === 'string' ? err.stack : undefined,
-      );
-    });
-    window.addEventListener('unhandledrejection', (evt) => {
-      const reason = evt.reason as { message?: string; stack?: string } | undefined;
-      const rawMsg =
-        typeof reason?.message === 'string'
-          ? reason.message
-          : typeof evt.reason === 'string'
-            ? evt.reason
-            : 'Unhandled promise rejection';
-      reportError(rawMsg, typeof reason?.stack === 'string' ? reason.stack : undefined);
-    });
   }
 
   /** R-BR-17, R-BR-12: build errors and successful updates come from Vite's HMR channel. */
@@ -443,6 +382,8 @@ export class BridgeClientRuntime {
   public destroy(): void {
     this.isDestroyed = true;
     this.textEdit.destroy();
+    this.historyTeardown?.();
+    this.errorTeardown?.();
     if (this.treeDebounceTimer !== undefined) {
       clearTimeout(this.treeDebounceTimer);
     }

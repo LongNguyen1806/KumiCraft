@@ -2,16 +2,17 @@ import type { ProjectInfo } from '@reactcraft/shared';
 import { useEffect, useState } from 'react';
 
 import { fetchProject } from '../../api/project-client.ts';
-import { useHistoryStore, useHistorySync } from '../history/history-store.ts';
+import { useHistorySync } from '../history/history-store.ts';
 import { InstallDialog } from '../project/install-dialog.tsx';
 import { ProjectDialog } from '../project/project-dialog.tsx';
+import { ShortcutHelp } from '../shortcuts/shortcut-help.tsx';
+import { useShortcuts } from '../shortcuts/use-shortcuts.ts';
 import { TrustPrompt } from '../trust/trust-prompt.tsx';
 import { CanvasArea } from './canvas-area.tsx';
 import { EditorToolbar } from './editor-toolbar.tsx';
 import { Resizer } from './resizer.tsx';
 import { LeftPanel, RightPanel } from './side-panels.tsx';
 import { StatusBar } from './status-bar.tsx';
-import { useEditorShortcuts } from './use-editor-shortcuts.ts';
 import { type PanelLayout, type Side, usePanelLayout } from './use-panel-layout.ts';
 
 const columns = ({ width, visible }: PanelLayout): string =>
@@ -165,17 +166,8 @@ function EditorDialogs({
 /** The Editor of an open project: toolbar, panels, Canvas and status bar. */
 export function EditorShell({ projectId, projectName, trusted, onTrusted }: EditorShellProps) {
   const panels = usePanelLayout();
-  const canUndo = useHistoryStore((s) => s.canUndo);
-  const canRedo = useHistoryStore((s) => s.canRedo);
-  const undo = useHistoryStore((s) => s.undo);
-  const redo = useHistoryStore((s) => s.redo);
   useHistorySync(true);
-
-  useEditorShortcuts({
-    togglePanels: panels.toggleBoth,
-    undo: canUndo ? () => void undo() : undefined,
-    redo: canRedo ? () => void redo() : undefined,
-  });
+  useShortcuts();
   const loader = useProjectLoader(trusted);
 
   return (
@@ -208,6 +200,7 @@ export function EditorShell({ projectId, projectName, trusted, onTrusted }: Edit
       />
       <StatusBar trusted={trusted} />
       <EditorDialogs loader={loader} onTrusted={onTrusted} />
+      <ShortcutHelp />
     </div>
   );
 }

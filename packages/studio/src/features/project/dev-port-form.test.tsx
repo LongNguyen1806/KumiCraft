@@ -1,5 +1,5 @@
 // The "dev port" field of the project dialog (R-RN-27).
-import type { ProjectInfo } from '@reactcraft/shared';
+import { DEFAULT_DESIGN_DIRS, type ProjectInfo } from '@reactcraft/shared';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -20,6 +20,7 @@ const project: ProjectInfo = {
   primaryFrameId: 'desktop',
   backends: [],
   trusted: true,
+  designDirs: DEFAULT_DESIGN_DIRS,
 };
 
 function mockSave() {

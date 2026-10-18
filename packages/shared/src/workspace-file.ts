@@ -60,6 +60,19 @@ export function frameRuleProblems(value: FrameRules): { rule: string; message: s
   return problems;
 }
 
+export const DesignDirsSchema = z.strictObject({
+  pages: RelPathSchema,
+  layouts: RelPathSchema,
+  components: RelPathSchema,
+});
+export type DesignDirs = z.infer<typeof DesignDirsSchema>;
+
+export const DEFAULT_DESIGN_DIRS = {
+  pages: 'src/pages',
+  layouts: 'src/layouts',
+  components: 'src/components',
+} as const;
+
 export const WorkspaceFileSchema = z
   .strictObject({
     schemaVersion: z.literal(WORKSPACE_SCHEMA_VERSION),
@@ -73,6 +86,7 @@ export const WorkspaceFileSchema = z
     frames: z.array(FrameSchema).min(1).max(8),
     primaryFrameId: z.string(),
     devPort: DevPortSchema.optional(),
+    designDirs: DesignDirsSchema.optional(),
   })
   .superRefine((value, ctx) => {
     for (const problem of frameRuleProblems(value)) {

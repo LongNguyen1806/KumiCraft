@@ -2,7 +2,7 @@
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { resolveTemplateDir } from '../../index.ts';
 import { makeTempDir, nodeFs, platform } from '../workspace/test-support.ts';
@@ -107,13 +107,27 @@ describe('createProject with the real template', () => {
       expect(await readFile(join(target, file), 'utf8')).not.toContain('{{');
     }
   });
+});
+
+/** Checks that only read the created site share one project: creating copies the whole template. */
+describe('the created starter site', () => {
+  let site: string;
+  let removeSite: () => Promise<void>;
+
+  beforeAll(async () => {
+    const temp = await makeTempDir();
+    removeSite = temp.cleanup;
+    site = join(temp.dir, 'shop');
+    expect(await createProject(site, 'Shop', deps())).toEqual({ ok: true, value: undefined });
+  });
+
+  afterAll(async () => {
+    await removeSite();
+  });
 
   it('copies every file from templates/vite-react-ts-tailwind4 recursively with _gitignore renamed [R-PJ-10]', async () => {
-    const target = join(dir, 'shop');
+    const target = site;
     const templateDir = resolveTemplateDir();
-
-    const created = await createProject(target, 'Shop', deps());
-    expect(created.ok).toBe(true);
 
     const templateFiles = (await listFilesRecursive(templateDir))
       .map((f) => (f === '_gitignore' ? '.gitignore' : f))
@@ -124,9 +138,8 @@ describe('createProject with the real template', () => {
   });
 
   it('includes all required starter template files [R-PJ-10]', async () => {
-    const target = join(dir, 'shop');
+    const target = site;
 
-    await createProject(target, 'Shop', deps());
     const projectFiles = await listFilesRecursive(target);
 
     const requiredFiles = [
@@ -168,9 +181,8 @@ describe('createProject with the real template', () => {
   });
 
   it('exposes Home and About pages via readPages without wildcard routes [R-PG-10]', async () => {
-    const target = join(dir, 'shop');
+    const target = site;
 
-    await createProject(target, 'Shop', deps());
     const pagesInfo = await readPages(nodeFs, target, 'src');
 
     expect(pagesInfo.convention).toBe(true);
@@ -183,9 +195,8 @@ describe('createProject with the real template', () => {
   });
 
   it('exposes the full set of @theme tokens via readThemeTokens [R-CP-10]', async () => {
-    const target = join(dir, 'shop');
+    const target = site;
 
-    await createProject(target, 'Shop', deps());
     const themeResult = await readThemeTokens(nodeFs, target, 'src/index.css');
 
     const theme = themeResult.ok ? themeResult.value : undefined;
@@ -202,9 +213,8 @@ describe('createProject with the real template', () => {
   });
 
   it('uses only static className strings in src/**/*.tsx and avoids .map( in visual zones [R-CP-10]', async () => {
-    const target = join(dir, 'shop');
+    const target = site;
 
-    await createProject(target, 'Shop', deps());
     const srcFiles = await listFilesRecursive(join(target, 'src'));
     const tsxFiles = srcFiles.filter((f) => f.endsWith('.tsx'));
 
@@ -224,9 +234,8 @@ describe('createProject with the real template', () => {
   });
 
   it('contains no external http:// or https:// links in src/ and index.html [R-PJ-10]', async () => {
-    const target = join(dir, 'shop');
+    const target = site;
 
-    await createProject(target, 'Shop', deps());
     const indexHtml = await readFile(join(target, 'index.html'), 'utf8');
     expect(indexHtml).not.toMatch(/https?:\/\//);
 
@@ -238,9 +247,8 @@ describe('createProject with the real template', () => {
   });
 
   it('resolves every relative import in src/ to an existing file in the project [R-PJ-10]', async () => {
-    const target = join(dir, 'shop');
+    const target = site;
 
-    await createProject(target, 'Shop', deps());
     const srcDir = join(target, 'src');
     const srcFiles = await listFilesRecursive(srcDir);
     const codeFiles = srcFiles.filter((f) => /\.(ts|tsx)$/.test(f));
@@ -262,9 +270,8 @@ describe('createProject with the real template', () => {
   });
 
   it('keeps all SVG files in public/ free of scripts, inline event handlers, and external hrefs [R-PJ-10]', async () => {
-    const target = join(dir, 'shop');
+    const target = site;
 
-    await createProject(target, 'Shop', deps());
     const publicFiles = await listFilesRecursive(join(target, 'public'));
     const svgFiles = publicFiles.filter((f) => f.endsWith('.svg'));
 

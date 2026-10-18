@@ -1,9 +1,10 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { InspectorPanel } from '../inspector/inspector-panel.tsx';
 import { useProjectTheme } from '../inspector/use-project-theme.ts';
 import { LayerTree } from '../layers/layer-tree.tsx';
+import { LibraryPanel } from '../library/library-panel.tsx';
 
 type PanelProps = {
   readonly label: string;
@@ -33,33 +34,80 @@ function Panel({ label, title, tabs, children }: PanelProps) {
 type TabProps = {
   readonly selected: boolean;
   readonly disabled?: boolean;
+  readonly onClick?: (() => void) | undefined;
   readonly children: ReactNode;
 };
 
-function Tab({ selected, disabled = false, children }: TabProps) {
+function Tab({ selected, disabled = false, onClick, children }: TabProps) {
   return (
     <button
       type="button"
       role="tab"
       aria-selected={selected}
       disabled={disabled}
-      className="h-7 flex-1 rounded-full text-ink-soft disabled:opacity-50 aria-selected:bg-card-solid aria-selected:text-ink aria-selected:shadow-[0_1px_3px_rgb(60_52_30/0.12)]"
+      onClick={onClick}
+      className="h-7 flex-1 rounded-full text-ink-soft disabled:opacity-50 aria-selected:bg-card-solid aria-selected:text-ink aria-selected:shadow-[0_1px_3px_rgb(60_52_30/0.12)] cursor-pointer"
     >
       {children}
     </button>
   );
 }
 
-/** Layer Tree of the running page (M-SL, WP-1.05). */
+const LEFT_PANEL_KEY = 'reactcraft.leftPanelTab';
+
+function readLeftPanelTab(): 'layers' | 'library' {
+  try {
+    const saved = localStorage.getItem(LEFT_PANEL_KEY);
+    return saved === 'library' ? 'library' : 'layers';
+  } catch {
+    return 'layers';
+  }
+}
+
+function saveLeftPanelTab(tab: 'layers' | 'library'): void {
+  try {
+    localStorage.setItem(LEFT_PANEL_KEY, tab);
+  } catch {
+    // Private windows may refuse storage: the layout then lasts for this visit only.
+  }
+}
+
+/** Layer Tree or Library of the running page (M-SL, M-LB, WP-1.05, WP-2.03). */
 export function LeftPanel() {
   const { t } = useTranslation();
+  const [tab, setTab] = useState<'layers' | 'library'>(readLeftPanelTab);
+
+  const handleSetTab = (nextTab: 'layers' | 'library') => {
+    setTab(nextTab);
+    saveLeftPanelTab(nextTab);
+  };
+
   return (
     <Panel
       label={t('editor.leftPanel')}
-      title={t('editor.layers')}
-      tabs={<Tab selected>{t('editor.layers')}</Tab>}
+      title={tab === 'layers' ? t('editor.layers') : t('editor.library')}
+      tabs={
+        <>
+          <Tab
+            selected={tab === 'layers'}
+            onClick={() => {
+              handleSetTab('layers');
+            }}
+          >
+            {t('editor.layers')}
+          </Tab>
+          <Tab
+            selected={tab === 'library'}
+            onClick={() => {
+              handleSetTab('library');
+            }}
+          >
+            {t('editor.library')}
+          </Tab>
+        </>
+      }
     >
-      <LayerTree />
+      {tab === 'layers' ? <LayerTree /> : <LibraryPanel />}
     </Panel>
   );
 }

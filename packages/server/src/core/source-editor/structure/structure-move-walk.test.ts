@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { nodeFs } from '../../workspace/test-support.ts';
+import { directWriteFs } from '../../workspace/test-support.ts';
 import { asAstNode, type AstNode, getJsxTagName, parseJsxAst } from '../ast-helpers.ts';
 import { createSourceEditorService } from '../source-editor-service.ts';
 import { jsxChildren } from './jsx-children.ts';
@@ -65,7 +65,7 @@ describe('M-SE: Move Real Files Walk [WP-2.02b]', () => {
   beforeEach(async () => {
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'rc-move-walk-test-'));
     await fs.mkdir(path.join(tmpDir, 'src'), { recursive: true });
-    service = createSourceEditorService({ fs: nodeFs });
+    service = createSourceEditorService({ fs: directWriteFs });
   });
 
   afterEach(async () => {

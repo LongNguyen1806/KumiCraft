@@ -14,7 +14,8 @@ export default defineConfig({
   plugins: [react({ compiler: true }), tailwindcss()],
   server: {
     host: '127.0.0.1',
-    port: 5173,
+    // Not 5173: that is the port a project's own dev server takes in the Canvas (R-RN-04).
+    port: 4311,
     strictPort: true,
     proxy: {
       '/api': { target: `http://127.0.0.1:${apiPort}`, ws: true },

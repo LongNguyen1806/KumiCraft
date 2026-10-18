@@ -1,9 +1,13 @@
 // Project endpoints (SPEC-03 section 5.3).
 import {
+  AddPageSchema,
+  DeletePageSchema,
+  DesignDirsSchema,
   DevPortSchema,
   FrameSchema,
   issuesToDetails,
   PackageManagerSchema,
+  RenamePageSchema,
   ResponsiveModeSchema,
 } from '@reactcraft/shared';
 import type { FastifyInstance } from 'fastify';
@@ -31,6 +35,7 @@ const PatchSchema = z.strictObject({
   primaryFrameId: z.string().optional(),
   // R-RN-27: 'auto' removes the saved port so the runner reads it from the project again.
   devPort: z.union([DevPortSchema, z.literal('auto')]).optional(),
+  designDirs: DesignDirsSchema.optional(),
 });
 const TrustSchema = z.strictObject({ trusted: z.boolean() });
 const InstallSchema = z.strictObject({ command: z.array(z.string()).min(1) });
@@ -160,9 +165,49 @@ function registerOpsRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void 
   });
 }
 
+function registerPageRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
+  api.get('/project/dirs', async (_request, reply) => {
+    const result = await deps.projectService.dirs();
+    if (!result.ok) return sendError(reply, result.error);
+    return { data: { dirs: result.value } };
+  });
+
+  api.post('/project/pages', async (request, reply) => {
+    const parsed = AddPageSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
+    }
+    const result = await deps.projectService.addPage(parsed.data);
+    if (!result.ok) return sendError(reply, result.error);
+    reply.status(201);
+    return { data: result.value };
+  });
+
+  api.patch('/project/pages', async (request, reply) => {
+    const parsed = RenamePageSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
+    }
+    const result = await deps.projectService.renamePage(parsed.data);
+    if (!result.ok) return sendError(reply, result.error);
+    return { data: result.value };
+  });
+
+  api.delete('/project/pages', async (request, reply) => {
+    const parsed = DeletePageSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
+    }
+    const result = await deps.projectService.deletePage(parsed.data);
+    if (!result.ok) return sendError(reply, result.error);
+    return { data: result.value };
+  });
+}
+
 export function registerProjectRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
   registerOpenCreateRoutes(api, deps);
   registerStateRoutes(api, deps);
   registerOpsRoutes(api, deps);
   registerCodeInfoRoutes(api, deps);
+  registerPageRoutes(api, deps);
 }

@@ -1,12 +1,11 @@
-// Canvas area displaying the live running Vite project (SPEC-04 M-RN, ADR-BE-28, R-RN-20 to R-RN-26).
-import { defaultFrames, type Frame, type ProjectInfo, type RunnerStatus } from '@reactcraft/shared';
-import { type ChangeEvent, useMemo, useRef, useState } from 'react';
+import { type Frame, type ProjectInfo, type RunnerStatus } from '@reactcraft/shared';
+import { type ChangeEvent, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { errorText } from '../../routes/error-text.ts';
 import { BuildErrorBanner } from '../canvas-errors/build-error-banner.tsx';
 import { RuntimeErrorList } from '../canvas-errors/runtime-error-list.tsx';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
 import { type TextEditWarning, useCanvasTextEdit } from '../text-edit/use-canvas-text-edit.ts';
 import { IframeFrame } from './canvas-frame.tsx';
 import {
@@ -16,6 +15,7 @@ import {
   StoppedView,
   UntrustedPrompt,
 } from './canvas-prompts.tsx';
+import { useCanvasViewStore } from './canvas-view-store.ts';
 import { fitZoom, useElementWidth, type Zoom, ZoomSelect } from './canvas-zoom.tsx';
 import { PageSelect } from './page-select.tsx';
 import { PortBusyBanner } from './port-busy-banner.tsx';
@@ -29,30 +29,11 @@ export type CanvasAreaProps = {
   readonly onInstallRequest?: (() => void) | undefined;
 };
 
-type CanvasMode = 'design' | 'preview';
-
 const FALLBACK_FRAME: Frame = { id: 'desktop', label: 'Desktop', width: 1280, height: 800 };
 
 function getActiveFrame(frames: readonly Frame[], activeId?: string): Frame {
   const match = frames.find((f) => f.id === activeId);
   return match ?? frames[0] ?? FALLBACK_FRAME;
-}
-
-function useCanvasFrames(projectInfo?: ProjectInfo) {
-  const [activeFrameId, setActiveFrameId] = useState<string>(
-    projectInfo?.primaryFrameId ?? 'desktop',
-  );
-
-  const frames = useMemo(() => {
-    if (projectInfo?.frames && projectInfo.frames.length > 0) {
-      return projectInfo.frames;
-    }
-    return defaultFrames('desktop-first').frames;
-  }, [projectInfo]);
-
-  const activeFrame = useMemo(() => getActiveFrame(frames, activeFrameId), [frames, activeFrameId]);
-
-  return { frames, activeFrame, setActiveFrameId };
 }
 
 function TextEditWarningBanner({
@@ -134,6 +115,12 @@ function CanvasViewport(props: Omit<CanvasContentProps, 'zoom'> & { readonly zoo
   const viewport = useRef<HTMLDivElement>(undefined);
   const width = useElementWidth(viewport);
   const zoom = props.zoom === 'fit' ? fitZoom(width, props.frame.width) : props.zoom;
+  const setDisplayedZoom = useCanvasViewStore((st) => st.setDisplayedZoom);
+
+  useEffect(() => {
+    setDisplayedZoom(zoom);
+  }, [zoom, setDisplayedZoom]);
+
   return (
     <div
       ref={(el) => {
@@ -161,9 +148,22 @@ function CanvasNotices({ onOpenLoc }: { readonly onOpenLoc: (loc: string) => voi
 
 function useCanvasAreaState(projectInfo?: ProjectInfo) {
   const runner = useRunnerStatus();
-  const [mode, setMode] = useState<CanvasMode>('design');
-  const [zoom, setZoom] = useState<Zoom>('fit');
-  const { frames, activeFrame, setActiveFrameId } = useCanvasFrames(projectInfo);
+  const mode = useCanvasViewStore((st) => st.mode);
+  const setMode = useCanvasViewStore((st) => st.setMode);
+  const zoom = useCanvasViewStore((st) => st.zoom);
+  const setZoom = useCanvasViewStore((st) => st.setZoom);
+  const activeFrameId = useCanvasViewStore((st) => st.activeFrameId);
+  const setActiveFrameId = useCanvasViewStore((st) => st.setActiveFrameId);
+  const frames = useCanvasViewStore((st) => st.frames);
+  const setFrames = useCanvasViewStore((st) => st.setFrames);
+
+  useEffect(() => {
+    if (projectInfo?.frames && projectInfo.frames.length > 0) {
+      setFrames(projectInfo.frames);
+    }
+  }, [projectInfo?.frames, setFrames]);
+
+  const activeFrame = useMemo(() => getActiveFrame(frames, activeFrameId), [frames, activeFrameId]);
   const editor = useOpenInEditor();
   const textEdit = useCanvasTextEdit({
     mode,

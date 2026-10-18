@@ -15,10 +15,10 @@ const COALESCE_WINDOW_MS = 500; // R-HI-02
 
 export type HistoryFileChange = {
   readonly path: string;
-  readonly before: string;
-  readonly after: string;
-  readonly beforeHash: string;
-  readonly afterHash: string;
+  readonly before?: string | undefined;
+  readonly after?: string | undefined;
+  readonly beforeHash?: string | undefined;
+  readonly afterHash?: string | undefined;
 };
 
 export type HistoryEntry = {
@@ -65,7 +65,8 @@ export function computeSha256(content: string): string {
 function calculateEntryBytes(entry: HistoryEntry): number {
   let bytes = 0;
   for (const f of entry.files) {
-    bytes += Buffer.byteLength(f.before, 'utf8') + Buffer.byteLength(f.after, 'utf8');
+    if (f.before !== undefined) bytes += Buffer.byteLength(f.before, 'utf8');
+    if (f.after !== undefined) bytes += Buffer.byteLength(f.after, 'utf8');
   }
   return bytes;
 }
@@ -106,10 +107,10 @@ function coalesceEntry(
   const nextFile = input.files[0];
   const mergedFile: HistoryFileChange = {
     path: topFile?.path ?? '',
-    before: topFile?.before ?? '',
-    beforeHash: topFile?.beforeHash ?? '',
-    after: nextFile?.after ?? '',
-    afterHash: nextFile?.afterHash ?? '',
+    before: topFile?.before,
+    beforeHash: topFile?.beforeHash,
+    after: nextFile?.after,
+    afterHash: nextFile?.afterHash,
   };
   return {
     id: top.id,
@@ -143,18 +144,22 @@ async function verifyFilesMatchHash(
   targetHashKind: 'before' | 'after',
 ): Promise<{ readonly ok: true } | { readonly ok: false; readonly mismatchFile: string }> {
   for (const f of files) {
-    const readRes = await fs.readText(projectRoot, f.path, { keepBom: true });
-    if (!readRes.ok) {
-      return { ok: false, mismatchFile: f.path };
-    }
-    const currentHash = computeSha256(readRes.value);
+    const expected = targetHashKind === 'before' ? f.before : f.after;
     const expectedHash = targetHashKind === 'before' ? f.beforeHash : f.afterHash;
-    if (currentHash !== expectedHash) {
-      return { ok: false, mismatchFile: f.path };
+    if (expected !== undefined) {
+      const readRes = await fs.readText(projectRoot, f.path, { keepBom: true });
+      if (!readRes.ok) return { ok: false, mismatchFile: f.path };
+      const currentHash = computeSha256(readRes.value);
+      if (currentHash !== expectedHash) return { ok: false, mismatchFile: f.path };
+    } else {
+      const exists = await fs.exists(projectRoot, f.path);
+      if (exists) return { ok: false, mismatchFile: f.path };
     }
   }
   return { ok: true };
 }
+
+type AppliedAction = { readonly path: string; readonly rollbackContent?: string | undefined };
 
 async function writeFilesAtomicWithRollback(
   fs: FileSystemPort,
@@ -162,19 +167,28 @@ async function writeFilesAtomicWithRollback(
   files: readonly HistoryFileChange[],
   targetContentKind: 'before' | 'after',
 ): Promise<Result<void>> {
-  const written: { readonly path: string; readonly rollbackContent: string }[] = [];
+  const applied: AppliedAction[] = [];
 
   for (const f of files) {
-    const content = targetContentKind === 'before' ? f.before : f.after;
+    const target = targetContentKind === 'before' ? f.before : f.after;
     const rollback = targetContentKind === 'before' ? f.after : f.before;
-    const writeRes = await fs.writeTextAtomic(projectRoot, f.path, content);
-    if (!writeRes.ok) {
-      for (const item of written) {
-        await fs.writeTextAtomic(projectRoot, item.path, item.rollbackContent);
+
+    const op =
+      target !== undefined
+        ? await fs.writeTextAtomic(projectRoot, f.path, target)
+        : await fs.remove(projectRoot, f.path);
+
+    if (!op.ok) {
+      for (const item of [...applied].reverse()) {
+        if (item.rollbackContent !== undefined) {
+          await fs.writeTextAtomic(projectRoot, item.path, item.rollbackContent);
+        } else {
+          await fs.remove(projectRoot, item.path);
+        }
       }
-      return writeRes;
+      return op;
     }
-    written.push({ path: f.path, rollbackContent: rollback });
+    applied.push({ path: f.path, rollbackContent: rollback });
   }
 
   return ok(undefined);
@@ -219,7 +233,7 @@ function executePush(
   nowMs: number,
 ): void {
   for (const f of input.files) {
-    ctx.lastWrittenHashes.set(f.path, f.afterHash);
+    ctx.lastWrittenHashes.set(f.path, f.afterHash ?? '');
   }
 
   const top = ctx.undoStack[ctx.undoStack.length - 1];
@@ -262,7 +276,7 @@ async function executeUndo(
   if (!writeRes.ok) return writeRes;
 
   for (const f of top.files) {
-    ctx.lastWrittenHashes.set(f.path, f.beforeHash);
+    ctx.lastWrittenHashes.set(f.path, f.beforeHash ?? '');
   }
 
   ctx.undoStack.pop();
@@ -298,7 +312,7 @@ async function executeRedo(
   if (!writeRes.ok) return writeRes;
 
   for (const f of top.files) {
-    ctx.lastWrittenHashes.set(f.path, f.afterHash);
+    ctx.lastWrittenHashes.set(f.path, f.afterHash ?? '');
   }
 
   ctx.redoStack.pop();

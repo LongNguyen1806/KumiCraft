@@ -1,6 +1,9 @@
 // Project endpoints (SPEC-03 section 5.3, SPEC-04 M-PJ).
 import {
+  type AddPage,
   type BackendInfo,
+  type DeletePage,
+  type DesignDirs,
   type DirectoryListing,
   type JobStarted,
   JobStartedSchema,
@@ -10,6 +13,9 @@ import {
   type ProjectInfo,
   ProjectInfoSchema,
   type ProjectProbe,
+  type RenamePage,
+  type StructureResult,
+  StructureResultSchema,
   type ThemeInfo,
 } from '@reactcraft/shared';
 
@@ -75,4 +81,25 @@ export async function removeProjectBackend(id: string): Promise<void> {
 export async function fetchDirectories(path?: string): Promise<DirectoryListing> {
   const url = path ? `fs/directories?path=${encodeURIComponent(path)}` : 'fs/directories';
   return (await apiGet(url)) as DirectoryListing;
+}
+
+export async function saveDesignDirs(designDirs: DesignDirs): Promise<ProjectInfo> {
+  return ProjectInfoSchema.parse(await apiPatch('project', { designDirs }));
+}
+
+export async function fetchProjectDirs(): Promise<string[]> {
+  const res = (await apiGet('project/dirs')) as { dirs: string[] };
+  return res.dirs;
+}
+
+export async function addProjectPage(payload: AddPage): Promise<StructureResult> {
+  return StructureResultSchema.parse(await apiPost('project/pages', payload));
+}
+
+export async function renameProjectPage(payload: RenamePage): Promise<StructureResult> {
+  return StructureResultSchema.parse(await apiPatch('project/pages', payload));
+}
+
+export async function deleteProjectPage(payload: DeletePage): Promise<StructureResult> {
+  return StructureResultSchema.parse(await apiDelete('project/pages', payload));
 }
