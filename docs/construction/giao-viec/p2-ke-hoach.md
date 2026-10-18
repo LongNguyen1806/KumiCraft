@@ -50,6 +50,8 @@ Dự án có sẵn (như WorkTracker) cũng dùng được các công cụ trên
 
 Lượt 10 và 11 không phụ thuộc lượt 6 đến 9. Nếu chủ dự án cần sớm thì có thể đổi lên ngay sau lượt 5.
 
+**Việc để sau (chủ dự án, 2026-10-18):** Library mới có 16 khối, còn ít. Bổ sung khối sau các lượt chính (trước cổng G2 hoặc ở Phase 4); chỉ thêm dữ liệu vào `packages/shared/src/library/`, không đổi hợp đồng.
+
 ## 4. Kiểm tay từng lượt (bản rút gọn)
 
 Bản giao việc của mỗi lượt có danh sách đầy đủ (5–10 bước). Ở đây là ý chính để chủ dự án biết sẽ thử gì. "Mới" là dự án mới tạo, "WT" là WorkTracker.
