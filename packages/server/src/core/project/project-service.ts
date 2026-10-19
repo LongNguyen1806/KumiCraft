@@ -1,26 +1,33 @@
 import {
   type BackendInfo,
-  DEFAULT_DESIGN_DIRS,
+  type CreateDraft,
+  type DraftFile,
+  type DraftsInfo,
   type ExtractComponent,
   type PackageManager,
   type PagesInfo,
   type ProjectInfo,
   type ProjectProbe,
+  type PromoteDraft,
+  type RenameDraft,
   type StructureResult,
   type SupportReport,
   type ThemeInfo,
+  type WorkspaceFile,
 } from '@reactcraft/shared';
 
 import { createJobService, type JobService } from '../jobs/job-service.ts';
 import { err, ok, type Result } from '../shared/result.ts';
-import type { Platform } from '../shared/session.ts';
 import { acquireLock, type LockInfo, releaseLock } from '../workspace/lock.ts';
 import { rememberPort } from '../workspace/studio-port.ts';
 import { trustKeyOf } from '../workspace/trust.ts';
 import { extractComponent } from './component-extract.ts';
 import { createProject } from './create.ts';
+import { promoteDraft } from './draft-promote.ts';
+import { createDraft, deleteDraft, duplicateDraft, listDrafts, renameDraft } from './drafts.ts';
 import {
   type AddPageInput,
+  buildPageEditDeps,
   type DeletePageInput,
   listProjectDirs,
   type PageEditDeps,
@@ -29,12 +36,8 @@ import {
 import { addPage, deletePage, renamePage } from './page-edits.ts';
 import { readPages } from './pages.ts';
 import { probeProject, probeSupportedProject } from './probe.ts';
-import {
-  computeBackendInfos,
-  executeAddBackend,
-  executeRemoveBackend,
-} from './project-backends.ts';
-import { projectInfoOf } from './project-info.ts';
+import { applyAddBackend, applyRemoveBackend, computeBackendInfos } from './project-backends.ts';
+import { normalizeRoot, projectInfoOf, resolveOpenSupport } from './project-info.ts';
 import { checkNeedsInstall, getInstallCommand, startInstallJob } from './project-install.ts';
 import type { ProjectService, ProjectServiceDeps, WorkspaceState } from './project-types.ts';
 import {
@@ -45,11 +48,6 @@ import {
 } from './project-workspace-file.ts';
 import { readThemeTokens } from './theme.ts';
 export type { ProjectService, ProjectServiceDeps, WorkspaceState };
-
-function normalizeRoot(path: string, platform: Platform): string {
-  const unified = path.replaceAll('\\', '/').replace(/\/+$/, '');
-  return platform === 'linux' ? unified : unified.toLowerCase();
-}
 
 class ProjectServiceImpl implements ProjectService {
   private current: WorkspaceState;
@@ -80,13 +78,6 @@ class ProjectServiceImpl implements ProjectService {
     });
   }
 
-  private resolveOpenSupport(root: string, baseSupport: SupportReport): SupportReport {
-    if (baseSupport.packageManager !== undefined) return baseSupport;
-    const fromCreated = this.createdPackageManagers.get(normalizeRoot(root, this.deps.platform));
-    const resolvedPm = fromCreated ?? this.deps.config.settings().packageManager;
-    return resolvedPm !== undefined ? { ...baseSupport, packageManager: resolvedPm } : baseSupport;
-  }
-
   private async releaseCurrentLock(): Promise<void> {
     if (this.heldLock !== undefined) {
       await releaseLock(this.deps.fs, this.heldLock.root, this.heldLock.info);
@@ -108,7 +99,13 @@ class ProjectServiceImpl implements ProjectService {
     });
     if (!probed.ok) return probed;
 
-    const support = this.resolveOpenSupport(root, probed.value);
+    const support = resolveOpenSupport(
+      root,
+      probed.value,
+      this.createdPackageManagers,
+      this.deps.config.settings().packageManager,
+      this.deps.platform,
+    );
     if (this.heldLock !== undefined) {
       await this.releaseCurrentLock();
     }
@@ -128,8 +125,15 @@ class ProjectServiceImpl implements ProjectService {
       this.deps.eventBus?.publish('session.changed', undefined);
       return fileRes;
     }
-    const file = fileRes.value;
+    const info = await this.finishOpen(root, fileRes.value, support);
+    return ok(info);
+  }
 
+  private async finishOpen(
+    root: string,
+    file: WorkspaceFile,
+    support: SupportReport,
+  ): Promise<ProjectInfo> {
     const trusted = this.deps.config.isTrusted(trustKeyOf(file, root));
     const needsInstall = await checkNeedsInstall(this.deps.fs, root);
     const backends = await computeBackendInfos(
@@ -148,7 +152,7 @@ class ProjectServiceImpl implements ProjectService {
     if (trusted && !needsInstall && support.supported) {
       void this.deps.runnerService?.start();
     }
-    return ok(info);
+    return info;
   }
 
   async create(
@@ -274,22 +278,7 @@ class ProjectServiceImpl implements ProjectService {
   }
 
   private getPageEditDeps(): Result<PageEditDeps> {
-    if (this.current.status !== 'open') {
-      return err({ code: 'E021', params: { missing: 'project' } });
-    }
-    const history = this.deps.history;
-    if (!history || !('push' in history)) {
-      return err({ code: 'E021', params: { missing: 'history' } });
-    }
-    return ok({
-      fs: this.deps.fs,
-      history,
-      projectRoot: this.current.root,
-      sourceDir: this.current.file.sourceDir,
-      platform: this.deps.platform,
-      language: this.current.support.language,
-      designDirs: this.current.file.designDirs ?? DEFAULT_DESIGN_DIRS,
-    });
+    return buildPageEditDeps(this.current, this.deps);
   }
 
   async addPage(input: AddPageInput): Promise<Result<StructureResult>> {
@@ -328,6 +317,36 @@ class ProjectServiceImpl implements ProjectService {
     return ok(dirs);
   }
 
+  async listDrafts(): Promise<Result<DraftsInfo>> {
+    const deps = this.getPageEditDeps();
+    return deps.ok ? listDrafts(deps.value) : deps;
+  }
+
+  async createDraft(input: CreateDraft): Promise<Result<StructureResult>> {
+    const deps = this.getPageEditDeps();
+    return deps.ok ? createDraft(deps.value, input) : deps;
+  }
+
+  async renameDraft(input: RenameDraft): Promise<Result<StructureResult>> {
+    const deps = this.getPageEditDeps();
+    return deps.ok ? renameDraft(deps.value, input) : deps;
+  }
+
+  async duplicateDraft(input: DraftFile): Promise<Result<StructureResult>> {
+    const deps = this.getPageEditDeps();
+    return deps.ok ? duplicateDraft(deps.value, input) : deps;
+  }
+
+  async deleteDraft(input: DraftFile): Promise<Result<StructureResult>> {
+    const deps = this.getPageEditDeps();
+    return deps.ok ? deleteDraft(deps.value, input) : deps;
+  }
+
+  async promoteDraft(input: PromoteDraft): Promise<Result<StructureResult>> {
+    const deps = this.getPageEditDeps();
+    return deps.ok ? promoteDraft(deps.value, input) : deps;
+  }
+
   async theme(): Promise<Result<ThemeInfo>> {
     if (this.current.status !== 'open') {
       return err({ code: 'E021', params: { missing: 'project' } });
@@ -340,41 +359,16 @@ class ProjectServiceImpl implements ProjectService {
   }
 
   async addBackend(backendPath: string, customLabel?: string): Promise<Result<BackendInfo>> {
-    if (this.current.status !== 'open') {
-      return err({ code: 'E021', params: { missing: 'project' } });
-    }
-
-    const res = await executeAddBackend(
-      this.deps,
-      this.current.root,
-      this.current.file,
-      this.current.trusted,
-      backendPath,
-      customLabel,
-    );
+    const res = await applyAddBackend(this.deps, this.current, backendPath, customLabel);
     if (!res.ok) return res;
-
-    this.current = { ...this.current, file: res.value.updatedFile, backends: res.value.backends };
-    this.deps.eventBus?.publish('project.changed', projectInfoOf(this.current));
+    this.current = res.value.next;
     return ok(res.value.added);
   }
 
   async removeBackend(id: string): Promise<Result<void>> {
-    if (this.current.status !== 'open') {
-      return err({ code: 'E021', params: { missing: 'project' } });
-    }
-
-    const res = await executeRemoveBackend(
-      this.deps,
-      this.current.root,
-      this.current.file,
-      this.current.trusted,
-      id,
-    );
+    const res = await applyRemoveBackend(this.deps, this.current, id);
     if (!res.ok) return res;
-
-    this.current = { ...this.current, file: res.value.updatedFile, backends: res.value.backends };
-    this.deps.eventBus?.publish('project.changed', projectInfoOf(this.current));
+    this.current = res.value.next;
     return ok(undefined);
   }
 

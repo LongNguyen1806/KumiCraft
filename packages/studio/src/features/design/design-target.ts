@@ -2,7 +2,7 @@
 import type { ElementRef, PageInfo, RelPath, TreeNode } from '@reactcraft/shared';
 
 export type DesignTarget = {
-  readonly kind: 'page' | 'layout' | 'component';
+  readonly kind: 'page' | 'layout' | 'component' | 'draft';
   readonly name?: string | undefined;
   readonly file?: RelPath | undefined;
   readonly route: string;

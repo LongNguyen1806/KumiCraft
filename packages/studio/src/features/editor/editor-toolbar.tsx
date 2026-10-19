@@ -18,11 +18,37 @@ export type EditorToolbarProps = {
   readonly onOpenProject?: () => void;
 };
 
+function resolveDraftHistoryLabel(
+  key: string,
+  name: string,
+  t: ReturnType<typeof useTranslation>['t'],
+): string | undefined {
+  if (key === 'history:draftCreate' || key === 'history.draftCreate') {
+    return t('history.draftCreate', { name });
+  }
+  if (key === 'history:draftRename' || key === 'history.draftRename') {
+    return t('history.draftRename', { name });
+  }
+  if (key === 'history:draftDuplicate' || key === 'history.draftDuplicate') {
+    return t('history.draftDuplicate', { name });
+  }
+  if (key === 'history:draftDelete' || key === 'history.draftDelete') {
+    return t('history.draftDelete', { name });
+  }
+  if (key === 'history:draftPromote' || key === 'history.draftPromote') {
+    return t('history.draftPromote', { name });
+  }
+  return undefined;
+}
+
 function resolveHistoryLabel(
   label: HistoryLabel | undefined,
   t: ReturnType<typeof useTranslation>['t'],
 ): string | undefined {
   if (label === undefined) return undefined;
+  const name = label.params?.['name'] ?? '';
+  const draft = resolveDraftHistoryLabel(label.key, name, t);
+  if (draft !== undefined) return draft;
   if (label.key === 'history:setClassName' || label.key === 'history.setClassName') {
     return t('history.setClassName');
   }
@@ -34,19 +60,15 @@ function resolveHistoryLabel(
     return t('history.setAttribute', { tag });
   }
   if (label.key === 'history:pageAdd' || label.key === 'history.pageAdd') {
-    const name = label.params?.['name'] ?? '';
     return t('history.pageAdd', { name });
   }
   if (label.key === 'history:pageRename' || label.key === 'history.pageRename') {
-    const name = label.params?.['name'] ?? '';
     return t('history.pageRename', { name });
   }
   if (label.key === 'history:pageDelete' || label.key === 'history.pageDelete') {
-    const name = label.params?.['name'] ?? '';
     return t('history.pageDelete', { name });
   }
   if (label.key === 'history:extract' || label.key === 'history.extract') {
-    const name = label.params?.['name'] ?? '';
     return t('history.extract', { name });
   }
   return label.key;

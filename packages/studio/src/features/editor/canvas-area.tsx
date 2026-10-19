@@ -346,6 +346,8 @@ type CanvasContentProps = {
 };
 
 function CanvasContent(props: CanvasContentProps) {
+  const draftFile = useCanvasViewStore((s) => s.draftFile);
+
   if (!props.trusted) {
     return <UntrustedPrompt onTrust={props.onTrustRequest} />;
   }
@@ -364,13 +366,14 @@ function CanvasContent(props: CanvasContentProps) {
   if (props.status.origin) {
     return (
       <IframeFrame
-        key={`${props.status.origin}|${props.status.nonce ?? ''}`}
+        key={`${props.status.origin}|${props.status.nonce ?? ''}|${draftFile ?? ''}`}
         origin={props.status.origin}
         nonce={props.status.nonce}
         mode={props.mode}
         frame={props.frame}
         zoom={props.zoom}
         logTail={props.logTail}
+        draftFile={draftFile}
       />
     );
   }

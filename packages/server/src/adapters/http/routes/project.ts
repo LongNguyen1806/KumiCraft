@@ -1,13 +1,17 @@
 // Project endpoints (SPEC-03 section 5.3).
 import {
   AddPageSchema,
+  CreateDraftSchema,
   DeletePageSchema,
   DesignDirsSchema,
   DevPortSchema,
+  DraftFileSchema,
   ExtractComponentSchema,
   FrameSchema,
   issuesToDetails,
   PackageManagerSchema,
+  PromoteDraftSchema,
+  RenameDraftSchema,
   RenamePageSchema,
   ResponsiveModeSchema,
 } from '@reactcraft/shared';
@@ -235,10 +239,75 @@ function registerPageRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void
   });
 }
 
+function registerDraftCrudRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
+  api.get('/project/drafts', async (_request, reply) => {
+    const result = await deps.projectService.listDrafts();
+    if (!result.ok) return sendError(reply, result.error);
+    return { data: result.value };
+  });
+
+  api.post('/project/drafts', async (request, reply) => {
+    const parsed = CreateDraftSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
+    }
+    const result = await deps.projectService.createDraft(parsed.data);
+    if (!result.ok) return sendError(reply, result.error);
+    reply.status(201);
+    return { data: result.value };
+  });
+
+  api.patch('/project/drafts', async (request, reply) => {
+    const parsed = RenameDraftSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
+    }
+    const result = await deps.projectService.renameDraft(parsed.data);
+    if (!result.ok) return sendError(reply, result.error);
+    return { data: result.value };
+  });
+
+  api.delete('/project/drafts', async (request, reply) => {
+    const parsed = DraftFileSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
+    }
+    const result = await deps.projectService.deleteDraft(parsed.data);
+    if (!result.ok) return sendError(reply, result.error);
+    return { data: result.value };
+  });
+}
+
+function registerDraftOpRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
+  api.post('/project/drafts/duplicate', async (request, reply) => {
+    const parsed = DraftFileSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
+    }
+    const result = await deps.projectService.duplicateDraft(parsed.data);
+    if (!result.ok) return sendError(reply, result.error);
+    reply.status(201);
+    return { data: result.value };
+  });
+
+  api.post('/project/drafts/promote', async (request, reply) => {
+    const parsed = PromoteDraftSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
+    }
+    const result = await deps.projectService.promoteDraft(parsed.data);
+    if (!result.ok) return sendError(reply, result.error);
+    reply.status(201);
+    return { data: result.value };
+  });
+}
+
 export function registerProjectRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
   registerOpenCreateRoutes(api, deps);
   registerStateRoutes(api, deps);
   registerOpsRoutes(api, deps);
   registerCodeInfoRoutes(api, deps);
   registerPageRoutes(api, deps);
+  registerDraftCrudRoutes(api, deps);
+  registerDraftOpRoutes(api, deps);
 }

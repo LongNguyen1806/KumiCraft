@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react';
 import { create } from 'zustand';
 
+import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { usePagesData } from '../editor/page-select.tsx';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
@@ -37,6 +38,20 @@ export const useDesignStore = create<DesignState>((set, get) => ({
   },
 }));
 
+function draftTargetOf(draftFile: string, route: string): DesignTarget {
+  const baseName =
+    draftFile
+      .split('/')
+      .pop()
+      ?.replace(/\.(tsx|jsx)$/, '') ?? draftFile;
+  return {
+    kind: 'draft',
+    name: baseName,
+    file: draftFile,
+    route,
+  };
+}
+
 /**
  * Synchronizes the current page design target with the store and notifies the Bridge
  * via `design-file` when the target file changes or when Bridge reports ready.
@@ -45,6 +60,7 @@ export function useDesignTargetSync(): void {
   const { pages } = usePagesData();
   const currentRoute = useSelectionStore((s) => s.currentRoute);
   const bridgeReady = useSelectionStore((s) => s.bridgeReady);
+  const draftFile = useCanvasViewStore((s) => s.draftFile);
   const lastSentFile = useRef<string | undefined>(undefined);
   const prevReadyRef = useRef<boolean>(false);
   const prevRouteRef = useRef<string>(currentRoute);
@@ -59,14 +75,21 @@ export function useDesignTargetSync(): void {
   }, [currentRoute]);
 
   useEffect(() => {
-    const nextTarget = designTargetOf(pages, currentRoute);
+    let nextTarget: DesignTarget;
+    if (draftFile) {
+      nextTarget = draftTargetOf(draftFile, currentRoute);
+    } else if (currentRoute.startsWith('/__reactcraft/draft')) {
+      nextTarget = { kind: 'page', route: currentRoute };
+    } else {
+      nextTarget = designTargetOf(pages, currentRoute);
+    }
     useDesignStore.getState().setTarget(nextTarget);
 
     if (bridgeReady) {
       const justBecameReady = !prevReadyRef.current;
       const compMode = useDesignStore.getState().componentMode;
       const activeFile = compMode ? compMode.filePath : nextTarget.file;
-      const activeFocus = compMode !== undefined ? true : undefined;
+      const activeFocus = compMode !== undefined ? true : false;
       const fileChanged = activeFile !== lastSentFile.current;
       if (justBecameReady || fileChanged) {
         studioBridgeChannel.setDesignFile(activeFile, activeFocus);
@@ -76,5 +99,5 @@ export function useDesignTargetSync(): void {
       lastSentFile.current = undefined;
     }
     prevReadyRef.current = bridgeReady;
-  }, [pages, currentRoute, bridgeReady]);
+  }, [pages, currentRoute, bridgeReady, draftFile]);
 }

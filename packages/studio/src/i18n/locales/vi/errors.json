@@ -85,7 +85,8 @@
       "lastPage": "Không thể xóa trang cuối cùng của dự án.",
       "indexPage": "Không thể đổi đường dẫn URL của trang index.",
       "notConvention": "Dự án không theo quy ước routes.tsx chuẩn.",
-      "designDirs": "Thư mục thiết kế phải nằm trong thư mục mã nguồn và không được lồng nhau hoặc trùng nhau."
+      "designDirs": "Thư mục thiết kế phải nằm trong thư mục mã nguồn và không được lồng nhau hoặc trùng nhau.",
+      "draftInUse": "Bản nháp đang được sử dụng trong dự án."
     }
   },
   "E017": {

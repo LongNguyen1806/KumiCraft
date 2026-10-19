@@ -180,7 +180,10 @@ async function planExtractedEdits(
   return ok({ newSourceCode: applied.value.code, newFileContent, newLoc });
 }
 
-async function updateConfigComponents(deps: PageEditDeps, newFileRel: string): Promise<void> {
+export async function updateConfigComponents(
+  deps: PageEditDeps,
+  newFileRel: string,
+): Promise<void> {
   const inComponents = newFileRel.startsWith(`${deps.designDirs.components}/`);
   const inLayouts = Boolean(
     deps.designDirs.layouts && newFileRel.startsWith(`${deps.designDirs.layouts}/`),

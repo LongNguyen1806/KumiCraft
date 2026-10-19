@@ -99,6 +99,11 @@
     "pageRename": "rename page {{name}}",
     "pageDelete": "delete page {{name}}",
     "extract": "extract component {{name}}",
+    "draftCreate": "create draft {{name}}",
+    "draftRename": "rename draft {{name}}",
+    "draftDuplicate": "duplicate draft {{name}}",
+    "draftDelete": "delete draft {{name}}",
+    "draftPromote": "promote draft {{name}}",
     "batch": "edit {{count}} elements",
     "dismissError": "Dismiss",
     "errorFileChanged": "File {{file}} was modified externally, cannot undo this step"
@@ -413,12 +418,33 @@
     "kind": {
       "page": "Page",
       "layout": "Layout",
-      "component": "Component"
+      "component": "Component",
+      "draft": "Draft"
     },
     "unknownFile": "The file of this page is unknown",
     "selectInFile": "Select an element in {{file}}",
     "back": "Back to page",
     "usages": "Used in {{count}} places"
+  },
+  "drafts": {
+    "title": "Drafts",
+    "new": "New draft…",
+    "manage": "Manage drafts",
+    "blank": "Blank",
+    "free": "Freeform canvas",
+    "create": "Create",
+    "creating": "Creating…",
+    "rename": "Rename",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "promote": "Promote",
+    "promoteKeep": "Keep draft",
+    "promoteAsPage": "Page",
+    "promoteAsComponent": "Component",
+    "inUse": "In use",
+    "ignoredWarning": "The drafts directory is ignored by .gitignore. Changes will not be committed to Git.",
+    "freeWarning": "Freeform drafts use fixed positions; check responsive display on mobile after promoting.",
+    "providerHint": "Draft runs outside the app; this component may need a Provider."
   },
   "components": {
     "title": "Components",

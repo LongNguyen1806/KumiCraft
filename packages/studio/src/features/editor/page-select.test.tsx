@@ -9,6 +9,10 @@ import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { PageSelect } from './page-select.tsx';
 
+/** Options of pages: direct children of the select, so the Drafts group (R-DR-13) is left out. */
+const pageOptions = (select: HTMLElement) =>
+  [...select.querySelectorAll('option')].filter((o) => o.parentElement === select);
+
 describe('PageSelect [R-PG-15]', () => {
   beforeAll(async () => {
     await initI18n();
@@ -41,17 +45,18 @@ describe('PageSelect [R-PG-15]', () => {
 
     const select = screen.getByTestId('canvas-page-select');
     await waitFor(() => {
-      expect(select.querySelectorAll('option')).toHaveLength(4);
+      expect(pageOptions(select)).toHaveLength(4);
     });
     expect(select).toHaveProperty('value', '/login');
     expect(screen.getByText('Product — /product/:id')).toBeDefined();
+    expect(select.querySelector('optgroup option[value="draft:new"]')).not.toBeNull();
   });
 
   it('shows a picked page in the Canvas', async () => {
     const navigate = vi.spyOn(studioBridgeChannel, 'navigate').mockImplementation(() => undefined);
     render(<PageSelect />);
     await waitFor(() => {
-      expect(screen.getByTestId('canvas-page-select').querySelectorAll('option')).toHaveLength(4);
+      expect(pageOptions(screen.getByTestId('canvas-page-select'))).toHaveLength(4);
     });
 
     fireEvent.change(screen.getByTestId('canvas-page-select'), { target: { value: '/login' } });
@@ -63,7 +68,7 @@ describe('PageSelect [R-PG-15]', () => {
     const navigate = vi.spyOn(studioBridgeChannel, 'navigate').mockImplementation(() => undefined);
     render(<PageSelect />);
     await waitFor(() => {
-      expect(screen.getByTestId('canvas-page-select').querySelectorAll('option')).toHaveLength(4);
+      expect(pageOptions(screen.getByTestId('canvas-page-select'))).toHaveLength(4);
     });
 
     fireEvent.change(screen.getByTestId('canvas-page-select'), {

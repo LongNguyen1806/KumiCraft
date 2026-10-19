@@ -49,12 +49,12 @@ function computeRouteImport(routesRel: string, newFileRel: string, routesAst: As
   return relImport;
 }
 
-type ValidatedAddPage = {
+export type ValidatedAddPage = {
   readonly routePath: string;
   readonly newFileRel: string;
 };
 
-async function validateAddPage(
+export async function validateAddPage(
   deps: PageEditDeps,
   input: AddPageInput,
   pagesInfo: PagesInfo,
@@ -83,12 +83,12 @@ async function validateAddPage(
   return ok({ routePath, newFileRel });
 }
 
-type PlannedRoutes = {
+export type PlannedRoutes = {
   readonly routesCode: string;
   readonly newRoutesCode: string;
 };
 
-async function planNewPageRoutes(
+export async function planNewPageRoutes(
   deps: PageEditDeps,
   routesRel: string,
   names: PageNamesResult,

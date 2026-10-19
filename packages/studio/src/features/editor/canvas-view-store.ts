@@ -13,6 +13,7 @@ export type CanvasViewState = {
   readonly displayedZoom: number;
   readonly activeFrameId: string;
   readonly frames: readonly Frame[];
+  readonly draftFile?: string | undefined;
   readonly setMode: (mode: CanvasMode | ((prev: CanvasMode) => CanvasMode)) => void;
   readonly toggleMode: () => void;
   readonly setZoom: (zoom: Zoom) => void;
@@ -24,7 +25,32 @@ export type CanvasViewState = {
   readonly setActiveFrameId: (id: string) => void;
   readonly setFrames: (frames: readonly Frame[]) => void;
   readonly selectFrameByIndex: (index: number) => boolean;
+  readonly openDraft: (file: string, projectId?: string) => void;
+  readonly closeDraft: (projectId?: string) => void;
 };
+
+const DRAFT_STORAGE_PREFIX = 'reactcraft:draft:';
+
+export function getStoredDraftFile(projectId: string): string | undefined {
+  try {
+    const val = localStorage.getItem(`${DRAFT_STORAGE_PREFIX}${projectId}`);
+    return val && val.trim().length > 0 ? val : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function setStoredDraftFile(projectId: string, file: string | undefined): void {
+  try {
+    if (file) {
+      localStorage.setItem(`${DRAFT_STORAGE_PREFIX}${projectId}`, file);
+    } else {
+      localStorage.removeItem(`${DRAFT_STORAGE_PREFIX}${projectId}`);
+    }
+  } catch {
+    // Ignore storage errors
+  }
+}
 
 function stepZoom(current: number, direction: 'in' | 'out'): number {
   if (direction === 'in') {
@@ -37,6 +63,29 @@ function stepZoom(current: number, direction: 'in' | 'out'): number {
 function updateFrames(frames: readonly Frame[], activeId: string) {
   const exists = frames.some((f) => f.id === activeId);
   return { frames, activeFrameId: exists ? activeId : (frames[0]?.id ?? 'desktop') };
+}
+
+function createZoomActions(
+  set: (
+    updater: Partial<CanvasViewState> | ((s: CanvasViewState) => Partial<CanvasViewState>),
+  ) => void,
+) {
+  return {
+    zoomIn: () => {
+      set((s) => ({ zoom: stepZoom(typeof s.zoom === 'number' ? s.zoom : s.displayedZoom, 'in') }));
+    },
+    zoomOut: () => {
+      set((s) => ({
+        zoom: stepZoom(typeof s.zoom === 'number' ? s.zoom : s.displayedZoom, 'out'),
+      }));
+    },
+    zoomReset: () => {
+      set({ zoom: 1 });
+    },
+    zoomFit: () => {
+      set({ zoom: 'fit' });
+    },
+  };
 }
 
 export const useCanvasViewStore = create<CanvasViewState>((set, get) => ({
@@ -62,18 +111,7 @@ export const useCanvasViewStore = create<CanvasViewState>((set, get) => ({
   setDisplayedZoom: (displayedZoom) => {
     set({ displayedZoom });
   },
-  zoomIn: () => {
-    set((s) => ({ zoom: stepZoom(typeof s.zoom === 'number' ? s.zoom : s.displayedZoom, 'in') }));
-  },
-  zoomOut: () => {
-    set((s) => ({ zoom: stepZoom(typeof s.zoom === 'number' ? s.zoom : s.displayedZoom, 'out') }));
-  },
-  zoomReset: () => {
-    set({ zoom: 1 });
-  },
-  zoomFit: () => {
-    set({ zoom: 'fit' });
-  },
+  ...createZoomActions(set),
   setActiveFrameId: (activeFrameId) => {
     set({ activeFrameId });
   },
@@ -88,5 +126,14 @@ export const useCanvasViewStore = create<CanvasViewState>((set, get) => ({
       return true;
     }
     return false;
+  },
+  draftFile: undefined,
+  openDraft: (file, projectId) => {
+    set({ draftFile: file });
+    if (projectId) setStoredDraftFile(projectId, file);
+  },
+  closeDraft: (projectId) => {
+    set({ draftFile: undefined });
+    if (projectId) setStoredDraftFile(projectId, undefined);
   },
 }));

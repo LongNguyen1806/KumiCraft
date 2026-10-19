@@ -21,6 +21,8 @@ import { err, ok, type Result } from '../shared/result.ts';
 import type { Platform } from '../shared/session.ts';
 import type { ConfigStore } from '../shared/user-config.ts';
 import { trustKeyOf } from '../workspace/trust.ts';
+import { projectInfoOf } from './project-info.ts';
+import type { ProjectServiceDeps, WorkspaceState } from './project-types.ts';
 
 export async function toBackendInfo(
   fs: FileSystemPort,
@@ -193,4 +195,54 @@ export async function executeRemoveBackend(
 
   const backends = await computeBackendInfos(ctx.fs, root, updatedFile, ctx.platform, ctx.homeDir);
   return ok({ updatedFile, backends });
+}
+
+export async function applyAddBackend(
+  deps: ProjectServiceDeps,
+  current: WorkspaceState,
+  backendPath: string,
+  customLabel?: string,
+): Promise<Result<{ readonly next: WorkspaceState; readonly added: BackendInfo }>> {
+  if (current.status !== 'open') {
+    return err({ code: 'E021', params: { missing: 'project' } });
+  }
+
+  const res = await executeAddBackend(
+    deps,
+    current.root,
+    current.file,
+    current.trusted,
+    backendPath,
+    customLabel,
+  );
+  if (!res.ok) return res;
+
+  const next: WorkspaceState = {
+    ...current,
+    file: res.value.updatedFile,
+    backends: res.value.backends,
+  };
+  deps.eventBus?.publish('project.changed', projectInfoOf(next));
+  return ok({ next, added: res.value.added });
+}
+
+export async function applyRemoveBackend(
+  deps: ProjectServiceDeps,
+  current: WorkspaceState,
+  id: string,
+): Promise<Result<{ readonly next: WorkspaceState }>> {
+  if (current.status !== 'open') {
+    return err({ code: 'E021', params: { missing: 'project' } });
+  }
+
+  const res = await executeRemoveBackend(deps, current.root, current.file, current.trusted, id);
+  if (!res.ok) return res;
+
+  const next: WorkspaceState = {
+    ...current,
+    file: res.value.updatedFile,
+    backends: res.value.backends,
+  };
+  deps.eventBus?.publish('project.changed', projectInfoOf(next));
+  return ok({ next });
 }

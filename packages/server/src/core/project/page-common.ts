@@ -1,6 +1,5 @@
 // Common types and validation for page operations (R-PG-11 to R-PG-14).
-import type { DesignDirs, Result } from '@reactcraft/shared';
-import { err, ok } from '@reactcraft/shared';
+import { DEFAULT_DESIGN_DIRS, type DesignDirs, err, ok, type Result } from '@reactcraft/shared';
 
 import type { HistoryService } from '../history/history-service.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
@@ -17,6 +16,41 @@ export type PageEditDeps = {
   readonly language: 'ts' | 'js';
   readonly designDirs: DesignDirs;
 };
+
+function isHistoryService(h: unknown): h is HistoryService {
+  return !!h && typeof h === 'object' && 'push' in h;
+}
+
+export function buildPageEditDeps(
+  current: {
+    readonly status: string;
+    readonly root?: string | undefined;
+    readonly file?:
+      { readonly sourceDir: string; readonly designDirs?: DesignDirs | undefined } | undefined;
+    readonly support?: { readonly language: 'ts' | 'js' } | undefined;
+  },
+  deps: {
+    readonly fs: FileSystemPort;
+    readonly history?: unknown;
+    readonly platform: Platform;
+  },
+): Result<PageEditDeps> {
+  if (current.status !== 'open' || !current.root || !current.file || !current.support) {
+    return err({ code: 'E021', params: { missing: 'project' } });
+  }
+  if (!isHistoryService(deps.history)) {
+    return err({ code: 'E021', params: { missing: 'history' } });
+  }
+  return ok({
+    fs: deps.fs,
+    history: deps.history,
+    projectRoot: current.root,
+    sourceDir: current.file.sourceDir,
+    platform: deps.platform,
+    language: current.support.language,
+    designDirs: current.file.designDirs ?? DEFAULT_DESIGN_DIRS,
+  });
+}
 
 export type AddPageInput = {
   readonly name: string;
@@ -89,21 +123,18 @@ export function validateDesignDirs(
   sourceDir: string,
   platform: Platform,
 ): boolean {
-  const { pages, layouts, components } = designDirs;
-  const list = [pages, layouts, components];
+  const drafts = designDirs.drafts ?? DEFAULT_DESIGN_DIRS.drafts;
+  const list = [designDirs.pages, designDirs.layouts, designDirs.components, drafts];
   for (const p of list) {
     if (!isInside(sourceDir, p, platform)) return false;
   }
-  if (pages === layouts || pages === components || layouts === components) return false;
-  if (
-    isInside(pages, layouts, platform) ||
-    isInside(layouts, pages, platform) ||
-    isInside(pages, components, platform) ||
-    isInside(components, pages, platform) ||
-    isInside(layouts, components, platform) ||
-    isInside(components, layouts, platform)
-  ) {
-    return false;
+  for (let i = 0; i < list.length; i++) {
+    for (let j = i + 1; j < list.length; j++) {
+      const a = list[i];
+      const b = list[j];
+      if (a === undefined || b === undefined) continue;
+      if (isInside(a, b, platform) || isInside(b, a, platform)) return false;
+    }
   }
   return true;
 }

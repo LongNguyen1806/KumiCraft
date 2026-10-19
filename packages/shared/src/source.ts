@@ -248,6 +248,7 @@ export const StructureResultSchema = z.strictObject({
   locs: z.array(z.string()),
   warnings: z.array(z.string()).optional(),
   pagePath: z.string().optional(),
+  draftFile: RelPathSchema.optional(),
 });
 export type StructureResult = z.infer<typeof StructureResultSchema>;
 

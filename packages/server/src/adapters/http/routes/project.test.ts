@@ -137,6 +137,52 @@ const mockProjectService: ProjectService = {
       ok({ changed: true, files: ['src/pages/Home.tsx', 'src/components/PromoBox.tsx'], locs: [] }),
     ),
   dirs: () => Promise.resolve(ok(['src/pages', 'src/components'])),
+  listDrafts: () =>
+    Promise.resolve(
+      ok({
+        drafts: [{ name: 'BanNhap1', file: 'src/drafts/BanNhap1.tsx', free: false, inUse: false }],
+        dir: 'src/drafts',
+        ignored: false,
+      }),
+    ),
+  createDraft: () =>
+    Promise.resolve(
+      ok({
+        changed: true,
+        files: ['src/drafts/BanNhap1.tsx'],
+        locs: [],
+        draftFile: 'src/drafts/BanNhap1.tsx',
+      }),
+    ),
+  renameDraft: () =>
+    Promise.resolve(
+      ok({
+        changed: true,
+        files: ['src/drafts/BanNhap1.tsx', 'src/drafts/Mockup.tsx'],
+        locs: [],
+        draftFile: 'src/drafts/Mockup.tsx',
+      }),
+    ),
+  duplicateDraft: () =>
+    Promise.resolve(
+      ok({
+        changed: true,
+        files: ['src/drafts/BanNhap2.tsx'],
+        locs: [],
+        draftFile: 'src/drafts/BanNhap2.tsx',
+      }),
+    ),
+  deleteDraft: () =>
+    Promise.resolve(ok({ changed: true, files: ['src/drafts/BanNhap1.tsx'], locs: [] })),
+  promoteDraft: () =>
+    Promise.resolve(
+      ok({
+        changed: true,
+        files: ['src/routes.tsx', 'src/pages/KhuyenMai.tsx'],
+        locs: [],
+        pagePath: '/khuyen-mai',
+      }),
+    ),
 };
 
 beforeEach(async () => {
@@ -339,5 +385,32 @@ describe('Page routes: /api/v1/project/dirs and /api/v1/project/pages', () => {
     });
     expect(res.statusCode).toBe(409);
     expect(res.json()).toMatchObject({ error: { code: 'E021' } });
+  });
+
+  it('handles draft routes', async () => {
+    const listRes = await app.inject({
+      method: 'GET',
+      url: '/api/v1/project/drafts',
+      headers: HEADERS,
+    });
+    expect(listRes.statusCode).toBe(200);
+    expect(listRes.json()).toEqual({
+      data: {
+        drafts: [{ name: 'BanNhap1', file: 'src/drafts/BanNhap1.tsx', free: false, inUse: false }],
+        dir: 'src/drafts',
+        ignored: false,
+      },
+    });
+
+    const createRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/project/drafts',
+      headers: HEADERS,
+      payload: { free: false },
+    });
+    expect(createRes.statusCode).toBe(201);
+    expect(createRes.json()).toMatchObject({
+      data: { draftFile: 'src/drafts/BanNhap1.tsx' },
+    });
   });
 });

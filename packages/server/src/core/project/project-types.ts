@@ -1,12 +1,17 @@
 import type {
   BackendInfo,
+  CreateDraft,
   DesignDirs,
+  DraftFile,
+  DraftsInfo,
   ExtractComponent,
   Frame,
   PackageManager,
   PagesInfo,
   ProjectInfo,
   ProjectProbe,
+  PromoteDraft,
+  RenameDraft,
   ResponsiveMode,
   StructureResult,
   SupportReport,
@@ -81,6 +86,12 @@ export type ProjectService = {
   deletePage(input: DeletePageInput): Promise<Result<StructureResult>>;
   extractComponent(input: ExtractComponent): Promise<Result<StructureResult>>;
   dirs(): Promise<Result<readonly string[]>>;
+  listDrafts(): Promise<Result<DraftsInfo>>;
+  createDraft(input: CreateDraft): Promise<Result<StructureResult>>;
+  renameDraft(input: RenameDraft): Promise<Result<StructureResult>>;
+  duplicateDraft(input: DraftFile): Promise<Result<StructureResult>>;
+  deleteDraft(input: DraftFile): Promise<Result<StructureResult>>;
+  promoteDraft(input: PromoteDraft): Promise<Result<StructureResult>>;
   addBackend(path: string, label?: string): Promise<Result<BackendInfo>>;
   removeBackend(id: string): Promise<Result<void>>;
   /** `workspace.json` changed on disk: read it again (project.changed, S-84). */

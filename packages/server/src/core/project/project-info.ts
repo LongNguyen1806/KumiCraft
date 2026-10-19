@@ -1,6 +1,12 @@
 // ProjectInfo of the open project as the API returns it (SPEC-03 section 5.3).
-import { DEFAULT_DESIGN_DIRS, type ProjectInfo } from '@reactcraft/shared';
+import {
+  DEFAULT_DESIGN_DIRS,
+  type PackageManager,
+  type ProjectInfo,
+  type SupportReport,
+} from '@reactcraft/shared';
 
+import type { Platform } from '../shared/session.ts';
 import { getInstallCommand } from './project-install.ts';
 import type { OpenWorkspace } from './project-workspace-file.ts';
 
@@ -21,4 +27,22 @@ export function projectInfoOf(state: OpenWorkspace): ProjectInfo {
     ...(state.file.devPort === undefined ? {} : { devPort: state.file.devPort }),
     designDirs: state.file.designDirs ?? DEFAULT_DESIGN_DIRS,
   };
+}
+
+export function normalizeRoot(path: string, platform: Platform): string {
+  const unified = path.replaceAll('\\', '/').replace(/\/+$/, '');
+  return platform === 'linux' ? unified : unified.toLowerCase();
+}
+
+export function resolveOpenSupport(
+  root: string,
+  baseSupport: SupportReport,
+  createdPackageManagers: ReadonlyMap<string, PackageManager>,
+  configSettingPm: PackageManager | undefined,
+  platform: Platform,
+): SupportReport {
+  if (baseSupport.packageManager !== undefined) return baseSupport;
+  const fromCreated = createdPackageManagers.get(normalizeRoot(root, platform));
+  const resolvedPm = fromCreated ?? configSettingPm;
+  return resolvedPm !== undefined ? { ...baseSupport, packageManager: resolvedPm } : baseSupport;
 }

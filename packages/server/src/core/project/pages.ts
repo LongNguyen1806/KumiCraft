@@ -141,7 +141,7 @@ function walk(node: unknown, file: string, out: Found[]): void {
   }
 }
 
-async function listCodeFiles(fs: FileSystemPort, root: string, sourceDir: string) {
+export async function listCodeFiles(fs: FileSystemPort, root: string, sourceDir: string) {
   const files: string[] = [];
   const pending = [sourceDir];
   while (pending.length > 0 && files.length < MAX_FILES) {

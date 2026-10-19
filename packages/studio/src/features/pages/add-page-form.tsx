@@ -12,7 +12,7 @@ export type AddPageFormProps = {
   readonly onAdded?: ((res: StructureResult) => void) | undefined;
 };
 
-function useDirSuggestions(): readonly string[] {
+export function useDirSuggestions(): readonly string[] {
   const [dirs, setDirs] = useState<readonly string[]>([]);
   useEffect(() => {
     let active = true;
@@ -126,12 +126,21 @@ function useAddPageState(defaultDir: string, onAdded?: (res: StructureResult) =>
   };
 }
 
-type FieldProps = {
-  readonly state: ReturnType<typeof useAddPageState>;
-  readonly convention: boolean;
+export type PageNameAndPathFieldsProps = {
+  readonly name: string;
+  readonly path: string;
+  readonly disabled?: boolean;
+  readonly onNameChange: (val: string) => void;
+  readonly onPathChange: (val: string) => void;
 };
 
-function PageNameAndPathFields({ state, convention }: FieldProps) {
+export function PageNameAndPathFields({
+  name,
+  path,
+  disabled = false,
+  onNameChange,
+  onPathChange,
+}: PageNameAndPathFieldsProps) {
   const { t } = useTranslation();
   return (
     <>
@@ -140,10 +149,10 @@ function PageNameAndPathFields({ state, convention }: FieldProps) {
         <input
           data-testid="page-name"
           type="text"
-          disabled={!convention || state.busy}
-          value={state.name}
+          disabled={disabled}
+          value={name}
           onChange={(e) => {
-            state.handleNameChange(e.target.value);
+            onNameChange(e.target.value);
           }}
           placeholder={t('pages.namePlaceholder')}
           className="rounded border border-border bg-field px-2 py-1 text-ink disabled:opacity-50"
@@ -154,10 +163,10 @@ function PageNameAndPathFields({ state, convention }: FieldProps) {
         <input
           data-testid="page-path"
           type="text"
-          disabled={!convention || state.busy}
-          value={state.path}
+          disabled={disabled}
+          value={path}
           onChange={(e) => {
-            state.setPath(e.target.value);
+            onPathChange(e.target.value);
           }}
           placeholder="/..."
           className="rounded border border-border bg-field px-2 py-1 text-ink disabled:opacity-50"
@@ -167,24 +176,40 @@ function PageNameAndPathFields({ state, convention }: FieldProps) {
   );
 }
 
-function PageDirAndFileFields({
-  state,
-  convention,
+export type PageDirAndFileFieldsProps = {
+  readonly dir: string;
+  readonly fileName: string;
+  readonly dirs: readonly string[];
+  readonly disabled?: boolean;
+  readonly dirTestId?: string;
+  readonly fileTestId?: string;
+  readonly onDirChange: (val: string) => void;
+  readonly onFileChange: (val: string) => void;
+};
+
+export function PageDirAndFileFields({
+  dir,
+  fileName,
   dirs,
-}: FieldProps & { readonly dirs: readonly string[] }) {
+  disabled = false,
+  dirTestId = 'page-dir',
+  fileTestId = 'page-file',
+  onDirChange,
+  onFileChange,
+}: PageDirAndFileFieldsProps) {
   const { t } = useTranslation();
   return (
     <>
       <label className="flex flex-col gap-1 text-ink-soft">
         {t('pages.dir')}
         <input
-          data-testid="page-dir"
+          data-testid={dirTestId}
           list="page-dir-list"
           type="text"
-          disabled={!convention || state.busy}
-          value={state.dir}
+          disabled={disabled}
+          value={dir}
           onChange={(e) => {
-            state.setDir(e.target.value);
+            onDirChange(e.target.value);
           }}
           className="rounded border border-border bg-field px-2 py-1 text-ink disabled:opacity-50"
         />
@@ -197,12 +222,12 @@ function PageDirAndFileFields({
       <label className="flex flex-col gap-1 text-ink-soft">
         {t('pages.file')}
         <input
-          data-testid="page-file"
+          data-testid={fileTestId}
           type="text"
-          disabled={!convention || state.busy}
-          value={state.fileName}
+          disabled={disabled}
+          value={fileName}
           onChange={(e) => {
-            state.setFileName(e.target.value);
+            onFileChange(e.target.value);
           }}
           placeholder={t('pages.filePlaceholder')}
           className="rounded border border-border bg-field px-2 py-1 text-ink disabled:opacity-50"
@@ -226,8 +251,21 @@ export function AddPageForm({ convention, defaultDir = 'src/pages', onAdded }: A
     >
       <div className="text-xs font-semibold text-ink">{t('pages.add')}</div>
       <div className="grid grid-cols-2 gap-2 text-xs">
-        <PageNameAndPathFields state={state} convention={convention} />
-        <PageDirAndFileFields state={state} convention={convention} dirs={dirs} />
+        <PageNameAndPathFields
+          name={state.name}
+          path={state.path}
+          disabled={!convention || state.busy}
+          onNameChange={state.handleNameChange}
+          onPathChange={state.setPath}
+        />
+        <PageDirAndFileFields
+          dir={state.dir}
+          fileName={state.fileName}
+          dirs={dirs}
+          disabled={!convention || state.busy}
+          onDirChange={state.setDir}
+          onFileChange={state.setFileName}
+        />
       </div>
       {state.errorMsg !== undefined && (
         <div role="alert" className="text-xs text-rose-600">

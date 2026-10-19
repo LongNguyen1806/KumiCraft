@@ -64,6 +64,7 @@ export const DesignDirsSchema = z.strictObject({
   pages: RelPathSchema,
   layouts: RelPathSchema,
   components: RelPathSchema,
+  drafts: RelPathSchema.optional(),
 });
 export type DesignDirs = z.infer<typeof DesignDirsSchema>;
 
@@ -71,6 +72,7 @@ export const DEFAULT_DESIGN_DIRS = {
   pages: 'src/pages',
   layouts: 'src/layouts',
   components: 'src/components',
+  drafts: 'src/drafts',
 } as const;
 
 export const WorkspaceFileSchema = z

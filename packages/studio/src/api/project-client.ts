@@ -2,9 +2,13 @@
 import {
   type AddPage,
   type BackendInfo,
+  type CreateDraft,
   type DeletePage,
   type DesignDirs,
   type DirectoryListing,
+  type DraftFile,
+  type DraftsInfo,
+  DraftsInfoSchema,
   type ExtractComponent,
   type JobStarted,
   JobStartedSchema,
@@ -16,6 +20,8 @@ import {
   type ProjectInfo,
   ProjectInfoSchema,
   type ProjectProbe,
+  type PromoteDraft,
+  type RenameDraft,
   type RenamePage,
   type StructureResult,
   StructureResultSchema,
@@ -114,4 +120,28 @@ export async function fetchComponents(): Promise<ProjectComponent[]> {
 
 export async function extractComponent(payload: ExtractComponent): Promise<StructureResult> {
   return StructureResultSchema.parse(await apiPost('project/components/extract', payload));
+}
+
+export async function fetchDrafts(): Promise<DraftsInfo> {
+  return DraftsInfoSchema.parse(await apiGet('project/drafts'));
+}
+
+export async function createDraft(payload: CreateDraft): Promise<StructureResult> {
+  return StructureResultSchema.parse(await apiPost('project/drafts', payload));
+}
+
+export async function renameDraft(payload: RenameDraft): Promise<StructureResult> {
+  return StructureResultSchema.parse(await apiPatch('project/drafts', payload));
+}
+
+export async function duplicateDraft(payload: DraftFile): Promise<StructureResult> {
+  return StructureResultSchema.parse(await apiPost('project/drafts/duplicate', payload));
+}
+
+export async function deleteDraft(payload: DraftFile): Promise<StructureResult> {
+  return StructureResultSchema.parse(await apiDelete('project/drafts', payload));
+}
+
+export async function promoteDraft(payload: PromoteDraft): Promise<StructureResult> {
+  return StructureResultSchema.parse(await apiPost('project/drafts/promote', payload));
 }

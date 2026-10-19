@@ -99,6 +99,11 @@
     "pageRename": "đổi tên trang {{name}}",
     "pageDelete": "xóa trang {{name}}",
     "extract": "tạo component {{name}}",
+    "draftCreate": "tạo bản nháp {{name}}",
+    "draftRename": "đổi tên bản nháp {{name}}",
+    "draftDuplicate": "nhân bản bản nháp {{name}}",
+    "draftDelete": "xóa bản nháp {{name}}",
+    "draftPromote": "chuyển đổi bản nháp {{name}}",
     "batch": "sửa {{count}} phần tử",
     "dismissError": "Đóng thông báo",
     "errorFileChanged": "File {{file}} đã bị sửa từ nơi khác, không hoàn tác được bước này"
@@ -413,12 +418,33 @@
     "kind": {
       "page": "Trang",
       "layout": "Bố cục",
-      "component": "Component"
+      "component": "Component",
+      "draft": "Bản nháp"
     },
     "unknownFile": "Chưa biết file của trang này",
     "selectInFile": "Chọn một phần tử trong {{file}}",
     "back": "Quay lại trang",
     "usages": "Đang dùng ở {{count}} vị trí"
+  },
+  "drafts": {
+    "title": "Bản nháp",
+    "new": "Bản nháp mới…",
+    "manage": "Quản lý bản nháp",
+    "blank": "Trắng",
+    "free": "Khung tự do",
+    "create": "Tạo",
+    "creating": "Đang tạo…",
+    "rename": "Đổi tên",
+    "duplicate": "Nhân bản",
+    "delete": "Xóa",
+    "promote": "Chuyển đổi",
+    "promoteKeep": "Giữ bản nháp",
+    "promoteAsPage": "Trang",
+    "promoteAsComponent": "Component",
+    "inUse": "Đang dùng",
+    "ignoredWarning": "Thư mục bản nháp đang bị .gitignore bỏ qua. Các thay đổi sẽ không được commit vào Git.",
+    "freeWarning": "Bản nháp tự do dùng vị trí tuyệt đối; hãy kiểm tra hiển thị responsive trên điện thoại sau khi chuyển đổi.",
+    "providerHint": "Bản nháp chạy ngoài app; component này cần Provider"
   },
   "components": {
     "title": "Component",
