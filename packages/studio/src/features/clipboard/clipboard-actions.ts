@@ -2,6 +2,8 @@ import type { ElementRef, TreeNode } from '@reactcraft/shared';
 
 import { applyStructureEdit, fetchElementText } from '../../api/source-client.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';
+import { placementTailwindMajor } from '../editor/canvas-view-store.ts';
+import { freeStackPlacement } from '../free-frame/free-frame-placement.ts';
 import { determineInsertTarget } from '../library/insert-block.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag, runStructureOp } from '../structure/structure-commands.ts';
@@ -163,9 +165,11 @@ export async function pasteClipboard(): Promise<boolean> {
     return false;
   }
 
+  const placement = await freeStackPlacement(target);
+  const tailwindMajor = placementTailwindMajor(placement);
   return runStructureOp(
     { ref: primaryRef, tag },
-    () => applyStructureEdit({ kind: 'insert', target, jsx: text, from }),
+    () => applyStructureEdit({ kind: 'insert', target, jsx: text, from, placement, tailwindMajor }),
     (res) => {
       // Every pasted element has a loc of its own, so each is the first instance of it.
       const newRefs = res.locs.map((loc) => ({ loc, index: 0 }));

@@ -1,9 +1,10 @@
 // Text edit builders for move operations (SPEC-04 R-SE-24, section 4.2).
-import { err, ok, type Result } from '@reactcraft/shared';
+import { err, ok, type Placement, type Result } from '@reactcraft/shared';
 
 import type { AstNode } from '../ast-helpers.ts';
 import { extractElementText } from './element-text.ts';
 import { jsxChildren } from './jsx-children.ts';
+import { applyPlacementToJsx } from './placement-jsx.ts';
 import { checkElementStructureGuard, findAncestors } from './structure-guard.ts';
 import {
   buildInsertTextEdit,
@@ -110,6 +111,8 @@ export function buildSameFileMoveEdits(
   targetKind: 'sibling' | 'child',
   where: 'before' | 'after' | 'start' | 'end',
   targetElement: ResolvedElement,
+  placement?: Placement,
+  tailwindMajor?: 3 | 4,
 ): Result<SameFileMoveEdits> {
   // 1. Guard check on each element
   for (const el of elements) {
@@ -126,7 +129,7 @@ export function buildSameFileMoveEdits(
   if (!intoSelfRes.ok) return intoSelfRes;
 
   // Optimized swap for adjacent siblings under the same parent to preserve separators verbatim
-  if (elements.length === 1 && targetKind === 'sibling') {
+  if (!placement && elements.length === 1 && targetKind === 'sibling') {
     const singleEl = elements[0];
     if (singleEl && (where === 'before' || where === 'after')) {
       const swapRes = tryAdjacentSiblingSwap(parentRes.value, code, singleEl, targetElement, where);
@@ -137,8 +140,14 @@ export function buildSameFileMoveEdits(
   // 4. Sort elements by position in file
   const sorted = [...elements].sort((a, b) => a.start - b.start);
 
-  // 5. Build moving JSX text
-  const movingJsx = sorted.map((el) => extractElementText(code, el)).join(nl);
+  // 5. Build moving JSX text with placement
+  const movingJsxRes = applyPlacementToJsx(
+    sorted.map((el) => extractElementText(code, el)).join(nl),
+    placement,
+    tailwindMajor,
+  );
+  if (!movingJsxRes.ok) return movingJsxRes;
+  const movingJsx = movingJsxRes.value;
 
   // 6. Build remove edits
   const removeEditsRes = buildRemoveTextEdits(ast, code, sorted);
@@ -157,14 +166,6 @@ export function buildSameFileMoveEdits(
   if (!insertEditRes.ok) return insertEditRes;
 
   const insertEdit = insertEditRes.value;
-
-  // Check boundary edge-case: sibling before immediate next element
-  // If remove edit deleted [lineStart, afterNewline] and insertEdit is at refStart (which is inside indentation on next line),
-  // but if insertEdit overlaps or sits right at afterNewline, ensure non-overlapping ranges.
-  // In our buildRemoveTextEdits, afterNewline is the start of the next line (before its indent).
-  // In buildSiblingEdit('before'), start is refStart (after indent).
-  // Thus afterNewline <= refStart, so prev.end <= curr.start is strictly satisfied!
-
   const allEdits = [...removeEditsRes.value, insertEdit];
   return ok({ edits: allEdits });
 }

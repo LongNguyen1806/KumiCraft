@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { RelPathSchema } from './rel-path.ts';
 import { ElementGuardSchema, InsertTargetSchema } from './source.ts';
+import { PlacementSchema } from './tailwind/free-position.ts';
 
 export const ElementRefSchema = z.strictObject({
   loc: z.string().min(1),
@@ -161,7 +162,12 @@ export type DropRect = z.infer<typeof DropRectSchema>;
 
 // Bridge -> Studio. {} = currently no valid drop target (spec-log #21).
 export const BridgeDropTargetPayloadSchema = z.union([
-  z.strictObject({ target: InsertTargetSchema, rect: DropRectSchema, label: z.string().max(100) }),
+  z.strictObject({
+    target: InsertTargetSchema,
+    rect: DropRectSchema,
+    label: z.string().max(100),
+    placement: PlacementSchema.optional(),
+  }),
   z.strictObject({}),
 ]);
 export type BridgeDropTargetPayload = z.infer<typeof BridgeDropTargetPayloadSchema>;
@@ -170,6 +176,7 @@ export type BridgeDropTargetPayload = z.infer<typeof BridgeDropTargetPayloadSche
 export const BridgeMoveIntentPayloadSchema = z.strictObject({
   elements: z.array(ElementGuardSchema).min(1).max(50),
   target: InsertTargetSchema,
+  placement: PlacementSchema.optional(),
 });
 export type BridgeMoveIntentPayload = z.infer<typeof BridgeMoveIntentPayloadSchema>;
 
@@ -191,3 +198,61 @@ export const StudioDesignFilePayloadSchema = z.strictObject({
   focus: z.boolean().optional(),
 });
 export type StudioDesignFilePayload = z.infer<typeof StudioDesignFilePayloadSchema>;
+
+// Studio -> Bridge: set-grid: lưới hiện hành (R-FF-11)
+export const StudioSetGridPayloadSchema = z.strictObject({
+  size: z.union([z.literal(1), z.literal(4), z.literal(8), z.literal(16)]),
+});
+export type StudioSetGridPayload = z.infer<typeof StudioSetGridPayloadSchema>;
+
+// Studio -> Bridge: measure-free: đo con trực tiếp của một phần tử trước khi bật khung tự do (R-FF-10)
+export const StudioMeasureFreePayloadSchema = z.strictObject({
+  ref: ElementRefSchema,
+});
+export type StudioMeasureFreePayload = z.infer<typeof StudioMeasureFreePayloadSchema>;
+
+// Bridge -> Studio: trả lời measure-free (R-FF-10)
+export const BridgeFreeMeasurePayloadSchema = z.strictObject({
+  ref: ElementRefSchema,
+  height: z.number(),
+  hasHeight: z.boolean(),
+  children: z
+    .array(
+      z.strictObject({
+        ref: ElementRefSchema,
+        tag: z.string(),
+        left: z.number(),
+        top: z.number(),
+      }),
+    )
+    .max(200),
+});
+export type BridgeFreeMeasurePayload = z.infer<typeof BridgeFreeMeasurePayloadSchema>;
+
+// Bridge -> Studio: nhả chuột sau khi kéo di chuyển trong khung (R-FF-13)
+export const BridgeFreeMovePayloadSchema = z.strictObject({
+  items: z
+    .array(
+      z.strictObject({
+        ref: ElementRefSchema,
+        tag: z.string(),
+        left: z.number(),
+        top: z.number(),
+      }),
+    )
+    .min(1)
+    .max(50),
+});
+export type BridgeFreeMovePayload = z.infer<typeof BridgeFreeMovePayloadSchema>;
+
+// Bridge -> Studio: nhả chuột sau khi kéo giãn (R-FF-14)
+export const BridgeFreeResizePayloadSchema = z.strictObject({
+  ref: ElementRefSchema,
+  tag: z.string(),
+  left: z.number().optional(),
+  top: z.number().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  resetSize: z.boolean().optional(),
+});
+export type BridgeFreeResizePayload = z.infer<typeof BridgeFreeResizePayloadSchema>;

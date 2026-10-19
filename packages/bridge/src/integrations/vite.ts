@@ -1,6 +1,7 @@
 // Vite plugin bridge connecting target project dev server to ReactCraft Studio (SPEC-04 M-BR, R-BR-04, R-BR-05).
 import { BRIDGE_CLIENT_CODE } from '../client/bridge-client.generated.ts';
 import { transformJsx } from '../transform/transform-jsx.ts';
+import { createDraftPageHooks, type DraftDevServer } from './draft-page.ts';
 
 export type BridgePluginOptions = {
   readonly rootDir: string;
@@ -8,6 +9,10 @@ export type BridgePluginOptions = {
   readonly nonce: string;
   readonly studioOrigin: string;
   readonly sourceExtensions?: readonly string[] | undefined;
+  /** Drafts folder served at `/__reactcraft/draft` (R-DR-12); absent: no draft page. */
+  readonly draftsDir?: string | undefined;
+  /** The project's Tailwind CSS entry, loaded by the draft page (R-DR-12). */
+  readonly tailwindCss?: string | undefined;
 };
 
 /** The URL the page loads; served as a module so Vite gives it `import.meta.hot` (R-BR-17). */
@@ -48,6 +53,8 @@ function createIndexHtmlTags(options: BridgePluginOptions): readonly HtmlTagDesc
 }
 
 export function createReactCraftBridgePlugin(options: BridgePluginOptions) {
+  const draftPage = createDraftPageHooks(options);
+
   return {
     name: 'reactcraft:bridge',
     apply: 'serve' as const,
@@ -69,12 +76,17 @@ export function createReactCraftBridgePlugin(options: BridgePluginOptions) {
       },
     },
 
-    resolveId(id: string): string | undefined {
-      return id === BRIDGE_CLIENT_URL ? BRIDGE_CLIENT_ID : undefined;
+    // R-DR-12: the draft preview page at `/__reactcraft/draft`.
+    configureServer(server: DraftDevServer): void {
+      draftPage.configureServer(server);
     },
 
-    load(id: string): string | undefined {
-      return id === BRIDGE_CLIENT_ID ? BRIDGE_CLIENT_CODE : undefined;
+    resolveId(id: string): string | undefined {
+      return id === BRIDGE_CLIENT_URL ? BRIDGE_CLIENT_ID : draftPage.resolveId(id);
+    },
+
+    load(id: string): string | Promise<string> | undefined {
+      return id === BRIDGE_CLIENT_ID ? BRIDGE_CLIENT_CODE : draftPage.load(id);
     },
 
     transformIndexHtml(): readonly HtmlTagDescriptor[] {

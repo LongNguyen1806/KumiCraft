@@ -3,6 +3,8 @@ import type { ElementRef, StructureResult, TreeNode } from '@reactcraft/shared';
 
 import { applyStructureEdit } from '../../api/source-client.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';
+import { placementTailwindMajor } from '../editor/canvas-view-store.ts';
+import { freeStackPlacement } from '../free-frame/free-frame-placement.ts';
 import { siblingMoveTarget } from '../inspector/sibling-move.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { useStructureErrorStore } from './structure-error-store.ts';
@@ -66,9 +68,20 @@ export async function runStructureOp(
 export async function executeDuplicate(target?: StructureTargetInput): Promise<boolean> {
   const t = resolveSingleTarget(target);
   if (!t) return false;
+  const placement = await freeStackPlacement({
+    kind: 'sibling',
+    ref: { loc: t.ref.loc, tag: t.tag },
+    where: 'after',
+  });
   return runStructureOp(
     t,
-    () => applyStructureEdit({ kind: 'duplicate', elements: [{ loc: t.ref.loc, tag: t.tag }] }),
+    () =>
+      applyStructureEdit({
+        kind: 'duplicate',
+        elements: [{ loc: t.ref.loc, tag: t.tag }],
+        placement,
+        tailwindMajor: placementTailwindMajor(placement),
+      }),
     (res) => {
       const newLoc = res.locs[0];
       if (newLoc) useSelectionStore.getState().setSelectedRefs([{ loc: newLoc, index: 0 }]);

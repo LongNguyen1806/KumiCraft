@@ -2,6 +2,7 @@
 import { z } from 'zod';
 
 import { RelPathSchema } from './rel-path.ts';
+import { PlacementSchema } from './tailwind/free-position.ts';
 
 export const EDITABLE_ATTRS = ['href', 'src', 'alt', 'placeholder', 'type'] as const;
 export type EditableAttr = (typeof EDITABLE_ATTRS)[number];
@@ -98,6 +99,7 @@ export const ElementSourceSchema = z.strictObject({
     })
     .optional(),
   inLoop: z.boolean(),
+  free: z.boolean().optional(),
 });
 export type ElementSource = z.infer<typeof ElementSourceSchema>;
 
@@ -129,10 +131,22 @@ export const SetAttributeEditSchema = z.strictObject({
 });
 export type SetAttributeEdit = z.infer<typeof SetAttributeEditSchema>;
 
+export const SetFlagEditSchema = z.strictObject({
+  kind: z.literal('setFlag'),
+  loc: z.string().min(1),
+  tag: z.string().min(1),
+  name: z.literal('data-rc-free'),
+  on: z.boolean(),
+  before: z.string().optional(),
+  after: z.string().optional(),
+});
+export type SetFlagEdit = z.infer<typeof SetFlagEditSchema>;
+
 export const SourceEditSchema = z.discriminatedUnion('kind', [
   SetClassNameEditSchema,
   SetTextEditSchema,
   SetAttributeEditSchema,
+  SetFlagEditSchema,
 ]);
 export type SourceEdit = z.infer<typeof SourceEditSchema>;
 
@@ -169,6 +183,8 @@ export const InsertEditSchema = z.strictObject({
       imports: z.array(z.string().max(2000)).max(50),
     })
     .optional(),
+  placement: PlacementSchema.optional(),
+  tailwindMajor: z.union([z.literal(3), z.literal(4)]).optional(),
 });
 export type InsertEdit = z.infer<typeof InsertEditSchema>;
 
@@ -181,6 +197,8 @@ export type RemoveEdit = z.infer<typeof RemoveEditSchema>;
 export const DuplicateEditSchema = z.strictObject({
   kind: z.literal('duplicate'),
   elements: z.array(ElementGuardSchema).min(1).max(50),
+  placement: PlacementSchema.optional(),
+  tailwindMajor: z.union([z.literal(3), z.literal(4)]).optional(),
 });
 export type DuplicateEdit = z.infer<typeof DuplicateEditSchema>;
 
@@ -188,6 +206,8 @@ export const MoveEditSchema = z.strictObject({
   kind: z.literal('move'),
   elements: z.array(ElementGuardSchema).min(1).max(50),
   target: InsertTargetSchema,
+  placement: PlacementSchema.optional(),
+  tailwindMajor: z.union([z.literal(3), z.literal(4)]).optional(),
 });
 export type MoveEdit = z.infer<typeof MoveEditSchema>;
 
@@ -218,6 +238,7 @@ export const AnyEditSchema = z.discriminatedUnion('kind', [
   SetClassNameEditSchema,
   SetTextEditSchema,
   SetAttributeEditSchema,
+  SetFlagEditSchema,
   InsertEditSchema,
   RemoveEditSchema,
   DuplicateEditSchema,
@@ -256,6 +277,7 @@ export const AttributeLevelEditSchema = z.discriminatedUnion('kind', [
   SetClassNameEditSchema,
   SetAttributeEditSchema,
   SetTextEditSchema,
+  SetFlagEditSchema,
 ]);
 export type AttributeLevelEdit = z.infer<typeof AttributeLevelEditSchema>;
 

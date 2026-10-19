@@ -90,6 +90,8 @@ async function listenVite(
         sourceDir: options.sourceDir,
         nonce: options.nonce,
         studioOrigin: options.studioOrigin,
+        draftsDir: options.draftsDir,
+        tailwindCss: options.tailwindCss,
       }),
     ],
   });

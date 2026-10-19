@@ -24,6 +24,12 @@ type ValidatedEdit = {
   readonly column: number;
 };
 
+function editKey(edit: AttributeLevelEdit): string {
+  if (edit.kind === 'setAttribute') return `${edit.loc}:attr:${edit.name}`;
+  if (edit.kind === 'setFlag') return `${edit.loc}:flag:${edit.name}`;
+  return `${edit.loc}:${edit.kind}`;
+}
+
 function validateAndGroupEdits(
   edits: readonly AttributeLevelEdit[],
   sourceDir: string,
@@ -32,14 +38,15 @@ function validateAndGroupEdits(
   readonly byFile: ReadonlyMap<string, readonly ValidatedEdit[]>;
   readonly sortedFiles: readonly string[];
 }> {
-  const locsSeen = new Set<string>();
+  const keysSeen = new Set<string>();
   const validated: ValidatedEdit[] = [];
 
   for (const edit of edits) {
-    if (locsSeen.has(edit.loc)) {
+    const key = editKey(edit);
+    if (keysSeen.has(key)) {
       return err({ code: 'E016', params: { reason: 'duplicateLoc' } });
     }
-    locsSeen.add(edit.loc);
+    keysSeen.add(key);
 
     const valRes = validateLocAndExt(edit.loc, sourceDir, sourceExtensions);
     if (!valRes.ok) return valRes;

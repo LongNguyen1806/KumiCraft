@@ -1,5 +1,11 @@
 // Block insertion logic (SPEC-04 R-LB-14, R-LB-15).
-import type { ElementRef, InsertTarget, LibraryBlock } from '@reactcraft/shared';
+import {
+  type ElementRef,
+  type InsertTarget,
+  isContainerTag,
+  type LibraryBlock,
+  type Placement,
+} from '@reactcraft/shared';
 
 import { applyStructureEdit } from '../../api/source-client.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';
@@ -7,25 +13,6 @@ import { useDesignStore } from '../design/design-store.ts';
 import { insertAnchor } from '../design/design-target.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
-
-export const CONTAINER_TAGS = [
-  'div',
-  'section',
-  'main',
-  'header',
-  'footer',
-  'nav',
-  'aside',
-  'article',
-  'form',
-  'fieldset',
-  'ul',
-  'ol',
-] as const;
-
-export function isContainerTag(tag: string): boolean {
-  return CONTAINER_TAGS.includes(tag.toLowerCase() as (typeof CONTAINER_TAGS)[number]);
-}
 
 export function determineInsertTarget(ref: ElementRef, tag: string): InsertTarget {
   if (isContainerTag(tag)) {
@@ -54,10 +41,12 @@ export async function insertBlockAt(
   block: LibraryBlock,
   target: InsertTarget,
   lang: string,
+  placement?: Placement,
+  tailwindMajor?: 3 | 4,
 ): Promise<InsertBlockResult> {
   const jsx = localizedBlockJsx(block, lang);
   try {
-    const res = await applyStructureEdit({ kind: 'insert', target, jsx });
+    const res = await applyStructureEdit({ kind: 'insert', target, jsx, placement, tailwindMajor });
     const newLoc = res.locs[0];
     if (newLoc) {
       useSelectionStore.getState().setSelectedRefs([{ loc: newLoc, index: 0 }]);

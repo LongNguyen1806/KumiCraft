@@ -1,9 +1,11 @@
 // Zustand store for Canvas view state (zoom, frame, mode) (SPEC-04 R-RN-21, R-KB-12).
-import { defaultFrames, type Frame } from '@reactcraft/shared';
+import { defaultFrames, type Frame, type Placement } from '@reactcraft/shared';
 import { create } from 'zustand';
 
 export type CanvasMode = 'design' | 'preview';
 export type Zoom = number | 'fit';
+export type CanvasGridSize = 1 | 4 | 8 | 16;
+export const CANVAS_GRID_SIZES: readonly CanvasGridSize[] = [1, 4, 8, 16];
 
 export const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
@@ -14,6 +16,14 @@ export type CanvasViewState = {
   readonly activeFrameId: string;
   readonly frames: readonly Frame[];
   readonly draftFile?: string | undefined;
+  readonly grid: CanvasGridSize;
+  readonly setGrid: (grid: CanvasGridSize) => void;
+  /** Tailwind major version of the open project (WP-2.12a section 3.1). */
+  readonly tailwindMajor: 3 | 4;
+  readonly setTailwindMajor: (major: 3 | 4) => void;
+  /** Drafts folder of the open project (R-FF-19). */
+  readonly draftsDir: string;
+  readonly setDraftsDir: (dir: string) => void;
   readonly setMode: (mode: CanvasMode | ((prev: CanvasMode) => CanvasMode)) => void;
   readonly toggleMode: () => void;
   readonly setZoom: (zoom: Zoom) => void;
@@ -28,6 +38,32 @@ export type CanvasViewState = {
   readonly openDraft: (file: string, projectId?: string) => void;
   readonly closeDraft: (projectId?: string) => void;
 };
+
+/** Tailwind major to send with a placement; none without one (WP-2.12a section 3.3). */
+export function placementTailwindMajor(placement: Placement | undefined): 3 | 4 | undefined {
+  return placement === undefined ? undefined : useCanvasViewStore.getState().tailwindMajor;
+}
+
+const GRID_STORAGE_KEY = 'reactcraft:canvas-grid';
+
+export function getStoredGrid(): CanvasGridSize {
+  try {
+    const val = localStorage.getItem(GRID_STORAGE_KEY);
+    const n = Number(val);
+    if (n === 1 || n === 4 || n === 8 || n === 16) return n;
+  } catch {
+    // Ignore storage errors
+  }
+  return 8;
+}
+
+export function setStoredGrid(grid: CanvasGridSize): void {
+  try {
+    localStorage.setItem(GRID_STORAGE_KEY, String(grid));
+  } catch {
+    // Ignore storage errors
+  }
+}
 
 const DRAFT_STORAGE_PREFIX = 'reactcraft:draft:';
 
@@ -88,12 +124,52 @@ function createZoomActions(
   };
 }
 
+function createDraftActions(
+  set: (
+    updater: Partial<CanvasViewState> | ((s: CanvasViewState) => Partial<CanvasViewState>),
+  ) => void,
+) {
+  return {
+    openDraft: (file: string, projectId?: string) => {
+      set({ draftFile: file });
+      if (projectId) setStoredDraftFile(projectId, file);
+    },
+    closeDraft: (projectId?: string) => {
+      set({ draftFile: undefined });
+      if (projectId) setStoredDraftFile(projectId, undefined);
+    },
+  };
+}
+
+function createProjectFactActions(
+  set: (
+    updater: Partial<CanvasViewState> | ((s: CanvasViewState) => Partial<CanvasViewState>),
+  ) => void,
+) {
+  return {
+    tailwindMajor: 4 as const,
+    setTailwindMajor: (tailwindMajor: 3 | 4) => {
+      set({ tailwindMajor });
+    },
+    draftsDir: 'src/drafts',
+    setDraftsDir: (draftsDir: string) => {
+      set({ draftsDir });
+    },
+  };
+}
+
 export const useCanvasViewStore = create<CanvasViewState>((set, get) => ({
   mode: 'design',
   zoom: 'fit',
   displayedZoom: 1,
   activeFrameId: 'desktop',
   frames: defaultFrames('desktop-first').frames,
+  grid: getStoredGrid(),
+  setGrid: (grid) => {
+    setStoredGrid(grid);
+    set({ grid });
+  },
+  ...createProjectFactActions(set),
 
   setMode: (mode) => {
     set((state) => ({
@@ -128,12 +204,5 @@ export const useCanvasViewStore = create<CanvasViewState>((set, get) => ({
     return false;
   },
   draftFile: undefined,
-  openDraft: (file, projectId) => {
-    set({ draftFile: file });
-    if (projectId) setStoredDraftFile(projectId, file);
-  },
-  closeDraft: (projectId) => {
-    set({ draftFile: undefined });
-    if (projectId) setStoredDraftFile(projectId, undefined);
-  },
+  ...createDraftActions(set),
 }));

@@ -3,6 +3,12 @@ import {
   BridgeBuildErrorPayloadSchema,
   BridgeDropTargetPayloadSchema,
   BridgeEnvelopeSchema,
+  type BridgeFreeMeasurePayload,
+  BridgeFreeMeasurePayloadSchema,
+  type BridgeFreeMovePayload,
+  BridgeFreeMovePayloadSchema,
+  type BridgeFreeResizePayload,
+  BridgeFreeResizePayloadSchema,
   BridgeHoverPayloadSchema,
   BridgeMoveIntentPayloadSchema,
   BridgeReadyPayloadSchema,
@@ -28,6 +34,7 @@ import { isApplePlatform } from '../../app/platform.ts';
 import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { executeDropMove } from '../dnd/drop-actions.ts';
+import { placementTailwindMajor, useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { runShortcut } from '../shortcuts/shortcut-actions.ts';
 import { type CanvasMode, useSelectionStore } from './selection-store.ts';
 
@@ -70,14 +77,19 @@ function handleDndBridgePayload(type: string, payload: unknown): boolean {
   if (type === 'drop-target') {
     const res = BridgeDropTargetPayloadSchema.safeParse(payload);
     if (res.success) {
-      useDndStore.getState().setDropTarget('target' in res.data ? res.data.target : undefined);
+      useDndStore.getState().setDropTarget(res.data.target, res.data.placement);
     }
     return true;
   }
   if (type === 'move-intent') {
     const res = BridgeMoveIntentPayloadSchema.safeParse(payload);
     if (res.success) {
-      void executeDropMove(res.data.elements, res.data.target);
+      void executeDropMove(
+        res.data.elements,
+        res.data.target,
+        res.data.placement,
+        placementTailwindMajor(res.data.placement),
+      );
     }
     return true;
   }
@@ -136,6 +148,12 @@ export type BridgeTextEditListener = {
   readonly onTextCancel?: (payload: BridgeTextCancelPayload) => void;
 };
 
+export type BridgeFreeFrameListener = {
+  readonly onFreeMeasure?: (payload: BridgeFreeMeasurePayload) => void;
+  readonly onFreeMove?: (payload: BridgeFreeMovePayload) => void;
+  readonly onFreeResize?: (payload: BridgeFreeResizePayload) => void;
+};
+
 export class BridgeChannel {
   private iframeWindow: Window | undefined;
   private runnerOrigin: string | undefined;
@@ -145,6 +163,7 @@ export class BridgeChannel {
   private designFocus = false;
   private readonly listener: (e: MessageEvent) => void;
   private readonly textEditListeners = new Set<BridgeTextEditListener>();
+  private readonly freeFrameListeners = new Set<BridgeFreeFrameListener>();
 
   constructor() {
     this.listener = (e: MessageEvent) => {
@@ -174,6 +193,21 @@ export class BridgeChannel {
     return () => {
       this.textEditListeners.delete(listener);
     };
+  }
+
+  registerFreeFrameListener(listener: BridgeFreeFrameListener): () => void {
+    this.freeFrameListeners.add(listener);
+    return () => {
+      this.freeFrameListeners.delete(listener);
+    };
+  }
+
+  setGrid(size: 1 | 4 | 8 | 16): void {
+    this.sendMessage('set-grid', { size });
+  }
+
+  measureFree(ref: ElementRef): void {
+    this.sendMessage('measure-free', { ref });
   }
 
   setMode(mode: CanvasMode): void {
@@ -234,8 +268,10 @@ export class BridgeChannel {
         ? { file: this.designFile, focus: true }
         : { file: this.designFile };
       this.sendMessage('design-file', payload);
+      this.setGrid(useCanvasViewStore.getState().grid);
     }
     this.handleTextEditMessage(envelopeRes.data.type, envelopeRes.data.payload);
+    this.handleFreeFrameMessage(envelopeRes.data.type, envelopeRes.data.payload);
   }
 
   private handleTextEditMessage(type: string, payload: unknown): void {
@@ -253,6 +289,25 @@ export class BridgeChannel {
       const res = BridgeTextCancelPayloadSchema.safeParse(payload);
       if (res.success) {
         for (const l of this.textEditListeners) l.onTextCancel?.(res.data);
+      }
+    }
+  }
+
+  private handleFreeFrameMessage(type: string, payload: unknown): void {
+    if (type === 'free-measure') {
+      const res = BridgeFreeMeasurePayloadSchema.safeParse(payload);
+      if (res.success) {
+        for (const l of this.freeFrameListeners) l.onFreeMeasure?.(res.data);
+      }
+    } else if (type === 'free-move') {
+      const res = BridgeFreeMovePayloadSchema.safeParse(payload);
+      if (res.success) {
+        for (const l of this.freeFrameListeners) l.onFreeMove?.(res.data);
+      }
+    } else if (type === 'free-resize') {
+      const res = BridgeFreeResizePayloadSchema.safeParse(payload);
+      if (res.success) {
+        for (const l of this.freeFrameListeners) l.onFreeResize?.(res.data);
       }
     }
   }

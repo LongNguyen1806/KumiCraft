@@ -6,6 +6,7 @@ import {
   type ElementSource,
   type ElementText,
   ElementTextSchema,
+  parseLocString,
   type SourceEdit,
   type StructureEdit,
   type StructureResult,
@@ -35,6 +36,12 @@ export async function fetchElementSource(params: FetchElementSourceParams): Prom
   });
   const result = await apiGet(`source/element?${query.toString()}`);
   return result as ElementSource;
+}
+
+export async function fetchElementSourceByLoc(loc: string): Promise<ElementSource | undefined> {
+  const parsed = parseLocString(loc);
+  if (!parsed) return undefined;
+  return fetchElementSource(parsed);
 }
 
 export async function fetchElementText(loc: string): Promise<ElementText> {

@@ -15,6 +15,8 @@ import { useTranslation } from 'react-i18next';
 
 import { errorText } from '../../routes/error-text.ts';
 import { useOpenInEditor } from '../editor/use-open-in-editor.ts';
+import { FreeFramePageWarning } from '../free-frame/free-frame-page-warning.tsx';
+import { FreeFrameToggle } from '../free-frame/free-frame-toggle.tsx';
 import { ColorField } from './components/color-field.tsx';
 import { InspectorHeader } from './components/inspector-header.tsx';
 import { OtherClassesSection } from './components/other-classes-section.tsx';
@@ -282,25 +284,29 @@ function InspectorSingleTargetView({
         error={displayedError}
       />
       {target.source && (
-        <ElementSections
-          source={target.source}
-          tokens={tokens}
-          currentScope={target.currentScope}
-          frameWidth={frameWidth}
-          ctx={ctx}
-          isLocked={isLocked}
-          isAttrLocked={isAttrLocked}
-          onAttributeChange={attrEdit.setAttribute}
-          rawClassString={liveEdit.classString}
-          onPropChange={(prop, val) => {
-            liveEdit.mutateProperty(prop, val);
-            onClassStringChange?.(liveEdit.classString);
-          }}
-          onRawChange={(raw) => {
-            liveEdit.mutateRawClass(raw);
-            onClassStringChange?.(raw);
-          }}
-        />
+        <>
+          <FreeFramePageWarning source={target.source} />
+          <FreeFrameToggle source={target.source} />
+          <ElementSections
+            source={target.source}
+            tokens={tokens}
+            currentScope={target.currentScope}
+            frameWidth={frameWidth}
+            ctx={ctx}
+            isLocked={isLocked}
+            isAttrLocked={isAttrLocked}
+            onAttributeChange={attrEdit.setAttribute}
+            rawClassString={liveEdit.classString}
+            onPropChange={(prop, val) => {
+              liveEdit.mutateProperty(prop, val);
+              onClassStringChange?.(liveEdit.classString);
+            }}
+            onRawChange={(raw) => {
+              liveEdit.mutateRawClass(raw);
+              onClassStringChange?.(raw);
+            }}
+          />
+        </>
       )}
     </div>
   );

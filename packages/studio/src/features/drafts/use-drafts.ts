@@ -71,6 +71,7 @@ export function useDrafts(): DraftsData {
         ]);
         if (!active) return;
         setData(draftsInfo);
+        useCanvasViewStore.getState().setDraftsDir(draftsInfo.dir);
         const pid = proj?.id;
         setProjectId(pid);
         restoreStoredDraft(draftsInfo.drafts, pid, openDraft);

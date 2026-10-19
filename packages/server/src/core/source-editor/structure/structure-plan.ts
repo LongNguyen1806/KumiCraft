@@ -7,6 +7,7 @@ import { findNodeAt, validateLocAndExt } from '../source-editor-lookup.ts';
 import { collectComponentTags } from './element-text.ts';
 import { buildMissingImportsEdits } from './imports.ts';
 import { buildSameFileMoveEdits } from './move-ops.ts';
+import { applyPlacementToJsx } from './placement-jsx.ts';
 import {
   buildDuplicateTextEdits,
   buildInsertTextEdit,
@@ -135,6 +136,13 @@ function planInsert(
   const first = resolved[0];
   if (!first) return err({ code: 'E016', params: { reason: 'empty' } });
 
+  let jsxToInsert = edit.jsx;
+  if (edit.placement) {
+    const placedRes = applyPlacementToJsx(edit.jsx, edit.placement, edit.tailwindMajor);
+    if (!placedRes.ok) return placedRes;
+    jsxToInsert = placedRes.value;
+  }
+
   const insertEditRes = buildInsertTextEdit(
     ast,
     code,
@@ -142,13 +150,13 @@ function planInsert(
     edit.target.kind,
     edit.target.where,
     first,
-    edit.jsx,
+    jsxToInsert,
   );
   if (!insertEditRes.ok) return insertEditRes;
 
   let astSnippet: AstNode | undefined;
   try {
-    astSnippet = parseJsxAst(`<>${edit.jsx}</>`);
+    astSnippet = parseJsxAst(`<>${jsxToInsert}</>`);
   } catch {
     // validated previously
   }
@@ -181,6 +189,13 @@ function planMoveCrossFileTarget(
     return ok({ edits: [], locsFromMarks: false });
   }
 
+  let movingJsx = context.movingJsx;
+  if (edit.placement) {
+    const placedRes = applyPlacementToJsx(context.movingJsx, edit.placement, edit.tailwindMajor);
+    if (!placedRes.ok) return placedRes;
+    movingJsx = placedRes.value;
+  }
+
   const insertEditRes = buildInsertTextEdit(
     ast,
     code,
@@ -188,7 +203,7 @@ function planMoveCrossFileTarget(
     edit.target.kind,
     edit.target.where,
     context.targetResolved,
-    context.movingJsx,
+    movingJsx,
   );
   if (!insertEditRes.ok) return insertEditRes;
 
@@ -233,6 +248,8 @@ function planMove(
       edit.target.kind,
       edit.target.where,
       context.targetResolved,
+      edit.placement,
+      edit.tailwindMajor,
     );
     return moveRes.ok ? ok({ edits: moveRes.value.edits, locsFromMarks: true }) : moveRes;
   }
@@ -285,7 +302,14 @@ export function planFileEdits(
     return remRes.ok ? ok({ edits: remRes.value, locsFromMarks: false }) : remRes;
   }
   if (edit.kind === 'duplicate') {
-    const dupRes = buildDuplicateTextEdits(ast, code, nl, resolved);
+    const dupRes = buildDuplicateTextEdits(
+      ast,
+      code,
+      nl,
+      resolved,
+      edit.placement,
+      edit.tailwindMajor,
+    );
     return dupRes.ok ? ok({ edits: dupRes.value, locsFromMarks: true }) : dupRes;
   }
   if (edit.kind === 'move') {

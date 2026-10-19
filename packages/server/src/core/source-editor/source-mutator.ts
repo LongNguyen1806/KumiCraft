@@ -189,3 +189,39 @@ export function mutateText(
   const replacement = `${newline}${childIndent}${encoded}${newline}${indentInfo.openingIndent}`;
   s.overwrite(openingEnd, closingStart, replacement);
 }
+
+/**
+ * Toggles a boolean flag attribute like `data-rc-free` on an opening element (R-FF-10).
+ */
+export function mutateFlag(
+  s: MagicString,
+  code: string,
+  openingEl: AstNode,
+  flagName: string,
+  on: boolean,
+): void {
+  const rawAttrs = Array.isArray(openingEl['attributes']) ? openingEl['attributes'] : [];
+  const attrs = rawAttrs
+    .map(asAstNode)
+    .filter((a): a is AstNode => a !== undefined && a.type === 'JSXAttribute');
+
+  const existingAttr = attrs.find((a) => {
+    const nameNode = asAstNode(a['name']);
+    return nameNode?.['name'] === flagName;
+  });
+
+  if (!on) {
+    if (existingAttr) {
+      removeAttribute(s, code, existingAttr);
+    }
+    return;
+  }
+
+  if (existingAttr) {
+    return;
+  }
+
+  const nameNode = asAstNode(openingEl['name']);
+  const nameEnd = typeof nameNode?.end === 'number' ? nameNode.end : 0;
+  s.appendRight(nameEnd, ` ${flagName}`);
+}

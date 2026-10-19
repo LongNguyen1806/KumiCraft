@@ -39,6 +39,8 @@
     "installButton": "Install now",
     "devServerError": "Dev server error",
     "frame": "Frame",
+    "grid": "Grid",
+    "gridSize": "Grid: {{size}}px",
     "zoom": "Zoom",
     "zoomFit": "Fit",
     "bridgeSilent": "The page Bridge has not connected after 10 seconds. The page may be failing or missing the Bridge plugin.",
@@ -468,5 +470,11 @@
       "fileExists": "Target file already exists.",
       "usesLocalScope": "Element uses local scope variables: {{name}}."
     }
+  },
+  "freeFrame": {
+    "toggle": "Free frame",
+    "confirmDisable": "Turning off free frame will switch child elements back to normal flow. Continue?",
+    "measureTimeout": "Failed to measure frame size (2s timeout).",
+    "pageWarning": "This is a regular page, not a draft. In-place visual editing with free frame may affect responsive layouts. Consider promoting to a draft."
   }
 }

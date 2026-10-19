@@ -1,4 +1,9 @@
-import { type Frame, type ProjectInfo, type RunnerStatus } from '@reactcraft/shared';
+import {
+  type Frame,
+  type ProjectInfo,
+  type RunnerStatus,
+  tailwindMajorOf,
+} from '@reactcraft/shared';
 import { type ChangeEvent, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -7,9 +12,11 @@ import { BuildErrorBanner } from '../canvas-errors/build-error-banner.tsx';
 import { RuntimeErrorList } from '../canvas-errors/runtime-error-list.tsx';
 import { DesignBar } from '../design/design-bar.tsx';
 import { DndErrorBanner } from '../dnd/dnd-error-banner.tsx';
+import { registerFreeFrameCommands } from '../free-frame/free-frame-commands.ts';
 import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
 import { type TextEditWarning, useCanvasTextEdit } from '../text-edit/use-canvas-text-edit.ts';
 import { IframeFrame } from './canvas-frame.tsx';
+import { GridSelect } from './canvas-grid-select.tsx';
 import {
   ErrorView,
   NeedsInstallPrompt,
@@ -166,6 +173,16 @@ function useCanvasAreaState(projectInfo?: ProjectInfo) {
     }
   }, [projectInfo?.frames, setFrames]);
 
+  const setTailwindMajor = useCanvasViewStore((st) => st.setTailwindMajor);
+  const tailwindVersion = projectInfo?.support.versions.tailwindcss;
+  useEffect(() => {
+    setTailwindMajor(tailwindMajorOf(tailwindVersion));
+  }, [tailwindVersion, setTailwindMajor]);
+
+  useEffect(() => {
+    return registerFreeFrameCommands();
+  }, []);
+
   const activeFrame = useMemo(() => getActiveFrame(frames, activeFrameId), [frames, activeFrameId]);
   const editor = useOpenInEditor();
   const textEdit = useCanvasTextEdit({
@@ -310,6 +327,7 @@ function CanvasToolbar({
       <div className="flex min-w-0 items-center gap-3">
         <FrameSelect frames={frames} activeId={activeFrameId} onChange={onSelectFrame} />
         <ZoomSelect zoom={zoom} onChange={onSelectZoom} />
+        <GridSelect />
         <PageSelect />
         <span
           className="min-w-0 truncate font-mono text-ink-soft"

@@ -1,4 +1,5 @@
 // Entry point for @reactcraft/shared/tailwind (QC-04, SPEC-04 section 8).
+export * from './free-position.ts';
 export * from './palette.generated.ts';
 export * from './parser.ts';
 export * from './properties.ts';

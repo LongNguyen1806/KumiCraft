@@ -94,6 +94,23 @@ export function parseText(children: readonly unknown[]): ElementSourceText {
   return { kind: 'mixed' as const };
 }
 
+function readFreeFlag(attributes: readonly unknown[]): boolean {
+  const freeAttr = attributes.map(asAstNode).find((a): a is AstNode => {
+    if (!a || a.type !== 'JSXAttribute') return false;
+    const nameNode = asAstNode(a['name']);
+    return nameNode?.['name'] === 'data-rc-free';
+  });
+  if (!freeAttr) return false;
+  const val = asAstNode(freeAttr['value']);
+  if (!val) return true;
+  if (val.type === 'StringLiteral') return val['value'] === 'true' || val['value'] === '';
+  if (val.type === 'JSXExpressionContainer') {
+    const expr = asAstNode(val['expression']);
+    if (expr?.type === 'BooleanLiteral') return Boolean(expr['value']);
+  }
+  return true;
+}
+
 export function buildElementSource(
   loc: string,
   targetNode: AstNode,
@@ -114,6 +131,7 @@ export function buildElementSource(
   const attributes = readEditableAttributes(rawAttrs, code);
   const componentName = findEnclosingComponent(ast, targetNode);
   const inLoop = checkInLoop(ast, targetNode);
+  const free = readFreeFlag(rawAttrs);
 
   return {
     loc,
@@ -125,6 +143,7 @@ export function buildElementSource(
     attributes,
     ...(componentName !== undefined ? { component: { name: componentName, usages: 1 } } : {}),
     inLoop,
+    free,
   };
 }
 

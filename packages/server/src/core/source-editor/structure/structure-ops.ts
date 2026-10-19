@@ -1,5 +1,5 @@
 // Structural text edit builders for insert, remove and duplicate (SPEC-04 R-SE-22, R-SE-25, R-SE-26).
-import { err, ok, type Result } from '@reactcraft/shared';
+import { err, ok, type Placement, type Result } from '@reactcraft/shared';
 
 import {
   asAstNode,
@@ -9,6 +9,7 @@ import {
   parseJsxAst,
 } from '../ast-helpers.ts';
 import { jsxChildren } from './jsx-children.ts';
+import { applyPlacementToJsx } from './placement-jsx.ts';
 import { checkChildInsertGuard, checkElementStructureGuard } from './structure-guard.ts';
 import type { TextEdit } from './text-edits.ts';
 
@@ -283,13 +284,22 @@ export function buildDuplicateTextEdits(
   code: string,
   nl: '\r\n' | '\n',
   elements: readonly ResolvedElement[],
+  placement?: Placement,
+  tailwindMajor?: 3 | 4,
 ): Result<readonly TextEdit[]> {
   const edits: TextEdit[] = [];
-  for (const item of elements) {
+  for (const [index, item] of elements.entries()) {
     const guard = checkElementStructureGuard(ast, item.node, item.loc);
     if (!guard.ok) return guard;
     const indent = indentOf(code, item.start);
-    const slice = code.slice(item.start, item.end);
+    const placedRes = applyPlacementToJsx(
+      code.slice(item.start, item.end),
+      placement,
+      tailwindMajor,
+      index,
+    );
+    if (!placedRes.ok) return placedRes;
+    const slice = placedRes.value;
     edits.push({
       start: item.end,
       end: item.end,

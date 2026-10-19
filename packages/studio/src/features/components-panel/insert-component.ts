@@ -1,5 +1,5 @@
 // Component insertion logic (SPEC-04 R-CP-11..13, spec-log #23).
-import type { InsertTarget, ProjectComponent } from '@reactcraft/shared';
+import type { InsertTarget, Placement, ProjectComponent } from '@reactcraft/shared';
 
 import { applyStructureEdit } from '../../api/source-client.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';
@@ -17,6 +17,8 @@ export type InsertComponentResult =
 export async function insertComponentAt(
   component: ProjectComponent,
   target: InsertTarget,
+  placement?: Placement,
+  tailwindMajor?: 3 | 4,
 ): Promise<InsertComponentResult> {
   try {
     const res = await applyStructureEdit({
@@ -27,6 +29,8 @@ export async function insertComponentAt(
         file: component.file,
         imports: [component.importStatement],
       },
+      placement,
+      tailwindMajor,
     });
     if (res.warnings && res.warnings.length > 0) {
       useStructureErrorStore.getState().setWarnings(res.warnings);

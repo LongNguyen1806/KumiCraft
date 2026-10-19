@@ -39,6 +39,8 @@
     "installButton": "Cài đặt ngay",
     "devServerError": "Lỗi dev server",
     "frame": "Khung",
+    "grid": "Lưới",
+    "gridSize": "Lưới: {{size}}px",
     "zoom": "Thu phóng",
     "zoomFit": "Vừa khung",
     "bridgeSilent": "Bridge của trang chưa kết nối sau 10 giây. Trang có thể đang lỗi hoặc thiếu plugin Bridge.",
@@ -468,5 +470,11 @@
       "fileExists": "File đích đã tồn tại.",
       "usesLocalScope": "Phần tử sử dụng biến trong phạm vi cục bộ: {{name}}."
     }
+  },
+  "freeFrame": {
+    "toggle": "Khung tự do",
+    "confirmDisable": "Tắt khung tự do sẽ chuyển các phần tử con về luồng xếp thông thường. Tiếp tục?",
+    "measureTimeout": "Không thể đo kích thước khung (quá hạn 2 giây).",
+    "pageWarning": "Đây là trang chính thức, không phải bản nháp. Chỉnh sửa tự do có thể ảnh hưởng bố cục co giãn. Bạn nên tạo bản nháp trước."
   }
 }

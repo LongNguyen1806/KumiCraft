@@ -2,6 +2,7 @@ import { stripVTControlCharacters } from 'node:util';
 
 import {
   type AppError,
+  DEFAULT_DESIGN_DIRS,
   err,
   type ErrorDetail,
   ok,
@@ -11,6 +12,7 @@ import {
   type RunnerToChildMessage,
   type RunnerToParentMessage,
   RunnerToParentMessageSchema,
+  type SupportReport,
   type WorkspaceFile,
 } from '@reactcraft/shared';
 import { nanoid } from 'nanoid';
@@ -255,7 +257,11 @@ class RunnerExecution {
   }
 
   private spawnProcess(
-    project: { readonly root: string; readonly file: WorkspaceFile },
+    project: {
+      readonly root: string;
+      readonly file: WorkspaceFile;
+      readonly support: SupportReport;
+    },
     port: number,
     nonce: string,
   ): ChildProcessHandle {
@@ -269,6 +275,11 @@ class RunnerExecution {
       ...(project.file.devPort === undefined ? {} : { projectPort: project.file.devPort }),
       nonce,
       studioOrigin: this.deps.studioOrigin,
+      // R-DR-12: the Bridge plugin serves drafts from this folder with the project's Tailwind CSS.
+      draftsDir: project.file.designDirs?.drafts ?? DEFAULT_DESIGN_DIRS.drafts,
+      ...(project.support.tailwindCss === undefined
+        ? {}
+        : { tailwindCss: project.support.tailwindCss }),
     });
 
     const handle = this.deps.process.spawn(process.execPath, [entryPath], {

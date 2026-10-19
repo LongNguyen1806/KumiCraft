@@ -58,7 +58,7 @@ export async function saveDevPort(devPort: number | 'auto'): Promise<ProjectInfo
 }
 
 export async function fetchProject(): Promise<ProjectInfo> {
-  return (await apiGet('project')) as ProjectInfo;
+  return ProjectInfoSchema.parse(await apiGet('project'));
 }
 
 export async function closeProject(): Promise<void> {

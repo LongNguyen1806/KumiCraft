@@ -3,17 +3,18 @@ import type {
   Result,
   SetAttributeEdit,
   SetClassNameEdit,
+  SetFlagEdit,
   SetTextEdit,
   SourceEdit,
 } from '@reactcraft/shared';
 import { err, ok } from '@reactcraft/shared';
 import type MagicString from 'magic-string';
 
-import type { AstNode } from './ast-helpers.ts';
+import { asAstNode, type AstNode } from './ast-helpers.ts';
 import { parseJsxAst } from './ast-helpers.ts';
 import { readClassName, readEditableAttributes } from './attribute-reader.ts';
 import { parseText } from './source-editor-lookup.ts';
-import { mutateAttribute, mutateText } from './source-mutator.ts';
+import { mutateAttribute, mutateFlag, mutateText } from './source-mutator.ts';
 
 export function applyClassNameMutation(
   edit: SetClassNameEdit,
@@ -75,6 +76,32 @@ export function applyTextMutation(
   return ok({});
 }
 
+export function applyFlagMutation(
+  edit: SetFlagEdit,
+  rawAttrs: readonly unknown[],
+  opening: AstNode,
+  code: string,
+  s: MagicString,
+): Result<{ unchanged?: boolean }> {
+  const attrName = edit.name;
+  const attrs = rawAttrs
+    .map(asAstNode)
+    .filter((a): a is AstNode => a !== undefined && a.type === 'JSXAttribute');
+
+  const existingAttr = attrs.find((a) => {
+    const nameNode = asAstNode(a['name']);
+    return nameNode?.['name'] === attrName;
+  });
+
+  const isCurrentlyOn = Boolean(existingAttr);
+  if (isCurrentlyOn === edit.on) {
+    return ok({ unchanged: true });
+  }
+
+  mutateFlag(s, code, opening, attrName, edit.on);
+  return ok({});
+}
+
 export function executeEditMutation(
   edit: SourceEdit,
   targetNode: AstNode,
@@ -89,6 +116,9 @@ export function executeEditMutation(
   }
   if (edit.kind === 'setAttribute') {
     return applyAttributeMutation(edit, rawAttrs, opening, code, s);
+  }
+  if (edit.kind === 'setFlag') {
+    return applyFlagMutation(edit, rawAttrs, opening, code, s);
   }
   return applyTextMutation(edit, targetNode, opening, code, s, newline);
 }

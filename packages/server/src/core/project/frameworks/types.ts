@@ -17,6 +17,10 @@ export type RunnerContext = {
   readonly projectPort?: number;
   readonly nonce: string;
   readonly studioOrigin: string;
+  /** Drafts folder served by the Bridge plugin (R-DR-12). */
+  readonly draftsDir?: RelPath;
+  /** The project's Tailwind CSS entry, loaded by the draft page (R-DR-12). */
+  readonly tailwindCss?: RelPath;
 };
 
 export type RunnerOptions = RunnerContext & {
