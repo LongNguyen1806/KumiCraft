@@ -60,6 +60,11 @@
       "phase": 1
     },
     {
+      "pattern": "^R-SL-1[34]$",
+      "phase": 2,
+      "reason": "selecting nested elements, added 2026-10-19 (round 11b of phase 2)"
+    },
+    {
       "pattern": "^R-(SE-(2\\d|30)|HI-11)$",
       "phase": 2
     },
