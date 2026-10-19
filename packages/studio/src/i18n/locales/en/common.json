@@ -335,6 +335,11 @@
       "overflow": "Overflow",
       "visibility": "Visibility",
       "objectFit": "Object fit"
+    },
+    "path": {
+      "label": "Element path",
+      "more": "Show all levels",
+      "hint": "Esc: select parent"
     }
   },
   "textEdit": {
@@ -476,5 +481,8 @@
     "confirmDisable": "Turning off free frame will switch child elements back to normal flow. Continue?",
     "measureTimeout": "Failed to measure frame size (2s timeout).",
     "pageWarning": "This is a regular page, not a draft. In-place visual editing with free frame may affect responsive layouts. Consider promoting to a draft."
+  },
+  "layerMenu": {
+    "title": "Select layer"
   }
 }

@@ -10,6 +10,8 @@ import {
   type BridgeFreeResizePayload,
   BridgeFreeResizePayloadSchema,
   BridgeHoverPayloadSchema,
+  BridgeLayerMenuClosePayloadSchema,
+  BridgeLayerMenuPayloadSchema,
   BridgeMoveIntentPayloadSchema,
   BridgeReadyPayloadSchema,
   BridgeRoutePayloadSchema,
@@ -35,6 +37,7 @@ import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { executeDropMove } from '../dnd/drop-actions.ts';
 import { placementTailwindMajor, useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { useLayerMenuStore } from '../layer-menu/layer-menu-store.ts';
 import { runShortcut } from '../shortcuts/shortcut-actions.ts';
 import { type CanvasMode, useSelectionStore } from './selection-store.ts';
 
@@ -96,9 +99,24 @@ function handleDndBridgePayload(type: string, payload: unknown): boolean {
   return false;
 }
 
+function handleLayerMenuBridgePayload(type: string, payload: unknown): boolean {
+  if (type === 'layer-menu') {
+    const res = BridgeLayerMenuPayloadSchema.safeParse(payload);
+    if (res.success) useLayerMenuStore.getState().show(res.data);
+    return true;
+  }
+  if (type === 'layer-menu-close') {
+    const res = BridgeLayerMenuClosePayloadSchema.safeParse(payload);
+    if (res.success) useLayerMenuStore.getState().close();
+    return true;
+  }
+  return false;
+}
+
 function dispatchBridgePayload(type: string, payload: unknown): void {
   if (handleErrorBridgePayload(type, payload)) return;
   if (handleDndBridgePayload(type, payload)) return;
+  if (handleLayerMenuBridgePayload(type, payload)) return;
   const state = useSelectionStore.getState();
   switch (type) {
     case 'shortcut': {
@@ -120,6 +138,7 @@ function dispatchBridgePayload(type: string, payload: unknown): void {
       break;
     }
     case 'select': {
+      useLayerMenuStore.getState().close();
       const res = BridgeSelectPayloadSchema.safeParse(payload);
       if (res.success) state.setSelectedRefs(res.data.refs);
       break;

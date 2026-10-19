@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { CanvasDropLayer } from '../dnd/canvas-drop-layer.tsx';
+import { LayerMenu } from '../layer-menu/layer-menu.tsx';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
 
@@ -130,6 +131,7 @@ function ZoomedIframeBox({ frame, zoom, src, iframeRef }: ZoomedIframeBoxProps) 
   return (
     <div
       data-testid="canvas-zoom-box"
+      className="relative"
       style={{
         width: `${String(frame.width * zoom)}px`,
         height: `${String(frame.height * zoom)}px`,
@@ -155,6 +157,7 @@ function ZoomedIframeBox({ frame, zoom, src, iframeRef }: ZoomedIframeBoxProps) 
         />
         <CanvasDropLayer iframeRef={iframeRef} zoom={zoom} />
       </div>
+      <LayerMenu boxWidth={frame.width * zoom} boxHeight={frame.height * zoom} />
     </div>
   );
 }

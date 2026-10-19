@@ -18,6 +18,7 @@ import { useOpenInEditor } from '../editor/use-open-in-editor.ts';
 import { FreeFramePageWarning } from '../free-frame/free-frame-page-warning.tsx';
 import { FreeFrameToggle } from '../free-frame/free-frame-toggle.tsx';
 import { ColorField } from './components/color-field.tsx';
+import { ElementPath } from './components/element-path.tsx';
 import { InspectorHeader } from './components/inspector-header.tsx';
 import { OtherClassesSection } from './components/other-classes-section.tsx';
 import { PropertyField } from './components/property-field.tsx';
@@ -278,6 +279,7 @@ function InspectorSingleTargetView({
 
   return (
     <div className="flex flex-col gap-2" data-testid="inspector-panel">
+      <ElementPath />
       <InspectorHeader target={target} />
       <InspectorStatusFeedback
         loading={target.loading && target.source === undefined}

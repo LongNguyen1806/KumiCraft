@@ -256,3 +256,22 @@ export const BridgeFreeResizePayloadSchema = z.strictObject({
   resetSize: z.boolean().optional(),
 });
 export type BridgeFreeResizePayload = z.infer<typeof BridgeFreeResizePayloadSchema>;
+
+// Bridge -> Studio, type 'layer-menu' (R-SL-13)
+export const LayerMenuItemSchema = z.strictObject({
+  ref: ElementRefSchema,
+  tag: z.string().min(1),
+  label: z.string().max(100).optional(),
+});
+export type LayerMenuItem = z.infer<typeof LayerMenuItemSchema>;
+
+export const BridgeLayerMenuPayloadSchema = z.strictObject({
+  x: z.number(),
+  y: z.number(),
+  items: z.array(LayerMenuItemSchema).min(1).max(30),
+});
+export type BridgeLayerMenuPayload = z.infer<typeof BridgeLayerMenuPayloadSchema>;
+
+// Bridge -> Studio, type 'layer-menu-close', payload {} (bấm chuột hoặc cuộn trong iframe)
+export const BridgeLayerMenuClosePayloadSchema = z.strictObject({});
+export type BridgeLayerMenuClosePayload = z.infer<typeof BridgeLayerMenuClosePayloadSchema>;

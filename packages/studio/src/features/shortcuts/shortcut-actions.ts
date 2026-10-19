@@ -8,6 +8,8 @@ import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { usePanelLayoutStore } from '../editor/use-panel-layout.ts';
 import { useHistoryStore } from '../history/history-store.ts';
 import { siblingMoveTarget } from '../inspector/sibling-move.ts';
+import { useLayerMenuStore } from '../layer-menu/layer-menu-store.ts';
+import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import {
   executeDuplicate,
@@ -19,6 +21,12 @@ import {
 import { useShortcutHelpStore } from './shortcut-help-store.ts';
 
 export function selectParentNode(): boolean {
+  if (useLayerMenuStore.getState().menu !== undefined) {
+    useLayerMenuStore.getState().close();
+    studioBridgeChannel.highlight(undefined);
+    useSelectionStore.getState().setHoveredRef(undefined);
+    return true;
+  }
   const selectedRefs = useSelectionStore.getState().selectedRefs;
   if (selectedRefs.length !== 1) {
     if (useDesignStore.getState().componentMode !== undefined) {

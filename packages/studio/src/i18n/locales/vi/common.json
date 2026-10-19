@@ -335,6 +335,11 @@
       "overflow": "Tràn ô (overflow)",
       "visibility": "Ẩn/hiện",
       "objectFit": "Object fit"
+    },
+    "path": {
+      "label": "Đường dẫn phần tử",
+      "more": "Hiện mọi bậc",
+      "hint": "Esc: chọn cha"
     }
   },
   "textEdit": {
@@ -476,5 +481,8 @@
     "confirmDisable": "Tắt khung tự do sẽ chuyển các phần tử con về luồng xếp thông thường. Tiếp tục?",
     "measureTimeout": "Không thể đo kích thước khung (quá hạn 2 giây).",
     "pageWarning": "Đây là trang chính thức, không phải bản nháp. Chỉnh sửa tự do có thể ảnh hưởng bố cục co giãn. Bạn nên tạo bản nháp trước."
+  },
+  "layerMenu": {
+    "title": "Chọn lớp"
   }
 }
