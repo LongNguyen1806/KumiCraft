@@ -3,14 +3,7 @@ import type { InsertTarget, Placement } from '@reactcraft/shared';
 import { FREE_STACK_OFFSET_PX, readClassPx } from '@reactcraft/shared';
 
 import { fetchElementSourceByLoc } from '../../api/source-client.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
-
-function parentLocOf(target: InsertTarget): string | undefined {
-  if (target.kind === 'child') return target.parent.loc;
-  const { treeNodes } = useSelectionStore.getState();
-  const node = treeNodes.find((n) => n.ref.loc === target.ref.loc);
-  return node?.parent === undefined ? undefined : treeNodes[node.parent]?.ref.loc;
-}
+import { freeFrameOfRef } from './free-context.ts';
 
 async function staticClassOf(loc: string): Promise<string> {
   const source = await fetchElementSourceByLoc(loc);
@@ -23,12 +16,17 @@ async function staticClassOf(loc: string): Promise<string> {
  * Anything else, including a failed lookup, keeps the pasted classes untouched (`undefined`).
  */
 export async function freeStackPlacement(target: InsertTarget): Promise<Placement | undefined> {
-  const parentLoc = parentLocOf(target);
-  if (parentLoc === undefined) return undefined;
   try {
-    const parent = await fetchElementSourceByLoc(parentLoc);
-    if (parent?.free !== true) return undefined;
-    const anchorClass = target.kind === 'sibling' ? await staticClassOf(target.ref.loc) : '';
+    let anchorClass = '';
+    if (target.kind === 'child') {
+      const parent = await fetchElementSourceByLoc(target.parent.loc);
+      if (parent?.free !== true) return undefined;
+    } else {
+      const frame = await freeFrameOfRef(target.ref);
+      if (!frame) return undefined;
+      anchorClass = await staticClassOf(target.ref.loc);
+    }
+
     return {
       kind: 'free',
       left: (readClassPx(anchorClass, 'left') ?? 0) + FREE_STACK_OFFSET_PX,

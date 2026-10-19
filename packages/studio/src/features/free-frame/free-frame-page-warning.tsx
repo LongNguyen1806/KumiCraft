@@ -1,57 +1,55 @@
-import { type ElementSource, parseLocString, type TreeNode } from '@reactcraft/shared';
+import { type ElementRef, type ElementSource, parseLocString } from '@reactcraft/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { fetchElementSourceByLoc } from '../../api/source-client.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
+import { freeFrameOfRef } from './free-context.ts';
 
 export function isDraftFile(filePath: string, draftsDir: string): boolean {
   return filePath.startsWith(`${draftsDir.replace(/\/+$/, '')}/`);
 }
 
-function useIsChildOfFree(
-  loc: string | undefined,
-  isFree: boolean,
-  treeNodes: readonly TreeNode[],
-): boolean {
-  const [isChildOfFree, setIsChildOfFree] = useState(false);
+function useIsChildOfFree(ref: ElementRef | undefined, isFree: boolean): boolean {
+  const [isChild, setIsChild] = useState(false);
+  const loc = ref?.loc;
+  const index = ref?.index ?? 0;
 
   useEffect(() => {
     let cancelled = false;
-    async function checkParent() {
-      if (!loc || isFree) {
-        setIsChildOfFree(false);
+    async function check() {
+      if (loc === undefined || isFree) {
+        setIsChild(false);
         return;
       }
-      const nodeIdx = treeNodes.findIndex((n) => n.ref.loc === loc);
-      const parentIdx = nodeIdx >= 0 ? treeNodes[nodeIdx]?.parent : undefined;
-      const parentNode = parentIdx !== undefined ? treeNodes[parentIdx] : undefined;
-      if (!parentNode) {
-        setIsChildOfFree(false);
-        return;
-      }
-      const pSource = await fetchElementSourceByLoc(parentNode.ref.loc);
+      const frame = await freeFrameOfRef({ loc, index });
       if (!cancelled) {
-        setIsChildOfFree(pSource?.free === true);
+        setIsChild(frame !== undefined);
       }
     }
-    void checkParent();
+    void check();
     return () => {
       cancelled = true;
     };
-  }, [loc, isFree, treeNodes]);
+  }, [loc, index, isFree]);
 
-  return isChildOfFree;
+  return isChild;
 }
 
 export function FreeFramePageWarning({ source }: { readonly source?: ElementSource | undefined }) {
   const { t } = useTranslation();
-  const treeNodes = useSelectionStore((s) => s.treeNodes);
   const draftsDir = useCanvasViewStore((s) => s.draftsDir);
-  const loc = source?.loc;
+  const selectedRefs = useSelectionStore((s) => s.selectedRefs);
+  const primaryRef = selectedRefs[selectedRefs.length - 1];
+  const ref =
+    primaryRef?.loc === source?.loc
+      ? primaryRef
+      : source
+        ? { loc: source.loc, index: 0 }
+        : undefined;
+
   const isFree = source?.free === true;
-  const isChildOfFree = useIsChildOfFree(loc, isFree, treeNodes);
+  const isChildOfFree = useIsChildOfFree(ref, isFree);
 
   if (!source) return <></>;
   const filePath = parseLocString(source.loc)?.file ?? '';

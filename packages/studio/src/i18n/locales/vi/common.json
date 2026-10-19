@@ -396,7 +396,9 @@
       "openInEditor": "Mở trong editor",
       "togglePanels": "Ẩn/hiện panel",
       "showShortcuts": "Bảng phím tắt",
-      "frames": "Chuyển khung 1–8"
+      "frames": "Chuyển khung 1–8",
+      "nudge": "Dịch trong khung tự do",
+      "nudgeFine": "Dịch 1 px"
     }
   },
   "pages": {
@@ -480,7 +482,28 @@
     "toggle": "Khung tự do",
     "confirmDisable": "Tắt khung tự do sẽ chuyển các phần tử con về luồng xếp thông thường. Tiếp tục?",
     "measureTimeout": "Không thể đo kích thước khung (quá hạn 2 giây).",
-    "pageWarning": "Đây là trang chính thức, không phải bản nháp. Chỉnh sửa tự do có thể ảnh hưởng bố cục co giãn. Bạn nên tạo bản nháp trước."
+    "pageWarning": "Đây là trang chính thức, không phải bản nháp. Chỉnh sửa tự do có thể ảnh hưởng bố cục co giãn. Bạn nên tạo bản nháp trước.",
+    "section": "Khung tự do",
+    "position": "Vị trí",
+    "x": "X",
+    "y": "Y",
+    "w": "W",
+    "h": "H",
+    "auto": "auto",
+    "layerOrder": "Thứ tự lớp",
+    "front": "Lên trên cùng",
+    "forward": "Lên một lớp",
+    "backward": "Xuống một lớp",
+    "back": "Xuống dưới cùng",
+    "align": "Căn",
+    "alignLeft": "Căn trái",
+    "alignCenterX": "Căn giữa ngang",
+    "alignRight": "Căn phải",
+    "alignTop": "Căn trên",
+    "alignCenterY": "Căn giữa dọc",
+    "alignBottom": "Căn dưới",
+    "distributeX": "Phân bố đều ngang",
+    "distributeY": "Phân bố đều dọc"
   },
   "layerMenu": {
     "title": "Chọn lớp"

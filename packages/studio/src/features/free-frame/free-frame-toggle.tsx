@@ -4,21 +4,18 @@ import { useTranslation } from 'react-i18next';
 
 import { type ErrorInfo, errorText } from '../../routes/error-text.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { useBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
+import { requestFreeMeasure } from './free-context.ts';
 import { executeDisableFreeFrame, executeEnableFreeFrame } from './free-frame-ops.ts';
 
 /** Shown error: a server error code, or the measure timeout (R-FF-10). */
 type ToggleError = ErrorInfo | 'measureTimeout';
-
-const MEASURE_TIMEOUT_MS = 2000;
 
 function useEnableFreeFrame(
   source: ElementSource | undefined,
   primaryRef: ElementRef | undefined,
   setError: (e: ToggleError | undefined) => void,
 ) {
-  const bridgeChannel = useBridgeChannel();
   const grid = useCanvasViewStore((s) => s.grid);
   const tailwindMajor = useCanvasViewStore((s) => s.tailwindMajor);
 
@@ -26,37 +23,26 @@ function useEnableFreeFrame(
     if (!source || !primaryRef) return;
     setError(undefined);
 
-    const cleanup: { unregister?: () => void } = {};
-    const timer = setTimeout(() => {
-      cleanup.unregister?.();
-      setError('measureTimeout');
-    }, MEASURE_TIMEOUT_MS);
+    void (async () => {
+      const payload = await requestFreeMeasure(primaryRef, () => {
+        setError('measureTimeout');
+      });
+      if (!payload) return;
 
-    cleanup.unregister = bridgeChannel.registerFreeFrameListener({
-      onFreeMeasure: (payload) => {
-        if (payload.ref.loc !== source.loc) return;
-        clearTimeout(timer);
-        cleanup.unregister?.();
+      const currentClassName = source.className.kind === 'static' ? source.className.value : '';
 
-        const currentClassName = source.className.kind === 'static' ? source.className.value : '';
-
-        void (async () => {
-          setError(
-            await executeEnableFreeFrame({
-              loc: source.loc,
-              tag: source.tag,
-              currentClassName,
-              grid,
-              tailwindMajor,
-              measurePayload: payload,
-            }),
-          );
-        })();
-      },
-    });
-
-    bridgeChannel.measureFree(primaryRef);
-  }, [source, primaryRef, bridgeChannel, grid, tailwindMajor, setError]);
+      setError(
+        await executeEnableFreeFrame({
+          loc: source.loc,
+          tag: source.tag,
+          currentClassName,
+          grid,
+          tailwindMajor,
+          measurePayload: payload,
+        }),
+      );
+    })();
+  }, [source, primaryRef, grid, tailwindMajor, setError]);
 }
 
 function useDisableFreeFrame(

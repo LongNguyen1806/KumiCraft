@@ -37,6 +37,8 @@ const SHORTCUT_GROUPS = [
       { action: 'zoomFit', labelKey: 'shortcuts.actions.zoomFit' },
       { action: 'togglePreview', labelKey: 'shortcuts.actions.togglePreview' },
       { action: 'openInEditor', labelKey: 'shortcuts.actions.openInEditor' },
+      { action: 'nudgeLeft', labelKey: 'shortcuts.actions.nudge' },
+      { action: 'nudgeLeftFine', labelKey: 'shortcuts.actions.nudgeFine' },
     ],
   },
   {
@@ -46,7 +48,10 @@ const SHORTCUT_GROUPS = [
 ] as const;
 
 function displayShortcutKey(action: ShortcutAction, apple: boolean): string {
-  return action === 'frame1' ? '1…8' : shortcutLabel(action, apple);
+  if (action === 'frame1') return '1…8';
+  if (action === 'nudgeLeft') return '← → ↑ ↓';
+  if (action === 'nudgeLeftFine') return 'Shift + mũi tên';
+  return shortcutLabel(action, apple);
 }
 
 function ShortcutGroupsList({ apple }: { readonly apple: boolean }) {

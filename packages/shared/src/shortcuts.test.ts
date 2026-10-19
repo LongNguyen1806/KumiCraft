@@ -91,4 +91,18 @@ describe('matchShortcut (R-KB-12, R-KB-13)', () => {
     expect(shortcutLabel('paste', true)).toBe('⌘V');
     expect(shortcutLabel('paste', false)).toBe('Ctrl+V');
   });
+
+  it('Scenario 1: matchShortcut ArrowLeft, Shift+ArrowUp, Ctrl+ArrowUp (Windows) [R-FF-15]', () => {
+    expect(matchShortcut(makePress('ArrowLeft'), false)).toBe('nudgeLeft');
+    expect(matchShortcut(makePress('ArrowUp', { shift: true }), false)).toBe('nudgeUpFine');
+    expect(matchShortcut(makePress('ArrowUp', { ctrl: true }), false)).toBe('moveUp');
+    expect(matchShortcut(makePress('ArrowRight'), false)).toBe('nudgeRight');
+    expect(matchShortcut(makePress('ArrowDown'), false)).toBe('nudgeDown');
+    expect(matchShortcut(makePress('ArrowLeft', { shift: true }), false)).toBe('nudgeLeftFine');
+    expect(matchShortcut(makePress('ArrowRight', { shift: true }), false)).toBe('nudgeRightFine');
+    expect(matchShortcut(makePress('ArrowDown', { shift: true }), false)).toBe('nudgeDownFine');
+    expect(shortcutLabel('nudgeLeft', false)).toBe('←');
+    expect(shortcutLabel('nudgeUpFine', false)).toBe('Shift+↑');
+    expect(shortcutLabel('nudgeUpFine', true)).toBe('⇧↑');
+  });
 });

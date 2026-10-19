@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { errorText } from '../../routes/error-text.ts';
 import { useOpenInEditor } from '../editor/use-open-in-editor.ts';
 import { FreeFramePageWarning } from '../free-frame/free-frame-page-warning.tsx';
+import { FreeFrameSection } from '../free-frame/free-frame-section.tsx';
 import { FreeFrameToggle } from '../free-frame/free-frame-toggle.tsx';
 import { ColorField } from './components/color-field.tsx';
 import { ElementPath } from './components/element-path.tsx';
@@ -289,6 +290,7 @@ function InspectorSingleTargetView({
         <>
           <FreeFramePageWarning source={target.source} />
           <FreeFrameToggle source={target.source} />
+          <FreeFrameSection source={target.source} />
           <ElementSections
             source={target.source}
             tokens={tokens}

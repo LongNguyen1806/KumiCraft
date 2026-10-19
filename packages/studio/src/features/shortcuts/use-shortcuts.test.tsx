@@ -72,6 +72,32 @@ describe('Studio useShortcuts (Scenarios #4, #5, #8, #9, #10)', () => {
     input.remove();
   });
 
+  it('arrows nudge only with no Studio control focused; a focused button keeps its arrows [R-FF-15]', () => {
+    render(<ShortcutHarness />);
+    const batchSpy = vi.spyOn(sourceClient, 'editSourceBatch');
+    const button = document.createElement('button');
+    document.body.appendChild(button);
+    button.focus();
+
+    const onButton = new KeyboardEvent('keydown', {
+      key: 'ArrowRight',
+      bubbles: true,
+      cancelable: true,
+    });
+    button.dispatchEvent(onButton);
+    expect(onButton.defaultPrevented).toBe(false);
+
+    button.remove();
+    const onBody = new KeyboardEvent('keydown', {
+      key: 'ArrowRight',
+      bubbles: true,
+      cancelable: true,
+    });
+    document.body.dispatchEvent(onBody);
+    expect(onBody.defaultPrevented).toBe(true);
+    expect(batchSpy).not.toHaveBeenCalled(); // nothing selected: nothing to nudge
+  });
+
   it('Scenario 5: Ctrl+D when nothing is selected does not call API and does not preventDefault', () => {
     render(<ShortcutHarness />);
     const spy = vi.spyOn(sourceClient, 'applyStructureEdit');

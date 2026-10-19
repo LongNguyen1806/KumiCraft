@@ -396,7 +396,9 @@
       "openInEditor": "Open in editor",
       "togglePanels": "Toggle panels",
       "showShortcuts": "Keyboard shortcuts",
-      "frames": "Switch frames 1–8"
+      "frames": "Switch frames 1–8",
+      "nudge": "Nudge in free frame",
+      "nudgeFine": "Nudge 1 px"
     }
   },
   "pages": {
@@ -480,7 +482,28 @@
     "toggle": "Free frame",
     "confirmDisable": "Turning off free frame will switch child elements back to normal flow. Continue?",
     "measureTimeout": "Failed to measure frame size (2s timeout).",
-    "pageWarning": "This is a regular page, not a draft. In-place visual editing with free frame may affect responsive layouts. Consider promoting to a draft."
+    "pageWarning": "This is a regular page, not a draft. In-place visual editing with free frame may affect responsive layouts. Consider promoting to a draft.",
+    "section": "Free frame",
+    "position": "Position",
+    "x": "X",
+    "y": "Y",
+    "w": "W",
+    "h": "H",
+    "auto": "auto",
+    "layerOrder": "Layer order",
+    "front": "Bring to front",
+    "forward": "Bring forward",
+    "backward": "Send backward",
+    "back": "Send to back",
+    "align": "Align",
+    "alignLeft": "Align left",
+    "alignCenterX": "Align horizontal center",
+    "alignRight": "Align right",
+    "alignTop": "Align top",
+    "alignCenterY": "Align vertical center",
+    "alignBottom": "Align bottom",
+    "distributeX": "Distribute horizontally",
+    "distributeY": "Distribute vertically"
   },
   "layerMenu": {
     "title": "Select layer"

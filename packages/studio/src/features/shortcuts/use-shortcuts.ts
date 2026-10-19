@@ -48,6 +48,11 @@ export function useShortcuts(): void {
       if (isTypingTarget(event.target) && !WORKS_WHILE_TYPING.includes(action)) {
         return;
       }
+      // R-FF-15: arrows nudge only when no Studio control has focus; a focused resizer, button or
+      // tree row keeps its own arrow keys. Arrows pressed in the Canvas arrive through the Bridge.
+      if (action.startsWith('nudge') && event.target !== document.body) {
+        return;
+      }
 
       const handled = runShortcut(action);
       if (handled) {

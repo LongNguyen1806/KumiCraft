@@ -6,6 +6,7 @@ import { copySelection, cutSelection, pasteClipboard } from '../clipboard/clipbo
 import { useDesignStore } from '../design/design-store.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { usePanelLayoutStore } from '../editor/use-panel-layout.ts';
+import { nudgeDelta, nudgeSelection } from '../free-frame/free-nudge.ts';
 import { useHistoryStore } from '../history/history-store.ts';
 import { siblingMoveTarget } from '../inspector/sibling-move.ts';
 import { useLayerMenuStore } from '../layer-menu/layer-menu-store.ts';
@@ -128,6 +129,15 @@ function runZoomOrFrame(action: ShortcutAction): boolean {
   }
 }
 
+function runNudgeShortcut(action: ShortcutAction): boolean {
+  if (!action.startsWith('nudge')) return false;
+  const grid = useCanvasViewStore.getState().grid;
+  const delta = nudgeDelta(action, grid);
+  if (!delta) return false;
+  void nudgeSelection(delta.dx, delta.dy);
+  return true;
+}
+
 /**
  * Execute a shortcut action. Returns true if handled (and can prevent default),
  * false if the action could not be performed (e.g. no selection for duplicate).
@@ -171,6 +181,7 @@ export function runShortcut(action: ShortcutAction): boolean {
       return true;
     default:
       if (runStructureShortcut(action)) return true;
+      if (runNudgeShortcut(action)) return true;
       return runZoomOrFrame(action);
   }
 }

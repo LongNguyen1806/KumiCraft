@@ -29,6 +29,14 @@ export const SHORTCUT_ACTIONS = [
   'copy',
   'cut',
   'paste',
+  'nudgeLeft',
+  'nudgeRight',
+  'nudgeUp',
+  'nudgeDown',
+  'nudgeLeftFine',
+  'nudgeRightFine',
+  'nudgeUpFine',
+  'nudgeDownFine',
 ] as const;
 
 export type ShortcutAction = (typeof SHORTCUT_ACTIONS)[number];
@@ -92,8 +100,16 @@ function matchNoModKey(k: string, press: KeyPress): ShortcutAction | undefined {
   if (press.shift) {
     if (k === '0' || k === ')') return 'zoomReset';
     if (k === '1' || k === '!') return 'zoomFit';
+    if (k === 'arrowleft') return 'nudgeLeftFine';
+    if (k === 'arrowright') return 'nudgeRightFine';
+    if (k === 'arrowup') return 'nudgeUpFine';
+    if (k === 'arrowdown') return 'nudgeDownFine';
     return undefined;
   }
+  if (k === 'arrowleft') return 'nudgeLeft';
+  if (k === 'arrowright') return 'nudgeRight';
+  if (k === 'arrowup') return 'nudgeUp';
+  if (k === 'arrowdown') return 'nudgeDown';
   if (k === 'delete' || k === 'backspace') return 'remove';
   if (k === 'escape') return 'selectParent';
   if (k >= '1' && k <= '8') {
@@ -152,6 +168,14 @@ const LABELS_APPLE: Record<ShortcutAction, string> = {
   copy: '⌘C',
   cut: '⌘X',
   paste: '⌘V',
+  nudgeLeft: '←',
+  nudgeRight: '→',
+  nudgeUp: '↑',
+  nudgeDown: '↓',
+  nudgeLeftFine: '⇧←',
+  nudgeRightFine: '⇧→',
+  nudgeUpFine: '⇧↑',
+  nudgeDownFine: '⇧↓',
 };
 
 const LABELS_OTHER: Record<ShortcutAction, string> = {
@@ -183,6 +207,14 @@ const LABELS_OTHER: Record<ShortcutAction, string> = {
   copy: 'Ctrl+C',
   cut: 'Ctrl+X',
   paste: 'Ctrl+V',
+  nudgeLeft: '←',
+  nudgeRight: '→',
+  nudgeUp: '↑',
+  nudgeDown: '↓',
+  nudgeLeftFine: 'Shift+←',
+  nudgeRightFine: 'Shift+→',
+  nudgeUpFine: 'Shift+↑',
+  nudgeDownFine: 'Shift+↓',
 };
 
 /** Label of the keys for the help dialog: `⌘⇧Z` on macOS, `Ctrl+Shift+Z` elsewhere. */
