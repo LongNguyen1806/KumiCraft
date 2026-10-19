@@ -27,6 +27,19 @@ Kích thước mỗi lần giao: khoảng ≤ 600 dòng code, ≤ 15 test, một
 7. Cuối cùng chạy một lần `pnpm verify` (CW-51, CW-53). `pnpm test:e2e` (bộ hồi quy, Chromium) chỉ chạy khi bản giao việc ghi rõ (lượt sửa Bridge, runner, phiên). Sửa shared hoặc bridge thì chạy `pnpm --filter @reactcraft/bridge build` trước.
 8. Tự chạy thử mục **Kiểm tay** trên dự án mẫu khi làm được, và ghi bước nào đã thử vào báo cáo.
 
+## Lỗi lint hay vấp (viết đúng ngay từ đầu)
+
+Các lượt Phase 2 đều phải sửa lại những lỗi sau ở cuối. Viết đúng ngay khi tạo file, và chạy `pnpm exec eslint <file>` **sau mỗi file**, không đợi tới `pnpm verify`.
+
+| Quy tắc                                                                | Viết thế này                                                                               |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Hàm ≤ 50 dòng, file ≤ 400 dòng (`max-lines-per-function`, `max-lines`) | Tách hàm con hoặc hook ngay khi hàm gần 40 dòng; component React tách phần render con      |
+| QC-40: không `null` (`no-restricted-syntax`)                           | `x !== undefined`, `Boolean(x)`, `typeof x === 'object'`; ref React dùng `el ?? undefined` |
+| Arrow xử lý sự kiện trả `void` (`no-confusing-void-expression`)        | `onClick={() => { doIt(); }}`, không viết `onClick={() => doIt()}`                         |
+| Điều kiện thừa (`no-unnecessary-condition`)                            | Không `?.` hay `&&` với giá trị đã chắc chắn có                                            |
+| Thứ tự import (`simple-import-sort`)                                   | Chạy `pnpm exec eslint --fix <file>`                                                       |
+| Không `any` (`no-unsafe-*`), kể cả `expect.any(...)` trong test        | So với giá trị cụ thể                                                                      |
+
 ## Quy ước chung
 
 - Chỉ sửa file trong phạm vi bản giao việc; cần sửa ngoài phạm vi, thêm thư viện, hoặc đổi hành vi người dùng thấy thì **dừng và báo**.
