@@ -4,10 +4,18 @@ import type {
   BridgeMoveIntentPayload,
   ElementRef,
   InsertTarget,
+  Placement,
   StudioDragOverPayload,
 } from '@reactcraft/shared';
 
 import { type DropCache, type DropEnv, type DropResult, findDropTarget } from './drop-target.ts';
+import {
+  freeDropPlacement,
+  freeFrameOf,
+  type GridSize,
+  isFreeFrame,
+  type Point,
+} from './free-frame/free-geometry.ts';
 
 export type DragCallbacks = {
   sendDropTarget: (p: BridgeDropTargetPayload) => void;
@@ -58,6 +66,7 @@ export class DragController {
   private readonly env: DropEnv;
   private readonly cb: DragCallbacks;
   private readonly win: Window;
+  private readonly getGrid: () => GridSize;
   private mode: 'idle' | 'canvas' | 'studio' = 'idle';
   private dragged: Element[] = [];
   private startX = 0;
@@ -66,6 +75,10 @@ export class DragController {
   private lastY = 0;
   private exceededThreshold = false;
   private currentTarget: InsertTarget | undefined;
+  /** R-FF-12: where the drop lands inside a free frame, or `flow` when leaving one. */
+  private placement: Placement | undefined;
+  /** Pointer offset inside the dragged element, so a free drop keeps the element under the pointer. */
+  private grab: Point = { x: 0, y: 0 };
   private lastTargetKey = '';
   private cache: DropCache = {};
   private moveRafId: number | undefined;
@@ -73,10 +86,11 @@ export class DragController {
   private scrollDelta = 0;
   private suppressClick = false;
 
-  constructor(env: DropEnv, cb: DragCallbacks, win: Window) {
+  constructor(env: DropEnv, cb: DragCallbacks, win: Window, getGrid: () => GridSize = () => 8) {
     this.env = env;
     this.cb = cb;
     this.win = win;
+    this.getGrid = getGrid;
     this.win.addEventListener('scroll', this.handleScrollOrResize, {
       capture: true,
       passive: true,
@@ -106,6 +120,10 @@ export class DragController {
     this.lastX = x;
     this.lastY = y;
     this.exceededThreshold = false;
+    const first = normalized[0];
+    const firstRect = first === undefined ? undefined : this.env.measure(first);
+    this.grab =
+      firstRect === undefined ? { x: 0, y: 0 } : { x: x - firstRect.x, y: y - firstRect.y };
     this.win.addEventListener('pointermove', this.handlePointerMove, true);
     this.win.addEventListener('pointerup', this.handlePointerUp, true);
     this.win.addEventListener('pointercancel', this.handlePointerCancel, true);
@@ -195,6 +213,7 @@ export class DragController {
 
     const wasDragging = this.exceededThreshold;
     const target = this.currentTarget;
+    const placement = this.placement;
     const dragged = this.dragged;
     this.resetDragState();
 
@@ -205,7 +224,11 @@ export class DragController {
           loc: el.getAttribute('data-rc-loc') ?? '',
           tag: el.localName,
         }));
-        this.cb.sendMoveIntent({ elements, target });
+        this.cb.sendMoveIntent({
+          elements,
+          target,
+          ...(placement !== undefined ? { placement } : {}),
+        });
       }
       this.cb.showIndicator(undefined);
       this.cb.sendDropTarget({});
@@ -213,18 +236,57 @@ export class DragController {
   };
 
   private evaluateDropTarget(x: number, y: number): void {
-    const res = findDropTarget(x, y, this.dragged, this.env, this.cache);
+    const res = this.applyFreeFrame(findDropTarget(x, y, this.dragged, this.env, this.cache), x, y);
     this.cb.showIndicator(res);
     this.currentTarget = res?.target;
-    const nextKey = res ? JSON.stringify(res.target) : '';
+    const placement = this.placement;
+    const nextKey = res ? JSON.stringify([res.target, placement]) : '';
     if (nextKey !== this.lastTargetKey) {
       this.lastTargetKey = nextKey;
       if (res) {
-        this.cb.sendDropTarget({ target: res.target, rect: res.rect, label: res.label });
+        this.cb.sendDropTarget({
+          target: res.target,
+          rect: res.rect,
+          label: res.label,
+          ...(placement !== undefined ? { placement } : {}),
+        });
       } else {
         this.cb.sendDropTarget({});
       }
     }
+  }
+
+  /**
+   * R-FF-12: a drop whose container is a free frame goes to the end of that frame at the pointer
+   * (snapped to the grid); dragging an element out of a free frame drops its coordinates.
+   */
+  private applyFreeFrame(
+    res: DropResult | undefined,
+    x: number,
+    y: number,
+  ): DropResult | undefined {
+    this.placement = undefined;
+    if (!res) return undefined;
+    const frame = res.container;
+    if (frame !== undefined && isFreeFrame(frame)) {
+      const point = { x, y };
+      this.placement = freeDropPlacement(frame, point, this.grab, this.getGrid(), this.env.measure);
+      return {
+        target: {
+          kind: 'child',
+          parent: { loc: frame.getAttribute('data-rc-loc') ?? '', tag: frame.localName },
+          where: 'end',
+        },
+        rect: this.env.measure(frame),
+        indicator: 'box',
+        label: frame.localName,
+        container: frame,
+      };
+    }
+    if (this.dragged.some((el) => freeFrameOf(el) !== undefined)) {
+      this.placement = { kind: 'flow' };
+    }
+    return res;
   }
 
   private updateAutoScroll(y: number): void {
@@ -274,6 +336,8 @@ export class DragController {
     this.dragged = [];
     this.exceededThreshold = false;
     this.currentTarget = undefined;
+    this.placement = undefined;
+    this.grab = { x: 0, y: 0 };
     this.lastTargetKey = '';
     this.scrollDelta = 0;
     this.clearCache();

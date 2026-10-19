@@ -207,6 +207,7 @@ describe('drop-target [R-DD-11, R-DD-12, R-DD-15]', () => {
       rect: { x: 0, y: 0, width: 300, height: 200 },
       indicator: 'box',
       label: 'section',
+      container: sec,
     });
   });
 

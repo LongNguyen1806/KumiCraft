@@ -1,5 +1,6 @@
 // Studio message dispatcher (V-111).
 import {
+  type ElementRef,
   StudioDesignFilePayloadSchema,
   type StudioDragEndPayload,
   StudioDragEndPayloadSchema,
@@ -7,9 +8,12 @@ import {
   StudioDragOverPayloadSchema,
   type StudioHighlightPayload,
   StudioHighlightPayloadSchema,
+  StudioMeasureFreePayloadSchema,
   StudioNavigatePayloadSchema,
   type StudioSelectPayload,
   StudioSelectPayloadSchema,
+  type StudioSetGridPayload,
+  StudioSetGridPayloadSchema,
   StudioSetModePayloadSchema,
   type StudioTextEditStartPayload,
   StudioTextEditStartPayloadSchema,
@@ -25,7 +29,28 @@ export type StudioMessageHandlers = {
   handleDragOver: (data: StudioDragOverPayload) => void;
   handleDragEnd: (data: StudioDragEndPayload) => void;
   handleDesignFile: (file?: string, focus?: boolean) => void;
+  handleSetGrid: (size: StudioSetGridPayload['size']) => void;
+  handleMeasureFree: (ref: ElementRef) => void;
 };
+
+/** Free frame messages (R-FF-10, R-FF-11). */
+function dispatchFreeFrame(
+  type: string,
+  payload: unknown,
+  handlers: Pick<StudioMessageHandlers, 'handleSetGrid' | 'handleMeasureFree'>,
+): boolean {
+  if (type === 'set-grid') {
+    const parsed = StudioSetGridPayloadSchema.safeParse(payload);
+    if (parsed.success) handlers.handleSetGrid(parsed.data.size);
+    return true;
+  }
+  if (type === 'measure-free') {
+    const parsed = StudioMeasureFreePayloadSchema.safeParse(payload);
+    if (parsed.success) handlers.handleMeasureFree(parsed.data.ref);
+    return true;
+  }
+  return false;
+}
 
 function dispatchDragOrEdit(
   type: string,
@@ -63,6 +88,7 @@ export function dispatchStudioMessage(
   handlers: StudioMessageHandlers,
 ): void {
   if (dispatchDragOrEdit(type, payload, handlers)) return;
+  if (dispatchFreeFrame(type, payload, handlers)) return;
   switch (type) {
     case 'set-mode': {
       const parsed = StudioSetModePayloadSchema.safeParse(payload);

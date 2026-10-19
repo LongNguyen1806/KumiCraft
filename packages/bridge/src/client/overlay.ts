@@ -2,6 +2,7 @@
 import type { ElementRef } from '@reactcraft/shared';
 
 import type { DropResult } from './drop-target.ts';
+import { FreeOverlay } from './free-frame/free-overlay.ts';
 import { focusPath, focusRoots } from './overlay-focus.ts';
 import { foreignLabel, OVERLAY_CSS } from './overlay-foreign.ts';
 
@@ -47,6 +48,8 @@ export class BridgeOverlay {
   private focus = false;
   private focusSvg: SVGSVGElement;
   private focusPathEl: SVGPathElement;
+  /** Free frame decorations, size handles and size labels (R-FF-11..14). */
+  public readonly free: FreeOverlay;
 
   constructor(onHandleDown?: (x: number, y: number) => void) {
     this.handleListener = onHandleDown;
@@ -90,6 +93,9 @@ export class BridgeOverlay {
     this.dropBoxLabel.className = 'tag-label';
     this.dropBox.appendChild(this.dropBoxLabel);
     this.shadow.appendChild(this.dropBox);
+
+    // Size handles go under the drag handle, which wins where the two overlap at the top-right corner.
+    this.free = new FreeOverlay(this.shadow);
 
     this.dragHandle = this.createDragHandleElement();
     this.shadow.appendChild(this.dragHandle);
@@ -347,6 +353,7 @@ export class BridgeOverlay {
     this.renderFocus();
     this.renderHover();
     this.renderSelections();
+    this.free.render(document);
     this.renderDragHandle();
     this.renderDropIndicator();
   }

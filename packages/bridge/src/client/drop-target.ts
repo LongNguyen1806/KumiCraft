@@ -8,6 +8,8 @@ export type DropResult = {
   rect: DropRect;
   indicator: 'line' | 'box';
   label: string;
+  /** The element the drop inserts into (the parent of a sibling target). */
+  container?: Element | undefined;
 };
 
 /** Browser dependencies injected so unit tests can run in happy-dom. */
@@ -190,6 +192,7 @@ function resolveSameFileSibling(
         rect: makeLineRect(axis, cRect, rRect, where),
         indicator: 'line',
         label: c.localName,
+        container: c,
       };
     }
     r = c;
@@ -242,6 +245,7 @@ export function findDropTarget(
           rect: nRect,
           indicator: 'box',
           label: n.localName,
+          container: n,
         };
       }
       const idx = computeInsertionIndex(axis, children, x, y);

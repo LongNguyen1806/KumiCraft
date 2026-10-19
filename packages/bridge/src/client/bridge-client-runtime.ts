@@ -16,6 +16,7 @@ import {
 } from './bridge-events.ts';
 import { toBuildError } from './build-error.ts';
 import { getRefForElement, handleElementClick } from './candidate-chain.ts';
+import { CanvasTools } from './canvas-tools.ts';
 import { scanDomTree } from './dom-scanner.ts';
 import { computeDragHandleTarget, DragController, resolveElementsByRefs } from './drag.ts';
 import { browserDropEnv } from './drop-target.ts';
@@ -39,6 +40,7 @@ export class BridgeClientRuntime {
   private mode: 'design' | 'preview' = 'design';
   private overlay: BridgeOverlay;
   private drag: DragController;
+  private tools: CanvasTools;
   private selectedRefs: ElementRef[] = [];
   private lastSelectionInfo: ElementInfo[] = [];
   private treeDebounceTimer: ReturnType<typeof setTimeout> | undefined;
@@ -61,6 +63,13 @@ export class BridgeClientRuntime {
       if (this.mode !== 'design' || this.textEdit.isActive()) return;
       this.drag.beginCanvasDrag(resolveElementsByRefs(this.selectedRefs, document), x, y);
     });
+    this.tools = new CanvasTools(
+      (type, payload) => {
+        this.sendToStudio(type, payload);
+      },
+      this.overlay,
+      window,
+    );
     this.drag = new DragController(
       browserDropEnv(document),
       {
@@ -75,6 +84,7 @@ export class BridgeClientRuntime {
         },
       },
       window,
+      () => this.tools.getGrid(),
     );
     this.textEdit = this.createTextEditController();
     this.domObserver = new MutationObserver((mutations) => {
@@ -186,6 +196,12 @@ export class BridgeClientRuntime {
       handleDesignFile: (file, focus) => {
         this.setDesignFile(file, focus);
       },
+      handleSetGrid: (size) => {
+        this.tools.setGrid(size);
+      },
+      handleMeasureFree: (ref) => {
+        this.tools.measureFree(ref, document);
+      },
     });
   };
 
@@ -193,6 +209,7 @@ export class BridgeClientRuntime {
     if (this.mode === 'design' && mode !== 'design') {
       this.textEdit.commit();
       this.drag.cancel();
+      this.tools.cancel();
     }
     this.mode = mode;
     this.overlay.setVisible(mode === 'design');
@@ -200,13 +217,20 @@ export class BridgeClientRuntime {
   }
 
   private syncDragHandle(): void {
-    this.overlay.setDragHandle(
-      computeDragHandleTarget(this.selectedRefs, this.mode, this.textEdit.isActive(), document),
+    const handleTarget = computeDragHandleTarget(
+      this.selectedRefs,
+      this.mode,
+      this.textEdit.isActive(),
+      document,
     );
+    this.overlay.setDragHandle(handleTarget);
+    // R-FF-14: size handles on a single selected element, under the same conditions.
+    this.tools.syncHandles(this.selectedRefs.length === 1 ? handleTarget : undefined);
   }
 
   private handleSelectMessage(payload: StudioSelectPayload): void {
     this.selectedRefs = [...payload.refs];
+    this.tools.selectionChanged();
     this.overlay.setSelection(this.selectedRefs);
     this.syncDragHandle();
 
@@ -223,9 +247,7 @@ export class BridgeClientRuntime {
   }
 
   private handleHighlightMessage(payload: StudioHighlightPayload): void {
-    const el = payload.ref
-      ? document.querySelectorAll(`[data-rc-loc="${payload.ref.loc}"]`)[payload.ref.index]
-      : undefined;
+    const el = payload.ref ? resolveElementsByRefs([payload.ref], document)[0] : undefined;
     this.overlay.setHover(el);
   }
 
@@ -235,10 +257,8 @@ export class BridgeClientRuntime {
   }
 
   private handleTextEditStartMessage(payload: StudioTextEditStartPayload): void {
-    const el = document.querySelectorAll(`[data-rc-loc="${payload.ref.loc}"]`)[
-      payload.ref.index
-    ] as HTMLElement | undefined;
-    if (el) this.textEdit.start(el, payload.ref);
+    const el = resolveElementsByRefs([payload.ref], document)[0];
+    if (el instanceof HTMLElement) this.textEdit.start(el, payload.ref);
   }
 
   private handleCapturedEvent = (event: Event): void => {
@@ -258,6 +278,7 @@ export class BridgeClientRuntime {
 
     event.preventDefault();
     event.stopPropagation();
+    if (this.handleToolEvent(event)) return;
 
     if (event.type === 'dblclick') {
       const mouseEvt = event as MouseEvent;
@@ -274,10 +295,27 @@ export class BridgeClientRuntime {
     }
 
     if (event.type === 'click') {
-      if (this.drag.consumeClickSuppression()) return;
+      if (this.drag.consumeClickSuppression() || this.tools.consumeClickSuppression()) return;
       this.handleClick(event as MouseEvent);
     }
   };
+
+  /** Presses, right-clicks and handle clicks owned by the Canvas tools. True when handled. */
+  private handleToolEvent(event: Event): boolean {
+    if (event.type === 'pointerdown') {
+      this.tools.pointerDown(
+        event as PointerEvent,
+        resolveElementsByRefs(this.selectedRefs, document),
+      );
+      return true;
+    }
+    if (event.type === 'contextmenu') {
+      this.tools.contextMenu(event as MouseEvent, this.designFile, this.focus);
+      return true;
+    }
+    // Clicks on overlay controls (size or drag handles) must not select what lies beneath them.
+    return (event.type === 'click' || event.type === 'dblclick') && isOverlayHost(event.target);
+  }
 
   private handleClick(mouseEvt: MouseEvent): void {
     const target = getBridgeElementAtPoint(
@@ -307,7 +345,7 @@ export class BridgeClientRuntime {
   }
 
   private handlePointerMove = (event: PointerEvent): void => {
-    if (this.mode !== 'design' || this.drag.isDragging()) return;
+    if (this.mode !== 'design' || this.drag.isDragging() || this.tools.isDragging()) return;
     const target = getBridgeElementAtPoint(
       document,
       event.clientX,
@@ -325,6 +363,11 @@ export class BridgeClientRuntime {
       event.preventDefault();
       event.stopPropagation();
       this.drag.cancel();
+      return;
+    }
+    if (event.key === 'Escape' && this.tools.escape()) {
+      event.preventDefault();
+      event.stopPropagation();
       return;
     }
     const isMac = navigator.platform.toUpperCase().includes('MAC');
@@ -361,6 +404,7 @@ export class BridgeClientRuntime {
   }
 
   private handleScrollOrResize = (): void => {
+    this.tools.scrolled();
     this.scheduleSelectionInfo();
   };
 
@@ -384,6 +428,7 @@ export class BridgeClientRuntime {
   public destroy(): void {
     this.isDestroyed = true;
     this.drag.destroy();
+    this.tools.destroy();
     this.textEdit.destroy();
     this.historyTeardown?.();
     this.errorTeardown?.();
