@@ -2019,18 +2019,20 @@ Cạnh riêng của viền và bo góc (`border-t`, `rounded-tl`…) chưa có �
 
 ## 13. PHASE 2 — DANH SÁCH MODULE
 
-| Mã   | Module                             | Nơi đặt chính                                                                                 | WP      |
-| ---- | ---------------------------------- | --------------------------------------------------------------------------------------------- | ------- |
-| M-SE | Source Editor: thao tác cấu trúc   | `server/src/core/source-editor/structure/`                                                    | WP-2.02 |
-| M-LB | Library                            | `shared/src/library/`, `studio/src/features/library/`                                         | WP-2.03 |
-| M-DD | Kéo thả                            | `bridge/src/client/drag.ts`, `studio/src/features/dnd/`                                       | WP-2.04 |
-| M-CB | Sao chép, cắt, dán, chọn nhiều     | `studio/src/features/clipboard/`, `server/src/core/source-editor/`                            | WP-2.04 |
-| M-PG | Trang                              | `server/src/core/project/frameworks/vite-react/routes.ts`, `studio/src/features/pages/`       | WP-2.05 |
-| M-DT | Công cụ vẽ phần tử trên Canvas     | `bridge/src/client/draw.ts`, `studio/src/features/draw/`, `server/src/core/project/assets.ts` | WP-2.09 |
-| M-TH | Panel Brand (sửa `@theme`)         | `server/src/core/source-editor/theme-edit.ts`, `studio/src/features/brand/`                   | WP-2.10 |
-| M-CP | Component của dự án, vùng thiết kế | `server/src/core/project/components.ts`, `studio/src/features/components/`                    | WP-2.08 |
-| M-KB | Phím tắt                           | `studio/src/features/shortcuts/`                                                              | WP-2.06 |
-| M-CL | CLI và gói cài                     | `packages/cli/`                                                                               | WP-2.07 |
+| Mã   | Module                             | Nơi đặt chính                                                                                               | WP      |
+| ---- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------- |
+| M-SE | Source Editor: thao tác cấu trúc   | `server/src/core/source-editor/structure/`                                                                  | WP-2.02 |
+| M-LB | Library                            | `shared/src/library/`, `studio/src/features/library/`                                                       | WP-2.03 |
+| M-DD | Kéo thả                            | `bridge/src/client/drag.ts`, `studio/src/features/dnd/`                                                     | WP-2.04 |
+| M-CB | Sao chép, cắt, dán, chọn nhiều     | `studio/src/features/clipboard/`, `server/src/core/source-editor/`                                          | WP-2.04 |
+| M-PG | Trang                              | `server/src/core/project/frameworks/vite-react/routes.ts`, `studio/src/features/pages/`                     | WP-2.05 |
+| M-DT | Công cụ vẽ phần tử trên Canvas     | `bridge/src/client/draw.ts`, `studio/src/features/draw/`, `server/src/core/project/assets.ts`               | WP-2.09 |
+| M-TH | Panel Brand (sửa `@theme`)         | `server/src/core/source-editor/theme-edit.ts`, `studio/src/features/brand/`                                 | WP-2.10 |
+| M-CP | Component của dự án, vùng thiết kế | `server/src/core/project/components.ts`, `studio/src/features/components/`                                  | WP-2.08 |
+| M-DR | Bản nháp                           | `server/src/core/project/drafts.ts`, `bridge/src/integrations/draft-page.ts`, `studio/src/features/drafts/` | WP-2.11 |
+| M-FF | Khung tự do, kéo giãn, căn chỉnh   | `bridge/src/client/free-frame/`, `studio/src/features/free-frame/`, `shared/src/tailwind/`                  | WP-2.12 |
+| M-KB | Phím tắt                           | `studio/src/features/shortcuts/`                                                                            | WP-2.06 |
+| M-CL | CLI và gói cài                     | `packages/cli/`                                                                                             | WP-2.07 |
 
 Mã module trùng bản 0.18 (`M-LB`, `M-DD`, `M-CB`, `M-PG`, `M-KB`, `M-AG`) đánh số quy tắc từ `10` (như mục 0).
 
@@ -2052,8 +2054,9 @@ type StructureEdit =
       target: InsertTarget;
       jsx: string;
       from?: { file: RelPath; imports: string[] };
+      placement?: Placement; // M-FF (R-FF-12)
     }
-  | { kind: 'move'; elements: ElementGuard[]; target: InsertTarget }
+  | { kind: 'move'; elements: ElementGuard[]; target: InsertTarget; placement?: Placement }
   | { kind: 'remove'; elements: ElementGuard[] }
   | { kind: 'duplicate'; elements: ElementGuard[] }
   | { kind: 'wrap'; elements: ElementGuard[]; wrapper: 'row' | 'column' | 'grid' }
@@ -2247,7 +2250,7 @@ type DrawTool = 'select' | 'frame' | 'text' | 'image';
 | Mã      | Quy tắc                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | R-DT-10 | Thanh công cụ Canvas (chỉ ở chế độ Thiết kế) có 4 công cụ: **Chọn** (`V`), **Khung** (`F`), **Chữ** (`T`), **Ảnh** (`I`). Công cụ khác Chọn thì con trỏ đổi hình chữ thập và Bridge không chọn phần tử khi bấm                                                                                                                                                                                                                                                                                                                                                                                      |
-| R-DT-11 | **Khung**: kéo trên Canvas vẽ một hình chữ nhật (overlay của Bridge). Thả: phần tử chứa là phần tử có `data-rc-loc` sâu nhất dưới **điểm bắt đầu kéo** mà chứa được con (không phải thẻ tự đóng, không phải `img`, `input`); vị trí chèn theo trục dọc giữa các con hiện có. Chèn `<div>` theo dòng chảy (không dùng `absolute`) với class kích thước quy theo thang (R-TW-08) `w-…`, `h-…` (rộng gần bằng phần tử chứa, sai lệch ≤ 8 px → `w-full`) và class mặc định `rounded-md bg-slate-100`                                                                                                    |
+| R-DT-11 | **Khung**: kéo trên Canvas vẽ một hình chữ nhật (overlay của Bridge). Thả: phần tử chứa là phần tử có `data-rc-loc` sâu nhất dưới **điểm bắt đầu kéo** mà chứa được con (không phải thẻ tự đóng, không phải `img`, `input`); vị trí chèn theo trục dọc giữa các con hiện có. Chèn `<div>` theo dòng chảy (không dùng `absolute`) với class kích thước quy theo thang (R-TW-08) `w-…`, `h-…` (rộng gần bằng phần tử chứa, sai lệch ≤ 8 px → `w-full`) và class mặc định `rounded-md bg-slate-100` Trong khung tự do (M-FF): chèn đúng vị trí và kích thước đã kéo (R-FF-12)                          |
 | R-DT-12 | **Chữ**: bấm một điểm → chèn `<p>` chứa chữ mẫu theo ngôn ngữ Studio (R-LB-11) theo cách chọn chỗ của R-DT-11, rồi vào ngay chế độ sửa chữ (M-TX)                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | R-DT-13 | **Ảnh**: bấm hoặc kéo → hộp chọn ảnh gồm ảnh có trong `public/` của dự án và nút **Tải ảnh từ máy**. Ảnh tải lên: chỉ PNG, JPEG, WebP, GIF, SVG, kiểm bằng byte đầu file (không tin đuôi file), tối đa 5 MB; tên chuyển về chữ thường không dấu `[a-z0-9-]`, trùng thì thêm `-2`, `-3`…; chép vào `public/images/` qua `writeTextAtomic` dạng nhị phân (S-20 đến S-24). SVG có `<script>`, thuộc tính `on*` hoặc `href` `javascript:` bị từ chối (E016 `unsafeSvg`). Chèn `<img src="/images/<tên>" alt="…">` với kích thước vẽ (hoặc `w-full h-auto` khi bấm); ô `alt` bắt buộc, gợi ý từ tên file |
 | R-DT-14 | Sau khi chèn: công cụ quay về Chọn; phần tử mới được chọn như R-LB-15. Mỗi lần vẽ là một mục lịch sử (ảnh tải lên và lệnh chèn là một mục; Undo xóa cả file ảnh vừa tải, R-HI-11)                                                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -2295,23 +2298,102 @@ type ThemeEdit =
 | 4   | File CSS không có `@theme`, thêm `font` `display` | Tạo khối ngay sau `@import "tailwindcss";`                                                               | Unit       |
 | 5   | Giá trị màu `banana`, cỡ chữ `12` (thiếu đơn vị)  | E016 `invalidValue`, file không đổi                                                                      | Unit       |
 
+## 18D. M-DR — BẢN NHÁP
+
+**Mục đích:** cho người dùng một trang trắng để vẽ mockup hoặc thử component mà không đụng app thật, dùng đúng màu, font, component của dự án; khi ưng ý thì chuyển thành trang hoặc component thật (file JSX chỉ có giao diện, gắn API sau bằng code). Bổ sung 2026-10-19 theo chủ dự án.
+
+```ts
+type DraftInfo = { name: string; file: RelPath; free: boolean }; // free: gốc là khung tự do (M-FF)
+// GET    /project/drafts                                   → { drafts: DraftInfo[]; ignored?: true }
+// POST   /project/drafts            { name, free }         → StructureResult   (tạo file, R-HI-11)
+// PATCH  /project/drafts            { file, newName }      → StructureResult   (đổi tên file + tên hàm)
+// POST   /project/drafts/duplicate  { file }               → StructureResult
+// DELETE /project/drafts            { file }               → StructureResult
+// POST   /project/drafts/promote    { file, as: 'page' | 'component', name, dir?, fileName?, path?, keepDraft } → StructureResult
+// Canvas xem bản nháp: <origin dev server>/__reactcraft/draft?file=<RelPath>
+```
+
+| Mã      | Quy tắc                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-DR-10 | Bản nháp là file `.tsx`/`.jsx` trong `designDirs.drafts` (khóa mới, tùy chọn, mặc định `src/drafts`; R-CP-16 kiểm cả bốn thư mục khác nhau, không lồng nhau, trong `sourceDir`). Mỗi file export đúng một component tên PascalCase. Thư mục phải nằm trong `sourceDir` để Tailwind quét được class; thư mục bị `.gitignore` bỏ qua thì `ignored: true` và Studio cảnh báo "Màu và class có thể không hiện vì thư mục bản nháp bị .gitignore bỏ qua"                                                                                                           |
+| R-DR-11 | Tạo: tên → PascalCase không dấu (R-PG-11), mặc định "Bản nháp 1", "Bản nháp 2"… (không trùng). Nội dung: `free: false` → gốc `<div className="min-h-screen bg-white p-8">`; `free: true` → gốc là khung tự do `<div data-rc-free className="relative min-h-screen w-full bg-white">` (M-FF). Là một mục lịch sử (Undo xóa file)                                                                                                                                                                                                                               |
+| R-DR-12 | Xem trên Canvas: plugin Vite của Bridge phục vụ `/__reactcraft/draft?file=…` **chỉ khi chạy dev server**: một trang HTML nạp file CSS Tailwind của dự án (`tailwindCss`), import component bản nháp và gắn vào `#root` bằng `createRoot`; dự án có `react-router`/`react-router-dom` thì bọc `MemoryRouter`. `file` phải nằm trong `designDirs.drafts` (sai: 404). Bridge client chạy như mọi trang. Provider của `main.tsx` **không** áp dụng: component cần Provider báo lỗi chạy (R-RN-25) kèm gợi ý "Bản nháp chạy ngoài app; component này cần Provider" |
+| R-DR-13 | Studio: ô Trang trên thanh Canvas có nhóm **Bản nháp** (danh sách + "Bản nháp mới…" hỏi tên và kiểu Trắng/Khung tự do). Chọn bản nháp: iframe nạp URL bản nháp (không dùng `navigate`); thanh "Đang thiết kế" ghi `Bản nháp · <Tên> · <file>`; mọi chèn, sửa ghi vào file bản nháp (R-CP-11). Chọn trang: iframe về trang đó. Studio nhớ bản nháp đang mở theo dự án (localStorage, chỉ tiện lợi)                                                                                                                                                             |
+| R-DR-14 | Đổi tên (file và tên hàm), nhân bản (`<Tên>2`, `<Tên>3`…), xóa (hỏi xác nhận): mỗi thao tác một mục lịch sử (R-HI-11). File của app import bản nháp: danh sách hiện cảnh báo "Bản nháp đang được app dùng" và xóa bị chặn (E016 `draftInUse`)                                                                                                                                                                                                                                                                                                                 |
+| R-DR-15 | **Chuyển thành trang**: hộp thoại như thêm trang (R-PG-11: tên, URL, thư mục, tên file); file trang mới chứa JSX gốc của bản nháp và các import (đổi đường dẫn theo thư mục mới), route thêm như R-PG-12. **Chuyển thành component**: như R-CP-14 với toàn bộ JSX gốc. Ô "Giữ bản nháp" (mặc định bật); tắt thì xóa bản nháp trong cùng mục lịch sử. Bản nháp có khung tự do: hộp thoại nhắc "Bố cục tự do có vị trí cố định, nên kiểm tra trên điện thoại"                                                                                                   |
+| R-DR-16 | Bản nháp không bao giờ được thêm vào `routes.tsx` tự động; `pnpm build` của dự án vẫn chạy (file bản nháp hợp lệ TypeScript, không ai import thì Vite bỏ qua)                                                                                                                                                                                                                                                                                                                                                                                                 |
+
+**Kịch bản kiểm thử M-DR:**
+
+| #   | Kịch bản                                                           | Kết quả                                                              | Loại     |
+| --- | ------------------------------------------------------------------ | -------------------------------------------------------------------- | -------- |
+| 1   | Tạo "Bản nháp 1" (trắng) và "Mockup" (khung tự do)                 | Hai file đúng nội dung R-DR-11 trong `src/drafts/`; Undo xóa file    | Unit     |
+| 2   | Mở bản nháp trên Canvas của template, chèn `Button`                | Nút hiện đúng màu `brand`; file bản nháp có import                   | Kiểm tay |
+| 3   | `/__reactcraft/draft?file=src/pages/Home.tsx`, `?file=../x.tsx`    | 404                                                                  | Unit     |
+| 4   | Chuyển bản nháp thành trang `/khuyen-mai`, bỏ "Giữ bản nháp"; Undo | Trang mới có route, bản nháp mất; Undo trả cả ba file đúng từng byte | Unit     |
+| 5   | Xóa bản nháp đang được `Home.tsx` import                           | E016 `draftInUse`                                                    | Unit     |
+| 6   | `src/drafts` bị `.gitignore`                                       | `ignored: true`, Studio cảnh báo                                     | Unit     |
+
+## 18E. M-FF — KHUNG TỰ DO, KÉO GIÃN KÍCH THƯỚC, CĂN CHỈNH
+
+**Mục đích:** trong một khung, đặt và kéo các ô tới đúng chỗ chuột như Figma, kéo giãn kích thước bằng chuột, căn thẳng hàng; ngoài khung tự do, trang vẫn xếp theo dòng chảy. Dùng chủ yếu trong bản nháp (M-DR); trang thật dùng được kèm cảnh báo. Bổ sung 2026-10-19 theo chủ dự án.
+
+```ts
+// Khung tự do: phần tử có thuộc tính data-rc-free và class relative.
+// Con trực tiếp: absolute + left/top (+ w/h tùy chọn).
+type Placement =
+  | { kind: 'free'; left: number; top: number; width?: number; height?: number } // px, đã hít lưới
+  | { kind: 'flow' }; // bỏ absolute/left/top/right/bottom/inset/z
+// M-SE: insert và move nhận thêm placement?: Placement (áp vào phần tử gốc được chèn/di chuyển, cùng một mục lịch sử)
+// Studio → Bridge: set-grid { size: 1 | 4 | 8 | 16 }
+```
+
+| Mã      | Quy tắc                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-FF-10 | **Bật/tắt khung tự do** trong Inspector (một phần tử chứa được, R-DD-11). Bật: thêm `data-rc-free` và `relative`; con trực tiếp đang có chuyển sang `absolute` đúng vị trí đang hiện (đo khung thật so với khung cha); khung chưa có chiều cao thì nhận chiều cao đang hiện. Tắt (hỏi xác nhận): bỏ `data-rc-free`, `relative`; con bỏ `absolute` và toạ độ, giữ `w`/`h`. Mỗi lần là **một** mục lịch sử (`POST /source/edits/batch`)                                                                         |
+| R-FF-11 | **Giá trị toạ độ, kích thước**: px hít theo lưới (mặc định 8; chọn 1, 4, 8, 16 trên thanh Canvas; giữ `Alt` khi kéo để tắt hít). Dự án Tailwind v4 và px chia hết cho 4 → thang chuẩn (`left-30` = 120 px, `w-50` = 200 px); còn lại → giá trị tùy ý (`left-[123px]`). Toạ độ không âm, góc trên trái của phần tử nằm trong khung                                                                                                                                                                             |
+| R-FF-12 | **Thả vào khung tự do** (kéo từ Library, panel Component, Layer Tree, tay cầm, dán, công cụ vẽ M-DT): chèn làm con cuối của khung với `placement: free` tại điểm thả (trừ độ lệch lúc cầm khi di chuyển phần tử có sẵn). Khối mới không có kích thước thì giữ kích thước tự nhiên, rộng tối đa bằng khung. Di chuyển phần tử từ khung tự do ra chỗ thường: `placement: flow`. Dán, `Mod+D` trong khung tự do: lệch +16 px so với bản gốc                                                                      |
+| R-FF-13 | **Kéo di chuyển trong khung**: bấm giữ phần tử đang chọn trong khung tự do và kéo (không cần tay cầm), bắt đầu sau 3 px. Trong lúc kéo Bridge chỉ dịch hình bằng style tạm (không ghi file), hiện nhãn `x 120 · y 40`; `Shift` khóa theo một trục; `Esc` hủy và trả về chỗ cũ. Nhả chuột: ghi `left`/`top` một lần. Đang chọn nhiều phần tử cùng khung: kéo cả nhóm, một mục lịch sử (batch). Không kéo ra ngoài khung bằng cách này (vị trí bị giữ trong khung); muốn đưa ra ngoài dùng tay cầm (M-DD)       |
+| R-FF-14 | **Kéo giãn kích thước**: phần tử đang chọn (một phần tử) có chấm kéo giãn: trong khung tự do 8 chấm (góc và cạnh); ở chỗ thường 3 chấm (phải, dưới, góc dưới phải, chỉ đổi `w`/`h`). `Shift` giữ tỉ lệ; `Alt` kéo đối xứng từ tâm (chỉ khung tự do); nhỏ nhất 8 × 8 px; hít lưới; nhãn `200 × 80` khi kéo; kéo từ cạnh trái/trên đổi cả `left`/`top`. Xem trước bằng style tạm, nhả chuột ghi một lần. Bấm đúp vào chấm: bỏ `w`/`h` (về kích thước tự nhiên). Khung tự do tự kéo giãn được như phần tử thường |
+| R-FF-15 | **Phím mũi tên** (tiêu điểm không ở ô nhập, phần tử trong khung tự do): dịch một bước lưới; `Shift` + mũi tên: 1 px. Các lần bấm liên tiếp trong 500 ms gộp một mục lịch sử (`coalesceKey`)                                                                                                                                                                                                                                                                                                                   |
+| R-FF-16 | **Thứ tự lớp** (chồng lên nhau theo thứ tự trong code): Inspector của phần tử trong khung tự do có bốn nút **Lên trên cùng**, **Lên một lớp**, **Xuống một lớp**, **Xuống dưới cùng** (thao tác `move` trong cùng khung, giữ `left`/`top`)                                                                                                                                                                                                                                                                    |
+| R-FF-17 | **Căn và phân bố**: chọn ≥ 2 phần tử cùng khung tự do → căn trái, giữa ngang, phải, trên, giữa dọc, dưới (theo khung bao của nhóm); ≥ 3 phần tử → phân bố đều ngang, dọc. Chọn một phần tử → căn theo khung cha. Một mục lịch sử (batch)                                                                                                                                                                                                                                                                      |
+| R-FF-18 | **Đường gióng thông minh**: khi kéo hoặc kéo giãn, mép và tâm của phần tử hít vào mép, tâm của anh em trong cùng khung và của chính khung khi cách ≤ 4 px (ưu tiên hơn lưới); vẽ vạch màu hồng `#ec4899` và khoảng cách bằng nhau (nếu có)                                                                                                                                                                                                                                                                    |
+| R-FF-19 | **Hiển thị**: khung tự do có viền nét đứt và nhãn "Khung tự do" khi rê chuột hoặc chọn; khi kéo trong khung hiện lưới chấm theo bước lưới. Khung tự do trong file trang (không phải bản nháp): Inspector hiện cảnh báo "Vị trí cố định, có thể vỡ trên điện thoại"                                                                                                                                                                                                                                            |
+| R-FF-20 | Mọi giá trị đọc lại từ code: sửa tay `left-30` thành `left-40` trong editor thì Canvas và Inspector theo code (Inspector có nhóm **Vị trí** X, Y, W, H cho phần tử trong khung tự do, sửa số được)                                                                                                                                                                                                                                                                                                            |
+
+**Kịch bản kiểm thử M-FF:**
+
+| #   | Kịch bản                                                   | Kết quả                                                                                         | Loại            |
+| --- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | --------------- |
+| 1   | Bật khung tự do cho `div` có 3 con xếp dọc                 | 3 con nhận `absolute left-0 top-*` đúng vị trí đang hiện; Canvas không xê dịch; một Undo trả về | Unit + kiểm tay |
+| 2   | Đổi px → class: 120 (v4), 122 (v4), 120 (v3)               | `left-30`, `left-[122px]`, `left-[120px]`                                                       | Unit            |
+| 3   | Thả khối Card vào điểm (130, 70) của khung tự do, lưới 8   | `absolute left-32 top-18` (128, 72)                                                             | Unit            |
+| 4   | Kéo một ô 3 lần rồi Undo một lần                           | Ô về vị trí trước lần kéo cuối                                                                  | Kiểm tay        |
+| 5   | Kéo giãn góc trên trái từ (40, 40, 200 × 100) tới (24, 32) | `left-6 top-8 w-[216px] h-[108px]` (hoặc thang chuẩn nếu chia hết cho 4)                        | Unit            |
+| 6   | Căn trái 3 ô; phân bố đều ngang 3 ô                        | `left` bằng nhau; khoảng cách bằng nhau, một mục lịch sử                                        | Unit            |
+| 7   | Đường gióng: kéo ô có mép trái cách mép trái anh em 3 px   | Hít đúng mép, có vạch                                                                           | Unit (DOM)      |
+| 8   | Kéo phần tử từ khung tự do ra section thường bằng tay cầm  | Bỏ `absolute`, `left`, `top`; một Undo trả về                                                   | Unit            |
+| 9   | Tắt khung tự do                                            | Con bỏ toạ độ, giữ `w`/`h`; một Undo trả về                                                     | Unit            |
+
 ## 19. M-KB — PHÍM TẮT
 
 `Mod` là Ctrl (Windows, Linux) hoặc Cmd (macOS).
 
-| Phím                                                   | Hành động                                      |
-| ------------------------------------------------------ | ---------------------------------------------- |
-| `Mod+Z`; `Mod+Shift+Z`, `Ctrl+Y` (không có trên macOS) | Undo; Redo                                     |
-| `Mod+C`, `Mod+X`, `Mod+V`, `Mod+D`                     | Sao chép, cắt, dán, nhân bản                   |
-| `Delete`, `Backspace`                                  | Xóa phần tử đang chọn                          |
-| `Mod+G`, `Mod+Shift+G`                                 | Bọc trong Cột; bỏ bọc                          |
-| `Esc`, `Enter`, `Tab`, `Shift+Tab`                     | Chọn cha; chọn con đầu; phần tử kế tiếp; trước |
-| `Mod+↑`, `Mod+↓`                                       | Đổi thứ tự trong cha                           |
-| `Mod+=`, `Mod+-`, `Shift+0`, `Shift+1`                 | Phóng to, thu nhỏ, 100 %, vừa khung            |
-| `1` … `8`                                              | Chuyển khung thứ N                             |
-| `Alt+P`                                                | Bật/tắt Xem thử                                |
-| `Alt+E`                                                | Mở phần tử chính trong editor                  |
-| `Mod+/`                                                | Bảng phím tắt                                  |
+| Phím                                                   | Hành động                                                    |
+| ------------------------------------------------------ | ------------------------------------------------------------ |
+| `Mod+Z`; `Mod+Shift+Z`, `Ctrl+Y` (không có trên macOS) | Undo; Redo                                                   |
+| `Mod+C`, `Mod+X`, `Mod+V`, `Mod+D`                     | Sao chép, cắt, dán, nhân bản                                 |
+| `Delete`, `Backspace`                                  | Xóa phần tử đang chọn                                        |
+| `Mod+G`, `Mod+Shift+G`                                 | Bọc trong Cột; bỏ bọc                                        |
+| `Esc`, `Enter`, `Tab`, `Shift+Tab`                     | Chọn cha; chọn con đầu; phần tử kế tiếp; trước               |
+| `Mod+↑`, `Mod+↓`                                       | Đổi thứ tự trong cha                                         |
+| `←` `→` `↑` `↓`; `Shift` + mũi tên                     | Dịch phần tử trong khung tự do một bước lưới; 1 px (R-FF-15) |
+| `Mod+=`, `Mod+-`, `Shift+0`, `Shift+1`                 | Phóng to, thu nhỏ, 100 %, vừa khung                          |
+| `1` … `8`                                              | Chuyển khung thứ N                                           |
+| `Alt+P`                                                | Bật/tắt Xem thử                                              |
+| `Alt+E`                                                | Mở phần tử chính trong editor                                |
+| `Mod+/`                                                | Bảng phím tắt                                                |
 
 | Mã      | Quy tắc                                                                                                                                            |
 | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -2947,6 +3029,8 @@ Quy trình giao việc và kiểm tra (Claude viết test và hợp đồng, Gem
 | WP-2.09 | M-DT: công cụ Khung, Chữ, Ảnh trên Canvas, tải ảnh vào `public/images/`                         | Kịch bản M-DT 1–5                            |
 | WP-2.10 | M-TH: panel Brand sửa, thêm, xóa token `@theme`                                                 | Kịch bản M-TH 1–5                            |
 | WP-2.08 | M-CP: vùng thiết kế, thanh "Đang thiết kế", panel Component, tạo component, sửa component       | Kịch bản M-CP 1–6                            |
+| WP-2.11 | M-DR: bản nháp trong `src/drafts/`, xem trên Canvas, chuyển thành trang hoặc component          | Kịch bản M-DR 1–6                            |
+| WP-2.12 | M-FF: khung tự do, kéo di chuyển, kéo giãn, phím mũi tên, thứ tự lớp, căn, đường gióng          | Kịch bản M-FF 1–9                            |
 
 Cổng G2: `pnpm verify` xanh với trace Phase 2; AC-05, AC-07 và kịch bản kiểm tay G2 đạt trên dự án mới và dự án có sẵn; bộ E2E hồi quy của Phase 1 vẫn xanh trên Chromium.
 
@@ -3090,3 +3174,4 @@ Tài liệu thi công của hướng cũ (Design Model) được chuyển vào `
 | 2026-10-17 | 1.0 (bổ sung 4)    | Theo chủ dự án: Canvas chạy ở cổng của dự án (R-RN-04: `devPort`, `--port` trong script `dev`, `vite.config`, 5173) để backend có CORS theo cổng vẫn đăng nhập được; `WorkspaceFile.devPort`, `RunnerStatus.busyPort`, R-RN-27 (cảnh báo cổng bận, ô Cổng chạy)                                                                                                                                                                                                                                                                                                           |
 | 2026-10-17 | 1.0 (bổ sung 5)    | Theo chủ dự án: S-05a giữ token phiên qua các lần chạy (thư mục cấu hình người dùng, 7 ngày) để tab Studio đang mở tự kết nối lại sau khi chạy lại ReactCraft                                                                                                                                                                                                                                                                                                                                                                                                             |
 | 2026-10-17 | 1.0 (bổ sung 6)    | Theo chủ dự án: từ Phase 2 không viết E2E mới; tình huống E2E làm bằng Unit/Integration + kiểm tay (SPEC-06 mục 7, R-QA-20 đến R-QA-23); Playwright chỉ Chromium, chạy ở cổng; CW-50, CW-53, WP-2.01, cổng G2 sửa theo                                                                                                                                                                                                                                                                                                                                                    |
+| 2026-10-19 | 1.0 (bổ sung 7)    | Theo chủ dự án: thêm M-DR (bản nháp trong `src/drafts/`, xem trên Canvas ngoài router, chuyển thành trang hoặc component) và M-FF (khung tự do: đặt và kéo ô đúng chỗ chuột, kéo giãn kích thước, phím mũi tên, thứ tự lớp, căn và phân bố, đường gióng, lưới hít); `placement` cho `insert`/`move`; `designDirs.drafts`; WP-2.11, WP-2.12                                                                                                                                                                                                                                |
