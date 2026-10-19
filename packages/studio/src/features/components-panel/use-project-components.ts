@@ -1,6 +1,7 @@
 // Hook to fetch and keep project components up to date (SPEC-04 R-CP-12, spec-log #23).
 import type { ProjectComponent } from '@reactcraft/shared';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { create } from 'zustand';
 
 import { createEventsClient } from '../../api/events-client.ts';
 import { isRecord } from '../../api/http.ts';
@@ -17,7 +18,7 @@ function handleEvent(
   event: { readonly type: string; readonly payload?: unknown },
   schedule: () => void,
 ): void {
-  if (event.type === 'project.changed') {
+  if (event.type === 'project.changed' || event.type === 'history.changed') {
     schedule();
     return;
   }
@@ -28,8 +29,20 @@ function handleEvent(
   }
 }
 
+export type ComponentsState = {
+  readonly components: readonly ProjectComponent[];
+  setComponents: (components: readonly ProjectComponent[]) => void;
+};
+
+export const useComponentsStore = create<ComponentsState>((set) => ({
+  components: [],
+  setComponents: (components) => {
+    set({ components });
+  },
+}));
+
 export function useProjectComponents(): readonly ProjectComponent[] {
-  const [components, setComponents] = useState<readonly ProjectComponent[]>([]);
+  const components = useComponentsStore((s) => s.components);
 
   useEffect(() => {
     let active = true;
@@ -38,9 +51,9 @@ export function useProjectComponents(): readonly ProjectComponent[] {
     const load = async () => {
       try {
         const res = await fetchComponents();
-        if (active) setComponents(res);
+        if (active) useComponentsStore.getState().setComponents(res);
       } catch {
-        if (active) setComponents([]);
+        if (active) useComponentsStore.getState().setComponents([]);
       }
     };
 

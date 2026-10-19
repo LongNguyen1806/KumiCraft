@@ -7,16 +7,19 @@ export class ApiError extends Error {
   readonly status: number;
   readonly code: string | undefined;
   readonly params: Readonly<Record<string, unknown>> | undefined;
+  readonly details: unknown;
 
   constructor(
     status: number,
     code: string | undefined,
     params?: Readonly<Record<string, unknown>>,
+    details?: unknown,
   ) {
     super(`API request failed with status ${String(status)}${code ? ` (${code})` : ''}`);
     this.status = status;
     this.code = code;
     this.params = params;
+    this.details = details;
   }
 }
 
@@ -25,14 +28,15 @@ export const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const readErrorInfo = (
   body: unknown,
-): { code: string | undefined; params: Record<string, unknown> | undefined } => {
+): { code: string | undefined; params: Record<string, unknown> | undefined; details: unknown } => {
   if (!isRecord(body) || !isRecord(body['error'])) {
-    return { code: undefined, params: undefined };
+    return { code: undefined, params: undefined, details: undefined };
   }
   const errorObj = body['error'];
   const code = typeof errorObj['code'] === 'string' ? errorObj['code'] : undefined;
   const params = isRecord(errorObj['params']) ? errorObj['params'] : undefined;
-  return { code, params };
+  const details = errorObj['details'];
+  return { code, params, details };
 };
 
 function authHeaders(): Record<string, string> {
@@ -49,8 +53,8 @@ async function readResponseData(response: Response): Promise<unknown> {
     body = undefined;
   }
   if (!response.ok || !isRecord(body)) {
-    const { code, params } = readErrorInfo(body);
-    throw new ApiError(response.status, code, params);
+    const { code, params, details } = readErrorInfo(body);
+    throw new ApiError(response.status, code, params, details);
   }
   return body['data'];
 }

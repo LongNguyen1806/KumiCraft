@@ -131,7 +131,8 @@
       "expressionChild": "Element is inside a dynamic expression; edit it in your editor.",
       "componentSlot": "Component receives children via prop; cannot insert directly into its template.",
       "componentTag": "Cannot unwrap an uppercase component tag.",
-      "componentNotFound": "Page component declaration or file could not be found."
+      "componentNotFound": "Page component declaration or file could not be found.",
+      "usesLocalScope": "Element uses local scope variables: {{name}}."
     }
   },
   "E024": {

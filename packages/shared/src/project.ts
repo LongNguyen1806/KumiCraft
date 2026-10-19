@@ -168,3 +168,12 @@ export const ProjectComponentsSchema = z.strictObject({
   components: z.array(ProjectComponentSchema),
 });
 export type ProjectComponents = z.infer<typeof ProjectComponentsSchema>;
+
+export const ExtractComponentSchema = z.strictObject({
+  loc: z.string().min(1),
+  tag: z.string().min(1),
+  name: z.string().trim().min(1).max(64),
+  dir: RelPathSchema.optional(),
+  fileName: z.string().max(100).optional(),
+});
+export type ExtractComponent = z.infer<typeof ExtractComponentSchema>;

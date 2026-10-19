@@ -71,6 +71,27 @@ function enclosingFunctionIndex(ancestors: readonly AstNode[]): number {
   return -1;
 }
 
+export function isElementLoopRoot(ast: AstNode, target: AstNode): boolean {
+  const ancestors = findAncestors(ast, target);
+  const parent = ancestors[ancestors.length - 1];
+  if (!parent) return false;
+
+  if (parent.type === 'ArrowFunctionExpression') {
+    const body = unwrapExpression(asAstNode(parent['body']));
+    if (body === target) {
+      const fnIdx = ancestors.length - 1;
+      return isMapCallArgument(ancestors, fnIdx);
+    }
+  }
+
+  if (parent.type === 'ReturnStatement') {
+    const fnIdx = enclosingFunctionIndex(ancestors);
+    return fnIdx >= 0 && isMapCallArgument(ancestors, fnIdx);
+  }
+
+  return false;
+}
+
 /**
  * Checks whether an element can be removed, duplicated, or used as a sibling insertion reference (R-SE-21).
  */

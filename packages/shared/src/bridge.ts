@@ -185,8 +185,9 @@ export type StudioDragOverPayload = z.infer<typeof StudioDragOverPayloadSchema>;
 export const StudioDragEndPayloadSchema = z.strictObject({ drop: z.boolean() });
 export type StudioDragEndPayload = z.infer<typeof StudioDragEndPayloadSchema>;
 
-// Studio -> Bridge (R-CP-11). file missing/undefined: unknown design file.
+// Studio -> Bridge (R-CP-11, R-CP-15). file missing/undefined: unknown design file.
 export const StudioDesignFilePayloadSchema = z.strictObject({
   file: RelPathSchema.optional(),
+  focus: z.boolean().optional(),
 });
 export type StudioDesignFilePayload = z.infer<typeof StudioDesignFilePayloadSchema>;

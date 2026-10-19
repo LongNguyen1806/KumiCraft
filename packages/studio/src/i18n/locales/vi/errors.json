@@ -131,7 +131,8 @@
       "expressionChild": "Phần tử nằm trong biểu thức động, hãy sửa trong editor.",
       "componentSlot": "Component nhận children qua prop, không chèn trực tiếp vào mẫu.",
       "componentTag": "Không thể bỏ bọc component viết hoa.",
-      "componentNotFound": "Không tìm thấy khai báo component hoặc file của trang."
+      "componentNotFound": "Không tìm thấy khai báo component hoặc file của trang.",
+      "usesLocalScope": "Phần tử sử dụng biến trong phạm vi cục bộ: {{name}}."
     }
   },
   "E024": {

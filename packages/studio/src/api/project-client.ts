@@ -5,6 +5,7 @@ import {
   type DeletePage,
   type DesignDirs,
   type DirectoryListing,
+  type ExtractComponent,
   type JobStarted,
   JobStartedSchema,
   type PackageManager,
@@ -107,6 +108,10 @@ export async function deleteProjectPage(payload: DeletePage): Promise<StructureR
 }
 
 export async function fetchComponents(): Promise<ProjectComponent[]> {
-  const res = (await apiGet('project/components')) as { components: ProjectComponent[] };
+  const res = await apiGet('project/components');
   return ProjectComponentsSchema.parse(res).components;
+}
+
+export async function extractComponent(payload: ExtractComponent): Promise<StructureResult> {
+  return StructureResultSchema.parse(await apiPost('project/components/extract', payload));
 }

@@ -3,6 +3,8 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { editSource, fetchElementSource } from '../../api/source-client.ts';
+import { useComponentsStore } from '../components-panel/use-project-components.ts';
+import { useDesignStore } from '../design/design-store.ts';
 import { BridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { useCanvasTextEdit } from './use-canvas-text-edit.ts';
@@ -49,6 +51,9 @@ describe('useCanvasTextEdit (SPEC-04 section 10 M-TX, R-TX-01..08)', () => {
 
   afterEach(() => {
     channel.detach();
+    useDesignStore.getState().setTarget(undefined);
+    useDesignStore.getState().exitComponentMode();
+    useComponentsStore.getState().setComponents([]);
   });
 
   const dispatchBridgeMessage = async (type: string, payload: unknown) => {
@@ -233,5 +238,47 @@ describe('useCanvasTextEdit (SPEC-04 section 10 M-TX, R-TX-01..08)', () => {
       result.current.dismissWarning();
     });
     expect(result.current.warning).toBeUndefined();
+  });
+
+  it('Scenario 12: double click on foreign component enters componentMode, double click on home edits text [R-CP-15]', async () => {
+    useDesignStore.getState().setTarget({
+      kind: 'page',
+      name: 'Home',
+      file: 'src/pages/Home.tsx',
+      route: '/',
+    });
+
+    useComponentsStore.getState().setComponents([
+      {
+        name: 'Header',
+        file: 'src/components/Header.tsx',
+        kind: 'component',
+        usages: 1,
+        importStatement: "import { Header } from '@/components/Header';",
+      },
+    ]);
+
+    renderHook(() => useCanvasTextEdit({ channel }));
+
+    // 1st double click: element in Header.tsx
+    const headerRef: ElementRef = { loc: 'src/components/Header.tsx:10:3', index: 0 };
+    await dispatchBridgeMessage('text-edit-request', { ref: headerRef });
+
+    // Enters component mode, did NOT start inline text edit
+    expect(useDesignStore.getState().componentMode).toEqual({
+      componentName: 'Header',
+      filePath: 'src/components/Header.tsx',
+    });
+    expect(startTextEditSpy).not.toHaveBeenCalled();
+
+    // Reset componentMode back to page mode
+    useDesignStore.getState().exitComponentMode();
+
+    // 2nd double click: element in Home.tsx
+    mockFetchElementSource.mockResolvedValueOnce(STATIC_SOURCE);
+    await dispatchBridgeMessage('text-edit-request', { ref: SAMPLE_REF });
+
+    // Starts text edit as usual
+    expect(startTextEditSpy).toHaveBeenCalledWith(SAMPLE_REF);
   });
 });

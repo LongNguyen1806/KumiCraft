@@ -263,23 +263,27 @@ function createProjectRunner(
   });
 }
 
-function createServices(
-  deps: Omit<ProjectServiceDeps, 'runnerService'> & {
-    readonly runnerScriptPath?: string | undefined;
-  },
-  studioOrigin: string,
-  processPort: ProcessPort,
-  eventBus: EventBusPort,
-  fs: FileSystemPort,
-  watcher: WatcherPort,
-): {
+type ServiceDeps = Omit<ProjectServiceDeps, 'runnerService'> & {
+  readonly runnerScriptPath?: string | undefined;
+};
+
+type CoreServices = {
   projectService: ProjectService;
   runnerService: RunnerService;
   sourceEditorService: SourceEditorService;
   historyService: HistoryService;
   jobService: JobService;
   usageCounter: UsageCounter;
-} {
+};
+
+function createServices(
+  deps: ServiceDeps,
+  studioOrigin: string,
+  processPort: ProcessPort,
+  eventBus: EventBusPort,
+  fs: FileSystemPort,
+  watcher: WatcherPort,
+): CoreServices {
   const runnerHolder: { current?: RunnerService | undefined } = {};
   const projectHolder: { current?: ProjectService | undefined } = {};
   const { historyService, jobService, watch } = createFileServices(

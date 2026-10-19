@@ -1,5 +1,18 @@
-// Shared types for ProjectService (SPEC-04 M-PJ).
-import type { BackendInfo, SupportReport, WorkspaceFile } from '@reactcraft/shared';
+import type {
+  BackendInfo,
+  DesignDirs,
+  ExtractComponent,
+  Frame,
+  PackageManager,
+  PagesInfo,
+  ProjectInfo,
+  ProjectProbe,
+  ResponsiveMode,
+  StructureResult,
+  SupportReport,
+  ThemeInfo,
+  WorkspaceFile,
+} from '@reactcraft/shared';
 
 import type { HistoryService } from '../history/history-service.ts';
 import type { JobService } from '../jobs/job-service.ts';
@@ -8,9 +21,10 @@ import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { LoggerPort } from '../ports/logger-port.ts';
 import type { ProcessPort } from '../ports/process-port.ts';
 import type { SystemPort } from '../ports/system-port.ts';
-import type { AppError } from '../shared/result.ts';
+import type { AppError, Result } from '../shared/result.ts';
 import type { Platform } from '../shared/session.ts';
 import type { ConfigStore } from '../shared/user-config.ts';
+import type { AddPageInput, DeletePageInput, RenamePageInput } from './page-common.ts';
 
 export type WorkspaceState =
   | { readonly status: 'none'; readonly suggestedPath?: string | undefined }
@@ -41,4 +55,34 @@ export type ProjectServiceDeps = {
   readonly jobs?: JobService | undefined;
   readonly history?: HistoryService | Pick<HistoryService, 'clear'> | undefined;
   readonly watch?: { start(root: string): void; stop(): Promise<void> } | undefined;
+};
+
+export type ProjectService = {
+  state(): WorkspaceState;
+  probe(path: string): Promise<Result<ProjectProbe>>;
+  open(path?: string): Promise<Result<ProjectInfo>>;
+  create(path: string, name: string, packageManager?: PackageManager): Promise<Result<ProjectInfo>>;
+  close(): Promise<void>;
+  getProjectInfo(): Result<ProjectInfo>;
+  patchProject(updates: {
+    readonly name?: string | undefined;
+    readonly responsiveMode?: ResponsiveMode | undefined;
+    readonly frames?: readonly Frame[] | undefined;
+    readonly primaryFrameId?: string | undefined;
+    readonly devPort?: number | 'auto' | undefined;
+    readonly designDirs?: DesignDirs | undefined;
+  }): Promise<Result<ProjectInfo>>;
+  setTrusted(trusted: boolean): Promise<Result<ProjectInfo>>;
+  install(command: readonly string[]): Promise<Result<{ readonly jobId: string }>>;
+  pages(): Promise<Result<PagesInfo>>;
+  theme(): Promise<Result<ThemeInfo>>;
+  addPage(input: AddPageInput): Promise<Result<StructureResult>>;
+  renamePage(input: RenamePageInput): Promise<Result<StructureResult>>;
+  deletePage(input: DeletePageInput): Promise<Result<StructureResult>>;
+  extractComponent(input: ExtractComponent): Promise<Result<StructureResult>>;
+  dirs(): Promise<Result<readonly string[]>>;
+  addBackend(path: string, label?: string): Promise<Result<BackendInfo>>;
+  removeBackend(id: string): Promise<Result<void>>;
+  /** `workspace.json` changed on disk: read it again (project.changed, S-84). */
+  reloadWorkspaceFile(): Promise<void>;
 };

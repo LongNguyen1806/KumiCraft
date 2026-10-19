@@ -98,6 +98,7 @@
     "pageAdd": "thêm trang {{name}}",
     "pageRename": "đổi tên trang {{name}}",
     "pageDelete": "xóa trang {{name}}",
+    "extract": "tạo component {{name}}",
     "batch": "sửa {{count}} phần tử",
     "dismissError": "Đóng thông báo",
     "errorFileChanged": "File {{file}} đã bị sửa từ nơi khác, không hoàn tác được bước này"
@@ -237,6 +238,7 @@
     "unwrap": "Bỏ bọc",
     "duplicate": "Nhân bản",
     "remove": "Xóa",
+    "extract": "Tạo component",
     "lockReason": {
       "classExpression": "Class là biểu thức mã, không thể sửa trực quan",
       "classDuplicate": "Trùng lặp class trên phần tử",
@@ -414,7 +416,9 @@
       "component": "Component"
     },
     "unknownFile": "Chưa biết file của trang này",
-    "selectInFile": "Chọn một phần tử trong {{file}}"
+    "selectInFile": "Chọn một phần tử trong {{file}}",
+    "back": "Quay lại trang",
+    "usages": "Đang dùng ở {{count}} vị trí"
   },
   "components": {
     "title": "Component",
@@ -422,6 +426,21 @@
     "usages": "Dùng ở {{count}} chỗ",
     "layout": "Bố cục",
     "empty": "Dự án chưa có component",
-    "selfInsert": "Không chèn component vào chính nó"
+    "selfInsert": "Không chèn component vào chính nó",
+    "extract": {
+      "title": "Tạo component",
+      "button": "Tạo component",
+      "name": "Tên component",
+      "namePlaceholder": "HopKhuyenMai",
+      "dir": "Thư mục",
+      "file": "Tên file",
+      "submit": "Tạo component",
+      "submitting": "Đang tạo…",
+      "cancel": "Hủy",
+      "invalidPascal": "Tên component phải ở định dạng PascalCase (ví dụ: HopKhuyenMai).",
+      "nameExists": "Tên component đã tồn tại trong dự án.",
+      "fileExists": "File đích đã tồn tại.",
+      "usesLocalScope": "Phần tử sử dụng biến trong phạm vi cục bộ: {{name}}."
+    }
   }
 }

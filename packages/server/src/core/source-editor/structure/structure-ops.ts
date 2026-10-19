@@ -83,7 +83,7 @@ export function validateInsertedJsx(jsx: string): Result<{ readonly firstTag: st
   return ok({ firstTag });
 }
 
-function normalizeSnippetIndent(lines: readonly string[], unit: string): string[] {
+export function normalizeSnippetIndent(lines: readonly string[], unit: string): string[] {
   const nonEmpty = lines.filter((l) => /\S/.test(l));
   if (nonEmpty.length === 0) return [...lines];
 

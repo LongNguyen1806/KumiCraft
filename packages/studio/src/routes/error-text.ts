@@ -7,6 +7,7 @@ import enErrors from '../i18n/locales/en/errors.json';
 export type ErrorInfo = {
   readonly code: string;
   readonly params?: Readonly<Record<string, unknown>> | undefined;
+  readonly details?: unknown;
 };
 
 /** Short title of an error code (V-80). */
@@ -57,7 +58,11 @@ export function errorText(
   for (const reason of reasons) {
     const path = `${code}.reasons.${reason}`;
     if (isReasonPath(path)) {
-      parts.push(tError(path));
+      if (params !== undefined) {
+        parts.push(tError(path, params));
+      } else {
+        parts.push(tError(path));
+      }
     }
   }
 
@@ -70,6 +75,7 @@ export function toErrorInfo(error: unknown): ErrorInfo {
     return {
       code: error.code ?? String(error.status),
       params: error.params,
+      details: error.details,
     };
   }
   return { code: 'network' };

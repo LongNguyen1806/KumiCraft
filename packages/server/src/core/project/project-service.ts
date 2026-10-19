@@ -1,13 +1,11 @@
 import {
   type BackendInfo,
   DEFAULT_DESIGN_DIRS,
-  type DesignDirs,
-  type Frame,
+  type ExtractComponent,
   type PackageManager,
   type PagesInfo,
   type ProjectInfo,
   type ProjectProbe,
-  type ResponsiveMode,
   type StructureResult,
   type SupportReport,
   type ThemeInfo,
@@ -19,6 +17,7 @@ import type { Platform } from '../shared/session.ts';
 import { acquireLock, type LockInfo, releaseLock } from '../workspace/lock.ts';
 import { rememberPort } from '../workspace/studio-port.ts';
 import { trustKeyOf } from '../workspace/trust.ts';
+import { extractComponent } from './component-extract.ts';
 import { createProject } from './create.ts';
 import {
   type AddPageInput,
@@ -37,7 +36,7 @@ import {
 } from './project-backends.ts';
 import { projectInfoOf } from './project-info.ts';
 import { checkNeedsInstall, getInstallCommand, startInstallJob } from './project-install.ts';
-import type { ProjectServiceDeps, WorkspaceState } from './project-types.ts';
+import type { ProjectService, ProjectServiceDeps, WorkspaceState } from './project-types.ts';
 import {
   executePatchWorkspaceFile,
   loadOrCreateWorkspaceFile,
@@ -45,38 +44,7 @@ import {
   reloadOpenWorkspace,
 } from './project-workspace-file.ts';
 import { readThemeTokens } from './theme.ts';
-export type { ProjectServiceDeps, WorkspaceState };
-
-export type ProjectService = {
-  state(): WorkspaceState;
-  probe(path: string): Promise<Result<ProjectProbe>>;
-  open(path?: string): Promise<Result<ProjectInfo>>;
-  create(path: string, name: string, packageManager?: PackageManager): Promise<Result<ProjectInfo>>;
-  close(): Promise<void>;
-  getProjectInfo(): Result<ProjectInfo>;
-  patchProject(updates: {
-    readonly name?: string | undefined;
-    readonly responsiveMode?: ResponsiveMode | undefined;
-    readonly frames?: readonly Frame[] | undefined;
-    readonly primaryFrameId?: string | undefined;
-    readonly devPort?: number | 'auto' | undefined;
-    readonly designDirs?: DesignDirs | undefined;
-  }): Promise<Result<ProjectInfo>>;
-  setTrusted(trusted: boolean): Promise<Result<ProjectInfo>>;
-  /** Starts installing dependencies as a job (R-PJ-13); checks fail at once. */
-  install(command: readonly string[]): Promise<Result<{ readonly jobId: string }>>;
-  theme(): Promise<Result<ThemeInfo>>;
-  /** Pages read from the project's router (R-PG-10, R-PG-15). */
-  pages(): Promise<Result<PagesInfo>>;
-  addPage(input: AddPageInput): Promise<Result<StructureResult>>;
-  renamePage(input: RenamePageInput): Promise<Result<StructureResult>>;
-  deletePage(input: DeletePageInput): Promise<Result<StructureResult>>;
-  dirs(): Promise<Result<readonly string[]>>;
-  addBackend(path: string, label?: string): Promise<Result<BackendInfo>>;
-  removeBackend(id: string): Promise<Result<void>>;
-  /** `workspace.json` changed on disk: read it again (project.changed, S-84). */
-  reloadWorkspaceFile(): Promise<void>;
-};
+export type { ProjectService, ProjectServiceDeps, WorkspaceState };
 
 function normalizeRoot(path: string, platform: Platform): string {
   const unified = path.replaceAll('\\', '/').replace(/\/+$/, '');
@@ -342,6 +310,12 @@ class ProjectServiceImpl implements ProjectService {
     return deletePage(deps.value, input);
   }
 
+  async extractComponent(input: ExtractComponent): Promise<Result<StructureResult>> {
+    const deps = this.getPageEditDeps();
+    if (!deps.ok) return deps;
+    return extractComponent(deps.value, input);
+  }
+
   async dirs(): Promise<Result<readonly string[]>> {
     if (this.current.status !== 'open') {
       return err({ code: 'E021', params: { missing: 'project' } });
@@ -358,17 +332,11 @@ class ProjectServiceImpl implements ProjectService {
     if (this.current.status !== 'open') {
       return err({ code: 'E021', params: { missing: 'project' } });
     }
-    if (!this.current.support.tailwindCss) {
-      return ok({
-        colors: [],
-        fontSizes: [],
-        radii: [],
-        fonts: [],
-        shadows: [],
-        breakpoints: [],
-      });
+    const css = this.current.support.tailwindCss;
+    if (!css) {
+      return ok({ colors: [], fontSizes: [], radii: [], fonts: [], shadows: [], breakpoints: [] });
     }
-    return readThemeTokens(this.deps.fs, this.current.root, this.current.support.tailwindCss);
+    return readThemeTokens(this.deps.fs, this.current.root, css);
   }
 
   async addBackend(backendPath: string, customLabel?: string): Promise<Result<BackendInfo>> {

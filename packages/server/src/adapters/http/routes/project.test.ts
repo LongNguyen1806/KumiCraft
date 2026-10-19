@@ -132,6 +132,10 @@ const mockProjectService: ProjectService = {
     ),
   renamePage: () => Promise.resolve(ok({ changed: true, files: ['src/routes.tsx'], locs: [] })),
   deletePage: () => Promise.resolve(ok({ changed: true, files: ['src/routes.tsx'], locs: [] })),
+  extractComponent: () =>
+    Promise.resolve(
+      ok({ changed: true, files: ['src/pages/Home.tsx', 'src/components/PromoBox.tsx'], locs: [] }),
+    ),
   dirs: () => Promise.resolve(ok(['src/pages', 'src/components'])),
 };
 
@@ -296,6 +300,43 @@ describe('Page routes: /api/v1/project/dirs and /api/v1/project/pages', () => {
   it('[R-CP-12] GET /api/v1/project/components returns E021 when no project is opened', async () => {
     isOpen = false;
     const res = await get('/api/v1/project/components');
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: { code: 'E021' } });
+  });
+
+  it('[R-CP-14] POST /api/v1/project/components/extract extracts component and returns 201', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/project/components/extract',
+      headers: HEADERS,
+      payload: {
+        loc: 'src/pages/Home.tsx:10:4',
+        tag: 'section',
+        name: 'Promo Box',
+      },
+    });
+    expect(res.statusCode).toBe(201);
+    expect(res.json()).toEqual({
+      data: {
+        changed: true,
+        files: ['src/pages/Home.tsx', 'src/components/PromoBox.tsx'],
+        locs: [],
+      },
+    });
+  });
+
+  it('[R-CP-14] POST /api/v1/project/components/extract returns E021 when no project is opened', async () => {
+    isOpen = false;
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/project/components/extract',
+      headers: HEADERS,
+      payload: {
+        loc: 'src/pages/Home.tsx:10:4',
+        tag: 'section',
+        name: 'Promo Box',
+      },
+    });
     expect(res.statusCode).toBe(409);
     expect(res.json()).toMatchObject({ error: { code: 'E021' } });
   });

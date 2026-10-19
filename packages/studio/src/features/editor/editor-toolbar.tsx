@@ -45,6 +45,10 @@ function resolveHistoryLabel(
     const name = label.params?.['name'] ?? '';
     return t('history.pageDelete', { name });
   }
+  if (label.key === 'history:extract' || label.key === 'history.extract') {
+    const name = label.params?.['name'] ?? '';
+    return t('history.extract', { name });
+  }
   return label.key;
 }
 

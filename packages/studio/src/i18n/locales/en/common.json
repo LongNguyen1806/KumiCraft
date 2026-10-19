@@ -98,6 +98,7 @@
     "pageAdd": "add page {{name}}",
     "pageRename": "rename page {{name}}",
     "pageDelete": "delete page {{name}}",
+    "extract": "extract component {{name}}",
     "batch": "edit {{count}} elements",
     "dismissError": "Dismiss",
     "errorFileChanged": "File {{file}} was modified externally, cannot undo this step"
@@ -237,6 +238,7 @@
     "unwrap": "Unwrap",
     "duplicate": "Duplicate",
     "remove": "Remove",
+    "extract": "Extract component",
     "lockReason": {
       "classExpression": "ClassName is an expression, cannot edit visually",
       "classDuplicate": "Duplicate className attribute",
@@ -414,7 +416,9 @@
       "component": "Component"
     },
     "unknownFile": "The file of this page is unknown",
-    "selectInFile": "Select an element in {{file}}"
+    "selectInFile": "Select an element in {{file}}",
+    "back": "Back to page",
+    "usages": "Used in {{count}} places"
   },
   "components": {
     "title": "Components",
@@ -422,6 +426,21 @@
     "usages": "Used in {{count}} places",
     "layout": "Layout",
     "empty": "This project has no components yet",
-    "selfInsert": "A component cannot be inserted into itself"
+    "selfInsert": "A component cannot be inserted into itself",
+    "extract": {
+      "title": "Extract component",
+      "button": "Extract component",
+      "name": "Component name",
+      "namePlaceholder": "MyComponent",
+      "dir": "Directory",
+      "file": "File name",
+      "submit": "Extract",
+      "submitting": "Extracting…",
+      "cancel": "Cancel",
+      "invalidPascal": "Component name must be PascalCase (e.g. MyComponent).",
+      "nameExists": "A component with this name already exists.",
+      "fileExists": "Target file already exists.",
+      "usesLocalScope": "Element uses local scope variables: {{name}}."
+    }
   }
 }

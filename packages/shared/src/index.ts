@@ -88,6 +88,8 @@ export {
   BackendStatusSchema,
   type DeletePage,
   DeletePageSchema,
+  type ExtractComponent,
+  ExtractComponentSchema,
   PACKAGE_MANAGERS,
   type PackageManager,
   PackageManagerSchema,

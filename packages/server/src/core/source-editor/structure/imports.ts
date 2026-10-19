@@ -93,7 +93,11 @@ function parseSingleImportStatement(stmtStr: string): ParsedImport | undefined {
   }
 }
 
-function resolveRelativeImportSource(fromFile: string, targetFile: string, src: string): string {
+export function resolveRelativeImportSource(
+  fromFile: string,
+  targetFile: string,
+  src: string,
+): string {
   if (!src.startsWith('.')) return src;
   const fromDir = path.posix.dirname(fromFile);
   const targetDir = path.posix.dirname(targetFile);
@@ -137,7 +141,7 @@ export type AutoImportResult = {
  * Finds insertion position for new imports: right after the last ImportDeclaration,
  * or at the beginning of code (after BOM).
  */
-function findImportInsertPosition(ast: AstNode, code: string): number {
+export function findImportInsertPosition(ast: AstNode, code: string): number {
   const program = asAstNode(ast['program']);
   const body = Array.isArray(program?.['body']) ? program['body'] : [];
   let lastImportEnd = -1;

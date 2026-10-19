@@ -1,7 +1,9 @@
-// Structure action buttons (Move, Wrap, Unwrap, Duplicate, Remove) in Inspector Header (SPEC-04 R-SE-24..28).
+// Structure action buttons (Move, Wrap, Unwrap, Duplicate, Remove, Extract) in Inspector Header (SPEC-04 R-SE-24..28, R-CP-14).
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { errorText } from '../../../routes/error-text.ts';
+import { ExtractDialog } from '../../components-panel/extract-dialog.tsx';
 import type { InspectorTarget } from '../types.ts';
 import { useStructureActions } from './use-structure-actions.ts';
 
@@ -126,10 +128,34 @@ function DuplicateAndRemoveButtons({ target, actions }: ActionButtonsProps) {
   );
 }
 
+function ExtractButton({
+  target,
+  actions,
+  onOpen,
+}: ActionButtonsProps & { readonly onOpen: () => void }) {
+  const { t } = useTranslation();
+  const tag = target.source?.tag;
+  const baseDisabled =
+    actions.pending || target.loading || tag === undefined || target.source?.readonly !== undefined;
+
+  return (
+    <button
+      type="button"
+      data-testid="structure-extract"
+      disabled={baseDisabled}
+      onClick={onOpen}
+      className="h-6 rounded border border-border/60 bg-field px-2 text-xs text-ink hover:bg-border/20 disabled:opacity-50"
+    >
+      {t('inspector.extract')}
+    </button>
+  );
+}
+
 export function StructureActions({ target }: StructureActionsProps) {
   const { t } = useTranslation();
   const { t: tError } = useTranslation('errors');
   const actions = useStructureActions(target);
+  const [extractOpen, setExtractOpen] = useState(false);
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -137,7 +163,23 @@ export function StructureActions({ target }: StructureActionsProps) {
         <MoveButtons target={target} actions={actions} />
         <WrapButtons target={target} actions={actions} />
         <DuplicateAndRemoveButtons target={target} actions={actions} />
+        <ExtractButton
+          target={target}
+          actions={actions}
+          onOpen={() => {
+            setExtractOpen(true);
+          }}
+        />
       </div>
+      {extractOpen && (
+        <ExtractDialog
+          open={extractOpen}
+          target={target}
+          onClose={() => {
+            setExtractOpen(false);
+          }}
+        />
+      )}
       {actions.errorInfo !== undefined && (
         <p role="alert" className="text-xs text-danger" data-testid="structure-action-error">
           {errorText(tError, actions.errorInfo.code, actions.errorInfo.params)}

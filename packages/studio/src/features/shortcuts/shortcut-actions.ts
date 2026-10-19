@@ -3,6 +3,7 @@ import type { ShortcutAction } from '@reactcraft/shared';
 
 import { openInEditor } from '../../api/editor-client.ts';
 import { copySelection, cutSelection, pasteClipboard } from '../clipboard/clipboard-actions.ts';
+import { useDesignStore } from '../design/design-store.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { usePanelLayoutStore } from '../editor/use-panel-layout.ts';
 import { useHistoryStore } from '../history/history-store.ts';
@@ -19,7 +20,13 @@ import { useShortcutHelpStore } from './shortcut-help-store.ts';
 
 export function selectParentNode(): boolean {
   const selectedRefs = useSelectionStore.getState().selectedRefs;
-  if (selectedRefs.length !== 1) return false;
+  if (selectedRefs.length !== 1) {
+    if (useDesignStore.getState().componentMode !== undefined) {
+      useDesignStore.getState().exitComponentMode();
+      return true;
+    }
+    return false;
+  }
   const currentRef = selectedRefs[0];
   if (!currentRef) return false;
 
@@ -27,10 +34,22 @@ export function selectParentNode(): boolean {
   const currentNode = treeNodes.find(
     (n) => n.ref.loc === currentRef.loc && n.ref.index === currentRef.index,
   );
-  if (!currentNode || currentNode.parent === undefined) return false;
+  if (!currentNode || currentNode.parent === undefined) {
+    if (useDesignStore.getState().componentMode !== undefined) {
+      useDesignStore.getState().exitComponentMode();
+      return true;
+    }
+    return false;
+  }
 
   const parentNode = treeNodes[currentNode.parent];
-  if (!parentNode || !parentNode.ref.loc) return false;
+  if (!parentNode || !parentNode.ref.loc) {
+    if (useDesignStore.getState().componentMode !== undefined) {
+      useDesignStore.getState().exitComponentMode();
+      return true;
+    }
+    return false;
+  }
 
   useSelectionStore.getState().setSelectedRefs([parentNode.ref]);
   return true;

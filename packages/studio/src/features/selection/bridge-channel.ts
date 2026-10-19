@@ -142,6 +142,7 @@ export class BridgeChannel {
   private nonce: string | undefined;
   /** Last file sent with `design-file`, sent again to a Bridge that just started (R-CP-11). */
   private designFile: string | undefined;
+  private designFocus = false;
   private readonly listener: (e: MessageEvent) => void;
   private readonly textEditListeners = new Set<BridgeTextEditListener>();
 
@@ -208,9 +209,11 @@ export class BridgeChannel {
     this.sendMessage('drag-end', { drop });
   }
 
-  setDesignFile(file?: string): void {
+  setDesignFile(file?: string, focus?: boolean): void {
     this.designFile = file;
-    this.sendMessage('design-file', { file });
+    this.designFocus = focus ?? false;
+    const payload = focus !== undefined ? { file, focus } : { file };
+    this.sendMessage('design-file', payload);
   }
 
   private handleMessage(event: MessageEvent): void {
@@ -226,8 +229,12 @@ export class BridgeChannel {
     useSelectionStore.getState().setBridgeReady(true);
     dispatchBridgePayload(envelopeRes.data.type, envelopeRes.data.payload);
     // A full reload of the page starts a new Bridge that does not know the design file yet.
-    if (envelopeRes.data.type === 'ready')
-      this.sendMessage('design-file', { file: this.designFile });
+    if (envelopeRes.data.type === 'ready') {
+      const payload = this.designFocus
+        ? { file: this.designFile, focus: true }
+        : { file: this.designFile };
+      this.sendMessage('design-file', payload);
+    }
     this.handleTextEditMessage(envelopeRes.data.type, envelopeRes.data.payload);
   }
 

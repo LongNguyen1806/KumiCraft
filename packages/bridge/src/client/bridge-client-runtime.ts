@@ -8,7 +8,12 @@ import {
   type StudioTextEditStartPayload,
 } from '@reactcraft/shared';
 
-import { INTERCEPTED_EVENTS, isOverlayHost } from './bridge-events.ts';
+import {
+  addWindowListeners,
+  type BridgeRuntimeConfig,
+  type HotContext,
+  isOverlayHost,
+} from './bridge-events.ts';
 import { toBuildError } from './build-error.ts';
 import { getRefForElement, handleElementClick } from './candidate-chain.ts';
 import { scanDomTree } from './dom-scanner.ts';
@@ -17,22 +22,14 @@ import { browserDropEnv } from './drop-target.ts';
 import { shouldForwardShortcut } from './keyboard.ts';
 import { fitsMessageLimit } from './message-size.ts';
 import { BridgeOverlay } from './overlay.ts';
+import { getBridgeElementAtPoint } from './overlay-focus.ts';
 import { attachRuntimeErrorListeners } from './runtime-errors.ts';
 import { wrapBrowserHistory } from './runtime-history.ts';
 import { collectSelectionInfo } from './selection-info.ts';
 import { dispatchStudioMessage } from './studio-messages.ts';
 import { TextEditController } from './text-edit.ts';
 
-/** The part of Vite's `import.meta.hot` the Bridge uses (R-BR-17). */
-export type HotContext = { on(event: string, callback: (payload: unknown) => void): void };
-
-export type BridgeRuntimeConfig = {
-  readonly nonce: string;
-  readonly studioOrigin: string;
-  /** Absolute root of the project, to report build errors with project-relative paths. */
-  readonly rootDir: string;
-  readonly hot?: HotContext | undefined;
-};
+export type { BridgeRuntimeConfig, HotContext };
 
 export class BridgeClientRuntime {
   private nonce: string;
@@ -51,6 +48,9 @@ export class BridgeClientRuntime {
   private textEdit: TextEditController;
   private historyTeardown?: () => void;
   private errorTeardown?: () => void;
+  private windowListenersTeardown?: () => void;
+  private designFile: string | undefined;
+  private focus = false;
 
   constructor(config: BridgeRuntimeConfig) {
     this.nonce = config.nonce;
@@ -109,11 +109,12 @@ export class BridgeClientRuntime {
 
   private init(): void {
     window.addEventListener('message', this.handleStudioMessage);
-    for (const evtName of INTERCEPTED_EVENTS) {
-      window.addEventListener(evtName, this.handleCapturedEvent, true);
-    }
-    window.addEventListener('pointermove', this.handlePointerMove, true);
-    window.addEventListener('keydown', this.handleKeyDown, true);
+    this.windowListenersTeardown = addWindowListeners(
+      this.handleCapturedEvent,
+      this.handlePointerMove,
+      this.handleKeyDown,
+      this.handleScrollOrResize,
+    );
 
     this.historyTeardown = wrapBrowserHistory(() => {
       this.sendToStudio('route', { route: window.location.pathname });
@@ -134,8 +135,6 @@ export class BridgeClientRuntime {
     });
 
     this.attachViteHmr();
-    window.addEventListener('scroll', this.handleScrollOrResize, { capture: true, passive: true });
-    window.addEventListener('resize', this.handleScrollOrResize);
 
     this.sendToStudio('ready', {
       bridgeVersion: '1.0.0',
@@ -184,8 +183,8 @@ export class BridgeClientRuntime {
       handleDragEnd: (data) => {
         this.drag.studioDragEnd(data.drop);
       },
-      handleDesignFile: (file) => {
-        this.overlay.setDesignFile(file);
+      handleDesignFile: (file, focus) => {
+        this.setDesignFile(file, focus);
       },
     });
   };
@@ -242,15 +241,6 @@ export class BridgeClientRuntime {
     if (el) this.textEdit.start(el, payload.ref);
   }
 
-  private getTargetElement(x: number, y: number): Element | undefined {
-    for (const el of document.elementsFromPoint(x, y)) {
-      if (el.id === '__rc_overlay_host' || el.closest('#__rc_overlay_host')) continue;
-      const bridgeEl = el.closest('[data-rc-loc]');
-      if (bridgeEl) return bridgeEl;
-    }
-    return undefined;
-  }
-
   private handleCapturedEvent = (event: Event): void => {
     if (this.mode !== 'design') return;
     // The drag handle sits in the overlay's closed shadow root (R-DD-10): stopping the press here
@@ -271,7 +261,13 @@ export class BridgeClientRuntime {
 
     if (event.type === 'dblclick') {
       const mouseEvt = event as MouseEvent;
-      const target = this.getTargetElement(mouseEvt.clientX, mouseEvt.clientY);
+      const target = getBridgeElementAtPoint(
+        document,
+        mouseEvt.clientX,
+        mouseEvt.clientY,
+        this.designFile,
+        this.focus,
+      );
       const ref = target ? getRefForElement(target, document) : undefined;
       if (ref) this.sendToStudio('text-edit-request', { ref });
       return;
@@ -284,7 +280,14 @@ export class BridgeClientRuntime {
   };
 
   private handleClick(mouseEvt: MouseEvent): void {
-    const target = this.getTargetElement(mouseEvt.clientX, mouseEvt.clientY);
+    const target = getBridgeElementAtPoint(
+      document,
+      mouseEvt.clientX,
+      mouseEvt.clientY,
+      this.designFile,
+      this.focus,
+    );
+    if (this.focus && !target) return;
     this.selectedRefs = target
       ? handleElementClick(
           target,
@@ -305,7 +308,13 @@ export class BridgeClientRuntime {
 
   private handlePointerMove = (event: PointerEvent): void => {
     if (this.mode !== 'design' || this.drag.isDragging()) return;
-    const target = this.getTargetElement(event.clientX, event.clientY);
+    const target = getBridgeElementAtPoint(
+      document,
+      event.clientX,
+      event.clientY,
+      this.designFile,
+      this.focus,
+    );
     this.overlay.setHover(target);
     const ref = target ? getRefForElement(target, document) : undefined;
     this.sendToStudio('hover', ref ? { ref } : {});
@@ -366,8 +375,10 @@ export class BridgeClientRuntime {
     }, 16);
   }
 
-  public setDesignFile(file?: string): void {
-    this.overlay.setDesignFile(file);
+  public setDesignFile(file?: string, focus?: boolean): void {
+    this.designFile = file;
+    this.focus = focus ?? false;
+    this.overlay.setDesignFile(file, focus);
   }
 
   public destroy(): void {
@@ -376,17 +387,11 @@ export class BridgeClientRuntime {
     this.textEdit.destroy();
     this.historyTeardown?.();
     this.errorTeardown?.();
+    this.windowListenersTeardown?.();
     if (this.treeDebounceTimer !== undefined) clearTimeout(this.treeDebounceTimer);
     if (this.selectionInfoTimer !== undefined) clearTimeout(this.selectionInfoTimer);
     this.domObserver.disconnect();
     this.overlay.destroy();
     window.removeEventListener('message', this.handleStudioMessage);
-    for (const evtName of INTERCEPTED_EVENTS) {
-      window.removeEventListener(evtName, this.handleCapturedEvent, true);
-    }
-    window.removeEventListener('pointermove', this.handlePointerMove, true);
-    window.removeEventListener('keydown', this.handleKeyDown, true);
-    window.removeEventListener('scroll', this.handleScrollOrResize, true);
-    window.removeEventListener('resize', this.handleScrollOrResize);
   }
 }

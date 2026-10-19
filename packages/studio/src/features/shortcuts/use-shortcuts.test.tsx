@@ -3,7 +3,9 @@ import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';
+import { useDesignStore } from '../design/design-store.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { useStructureErrorStore } from '../structure/structure-error-store.ts';
 import { useShortcuts } from './use-shortcuts.ts';
@@ -29,6 +31,8 @@ describe('Studio useShortcuts (Scenarios #4, #5, #8, #9, #10)', () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
+    useDesignStore.getState().setTarget(undefined);
+    useDesignStore.getState().exitComponentMode();
   });
 
   it('Scenario 4: Delete in typing input does not trigger remove; Alt+P still toggles preview', () => {
@@ -203,5 +207,34 @@ describe('Studio useShortcuts (Scenarios #4, #5, #8, #9, #10)', () => {
     window.dispatchEvent(frame3Evt);
     expect(frame3Evt.defaultPrevented).toBe(true);
     expect(useCanvasViewStore.getState().activeFrameId).toBe('frame-3');
+  });
+
+  it('Scenario 13: Esc when nothing selected exits componentMode and sends design-file focus: false [R-CP-15]', () => {
+    const bridgeSpy = vi.spyOn(studioBridgeChannel, 'setDesignFile');
+    useDesignStore.getState().setTarget({
+      kind: 'page',
+      name: 'Home',
+      file: 'src/pages/Home.tsx',
+      route: '/',
+    });
+    useDesignStore.getState().enterComponentMode({
+      componentName: 'Header',
+      filePath: 'src/components/Header.tsx',
+    });
+    expect(useDesignStore.getState().componentMode).toBeDefined();
+
+    render(<ShortcutHarness />);
+
+    // Press Escape with no selection
+    const escEvt = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    });
+    window.dispatchEvent(escEvt);
+
+    expect(escEvt.defaultPrevented).toBe(true);
+    expect(useDesignStore.getState().componentMode).toBeUndefined();
+    expect(bridgeSpy).toHaveBeenLastCalledWith('src/pages/Home.tsx', false);
   });
 });

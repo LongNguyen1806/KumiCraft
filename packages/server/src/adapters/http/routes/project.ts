@@ -4,6 +4,7 @@ import {
   DeletePageSchema,
   DesignDirsSchema,
   DevPortSchema,
+  ExtractComponentSchema,
   FrameSchema,
   issuesToDetails,
   PackageManagerSchema,
@@ -134,6 +135,19 @@ function registerCodeInfoRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): 
       infoRes.value,
     );
     return { data: { components } };
+  });
+
+  api.post('/project/components/extract', async (request, reply) => {
+    const infoRes = deps.projectService.getProjectInfo();
+    if (!infoRes.ok) return sendError(reply, { code: 'E021', params: { missing: 'project' } });
+    const parsed = ExtractComponentSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
+    }
+    const result = await deps.projectService.extractComponent(parsed.data);
+    if (!result.ok) return sendError(reply, result.error);
+    reply.status(201);
+    return { data: result.value };
   });
 }
 

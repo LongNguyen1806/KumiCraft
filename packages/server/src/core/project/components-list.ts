@@ -1,4 +1,6 @@
 // List of components and layouts for Studio component panel (SPEC-04 M-CP, R-CP-11..13).
+import * as path from 'node:path';
+
 import type { ProjectComponent, ProjectInfo } from '@reactcraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
@@ -53,7 +55,11 @@ async function readConfigComponents(fs: FileSystemPort, root: string): Promise<r
   }
 }
 
-function buildImportSource(file: string, aliasPrefix: string | undefined): string {
+export function buildImportSource(
+  file: string,
+  aliasPrefix: string | undefined,
+  fromFile?: string,
+): string {
   if (aliasPrefix && file.startsWith(aliasPrefix)) {
     const after = file.slice(aliasPrefix.length);
     const withoutExt = after.replace(/\.(tsx|jsx)$/, '');
@@ -61,6 +67,15 @@ function buildImportSource(file: string, aliasPrefix: string | undefined): strin
       ? withoutExt.slice(0, -'/index'.length)
       : withoutExt;
     return `@/${clean}`;
+  }
+  if (fromFile !== undefined) {
+    const fromDir = path.posix.dirname(fromFile);
+    const rel = path.posix.relative(fromDir, file);
+    const withoutExt = rel.replace(/\.(tsx|jsx)$/, '');
+    const clean = withoutExt.endsWith('/index')
+      ? withoutExt.slice(0, -'/index'.length)
+      : withoutExt;
+    return clean.startsWith('.') ? clean : `./${clean}`;
   }
   const parts = file.split('/');
   const fileName = parts[parts.length - 1] ?? file;

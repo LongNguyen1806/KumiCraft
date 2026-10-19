@@ -24,7 +24,7 @@ export type StudioMessageHandlers = {
   commitTextEdit: () => void;
   handleDragOver: (data: StudioDragOverPayload) => void;
   handleDragEnd: (data: StudioDragEndPayload) => void;
-  handleDesignFile: (file?: string) => void;
+  handleDesignFile: (file?: string, focus?: boolean) => void;
 };
 
 function dispatchDragOrEdit(
@@ -86,7 +86,7 @@ export function dispatchStudioMessage(
     }
     case 'design-file': {
       const parsed = StudioDesignFilePayloadSchema.safeParse(payload);
-      if (parsed.success) handlers.handleDesignFile(parsed.data.file);
+      if (parsed.success) handlers.handleDesignFile(parsed.data.file, parsed.data.focus);
       break;
     }
   }

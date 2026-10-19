@@ -3,6 +3,8 @@ import { type ElementRef, type ElementSource, parseLocString } from '@reactcraft
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { editSource, fetchElementSource } from '../../api/source-client.ts';
+import { useComponentsStore } from '../components-panel/use-project-components.ts';
+import { useDesignStore } from '../design/design-store.ts';
 import {
   type BridgeChannel,
   type BridgeTextEditListener,
@@ -131,6 +133,21 @@ async function processTextEditRequest(
 ): Promise<void> {
   const parsed = parseLocString(ref.loc);
   if (!parsed) return;
+
+  const currentFile =
+    useDesignStore.getState().componentMode?.filePath ?? useDesignStore.getState().target?.file;
+  if (currentFile && parsed.file !== currentFile) {
+    const components = useComponentsStore.getState().components;
+    const comp = components.find((c) => c.file === parsed.file);
+    if (comp) {
+      useDesignStore.getState().enterComponentMode({
+        componentName: comp.name,
+        filePath: comp.file,
+      });
+      return;
+    }
+  }
+
   try {
     const source = await fetchElementSource(parsed);
     const warn = getWarningForSource(source, ref.loc, parsed.file, parsed.line, parsed.column);

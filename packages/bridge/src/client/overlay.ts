@@ -2,6 +2,7 @@
 import type { ElementRef } from '@reactcraft/shared';
 
 import type { DropResult } from './drop-target.ts';
+import { focusPath, focusRoots } from './overlay-focus.ts';
 import { foreignLabel, OVERLAY_CSS } from './overlay-foreign.ts';
 
 export type OverlayState = {
@@ -43,6 +44,9 @@ export class BridgeOverlay {
   private visible = true;
   private handleListener: ((x: number, y: number) => void) | undefined;
   private designFile: string | undefined;
+  private focus = false;
+  private focusSvg: SVGSVGElement;
+  private focusPathEl: SVGPathElement;
 
   constructor(onHandleDown?: (x: number, y: number) => void) {
     this.handleListener = onHandleDown;
@@ -58,6 +62,11 @@ export class BridgeOverlay {
     const style = document.createElement('style');
     style.textContent = OVERLAY_CSS;
     this.shadow.appendChild(style);
+
+    const focusEls = this.createFocusSvgElement();
+    this.focusSvg = focusEls.svg;
+    this.focusPathEl = focusEls.path;
+    this.shadow.appendChild(this.focusSvg);
 
     this.hoverBox = document.createElement('div');
     this.hoverBox.className = 'box hover-box';
@@ -91,6 +100,21 @@ export class BridgeOverlay {
     });
 
     this.attach();
+  }
+
+  private createFocusSvgElement(): { svg: SVGSVGElement; path: SVGPathElement } {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.style.position = 'fixed';
+    svg.style.inset = '0';
+    svg.style.width = '100%';
+    svg.style.height = '100%';
+    svg.style.pointerEvents = 'none';
+    svg.style.display = 'none';
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('fill', 'rgba(15, 23, 42, 0.35)');
+    path.setAttribute('fill-rule', 'evenodd');
+    svg.appendChild(path);
+    return { svg, path };
   }
 
   private createDragHandleElement(): HTMLDivElement {
@@ -145,8 +169,9 @@ export class BridgeOverlay {
     this.host.style.display = visible ? 'block' : 'none';
   }
 
-  public setDesignFile(file?: string): void {
+  public setDesignFile(file?: string, focus?: boolean): void {
     this.designFile = file;
+    this.focus = focus ?? false;
     this.requestRender();
   }
 
@@ -299,8 +324,27 @@ export class BridgeOverlay {
     }
   }
 
+  private renderFocus(): void {
+    if (!this.focus || !this.designFile) {
+      this.focusSvg.style.display = 'none';
+      return;
+    }
+    const roots = focusRoots(document, this.designFile);
+    const viewport = {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    };
+    const rects = roots.map((el) => {
+      const r = el.getBoundingClientRect();
+      return { x: r.left, y: r.top, width: r.width, height: r.height };
+    });
+    this.focusPathEl.setAttribute('d', focusPath(viewport, rects));
+    this.focusSvg.style.display = 'block';
+  }
+
   private render(): void {
     if (!this.visible) return;
+    this.renderFocus();
     this.renderHover();
     this.renderSelections();
     this.renderDragHandle();
