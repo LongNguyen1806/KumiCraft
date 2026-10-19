@@ -98,12 +98,16 @@ export function measureFreeFrame(
           tag: child.localName,
           left: Math.round(box.left),
           top: Math.round(box.top),
+          width: Math.round(box.width),
+          height: Math.round(box.height),
         },
       ];
     });
+  const frameBox = measure(frame);
   return {
     ref,
-    height: Math.round(measure(frame).height),
+    width: Math.round(frameBox.width),
+    height: Math.round(frameBox.height),
     hasHeight: hasHeightClass(frame),
     children,
   };

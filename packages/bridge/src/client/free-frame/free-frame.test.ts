@@ -72,11 +72,26 @@ describe('free-geometry [R-FF-10, R-FF-12]', () => {
     expect(directLocChildren(frame).map((el) => el.id)).toEqual(['card', 'title']);
     expect(measureFreeFrame(frame, document, measureFrom(rects))).toEqual({
       ref: { loc: 'src/pages/Home.tsx:3:5', index: 0 },
+      width: 600,
       height: 400,
       hasHeight: false,
       children: [
-        { ref: { loc: 'src/pages/Home.tsx:4:7', index: 0 }, tag: 'div', left: 40, top: 24 },
-        { ref: { loc: 'src/pages/Home.tsx:5:7', index: 0 }, tag: 'h2', left: 0, top: 120 },
+        {
+          ref: { loc: 'src/pages/Home.tsx:4:7', index: 0 },
+          tag: 'div',
+          left: 40,
+          top: 24,
+          width: 200,
+          height: 100,
+        },
+        {
+          ref: { loc: 'src/pages/Home.tsx:5:7', index: 0 },
+          tag: 'h2',
+          left: 0,
+          top: 120,
+          width: 300,
+          height: 30,
+        },
       ],
     });
   });

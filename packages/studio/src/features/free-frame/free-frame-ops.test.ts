@@ -29,6 +29,7 @@ function source(loc: string, className: ElementSource['className'], free = false
 function measure(children: readonly [string, number, number][]): BridgeFreeMeasurePayload {
   return {
     ref: { loc: FRAME, index: 0 },
+    width: 640,
     height: 300.4,
     hasHeight: false,
     children: children.map(([loc, left, top]) => ({
@@ -36,6 +37,8 @@ function measure(children: readonly [string, number, number][]): BridgeFreeMeasu
       tag: 'div',
       left,
       top,
+      width: 120,
+      height: 80,
     })),
   };
 }

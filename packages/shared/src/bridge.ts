@@ -214,6 +214,8 @@ export type StudioMeasureFreePayload = z.infer<typeof StudioMeasureFreePayloadSc
 // Bridge -> Studio: trả lời measure-free (R-FF-10)
 export const BridgeFreeMeasurePayloadSchema = z.strictObject({
   ref: ElementRefSchema,
+  /** Rendered size of the frame's padding box (px); align to parent uses it (R-FF-17). */
+  width: z.number(),
   height: z.number(),
   hasHeight: z.boolean(),
   children: z
@@ -223,6 +225,8 @@ export const BridgeFreeMeasurePayloadSchema = z.strictObject({
         tag: z.string(),
         left: z.number(),
         top: z.number(),
+        width: z.number(),
+        height: z.number(),
       }),
     )
     .max(200),
