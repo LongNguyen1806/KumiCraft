@@ -399,7 +399,11 @@
       "showShortcuts": "Bảng phím tắt",
       "frames": "Chuyển khung 1–8",
       "nudge": "Dịch trong khung tự do",
-      "nudgeFine": "Dịch 1 px"
+      "nudgeFine": "Dịch 1 px",
+      "toolSelect": "Công cụ Chọn",
+      "toolFrame": "Công cụ Khung",
+      "toolText": "Công cụ Chữ",
+      "toolImage": "Công cụ Ảnh"
     }
   },
   "pages": {
@@ -520,5 +524,12 @@
     "alt": "Mô tả ảnh (alt)",
     "altPlaceholder": "Nhập mô tả ảnh…",
     "selectedUpload": "Đã chọn tải lên:"
+  },
+  "draw": {
+    "toolbar": "Công cụ vẽ",
+    "select": "Chọn",
+    "frame": "Khung",
+    "text": "Chữ",
+    "image": "Ảnh"
   }
 }

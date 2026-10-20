@@ -69,6 +69,7 @@ export class BridgeClientRuntime {
       },
       this.overlay,
       window,
+      () => this.designFile,
     );
     this.drag = new DragController(
       browserDropEnv(document),
@@ -172,21 +173,11 @@ export class BridgeClientRuntime {
     const envelope = BridgeEnvelopeSchema.safeParse(event.data);
     if (!envelope.success || envelope.data.nonce !== this.nonce) return;
     dispatchStudioMessage(envelope.data.type, envelope.data.payload, {
-      setMode: (mode) => {
-        this.setMode(mode);
-      },
-      handleSelect: (data) => {
-        this.handleSelectMessage(data);
-      },
-      handleHighlight: (data) => {
-        this.handleHighlightMessage(data);
-      },
-      handleNavigate: (route) => {
-        this.handleNavigateMessage(route);
-      },
-      handleTextEditStart: (data) => {
-        this.handleTextEditStartMessage(data);
-      },
+      setMode: this.setMode,
+      handleSelect: this.handleSelectMessage,
+      handleHighlight: this.handleHighlightMessage,
+      handleNavigate: this.handleNavigateMessage,
+      handleTextEditStart: this.handleTextEditStartMessage,
       commitTextEdit: () => {
         this.textEdit.commit();
       },
@@ -196,19 +187,20 @@ export class BridgeClientRuntime {
       handleDragEnd: (data) => {
         this.drag.studioDragEnd(data.drop);
       },
-      handleDesignFile: (file, focus) => {
-        this.setDesignFile(file, focus);
-      },
+      handleDesignFile: this.setDesignFile,
       handleSetGrid: (size) => {
         this.tools.setGrid(size);
       },
       handleMeasureFree: (ref) => {
         this.tools.measureFree(ref, document);
       },
+      handleSetTool: (tool) => {
+        this.tools.setTool(tool);
+      },
     });
   };
 
-  private setMode(mode: 'design' | 'preview'): void {
+  private setMode = (mode: 'design' | 'preview'): void => {
     if (this.mode === 'design' && mode !== 'design') {
       this.textEdit.commit();
       this.drag.cancel();
@@ -217,7 +209,7 @@ export class BridgeClientRuntime {
     this.mode = mode;
     this.overlay.setVisible(mode === 'design');
     this.syncDragHandle();
-  }
+  };
 
   private syncDragHandle(): void {
     const handleTarget = computeDragHandleTarget(
@@ -231,7 +223,7 @@ export class BridgeClientRuntime {
     this.tools.syncHandles(this.selectedRefs.length === 1 ? handleTarget : undefined);
   }
 
-  private handleSelectMessage(payload: StudioSelectPayload): void {
+  private handleSelectMessage = (payload: StudioSelectPayload): void => {
     this.selectedRefs = [...payload.refs];
     this.tools.selectionChanged();
     this.overlay.setSelection(this.selectedRefs);
@@ -247,22 +239,22 @@ export class BridgeClientRuntime {
       }
     }
     this.scheduleSelectionInfo();
-  }
+  };
 
-  private handleHighlightMessage(payload: StudioHighlightPayload): void {
+  private handleHighlightMessage = (payload: StudioHighlightPayload): void => {
     const el = payload.ref ? resolveElementsByRefs([payload.ref], document)[0] : undefined;
     this.overlay.setHover(el);
-  }
+  };
 
-  private handleNavigateMessage(route: string): void {
+  private handleNavigateMessage = (route: string): void => {
     window.history.pushState(undefined, '', route);
     window.dispatchEvent(new PopStateEvent('popstate'));
-  }
+  };
 
-  private handleTextEditStartMessage(payload: StudioTextEditStartPayload): void {
+  private handleTextEditStartMessage = (payload: StudioTextEditStartPayload): void => {
     const el = resolveElementsByRefs([payload.ref], document)[0];
     if (el instanceof HTMLElement) this.textEdit.start(el, payload.ref);
-  }
+  };
 
   private handleCapturedEvent = (event: Event): void => {
     if (this.mode !== 'design') return;
@@ -316,8 +308,11 @@ export class BridgeClientRuntime {
       this.tools.contextMenu(event as MouseEvent, this.designFile, this.focus);
       return true;
     }
-    // Clicks on overlay controls (size or drag handles) must not select what lies beneath them.
-    return (event.type === 'click' || event.type === 'dblclick') && isOverlayHost(event.target);
+    // Clicks on overlay controls (size or drag handles) or with a draw tool active must not select.
+    return (
+      (event.type === 'click' || event.type === 'dblclick') &&
+      (isOverlayHost(event.target) || this.tools.swallowDrawClick())
+    );
   }
 
   private handleClick(mouseEvt: MouseEvent): void {
@@ -422,11 +417,11 @@ export class BridgeClientRuntime {
     }, 16);
   }
 
-  public setDesignFile(file?: string, focus?: boolean): void {
+  public setDesignFile = (file?: string, focus?: boolean): void => {
     this.designFile = file;
     this.focus = focus ?? false;
     this.overlay.setDesignFile(file, focus);
-  }
+  };
 
   public destroy(): void {
     this.isDestroyed = true;

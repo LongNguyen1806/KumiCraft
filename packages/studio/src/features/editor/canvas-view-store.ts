@@ -1,6 +1,8 @@
-// Zustand store for Canvas view state (zoom, frame, mode) (SPEC-04 R-RN-21, R-KB-12).
-import { defaultFrames, type Frame, type Placement } from '@reactcraft/shared';
+// Zustand store for Canvas view state (zoom, frame, mode, tool) (SPEC-04 R-RN-21, R-KB-12, R-DT-10).
+import { defaultFrames, type DrawTool, type Frame, type Placement } from '@reactcraft/shared';
 import { create } from 'zustand';
+
+import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 
 export type CanvasMode = 'design' | 'preview';
 export type Zoom = number | 'fit';
@@ -11,6 +13,8 @@ export const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
 export type CanvasViewState = {
   readonly mode: CanvasMode;
+  readonly tool: DrawTool;
+  readonly setTool: (tool: DrawTool) => void;
   readonly zoom: Zoom;
   readonly displayedZoom: number;
   readonly activeFrameId: string;
@@ -158,8 +162,34 @@ function createProjectFactActions(
   };
 }
 
+function createModeAndToolActions(
+  set: (
+    updater: Partial<CanvasViewState> | ((s: CanvasViewState) => Partial<CanvasViewState>),
+  ) => void,
+  get: () => CanvasViewState,
+) {
+  return {
+    mode: 'design' as const,
+    tool: 'select' as const,
+    setTool: (tool: DrawTool) => {
+      set({ tool });
+      studioBridgeChannel.setTool(tool);
+    },
+    setMode: (mode: CanvasMode | ((prev: CanvasMode) => CanvasMode)) => {
+      const next = typeof mode === 'function' ? mode(get().mode) : mode;
+      set(next === 'preview' ? { mode: next, tool: 'select' } : { mode: next });
+      if (next === 'preview') studioBridgeChannel.setTool('select');
+    },
+    toggleMode: () => {
+      const next = get().mode === 'design' ? 'preview' : 'design';
+      set(next === 'preview' ? { mode: next, tool: 'select' } : { mode: next });
+      if (next === 'preview') studioBridgeChannel.setTool('select');
+    },
+  };
+}
+
 export const useCanvasViewStore = create<CanvasViewState>((set, get) => ({
-  mode: 'design',
+  ...createModeAndToolActions(set, get),
   zoom: 'fit',
   displayedZoom: 1,
   activeFrameId: 'desktop',
@@ -170,17 +200,6 @@ export const useCanvasViewStore = create<CanvasViewState>((set, get) => ({
     set({ grid });
   },
   ...createProjectFactActions(set),
-
-  setMode: (mode) => {
-    set((state) => ({
-      mode: typeof mode === 'function' ? mode(state.mode) : mode,
-    }));
-  },
-  toggleMode: () => {
-    set((state) => ({
-      mode: state.mode === 'design' ? 'preview' : 'design',
-    }));
-  },
   setZoom: (zoom) => {
     set({ zoom });
   },

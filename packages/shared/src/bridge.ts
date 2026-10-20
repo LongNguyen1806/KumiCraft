@@ -279,3 +279,32 @@ export type BridgeLayerMenuPayload = z.infer<typeof BridgeLayerMenuPayloadSchema
 // Bridge -> Studio, type 'layer-menu-close', payload {} (bấm chuột hoặc cuộn trong iframe)
 export const BridgeLayerMenuClosePayloadSchema = z.strictObject({});
 export type BridgeLayerMenuClosePayload = z.infer<typeof BridgeLayerMenuClosePayloadSchema>;
+
+// Công cụ vẽ trên Canvas (R-DT-10..R-DT-15, spec-log #32)
+export const DRAW_TOOLS = ['select', 'frame', 'text', 'image'] as const;
+export const DrawToolSchema = z.enum(DRAW_TOOLS);
+export type DrawTool = z.infer<typeof DrawToolSchema>;
+
+// Studio -> Bridge, type 'set-tool'
+export const StudioSetToolPayloadSchema = z.strictObject({
+  tool: DrawToolSchema,
+});
+export type StudioSetToolPayload = z.infer<typeof StudioSetToolPayloadSchema>;
+
+// Bridge -> Studio, type 'draw-end'
+export const BridgeDrawEndPayloadSchema = z.strictObject({
+  tool: z.enum(['frame', 'text', 'image']),
+  target: InsertTargetSchema,
+  /** Kích thước hộp đã kéo (px). Bấm mà không kéo (< 8px) thì không có. */
+  size: z
+    .strictObject({
+      width: z.number().int().min(8).max(4096),
+      height: z.number().int().min(8).max(4096),
+    })
+    .optional(),
+  /** Bề rộng khung chứa (px) để Studio đổi sang w-full khi gần bằng. */
+  containerWidth: z.number().int().min(0).max(16384),
+  /** Có khi vẽ vào một khung tự do (R-FF-11, R-DT-11..14). */
+  placement: PlacementSchema.optional(),
+});
+export type BridgeDrawEndPayload = z.infer<typeof BridgeDrawEndPayloadSchema>;

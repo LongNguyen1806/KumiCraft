@@ -40,6 +40,7 @@ export class BridgeOverlay {
   private dropLine: HTMLDivElement;
   private dropBox: HTMLDivElement;
   private dropBoxLabel: HTMLSpanElement;
+  private drawBox: HTMLDivElement = document.createElement('div');
   private gridCells: readonly DropRect[] | undefined;
   private observer: MutationObserver;
   private state: OverlayState = { selectedRefs: [] };
@@ -219,6 +220,27 @@ export class BridgeOverlay {
     this.gridCells = cells;
     if (this.visible) this.renderGridCells();
     this.requestRender();
+  }
+
+  public setDrawRect(
+    rect: { x: number; y: number; width: number; height: number } | undefined,
+  ): void {
+    if (!rect) {
+      this.drawBox.style.display = 'none';
+      return;
+    }
+    if (!this.drawBox.parentNode) {
+      this.drawBox.style.cssText =
+        'position:fixed;box-sizing:border-box;border:1px solid #2563eb;background:rgba(37, 99, 235, 0.08);pointer-events:none;';
+      this.shadow.appendChild(this.drawBox);
+    }
+    this.drawBox.style.display = 'block';
+    applyRectStyle(this.drawBox, {
+      top: rect.y,
+      left: rect.x,
+      width: rect.width,
+      height: rect.height,
+    });
   }
 
   public requestRender(): void {

@@ -77,6 +77,23 @@ describe('CanvasTools [R-SL-13, R-FF-10]', () => {
     return { sent, tools, overlay };
   }
 
+  it('after a draw, the release click is swallowed but the next real click is not [R-DT-14]', () => {
+    const img = setupPage();
+    const { sent, tools, overlay } = setupTools();
+    tools.setTool('frame');
+    const press = new PointerEvent('pointerdown', { button: 0, clientX: 120, clientY: 80 });
+    img.dispatchEvent(press);
+    expect(tools.pointerDown(press, [])).toBe(true);
+    window.dispatchEvent(new PointerEvent('pointerup', { clientX: 220, clientY: 160 }));
+    expect(sent.map((m) => m.type)).toEqual(['draw-end']);
+
+    expect(tools.swallowDrawClick()).toBe(true); // the click right after the release
+    tools.setTool('select'); // Studio switches back after the insert
+    expect(tools.swallowDrawClick()).toBe(false);
+    expect(tools.consumeClickSuppression()).toBe(false); // the user's next click selects
+    overlay.destroy();
+  });
+
   it('right-click sends layer-menu; the next press or scroll sends one layer-menu-close', () => {
     const img = setupPage();
     const { sent, tools, overlay } = setupTools();

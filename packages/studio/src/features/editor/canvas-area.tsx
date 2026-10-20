@@ -12,6 +12,7 @@ import { BuildErrorBanner } from '../canvas-errors/build-error-banner.tsx';
 import { RuntimeErrorList } from '../canvas-errors/runtime-error-list.tsx';
 import { DesignBar } from '../design/design-bar.tsx';
 import { DndErrorBanner } from '../dnd/dnd-error-banner.tsx';
+import { CanvasImagePicker, DrawToolbar } from '../draw/draw-toolbar.tsx';
 import { registerFreeFrameCommands } from '../free-frame/free-frame-commands.ts';
 import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
 import { type TextEditWarning, useCanvasTextEdit } from '../text-edit/use-canvas-text-edit.ts';
@@ -136,7 +137,9 @@ function CanvasViewport(props: Omit<CanvasContentProps, 'zoom'> & { readonly zoo
         viewport.current = el ?? undefined;
       }}
       // `safe`: a frame wider than the Canvas scrolls from its left edge instead of being cut.
-      className="relative grid min-h-0 min-w-0 flex-1 place-items-center-safe overflow-auto p-4"
+      // Stable gutter: "Fit" reads clientWidth, so a scrollbar that comes and goes would change the
+      // zoom, the height, and the scrollbar again, and the Canvas would flicker without end.
+      className="relative grid min-h-0 min-w-0 flex-1 place-items-center-safe overflow-auto p-4 [scrollbar-gutter:stable]"
       data-testid="canvas-placeholder"
     >
       <CanvasContent {...props} zoom={zoom} />
@@ -266,6 +269,7 @@ export function CanvasArea(props: CanvasAreaProps) {
         onStart={s.runner.start}
         onRestart={s.runner.restart}
       />
+      <CanvasImagePicker />
     </main>
   );
 }
@@ -325,6 +329,7 @@ function CanvasToolbar({
   return (
     <header className="flex h-11 items-center justify-between border-b border-line bg-card/60 px-4 text-xs backdrop-blur-md">
       <div className="flex min-w-0 items-center gap-3">
+        <DrawToolbar />
         <FrameSelect frames={frames} activeId={activeFrameId} onChange={onSelectFrame} />
         <ZoomSelect zoom={zoom} onChange={onSelectZoom} />
         <GridSelect />

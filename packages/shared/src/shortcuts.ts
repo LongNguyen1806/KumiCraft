@@ -37,6 +37,10 @@ export const SHORTCUT_ACTIONS = [
   'nudgeRightFine',
   'nudgeUpFine',
   'nudgeDownFine',
+  'toolSelect',
+  'toolFrame',
+  'toolText',
+  'toolImage',
 ] as const;
 
 export type ShortcutAction = (typeof SHORTCUT_ACTIONS)[number];
@@ -112,6 +116,10 @@ function matchNoModKey(k: string, press: KeyPress): ShortcutAction | undefined {
   if (k === 'arrowdown') return 'nudgeDown';
   if (k === 'delete' || k === 'backspace') return 'remove';
   if (k === 'escape') return 'selectParent';
+  if (k === 'v') return 'toolSelect';
+  if (k === 'f') return 'toolFrame';
+  if (k === 't') return 'toolText';
+  if (k === 'i') return 'toolImage';
   if (k >= '1' && k <= '8') {
     return `frame${k}` as ShortcutAction;
   }
@@ -176,6 +184,10 @@ const LABELS_APPLE: Record<ShortcutAction, string> = {
   nudgeRightFine: '⇧→',
   nudgeUpFine: '⇧↑',
   nudgeDownFine: '⇧↓',
+  toolSelect: 'V',
+  toolFrame: 'F',
+  toolText: 'T',
+  toolImage: 'I',
 };
 
 const LABELS_OTHER: Record<ShortcutAction, string> = {
@@ -215,6 +227,10 @@ const LABELS_OTHER: Record<ShortcutAction, string> = {
   nudgeRightFine: 'Shift+→',
   nudgeUpFine: 'Shift+↑',
   nudgeDownFine: 'Shift+↓',
+  toolSelect: 'V',
+  toolFrame: 'F',
+  toolText: 'T',
+  toolImage: 'I',
 };
 
 /** Label of the keys for the help dialog: `⌘⇧Z` on macOS, `Ctrl+Shift+Z` elsewhere. */

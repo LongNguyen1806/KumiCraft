@@ -28,6 +28,10 @@ export function selectParentNode(): boolean {
     useSelectionStore.getState().setHoveredRef(undefined);
     return true;
   }
+  if (useCanvasViewStore.getState().tool !== 'select') {
+    useCanvasViewStore.getState().setTool('select');
+    return true;
+  }
   const selectedRefs = useSelectionStore.getState().selectedRefs;
   if (selectedRefs.length !== 1) {
     if (useDesignStore.getState().componentMode !== undefined) {
@@ -138,6 +142,27 @@ function runNudgeShortcut(action: ShortcutAction): boolean {
   return true;
 }
 
+function runDrawToolShortcut(action: ShortcutAction): boolean {
+  const canvas = useCanvasViewStore.getState();
+  if (canvas.mode !== 'design') return false;
+  switch (action) {
+    case 'toolSelect':
+      canvas.setTool('select');
+      return true;
+    case 'toolFrame':
+      canvas.setTool('frame');
+      return true;
+    case 'toolText':
+      canvas.setTool('text');
+      return true;
+    case 'toolImage':
+      canvas.setTool('image');
+      return true;
+    default:
+      return false;
+  }
+}
+
 /**
  * Execute a shortcut action. Returns true if handled (and can prevent default),
  * false if the action could not be performed (e.g. no selection for duplicate).
@@ -180,6 +205,7 @@ export function runShortcut(action: ShortcutAction): boolean {
       void pasteClipboard();
       return true;
     default:
+      if (runDrawToolShortcut(action)) return true;
       if (runStructureShortcut(action)) return true;
       if (runNudgeShortcut(action)) return true;
       return runZoomOrFrame(action);

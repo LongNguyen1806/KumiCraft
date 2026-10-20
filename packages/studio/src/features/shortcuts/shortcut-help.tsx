@@ -31,6 +31,10 @@ const SHORTCUT_GROUPS = [
   {
     groupKey: 'shortcuts.groups.canvas',
     items: [
+      { action: 'toolSelect', labelKey: 'shortcuts.actions.toolSelect' },
+      { action: 'toolFrame', labelKey: 'shortcuts.actions.toolFrame' },
+      { action: 'toolText', labelKey: 'shortcuts.actions.toolText' },
+      { action: 'toolImage', labelKey: 'shortcuts.actions.toolImage' },
       { action: 'zoomIn', labelKey: 'shortcuts.actions.zoomIn' },
       { action: 'zoomOut', labelKey: 'shortcuts.actions.zoomOut' },
       { action: 'zoomReset', labelKey: 'shortcuts.actions.zoomReset' },

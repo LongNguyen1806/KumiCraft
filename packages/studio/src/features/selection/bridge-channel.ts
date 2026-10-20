@@ -1,6 +1,7 @@
 // Bridge postMessage communication channel for Studio (SPEC-04 M-BR, R-BR-30, R-BR-31, V-110..111).
 import {
   BridgeBuildErrorPayloadSchema,
+  BridgeDrawEndPayloadSchema,
   BridgeDropTargetPayloadSchema,
   BridgeEnvelopeSchema,
   type BridgeFreeMeasurePayload,
@@ -26,6 +27,7 @@ import {
   type BridgeTextEditRequestPayload,
   BridgeTextEditRequestPayloadSchema,
   BridgeTreePayloadSchema,
+  type DrawTool,
   type ElementRef,
   type KeyPress,
   matchShortcut,
@@ -36,6 +38,7 @@ import { isApplePlatform } from '../../app/platform.ts';
 import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { executeDropMove } from '../dnd/drop-actions.ts';
+import { handleDrawEnd } from '../draw/draw-commands.ts';
 import { placementTailwindMajor, useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { useLayerMenuStore } from '../layer-menu/layer-menu-store.ts';
 import { runShortcut } from '../shortcuts/shortcut-actions.ts';
@@ -108,6 +111,14 @@ function handleLayerMenuBridgePayload(type: string, payload: unknown): boolean {
   if (type === 'layer-menu-close') {
     const res = BridgeLayerMenuClosePayloadSchema.safeParse(payload);
     if (res.success) useLayerMenuStore.getState().close();
+    return true;
+  }
+  if (type === 'draw-end') {
+    const res = BridgeDrawEndPayloadSchema.safeParse(payload);
+    if (res.success) {
+      useDndStore.getState().setError(undefined);
+      void handleDrawEnd(res.data);
+    }
     return true;
   }
   return false;
@@ -225,6 +236,10 @@ export class BridgeChannel {
     this.sendMessage('set-grid', { size });
   }
 
+  setTool(tool: DrawTool): void {
+    this.sendMessage('set-tool', { tool });
+  }
+
   measureFree(ref: ElementRef): void {
     this.sendMessage('measure-free', { ref });
   }
@@ -288,6 +303,7 @@ export class BridgeChannel {
         : { file: this.designFile };
       this.sendMessage('design-file', payload);
       this.setGrid(useCanvasViewStore.getState().grid);
+      this.setTool(useCanvasViewStore.getState().tool);
     }
     this.handleTextEditMessage(envelopeRes.data.type, envelopeRes.data.payload);
     this.handleFreeFrameMessage(envelopeRes.data.type, envelopeRes.data.payload);

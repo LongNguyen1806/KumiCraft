@@ -1,5 +1,6 @@
 // Studio message dispatcher (V-111).
 import {
+  type DrawTool,
   type ElementRef,
   StudioDesignFilePayloadSchema,
   type StudioDragEndPayload,
@@ -15,6 +16,7 @@ import {
   type StudioSetGridPayload,
   StudioSetGridPayloadSchema,
   StudioSetModePayloadSchema,
+  StudioSetToolPayloadSchema,
   type StudioTextEditStartPayload,
   StudioTextEditStartPayloadSchema,
 } from '@reactcraft/shared';
@@ -31,13 +33,14 @@ export type StudioMessageHandlers = {
   handleDesignFile: (file?: string, focus?: boolean) => void;
   handleSetGrid: (size: StudioSetGridPayload['size']) => void;
   handleMeasureFree: (ref: ElementRef) => void;
+  handleSetTool?: ((tool: DrawTool) => void) | undefined;
 };
 
-/** Free frame messages (R-FF-10, R-FF-11). */
+/** Free frame and drawing tool messages (R-FF-10, R-FF-11, R-DT-10). */
 function dispatchFreeFrame(
   type: string,
   payload: unknown,
-  handlers: Pick<StudioMessageHandlers, 'handleSetGrid' | 'handleMeasureFree'>,
+  handlers: Pick<StudioMessageHandlers, 'handleSetGrid' | 'handleMeasureFree' | 'handleSetTool'>,
 ): boolean {
   if (type === 'set-grid') {
     const parsed = StudioSetGridPayloadSchema.safeParse(payload);
@@ -47,6 +50,11 @@ function dispatchFreeFrame(
   if (type === 'measure-free') {
     const parsed = StudioMeasureFreePayloadSchema.safeParse(payload);
     if (parsed.success) handlers.handleMeasureFree(parsed.data.ref);
+    return true;
+  }
+  if (type === 'set-tool') {
+    const parsed = StudioSetToolPayloadSchema.safeParse(payload);
+    if (parsed.success) handlers.handleSetTool?.(parsed.data.tool);
     return true;
   }
   return false;

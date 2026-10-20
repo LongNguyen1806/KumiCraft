@@ -399,7 +399,11 @@
       "showShortcuts": "Keyboard shortcuts",
       "frames": "Switch frames 1–8",
       "nudge": "Nudge in free frame",
-      "nudgeFine": "Nudge 1 px"
+      "nudgeFine": "Nudge 1 px",
+      "toolSelect": "Select tool",
+      "toolFrame": "Frame tool",
+      "toolText": "Text tool",
+      "toolImage": "Image tool"
     }
   },
   "pages": {
@@ -520,5 +524,12 @@
     "alt": "Image description (alt)",
     "altPlaceholder": "Enter image description…",
     "selectedUpload": "Selected upload:"
+  },
+  "draw": {
+    "toolbar": "Drawing tools",
+    "select": "Select",
+    "frame": "Frame",
+    "text": "Text",
+    "image": "Image"
   }
 }

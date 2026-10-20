@@ -105,4 +105,17 @@ describe('matchShortcut (R-KB-12, R-KB-13)', () => {
     expect(shortcutLabel('nudgeUpFine', false)).toBe('Shift+↑');
     expect(shortcutLabel('nudgeUpFine', true)).toBe('⇧↑');
   });
+
+  it('Scenario 1: matchShortcut v, f, t, i, Ctrl+V, Shift+F [R-DT-10]', () => {
+    expect(matchShortcut(makePress('v'), false)).toBe('toolSelect');
+    expect(matchShortcut(makePress('f'), false)).toBe('toolFrame');
+    expect(matchShortcut(makePress('t'), false)).toBe('toolText');
+    expect(matchShortcut(makePress('i'), false)).toBe('toolImage');
+    expect(matchShortcut(makePress('v', { ctrl: true }), false)).toBe('paste');
+    expect(matchShortcut(makePress('f', { shift: true }), false)).toBeUndefined();
+    expect(shortcutLabel('toolSelect', false)).toBe('V');
+    expect(shortcutLabel('toolFrame', true)).toBe('F');
+    expect(shortcutLabel('toolText', false)).toBe('T');
+    expect(shortcutLabel('toolImage', true)).toBe('I');
+  });
 });
