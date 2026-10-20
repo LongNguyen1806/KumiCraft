@@ -31,11 +31,13 @@ export class CanvasTools {
           overlay.requestRender();
         },
         showGuides: (lines, gaps, frame) => {
+          // Frame coordinates start at the padding box and move with the frame's own scroll.
+          const rect = frame?.getBoundingClientRect();
           const origin =
-            frame !== undefined
+            frame !== undefined && rect !== undefined
               ? {
-                  x: frame.getBoundingClientRect().left + frame.clientLeft,
-                  y: frame.getBoundingClientRect().top + frame.clientTop,
+                  x: rect.left + frame.clientLeft - frame.scrollLeft,
+                  y: rect.top + frame.clientTop - frame.scrollTop,
                 }
               : undefined;
           overlay.free.setGuides(lines, gaps, origin);
