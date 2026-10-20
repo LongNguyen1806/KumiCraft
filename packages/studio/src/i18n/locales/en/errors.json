@@ -95,7 +95,8 @@
       "tokenExists": "Token already exists in @theme.",
       "tokenNotFound": "Token not found in @theme.",
       "invalidValue": "Invalid CSS value.",
-      "noThemeFile": "Tailwind CSS file not found."
+      "noThemeFile": "Tailwind CSS file not found.",
+      "invalidResponse": "The server returned an unexpected response."
     }
   },
   "E017": {

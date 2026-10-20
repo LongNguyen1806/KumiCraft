@@ -8,6 +8,9 @@
     "lost": {
       "title": "Lost connection to ReactCraft",
       "body": "Trying to reconnect. You can keep working once the connection is back."
+    },
+    "stopped": {
+      "title": "ReactCraft has stopped"
     }
   },
   "language": {

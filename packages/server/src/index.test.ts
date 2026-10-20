@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { makeTempDir, silentLogger } from './core/workspace/test-support.ts';
-import { startServer, studioOriginOf } from './index.ts';
+import { createServerClose, startServer, studioOriginOf } from './index.ts';
 
 /** Never the settings folder of the machine running the tests. */
 let config: { dir: string; cleanup: () => Promise<void> };
@@ -74,5 +74,89 @@ describe('studioOriginOf', () => {
     expect(studioOriginOf({ ...base, trustedOrigins: ['http://127.0.0.1:4311'] })).toBe(
       'http://127.0.0.1:4311',
     );
+  });
+});
+
+describe('server.close', () => {
+  it('closes services in the required order [R-CL-02]', async () => {
+    const steps: string[] = [];
+    const server = {
+      close: createServerClose({
+        flushMs: 1,
+        eventBus: {
+          publish: (type: string) => {
+            steps.push(`event:${type}`);
+          },
+        },
+        jobService: {
+          cancelAll: () => {
+            steps.push('jobs.cancelAll');
+          },
+        },
+        runnerService: {
+          dispose: async () => {
+            await Promise.resolve();
+            steps.push('runner.dispose');
+          },
+        },
+        projectService: {
+          close: async () => {
+            await Promise.resolve();
+            steps.push('project.close');
+          },
+        },
+        historyService: {
+          clear: () => {
+            steps.push('history.clear');
+          },
+        },
+        app: {
+          close: async () => {
+            await Promise.resolve();
+            steps.push('app.close');
+          },
+        },
+      }),
+    };
+
+    await server.close();
+
+    expect(steps).toEqual([
+      'event:server.shuttingDown',
+      'jobs.cancelAll',
+      'runner.dispose',
+      'project.close',
+      'history.clear',
+      'app.close',
+    ]);
+  });
+
+  it('calls each shutdown step only once when close() is called concurrently [R-CL-02]', async () => {
+    const publish = vi.fn();
+    const cancelAll = vi.fn();
+    const dispose = vi.fn(() => Promise.resolve());
+    const projectClose = vi.fn(() => Promise.resolve());
+    const clear = vi.fn();
+    const appClose = vi.fn(() => Promise.resolve());
+    const server = {
+      close: createServerClose({
+        flushMs: 5,
+        eventBus: { publish },
+        jobService: { cancelAll },
+        runnerService: { dispose },
+        projectService: { close: projectClose },
+        historyService: { clear },
+        app: { close: appClose },
+      }),
+    };
+
+    await Promise.all([server.close(), server.close()]);
+
+    expect(publish).toHaveBeenCalledTimes(1);
+    expect(cancelAll).toHaveBeenCalledTimes(1);
+    expect(dispose).toHaveBeenCalledTimes(1);
+    expect(projectClose).toHaveBeenCalledTimes(1);
+    expect(clear).toHaveBeenCalledTimes(1);
+    expect(appClose).toHaveBeenCalledTimes(1);
   });
 });

@@ -3,7 +3,9 @@ import {
   type BatchEditResult,
   BatchEditResultSchema,
   type EditResult,
+  EditResultSchema,
   type ElementSource,
+  ElementSourceSchema,
   type ElementText,
   ElementTextSchema,
   parseLocString,
@@ -13,7 +15,7 @@ import {
   StructureResultSchema,
 } from '@reactcraft/shared';
 
-import { apiGet, apiPost } from './http.ts';
+import { apiGet, apiPost, parseResponse } from './http.ts';
 
 export type FetchElementSourceParams = {
   readonly file: string;
@@ -34,8 +36,7 @@ export async function fetchElementSource(params: FetchElementSourceParams): Prom
     line: String(params.line),
     column: String(params.column),
   });
-  const result = await apiGet(`source/element?${query.toString()}`);
-  return result as ElementSource;
+  return parseResponse(ElementSourceSchema, await apiGet(`source/element?${query.toString()}`));
 }
 
 export async function fetchElementSourceByLoc(loc: string): Promise<ElementSource | undefined> {
@@ -46,21 +47,17 @@ export async function fetchElementSourceByLoc(loc: string): Promise<ElementSourc
 
 export async function fetchElementText(loc: string): Promise<ElementText> {
   const query = new URLSearchParams({ loc });
-  const result = await apiGet(`source/element-text?${query.toString()}`);
-  return ElementTextSchema.parse(result);
+  return parseResponse(ElementTextSchema, await apiGet(`source/element-text?${query.toString()}`));
 }
 
 export async function editSource(request: SingleFileEditRequest): Promise<EditResult> {
-  const result = await apiPost('source/edits', request);
-  return result as EditResult;
+  return parseResponse(EditResultSchema, await apiPost('source/edits', request));
 }
 
 export async function editSourceBatch(request: BatchEditRequest): Promise<BatchEditResult> {
-  const result = await apiPost('source/edits/batch', request);
-  return BatchEditResultSchema.parse(result);
+  return parseResponse(BatchEditResultSchema, await apiPost('source/edits/batch', request));
 }
 
 export async function applyStructureEdit(edit: StructureEdit): Promise<StructureResult> {
-  const result = await apiPost('source/edits', { edit });
-  return StructureResultSchema.parse(result);
+  return parseResponse(StructureResultSchema, await apiPost('source/edits', { edit }));
 }

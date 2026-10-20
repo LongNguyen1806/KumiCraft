@@ -148,4 +148,23 @@ describe('App', () => {
       expect(sessionCalls(fetchMock)).toBe(2);
     });
   });
+
+  it('shows the stopped banner immediately when server.shuttingDown arrives [R-CL-02]', async () => {
+    const fetchMock = respond(200, session({ state: 'none' }));
+    vi.stubGlobal('fetch', fetchMock);
+    render(<App />);
+    await screen.findByTestId('studio-version');
+
+    act(() => socket?.onConnectionChange?.(true));
+    act(() =>
+      socket?.onEvent?.({
+        v: 1,
+        type: 'server.shuttingDown',
+        at: '2026-10-20T00:00:00Z',
+        payload: {},
+      }),
+    );
+
+    expect(screen.getByTestId('connection-lost').textContent).toContain('ReactCraft has stopped');
+  });
 });

@@ -20,7 +20,16 @@ function stubServer(trustStatus = 200) {
         method: init?.method ?? 'GET',
         ...(init?.body === undefined ? {} : { body: init.body as string }),
       });
-      const body = trustStatus === 200 ? { data: {} } : { error: { code: 'E011' } };
+      const sessionData = {
+        version: '1.4.0',
+        platform: 'win32',
+        features: [],
+        project: { state: 'open', id: 'shop000001', name: 'Shop', trusted: true },
+      };
+      const body =
+        trustStatus === 200
+          ? { data: url.endsWith('/project/trust') ? sessionData : {} }
+          : { error: { code: 'E011' } };
       return Promise.resolve(new Response(JSON.stringify(body), { status: trustStatus }));
     }),
   );

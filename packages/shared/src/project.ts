@@ -1,8 +1,10 @@
 // Types and schemas for project probing, framework support, project lifecycle and theme (SPEC-03 section 5.3).
 import { z } from 'zod';
 
+import { FeatureIdSchema } from './features.ts';
 import { RelPathSchema } from './rel-path.ts';
 import { ResponsiveModeSchema } from './responsive.ts';
+import { AppErrorSchema } from './result.ts';
 import {
   BackendLinkSchema,
   DesignDirsSchema,
@@ -225,37 +227,35 @@ export const ProjectAssetsSchema = z.strictObject({
 export type ProjectAssets = z.infer<typeof ProjectAssetsSchema>;
 
 export const THEME_TOKEN_KINDS = ['color', 'font', 'fontSize', 'radius', 'shadow'] as const;
-export const ThemeTokenKindSchema = /* @__PURE__ */ z.enum(THEME_TOKEN_KINDS);
+export const ThemeTokenKindSchema = z.enum(THEME_TOKEN_KINDS);
 export type ThemeTokenKind = z.infer<typeof ThemeTokenKindSchema>;
 
 export const THEME_TOKEN_NAME = /^[a-z][a-z0-9-]{0,39}$/;
 
-export const ThemeEditSchema = /* @__PURE__ */ (() =>
-  z.discriminatedUnion('op', [
-    z.strictObject({
-      op: z.literal('set'),
-      kind: ThemeTokenKindSchema,
-      name: z.string().regex(THEME_TOKEN_NAME),
-      value: z.string().trim().min(1).max(300),
-    }),
-    z.strictObject({
-      op: z.literal('add'),
-      kind: ThemeTokenKindSchema,
-      name: z.string().regex(THEME_TOKEN_NAME),
-      value: z.string().trim().min(1).max(300),
-    }),
-    z.strictObject({
-      op: z.literal('remove'),
-      kind: ThemeTokenKindSchema,
-      name: z.string().regex(THEME_TOKEN_NAME),
-    }),
-  ]))();
+export const ThemeEditSchema = z.discriminatedUnion('op', [
+  z.strictObject({
+    op: z.literal('set'),
+    kind: ThemeTokenKindSchema,
+    name: z.string().regex(THEME_TOKEN_NAME),
+    value: z.string().trim().min(1).max(300),
+  }),
+  z.strictObject({
+    op: z.literal('add'),
+    kind: ThemeTokenKindSchema,
+    name: z.string().regex(THEME_TOKEN_NAME),
+    value: z.string().trim().min(1).max(300),
+  }),
+  z.strictObject({
+    op: z.literal('remove'),
+    kind: ThemeTokenKindSchema,
+    name: z.string().regex(THEME_TOKEN_NAME),
+  }),
+]);
 export type ThemeEdit = z.infer<typeof ThemeEditSchema>;
 
-export const ThemeUsageSchema = /* @__PURE__ */ (() =>
-  z.strictObject({
-    count: z.number().int().min(0),
-  }))();
+export const ThemeUsageSchema = z.strictObject({
+  count: z.number().int().min(0),
+});
 export type ThemeUsage = z.infer<typeof ThemeUsageSchema>;
 
 export const THEME_VAR_PREFIX: Readonly<Record<ThemeTokenKind, string>> = {
@@ -265,3 +265,96 @@ export const THEME_VAR_PREFIX: Readonly<Record<ThemeTokenKind, string>> = {
   radius: '--radius-',
   shadow: '--shadow-',
 };
+
+export const SERVER_EVENT_TYPES = [
+  'session.changed',
+  'project.changed',
+  'project.filesChanged',
+  'runner.status',
+  'runner.log',
+  'history.changed',
+  'settings.changed',
+  'job.progress',
+  'job.completed',
+  'job.failed',
+  'job.cancelled',
+  'server.shuttingDown',
+] as const;
+export const ServerEventTypeSchema = z.enum(SERVER_EVENT_TYPES);
+export type ServerEventType = z.infer<typeof ServerEventTypeSchema>;
+
+export const ServerShuttingDownEventSchema = z.strictObject({});
+export type ServerShuttingDownEvent = z.infer<typeof ServerShuttingDownEventSchema>;
+
+export const StudioServerEventSchema = z.strictObject({
+  v: z.literal(1),
+  type: ServerEventTypeSchema,
+  at: z.string(),
+  correlationId: z.string().optional(),
+  payload: z.unknown(),
+});
+export type StudioServerEvent = z.infer<typeof StudioServerEventSchema>;
+
+export const PLATFORMS = ['win32', 'darwin', 'linux'] as const;
+export const PlatformSchema = z.enum(PLATFORMS);
+export type Platform = z.infer<typeof PlatformSchema>;
+
+export const ProjectStateSchema = z.discriminatedUnion('state', [
+  z.strictObject({
+    state: z.literal('none'),
+    suggestedPath: z.string().optional(),
+  }),
+  z.strictObject({
+    state: z.literal('open'),
+    id: z.string().min(1),
+    name: z.string().min(1),
+    trusted: z.boolean(),
+  }),
+  z.strictObject({
+    state: z.literal('error'),
+    error: AppErrorSchema,
+  }),
+]);
+export type ProjectState = z.infer<typeof ProjectStateSchema>;
+
+export const SessionInfoSchema = z.strictObject({
+  version: z.string().min(1),
+  platform: PlatformSchema,
+  features: z.array(FeatureIdSchema).readonly(),
+  project: ProjectStateSchema,
+});
+export type SessionInfo = z.infer<typeof SessionInfoSchema>;
+
+export const INTERFACE_LANGUAGES = ['vi', 'en'] as const;
+export const InterfaceLanguageSchema = z.enum(INTERFACE_LANGUAGES);
+export type InterfaceLanguage = z.infer<typeof InterfaceLanguageSchema>;
+
+export const EDITORS = ['vscode', 'cursor', 'webstorm', 'zed'] as const;
+export const EditorSchema = z.enum(EDITORS);
+export type Editor = z.infer<typeof EditorSchema>;
+
+export const AGENT_CHOICES = ['auto', 'agy', 'claude'] as const;
+export const AgentChoiceSchema = z.enum(AGENT_CHOICES);
+export type AgentChoice = z.infer<typeof AgentChoiceSchema>;
+
+export const SettingsSchema = z.strictObject({
+  language: InterfaceLanguageSchema.optional(),
+  editor: EditorSchema,
+  packageManager: PackageManagerSchema.optional(),
+  agent: z.strictObject({
+    preferred: AgentChoiceSchema,
+  }),
+});
+export type Settings = z.infer<typeof SettingsSchema>;
+
+export const SettingsPatchSchema = z.strictObject({
+  language: InterfaceLanguageSchema.optional(),
+  editor: EditorSchema.optional(),
+  packageManager: PackageManagerSchema.optional(),
+  agent: z
+    .strictObject({
+      preferred: AgentChoiceSchema.optional(),
+    })
+    .optional(),
+});
+export type SettingsPatch = z.infer<typeof SettingsPatchSchema>;

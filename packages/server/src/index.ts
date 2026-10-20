@@ -95,12 +95,7 @@ export type RunningServer = {
   readonly close: () => Promise<void>;
 };
 
-export type InitializedContext = {
-  readonly projectService: ProjectService;
-  readonly runnerService: RunnerService;
-  readonly sourceEditorService: SourceEditorService;
-  readonly historyService: HistoryService;
-  readonly jobService: JobService;
+export type InitializedContext = CoreServices & {
   readonly configStore: ConfigStore;
   readonly eventBus: EventBusPort;
   readonly fs: FileSystemPort;
@@ -109,7 +104,6 @@ export type InitializedContext = {
   readonly homeDir: string;
   readonly configDir: string;
   readonly logger: LoggerPort;
-  readonly usageCounter: UsageCounter;
 };
 
 /**
@@ -195,21 +189,21 @@ export function resolveTemplateDir(): string {
 
 export function resolveRunnerScript(customPath?: string): string {
   if (customPath && existsSync(customPath)) return customPath;
-  const candidates = [
-    new URL('./runners/vite-react.js', import.meta.url),
-    new URL('./runners/vite-react.ts', import.meta.url),
-    new URL('../runners/vite-react.js', import.meta.url),
-    new URL('../runners/vite-react.ts', import.meta.url),
-    new URL('../../runners/vite-react.js', import.meta.url),
-    new URL('../../runners/vite-react.ts', import.meta.url),
-    new URL('../../../server/src/runners/vite-react.ts', import.meta.url),
-    new URL('../../../../packages/server/src/runners/vite-react.ts', import.meta.url),
+  const rels = [
+    './runners/vite-react.js',
+    './runners/vite-react.ts',
+    '../runners/vite-react.js',
+    '../runners/vite-react.ts',
+    '../../runners/vite-react.js',
+    '../../runners/vite-react.ts',
+    '../../../server/src/runners/vite-react.ts',
+    '../../../../packages/server/src/runners/vite-react.ts',
   ];
-  for (const candidate of candidates) {
-    const p = fileURLToPath(candidate);
+  for (const rel of rels) {
+    const p = fileURLToPath(new URL(rel, import.meta.url));
     if (existsSync(p)) return p;
   }
-  return fileURLToPath(candidates[0] ?? new URL('./runners/vite-react.js', import.meta.url));
+  return fileURLToPath(new URL('./runners/vite-react.js', import.meta.url));
 }
 
 /**
@@ -326,6 +320,33 @@ function createServices(
   };
 }
 
+export type ServerCloseSteps = {
+  readonly eventBus: Pick<EventBusPort, 'publish'>;
+  readonly jobService: Pick<JobService, 'cancelAll'>;
+  readonly runnerService: Pick<RunnerService, 'dispose'>;
+  readonly projectService: Pick<ProjectService, 'close'>;
+  readonly historyService: Pick<HistoryService, 'clear'>;
+  readonly app: { close: () => Promise<unknown> };
+  readonly flushMs?: number;
+};
+
+export function createServerClose(steps: ServerCloseSteps): () => Promise<void> {
+  let closing: Promise<void> | undefined;
+  const waitMs = Math.min(Math.max(steps.flushMs ?? 50, 0), 200);
+  return () => {
+    closing ??= (async () => {
+      steps.eventBus.publish('server.shuttingDown', {});
+      await new Promise<void>((r) => setTimeout(r, waitMs));
+      steps.jobService.cancelAll();
+      await steps.runnerService.dispose();
+      await steps.projectService.close();
+      steps.historyService.clear();
+      await steps.app.close();
+    })();
+    return closing;
+  };
+}
+
 export async function startServer(options: StartServerOptions): Promise<Result<RunningServer>> {
   const platform = toSupportedPlatform(process.platform);
   if (platform === undefined) {
@@ -346,6 +367,7 @@ export async function startServer(options: StartServerOptions): Promise<Result<R
   try {
     await app.listen({ host: HOST, port: options.port });
   } catch (cause) {
+    ctx.jobService.cancelAll();
     await ctx.runnerService.dispose();
     await ctx.projectService.close();
     ctx.historyService.clear();
@@ -362,12 +384,7 @@ export async function startServer(options: StartServerOptions): Promise<Result<R
     sourceEditorService: ctx.sourceEditorService,
     historyService: ctx.historyService,
     eventBus: ctx.eventBus,
-    close: async () => {
-      await ctx.runnerService.dispose();
-      await ctx.projectService.close();
-      ctx.historyService.clear();
-      await app.close();
-    },
+    close: createServerClose({ ...ctx, app }),
   });
 }
 

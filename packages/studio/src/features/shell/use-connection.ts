@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createEventsClient } from '../../api/events-client.ts';
 
 /** `offline` only after the socket was open once, so a slow first connect shows no overlay. */
-export type ConnectionState = 'connecting' | 'online' | 'offline';
+export type ConnectionState = 'connecting' | 'online' | 'offline' | 'stopped';
 
 /**
  * Opens the event socket while `enabled`. `onReconnect` runs when the socket comes back after a
@@ -21,11 +21,25 @@ export function useConnection(enabled: boolean, onReconnect: () => void): Connec
   useEffect(() => {
     if (!enabled) return undefined;
     let wasOnline = false;
+    let stopped = false;
     const client = createEventsClient({
       onConnectionChange: (connected) => {
         if (connected && wasOnline) reconnect.current();
-        if (connected) wasOnline = true;
-        setState(connected ? 'online' : wasOnline ? 'offline' : 'connecting');
+        if (connected) {
+          wasOnline = true;
+          stopped = false;
+          setState('online');
+          return;
+        }
+        if (stopped) return;
+        setState(wasOnline ? 'offline' : 'connecting');
+      },
+      onEvent: (event) => {
+        if (event.type === 'server.shuttingDown') {
+          wasOnline = true;
+          stopped = true;
+          setState('stopped');
+        }
       },
     });
     return () => {

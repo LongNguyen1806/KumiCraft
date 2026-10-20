@@ -1,5 +1,21 @@
 // Feature flags by construction phase (SPEC-07 section 2). Shared by server and Studio: a feature
 // stays hidden until the gate of its phase has passed.
+import { z } from 'zod';
+
+export const FEATURE_IDS = [
+  'structureEdit',
+  'pages',
+  'ai',
+  'tokens',
+  'extractComponent',
+  'multiFrame',
+  'buildCheck',
+] as const;
+
+/** Identifier of a feature flag. */
+export type FeatureId = (typeof FEATURE_IDS)[number];
+
+export const FeatureIdSchema = z.enum(FEATURE_IDS);
 
 /** Every feature that is hidden until the gate of its phase has passed. */
 export const FEATURES = {
@@ -10,15 +26,10 @@ export const FEATURES = {
   extractComponent: { phase: 4 },
   multiFrame: { phase: 4 },
   buildCheck: { phase: 4 },
-} as const;
-
-/** Identifier of a feature flag. */
-export type FeatureId = keyof typeof FEATURES;
+} as const satisfies Readonly<Record<FeatureId, { readonly phase: number }>>;
 
 /** Highest phase whose acceptance gate has passed. */
 export const RELEASED_PHASE: number = 0;
-
-const FEATURE_IDS = Object.keys(FEATURES) as readonly FeatureId[];
 
 /**
  * Lists the enabled features.

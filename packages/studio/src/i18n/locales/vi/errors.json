@@ -95,7 +95,8 @@
       "tokenExists": "Token đã tồn tại trong @theme.",
       "tokenNotFound": "Không tìm thấy token trong @theme.",
       "invalidValue": "Giá trị CSS không hợp lệ.",
-      "noThemeFile": "Không tìm thấy file CSS của Tailwind."
+      "noThemeFile": "Không tìm thấy file CSS của Tailwind.",
+      "invalidResponse": "Phản hồi từ server không đúng định dạng."
     }
   },
   "E017": {

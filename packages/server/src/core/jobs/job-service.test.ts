@@ -140,4 +140,26 @@ describe('job service', () => {
     t.advanceClock(1);
     expect(t.jobs.get('job1')).toMatchObject({ ok: false, error: { code: 'E015' } });
   });
+
+  it('cancelAll kills running child processes and marks jobs cancelled [R-CL-02]', () => {
+    const t = setup();
+    const handle = { kill: vi.fn() };
+    t.jobs.start('project.install', 'jobs:install.running', async (ctx) => {
+      await new Promise<void>((resolve) => {
+        ctx.signal.addEventListener('abort', () => {
+          handle.kill();
+          resolve();
+        });
+      });
+      return err({ code: 'E019', params: { jobId: 'job1' } });
+    });
+
+    t.jobs.cancelAll();
+
+    expect(handle.kill).toHaveBeenCalledTimes(1);
+    expect(t.jobs.get('job1')).toMatchObject({
+      ok: true,
+      value: { state: 'cancelled', error: { code: 'E019' } },
+    });
+  });
 });

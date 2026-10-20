@@ -10,6 +10,7 @@ import { type CliOptions, parseCliArgs } from './args.ts';
 import { startFailureMessage } from './messages.ts';
 import { findStudioDir } from './paths.ts';
 import { attemptsFor, portFor, type PortPlan } from './port-choice.ts';
+import { createShutdown } from './shutdown.ts';
 
 function fail(message: string): never {
   console.error(`reactcraft: ${message}`);
@@ -80,13 +81,18 @@ async function main(): Promise<void> {
   console.log(`Studio: ${studioUrl}`);
   console.log('Press Ctrl+C to stop.');
 
-  let isStopping = false;
-  const stop = async () => {
-    if (isStopping) return;
-    isStopping = true;
-    await server.close();
-    process.exit(0);
-  };
+  const stop = createShutdown({
+    close: () => server.close(),
+    exit: (code) => {
+      process.exit(code);
+    },
+    log: (line) => {
+      console.log(line);
+    },
+    warn: (line) => {
+      console.warn(line);
+    },
+  });
   process.on('SIGINT', () => void stop());
   process.on('SIGTERM', () => void stop());
 

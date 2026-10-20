@@ -15,13 +15,13 @@ export function App() {
     return <SessionErrorScreen code={state.code} errorInfo={state.info} />;
   }
 
-  const isOffline = connection === 'offline';
+  const isOffline = connection === 'offline' || connection === 'stopped';
   return (
     <>
       <div className="h-full" inert={isOffline}>
         <ProjectScreen session={state.session} onRetry={reload} />
       </div>
-      {isOffline && <ConnectionOverlay />}
+      {isOffline && <ConnectionOverlay stopped={connection === 'stopped'} />}
     </>
   );
 }

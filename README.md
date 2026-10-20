@@ -68,6 +68,15 @@ Trình duyệt tự mở Studio. Bấm `Ctrl+C` trong terminal để tắt; thay
 
 **Cập nhật** sau khi kéo code mới: làm lại bước 1 và 2. **Gỡ:** `npm uninstall -g @reactcraft/cli`.
 
+### Cài thử bản đóng gói
+
+```sh
+pnpm package
+pnpm check:package
+npm install -g artifacts/reactcraft-cli-0.0.0.tgz
+node scripts/smoke-installed.mjs
+```
+
 **Chạy nhanh không cần cài** (khi đang phát triển): `pnpm build` rồi `node packages/cli/dist/index.js <thư mục>`.
 
 Trình duyệt: Chrome, Edge, Firefox, Safari (đều có trong test tự động). Trên macOS, phím tắt dùng `⌘` thay cho `Ctrl` (ví dụ `⌘Z` hoàn tác, `⇧⌘Z` làm lại).

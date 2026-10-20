@@ -1,5 +1,7 @@
 // REST client of the Studio (ADR-FE-17): adds the session token, unwraps `{ data }`, turns
 // `{ error }` into ApiError (SPEC-03 section 4.1).
+import { issuesToDetails } from '@reactcraft/shared';
+
 import { readSessionToken } from './session-token.ts';
 
 /** Failure of an API call: HTTP status, error code and parameter map. */
@@ -70,7 +72,7 @@ export async function apiGet(path: string): Promise<unknown> {
   return readResponseData(response);
 }
 
-/** Sends `payload` as JSON with `method` and returns the `data` member of the response. */
+/** Sends `payload` in JSON format with `method` and returns the `data` member of the response. */
 async function apiSend(
   method: 'POST' | 'PATCH' | 'DELETE',
   path: string,
@@ -99,3 +101,29 @@ export const apiPatch = (path: string, payload: unknown): Promise<unknown> =>
 /** DELETE `/api/v1/<path>`. */
 export const apiDelete = (path: string, payload?: unknown): Promise<unknown> =>
   apiSend('DELETE', path, payload);
+
+export type SafeParseIssue = {
+  readonly path: readonly PropertyKey[];
+  readonly message: string;
+};
+
+export type SafeParseResult<T> =
+  | { readonly success: true; readonly data: T }
+  | { readonly success: false; readonly error: { readonly issues: readonly SafeParseIssue[] } };
+
+export type ResponseSchema<T> = {
+  safeParse(data: unknown): SafeParseResult<T>;
+};
+
+export function parseResponse<T>(schema: ResponseSchema<T>, data: unknown): T {
+  const parsed = schema.safeParse(data);
+  if (!parsed.success) {
+    throw new ApiError(
+      200,
+      'E016',
+      { reason: 'invalidResponse' },
+      issuesToDetails(parsed.error.issues),
+    );
+  }
+  return parsed.data;
+}

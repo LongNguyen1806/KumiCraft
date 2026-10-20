@@ -27,6 +27,8 @@ export type JobService = {
   cancel(id: string): Result<void>;
   /** Cancels the running job of a kind, if any (R-PJ-12). */
   cancelKind(kind: JobKind): void;
+  /** Cancels every running job on server shutdown (R-CL-02). */
+  cancelAll(): void;
 };
 
 export type JobServiceDeps = {
@@ -82,6 +84,7 @@ function sendProgress(store: JobStore, id: string, job: JobRecord): void {
 }
 
 function finish(store: JobStore, id: string, job: JobRecord, outcome: Result<unknown>): void {
+  if (job.status.state !== 'running') return;
   if (job.progressTimer !== undefined) {
     clearTimeout(job.progressTimer);
     sendProgress(store, id, job);
@@ -100,6 +103,12 @@ function finish(store: JobStore, id: string, job: JobRecord, outcome: Result<unk
     job.status = { ...base, state: 'failed', error };
     bus?.publish('job.failed', { jobId: id, kind, error });
   }
+}
+
+function abortJob(store: JobStore, job: JobRecord): void {
+  if (job.status.state !== 'running') return;
+  job.controller.abort();
+  finish(store, job.status.id, job, err({ code: 'E019', params: { jobId: job.status.id } }));
 }
 
 async function runJob(store: JobStore, id: string, job: JobRecord, run: JobRun): Promise<void> {
@@ -176,12 +185,19 @@ export function createJobService(deps: JobServiceDeps): JobService {
     cancel(id) {
       const found = findJob(store, id);
       if (!found.ok) return found;
-      if (found.value.status.state === 'running') found.value.controller.abort();
+      abortJob(store, found.value);
       return ok(undefined);
     },
 
     cancelKind(kind) {
-      runningJob(store, kind)?.controller.abort();
+      const job = runningJob(store, kind);
+      if (job !== undefined) abortJob(store, job);
+    },
+
+    cancelAll() {
+      for (const job of store.jobs.values()) {
+        abortJob(store, job);
+      }
     },
   };
 }

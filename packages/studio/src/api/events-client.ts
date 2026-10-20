@@ -1,28 +1,13 @@
 // WebSocket client for real-time server events (SPEC-03 section 6, SPEC-05 section 3).
+import {
+  type ServerEventType,
+  type StudioServerEvent,
+  StudioServerEventSchema,
+} from '@reactcraft/shared';
+
 import { readSessionToken } from './session-token.ts';
 
-/** Event types of SPEC-03 section 6. Each module parses the payload of its own events. */
-export type ServerEventType =
-  | 'session.changed'
-  | 'project.changed'
-  | 'project.filesChanged'
-  | 'runner.status'
-  | 'runner.log'
-  | 'history.changed'
-  | 'settings.changed'
-  | 'job.progress'
-  | 'job.completed'
-  | 'job.failed'
-  | 'job.cancelled'
-  | 'server.shuttingDown';
-
-export type StudioServerEvent = {
-  readonly v: 1;
-  readonly type: ServerEventType;
-  readonly at: string;
-  readonly correlationId?: string;
-  readonly payload: unknown;
-};
+export type { ServerEventType, StudioServerEvent };
 
 export type EventsClientOptions = {
   readonly url?: string;
@@ -43,7 +28,8 @@ function defaultWsUrl(): string {
 
 function parseEventFrame(raw: unknown): StudioServerEvent | undefined {
   try {
-    return JSON.parse(String(raw)) as StudioServerEvent;
+    const parsed = StudioServerEventSchema.safeParse(JSON.parse(String(raw)));
+    return parsed.success ? parsed.data : undefined;
   } catch {
     return undefined;
   }

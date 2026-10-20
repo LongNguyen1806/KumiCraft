@@ -8,6 +8,9 @@
     "lost": {
       "title": "Mất kết nối tới ReactCraft",
       "body": "Đang thử kết nối lại. Bạn làm tiếp được khi kết nối trở lại."
+    },
+    "stopped": {
+      "title": "ReactCraft đã dừng"
     }
   },
   "language": {
