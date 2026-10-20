@@ -1,7 +1,7 @@
 // Bridge overlay in closed shadow root (SPEC-04 R-BR-11, R-BR-15, R-DD-10, R-DD-13).
 import type { ElementRef } from '@reactcraft/shared';
 
-import type { DropResult } from './drop-target.ts';
+import type { DropRect, DropResult } from './drop-target.ts';
 import { FreeOverlay } from './free-frame/free-overlay.ts';
 import { focusPath, focusRoots } from './overlay-focus.ts';
 import { foreignLabel, OVERLAY_CSS } from './overlay-foreign.ts';
@@ -36,9 +36,11 @@ export class BridgeOverlay {
   private hoverBoxLabel: HTMLSpanElement;
   private selectionContainer: HTMLDivElement;
   private dragHandle: HTMLDivElement;
+  private gridLayer: HTMLDivElement;
   private dropLine: HTMLDivElement;
   private dropBox: HTMLDivElement;
   private dropBoxLabel: HTMLSpanElement;
+  private gridCells: readonly DropRect[] | undefined;
   private observer: MutationObserver;
   private state: OverlayState = { selectedRefs: [] };
   private rafId: number | undefined;
@@ -82,6 +84,9 @@ export class BridgeOverlay {
 
     this.selectionContainer = document.createElement('div');
     this.shadow.appendChild(this.selectionContainer);
+
+    this.gridLayer = document.createElement('div');
+    this.shadow.appendChild(this.gridLayer);
 
     this.dropLine = document.createElement('div');
     this.dropLine.className = 'drop-line';
@@ -207,6 +212,12 @@ export class BridgeOverlay {
       this.renderHover();
       this.renderDropIndicator();
     }
+    this.requestRender();
+  }
+
+  public setGridCells(cells: readonly DropRect[] | undefined): void {
+    this.gridCells = cells;
+    if (this.visible) this.renderGridCells();
     this.requestRender();
   }
 
@@ -348,6 +359,21 @@ export class BridgeOverlay {
     this.focusSvg.style.display = 'block';
   }
 
+  private renderGridCells(): void {
+    this.gridLayer.replaceChildren();
+    if (!this.gridCells || this.gridCells.length === 0) return;
+    for (const cell of this.gridCells) {
+      const box = document.createElement('div');
+      box.style.position = 'absolute';
+      box.style.boxSizing = 'border-box';
+      box.style.border = '1px dashed rgba(59, 130, 246, 0.45)';
+      box.style.background = 'rgba(59, 130, 246, 0.03)';
+      box.style.pointerEvents = 'none';
+      applyRectStyle(box, { top: cell.y, left: cell.x, width: cell.width, height: cell.height });
+      this.gridLayer.appendChild(box);
+    }
+  }
+
   private render(): void {
     if (!this.visible) return;
     this.renderFocus();
@@ -355,6 +381,7 @@ export class BridgeOverlay {
     this.renderSelections();
     this.free.render(document);
     this.renderDragHandle();
+    this.renderGridCells();
     this.renderDropIndicator();
   }
 

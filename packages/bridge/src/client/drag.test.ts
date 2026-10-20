@@ -68,6 +68,7 @@ describe('DragController [R-DD-13, R-DD-14, R-DD-16, R-DD-17]', () => {
         showIndicator: (d) => {
           indicators.push(d);
         },
+        showGridCells: () => {},
       },
       window,
     );
@@ -163,6 +164,7 @@ describe('DragController [R-DD-13, R-DD-14, R-DD-16, R-DD-17]', () => {
           moveIntents.push(p);
         },
         showIndicator: () => {},
+        showGridCells: () => {},
       },
       window,
     );
@@ -205,6 +207,7 @@ describe('DragController [R-DD-13, R-DD-14, R-DD-16, R-DD-17]', () => {
         sendDropTarget: () => {},
         sendMoveIntent: () => {},
         showIndicator: () => {},
+        showGridCells: () => {},
       },
       window,
     );

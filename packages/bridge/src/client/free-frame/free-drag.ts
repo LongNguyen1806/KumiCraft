@@ -7,6 +7,7 @@ import { getRefForElement } from '../candidate-chain.ts';
 import {
   type Box,
   boxInFrame,
+  directLocChildren,
   freeFrameOf,
   type GridSize,
   type Measure,
@@ -14,21 +15,32 @@ import {
 } from './free-geometry.ts';
 import { PreviewStyles } from './preview-styles.ts';
 import { type HandleDir, resizeBox, resizeChanges } from './resize-box.ts';
+import { type GapMark, type GuideLine, snapEdge, snapMove } from './smart-guides.ts';
 
 export type FreeDragCallbacks = {
   sendMove: (p: BridgeFreeMovePayload) => void;
   sendResize: (p: BridgeFreeResizePayload) => void;
   /** Live `x · y` or `W × H` label next to `anchor`; `undefined` hides it. */
   showLabel: (text: string | undefined, anchor?: Element) => void;
+  showGuides: (lines: readonly GuideLine[], gaps: readonly GapMark[], frame?: Element) => void;
 };
 
 type MoveItem = { el: HTMLElement; start: Box; now: Box };
-type MoveSession = { kind: 'move'; items: MoveItem[] };
+type MoveSession = {
+  kind: 'move';
+  frame: Element;
+  items: MoveItem[];
+  others: Box[];
+  frameSize: { width: number; height: number };
+};
 type ResizeSession = {
   kind: 'resize';
   el: HTMLElement;
   dir: HandleDir;
   inFree: boolean;
+  frame?: Element | undefined;
+  others?: Box[] | undefined;
+  frameSize?: { width: number; height: number } | undefined;
   start: Box;
   now: Box;
 };
@@ -93,7 +105,25 @@ export class FreeDragController {
         return { el, start, now: start };
       });
     if (items.length === 0) return false;
-    this.begin({ kind: 'move', items, startX: x, startY: y, moved: false });
+    const draggedSet = new Set<Element>(items.map((it) => it.el));
+    const others = directLocChildren(frame)
+      .filter((c) => !draggedSet.has(c))
+      .map((c) => boxInFrame(c, frame, this.measure));
+    const r = this.measure(frame);
+    const frameSize = {
+      width: frame.clientWidth || r.width,
+      height: frame.clientHeight || r.height,
+    };
+    this.begin({
+      kind: 'move',
+      frame,
+      items,
+      others,
+      frameSize,
+      startX: x,
+      startY: y,
+      moved: false,
+    });
     return true;
   }
 
@@ -106,11 +136,26 @@ export class FreeDragController {
       frame === undefined
         ? { left: 0, top: 0, width: r.width, height: r.height }
         : boxInFrame(el, frame, this.measure);
+    let others: Box[] | undefined;
+    let frameSize: { width: number; height: number } | undefined;
+    if (frame !== undefined) {
+      others = directLocChildren(frame)
+        .filter((c) => c !== el)
+        .map((c) => boxInFrame(c, frame, this.measure));
+      const rFrame = this.measure(frame);
+      frameSize = {
+        width: frame.clientWidth || rFrame.width,
+        height: frame.clientHeight || rFrame.height,
+      };
+    }
     this.begin({
       kind: 'resize',
       el,
       dir,
       inFree: frame !== undefined,
+      frame,
+      others,
+      frameSize,
       start,
       now: start,
       startX: x,
@@ -148,6 +193,7 @@ export class FreeDragController {
   private end(): void {
     this.session = undefined;
     this.cb.showLabel(undefined);
+    this.cb.showGuides([], []);
     this.win.removeEventListener('pointermove', this.handlePointerMove, true);
     this.win.removeEventListener('pointerup', this.handlePointerUp, true);
     this.win.removeEventListener('pointercancel', this.handlePointerCancel, true);
@@ -171,26 +217,52 @@ export class FreeDragController {
   private previewMove(s: MoveSession, dx: number, dy: number): void {
     const first = s.items[0];
     if (first === undefined) return;
-    // The first element snaps to the grid; the others keep their distance to it.
-    const shiftX = snap(first.start.left + dx, this.grid) - first.start.left;
-    const shiftY = snap(first.start.top + dy, this.grid) - first.start.top;
+    const rawLead: Box = {
+      left: first.start.left + dx,
+      top: first.start.top + dy,
+      width: first.start.width,
+      height: first.start.height,
+    };
+    const guide = snapMove(rawLead, s.others, s.frameSize);
+    const left = guide.left ?? snap(rawLead.left, this.grid);
+    const top = guide.top ?? snap(rawLead.top, this.grid);
+    const shiftX = left - first.start.left;
+    const shiftY = top - first.start.top;
     for (const item of s.items) {
-      const left = Math.max(0, item.start.left + shiftX);
-      const top = Math.max(0, item.start.top + shiftY);
-      item.now = { ...item.start, left, top };
+      const itemLeft = Math.max(0, item.start.left + shiftX);
+      const itemTop = Math.max(0, item.start.top + shiftY);
+      item.now = { ...item.start, left: itemLeft, top: itemTop };
       this.preview.apply(item.el, { left: item.now.left, top: item.now.top });
     }
+    this.cb.showGuides(guide.lines, guide.gaps, s.frame);
     const label = `x ${String(Math.round(first.now.left))} · y ${String(Math.round(first.now.top))}`;
     this.cb.showLabel(label, first.el);
   }
 
   private previewResize(s: ResizeSession, dx: number, dy: number, ratio: boolean): void {
-    s.now = resizeBox(s.start, s.dir, { dx, dy }, this.grid, ratio);
+    let lineX: GuideLine | undefined;
+    let lineY: GuideLine | undefined;
+    const others = s.others;
+    const frameSize = s.frameSize;
+    const edgeSnap =
+      s.inFree && others !== undefined && frameSize !== undefined
+        ? (axis: 'x' | 'y', val: number): number | undefined => {
+            const res = snapEdge(axis, val, others, frameSize);
+            if (axis === 'x') lineX = res.line;
+            else lineY = res.line;
+            return res.value;
+          }
+        : undefined;
+    s.now = resizeBox(s.start, s.dir, { dx, dy }, this.grid, ratio, edgeSnap);
     this.preview.apply(s.el, {
       width: s.now.width,
       height: s.now.height,
       ...(s.inFree ? { left: s.now.left, top: s.now.top } : {}),
     });
+    const lines: GuideLine[] = [];
+    if (lineX !== undefined) lines.push(lineX);
+    if (lineY !== undefined) lines.push(lineY);
+    this.cb.showGuides(lines, [], s.frame);
     const label = `${String(Math.round(s.now.width))} × ${String(Math.round(s.now.height))}`;
     this.cb.showLabel(label, s.el);
   }

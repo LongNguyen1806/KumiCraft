@@ -30,6 +30,17 @@ export class CanvasTools {
           overlay.free.setLabel(text, anchor);
           overlay.requestRender();
         },
+        showGuides: (lines, gaps, frame) => {
+          const origin =
+            frame !== undefined
+              ? {
+                  x: frame.getBoundingClientRect().left + frame.clientLeft,
+                  y: frame.getBoundingClientRect().top + frame.clientTop,
+                }
+              : undefined;
+          overlay.free.setGuides(lines, gaps, origin);
+          overlay.requestRender();
+        },
       },
       win,
     );
@@ -85,6 +96,8 @@ export class CanvasTools {
 
   public scrolled(): void {
     this.closeLayerMenu();
+    this.overlay.free.setGuides([], []);
+    this.overlay.requestRender();
   }
 
   /** Studio picked an element (possibly from the menu), so Studio has closed the menu itself. */

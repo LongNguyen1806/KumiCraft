@@ -8,7 +8,13 @@ import type {
   StudioDragOverPayload,
 } from '@reactcraft/shared';
 
-import { type DropCache, type DropEnv, type DropResult, findDropTarget } from './drop-target.ts';
+import {
+  type DropCache,
+  type DropEnv,
+  type DropRect,
+  type DropResult,
+  findDropTarget,
+} from './drop-target.ts';
 import {
   freeDropPlacement,
   freeFrameOf,
@@ -16,11 +22,13 @@ import {
   isFreeFrame,
   type Point,
 } from './free-frame/free-geometry.ts';
+import { gridCells } from './grid-cells.ts';
 
 export type DragCallbacks = {
   sendDropTarget: (p: BridgeDropTargetPayload) => void;
   sendMoveIntent: (p: BridgeMoveIntentPayload) => void;
   showIndicator: (d: DropResult | undefined) => void;
+  showGridCells: (cells: readonly DropRect[] | undefined) => void;
 };
 
 const DRAG_THRESHOLD_PX = 4;
@@ -151,12 +159,14 @@ export class DragController {
       this.cb.sendDropTarget({});
     }
     this.cb.showIndicator(undefined);
+    this.cb.showGridCells(undefined);
     this.resetDragState();
   }
 
   public cancel(): void {
     if (!this.isDragging()) return;
     this.cb.showIndicator(undefined);
+    this.cb.showGridCells(undefined);
     this.cb.sendDropTarget({});
     this.resetDragState();
   }
@@ -231,6 +241,7 @@ export class DragController {
         });
       }
       this.cb.showIndicator(undefined);
+      this.cb.showGridCells(undefined);
       this.cb.sendDropTarget({});
     }
   };
@@ -238,6 +249,9 @@ export class DragController {
   private evaluateDropTarget(x: number, y: number): void {
     const res = this.applyFreeFrame(findDropTarget(x, y, this.dragged, this.env, this.cache), x, y);
     this.cb.showIndicator(res);
+    const container = res?.container;
+    const tracks = container && this.env.gridTracks ? this.env.gridTracks(container) : undefined;
+    this.cb.showGridCells(tracks ? gridCells(tracks) : undefined);
     this.currentTarget = res?.target;
     const placement = this.placement;
     const nextKey = res ? JSON.stringify([res.target, placement]) : '';

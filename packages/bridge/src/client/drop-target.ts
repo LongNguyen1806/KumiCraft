@@ -1,6 +1,8 @@
 // Pure drop-target calculation for Canvas drag-and-drop (SPEC-04 section 16 M-DD, R-DD-11..15).
 import { type ElementGuard, type InsertTarget, parseLocString } from '@reactcraft/shared';
 
+import { type GridTracks, readGridTracks } from './grid-cells.ts';
+
 export type DropRect = { x: number; y: number; width: number; height: number };
 export type LayoutAxis = 'row' | 'column' | 'grid' | 'wrap';
 export type DropResult = {
@@ -17,6 +19,7 @@ export type DropEnv = {
   hitTest: (x: number, y: number) => readonly Element[];
   measure: (el: Element) => DropRect;
   axisOf: (el: Element) => LayoutAxis;
+  gridTracks?: (el: Element) => GridTracks | undefined;
 };
 
 export type DropCache = {
@@ -42,6 +45,7 @@ export function browserDropEnv(doc: Document): DropEnv {
       return { x: r.left, y: r.top, width: r.width, height: r.height };
     },
     axisOf: (el) => layoutAxisOf(el),
+    gridTracks: (el) => readGridTracks(el),
   };
 }
 

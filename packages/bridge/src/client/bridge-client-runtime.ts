@@ -82,6 +82,9 @@ export class BridgeClientRuntime {
         showIndicator: (d) => {
           this.overlay.setDropIndicator(d);
         },
+        showGridCells: (c) => {
+          this.overlay.setGridCells(c);
+        },
       },
       window,
       () => this.tools.getGrid(),

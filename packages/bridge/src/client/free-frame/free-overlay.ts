@@ -1,7 +1,8 @@
 // Free frame decorations, size handles and live labels drawn in the overlay's shadow root
-// (SPEC-04 section 18E, R-FF-11, R-FF-13, R-FF-14).
+// (SPEC-04 section 18E, R-FF-11, R-FF-13, R-FF-14, R-FF-18).
 import { FREE_ATTR, type GridSize } from './free-geometry.ts';
 import { FLOW_HANDLES, FREE_HANDLES, type HandleDir } from './resize-box.ts';
+import type { GapMark, GuideLine } from './smart-guides.ts';
 
 export type FreeOverlayCallbacks = {
   onResizeDown: (el: Element, dir: HandleDir, x: number, y: number) => void;
@@ -53,6 +54,27 @@ export const FREE_OVERLAY_CSS = `
   pointer-events: none;
   display: none;
 }
+.smart-guide {
+  position: absolute;
+  pointer-events: none;
+  background: #ec4899;
+}
+.gap-mark {
+  position: absolute;
+  pointer-events: none;
+  background: #ec4899;
+}
+.gap-label {
+  position: absolute;
+  pointer-events: none;
+  background: #ec4899;
+  color: #ffffff;
+  font: 500 10px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 2px 4px;
+  border-radius: 2px;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+}
 `;
 
 const CURSORS: Readonly<Record<HandleDir, string>> = {
@@ -74,12 +96,16 @@ function handlePoint(dir: HandleDir, r: DOMRect): { x: number; y: number } {
 
 export class FreeOverlay {
   private readonly frameLayer: HTMLDivElement;
+  private readonly guideLayer: HTMLDivElement;
   private readonly handles = new Map<HandleDir, HTMLDivElement>();
   private readonly sizeLabel: HTMLSpanElement;
   private callbacks: FreeOverlayCallbacks | undefined;
   private target: Element | undefined;
   private grid: GridSize = 8;
   private label: { text: string; anchor: Element } | undefined;
+  private guides: readonly GuideLine[] = [];
+  private gaps: readonly GapMark[] = [];
+  private frameOrigin: { x: number; y: number } | undefined;
 
   constructor(root: ShadowRoot) {
     const style = document.createElement('style');
@@ -87,6 +113,8 @@ export class FreeOverlay {
     root.appendChild(style);
     this.frameLayer = document.createElement('div');
     root.appendChild(this.frameLayer);
+    this.guideLayer = document.createElement('div');
+    root.appendChild(this.guideLayer);
     for (const dir of FREE_HANDLES) {
       const handle = this.createHandle(dir);
       this.handles.set(dir, handle);
@@ -114,10 +142,98 @@ export class FreeOverlay {
     this.label = text !== undefined && anchor !== undefined ? { text, anchor } : undefined;
   }
 
+  public setGuides(
+    lines: readonly GuideLine[],
+    gaps: readonly GapMark[],
+    frameOrigin?: { x: number; y: number },
+  ): void {
+    this.guides = lines;
+    this.gaps = gaps;
+    this.frameOrigin = frameOrigin;
+  }
+
   public render(doc: Document): void {
     this.renderFrames(doc);
+    this.renderGuides();
     this.renderHandles(doc);
     this.renderLabel(doc);
+  }
+
+  private renderGuides(): void {
+    this.guideLayer.replaceChildren();
+    const origin = this.frameOrigin;
+    if (origin === undefined) return;
+    for (const line of this.guides) {
+      const el = document.createElement('div');
+      el.className = 'smart-guide';
+      if (line.axis === 'x') {
+        el.style.left = `${String(origin.x + line.pos)}px`;
+        el.style.top = `${String(origin.y + line.from)}px`;
+        el.style.width = '1px';
+        el.style.height = `${String(line.to - line.from)}px`;
+      } else {
+        el.style.left = `${String(origin.x + line.from)}px`;
+        el.style.top = `${String(origin.y + line.pos)}px`;
+        el.style.width = `${String(line.to - line.from)}px`;
+        el.style.height = '1px';
+      }
+      this.guideLayer.appendChild(el);
+    }
+    for (const gap of this.gaps) {
+      this.renderGapMark(gap, origin);
+    }
+  }
+
+  private renderGapMark(gap: GapMark, origin: { x: number; y: number }): void {
+    const line = document.createElement('div');
+    line.className = 'gap-mark';
+    const tick1 = document.createElement('div');
+    tick1.className = 'gap-mark';
+    const tick2 = document.createElement('div');
+    tick2.className = 'gap-mark';
+    const label = document.createElement('span');
+    label.className = 'gap-label';
+    label.textContent = String(gap.to - gap.from);
+
+    if (gap.axis === 'x') {
+      line.style.left = `${String(origin.x + gap.from)}px`;
+      line.style.top = `${String(origin.y + gap.at)}px`;
+      line.style.width = `${String(gap.to - gap.from)}px`;
+      line.style.height = '1px';
+
+      tick1.style.left = `${String(origin.x + gap.from)}px`;
+      tick1.style.top = `${String(origin.y + gap.at - 3)}px`;
+      tick1.style.width = '1px';
+      tick1.style.height = '6px';
+
+      tick2.style.left = `${String(origin.x + gap.to)}px`;
+      tick2.style.top = `${String(origin.y + gap.at - 3)}px`;
+      tick2.style.width = '1px';
+      tick2.style.height = '6px';
+
+      label.style.left = `${String(origin.x + (gap.from + gap.to) / 2)}px`;
+      label.style.top = `${String(origin.y + gap.at)}px`;
+    } else {
+      line.style.left = `${String(origin.x + gap.at)}px`;
+      line.style.top = `${String(origin.y + gap.from)}px`;
+      line.style.width = '1px';
+      line.style.height = `${String(gap.to - gap.from)}px`;
+
+      tick1.style.left = `${String(origin.x + gap.at - 3)}px`;
+      tick1.style.top = `${String(origin.y + gap.from)}px`;
+      tick1.style.width = '6px';
+      tick1.style.height = '1px';
+
+      tick2.style.left = `${String(origin.x + gap.at - 3)}px`;
+      tick2.style.top = `${String(origin.y + gap.to)}px`;
+      tick2.style.width = '6px';
+      tick2.style.height = '1px';
+
+      label.style.left = `${String(origin.x + gap.at)}px`;
+      label.style.top = `${String(origin.y + (gap.from + gap.to) / 2)}px`;
+    }
+
+    this.guideLayer.append(line, tick1, tick2, label);
   }
 
   private createHandle(dir: HandleDir): HTMLDivElement {

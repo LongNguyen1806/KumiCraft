@@ -37,18 +37,23 @@ export function resizeBox(
   delta: { dx: number; dy: number },
   grid: GridSize,
   ratio = false,
+  edgeSnap?: (axis: 'x' | 'y', value: number) => number | undefined,
 ): Box {
   const min = Math.max(grid, 1);
+  const snap = (axis: 'x' | 'y', val: number): number => {
+    const sn = edgeSnap?.(axis, val);
+    return sn !== undefined ? sn : snapEdge(val, grid);
+  };
   const edges: Edges = {
     x1: start.left,
     y1: start.top,
     x2: start.left + start.width,
     y2: start.top + start.height,
   };
-  if (dir.includes('w')) edges.x1 = Math.min(snapEdge(edges.x1 + delta.dx, grid), edges.x2 - min);
-  if (dir.includes('e')) edges.x2 = Math.max(snapEdge(edges.x2 + delta.dx, grid), edges.x1 + min);
-  if (dir.includes('n')) edges.y1 = Math.min(snapEdge(edges.y1 + delta.dy, grid), edges.y2 - min);
-  if (dir.includes('s')) edges.y2 = Math.max(snapEdge(edges.y2 + delta.dy, grid), edges.y1 + min);
+  if (dir.includes('w')) edges.x1 = Math.min(snap('x', edges.x1 + delta.dx), edges.x2 - min);
+  if (dir.includes('e')) edges.x2 = Math.max(snap('x', edges.x2 + delta.dx), edges.x1 + min);
+  if (dir.includes('n')) edges.y1 = Math.min(snap('y', edges.y1 + delta.dy), edges.y2 - min);
+  if (dir.includes('s')) edges.y2 = Math.max(snap('y', edges.y2 + delta.dy), edges.y1 + min);
   if (ratio && dir.length === 2) keepRatio(dir, start, edges);
   return { left: edges.x1, top: edges.y1, width: edges.x2 - edges.x1, height: edges.y2 - edges.y1 };
 }
