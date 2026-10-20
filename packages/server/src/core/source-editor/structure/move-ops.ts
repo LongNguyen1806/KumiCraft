@@ -103,6 +103,24 @@ function tryAdjacentSiblingSwap(
   };
 }
 
+/** Guards of a same-file move; returns the elements' shared parent. */
+function validateMovable(
+  ast: AstNode,
+  elements: readonly ResolvedElement[],
+  targetElement: ResolvedElement,
+  targetKind: 'sibling' | 'child',
+): Result<AstNode> {
+  for (const el of elements) {
+    const gRes = checkElementStructureGuard(ast, el.node, el.loc);
+    if (!gRes.ok) return gRes;
+  }
+  const parentRes = validateSameParent(ast, elements);
+  if (!parentRes.ok) return parentRes;
+  const intoSelfRes = validateMoveIntoSelf(elements, targetElement.node, targetKind);
+  if (!intoSelfRes.ok) return intoSelfRes;
+  return parentRes;
+}
+
 export function buildSameFileMoveEdits(
   ast: AstNode,
   code: string,
@@ -114,38 +132,24 @@ export function buildSameFileMoveEdits(
   placement?: Placement,
   tailwindMajor?: 3 | 4,
 ): Result<SameFileMoveEdits> {
-  // 1. Guard check on each element
-  for (const el of elements) {
-    const gRes = checkElementStructureGuard(ast, el.node, el.loc);
-    if (!gRes.ok) return gRes;
-  }
-
-  // 2. Validate same parent
-  const parentRes = validateSameParent(ast, elements);
+  // 1–3. Guards, one shared parent, not into itself
+  const parentRes = validateMovable(ast, elements, targetElement, targetKind);
   if (!parentRes.ok) return parentRes;
 
-  // 3. Validate target not in self
-  const intoSelfRes = validateMoveIntoSelf(elements, targetElement.node, targetKind);
-  if (!intoSelfRes.ok) return intoSelfRes;
-
   // Optimized swap for adjacent siblings under the same parent to preserve separators verbatim
-  if (!placement && elements.length === 1 && targetKind === 'sibling') {
-    const singleEl = elements[0];
-    if (singleEl && (where === 'before' || where === 'after')) {
-      const swapRes = tryAdjacentSiblingSwap(parentRes.value, code, singleEl, targetElement, where);
-      if (swapRes) return ok(swapRes);
-    }
-  }
+  const singleEl = elements.length === 1 ? elements[0] : undefined;
+  const swap =
+    !placement && singleEl && targetKind === 'sibling' && (where === 'before' || where === 'after')
+      ? tryAdjacentSiblingSwap(parentRes.value, code, singleEl, targetElement, where)
+      : undefined;
+  if (swap) return ok(swap);
 
   // 4. Sort elements by position in file
   const sorted = [...elements].sort((a, b) => a.start - b.start);
 
   // 5. Build moving JSX text with placement
-  const movingJsxRes = applyPlacementToJsx(
-    sorted.map((el) => extractElementText(code, el)).join(nl),
-    placement,
-    tailwindMajor,
-  );
+  const movingText = sorted.map((el) => extractElementText(code, el)).join(nl);
+  const movingJsxRes = applyPlacementToJsx(movingText, placement, tailwindMajor);
   if (!movingJsxRes.ok) return movingJsxRes;
   const movingJsx = movingJsxRes.value;
 
@@ -166,6 +170,40 @@ export function buildSameFileMoveEdits(
   if (!insertEditRes.ok) return insertEditRes;
 
   const insertEdit = insertEditRes.value;
+  const inPlace = inPlaceMove(
+    sorted,
+    removeEditsRes.value,
+    insertEdit,
+    code,
+    placement,
+    tailwindMajor,
+  );
+  if (inPlace) return inPlace;
   const allEdits = [...removeEditsRes.value, insertEdit];
   return ok({ edits: allEdits });
+}
+
+/**
+ * A single element dropped where it already is (its own parent's end when it is the last child,
+ * for example: a free frame child dragged inside its frame) lands inside its own removed range, so
+ * remove and insert would overlap (E016). It stays put; only its JSX is rewritten, which applies
+ * a placement or, without one, leaves the file as it was.
+ */
+function inPlaceMove(
+  sorted: readonly ResolvedElement[],
+  removeEdits: readonly TextEdit[],
+  insertEdit: TextEdit,
+  code: string,
+  placement?: Placement,
+  tailwindMajor?: 3 | 4,
+): Result<SameFileMoveEdits> | undefined {
+  const el = sorted[0];
+  if (sorted.length !== 1 || el === undefined || removeEdits.length === 0) return undefined;
+  const removeStart = Math.min(...removeEdits.map((e) => e.start));
+  const removeEnd = Math.max(...removeEdits.map((e) => e.end));
+  if (insertEdit.start < removeStart || insertEdit.start > removeEnd) return undefined;
+  // The element's own text, indentation untouched: it does not move to another depth.
+  const placed = applyPlacementToJsx(code.slice(el.start, el.end), placement, tailwindMajor);
+  if (!placed.ok) return placed;
+  return ok({ edits: [{ start: el.start, end: el.end, text: placed.value, mark: 0 }] });
 }

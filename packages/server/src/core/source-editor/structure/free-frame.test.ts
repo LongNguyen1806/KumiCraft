@@ -168,6 +168,34 @@ describe('Server: Free Frame operations [R-FF-10, R-FF-12]', () => {
     expect(content).toContain('<span className="absolute left-[48px] top-[48px]">B</span>');
   });
 
+  it('moving an element to where it already is never fails with overlapping edits [R-FF-12, R-SE-24]', async () => {
+    const original =
+      'export function Page() {\n  return (\n    <div data-rc-free className="relative">\n      <div className="absolute left-0 top-0">\n        <p>Cột 1</p>\n        <p>Cột 2</p>\n      </div>\n    </div>\n  );\n}\n';
+    await writePage(original);
+
+    // Last child dropped at the end of its own parent: nothing changes.
+    const same = await applyStructure({
+      kind: 'move',
+      elements: [{ loc: 'src/Page.tsx:6:9', tag: 'p' }],
+      target: { kind: 'child', parent: { loc: 'src/Page.tsx:4:7', tag: 'div' }, where: 'end' },
+    });
+    expect(same.ok).toBe(true);
+    expect(await readPage()).toBe(original);
+
+    // Free frame child dragged by its handle inside its own frame: only the coordinates change,
+    // the nested lines keep their indentation.
+    const placed = await applyStructure({
+      kind: 'move',
+      elements: [{ loc: 'src/Page.tsx:4:7', tag: 'div' }],
+      target: { kind: 'child', parent: { loc: 'src/Page.tsx:3:5', tag: 'div' }, where: 'end' },
+      placement: { kind: 'free', left: 8, top: 8 },
+      tailwindMajor: 4,
+    });
+    expect(placed.ok).toBe(true);
+    expect(await readPage()).toBe(original.replace('left-0 top-0', 'left-2 top-2'));
+    if (placed.ok) expect(placed.value.locs).toEqual(['src/Page.tsx:4:7']);
+  });
+
   it('Scenario 6b: moving two flow elements into a free frame stacks them 16 px apart [R-FF-12]', async () => {
     await writePage(
       'export function Page() {\n  return (\n    <div>\n      <p>One</p>\n      <p>Two</p>\n      <div data-rc-free className="relative"></div>\n    </div>\n  );\n}\n',
