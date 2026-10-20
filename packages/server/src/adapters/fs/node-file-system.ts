@@ -140,6 +140,26 @@ async function readText(platform: Platform, root: string, path: string, options:
   }
 }
 
+async function readBytes(
+  platform: Platform,
+  root: string,
+  path: string,
+  options: ReadOptions = {},
+): Promise<Result<Uint8Array>> {
+  const resolved = await resolveSafe(platform, root, path);
+  if (!resolved.ok) return resolved;
+  try {
+    const { size } = await stat(resolved.value);
+    if (size > (options.maxBytes ?? DEFAULT_MAX_BYTES)) {
+      return err({ code: 'E003', params: { file: path, reason: 'tooLarge' } });
+    }
+    const buffer = await readFile(resolved.value);
+    return ok(new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength));
+  } catch (error) {
+    return err(toAppError(error, path, 'read'));
+  }
+}
+
 async function createExclusive(platform: Platform, root: string, path: string, content: string) {
   const resolved = await resolveForWrite(platform, root, path);
   if (!resolved.ok) return resolved;
@@ -214,9 +234,31 @@ async function resolvePair(
   return target.ok ? ok({ source: source.value, target: target.value }) : target;
 }
 
+async function writeBytesAtomic(
+  platform: Platform,
+  root: string,
+  path: string,
+  bytes: Uint8Array,
+  options: { mode?: number } = {},
+): Promise<Result<void>> {
+  const resolved = await resolveForWrite(platform, root, path);
+  if (!resolved.ok) return resolved;
+  return withRetry(path, 'write', async () => {
+    await mkdir(dirname(resolved.value), { recursive: true });
+    await writeFileAtomic(
+      resolved.value,
+      Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength),
+      {
+        ...(options.mode === undefined ? {} : { mode: options.mode }),
+      },
+    );
+  });
+}
+
 export function createNodeFileSystem(platform: Platform): FileSystemPort {
   return {
     readText: (root, path, options) => readText(platform, root, path, options),
+    readBytes: (root, path, options) => readBytes(platform, root, path, options),
     async writeTextAtomic(root, path, content, options = {}) {
       const resolved = await resolveForWrite(platform, root, path);
       if (!resolved.ok) return resolved;
@@ -228,6 +270,8 @@ export function createNodeFileSystem(platform: Platform): FileSystemPort {
         });
       });
     },
+    writeBytesAtomic: (root, path, bytes, options) =>
+      writeBytesAtomic(platform, root, path, bytes, options),
     createExclusive: (root, path, content) => createExclusive(platform, root, path, content),
     readDir: (root, path) => readDir(platform, root, path),
     exists: (root, path) => exists(platform, root, path),

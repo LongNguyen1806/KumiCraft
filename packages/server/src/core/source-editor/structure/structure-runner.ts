@@ -1,5 +1,11 @@
 // Multi-file coordinator for structural JSX edits (SPEC-04 section 14, R-SE-29).
-import type { ElementGuard, Result, StructureEdit, StructureResult } from '@reactcraft/shared';
+import type {
+  ElementGuard,
+  InsertEdit,
+  Result,
+  StructureEdit,
+  StructureResult,
+} from '@reactcraft/shared';
 import { err, ok } from '@reactcraft/shared';
 
 import type { FileSystemPort } from '../../ports/file-system-port.ts';
@@ -12,6 +18,7 @@ import {
   collectMatchingImportStatements,
   extractElementText,
 } from './element-text.ts';
+import { executeInsertImage } from './insert-image.ts';
 import { type ResolvedElement, validateInsertedJsx } from './structure-ops.ts';
 import {
   type FilePlanResult,
@@ -98,7 +105,7 @@ async function loadFileContext(
 }
 
 function collectGuardsForEdit(edit: StructureEdit): readonly ElementGuard[] {
-  if (edit.kind === 'insert') {
+  if (edit.kind === 'insert' || edit.kind === 'insertImage') {
     return [edit.target.kind === 'sibling' ? edit.target.ref : edit.target.parent];
   }
   if (edit.kind === 'move') {
@@ -167,7 +174,7 @@ function filterRelevantElements(
   targetLoc?: string,
 ): readonly ResolvedElement[] {
   return resolved.filter((r) => {
-    if (edit.kind === 'insert') return r.loc === targetLoc;
+    if (edit.kind === 'insert' || edit.kind === 'insertImage') return r.loc === targetLoc;
     if (edit.kind === 'move') {
       return edit.elements.some((eg) => eg.loc === r.loc) || r.loc === targetLoc;
     }
@@ -285,6 +292,20 @@ async function performLockedStructureEdit(
   });
 }
 
+function groupGuardsByFile(guards: readonly GuardWithPosition[]): {
+  readonly byFile: ReadonlyMap<string, GuardWithPosition[]>;
+  readonly sortedFiles: readonly string[];
+} {
+  const byFile = new Map<string, GuardWithPosition[]>();
+  for (const g of guards) {
+    const list = byFile.get(g.rel) ?? [];
+    list.push(g);
+    byFile.set(g.rel, list);
+  }
+  const sortedFiles = [...byFile.keys()].sort((a, b) => a.localeCompare(b));
+  return { byFile, sortedFiles };
+}
+
 export async function executeStructureEdit(
   fs: FileSystemPort,
   projectRoot: string,
@@ -293,6 +314,12 @@ export async function executeStructureEdit(
   edit: StructureEdit,
   onWritten?: (files: readonly WrittenFile[]) => void,
 ): Promise<Result<StructureResult>> {
+  if (edit.kind === 'insertImage') {
+    const runner = (iEdit: InsertEdit, cb?: (f: readonly WrittenFile[]) => void) =>
+      executeStructureEdit(fs, projectRoot, sourceDir, sourceExtensions, iEdit, cb);
+    return executeInsertImage(fs, projectRoot, edit, runner, onWritten);
+  }
+
   if (edit.kind === 'insert') {
     const jsxCheck = validateInsertedJsx(edit.jsx);
     if (!jsxCheck.ok) return jsxCheck;
@@ -308,13 +335,7 @@ export async function executeStructureEdit(
       ? validatedGuards[validatedGuards.length - 1]
       : undefined;
 
-  const byFile = new Map<string, GuardWithPosition[]>();
-  for (const g of validatedGuards) {
-    const list = byFile.get(g.rel) ?? [];
-    list.push(g);
-    byFile.set(g.rel, list);
-  }
-  const sortedFiles = [...byFile.keys()].sort((a, b) => a.localeCompare(b));
+  const { byFile, sortedFiles } = groupGuardsByFile(validatedGuards);
 
   return withFileLocks(projectRoot, sortedFiles, () =>
     performLockedStructureEdit(

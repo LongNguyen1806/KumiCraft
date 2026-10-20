@@ -20,6 +20,7 @@ import { z } from 'zod';
 
 import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
 import { listProjectComponents } from '../../../core/project/components-list.ts';
+import { listPublicImages } from '../../../core/project/images.ts';
 import type { ProjectService } from '../../../core/project/project-service.ts';
 import type { SessionInfo } from '../../../core/shared/session.ts';
 import type { UsageCounter } from '../../../core/source-editor/component-usages.ts';
@@ -127,6 +128,15 @@ function registerCodeInfoRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): 
     const result = await deps.projectService.theme();
     if (!result.ok) return sendError(reply, result.error);
     return { data: result.value };
+  });
+
+  api.get('/project/assets', async (_request, reply) => {
+    const infoRes = deps.projectService.getProjectInfo();
+    if (!infoRes.ok) return sendError(reply, infoRes.error);
+    if (!deps.fs) return sendError(reply, { code: 'E021' });
+    const listRes = await listPublicImages(deps.fs, infoRes.value.root);
+    if (!listRes.ok) return sendError(reply, listRes.error);
+    return { data: { files: listRes.value } };
   });
 
   api.get('/project/components', async (_request, reply) => {

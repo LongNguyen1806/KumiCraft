@@ -46,10 +46,11 @@ export type SourceEditorConfig = {
 /** The file around one write, exactly as it was and is on disk (BOM included), for the history. */
 export type WrittenFile = {
   readonly path: string;
-  readonly before: string;
+  readonly before?: string | undefined;
   readonly after: string;
-  readonly beforeHash: string;
+  readonly beforeHash?: string | undefined;
   readonly afterHash: string;
+  readonly encoding?: 'base64' | undefined;
 };
 
 export interface SourceEditorService {

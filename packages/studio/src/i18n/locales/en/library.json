@@ -1,6 +1,7 @@
 {
   "title": "Library",
   "search": "Search blocks…",
+  "insertImage": "Image…",
   "hint": "Select an element and click a block, or drag a block onto the Canvas",
   "categories": {
     "layout": "Layout",

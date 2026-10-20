@@ -1,6 +1,7 @@
 {
   "title": "Thư viện",
   "search": "Tìm kiếm khối…",
+  "insertImage": "Ảnh…",
   "hint": "Chọn một phần tử rồi bấm khối, hoặc kéo khối vào Canvas",
   "categories": {
     "layout": "Bố cục",

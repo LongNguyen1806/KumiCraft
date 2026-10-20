@@ -315,5 +315,8 @@ export function planFileEdits(
   if (edit.kind === 'move') {
     return planMove(ast, code, rel, nl, resolved, edit, context);
   }
-  return planWrapOrUnwrap(ast, code, nl, resolved, edit);
+  if (edit.kind === 'wrap' || edit.kind === 'unwrap') {
+    return planWrapOrUnwrap(ast, code, nl, resolved, edit);
+  }
+  return err({ code: 'E016', params: { reason: 'unsupportedStructureEdit' } });
 }

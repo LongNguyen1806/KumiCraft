@@ -106,6 +106,7 @@
     "draftDuplicate": "duplicate draft {{name}}",
     "draftDelete": "delete draft {{name}}",
     "draftPromote": "promote draft {{name}}",
+    "insertImage": "insert image {{name}}",
     "batch": "edit {{count}} elements",
     "dismissError": "Dismiss",
     "errorFileChanged": "File {{file}} was modified externally, cannot undo this step"
@@ -507,5 +508,17 @@
   },
   "layerMenu": {
     "title": "Select layer"
+  },
+  "imagePicker": {
+    "title": "Choose image",
+    "cancel": "Cancel",
+    "insert": "Insert",
+    "upload": "Upload from computer",
+    "projectImages": "Project images",
+    "empty": "No images in public/",
+    "tooLarge": "Image exceeds 5 MB",
+    "alt": "Image description (alt)",
+    "altPlaceholder": "Enter image description…",
+    "selectedUpload": "Selected upload:"
   }
 }

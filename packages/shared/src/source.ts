@@ -170,6 +170,27 @@ export const InsertTargetSchema = z.discriminatedUnion('kind', [
 ]);
 export type InsertTarget = z.infer<typeof InsertTargetSchema>;
 
+export const ImageSourceSchema = z.discriminatedUnion('kind', [
+  z.strictObject({ kind: z.literal('existing'), src: z.string().min(2).max(512).startsWith('/') }),
+  z.strictObject({
+    kind: z.literal('upload'),
+    name: z.string().min(1).max(200),
+    dataBase64: z.string().min(1).max(7_000_000),
+  }),
+]);
+export type ImageSource = z.infer<typeof ImageSourceSchema>;
+
+export const InsertImageEditSchema = z.strictObject({
+  kind: z.literal('insertImage'),
+  target: InsertTargetSchema,
+  image: ImageSourceSchema,
+  alt: z.string().trim().min(1).max(200),
+  className: z.string().max(500),
+  placement: PlacementSchema.optional(),
+  tailwindMajor: z.union([z.literal(3), z.literal(4)]).optional(),
+});
+export type InsertImageEdit = z.infer<typeof InsertImageEditSchema>;
+
 export const InsertEditSchema = z.strictObject({
   kind: z.literal('insert'),
   target: InsertTargetSchema,
@@ -226,6 +247,7 @@ export type UnwrapEdit = z.infer<typeof UnwrapEditSchema>;
 
 export const StructureEditSchema = z.discriminatedUnion('kind', [
   InsertEditSchema,
+  InsertImageEditSchema,
   RemoveEditSchema,
   DuplicateEditSchema,
   MoveEditSchema,
@@ -240,6 +262,7 @@ export const AnyEditSchema = z.discriminatedUnion('kind', [
   SetAttributeEditSchema,
   SetFlagEditSchema,
   InsertEditSchema,
+  InsertImageEditSchema,
   RemoveEditSchema,
   DuplicateEditSchema,
   MoveEditSchema,

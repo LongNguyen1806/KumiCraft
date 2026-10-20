@@ -301,7 +301,9 @@ export function App() {
 
     if (writtenCalls[0]) {
       for (const w of writtenCalls[0]) {
-        await fs.writeFile(path.join(tmpDir, w.path), w.before, 'utf8');
+        if (w.before !== undefined) {
+          await fs.writeFile(path.join(tmpDir, w.path), w.before, 'utf8');
+        }
       }
     }
     const homeRestored = await fs.readFile(path.join(tmpDir, 'src/pages/Home.tsx'), 'utf8');

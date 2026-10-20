@@ -25,6 +25,11 @@ export const directWriteFs: FileSystemPort = {
     await writeFile(join(root, path), content, 'utf8');
     return ok(undefined);
   },
+  writeBytesAtomic: async (root, path, bytes) => {
+    await mkdir(dirname(join(root, path)), { recursive: true });
+    await writeFile(join(root, path), bytes);
+    return ok(undefined);
+  },
 };
 
 export const silentLogger: LoggerPort = {

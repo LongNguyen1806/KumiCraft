@@ -86,7 +86,12 @@
       "indexPage": "Không thể đổi đường dẫn URL của trang index.",
       "notConvention": "Dự án không theo quy ước routes.tsx chuẩn.",
       "designDirs": "Thư mục thiết kế phải nằm trong thư mục mã nguồn và không được lồng nhau hoặc trùng nhau.",
-      "draftInUse": "Bản nháp đang được sử dụng trong dự án."
+      "draftInUse": "Bản nháp đang được sử dụng trong dự án.",
+      "imageNotFound": "Không tìm thấy file ảnh.",
+      "invalidImage": "Dữ liệu ảnh không hợp lệ.",
+      "tooLarge": "Ảnh vượt quá kích thước cho phép.",
+      "unsupportedImage": "Định dạng ảnh không được hỗ trợ.",
+      "unsafeSvg": "File SVG chứa mã không an toàn."
     }
   },
   "E017": {

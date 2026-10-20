@@ -1,6 +1,4 @@
 // History Service implementing M-HI (SPEC-03 section 5.6, SPEC-04 section 7).
-import { createHash } from 'node:crypto';
-
 import type { HistoryLabel, HistoryState, HistoryStep, Result } from '@reactcraft/shared';
 import { err, ok } from '@reactcraft/shared';
 import { nanoid } from 'nanoid';
@@ -8,6 +6,14 @@ import { nanoid } from 'nanoid';
 import type { EventBusPort } from '../ports/event-bus-port.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { fileQueueKey, queueFileTask } from '../source-editor/file-queue.ts';
+import {
+  computeBytesSha256,
+  computeSha256,
+  verifyFilesMatchHash,
+  writeFilesAtomicWithRollback,
+} from './history-file-io.ts';
+
+export { computeBytesSha256, computeSha256 };
 
 const MAX_HISTORY_ITEMS = 200; // R-HI-07
 const MAX_HISTORY_BYTES = 50 * 1024 * 1024; // 50 MB (R-HI-07)
@@ -19,6 +25,7 @@ export type HistoryFileChange = {
   readonly after?: string | undefined;
   readonly beforeHash?: string | undefined;
   readonly afterHash?: string | undefined;
+  readonly encoding?: 'base64' | undefined;
 };
 
 export type HistoryEntry = {
@@ -57,18 +64,14 @@ export interface HistoryService {
   clear(): void;
 }
 
-/** SHA-256 of a file's text, as History records it (R-HI-04, R-HI-05). */
-export function computeSha256(content: string): string {
-  return createHash('sha256').update(content, 'utf8').digest('hex');
-}
+const byteLen = (content?: string, enc?: 'base64') =>
+  content !== undefined ? Buffer.byteLength(content, enc ?? 'utf8') : 0;
 
 function calculateEntryBytes(entry: HistoryEntry): number {
-  let bytes = 0;
-  for (const f of entry.files) {
-    if (f.before !== undefined) bytes += Buffer.byteLength(f.before, 'utf8');
-    if (f.after !== undefined) bytes += Buffer.byteLength(f.after, 'utf8');
-  }
-  return bytes;
+  return entry.files.reduce(
+    (sum, f) => sum + byteLen(f.before, f.encoding) + byteLen(f.after, f.encoding),
+    0,
+  );
 }
 
 function canCoalesce(
@@ -111,6 +114,7 @@ function coalesceEntry(
     beforeHash: topFile?.beforeHash,
     after: nextFile?.after,
     afterHash: nextFile?.afterHash,
+    encoding: topFile?.encoding ?? nextFile?.encoding,
   };
   return {
     id: top.id,
@@ -135,63 +139,6 @@ function trimToLimits(undoStack: HistoryEntry[], redoStack: readonly HistoryEntr
   ) {
     undoStack.shift();
   }
-}
-
-async function verifyFilesMatchHash(
-  fs: FileSystemPort,
-  projectRoot: string,
-  files: readonly HistoryFileChange[],
-  targetHashKind: 'before' | 'after',
-): Promise<{ readonly ok: true } | { readonly ok: false; readonly mismatchFile: string }> {
-  for (const f of files) {
-    const expected = targetHashKind === 'before' ? f.before : f.after;
-    const expectedHash = targetHashKind === 'before' ? f.beforeHash : f.afterHash;
-    if (expected !== undefined) {
-      const readRes = await fs.readText(projectRoot, f.path, { keepBom: true });
-      if (!readRes.ok) return { ok: false, mismatchFile: f.path };
-      const currentHash = computeSha256(readRes.value);
-      if (currentHash !== expectedHash) return { ok: false, mismatchFile: f.path };
-    } else {
-      const exists = await fs.exists(projectRoot, f.path);
-      if (exists) return { ok: false, mismatchFile: f.path };
-    }
-  }
-  return { ok: true };
-}
-
-type AppliedAction = { readonly path: string; readonly rollbackContent?: string | undefined };
-
-async function writeFilesAtomicWithRollback(
-  fs: FileSystemPort,
-  projectRoot: string,
-  files: readonly HistoryFileChange[],
-  targetContentKind: 'before' | 'after',
-): Promise<Result<void>> {
-  const applied: AppliedAction[] = [];
-
-  for (const f of files) {
-    const target = targetContentKind === 'before' ? f.before : f.after;
-    const rollback = targetContentKind === 'before' ? f.after : f.before;
-
-    const op =
-      target !== undefined
-        ? await fs.writeTextAtomic(projectRoot, f.path, target)
-        : await fs.remove(projectRoot, f.path);
-
-    if (!op.ok) {
-      for (const item of [...applied].reverse()) {
-        if (item.rollbackContent !== undefined) {
-          await fs.writeTextAtomic(projectRoot, item.path, item.rollbackContent);
-        } else {
-          await fs.remove(projectRoot, item.path);
-        }
-      }
-      return op;
-    }
-    applied.push({ path: f.path, rollbackContent: rollback });
-  }
-
-  return ok(undefined);
 }
 
 function getHistoryState(ctx: HistoryContext): HistoryState {

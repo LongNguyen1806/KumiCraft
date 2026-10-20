@@ -19,11 +19,20 @@ export type WriteOptions = {
 export interface FileSystemPort {
   /** Reads a UTF-8 file. Missing file: E015; unreadable: E003 or E011; outside root: E012. */
   readText(root: string, path: string, options?: ReadOptions): Promise<Result<string>>;
+  /** Reads binary data. Missing file: E015; unreadable: E003 or E011; outside root: E012. */
+  readBytes(root: string, path: string, options?: ReadOptions): Promise<Result<Uint8Array>>;
   /** Writes atomically (temp file + rename), creating parent folders. Refuses symlinks (S-24). */
   writeTextAtomic(
     root: string,
     path: string,
     content: string,
+    options?: WriteOptions,
+  ): Promise<Result<void>>;
+  /** Writes binary atomically (temp file + rename), creating parent folders. Refuses symlinks (S-24). */
+  writeBytesAtomic(
+    root: string,
+    path: string,
+    bytes: Uint8Array,
     options?: WriteOptions,
   ): Promise<Result<void>>;
   /** Creates the file only if it does not exist yet (`wx`). */

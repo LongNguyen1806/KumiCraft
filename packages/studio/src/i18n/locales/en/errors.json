@@ -86,7 +86,12 @@
       "indexPage": "Cannot change the path of an index page.",
       "notConvention": "Project does not follow the standard routes.tsx convention.",
       "designDirs": "Design directories must be within the source directory and cannot nest or overlap.",
-      "draftInUse": "Draft is currently in use."
+      "draftInUse": "Draft is currently in use.",
+      "imageNotFound": "Image file not found.",
+      "invalidImage": "Invalid image data.",
+      "tooLarge": "Image exceeds allowed size.",
+      "unsupportedImage": "Unsupported image format.",
+      "unsafeSvg": "SVG file contains unsafe content."
     }
   },
   "E017": {

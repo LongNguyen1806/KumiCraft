@@ -106,6 +106,7 @@
     "draftDuplicate": "nhân bản bản nháp {{name}}",
     "draftDelete": "xóa bản nháp {{name}}",
     "draftPromote": "chuyển đổi bản nháp {{name}}",
+    "insertImage": "chèn ảnh {{name}}",
     "batch": "sửa {{count}} phần tử",
     "dismissError": "Đóng thông báo",
     "errorFileChanged": "File {{file}} đã bị sửa từ nơi khác, không hoàn tác được bước này"
@@ -507,5 +508,17 @@
   },
   "layerMenu": {
     "title": "Chọn lớp"
+  },
+  "imagePicker": {
+    "title": "Chọn ảnh",
+    "cancel": "Hủy",
+    "insert": "Chèn",
+    "upload": "Tải ảnh từ máy",
+    "projectImages": "Ảnh trong dự án",
+    "empty": "Chưa có ảnh trong public/",
+    "tooLarge": "Ảnh vượt quá 5 MB",
+    "alt": "Mô tả ảnh (alt)",
+    "altPlaceholder": "Nhập mô tả ảnh…",
+    "selectedUpload": "Đã chọn tải lên:"
   }
 }

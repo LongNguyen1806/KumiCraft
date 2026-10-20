@@ -44,6 +44,11 @@ function buildStructureHistoryLabel(edit: StructureEdit): HistoryLabel {
     const tag = jsxRes.ok ? jsxRes.value.firstTag : fallbackTag;
     return { key: 'history:insert', params: { tag, count: '1' } };
   }
+  if (edit.kind === 'insertImage') {
+    const name =
+      edit.image.kind === 'upload' ? edit.image.name : (edit.image.src.split('/').pop() ?? 'image');
+    return { key: 'history:insertImage', params: { name } };
+  }
   if (edit.kind === 'unwrap') {
     return {
       key: 'history:unwrap',
@@ -95,6 +100,7 @@ async function handleApplyEdit(
   const { edit, coalesceKey } = parsed.data;
   if (
     edit.kind === 'insert' ||
+    edit.kind === 'insertImage' ||
     edit.kind === 'remove' ||
     edit.kind === 'duplicate' ||
     edit.kind === 'move' ||
@@ -103,6 +109,9 @@ async function handleApplyEdit(
   ) {
     const label = buildStructureHistoryLabel(edit);
     const edited = await deps.sourceEditorService.applyStructureEdit(projectRoot, edit, (files) => {
+      for (const f of files) {
+        deps.historyService.recordInternalWrite(f.path, f.afterHash);
+      }
       deps.historyService.push({ label, coalesceKey, files });
     });
     if (!edited.ok) return sendError(reply, edited.error);
@@ -146,6 +155,8 @@ async function handleApplyBatchEdit(
 export function registerSourceRoutes(api: FastifyInstance, deps: SourceRoutesDeps): void {
   api.get('/source/element', (req, rep) => handleGetElement(deps, req, rep));
   api.get('/source/element-text', (req, rep) => handleGetElementText(deps, req, rep));
-  api.post('/source/edits', (req, rep) => handleApplyEdit(deps, req, rep));
+  api.post('/source/edits', { bodyLimit: 10 * 1024 * 1024 }, (req, rep) =>
+    handleApplyEdit(deps, req, rep),
+  );
   api.post('/source/edits/batch', (req, rep) => handleApplyBatchEdit(deps, req, rep));
 }

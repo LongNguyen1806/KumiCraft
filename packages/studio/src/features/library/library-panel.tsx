@@ -1,5 +1,6 @@
 // Block Library Panel (SPEC-04 section 15 M-LB, R-LB-10..15).
 import {
+  type ImageSource,
   LIBRARY_BLOCKS,
   type LibraryBlock,
   type LibraryBlockCategory,
@@ -11,6 +12,8 @@ import { useTranslation } from 'react-i18next';
 import { resources } from '../../i18n/i18n.ts';
 import { type ErrorInfo, errorText } from '../../routes/error-text.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
+import { ImagePickerDialog } from '../draw/image-picker-dialog.tsx';
+import { insertImageFromSelection } from '../draw/insert-image.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { insertBlock } from './insert-block.ts';
@@ -96,10 +99,54 @@ function CategorySection({ category, blocks, disabled, onSelect }: CategorySecti
   );
 }
 
+type LibraryStatusHintProps = {
+  readonly hasSelection: boolean;
+  readonly errorInfo?: ErrorInfo | undefined;
+};
+
+function LibraryStatusHint({ hasSelection, errorInfo }: LibraryStatusHintProps) {
+  const { t } = useTranslation('library');
+  const { t: tError } = useTranslation('errors');
+  const { t: tCommon } = useTranslation('common');
+
+  if (!hasSelection) {
+    return (
+      <p
+        data-testid="library-hint"
+        className="rounded bg-amber-500/10 border border-amber-500/20 p-2 text-[11px] text-amber-900 dark:text-amber-200"
+      >
+        {t('hint')}
+      </p>
+    );
+  }
+
+  if (errorInfo !== undefined && errorInfo.code === 'design.selectInFile') {
+    return (
+      <p
+        data-testid="library-hint"
+        className="rounded bg-amber-500/10 border border-amber-500/20 p-2 text-[11px] text-amber-900 dark:text-amber-200"
+      >
+        {tCommon('design.selectInFile', errorInfo.params ?? {})}
+      </p>
+    );
+  }
+
+  if (errorInfo !== undefined && errorInfo.code !== 'design.selectInFile') {
+    return (
+      <p role="alert" className="text-xs text-danger" data-testid="library-error">
+        {errorText(tError, errorInfo.code, errorInfo.params)}
+      </p>
+    );
+  }
+
+  return undefined;
+}
+
 type LibrarySearchHeaderProps = {
   readonly query: string;
   readonly onQueryChange: (q: string) => void;
   readonly hasSelection: boolean;
+  readonly onOpenImagePicker: () => void;
   readonly errorInfo?: ErrorInfo | undefined;
 };
 
@@ -107,50 +154,64 @@ function LibrarySearchHeader({
   query,
   onQueryChange,
   hasSelection,
+  onOpenImagePicker,
   errorInfo,
 }: LibrarySearchHeaderProps) {
   const { t } = useTranslation('library');
-  const { t: tError } = useTranslation('errors');
-  const { t: tCommon } = useTranslation('common');
 
   return (
     <div className="p-3 border-b border-border/40 space-y-2">
-      <input
-        type="search"
-        data-testid="library-search"
-        placeholder={t('search')}
-        value={query}
-        onChange={(e) => {
-          onQueryChange(e.target.value);
-        }}
-        className="w-full rounded-md border border-border bg-field px-3 py-1.5 text-xs text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-      />
-
-      {!hasSelection && (
-        <p
-          data-testid="library-hint"
-          className="rounded bg-amber-500/10 border border-amber-500/20 p-2 text-[11px] text-amber-900 dark:text-amber-200"
+      <div className="flex items-center gap-2">
+        <input
+          type="search"
+          data-testid="library-search"
+          placeholder={t('search')}
+          value={query}
+          onChange={(e) => {
+            onQueryChange(e.target.value);
+          }}
+          className="flex-1 rounded-md border border-border bg-field px-3 py-1.5 text-xs text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+        />
+        <button
+          type="button"
+          data-testid="library-insert-image"
+          disabled={!hasSelection}
+          onClick={onOpenImagePicker}
+          className="rounded-md border border-border bg-field px-2.5 py-1.5 text-xs font-medium text-ink hover:bg-field-hover disabled:cursor-not-allowed disabled:opacity-40 whitespace-nowrap"
         >
-          {t('hint')}
-        </p>
-      )}
+          {t('insertImage', 'Ảnh…')}
+        </button>
+      </div>
 
-      {errorInfo !== undefined && errorInfo.code === 'design.selectInFile' && (
-        <p
-          data-testid="library-hint"
-          className="rounded bg-amber-500/10 border border-amber-500/20 p-2 text-[11px] text-amber-900 dark:text-amber-200"
-        >
-          {tCommon('design.selectInFile', errorInfo.params ?? {})}
-        </p>
-      )}
-
-      {errorInfo !== undefined && errorInfo.code !== 'design.selectInFile' && (
-        <p role="alert" className="text-xs text-danger" data-testid="library-error">
-          {errorText(tError, errorInfo.code, errorInfo.params)}
-        </p>
-      )}
+      <LibraryStatusHint hasSelection={hasSelection} errorInfo={errorInfo} />
     </div>
   );
+}
+
+function useLibraryInsert(hasSelection: boolean) {
+  const { i18n } = useTranslation('library');
+  const [inserting, setInserting] = useState(false);
+  const [errorInfo, setErrorInfo] = useState<ErrorInfo>();
+
+  const handleInsert = async (block: LibraryBlock) => {
+    if (!hasSelection || inserting) return;
+    setInserting(true);
+    setErrorInfo(undefined);
+    const res = await insertBlock(block, i18n.language);
+    setInserting(false);
+    if (!res.ok && res.error) setErrorInfo(res.error);
+  };
+
+  const handlePickImage = async (choice: { readonly image: ImageSource; readonly alt: string }) => {
+    if (!hasSelection || inserting) return;
+    setInserting(true);
+    setErrorInfo(undefined);
+    const res = await insertImageFromSelection(choice);
+    setInserting(false);
+    if (!res.ok && res.error) setErrorInfo(res.error);
+  };
+
+  return { inserting, errorInfo, handleInsert, handlePickImage };
 }
 
 function useFilteredLibraryBlocks(query: string): readonly LibraryBlock[] {
@@ -170,26 +231,38 @@ function useFilteredLibraryBlocks(query: string): readonly LibraryBlock[] {
   }, [query]);
 }
 
+type LibraryCategoriesProps = {
+  readonly categories: readonly LibraryBlockCategory[];
+  readonly blocks: readonly LibraryBlock[];
+  readonly disabled: boolean;
+  readonly onSelect: (block: LibraryBlock) => void;
+};
+
+function LibraryCategories({ categories, blocks, disabled, onSelect }: LibraryCategoriesProps) {
+  return (
+    <div className="flex-1 overflow-y-auto p-3 space-y-5">
+      {categories.map((cat) => (
+        <CategorySection
+          key={cat}
+          category={cat}
+          blocks={blocks.filter((b) => b.category === cat)}
+          disabled={disabled}
+          onSelect={onSelect}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function LibraryPanel() {
-  const { t, i18n } = useTranslation('library');
+  const { t } = useTranslation('library');
   const selectedRefs = useSelectionStore((s) => s.selectedRefs);
   const [query, setQuery] = useState('');
-  const [inserting, setInserting] = useState(false);
-  const [errorInfo, setErrorInfo] = useState<ErrorInfo>();
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
 
   const hasSelection = selectedRefs.length === 1;
   const filteredBlocks = useFilteredLibraryBlocks(query);
-
-  const handleInsert = async (block: LibraryBlock) => {
-    if (!hasSelection || inserting) return;
-    setInserting(true);
-    setErrorInfo(undefined);
-    const res = await insertBlock(block, i18n.language);
-    setInserting(false);
-    if (!res.ok && res.error) {
-      setErrorInfo(res.error);
-    }
-  };
+  const { inserting, errorInfo, handleInsert, handlePickImage } = useLibraryInsert(hasSelection);
 
   const activeCategories = CATEGORIES.filter((cat) =>
     filteredBlocks.some((b) => b.category === cat),
@@ -205,22 +278,30 @@ export function LibraryPanel() {
         query={query}
         onQueryChange={setQuery}
         hasSelection={hasSelection}
+        onOpenImagePicker={() => {
+          setImagePickerOpen(true);
+        }}
         errorInfo={errorInfo}
       />
 
-      <div className="flex-1 overflow-y-auto p-3 space-y-5">
-        {activeCategories.map((cat) => (
-          <CategorySection
-            key={cat}
-            category={cat}
-            blocks={filteredBlocks.filter((b) => b.category === cat)}
-            disabled={!hasSelection || inserting}
-            onSelect={(block) => {
-              void handleInsert(block);
-            }}
-          />
-        ))}
-      </div>
+      <LibraryCategories
+        categories={activeCategories}
+        blocks={filteredBlocks}
+        disabled={!hasSelection || inserting}
+        onSelect={(block) => {
+          void handleInsert(block);
+        }}
+      />
+
+      <ImagePickerDialog
+        open={imagePickerOpen}
+        onClose={() => {
+          setImagePickerOpen(false);
+        }}
+        onPick={(choice) => {
+          void handlePickImage(choice);
+        }}
+      />
     </aside>
   );
 }

@@ -218,3 +218,8 @@ export const PromoteDraftSchema = z.strictObject({
   keepDraft: z.boolean(),
 });
 export type PromoteDraft = z.infer<typeof PromoteDraftSchema>;
+
+export const ProjectAssetsSchema = z.strictObject({
+  files: z.array(RelPathSchema).max(500),
+});
+export type ProjectAssets = z.infer<typeof ProjectAssetsSchema>;

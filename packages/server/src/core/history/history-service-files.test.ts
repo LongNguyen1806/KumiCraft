@@ -6,7 +6,7 @@ import * as path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { nodeFs } from '../workspace/test-support.ts';
-import { computeSha256, createHistoryService } from './history-service.ts';
+import { computeBytesSha256, computeSha256, createHistoryService } from './history-service.ts';
 
 describe('M-HI: History Service file create/delete [R-HI-11]', () => {
   let tmpDir: string;
@@ -116,5 +116,73 @@ describe('M-HI: History Service file create/delete [R-HI-11]', () => {
     }
     expect(await nodeFs.exists(tmpDir, f)).toBe(true);
     expect(await fs.readFile(full, 'utf8')).toBe(modifiedContent);
+  });
+
+  it('handles binary created file: Undo deletes and Redo recreates byte-for-byte [R-HI-11]', async () => {
+    const f = 'public/images/logo.png';
+    const full = path.join(tmpDir, f);
+    await fs.mkdir(path.dirname(full), { recursive: true });
+
+    const bytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
+    await fs.writeFile(full, bytes);
+    const b64 = Buffer.from(bytes).toString('base64');
+
+    const history = createHistoryService({ fs: nodeFs, now: fakeNow });
+    history.push({
+      label: { key: 'history:insertImage', params: { name: 'logo.png' } },
+      files: [
+        {
+          path: f,
+          after: b64,
+          afterHash: computeBytesSha256(bytes),
+          encoding: 'base64',
+        },
+      ],
+    });
+
+    const u = await history.undo(tmpDir);
+    expect(u.ok).toBe(true);
+    expect(await nodeFs.exists(tmpDir, f)).toBe(false);
+
+    const r = await history.redo(tmpDir);
+    expect(r.ok).toBe(true);
+    expect(await nodeFs.exists(tmpDir, f)).toBe(true);
+    const restored = await fs.readFile(full);
+    expect(Buffer.compare(restored, Buffer.from(bytes))).toBe(0);
+  });
+
+  it('#11 blocks undo when a base64 encoded binary file was modified externally [R-HI-11]', async () => {
+    const f = 'public/images/test.png';
+    const full = path.join(tmpDir, f);
+    await fs.mkdir(path.dirname(full), { recursive: true });
+
+    const originalBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 9, 9]);
+    await fs.writeFile(full, originalBytes);
+    const b64 = Buffer.from(originalBytes).toString('base64');
+
+    const history = createHistoryService({ fs: nodeFs, now: fakeNow });
+    history.push({
+      label: { key: 'history:insertImage', params: { name: 'test.png' } },
+      files: [
+        {
+          path: f,
+          after: b64,
+          afterHash: computeBytesSha256(originalBytes),
+          encoding: 'base64',
+        },
+      ],
+    });
+
+    // Modify file externally
+    await fs.writeFile(full, new Uint8Array([1, 2, 3, 4]));
+
+    const res = await history.undo(tmpDir);
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.error.code).toBe('E017');
+    }
+    expect(await nodeFs.exists(tmpDir, f)).toBe(true);
+    const current = await fs.readFile(full);
+    expect(Buffer.compare(current, Buffer.from([1, 2, 3, 4]))).toBe(0);
   });
 });

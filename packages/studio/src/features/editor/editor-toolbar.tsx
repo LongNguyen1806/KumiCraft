@@ -71,6 +71,9 @@ function resolveHistoryLabel(
   if (label.key === 'history:extract' || label.key === 'history.extract') {
     return t('history.extract', { name });
   }
+  if (label.key === 'history:insertImage' || label.key === 'history.insertImage') {
+    return t('history.insertImage', { name });
+  }
   return label.key;
 }
 
