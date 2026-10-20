@@ -109,6 +109,18 @@ const mockProjectService: ProjectService = {
         breakpoints: [],
       }),
     ),
+  editTheme: () =>
+    Promise.resolve(
+      ok({
+        colors: [{ name: 'brand', value: '#3b82f6' }],
+        fontSizes: [],
+        radii: [],
+        fonts: [],
+        shadows: [],
+        breakpoints: [],
+      }),
+    ),
+  themeUsage: () => Promise.resolve(ok({ count: 0 })),
   addBackend: (path, label) =>
     Promise.resolve(
       ok({

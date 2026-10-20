@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { BrandPanel } from '../brand/brand-panel.tsx';
 import { ComponentsPanel } from '../components-panel/components-panel.tsx';
 import { InspectorPanel } from '../inspector/inspector-panel.tsx';
 import { useProjectTheme } from '../inspector/use-project-theme.ts';
@@ -35,11 +36,12 @@ function Panel({ label, title, tabs, children }: PanelProps) {
 type TabProps = {
   readonly selected: boolean;
   readonly disabled?: boolean;
+  readonly testId?: string | undefined;
   readonly onClick?: (() => void) | undefined;
   readonly children: ReactNode;
 };
 
-function Tab({ selected, disabled = false, onClick, children }: TabProps) {
+function Tab({ selected, disabled = false, testId, onClick, children }: TabProps) {
   return (
     <button
       type="button"
@@ -47,6 +49,7 @@ function Tab({ selected, disabled = false, onClick, children }: TabProps) {
       aria-selected={selected}
       disabled={disabled}
       onClick={onClick}
+      data-testid={testId}
       className="h-7 flex-1 rounded-full text-ink-soft disabled:opacity-50 aria-selected:bg-card-solid aria-selected:text-ink aria-selected:shadow-[0_1px_3px_rgb(60_52_30/0.12)] cursor-pointer"
     >
       {children}
@@ -143,21 +146,67 @@ export function LeftPanel() {
   );
 }
 
-/** Inspector of the selected element (M-IN, WP-1.07); the AI chat tab comes in Phase 3. */
+const RIGHT_PANEL_KEY = 'reactcraft.rightPanelTab';
+
+export type RightPanelTab = 'properties' | 'brand';
+
+function readRightPanelTab(): RightPanelTab {
+  try {
+    const saved = localStorage.getItem(RIGHT_PANEL_KEY);
+    if (saved === 'brand') return 'brand';
+    return 'properties';
+  } catch {
+    return 'properties';
+  }
+}
+
+function saveRightPanelTab(tab: RightPanelTab): void {
+  try {
+    localStorage.setItem(RIGHT_PANEL_KEY, tab);
+  } catch {
+    // Private windows may refuse storage: the layout then lasts for this visit only.
+  }
+}
+
+/** Inspector of the selected element or Brand @theme editor (M-IN, WP-1.07, WP-2.10); AI chat tab comes in Phase 3. */
 export function RightPanel() {
   const { t } = useTranslation();
   const theme = useProjectTheme();
+  const [tab, setTab] = useState<RightPanelTab>(readRightPanelTab);
+
+  const handleSetTab = (nextTab: RightPanelTab) => {
+    setTab(nextTab);
+    saveRightPanelTab(nextTab);
+  };
+
+  const title = tab === 'brand' ? t('brand.tab') : t('editor.properties');
   const tabs = (
     <>
-      <Tab selected>{t('editor.properties')}</Tab>
+      <Tab
+        selected={tab === 'properties'}
+        onClick={() => {
+          handleSetTab('properties');
+        }}
+      >
+        {t('editor.properties')}
+      </Tab>
+      <Tab
+        selected={tab === 'brand'}
+        testId="right-tab-brand"
+        onClick={() => {
+          handleSetTab('brand');
+        }}
+      >
+        {t('brand.tab')}
+      </Tab>
       <Tab selected={false} disabled>
         {t('editor.ai')}
       </Tab>
     </>
   );
   return (
-    <Panel label={t('editor.rightPanel')} title={t('editor.properties')} tabs={tabs}>
-      <InspectorPanel theme={theme} />
+    <Panel label={t('editor.rightPanel')} title={title} tabs={tabs}>
+      {tab === 'properties' ? <InspectorPanel theme={theme} /> : <BrandPanel />}
     </Panel>
   );
 }

@@ -91,7 +91,11 @@
       "invalidImage": "Dữ liệu ảnh không hợp lệ.",
       "tooLarge": "Ảnh vượt quá kích thước cho phép.",
       "unsupportedImage": "Định dạng ảnh không được hỗ trợ.",
-      "unsafeSvg": "File SVG chứa mã không an toàn."
+      "unsafeSvg": "File SVG chứa mã không an toàn.",
+      "tokenExists": "Token đã tồn tại trong @theme.",
+      "tokenNotFound": "Không tìm thấy token trong @theme.",
+      "invalidValue": "Giá trị CSS không hợp lệ.",
+      "noThemeFile": "Không tìm thấy file CSS của Tailwind."
     }
   },
   "E017": {

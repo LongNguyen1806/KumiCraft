@@ -15,7 +15,10 @@ import type {
   ResponsiveMode,
   StructureResult,
   SupportReport,
+  ThemeEdit,
   ThemeInfo,
+  ThemeTokenKind,
+  ThemeUsage,
   WorkspaceFile,
 } from '@reactcraft/shared';
 
@@ -81,6 +84,8 @@ export type ProjectService = {
   install(command: readonly string[]): Promise<Result<{ readonly jobId: string }>>;
   pages(): Promise<Result<PagesInfo>>;
   theme(): Promise<Result<ThemeInfo>>;
+  editTheme(edit: ThemeEdit): Promise<Result<ThemeInfo>>;
+  themeUsage(kind: ThemeTokenKind, name: string): Promise<Result<ThemeUsage>>;
   addPage(input: AddPageInput): Promise<Result<StructureResult>>;
   renamePage(input: RenamePageInput): Promise<Result<StructureResult>>;
   deletePage(input: DeletePageInput): Promise<Result<StructureResult>>;

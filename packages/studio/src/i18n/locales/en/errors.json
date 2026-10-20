@@ -91,7 +91,11 @@
       "invalidImage": "Invalid image data.",
       "tooLarge": "Image exceeds allowed size.",
       "unsupportedImage": "Unsupported image format.",
-      "unsafeSvg": "SVG file contains unsafe content."
+      "unsafeSvg": "SVG file contains unsafe content.",
+      "tokenExists": "Token already exists in @theme.",
+      "tokenNotFound": "Token not found in @theme.",
+      "invalidValue": "Invalid CSS value.",
+      "noThemeFile": "Tailwind CSS file not found."
     }
   },
   "E017": {

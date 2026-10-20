@@ -14,6 +14,9 @@ import {
   RenameDraftSchema,
   RenamePageSchema,
   ResponsiveModeSchema,
+  THEME_TOKEN_NAME,
+  ThemeEditSchema,
+  ThemeTokenKindSchema,
 } from '@reactcraft/shared';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
@@ -53,6 +56,10 @@ const InstallSchema = z.strictObject({ command: z.array(z.string()).min(1) });
 const AddBackendSchema = z.strictObject({
   path: z.string().min(1),
   label: z.string().min(1).max(64).optional(),
+});
+const ThemeUsageQuerySchema = z.strictObject({
+  kind: ThemeTokenKindSchema,
+  name: z.string().regex(THEME_TOKEN_NAME),
 });
 
 function registerOpenCreateRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
@@ -312,6 +319,28 @@ function registerDraftOpRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): v
   });
 }
 
+function registerThemeRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
+  api.patch('/project/theme', async (request, reply) => {
+    const parsed = ThemeEditSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
+    }
+    const result = await deps.projectService.editTheme(parsed.data);
+    if (!result.ok) return sendError(reply, result.error);
+    return { data: result.value };
+  });
+
+  api.get('/project/theme/usage', async (request, reply) => {
+    const parsed = ThemeUsageQuerySchema.safeParse(request.query);
+    if (!parsed.success) {
+      return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
+    }
+    const result = await deps.projectService.themeUsage(parsed.data.kind, parsed.data.name);
+    if (!result.ok) return sendError(reply, result.error);
+    return { data: result.value };
+  });
+}
+
 export function registerProjectRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
   registerOpenCreateRoutes(api, deps);
   registerStateRoutes(api, deps);
@@ -320,4 +349,5 @@ export function registerProjectRoutes(api: FastifyInstance, deps: ProjectRoutesD
   registerPageRoutes(api, deps);
   registerDraftCrudRoutes(api, deps);
   registerDraftOpRoutes(api, deps);
+  registerThemeRoutes(api, deps);
 }

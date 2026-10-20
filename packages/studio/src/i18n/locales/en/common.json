@@ -107,6 +107,9 @@
     "draftDelete": "delete draft {{name}}",
     "draftPromote": "promote draft {{name}}",
     "insertImage": "insert image {{name}}",
+    "themeSet": "update token {{name}}",
+    "themeAdd": "add token {{name}}",
+    "themeRemove": "remove token {{name}}",
     "batch": "edit {{count}} elements",
     "dismissError": "Dismiss",
     "errorFileChanged": "File {{file}} was modified externally, cannot undo this step"
@@ -531,5 +534,24 @@
     "frame": "Frame",
     "text": "Text",
     "image": "Image"
+  },
+  "brand": {
+    "tab": "Brand",
+    "colors": "Colors",
+    "fonts": "Fonts",
+    "fontSizes": "Font sizes",
+    "radii": "Border radius",
+    "shadows": "Shadows",
+    "add": "+ Add",
+    "name": "Token name",
+    "value": "Value",
+    "save": "Add",
+    "cancel": "Cancel",
+    "remove": "Remove token",
+    "confirmRemove": "Token {{name}} is used in {{count}} place(s). Remove it from @theme? (Existing classes will be kept.)",
+    "confirmDelete": "Remove",
+    "emptyGroup": "No tokens yet",
+    "noThemeFile": "Project has no Tailwind CSS file",
+    "invalidName": "Lowercase letters, digits, hyphens; must start with a letter (max 40 chars)"
   }
 }

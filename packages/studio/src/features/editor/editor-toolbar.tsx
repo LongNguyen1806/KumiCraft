@@ -41,6 +41,18 @@ function resolveDraftHistoryLabel(
   return undefined;
 }
 
+function resolveThemeHistoryLabel(
+  label: HistoryLabel,
+  name: string,
+  t: ReturnType<typeof useTranslation>['t'],
+): string | undefined {
+  if (label.key !== 'history:theme' && label.key !== 'history.theme') return undefined;
+  const op = label.params?.['op'];
+  if (op === 'add') return t('history.themeAdd', { name });
+  if (op === 'remove') return t('history.themeRemove', { name });
+  return t('history.themeSet', { name });
+}
+
 function resolveHistoryLabel(
   label: HistoryLabel | undefined,
   t: ReturnType<typeof useTranslation>['t'],
@@ -49,6 +61,8 @@ function resolveHistoryLabel(
   const name = label.params?.['name'] ?? '';
   const draft = resolveDraftHistoryLabel(label.key, name, t);
   if (draft !== undefined) return draft;
+  const theme = resolveThemeHistoryLabel(label, name, t);
+  if (theme !== undefined) return theme;
   if (label.key === 'history:setClassName' || label.key === 'history.setClassName') {
     return t('history.setClassName');
   }

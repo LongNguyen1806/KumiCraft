@@ -223,3 +223,45 @@ export const ProjectAssetsSchema = z.strictObject({
   files: z.array(RelPathSchema).max(500),
 });
 export type ProjectAssets = z.infer<typeof ProjectAssetsSchema>;
+
+export const THEME_TOKEN_KINDS = ['color', 'font', 'fontSize', 'radius', 'shadow'] as const;
+export const ThemeTokenKindSchema = /* @__PURE__ */ z.enum(THEME_TOKEN_KINDS);
+export type ThemeTokenKind = z.infer<typeof ThemeTokenKindSchema>;
+
+export const THEME_TOKEN_NAME = /^[a-z][a-z0-9-]{0,39}$/;
+
+export const ThemeEditSchema = /* @__PURE__ */ (() =>
+  z.discriminatedUnion('op', [
+    z.strictObject({
+      op: z.literal('set'),
+      kind: ThemeTokenKindSchema,
+      name: z.string().regex(THEME_TOKEN_NAME),
+      value: z.string().trim().min(1).max(300),
+    }),
+    z.strictObject({
+      op: z.literal('add'),
+      kind: ThemeTokenKindSchema,
+      name: z.string().regex(THEME_TOKEN_NAME),
+      value: z.string().trim().min(1).max(300),
+    }),
+    z.strictObject({
+      op: z.literal('remove'),
+      kind: ThemeTokenKindSchema,
+      name: z.string().regex(THEME_TOKEN_NAME),
+    }),
+  ]))();
+export type ThemeEdit = z.infer<typeof ThemeEditSchema>;
+
+export const ThemeUsageSchema = /* @__PURE__ */ (() =>
+  z.strictObject({
+    count: z.number().int().min(0),
+  }))();
+export type ThemeUsage = z.infer<typeof ThemeUsageSchema>;
+
+export const THEME_VAR_PREFIX: Readonly<Record<ThemeTokenKind, string>> = {
+  color: '--color-',
+  font: '--font-',
+  fontSize: '--text-',
+  radius: '--radius-',
+  shadow: '--shadow-',
+};

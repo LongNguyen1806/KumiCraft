@@ -1,8 +1,13 @@
-// Hook for loading and subscribing to project theme (R-IN-19, R-PJ-17).
+// Store and hook for loading and subscribing to project theme (R-IN-19, R-PJ-17, R-TH-10).
 import type { ThemeInfo } from '@reactcraft/shared';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
+import { create } from 'zustand';
 
-import { createEventsClient, type StudioServerEvent } from '../../api/events-client.ts';
+import {
+  createEventsClient,
+  type EventsClient,
+  type StudioServerEvent,
+} from '../../api/events-client.ts';
 import { fetchProjectTheme } from '../../api/project-client.ts';
 
 export const DEFAULT_THEME: ThemeInfo = {
@@ -14,50 +19,67 @@ export const DEFAULT_THEME: ThemeInfo = {
   breakpoints: [],
 };
 
+export interface ThemeStoreState {
+  readonly theme: ThemeInfo;
+  readonly load: () => Promise<void>;
+  readonly setTheme: (theme: ThemeInfo) => void;
+}
+
+export const useThemeStore = create<ThemeStoreState>((set) => ({
+  theme: DEFAULT_THEME,
+  load: async () => {
+    try {
+      const data = await fetchProjectTheme();
+      set({ theme: data });
+    } catch {
+      // Keep existing or DEFAULT_THEME
+    }
+  },
+  setTheme: (theme: ThemeInfo) => {
+    set({ theme });
+  },
+}));
+
+let subscriberCount = 0;
+let activeClient: EventsClient | undefined;
+
+function handleThemeServerEvent(event: StudioServerEvent): void {
+  if (event.type === 'project.changed') {
+    void useThemeStore.getState().load();
+    return;
+  }
+  if (
+    event.type === 'project.filesChanged' &&
+    event.payload &&
+    typeof event.payload === 'object' &&
+    'files' in event.payload &&
+    Array.isArray(event.payload.files)
+  ) {
+    const currentFile = useThemeStore.getState().theme.file;
+    if (currentFile !== undefined && event.payload.files.includes(currentFile)) {
+      void useThemeStore.getState().load();
+    }
+  }
+}
+
 export function useProjectTheme(): ThemeInfo {
-  const [theme, setTheme] = useState<ThemeInfo>(DEFAULT_THEME);
-  const themeRef = useRef<ThemeInfo>(DEFAULT_THEME);
+  const theme = useThemeStore((s) => s.theme);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function load(): Promise<void> {
-      try {
-        const data = await fetchProjectTheme();
-        if (!cancelled) {
-          themeRef.current = data;
-          setTheme(data);
-        }
-      } catch {
-        // Keep existing or DEFAULT_THEME
-      }
+    subscriberCount += 1;
+    if (subscriberCount === 1) {
+      void useThemeStore.getState().load();
+      activeClient = createEventsClient({
+        onEvent: handleThemeServerEvent,
+      });
     }
 
-    void load();
-
-    const client = createEventsClient({
-      onEvent: (event: StudioServerEvent) => {
-        if (event.type === 'project.changed') {
-          void load();
-        } else if (event.type === 'project.filesChanged') {
-          if (
-            event.payload &&
-            typeof event.payload === 'object' &&
-            'files' in event.payload &&
-            Array.isArray(event.payload.files)
-          ) {
-            const currentFile = themeRef.current.file;
-            if (currentFile !== undefined && event.payload.files.includes(currentFile)) {
-              void load();
-            }
-          }
-        }
-      },
-    });
-
     return () => {
-      cancelled = true;
-      client.close();
+      subscriberCount = Math.max(0, subscriberCount - 1);
+      if (subscriberCount === 0 && activeClient !== undefined) {
+        activeClient.close();
+        activeClient = undefined;
+      }
     };
   }, []);
 

@@ -107,6 +107,9 @@
     "draftDelete": "xóa bản nháp {{name}}",
     "draftPromote": "chuyển đổi bản nháp {{name}}",
     "insertImage": "chèn ảnh {{name}}",
+    "themeSet": "sửa token {{name}}",
+    "themeAdd": "thêm token {{name}}",
+    "themeRemove": "xóa token {{name}}",
     "batch": "sửa {{count}} phần tử",
     "dismissError": "Đóng thông báo",
     "errorFileChanged": "File {{file}} đã bị sửa từ nơi khác, không hoàn tác được bước này"
@@ -531,5 +534,24 @@
     "frame": "Khung",
     "text": "Chữ",
     "image": "Ảnh"
+  },
+  "brand": {
+    "tab": "Brand",
+    "colors": "Màu sắc",
+    "fonts": "Font chữ",
+    "fontSizes": "Cỡ chữ",
+    "radii": "Bo góc",
+    "shadows": "Bóng",
+    "add": "+ Thêm",
+    "name": "Tên token",
+    "value": "Giá trị",
+    "save": "Thêm",
+    "cancel": "Hủy",
+    "remove": "Xóa token",
+    "confirmRemove": "Token {{name}} đang được dùng ở {{count}} chỗ. Xóa token trong @theme? (Các class đang dùng sẽ giữ nguyên.)",
+    "confirmDelete": "Xóa",
+    "emptyGroup": "Chưa có token nào",
+    "noThemeFile": "Dự án chưa có file CSS Tailwind",
+    "invalidName": "Tên gồm chữ thường, số, gạch ngang; bắt đầu bằng chữ (tối đa 40 ký tự)"
   }
 }

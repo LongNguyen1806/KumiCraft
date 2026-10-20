@@ -103,6 +103,18 @@ describe('GET /project/assets [R-DT-13]', () => {
             breakpoints: [],
           }),
         ),
+      editTheme: () =>
+        Promise.resolve(
+          ok({
+            colors: [],
+            fontSizes: [],
+            radii: [],
+            fonts: [],
+            shadows: [],
+            breakpoints: [],
+          }),
+        ),
+      themeUsage: () => Promise.resolve(ok({ count: 0 })),
       addBackend: () => Promise.resolve(err({ code: 'E021', params: { missing: 'project' } })),
       removeBackend: () => Promise.resolve(ok(undefined)),
       reloadWorkspaceFile: () => Promise.resolve(),

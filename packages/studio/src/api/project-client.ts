@@ -25,7 +25,12 @@ import {
   type RenamePage,
   type StructureResult,
   StructureResultSchema,
+  type ThemeEdit,
   type ThemeInfo,
+  ThemeInfoSchema,
+  type ThemeTokenKind,
+  type ThemeUsage,
+  ThemeUsageSchema,
 } from '@reactcraft/shared';
 
 import { apiDelete, apiGet, apiPatch, apiPost } from './http.ts';
@@ -77,6 +82,15 @@ export async function fetchPages(): Promise<PagesInfo> {
 
 export async function fetchProjectTheme(): Promise<ThemeInfo> {
   return (await apiGet('project/theme')) as ThemeInfo;
+}
+
+export async function editTheme(edit: ThemeEdit): Promise<ThemeInfo> {
+  return ThemeInfoSchema.parse(await apiPatch('project/theme', edit));
+}
+
+export async function fetchThemeUsage(kind: ThemeTokenKind, name: string): Promise<ThemeUsage> {
+  const qs = `kind=${encodeURIComponent(kind)}&name=${encodeURIComponent(name)}`;
+  return ThemeUsageSchema.parse(await apiGet(`project/theme/usage?${qs}`));
 }
 
 export async function addProjectBackend(path: string, label?: string): Promise<BackendInfo> {

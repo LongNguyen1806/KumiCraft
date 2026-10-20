@@ -12,7 +12,10 @@ import {
   type RenameDraft,
   type StructureResult,
   type SupportReport,
+  type ThemeEdit,
   type ThemeInfo,
+  type ThemeTokenKind,
+  type ThemeUsage,
   type WorkspaceFile,
 } from '@reactcraft/shared';
 
@@ -46,7 +49,7 @@ import {
   type PatchWorkspaceUpdates,
   reloadOpenWorkspace,
 } from './project-workspace-file.ts';
-import { readThemeTokens } from './theme.ts';
+import { countProjectThemeUsage, editProjectTheme, readThemeTokens } from './theme.ts';
 export type { ProjectService, ProjectServiceDeps, WorkspaceState };
 
 class ProjectServiceImpl implements ProjectService {
@@ -356,6 +359,14 @@ class ProjectServiceImpl implements ProjectService {
       return ok({ colors: [], fontSizes: [], radii: [], fonts: [], shadows: [], breakpoints: [] });
     }
     return readThemeTokens(this.deps.fs, this.current.root, css);
+  }
+
+  editTheme(edit: ThemeEdit): Promise<Result<ThemeInfo>> {
+    return editProjectTheme(this.current, this.deps, edit);
+  }
+
+  themeUsage(kind: ThemeTokenKind, name: string): Promise<Result<ThemeUsage>> {
+    return countProjectThemeUsage(this.current, this.deps, kind, name);
   }
 
   async addBackend(backendPath: string, customLabel?: string): Promise<Result<BackendInfo>> {
