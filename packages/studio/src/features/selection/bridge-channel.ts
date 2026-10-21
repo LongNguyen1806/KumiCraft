@@ -191,6 +191,13 @@ export class BridgeChannel {
   /** Last file sent with `design-file`, sent again to a Bridge that just started (R-CP-11). */
   private designFile: string | undefined;
   private designFocus = false;
+  /**
+   * Until the Bridge answers, the iframe may still show the blank page it starts with (the Studio's
+   * own origin): posting then fails with an origin mismatch. Messages wait here, the latest one of
+   * each type, and go out when the first verified Bridge message arrives (S-101).
+   */
+  private bridgeAlive = false;
+  private readonly waiting = new Map<string, unknown>();
   private readonly listener: (e: MessageEvent) => void;
   private readonly textEditListeners = new Set<BridgeTextEditListener>();
   private readonly freeFrameListeners = new Set<BridgeFreeFrameListener>();
@@ -205,6 +212,8 @@ export class BridgeChannel {
     this.iframeWindow = iframeWindow;
     this.runnerOrigin = runnerOrigin;
     this.nonce = nonce;
+    this.bridgeAlive = false;
+    this.waiting.clear();
     window.addEventListener('message', this.listener);
   }
 
@@ -213,6 +222,8 @@ export class BridgeChannel {
     this.iframeWindow = undefined;
     this.runnerOrigin = undefined;
     this.nonce = undefined;
+    this.bridgeAlive = false;
+    this.waiting.clear();
     useCanvasErrorStore.getState().reset();
     useDndStore.getState().endDrag();
     useSelectionStore.getState().setBridgeReady(false);
@@ -295,6 +306,7 @@ export class BridgeChannel {
 
     // Any verified message proves the Bridge runs (R-RN-24), even if `ready` came too early.
     useSelectionStore.getState().setBridgeReady(true);
+    this.flushWaiting();
     dispatchBridgePayload(envelopeRes.data.type, envelopeRes.data.payload);
     // A full reload of the page starts a new Bridge that does not know the design file yet.
     if (envelopeRes.data.type === 'ready') {
@@ -347,12 +359,26 @@ export class BridgeChannel {
     }
   }
 
+  private flushWaiting(): void {
+    if (this.bridgeAlive) return;
+    this.bridgeAlive = true;
+    const waiting = [...this.waiting];
+    this.waiting.clear();
+    for (const [type, payload] of waiting) this.sendMessage(type, payload);
+  }
+
   private sendMessage(type: string, payload: unknown): void {
     if (
       this.iframeWindow === undefined ||
       this.runnerOrigin === undefined ||
       this.nonce === undefined
     ) {
+      return;
+    }
+    if (!this.bridgeAlive) {
+      // Re-insert so the order follows the latest call of each type.
+      this.waiting.delete(type);
+      this.waiting.set(type, payload);
       return;
     }
     const msg = {

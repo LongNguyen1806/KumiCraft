@@ -6,6 +6,9 @@ import { createEventsClient, type StudioServerEvent } from './events-client.ts';
 let activeSockets: MockWebSocket[] = [];
 
 class MockWebSocket {
+  static readonly CONNECTING = 0;
+  static readonly OPEN = 1;
+  closeCalls = 0;
   onopen: (() => void) | undefined = undefined;
   onmessage: ((event: { data: string }) => void) | undefined = undefined;
   onclose: (() => void) | undefined = undefined;
@@ -24,6 +27,7 @@ class MockWebSocket {
   }
 
   close(): void {
+    this.closeCalls += 1;
     this.readyState = 3;
     this.onclose?.();
   }
@@ -131,5 +135,63 @@ describe('events-client', () => {
 
     expect(connectionStates).toContain(false);
     client.close();
+  });
+
+  it('shares one socket between clients of the same URL', async () => {
+    const url = 'ws://127.0.0.1:4000/api/v1/events';
+    const first = createEventsClient({ url });
+    const second = createEventsClient({ url });
+    await vi.waitFor(() => {
+      expect(second.isConnected()).toBe(true);
+    });
+
+    expect(activeSockets).toHaveLength(1);
+    first.close();
+    expect(activeSockets[0]?.closeCalls).toBe(0);
+    expect(second.isConnected()).toBe(true);
+    second.close();
+    expect(activeSockets[0]?.closeCalls).toBe(1);
+  });
+
+  it('never closes a socket that is still connecting; StrictMode re-subscribing reuses it', async () => {
+    const url = 'ws://127.0.0.1:4000/api/v1/events';
+    const mounted = createEventsClient({ url });
+    const socket = activeSockets[0];
+    expect(socket).toBeDefined();
+    if (socket === undefined) return;
+    socket.readyState = MockWebSocket.CONNECTING;
+
+    // StrictMode: the effect cleanup runs, then the effect runs again at once.
+    mounted.close();
+    let connected = false;
+    const remounted = createEventsClient({
+      url,
+      onConnectionChange: (c) => {
+        connected = c;
+      },
+    });
+    socket.readyState = MockWebSocket.OPEN;
+    await vi.waitFor(() => {
+      expect(connected).toBe(true);
+    });
+
+    expect(activeSockets).toHaveLength(1);
+    expect(socket.closeCalls).toBe(0);
+    remounted.close();
+  });
+
+  it('closes a connecting socket only after it opens when nobody needs it anymore', async () => {
+    const client = createEventsClient({ url: 'ws://127.0.0.1:4000/api/v1/events' });
+    const socket = activeSockets[0];
+    expect(socket).toBeDefined();
+    if (socket === undefined) return;
+    socket.readyState = MockWebSocket.CONNECTING;
+
+    client.close();
+    expect(socket.closeCalls).toBe(0);
+    socket.readyState = MockWebSocket.OPEN;
+    await vi.waitFor(() => {
+      expect(socket.closeCalls).toBe(1);
+    });
   });
 });

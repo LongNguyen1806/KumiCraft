@@ -34,7 +34,40 @@ describe('BridgeChannel', () => {
     iframe.remove();
   });
 
+  /** The Bridge proves it runs: from then on the iframe shows the project's origin. */
+  function bridgeAnswers(): void {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: { rc: 1, nonce: currentNonce, type: 'hover', payload: {} },
+        origin: runnerOrigin,
+        source: fakeIframeWindow,
+      }),
+    );
+  }
+
+  it('holds messages until the Bridge answers, then sends the latest of each type in order [S-101]', () => {
+    channel.setMode('preview');
+    channel.setGrid(8);
+    channel.setMode('design');
+    expect(postMessageSpy).not.toHaveBeenCalled();
+
+    bridgeAnswers();
+
+    expect(postMessageSpy).toHaveBeenCalledTimes(2);
+    expect(postMessageSpy).toHaveBeenNthCalledWith(
+      1,
+      { rc: 1, nonce: currentNonce, type: 'set-grid', payload: { size: 8 } },
+      runnerOrigin,
+    );
+    expect(postMessageSpy).toHaveBeenNthCalledWith(
+      2,
+      { rc: 1, nonce: currentNonce, type: 'set-mode', payload: { mode: 'design' } },
+      runnerOrigin,
+    );
+  });
+
   it('sends messages with correct envelope and target origin [V-110, S-101]', () => {
+    bridgeAnswers();
     channel.setMode('preview');
     expect(postMessageSpy).toHaveBeenCalledWith(
       {

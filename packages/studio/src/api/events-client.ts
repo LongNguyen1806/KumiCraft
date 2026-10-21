@@ -81,55 +81,130 @@ function tryOpenSocket(
   }
 }
 
-export function createEventsClient(options?: EventsClientOptions): EventsClient {
-  let ws: WebSocket | undefined;
-  let closed = false;
-  let connected = false;
-  let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
-  let retryDelay = 1000;
+type Subscriber = {
+  readonly onConnectionChange?: ((connected: boolean) => void) | undefined;
+  readonly onEvent?: ((event: StudioServerEvent) => void) | undefined;
+};
 
-  function scheduleReconnect(): void {
-    if (closed || reconnectTimer !== undefined) return;
-    reconnectTimer = setTimeout(() => {
-      reconnectTimer = undefined;
-      retryDelay = Math.min(retryDelay * 1.5, 10000);
-      connect();
-    }, retryDelay);
-  }
+/**
+ * One WebSocket per URL for the whole tab, shared by every subscriber. A socket still connecting is
+ * never closed (browsers report "closed before the connection is established"): when the last
+ * subscriber leaves meanwhile, it closes once open, unless someone subscribes again first, as React
+ * StrictMode does when it runs every effect twice.
+ */
+type SharedConnection = {
+  readonly url: string;
+  readonly subscribers: Set<Subscriber>;
+  ws: WebSocket | undefined;
+  connected: boolean;
+  reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+  retryDelay: number;
+};
 
-  function connect(): void {
-    if (closed) return;
-    ws = tryOpenSocket(options, {
+/** `WebSocket.CONNECTING` (WHATWG): the socket has not opened yet. */
+const SOCKET_CONNECTING = 0;
+
+const connections = new Map<string, SharedConnection>();
+
+function notify(conn: SharedConnection, connected: boolean): void {
+  for (const sub of conn.subscribers) sub.onConnectionChange?.(connected);
+}
+
+function scheduleReconnect(conn: SharedConnection): void {
+  if (conn.subscribers.size === 0 || conn.reconnectTimer !== undefined) return;
+  conn.reconnectTimer = setTimeout(() => {
+    conn.reconnectTimer = undefined;
+    conn.retryDelay = Math.min(conn.retryDelay * 1.5, 10000);
+    connect(conn);
+  }, conn.retryDelay);
+}
+
+function connect(conn: SharedConnection): void {
+  if (conn.subscribers.size === 0) return;
+  conn.ws = tryOpenSocket(
+    {
+      url: conn.url,
+      onConnectionChange: (connected) => {
+        notify(conn, connected);
+      },
+      onEvent: (event) => {
+        for (const sub of conn.subscribers) sub.onEvent?.(event);
+      },
+    },
+    {
       onOpen: () => {
-        connected = true;
-        retryDelay = 1000;
-        options?.onConnectionChange?.(true);
+        if (conn.subscribers.size === 0) {
+          teardown(conn);
+          return;
+        }
+        conn.connected = true;
+        conn.retryDelay = 1000;
+        notify(conn, true);
       },
       onClose: () => {
-        if (connected) {
-          connected = false;
-          options?.onConnectionChange?.(false);
+        conn.ws = undefined;
+        if (conn.connected) {
+          conn.connected = false;
+          notify(conn, false);
         }
-        scheduleReconnect();
+        scheduleReconnect(conn);
       },
-    });
-    if (ws === undefined && readSessionToken() !== undefined) {
-      scheduleReconnect();
-    }
-  }
+    },
+  );
+  if (conn.ws === undefined && readSessionToken() !== undefined) scheduleReconnect(conn);
+}
 
-  connect();
+function teardown(conn: SharedConnection): void {
+  connections.delete(conn.url);
+  if (conn.reconnectTimer !== undefined) clearTimeout(conn.reconnectTimer);
+  conn.reconnectTimer = undefined;
+  conn.connected = false;
+  const ws = conn.ws;
+  conn.ws = undefined;
+  if (ws !== undefined) {
+    ws.onclose = () => {};
+    ws.close();
+  }
+}
+
+function unsubscribe(conn: SharedConnection, sub: Subscriber): void {
+  conn.subscribers.delete(sub);
+  if (conn.subscribers.size > 0) return;
+  // Still connecting: `onOpen` closes it, unless a new subscriber arrives first.
+  if (conn.ws !== undefined && conn.ws.readyState === SOCKET_CONNECTING) return;
+  teardown(conn);
+}
+
+export function createEventsClient(options?: EventsClientOptions): EventsClient {
+  const url = options?.url ?? defaultWsUrl();
+  let conn = connections.get(url);
+  if (conn === undefined) {
+    conn = {
+      url,
+      subscribers: new Set(),
+      ws: undefined,
+      connected: false,
+      reconnectTimer: undefined,
+      retryDelay: 1000,
+    };
+    connections.set(url, conn);
+  }
+  const shared = conn;
+  const sub: Subscriber = {
+    onConnectionChange: options?.onConnectionChange,
+    onEvent: options?.onEvent,
+  };
+  shared.subscribers.add(sub);
+  let subscribed = true;
+  if (shared.connected) sub.onConnectionChange?.(true);
+  else if (shared.ws === undefined && shared.reconnectTimer === undefined) connect(shared);
 
   return {
     close(): void {
-      closed = true;
-      if (reconnectTimer !== undefined) clearTimeout(reconnectTimer);
-      if (ws !== undefined) {
-        ws.onclose = () => {};
-        ws.close();
-      }
-      connected = false;
+      if (!subscribed) return;
+      subscribed = false;
+      unsubscribe(shared, sub);
     },
-    isConnected: () => connected,
+    isConnected: () => subscribed && shared.connected,
   };
 }
