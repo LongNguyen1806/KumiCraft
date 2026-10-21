@@ -13,6 +13,7 @@ import Fastify, {
 } from 'fastify';
 
 import type { SessionInfo } from '../../core/shared/session.ts';
+import { type AgentTurnRoutesDeps, registerAgentTurnRoutes } from './routes/agent-turns.ts';
 import { type AgentRoutesDeps, registerAgentRoutes } from './routes/agents.ts';
 import { type EditorRoutesDeps, registerEditorRoutes } from './routes/editor.ts';
 import { type EventRoutesDeps, registerEventRoutes } from './routes/events.ts';
@@ -43,6 +44,7 @@ export type HttpAppOptions = {
   readonly editorRoutes?: EditorRoutesDeps;
   readonly jobRoutes?: JobRoutesDeps;
   readonly agentRoutes?: AgentRoutesDeps;
+  readonly agentTurnRoutes?: AgentTurnRoutesDeps;
   /** Directory of the built Studio. When absent, only the API is served. */
   readonly studioDir?: string;
 };
@@ -130,6 +132,9 @@ async function registerApiRoutes(app: FastifyInstance, options: HttpAppOptions):
       }
       if (options.agentRoutes !== undefined) {
         registerAgentRoutes(api, options.agentRoutes);
+      }
+      if (options.agentTurnRoutes !== undefined) {
+        registerAgentTurnRoutes(api, options.agentTurnRoutes);
       }
       if (options.eventRoutes !== undefined) {
         registerEventRoutes(api, options.eventRoutes);

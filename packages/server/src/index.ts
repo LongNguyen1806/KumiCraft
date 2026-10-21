@@ -15,6 +15,7 @@ import { createNodeSystem } from './adapters/system/node-system.ts';
 import { createChokidarWatcher } from './adapters/watcher/chokidar-watcher.ts';
 import type { AgentService } from './core/agent/agent-service.ts';
 import type { TurnSnapshotStore } from './core/agent/snapshot/index.ts';
+import type { TurnRunner } from './core/agent/turn-runner.ts';
 import type { HistoryService } from './core/history/history-service.ts';
 import type { JobService } from './core/jobs/job-service.ts';
 import { createEventBus, type EventBusPort } from './core/ports/event-bus-port.ts';
@@ -38,6 +39,8 @@ import { type CoreServices, createServices } from './server-services.ts';
 export type { LogLevel } from './adapters/http/create-http-app.ts';
 export type { AgentService } from './core/agent/agent-service.ts';
 export type { TurnSnapshotStore } from './core/agent/snapshot/index.ts';
+export type { TurnRunner } from './core/agent/turn-runner.ts';
+export type { TurnStore } from './core/agent/turn-store.ts';
 export type { HistoryService } from './core/history/history-service.ts';
 export type { EventBusPort, ServerEvent } from './core/ports/event-bus-port.ts';
 export type { ProjectService } from './core/project/project-service.ts';
@@ -92,6 +95,7 @@ export type RunningServer = {
   readonly eventBus: EventBusPort;
   readonly agentService: AgentService;
   readonly turnSnapshotStore: TurnSnapshotStore;
+  readonly turnRunner: TurnRunner;
   readonly close: () => Promise<void>;
 };
 
@@ -322,6 +326,7 @@ export async function startServer(options: StartServerOptions): Promise<Result<R
     eventBus: ctx.eventBus,
     agentService: ctx.agentService,
     turnSnapshotStore: ctx.turnSnapshotStore,
+    turnRunner: ctx.turnRunner,
     close: createServerClose({ ...ctx, app }),
   });
 }

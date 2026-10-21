@@ -65,6 +65,7 @@ function buildRouteConfigs(
     },
     jobRoutes: { jobService: ctx.jobService },
     agentRoutes: { agentService: ctx.agentService },
+    agentTurnRoutes: { turnRunner: ctx.turnRunner },
     historyRoutes: {
       historyService: ctx.historyService,
       getProjectRoot,

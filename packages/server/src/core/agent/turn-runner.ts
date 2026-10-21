@@ -1,0 +1,385 @@
+// End-to-end execution of agent turns (WP-3.03b, R-AG-11 to R-AG-17, S-32, S-110 to S-118).
+import type {
+  AgentEvent,
+  AgentStatus,
+  BackendInfo,
+  ProjectInfo,
+  StartTurnRequest,
+  TurnNotice,
+  TurnSummary,
+} from '@reactcraft/shared';
+import { nanoid } from 'nanoid';
+
+import type { JobContext, JobService } from '../jobs/job-service.ts';
+import type { MirrorResult, MirrorService } from '../mirror/mirror-types.ts';
+import type { EventBusPort } from '../ports/event-bus-port.ts';
+import type { FileSystemPort } from '../ports/file-system-port.ts';
+import type { LoggerPort } from '../ports/logger-port.ts';
+import type { ProcessPort } from '../ports/process-port.ts';
+import { redactSecrets } from '../shared/redact-secrets.ts';
+import { type AppError, err, ok, type Result } from '../shared/result.ts';
+import type { AgentService } from './agent-service.ts';
+import type { AgentAdapter, AgentCommand } from './agent-types.ts';
+import { buildPrompt } from './prompt.ts';
+import type { TurnSnapshotStore } from './snapshot/snapshot-types.ts';
+import type { TurnStore } from './turn-store.ts';
+
+export const AGENT_TURN_TIMEOUT_MS = 30 * 60 * 1000;
+
+export type ResolvedAgent = {
+  readonly adapter: AgentAdapter;
+  readonly command: AgentCommand;
+  readonly status: AgentStatus;
+};
+
+export type TurnRunnerDeps = {
+  readonly fs: FileSystemPort;
+  readonly process: ProcessPort;
+  readonly jobs: JobService;
+  readonly agents: Pick<AgentService, 'resolve'>;
+  readonly mirror: Pick<MirrorService, 'refresh' | 'check'>;
+  readonly snapshots: TurnSnapshotStore;
+  readonly store: TurnStore;
+  readonly project: () => Result<ProjectInfo>;
+  readonly eventBus?: EventBusPort | undefined;
+  readonly logger: LoggerPort;
+  readonly now: () => Date;
+  readonly newTurnId?: () => string;
+  readonly timeoutMs?: number | undefined;
+};
+
+export type TurnRunner = {
+  start(
+    request: StartTurnRequest,
+  ): Promise<Result<{ readonly jobId: string; readonly turnId: string }>>;
+  list(): Promise<Result<readonly TurnSummary[]>>;
+  diff(turnId: string, file: string): Promise<Result<string>>;
+  revert(turnId: string): Promise<Result<TurnSummary>>;
+};
+
+type MirrorDir = { readonly backendId: string; readonly label: string; readonly dir: string };
+
+function redactEventSecrets(event: AgentEvent): AgentEvent {
+  if (event.kind === 'message') {
+    return { ...event, text: redactSecrets(event.text) };
+  }
+  if (event.kind === 'tool') {
+    return {
+      ...event,
+      ...(event.target !== undefined ? { target: redactSecrets(event.target) } : {}),
+    };
+  }
+  if (event.kind === 'error') {
+    return { ...event, message: redactSecrets(event.message) };
+  }
+  return event;
+}
+
+async function prepareMirrors(
+  mirrorService: Pick<MirrorService, 'refresh' | 'check'>,
+  projectId: string,
+  backends: readonly BackendInfo[],
+  notices: TurnNotice[],
+): Promise<readonly MirrorDir[]> {
+  const mirrors: MirrorDir[] = [];
+  for (const backend of backends) {
+    const res: MirrorResult = await mirrorService.refresh(projectId, backend);
+    if (res.state === 'ready' && res.dir !== undefined) {
+      mirrors.push({ backendId: backend.id, label: backend.label, dir: res.dir });
+    } else if (res.state === 'skipped' || res.state === 'failed') {
+      notices.push({ code: 'backendSkipped', backendId: backend.id, label: backend.label });
+    } else {
+      notices.push({ code: 'backendTooLarge', backendId: backend.id, label: backend.label });
+    }
+  }
+  return mirrors;
+}
+
+async function checkMirrorsModified(
+  mirrorService: Pick<MirrorService, 'refresh' | 'check'>,
+  projectId: string,
+  backends: readonly BackendInfo[],
+  readyIds: ReadonlySet<string>,
+  notices: TurnNotice[],
+): Promise<void> {
+  for (const backend of backends) {
+    if (!readyIds.has(backend.id)) continue;
+    const checkRes = await mirrorService.check(projectId, backend.id);
+    if (checkRes === 'modified') {
+      notices.push({ code: 'mirrorModified', backendId: backend.id, label: backend.label });
+    }
+  }
+}
+
+function determineOutcome(
+  signal: AbortSignal,
+  exitCode: number,
+  hasErrorEvent: boolean,
+  agent: 'agy' | 'claude',
+  timeoutMs: number,
+): { state: 'completed' | 'failed' | 'cancelled'; error?: AppError | undefined } {
+  if (signal.aborted) {
+    return { state: 'cancelled', error: { code: 'E019' } };
+  }
+  if (exitCode === 124) {
+    return { state: 'failed', error: { code: 'E020', params: { operation: 'agent', timeoutMs } } };
+  }
+  if (exitCode !== 0 || hasErrorEvent) {
+    return { state: 'failed', error: { code: 'E027', params: { agent, exitCode } } };
+  }
+  return { state: 'completed' };
+}
+
+async function resolveConversation(
+  store: TurnStore,
+  projectId: string,
+  mode: 'new' | 'continue',
+  agent: 'agy' | 'claude',
+): Promise<string | undefined> {
+  if (mode === 'continue') {
+    const prev = await store.conversation(projectId);
+    return prev?.agent === agent ? prev.id : undefined;
+  }
+  await store.setConversation(projectId, undefined);
+  return undefined;
+}
+
+async function executeAgentProcess(
+  deps: TurnRunnerDeps,
+  resolved: ResolvedAgent,
+  args: readonly string[],
+  cwd: string,
+  timeoutMs: number,
+  turnId: string,
+  projectId: string,
+  signal: AbortSignal,
+): Promise<{ exitCode: number; hasErrorEvent: boolean }> {
+  let hasErrorEvent = false;
+  let conversationId: string | undefined;
+  // Cancelled while the snapshot or mirrors were being prepared: never start the agent.
+  if (signal.aborted) return { exitCode: 1, hasErrorEvent };
+  const handle = deps.process.spawn(resolved.command.command, args, { cwd, timeoutMs });
+
+  const onAbort = () => {
+    void handle.kill();
+  };
+  signal.addEventListener('abort', onAbort, { once: true });
+
+  handle.onLine((line) => {
+    const event = resolved.adapter.parseLine(line);
+    if (event !== undefined) {
+      const redacted = redactEventSecrets(event);
+      if (redacted.kind === 'conversation') conversationId = redacted.id;
+      if (redacted.kind === 'error') {
+        hasErrorEvent = true;
+      }
+      deps.eventBus?.publish('agent.event', { turnId, event: redacted });
+    }
+  });
+
+  const out = await handle.wait();
+  signal.removeEventListener('abort', onAbort);
+  // Saved before the turn ends, so an immediate "continue" turn reads it (R-AG-16).
+  if (conversationId !== undefined) {
+    await deps.store.setConversation(projectId, { agent: resolved.status.id, id: conversationId });
+  }
+  return { exitCode: out.exitCode, hasErrorEvent };
+}
+
+type TurnPreparation = {
+  readonly initialSummary: TurnSummary;
+  readonly args: readonly string[];
+  readonly readyIds: ReadonlySet<string>;
+  readonly notices: TurnNotice[];
+};
+
+async function prepareTurnRun(
+  deps: TurnRunnerDeps,
+  projectInfo: ProjectInfo,
+  resolved: ResolvedAgent,
+  turnId: string,
+  request: StartTurnRequest,
+): Promise<Result<TurnPreparation>> {
+  const capRes = await deps.snapshots.capture(projectInfo.id, projectInfo.root, turnId);
+  if (!capRes.ok) return err(capRes.error);
+
+  const notices: TurnNotice[] = [];
+  const mirrors = await prepareMirrors(deps.mirror, projectInfo.id, projectInfo.backends, notices);
+  const guideRes = await deps.fs.readText(projectInfo.root, '.reactcraft/agent-guide.md');
+  const guide = guideRes.ok ? guideRes.value : undefined;
+
+  const promptRes = buildPrompt({
+    request: request.prompt,
+    context: request.context,
+    mirrors,
+    docs: request.docs,
+    guide,
+  });
+  if (!promptRes.ok) return err(promptRes.error);
+
+  const conversationId = await resolveConversation(
+    deps.store,
+    projectInfo.id,
+    request.conversation,
+    resolved.status.id,
+  );
+  const initialSummary: TurnSummary = {
+    id: turnId,
+    agent: resolved.status.id,
+    startedAt: deps.now().toISOString(),
+    prompt: request.prompt,
+    state: 'running',
+    files: [],
+    revertible: false,
+    notices,
+  };
+  await deps.store.save(projectInfo.id, initialSummary);
+
+  const mirrorDirs = mirrors.map((m) => m.dir);
+  const adapterArgs = resolved.adapter.buildArgs({
+    prompt: promptRes.value,
+    mirrorDirs,
+    conversationId,
+  });
+  const args = [...resolved.command.prefixArgs, ...adapterArgs];
+  const readyIds = new Set(mirrors.map((m) => m.backendId));
+
+  return ok({ initialSummary, args, readyIds, notices });
+}
+
+async function finalizeTurn(
+  deps: TurnRunnerDeps,
+  projectInfo: ProjectInfo,
+  resolved: ResolvedAgent,
+  turnId: string,
+  prep: TurnPreparation,
+  exitCode: number,
+  hasErrorEvent: boolean,
+  timeoutMs: number,
+  signal: AbortSignal,
+): Promise<Result<TurnSummary>> {
+  const finishRes = await deps.snapshots.finish(projectInfo.id, projectInfo.root, turnId);
+  const files = finishRes.ok ? [...finishRes.value] : [];
+  await checkMirrorsModified(
+    deps.mirror,
+    projectInfo.id,
+    projectInfo.backends,
+    prep.readyIds,
+    prep.notices,
+  );
+
+  const outcome = determineOutcome(signal, exitCode, hasErrorEvent, resolved.status.id, timeoutMs);
+
+  const finalSummary: TurnSummary = {
+    ...prep.initialSummary,
+    finishedAt: deps.now().toISOString(),
+    state: outcome.state,
+    files,
+    revertible: files.length > 0,
+    notices: prep.notices,
+  };
+  await deps.store.save(projectInfo.id, finalSummary);
+
+  deps.logger.info(
+    { projectId: projectInfo.id, turnId, agent: resolved.status.id, exitCode },
+    'agent turn finished',
+  );
+
+  if (outcome.state === 'completed') {
+    return ok(finalSummary);
+  }
+  return err(outcome.error ?? { code: 'E027', params: { agent: resolved.status.id, exitCode } });
+}
+
+async function runTurn(
+  ctx: JobContext,
+  deps: TurnRunnerDeps,
+  projectInfo: ProjectInfo,
+  resolved: ResolvedAgent,
+  turnId: string,
+  request: StartTurnRequest,
+): Promise<Result<TurnSummary>> {
+  const timeoutMs = deps.timeoutMs ?? AGENT_TURN_TIMEOUT_MS;
+  const prepRes = await prepareTurnRun(deps, projectInfo, resolved, turnId, request);
+  if (!prepRes.ok) return err(prepRes.error);
+
+  const { exitCode, hasErrorEvent } = await executeAgentProcess(
+    deps,
+    resolved,
+    prepRes.value.args,
+    projectInfo.root,
+    timeoutMs,
+    turnId,
+    projectInfo.id,
+    ctx.signal,
+  );
+
+  return finalizeTurn(
+    deps,
+    projectInfo,
+    resolved,
+    turnId,
+    prepRes.value,
+    exitCode,
+    hasErrorEvent,
+    timeoutMs,
+    ctx.signal,
+  );
+}
+
+export function createTurnRunner(deps: TurnRunnerDeps): TurnRunner {
+  return {
+    async start(request) {
+      const pRes = deps.project();
+      if (!pRes.ok) return pRes;
+      if (!pRes.value.trusted) {
+        return err({ code: 'E011', params: { reason: 'untrusted' } });
+      }
+      const aRes = await deps.agents.resolve();
+      if (!aRes.ok) return aRes;
+
+      for (const doc of request.docs) {
+        const docExists = await deps.fs.exists(pRes.value.root, doc);
+        if (!docExists) {
+          return err({ code: 'E015', params: { resource: 'file', id: doc } });
+        }
+      }
+
+      const turnId = deps.newTurnId ? deps.newTurnId() : nanoid(10);
+      const jobRes = deps.jobs.start('agent.turn', 'agent.turn', (ctx) =>
+        runTurn(ctx, deps, pRes.value, aRes.value, turnId, request),
+      );
+      if (!jobRes.ok) return jobRes;
+      return ok({ jobId: jobRes.value.jobId, turnId });
+    },
+
+    async list() {
+      const pRes = deps.project();
+      if (!pRes.ok) return pRes;
+      const summaries = await deps.store.list(pRes.value.id);
+      return ok(summaries);
+    },
+
+    async diff(turnId, file) {
+      const pRes = deps.project();
+      if (!pRes.ok) return pRes;
+      return deps.snapshots.diff(pRes.value.id, turnId, file);
+    },
+
+    async revert(turnId) {
+      const pRes = deps.project();
+      if (!pRes.ok) return pRes;
+      const projectId = pRes.value.id;
+      // Look the turn up first: an unknown turn must not change any file.
+      const existing = await deps.store.get(projectId, turnId);
+      if (existing === undefined) {
+        return err({ code: 'E015', params: { resource: 'turn', id: turnId } });
+      }
+      const revRes = await deps.snapshots.revert(projectId, pRes.value.root, turnId);
+      if (!revRes.ok) return revRes;
+      const updated: TurnSummary = { ...existing, revertible: false };
+      await deps.store.save(projectId, updated);
+      return ok(updated);
+    },
+  };
+}

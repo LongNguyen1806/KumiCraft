@@ -3,6 +3,8 @@ import { agyAdapter } from './core/agent/adapters/agy.ts';
 import { claudeAdapter } from './core/agent/adapters/claude.ts';
 import { type AgentService, createAgentService } from './core/agent/agent-service.ts';
 import { createTurnSnapshotStore, type TurnSnapshotStore } from './core/agent/snapshot/index.ts';
+import { createTurnRunner, type TurnRunner } from './core/agent/turn-runner.ts';
+import { createTurnStore, type TurnStore } from './core/agent/turn-store.ts';
 import { createHistoryService, type HistoryService } from './core/history/history-service.ts';
 import { createJobService, type JobService } from './core/jobs/job-service.ts';
 import { createMirrorService } from './core/mirror/mirror-service.ts';
@@ -42,6 +44,8 @@ export type CoreServices = {
   usageCounter: UsageCounter;
   agentService: AgentService;
   turnSnapshotStore: TurnSnapshotStore;
+  turnStore: TurnStore;
+  turnRunner: TurnRunner;
 };
 
 /** History, jobs and the watcher that reports files changed outside ReactCraft (R-HI-05). */
@@ -109,6 +113,106 @@ function createAuxiliaryServices(deps: ServiceDeps, processPort: ProcessPort, fs
   return { usageCounter, sourceEditorService, agentService, turnSnapshotStore };
 }
 
+function createAgentTurnServices(
+  deps: ServiceDeps,
+  fs: FileSystemPort,
+  processPort: ProcessPort,
+  jobService: JobService,
+  mirrorService: MirrorService,
+  projectService: ProjectService,
+  eventBus: EventBusPort,
+  auxiliary: { agentService: AgentService; turnSnapshotStore: TurnSnapshotStore },
+) {
+  const turnStore = createTurnStore({ fs, dataDir: deps.dataDir });
+  const turnRunner = createTurnRunner({
+    fs,
+    process: processPort,
+    jobs: jobService,
+    agents: auxiliary.agentService,
+    mirror: mirrorService,
+    snapshots: auxiliary.turnSnapshotStore,
+    store: turnStore,
+    project: () => projectService.getProjectInfo(),
+    eventBus,
+    logger: deps.logger,
+    now: () => new Date(),
+  });
+  return { turnStore, turnRunner };
+}
+
+function createProjectWithWatch(
+  deps: ServiceDeps,
+  historyService: HistoryService,
+  jobService: JobService,
+  mirrorService: MirrorService,
+  watch: ProjectWatch,
+  runnerHolder: { current?: RunnerService | undefined },
+  projectHolder: { current?: ProjectService | undefined },
+): ProjectService {
+  const projectService = createProjectService({
+    ...deps,
+    watch,
+    jobs: jobService,
+    history: historyService,
+    mirror: mirrorService,
+    runnerService: createRunnerProxy(runnerHolder),
+  });
+  projectHolder.current = projectService;
+  return projectService;
+}
+
+function createRunnersAndAuxiliary(
+  deps: ServiceDeps,
+  studioOrigin: string,
+  processPort: ProcessPort,
+  eventBus: EventBusPort,
+  fs: FileSystemPort,
+  runnerScript: string,
+  adapter: FrameworkAdapter,
+  projectService: ProjectService,
+  runnerHolder: { current?: RunnerService | undefined },
+) {
+  const runnerService = createProjectRunner(
+    deps,
+    runnerScript,
+    adapter,
+    projectService,
+    processPort,
+    eventBus,
+    studioOrigin,
+  );
+  runnerHolder.current = runnerService;
+  const auxiliary = createAuxiliaryServices(deps, processPort, fs);
+  return { runnerService, auxiliary };
+}
+
+function initProjectServices(
+  deps: ServiceDeps,
+  eventBus: EventBusPort,
+  watcher: WatcherPort,
+  fs: FileSystemPort,
+  runnerHolder: { current?: RunnerService | undefined },
+) {
+  const projectHolder: { current?: ProjectService | undefined } = {};
+  const { historyService, jobService, watch } = createFileServices(
+    deps,
+    eventBus,
+    watcher,
+    projectHolder,
+  );
+  const mirrorService = createMirrorService({ fs, cacheDir: deps.cacheDir, logger: deps.logger });
+  const projectService = createProjectWithWatch(
+    deps,
+    historyService,
+    jobService,
+    mirrorService,
+    watch,
+    runnerHolder,
+    projectHolder,
+  );
+  return { historyService, jobService, mirrorService, projectService };
+}
+
 export function createServices(
   deps: ServiceDeps,
   studioOrigin: string,
@@ -120,42 +224,35 @@ export function createServices(
   adapter: FrameworkAdapter,
 ): CoreServices {
   const runnerHolder: { current?: RunnerService | undefined } = {};
-  const projectHolder: { current?: ProjectService | undefined } = {};
-  const { historyService, jobService, watch } = createFileServices(
-    deps,
-    eventBus,
-    watcher,
-    projectHolder,
-  );
-  const mirrorService = createMirrorService({ fs, cacheDir: deps.cacheDir, logger: deps.logger });
-  const projectService = createProjectService({
-    ...deps,
-    watch,
-    jobs: jobService,
-    history: historyService,
-    mirror: mirrorService,
-    runnerService: createRunnerProxy(runnerHolder),
-  });
-  projectHolder.current = projectService;
+  const projectServices = initProjectServices(deps, eventBus, watcher, fs, runnerHolder);
 
-  const runnerService = createProjectRunner(
+  const { runnerService, auxiliary } = createRunnersAndAuxiliary(
     deps,
-    runnerScript,
-    adapter,
-    projectService,
+    studioOrigin,
     processPort,
     eventBus,
-    studioOrigin,
+    fs,
+    runnerScript,
+    adapter,
+    projectServices.projectService,
+    runnerHolder,
   );
-  const auxiliary = createAuxiliaryServices(deps, processPort, fs);
-  runnerHolder.current = runnerService;
+
+  const agentTurns = createAgentTurnServices(
+    deps,
+    fs,
+    processPort,
+    projectServices.jobService,
+    projectServices.mirrorService,
+    projectServices.projectService,
+    eventBus,
+    auxiliary,
+  );
 
   return {
-    projectService,
+    ...projectServices,
     runnerService,
-    historyService,
-    jobService,
-    mirrorService,
+    ...agentTurns,
     ...auxiliary,
   };
 }
