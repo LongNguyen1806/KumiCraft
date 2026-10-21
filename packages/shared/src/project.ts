@@ -279,6 +279,7 @@ export const SERVER_EVENT_TYPES = [
   'job.failed',
   'job.cancelled',
   'server.shuttingDown',
+  'agent.event',
 ] as const;
 export const ServerEventTypeSchema = z.enum(SERVER_EVENT_TYPES);
 export type ServerEventType = z.infer<typeof ServerEventTypeSchema>;

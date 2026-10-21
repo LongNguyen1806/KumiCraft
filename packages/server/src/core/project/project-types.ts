@@ -24,6 +24,7 @@ import type {
 
 import type { HistoryService } from '../history/history-service.ts';
 import type { JobService } from '../jobs/job-service.ts';
+import type { MirrorService } from '../mirror/mirror-types.ts';
 import type { EventBusPort } from '../ports/event-bus-port.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { LoggerPort } from '../ports/logger-port.ts';
@@ -63,6 +64,7 @@ export type ProjectServiceDeps = {
   readonly jobs?: JobService | undefined;
   readonly history?: HistoryService | Pick<HistoryService, 'clear'> | undefined;
   readonly watch?: { start(root: string): void; stop(): Promise<void> } | undefined;
+  readonly mirror?: Pick<MirrorService, 'refresh' | 'remove'> | undefined;
 };
 
 export type ProjectService = {

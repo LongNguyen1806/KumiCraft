@@ -1,4 +1,4 @@
-import type { ElementRef, TreeNode } from '@reactcraft/shared';
+import { type ElementRef, INSERT_JSX_MAX_BYTES, type TreeNode } from '@reactcraft/shared';
 
 import { applyStructureEdit, fetchElementText } from '../../api/source-client.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';
@@ -9,8 +9,6 @@ import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag, runStructureOp } from '../structure/structure-commands.ts';
 import { useStructureErrorStore } from '../structure/structure-error-store.ts';
 import { type ClipboardEntry, useClipboardStore } from './clipboard-store.ts';
-
-const MAX_CLIPBOARD_BYTES = 1024 * 1024; // 1 MB (S-17)
 
 export function sortRefsInDocumentOrder(
   refs: readonly ElementRef[],
@@ -156,7 +154,7 @@ export async function pasteClipboard(): Promise<boolean> {
 
   if (!text || text.trim() === '') return false;
 
-  if (new TextEncoder().encode(text).length > MAX_CLIPBOARD_BYTES) {
+  if (new TextEncoder().encode(text).length > INSERT_JSX_MAX_BYTES) {
     const targetKey = `${primaryRef.loc}#${String(primaryRef.index)}`;
     useStructureErrorStore.getState().setError({
       targetKey,

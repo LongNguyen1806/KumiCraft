@@ -4,6 +4,8 @@ import {
   EditRequestSchema,
   EditResultSchema,
   ElementSourceSchema,
+  INSERT_JSX_MAX_BYTES,
+  InsertEditSchema,
   parseLocString,
   SetAttributeEditSchema,
   SetClassNameEditSchema,
@@ -150,6 +152,20 @@ describe('source schemas and utilities', () => {
         },
       };
       expect(EditResultSchema.safeParse(res).success).toBe(true);
+    });
+  });
+
+  describe('InsertEditSchema', () => {
+    it('takes a clipboard paste up to 1 MB and refuses a larger one [S-17]', () => {
+      const insert = (jsx: string) =>
+        InsertEditSchema.safeParse({
+          kind: 'insert',
+          target: { kind: 'child', parent: { loc: 'src/App.tsx:3:5', tag: 'div' }, where: 'end' },
+          jsx,
+        }).success;
+      expect(INSERT_JSX_MAX_BYTES).toBe(1024 * 1024);
+      expect(insert(`<p>${'a'.repeat(512 * 1024)}</p>`)).toBe(true);
+      expect(insert('a'.repeat(INSERT_JSX_MAX_BYTES + 1))).toBe(false);
     });
   });
 });

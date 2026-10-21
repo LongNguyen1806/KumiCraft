@@ -233,4 +233,26 @@ describe('Studio Clipboard (Scenarios #9..#12) [R-CB-10..13]', () => {
       { loc: 'src/App.tsx:6:5', index: 0 },
     ]);
   });
+
+  it('refuses to paste more than 1 MB of UTF-8 without calling the server [S-17]', async () => {
+    useClipboardStore.getState().clear();
+    const applySpy = vi.spyOn(sourceClient, 'applyStructureEdit');
+    const sectionRef: ElementRef = { loc: 'src/App.tsx:10:1', index: 0 };
+    useSelectionStore.getState().setTree([{ ref: sectionRef, tag: 'section', instances: 1 }]);
+    useSelectionStore.getState().setSelectedRefs([sectionRef]);
+    // 600 000 characters but 1.2 MB: the limit counts bytes, as the clipboard holds them.
+    const text = `<p>${'Ă'.repeat(600_000)}</p>`;
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { readText: vi.fn().mockResolvedValue(text), writeText: vi.fn() },
+      configurable: true,
+      writable: true,
+    });
+
+    expect(await pasteClipboard()).toBe(false);
+    expect(applySpy).not.toHaveBeenCalled();
+    expect(useStructureErrorStore.getState().error).toEqual({
+      targetKey: 'src/App.tsx:10:1#0',
+      info: { code: 'E016', params: { reason: 'tooLarge' } },
+    });
+  });
 });

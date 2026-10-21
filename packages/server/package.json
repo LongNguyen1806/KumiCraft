@@ -24,6 +24,7 @@
     "cross-spawn": "7.0.6",
     "env-paths": "4.0.0",
     "fastify": "5.12.5",
+    "ignore": "7.0.12",
     "magic-string": "0.30.21",
     "nanoid": "6.0.2",
     "pino": "10.4.0",

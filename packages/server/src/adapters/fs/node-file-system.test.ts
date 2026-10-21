@@ -124,4 +124,22 @@ describe('NodeFileSystem', () => {
       expect(names).toEqual(['a.txt', 'real']);
     }
   });
+
+  it('stat returns size and mtimeMs, handles missing (E015) and traversal (E012)', async () => {
+    await writeFile(join(root, 'hello.txt'), '12345');
+    const res = await fs.stat(root, 'hello.txt');
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.value.size).toBe(5);
+      expect(res.value.mtimeMs).toBeGreaterThan(0);
+    }
+
+    const missing = await fs.stat(root, 'missing.txt');
+    expect(missing.ok).toBe(false);
+    if (!missing.ok) expect(missing.error.code).toBe('E015');
+
+    const outsideRes = await fs.stat(root, '../outside/secret.txt');
+    expect(outsideRes.ok).toBe(false);
+    if (!outsideRes.ok) expect(outsideRes.error.code).toBe('E012');
+  });
 });

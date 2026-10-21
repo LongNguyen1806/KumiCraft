@@ -13,8 +13,8 @@ import { createServerLogger } from './adapters/log/create-logger.ts';
 import { createNodeProcess } from './adapters/system/node-process.ts';
 import { createNodeSystem } from './adapters/system/node-system.ts';
 import { createChokidarWatcher } from './adapters/watcher/chokidar-watcher.ts';
-import { createHistoryService, type HistoryService } from './core/history/history-service.ts';
-import { createJobService, type JobService } from './core/jobs/job-service.ts';
+import type { HistoryService } from './core/history/history-service.ts';
+import type { JobService } from './core/jobs/job-service.ts';
 import { createEventBus, type EventBusPort } from './core/ports/event-bus-port.ts';
 import type { FileSystemPort } from './core/ports/file-system-port.ts';
 import type { LoggerPort } from './core/ports/logger-port.ts';
@@ -22,24 +22,16 @@ import type { ProcessPort } from './core/ports/process-port.ts';
 import type { SystemPort } from './core/ports/system-port.ts';
 import type { WatcherPort } from './core/ports/watcher-port.ts';
 import { viteReactAdapter } from './core/project/frameworks/vite-react/index.ts';
-import {
-  createProjectService,
-  type ProjectService,
-  type ProjectServiceDeps,
-} from './core/project/project-service.ts';
-import { createProjectWatch, type ProjectWatch } from './core/project/project-watch.ts';
-import { createRunnerService, type RunnerService } from './core/runner/runner-service.ts';
+import type { ProjectService } from './core/project/project-service.ts';
+import type { RunnerService } from './core/runner/runner-service.ts';
 import { err, ok, type Result } from './core/shared/result.ts';
 import { type Platform, toSupportedPlatform } from './core/shared/session.ts';
 import { loadSessionToken } from './core/shared/session-token-store.ts';
 import { type ConfigStore, createConfigStore } from './core/shared/user-config.ts';
-import { createUsageCounter, type UsageCounter } from './core/source-editor/component-usages.ts';
-import {
-  createSourceEditorService,
-  type SourceEditorService,
-} from './core/source-editor/source-editor-service.ts';
+import type { SourceEditorService } from './core/source-editor/source-editor-service.ts';
 import { readRememberedPort } from './core/workspace/studio-port.ts';
 import { autoOpenProject, createHttpServer } from './server-http.ts';
+import { type CoreServices, createServices } from './server-services.ts';
 
 export type { LogLevel } from './adapters/http/create-http-app.ts';
 export type { HistoryService } from './core/history/history-service.ts';
@@ -73,6 +65,7 @@ export type StartServerOptions = {
     readonly system?: SystemPort;
     readonly process?: ProcessPort;
     readonly configDir?: string;
+    readonly cacheDir?: string;
     readonly templateDir?: string;
     readonly homeDir?: string;
     readonly logger?: LoggerPort;
@@ -118,23 +111,49 @@ async function ensureConfigDir(dir: string, logger: LoggerPort): Promise<void> {
   }
 }
 
+/** S-125: cache directory for backend mirrors with mode 0o700. */
+async function ensureMirrorsDir(cacheDir: string, logger: LoggerPort): Promise<void> {
+  try {
+    await mkdir(join(cacheDir, 'mirrors'), { recursive: true, mode: 0o700 });
+  } catch (cause) {
+    logger.warn(
+      { cacheDir, err: cause },
+      'cannot create the mirrors folder; backend mirroring disabled',
+    );
+  }
+}
+
+function resolveServerPaths(options: StartServerOptions) {
+  return {
+    configDir: options.deps?.configDir ?? envPaths('reactcraft').config,
+    cacheDir: options.deps?.cacheDir ?? envPaths('reactcraft').cache,
+    homeDir: options.deps?.homeDir ?? homedir(),
+    templateDir: options.deps?.templateDir ?? resolveTemplateDir(),
+  };
+}
+
+function resolveCorePorts(options: StartServerOptions, platform: Platform) {
+  return {
+    fs: options.deps?.fs ?? createNodeFileSystem(platform),
+    logger: options.deps?.logger ?? createServerLogger({ level: options.logLevel ?? 'info' }).port,
+    system: options.deps?.system ?? createNodeSystem(),
+    processPort: options.deps?.process ?? createNodeProcess(),
+    eventBus: options.deps?.eventBus ?? createEventBus(),
+  };
+}
+
 async function initServerContext(
   options: StartServerOptions,
   platform: Platform,
 ): Promise<Result<InitializedContext>> {
-  const fs = options.deps?.fs ?? createNodeFileSystem(platform);
-  const logger =
-    options.deps?.logger ?? createServerLogger({ level: options.logLevel ?? 'info' }).port;
-  const system = options.deps?.system ?? createNodeSystem();
-  const processPort = options.deps?.process ?? createNodeProcess();
-  const configDir = options.deps?.configDir ?? envPaths('reactcraft').config;
-  const eventBus = options.deps?.eventBus ?? createEventBus();
-  const homeDir = options.deps?.homeDir ?? homedir();
-  const templateDir = options.deps?.templateDir ?? resolveTemplateDir();
+  const { fs, logger, system, processPort, eventBus } = resolveCorePorts(options, platform);
+  const { configDir, cacheDir, homeDir, templateDir } = resolveServerPaths(options);
 
   await ensureConfigDir(configDir, logger);
+  await ensureMirrorsDir(cacheDir, logger);
   const configStore = await createConfigStore({ fs, dir: configDir, platform, logger });
 
+  const runnerScript = resolveRunnerScript(options.deps?.runnerScriptPath);
   const services = createServices(
     {
       fs,
@@ -148,13 +167,15 @@ async function initServerContext(
       homeDir,
       templateDir,
       initialRoot: options.workspaceDir,
-      runnerScriptPath: options.deps?.runnerScriptPath,
+      cacheDir,
     },
     studioOriginOf(options),
     processPort,
     eventBus,
     fs,
     options.deps?.watcher ?? createChokidarWatcher(),
+    runnerScript,
+    viteReactAdapter,
   );
 
   const autoOpen = await autoOpenProject(fs, services.projectService, options.workspaceDir);
@@ -214,110 +235,6 @@ export function studioOriginOf(
   options: Pick<StartServerOptions, 'port' | 'trustedOrigins'>,
 ): string {
   return options.trustedOrigins?.[0] ?? `http://${HOST}:${String(options.port)}`;
-}
-
-/** History, jobs and the watcher that reports files changed outside ReactCraft (R-HI-05). */
-function createFileServices(
-  deps: Pick<ProjectServiceDeps, 'fs' | 'system' | 'logger'>,
-  eventBus: EventBusPort,
-  watcher: WatcherPort,
-  projectHolder: { readonly current?: ProjectService | undefined },
-): { historyService: HistoryService; jobService: JobService; watch: ProjectWatch } {
-  const historyService = createHistoryService({ fs: deps.fs, eventBus });
-  const jobService = createJobService({ system: deps.system, logger: deps.logger, eventBus });
-  const watch = createProjectWatch({
-    watcher,
-    fs: deps.fs,
-    history: historyService,
-    logger: deps.logger,
-    eventBus,
-    onWorkspaceFileChanged: () => projectHolder.current?.reloadWorkspaceFile() ?? Promise.resolve(),
-  });
-  return { historyService, jobService, watch };
-}
-
-function createProjectRunner(
-  deps: Pick<ProjectServiceDeps, 'system' | 'logger'> & {
-    readonly runnerScriptPath?: string | undefined;
-  },
-  projectService: ProjectService,
-  processPort: ProcessPort,
-  eventBus: EventBusPort,
-  studioOrigin: string,
-): RunnerService {
-  return createRunnerService({
-    getWorkspaceState: () => projectService.state(),
-    system: deps.system,
-    process: processPort,
-    logger: deps.logger,
-    eventBus,
-    studioOrigin,
-    adapter: viteReactAdapter,
-    runnerScriptPath: resolveRunnerScript(deps.runnerScriptPath),
-  });
-}
-
-type ServiceDeps = Omit<ProjectServiceDeps, 'runnerService'> & {
-  readonly runnerScriptPath?: string | undefined;
-};
-
-type CoreServices = {
-  projectService: ProjectService;
-  runnerService: RunnerService;
-  sourceEditorService: SourceEditorService;
-  historyService: HistoryService;
-  jobService: JobService;
-  usageCounter: UsageCounter;
-};
-
-function createServices(
-  deps: ServiceDeps,
-  studioOrigin: string,
-  processPort: ProcessPort,
-  eventBus: EventBusPort,
-  fs: FileSystemPort,
-  watcher: WatcherPort,
-): CoreServices {
-  const runnerHolder: { current?: RunnerService | undefined } = {};
-  const projectHolder: { current?: ProjectService | undefined } = {};
-  const { historyService, jobService, watch } = createFileServices(
-    deps,
-    eventBus,
-    watcher,
-    projectHolder,
-  );
-
-  const projectService = createProjectService({
-    ...deps,
-    watch,
-    jobs: jobService,
-    history: historyService,
-    runnerService: {
-      start: () => runnerHolder.current?.start() ?? Promise.resolve(ok({ state: 'stopped' })),
-      stop: () => runnerHolder.current?.stop() ?? Promise.resolve(ok({ state: 'stopped' })),
-    },
-  });
-  projectHolder.current = projectService;
-
-  const runnerService = createProjectRunner(
-    deps,
-    projectService,
-    processPort,
-    eventBus,
-    studioOrigin,
-  );
-  const usageCounter = createUsageCounter(fs);
-  const sourceEditorService = createSourceEditorService({ fs, usageCounter });
-  runnerHolder.current = runnerService;
-
-  return {
-    projectService,
-    runnerService,
-    sourceEditorService,
-    historyService,
-    jobService,
-    usageCounter,
-  };
 }
 
 export type ServerCloseSteps = {

@@ -223,6 +223,9 @@ export async function applyAddBackend(
     backends: res.value.backends,
   };
   deps.eventBus?.publish('project.changed', projectInfoOf(next));
+  if (current.trusted && res.value.added.status === 'ok') {
+    void deps.mirror?.refresh(current.file.id, res.value.added).catch(() => undefined);
+  }
   return ok({ next, added: res.value.added });
 }
 
@@ -237,6 +240,8 @@ export async function applyRemoveBackend(
 
   const res = await executeRemoveBackend(deps, current.root, current.file, current.trusted, id);
   if (!res.ok) return res;
+
+  await deps.mirror?.remove(current.file.id, id);
 
   const next: WorkspaceState = {
     ...current,

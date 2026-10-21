@@ -130,6 +130,9 @@ importers:
       fastify:
         specifier: 5.12.5
         version: 5.12.5
+      ignore:
+        specifier: 7.0.12
+        version: 7.0.12
       magic-string:
         specifier: 0.30.21
         version: 0.30.21
@@ -194,6 +197,9 @@ importers:
       fastify:
         specifier: 5.12.5
         version: 5.12.5
+      ignore:
+        specifier: 7.0.12
+        version: 7.0.12
       magic-string:
         specifier: 0.30.21
         version: 0.30.21

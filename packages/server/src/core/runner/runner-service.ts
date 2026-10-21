@@ -23,8 +23,8 @@ import type { ChildProcessHandle, ProcessPort } from '../ports/process-port.ts';
 import type { SystemPort } from '../ports/system-port.ts';
 import type { FrameworkAdapter } from '../project/frameworks/types.ts';
 import type { WorkspaceState } from '../project/project-service.ts';
+import { redactSecrets } from '../shared/redact-secrets.ts';
 import { findRunnerPort } from './port-finder.ts';
-import { redactSecrets } from './redact-secrets.ts';
 
 export type RunnerServiceDeps = {
   readonly getWorkspaceState: () => WorkspaceState;

@@ -20,6 +20,7 @@ import writeFileAtomic from 'write-file-atomic';
 
 import type {
   DirectoryEntry,
+  FileStat,
   FileSystemPort,
   ReadOptions,
 } from '../../core/ports/file-system-port.ts';
@@ -255,6 +256,17 @@ async function writeBytesAtomic(
   });
 }
 
+async function statFile(platform: Platform, root: string, path: string): Promise<Result<FileStat>> {
+  const resolved = await resolveSafe(platform, root, path);
+  if (!resolved.ok) return resolved;
+  try {
+    const st = await lstat(resolved.value);
+    return ok({ size: st.size, mtimeMs: st.mtimeMs });
+  } catch (error) {
+    return err(toAppError(error, path, 'stat'));
+  }
+}
+
 export function createNodeFileSystem(platform: Platform): FileSystemPort {
   return {
     readText: (root, path, options) => readText(platform, root, path, options),
@@ -296,5 +308,6 @@ export function createNodeFileSystem(platform: Platform): FileSystemPort {
         await rename(pair.value.source, pair.value.target);
       });
     },
+    stat: (root, path) => statFile(platform, root, path),
   };
 }

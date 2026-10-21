@@ -4,6 +4,8 @@ import type { Result } from '../shared/result.ts';
 
 export type DirectoryEntry = { readonly name: string; readonly kind: 'file' | 'directory' };
 
+export type FileStat = { readonly size: number; readonly mtimeMs: number };
+
 export type ReadOptions = {
   /** Larger files fail with E003 (`params.reason: 'tooLarge'`). Default: 20 MB (S-29). */
   readonly maxBytes?: number;
@@ -48,4 +50,6 @@ export interface FileSystemPort {
   remove(root: string, path: string): Promise<Result<void>>;
   copy(root: string, from: string, to: string): Promise<Result<void>>;
   rename(root: string, from: string, to: string): Promise<Result<void>>;
+  /** Size and modification time without following symlinks (lstat). Missing: E015; outside root: E012. */
+  stat(root: string, path: string): Promise<Result<FileStat>>;
 }
