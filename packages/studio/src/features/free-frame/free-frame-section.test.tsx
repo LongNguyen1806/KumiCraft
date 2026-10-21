@@ -42,7 +42,7 @@ describe('FreeFrameSection [R-FF-11, R-FF-14, R-FF-17]', () => {
     vi.restoreAllMocks();
   });
 
-  it('Scenario 12: reads inputs for 1 element and commits X on Enter [R-FF-11]', async () => {
+  it('Scenario 12: reads X, Y from the code classes and commits X on Enter [R-FF-11, R-FF-20]', async () => {
     useSelectionStore.getState().setTree(
       [
         { ref: { loc: FRAME, index: 0 }, tag: 'div', instances: 1 },

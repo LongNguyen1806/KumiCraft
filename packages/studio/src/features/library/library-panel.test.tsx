@@ -26,7 +26,7 @@ describe('Library Panel and Insertion (Scenarios #14, #15)', () => {
     vi.restoreAllMocks();
   });
 
-  it('Scenario 14: determineInsertTarget targets child end for container tags and sibling after for non-containers', async () => {
+  it('Scenario 14: determineInsertTarget targets child end for container tags and sibling after for non-containers [R-LB-14]', async () => {
     // 1. Container: section -> child end
     const sectionTarget = determineInsertTarget({ loc: 'src/Home.tsx:10:1', index: 0 }, 'section');
     expect(sectionTarget).toEqual({
@@ -54,7 +54,7 @@ describe('Library Panel and Insertion (Scenarios #14, #15)', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it('Scenario 15: LibraryPanel sets aria-disabled, keeps blocks draggable, and shows hint when no selection; inserts when selected', async () => {
+  it('Scenario 15: LibraryPanel sets aria-disabled, keeps blocks draggable, and shows hint when no selection; inserts when selected, then selects the new element [R-LB-14, R-LB-15]', async () => {
     const spy = vi.spyOn(sourceClient, 'applyStructureEdit').mockResolvedValue({
       changed: true,
       files: ['src/Home.tsx'],

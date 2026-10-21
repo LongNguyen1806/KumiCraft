@@ -93,7 +93,7 @@ async function setupProject(subName = 'app') {
 }
 
 describe('page-edits [WP-2.05]', () => {
-  it('scenario 2: adds "Giới thiệu" to template [R-PG-11, R-PG-12]', async () => {
+  it('scenario 2: adds "Giới thiệu" to template [R-PG-11, R-PG-12, AC-07]', async () => {
     const { target, service, fs } = await setupProject();
     const res = await service.addPage({ name: 'Giới thiệu' });
     expect(res.ok).toBe(true);

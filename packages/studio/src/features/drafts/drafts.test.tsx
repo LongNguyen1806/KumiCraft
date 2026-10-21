@@ -77,7 +77,7 @@ describe('Studio Drafts [R-DR-10 .. R-DR-15]', () => {
     vi.restoreAllMocks();
   });
 
-  it('scenario 15: selecting draft updates draftFile, sets draft iframe URL, design bar and setDesignFile', async () => {
+  it('scenario 15: selecting draft updates draftFile, sets draft iframe URL, design bar and setDesignFile [R-DR-13]', async () => {
     useSelectionStore.setState({ bridgeReady: true, currentRoute: '/' });
     const setDesignSpy = vi
       .spyOn(studioBridgeChannel, 'setDesignFile')
@@ -117,7 +117,7 @@ describe('Studio Drafts [R-DR-10 .. R-DR-15]', () => {
     expect(setDesignSpy).toHaveBeenCalledWith('src/drafts/BanNhap1.tsx', false);
   });
 
-  it('scenario 16: selecting page while in draft clears draftFile and restores page iframe URL', async () => {
+  it('scenario 16: selecting page while in draft clears draftFile and restores page iframe URL [R-DR-13]', async () => {
     useCanvasViewStore.setState({ draftFile: 'src/drafts/BanNhap1.tsx' });
     render(<PageSelect />);
 
@@ -134,6 +134,23 @@ describe('Studio Drafts [R-DR-10 .. R-DR-15]', () => {
     expect(useCanvasViewStore.getState().draftFile).toBeUndefined();
     const pageIframeSrc = computeIframeSrc('http://127.0.0.1:5173', undefined);
     expect(pageIframeSrc).toBe('http://127.0.0.1:5173/');
+  });
+
+  it('reopens the draft remembered for the project, and forgets it after going back to a page [R-DR-13]', async () => {
+    localStorage.setItem('reactcraft:draft:shop000001', 'src/drafts/BanNhap1.tsx');
+    localStorage.setItem('reactcraft:draft:other00001', 'src/drafts/Other.tsx');
+    render(<PageSelect />);
+
+    await waitFor(() => {
+      expect(useCanvasViewStore.getState().draftFile).toBe('src/drafts/BanNhap1.tsx');
+    });
+
+    fireEvent.change(screen.getByTestId('canvas-page-select'), { target: { value: '/' } });
+
+    expect(useCanvasViewStore.getState().draftFile).toBeUndefined();
+    expect(localStorage.getItem('reactcraft:draft:shop000001')).toBeNull();
+    expect(localStorage.getItem('reactcraft:draft:other00001')).toBe('src/drafts/Other.tsx');
+    localStorage.clear();
   });
 
   it('scenario 17: DraftsDialog disables delete for inUse draft, shows draft-in-use and ignored warning', () => {

@@ -15,7 +15,7 @@ function makePress(
   };
 }
 
-describe('matchShortcut (R-KB-12, R-KB-13)', () => {
+describe('matchShortcut [R-KB-12, R-KB-13]', () => {
   it('Scenario 1: undo, redo, and platform differences for Ctrl+Y/Cmd+Y', () => {
     // Windows / Linux (apple = false)
     expect(matchShortcut(makePress('z', { ctrl: true }), false)).toBe('undo');

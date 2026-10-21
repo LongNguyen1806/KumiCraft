@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { LIBRARY_BLOCKS } from './blocks.ts';
 import { normalizeText, searchBlocks } from './search.ts';
 
-describe('searchBlocks (R-LB-13)', () => {
+describe('searchBlocks [R-LB-13]', () => {
   it('Scenario 13: matches button with "nut", "Nút", "button", "BUTTON", and "xyz" is empty', () => {
     const r1 = searchBlocks('nut');
     expect(r1.map((b) => b.id)).toContain('form.button');

@@ -1,6 +1,6 @@
 {
   "$comment": "Phase in which each R-xx, V-xx, S-xx, AC-xx code of docs/spec.md 1.0 must have a test (SPEC-06 section 6, SPEC-07 sections 3 to 6). First matching pattern wins. Update in the same change as the spec.",
-  "currentPhase": 1,
+  "currentPhase": 2,
   "rules": [
     {
       "pattern": "^(R-IN-21|R-SL-12|S-86|R-SE-16)$",
@@ -72,6 +72,11 @@
       "pattern": "^R-QA-2\\d$",
       "phase": 99,
       "reason": "manual-check process rules (SPEC-06 section 7): followed by people in each round, no automated test"
+    },
+    {
+      "pattern": "^R-CL-04$",
+      "phase": 99,
+      "reason": "clean-machine install is a CI step, not a unit test: job build of .github/workflows/ci.yml runs pnpm package and scripts/smoke-installed.mjs on Windows, macOS and Linux; opening a project to the Canvas is in the G2 manual test (spec-log #35)"
     },
     {
       "pattern": "^R-QA-1\\d$",
