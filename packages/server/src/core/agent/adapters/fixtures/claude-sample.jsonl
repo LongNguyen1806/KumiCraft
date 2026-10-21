@@ -1,0 +1,5 @@
+{"type":"system","subtype":"init","session_id":"sess-123","cwd":"C:\\work\\project","tools":["Read","Edit"]}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"I will read the API."}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"t1","name":"Read","input":{"file_path":"C:\\work\\mirror\\api.js"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","content":"..."}]}}
+{"type":"result","subtype":"error_max_turns","is_error":true,"result":"Reached max turns"}

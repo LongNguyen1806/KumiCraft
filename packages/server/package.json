@@ -22,6 +22,7 @@
     "@reactcraft/shared": "workspace:*",
     "chokidar": "5.0.0",
     "cross-spawn": "7.0.6",
+    "diff": "9.0.0",
     "env-paths": "4.0.0",
     "fastify": "5.12.5",
     "ignore": "7.0.12",

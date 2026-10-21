@@ -15,7 +15,7 @@ import type {
   SpawnOptions,
 } from '../../core/ports/process-port.ts';
 
-/** S-53: Strip REACTCRAFT_* and session token env vars. */
+/** S-53: Strip REACTCRAFT_* env vars. Agent auth tokens (e.g. GH_TOKEN) are preserved. */
 export function sanitizeEnvironment(
   baseEnv: NodeJS.ProcessEnv,
   extraEnv?: Readonly<Record<string, string>>,
@@ -23,7 +23,7 @@ export function sanitizeEnvironment(
   const result: Record<string, string> = {};
   for (const [key, value] of Object.entries(baseEnv)) {
     if (value === undefined) continue;
-    if (key.startsWith('REACTCRAFT_') || key.toLowerCase().includes('token')) continue;
+    if (key.startsWith('REACTCRAFT_')) continue;
     result[key] = value;
   }
   if (extraEnv !== undefined) {

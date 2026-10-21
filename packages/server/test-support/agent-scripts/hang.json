@@ -1,0 +1,22 @@
+{
+  "steps": [
+    {
+      "emit": {
+        "event": "init",
+        "conversation_id": "$CONVERSATION"
+      }
+    },
+    {
+      "emit": {
+        "event": "step_update",
+        "step_update": {
+          "step_type": "agent_response",
+          "text_delta": "Hanging now..."
+        }
+      }
+    },
+    {
+      "wait": 3600000
+    }
+  ]
+}

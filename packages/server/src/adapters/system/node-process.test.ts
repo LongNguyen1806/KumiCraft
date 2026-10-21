@@ -4,12 +4,12 @@ import { describe, expect, it } from 'vitest';
 import { createNodeProcess, sanitizeEnvironment } from './node-process.ts';
 
 describe('sanitizeEnvironment [S-53]', () => {
-  it('strips REACTCRAFT_* and token env variables', () => {
+  it('strips only REACTCRAFT_* variables [S-53]', () => {
     const raw = {
       PATH: '/usr/bin',
       REACTCRAFT_PORT: '5420',
       REACTCRAFT_CONFIG_DIR: '/tmp',
-      SESSION_TOKEN: 'secret123',
+      GH_TOKEN: 'secret123',
       my_token: 'abc',
       USER: 'dev',
     };
@@ -19,10 +19,10 @@ describe('sanitizeEnvironment [S-53]', () => {
     expect(sanitized['PATH']).toBe('/usr/bin');
     expect(sanitized['USER']).toBe('dev');
     expect(sanitized['EXTRA']).toBe('yes');
+    expect(sanitized['GH_TOKEN']).toBe('secret123');
+    expect(sanitized['my_token']).toBe('abc');
     expect(sanitized['REACTCRAFT_PORT']).toBeUndefined();
     expect(sanitized['REACTCRAFT_CONFIG_DIR']).toBeUndefined();
-    expect(sanitized['SESSION_TOKEN']).toBeUndefined();
-    expect(sanitized['my_token']).toBeUndefined();
   });
 });
 

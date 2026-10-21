@@ -1,0 +1,30 @@
+{
+  "steps": [
+    {
+      "emit": {
+        "event": "init",
+        "conversation_id": "$CONVERSATION"
+      }
+    },
+    {
+      "write": {
+        "path": "src/App.tsx",
+        "content": "// fake-agent midway edit\nexport function App() { return <div>Midway</div>; }\n"
+      }
+    },
+    {
+      "stderr": "fake failure"
+    },
+    {
+      "emit": {
+        "event": "result",
+        "result": {
+          "status": "ERROR"
+        }
+      }
+    },
+    {
+      "exit": 1
+    }
+  ]
+}

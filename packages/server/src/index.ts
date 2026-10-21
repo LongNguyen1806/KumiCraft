@@ -13,6 +13,8 @@ import { createServerLogger } from './adapters/log/create-logger.ts';
 import { createNodeProcess } from './adapters/system/node-process.ts';
 import { createNodeSystem } from './adapters/system/node-system.ts';
 import { createChokidarWatcher } from './adapters/watcher/chokidar-watcher.ts';
+import type { AgentService } from './core/agent/agent-service.ts';
+import type { TurnSnapshotStore } from './core/agent/snapshot/index.ts';
 import type { HistoryService } from './core/history/history-service.ts';
 import type { JobService } from './core/jobs/job-service.ts';
 import { createEventBus, type EventBusPort } from './core/ports/event-bus-port.ts';
@@ -34,6 +36,8 @@ import { autoOpenProject, createHttpServer } from './server-http.ts';
 import { type CoreServices, createServices } from './server-services.ts';
 
 export type { LogLevel } from './adapters/http/create-http-app.ts';
+export type { AgentService } from './core/agent/agent-service.ts';
+export type { TurnSnapshotStore } from './core/agent/snapshot/index.ts';
 export type { HistoryService } from './core/history/history-service.ts';
 export type { EventBusPort, ServerEvent } from './core/ports/event-bus-port.ts';
 export type { ProjectService } from './core/project/project-service.ts';
@@ -66,6 +70,7 @@ export type StartServerOptions = {
     readonly process?: ProcessPort;
     readonly configDir?: string;
     readonly cacheDir?: string;
+    readonly dataDir?: string;
     readonly templateDir?: string;
     readonly homeDir?: string;
     readonly logger?: LoggerPort;
@@ -85,6 +90,8 @@ export type RunningServer = {
   readonly sourceEditorService: SourceEditorService;
   readonly historyService: HistoryService;
   readonly eventBus: EventBusPort;
+  readonly agentService: AgentService;
+  readonly turnSnapshotStore: TurnSnapshotStore;
   readonly close: () => Promise<void>;
 };
 
@@ -123,10 +130,20 @@ async function ensureMirrorsDir(cacheDir: string, logger: LoggerPort): Promise<v
   }
 }
 
+/** S-113: data directory for agent turn snapshots with mode 0o700. */
+async function ensureTurnsDir(dataDir: string, logger: LoggerPort): Promise<void> {
+  try {
+    await mkdir(join(dataDir, 'turns'), { recursive: true, mode: 0o700 });
+  } catch (cause) {
+    logger.warn({ dataDir, err: cause }, 'cannot create the turns folder; turn snapshots disabled');
+  }
+}
+
 function resolveServerPaths(options: StartServerOptions) {
   return {
     configDir: options.deps?.configDir ?? envPaths('reactcraft').config,
     cacheDir: options.deps?.cacheDir ?? envPaths('reactcraft').cache,
+    dataDir: options.deps?.dataDir ?? envPaths('reactcraft').data,
     homeDir: options.deps?.homeDir ?? homedir(),
     templateDir: options.deps?.templateDir ?? resolveTemplateDir(),
   };
@@ -147,10 +164,11 @@ async function initServerContext(
   platform: Platform,
 ): Promise<Result<InitializedContext>> {
   const { fs, logger, system, processPort, eventBus } = resolveCorePorts(options, platform);
-  const { configDir, cacheDir, homeDir, templateDir } = resolveServerPaths(options);
+  const { configDir, cacheDir, dataDir, homeDir, templateDir } = resolveServerPaths(options);
 
   await ensureConfigDir(configDir, logger);
   await ensureMirrorsDir(cacheDir, logger);
+  await ensureTurnsDir(dataDir, logger);
   const configStore = await createConfigStore({ fs, dir: configDir, platform, logger });
 
   const runnerScript = resolveRunnerScript(options.deps?.runnerScriptPath);
@@ -168,6 +186,7 @@ async function initServerContext(
       templateDir,
       initialRoot: options.workspaceDir,
       cacheDir,
+      dataDir,
     },
     studioOriginOf(options),
     processPort,
@@ -301,6 +320,8 @@ export async function startServer(options: StartServerOptions): Promise<Result<R
     sourceEditorService: ctx.sourceEditorService,
     historyService: ctx.historyService,
     eventBus: ctx.eventBus,
+    agentService: ctx.agentService,
+    turnSnapshotStore: ctx.turnSnapshotStore,
     close: createServerClose({ ...ctx, app }),
   });
 }

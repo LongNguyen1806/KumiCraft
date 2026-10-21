@@ -6,7 +6,11 @@ import { createHttpApp } from './adapters/http/create-http-app.ts';
 import type { FileSystemPort } from './core/ports/file-system-port.ts';
 import type { ProjectService } from './core/project/project-service.ts';
 import { ok, type Result } from './core/shared/result.ts';
-import { createSessionInfoProvider, toSupportedPlatform } from './core/shared/session.ts';
+import {
+  createSessionInfoProvider,
+  type SessionInfo,
+  toSupportedPlatform,
+} from './core/shared/session.ts';
 import { createProjectReader } from './core/workspace/project-reader.ts';
 import type { InitializedContext, StartServerOptions } from './index.ts';
 
@@ -36,27 +40,13 @@ export async function autoOpenProject(
   return ok(undefined);
 }
 
-export function createHttpServer(
-  options: StartServerOptions,
+function buildRouteConfigs(
   ctx: InitializedContext,
+  getSessionInfo: () => SessionInfo,
+  getProjectRoot: () => string | undefined,
   sessionToken: string,
-): Promise<FastifyInstance> {
-  const getSessionInfo = createSessionInfoProvider({
-    version: options.version,
-    platform: toSupportedPlatform(process.platform) ?? 'linux',
-    features: resolveEnabledFeatures(options.featureOverride),
-    readProject: createProjectReader(ctx.projectService, options.workspaceDir),
-  });
-
-  const getProjectRoot = () => {
-    const ws = ctx.projectService.state();
-    return ws.status === 'open' ? ws.root : undefined;
-  };
-
-  return createHttpApp({
-    logLevel: options.logLevel ?? 'info',
-    security: { port: options.port, sessionToken, trustedOrigins: options.trustedOrigins ?? [] },
-    getSessionInfo,
+) {
+  return {
     projectRoutes: {
       projectService: ctx.projectService,
       getSessionInfo,
@@ -74,6 +64,7 @@ export function createHttpServer(
       fs: ctx.fs,
     },
     jobRoutes: { jobService: ctx.jobService },
+    agentRoutes: { agentService: ctx.agentService },
     historyRoutes: {
       historyService: ctx.historyService,
       getProjectRoot,
@@ -85,6 +76,33 @@ export function createHttpServer(
       editor: () => ctx.configStore.settings().editor,
       getProjectRoot,
     },
+  };
+}
+
+export function createHttpServer(
+  options: StartServerOptions,
+  ctx: InitializedContext,
+  sessionToken: string,
+): Promise<FastifyInstance> {
+  const getSessionInfo = createSessionInfoProvider({
+    version: options.version,
+    platform: toSupportedPlatform(process.platform) ?? 'linux',
+    features: resolveEnabledFeatures(options.featureOverride),
+    readProject: createProjectReader(ctx.projectService, options.workspaceDir),
+  });
+
+  const getProjectRoot = () => {
+    const ws = ctx.projectService.state();
+    return ws.status === 'open' ? ws.root : undefined;
+  };
+
+  const routes = buildRouteConfigs(ctx, getSessionInfo, getProjectRoot, sessionToken);
+
+  return createHttpApp({
+    logLevel: options.logLevel ?? 'info',
+    security: { port: options.port, sessionToken, trustedOrigins: options.trustedOrigins ?? [] },
+    getSessionInfo,
+    ...routes,
     ...(options.studioDir === undefined ? {} : { studioDir: options.studioDir }),
   });
 }

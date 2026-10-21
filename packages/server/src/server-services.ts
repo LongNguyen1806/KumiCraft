@@ -1,4 +1,8 @@
 // Service assembly for the local server (SPEC-01 section 3.2).
+import { agyAdapter } from './core/agent/adapters/agy.ts';
+import { claudeAdapter } from './core/agent/adapters/claude.ts';
+import { type AgentService, createAgentService } from './core/agent/agent-service.ts';
+import { createTurnSnapshotStore, type TurnSnapshotStore } from './core/agent/snapshot/index.ts';
 import { createHistoryService, type HistoryService } from './core/history/history-service.ts';
 import { createJobService, type JobService } from './core/jobs/job-service.ts';
 import { createMirrorService } from './core/mirror/mirror-service.ts';
@@ -25,6 +29,7 @@ import {
 export type ServiceDeps = Omit<ProjectServiceDeps, 'runnerService'> & {
   readonly runnerScriptPath?: string | undefined;
   readonly cacheDir: string;
+  readonly dataDir: string;
 };
 
 export type CoreServices = {
@@ -35,6 +40,8 @@ export type CoreServices = {
   jobService: JobService;
   mirrorService: MirrorService;
   usageCounter: UsageCounter;
+  agentService: AgentService;
+  turnSnapshotStore: TurnSnapshotStore;
 };
 
 /** History, jobs and the watcher that reports files changed outside ReactCraft (R-HI-05). */
@@ -86,6 +93,22 @@ function createRunnerProxy(runnerHolder: { current?: RunnerService | undefined }
   };
 }
 
+function createAuxiliaryServices(deps: ServiceDeps, processPort: ProcessPort, fs: FileSystemPort) {
+  const usageCounter = createUsageCounter(fs);
+  const sourceEditorService = createSourceEditorService({ fs, usageCounter });
+  const agentService = createAgentService({
+    process: processPort,
+    settings: () => deps.config.settings(),
+    adapters: { agy: agyAdapter, claude: claudeAdapter },
+  });
+  const turnSnapshotStore = createTurnSnapshotStore({
+    fs,
+    dataDir: deps.dataDir,
+    logger: deps.logger,
+  });
+  return { usageCounter, sourceEditorService, agentService, turnSnapshotStore };
+}
+
 export function createServices(
   deps: ServiceDeps,
   studioOrigin: string,
@@ -124,17 +147,15 @@ export function createServices(
     eventBus,
     studioOrigin,
   );
-  const usageCounter = createUsageCounter(fs);
-  const sourceEditorService = createSourceEditorService({ fs, usageCounter });
+  const auxiliary = createAuxiliaryServices(deps, processPort, fs);
   runnerHolder.current = runnerService;
 
   return {
     projectService,
     runnerService,
-    sourceEditorService,
     historyService,
     jobService,
     mirrorService,
-    usageCounter,
+    ...auxiliary,
   };
 }

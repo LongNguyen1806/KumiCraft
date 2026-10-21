@@ -1,0 +1,99 @@
+{
+  "steps": [
+    {
+      "emit": {
+        "event": "init",
+        "conversation_id": "$CONVERSATION"
+      }
+    },
+    {
+      "emit": {
+        "event": "step_update",
+        "step_update": {
+          "step_type": "agent_response",
+          "text_delta": "I will update the components."
+        }
+      }
+    },
+    {
+      "emit": {
+        "event": "step_update",
+        "step_update": {
+          "step_type": "agent_response",
+          "text_delta": " Writing changes now."
+        }
+      }
+    },
+    {
+      "emit": {
+        "event": "step_update",
+        "step_update": {
+          "step_type": "tool",
+          "state": "ACTIVE",
+          "tool_name": "write_file",
+          "tool_info": {
+            "parameters": {
+              "Path": "src/App.tsx"
+            }
+          }
+        }
+      }
+    },
+    {
+      "write": {
+        "path": "src/App.tsx",
+        "content": "// fake-agent modified App\nexport function App() { return <div>App Updated</div>; }\n"
+      }
+    },
+    {
+      "emit": {
+        "event": "step_update",
+        "step_update": {
+          "step_type": "tool",
+          "state": "ACTIVE",
+          "tool_name": "write_file",
+          "tool_info": {
+            "parameters": {
+              "Path": "src/main.tsx"
+            }
+          }
+        }
+      }
+    },
+    {
+      "write": {
+        "path": "src/main.tsx",
+        "content": "// fake-agent modified main\nconsole.log('main');\n"
+      }
+    },
+    {
+      "emit": {
+        "event": "step_update",
+        "step_update": {
+          "step_type": "tool",
+          "state": "ACTIVE",
+          "tool_name": "write_file",
+          "tool_info": {
+            "parameters": {
+              "Path": "src/pages/Products.tsx"
+            }
+          }
+        }
+      }
+    },
+    {
+      "write": {
+        "path": "src/pages/Products.tsx",
+        "content": "// fake-agent created Products\nexport function Products() { return <div>Products</div>; }\n"
+      }
+    },
+    {
+      "emit": {
+        "event": "result",
+        "result": {
+          "status": "SUCCESS"
+        }
+      }
+    }
+  ]
+}
