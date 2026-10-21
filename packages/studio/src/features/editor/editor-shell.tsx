@@ -66,7 +66,7 @@ function WorkGrid({
         onInstallRequest={onInstallRequest}
       />
       <SideHandle side="right" layout={layout} resize={resize} />
-      {layout.visible.right ? <RightPanel /> : <div />}
+      {layout.visible.right ? <RightPanel trusted={trusted} /> : <div />}
     </div>
   );
 }

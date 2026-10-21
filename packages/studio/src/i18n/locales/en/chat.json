@@ -1,0 +1,17 @@
+{
+  "lockedUntrusted": "Project is not trusted. Open the Project dialog and choose Trust to use AI.",
+  "lockedNoAgent": "No AI agent installed (agy or claude). Install an agent and reopen this tab.",
+  "checkingAgents": "Checking agents…",
+  "inputPlaceholder": "Ask or request changes… (Ctrl+Enter to send)",
+  "send": "Send",
+  "cancel": "Cancel",
+  "turnDone": "Done · {{count}} files changed",
+  "turnCancelled": "Cancelled",
+  "addBackend": "Add backend",
+  "confirmBackend": "Attach",
+  "cancelBackend": "Cancel",
+  "attachDoc": "Attach document",
+  "docInputPlaceholder": "Relative document path (Enter to add)…",
+  "selectFolder": "Select backend folder",
+  "remove": "Remove"
+}

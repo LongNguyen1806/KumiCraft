@@ -1,0 +1,17 @@
+{
+  "lockedUntrusted": "Dự án chưa được tin cậy. Mở hộp Project và chọn Tin cậy để dùng AI.",
+  "lockedNoAgent": "Chưa cài agent AI (agy hoặc claude). Cài agent rồi mở lại tab này.",
+  "checkingAgents": "Đang kiểm tra agent…",
+  "inputPlaceholder": "Hỏi hoặc yêu cầu thay đổi… (Ctrl+Enter để gửi)",
+  "send": "Gửi",
+  "cancel": "Hủy",
+  "turnDone": "Xong · {{count}} file đã đổi",
+  "turnCancelled": "Đã hủy",
+  "addBackend": "Thêm backend",
+  "confirmBackend": "Gắn",
+  "cancelBackend": "Hủy",
+  "attachDoc": "Đính kèm tài liệu",
+  "docInputPlaceholder": "Đường dẫn tài liệu tương đối (Enter để thêm)…",
+  "selectFolder": "Chọn thư mục backend",
+  "remove": "Gỡ"
+}

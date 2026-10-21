@@ -3,10 +3,12 @@
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
+import enChat from './locales/en/chat.json';
 import enCommon from './locales/en/common.json';
 import enErrors from './locales/en/errors.json';
 import enJobs from './locales/en/jobs.json';
 import enLibrary from './locales/en/library.json';
+import viChat from './locales/vi/chat.json';
 import viCommon from './locales/vi/common.json';
 import viErrors from './locales/vi/errors.json';
 import viJobs from './locales/vi/jobs.json';
@@ -16,8 +18,8 @@ export const LANGUAGES = ['vi', 'en'] as const;
 export type Language = (typeof LANGUAGES)[number];
 
 export const resources = {
-  en: { common: enCommon, errors: enErrors, jobs: enJobs, library: enLibrary },
-  vi: { common: viCommon, errors: viErrors, jobs: viJobs, library: viLibrary },
+  en: { chat: enChat, common: enCommon, errors: enErrors, jobs: enJobs, library: enLibrary },
+  vi: { chat: viChat, common: viCommon, errors: viErrors, jobs: viJobs, library: viLibrary },
 } as const;
 
 /** First visit: Vietnamese when the browser prefers it, English otherwise. */
@@ -33,7 +35,7 @@ export async function initI18n(): Promise<void> {
     lng: detectLanguage(navigator.language),
     fallbackLng: 'en',
     supportedLngs: [...LANGUAGES],
-    ns: ['common', 'errors', 'jobs', 'library'],
+    ns: ['chat', 'common', 'errors', 'jobs', 'library'],
     defaultNS: 'common',
     // React escapes every value it renders (SPEC-05 S-14).
     interpolation: { escapeValue: false },

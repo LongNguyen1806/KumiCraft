@@ -2,6 +2,7 @@ import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { BrandPanel } from '../brand/brand-panel.tsx';
+import { ChatPanel } from '../chat/chat-panel.tsx';
 import { ComponentsPanel } from '../components-panel/components-panel.tsx';
 import { InspectorPanel } from '../inspector/inspector-panel.tsx';
 import { useProjectTheme } from '../inspector/use-project-theme.ts';
@@ -148,12 +149,12 @@ export function LeftPanel() {
 
 const RIGHT_PANEL_KEY = 'reactcraft.rightPanelTab';
 
-export type RightPanelTab = 'properties' | 'brand';
+export type RightPanelTab = 'properties' | 'brand' | 'chat';
 
 function readRightPanelTab(): RightPanelTab {
   try {
     const saved = localStorage.getItem(RIGHT_PANEL_KEY);
-    if (saved === 'brand') return 'brand';
+    if (saved === 'brand' || saved === 'chat') return saved;
     return 'properties';
   } catch {
     return 'properties';
@@ -168,8 +169,12 @@ function saveRightPanelTab(tab: RightPanelTab): void {
   }
 }
 
-/** Inspector of the selected element or Brand @theme editor (M-IN, WP-1.07, WP-2.10); AI chat tab comes in Phase 3. */
-export function RightPanel() {
+export type RightPanelProps = {
+  readonly trusted?: boolean;
+};
+
+/** Inspector of the selected element, Brand @theme editor, or AI chat (M-IN, WP-1.07, WP-2.10, WP-3.05a). */
+export function RightPanel({ trusted = false }: RightPanelProps) {
   const { t } = useTranslation();
   const theme = useProjectTheme();
   const [tab, setTab] = useState<RightPanelTab>(readRightPanelTab);
@@ -179,7 +184,8 @@ export function RightPanel() {
     saveRightPanelTab(nextTab);
   };
 
-  const title = tab === 'brand' ? t('brand.tab') : t('editor.properties');
+  const title =
+    tab === 'brand' ? t('brand.tab') : tab === 'chat' ? t('editor.ai') : t('editor.properties');
   const tabs = (
     <>
       <Tab
@@ -199,14 +205,22 @@ export function RightPanel() {
       >
         {t('brand.tab')}
       </Tab>
-      <Tab selected={false} disabled>
+      <Tab
+        selected={tab === 'chat'}
+        testId="right-tab-chat"
+        onClick={() => {
+          handleSetTab('chat');
+        }}
+      >
         {t('editor.ai')}
       </Tab>
     </>
   );
   return (
     <Panel label={t('editor.rightPanel')} title={title} tabs={tabs}>
-      {tab === 'properties' ? <InspectorPanel theme={theme} /> : <BrandPanel />}
+      {tab === 'properties' && <InspectorPanel theme={theme} />}
+      {tab === 'brand' && <BrandPanel />}
+      {tab === 'chat' && <ChatPanel trusted={trusted} />}
     </Panel>
   );
 }
