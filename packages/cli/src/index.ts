@@ -6,7 +6,7 @@ import { lastStudioPort, type RunningServer, startServer } from '@reactcraft/ser
 import open from 'open';
 
 import packageJson from '../package.json' with { type: 'json' };
-import { type CliOptions, parseCliArgs } from './args.ts';
+import { type CliOptions, parseCliArgs, USAGE, USAGE_EXIT_CODE } from './args.ts';
 import { startFailureMessage } from './messages.ts';
 import { findStudioDir } from './paths.ts';
 import { attemptsFor, portFor, type PortPlan } from './port-choice.ts';
@@ -60,7 +60,16 @@ async function start(options: CliOptions, studio: StudioSource): Promise<Running
 
 async function main(): Promise<void> {
   const parsed = parseCliArgs(process.argv.slice(2), process.cwd());
-  if (!parsed.ok) fail(parsed.message);
+  if (!parsed.ok) {
+    console.error(`reactcraft: ${parsed.message}
+
+${USAGE}`);
+    process.exit(USAGE_EXIT_CODE);
+  }
+  if ('show' in parsed) {
+    console.log(parsed.show === 'help' ? USAGE : packageJson.version);
+    return;
+  }
   const { options } = parsed;
   if (!isDirectory(options.workspaceDir)) fail(`not a directory: ${options.workspaceDir}`);
 
