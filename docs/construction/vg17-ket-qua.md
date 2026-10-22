@@ -24,3 +24,17 @@ Máy chủ dự án, Windows 11, `agy` 1.4.3. Chưa có `claude`. Script: `scrip
 1. Quyết định của chủ dự án (2026-10-21): **không thiết kế theo quy tắc riêng** trên máy chủ dự án. Thiết kế mặc định: agent sửa file ngay trong lượt (agy không có quy tắc thêm thì làm vậy). Lượt chỉ trả lời mà không đổi file vẫn là lượt hợp lệ; người dùng gõ tiếp trong cùng hội thoại (`continue`), không cần nút riêng. Nếu sau này cần, ReactCraft thêm chỉ dẫn vào mẫu lời nhắc (`prompt.ts`, R-AG-13) trước khi gửi agent; không dùng cờ nới quyền (S-112). Kiểm tay G3 trên máy chủ dự án: trả lời "Đồng ý" hoặc tạm chỉnh `user_rules.md`.
 2. `parseLine` của adapter `agy`: `text_delta` gom thành `message`; `step_type: "tool"` + `state: "ACTIVE"` thành `tool` (`target` lấy từ `Path` hoặc `CommandLine`); `init` thành `conversation`; `result.status` khác `SUCCESS` thành `error`. Dòng khác bỏ qua.
 3. Không dùng `--dangerously-skip-permissions`, `--mode`, `--sandbox` mặc định (S-112). `--sandbox` có thể là tùy chọn người dùng bật trong Cài đặt (để sau).
+
+## Bổ sung 2026-10-22: lệnh cài và đăng nhập chính thức (R-AG-21)
+
+Nguồn: codelab chính thức của Google "Hands-on with Antigravity CLI" (`codelabs.developers.google.com/antigravity-cli-hands-on`). Máy chủ dự án có `agy` ở `%LOCALAPPDATA%gyingy.exe`, khớp với trình cài này.
+
+| Việc               | Lệnh hoặc cách làm                                                                                                                                                                                                                          |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cài (Windows)      | PowerShell: `irm https://antigravity.google/cli/install.ps1 \| iex`. CMD: `curl -fsSL https://antigravity.google/cli/install.cmd -o install.cmd && install.cmd && del install.cmd`                                                          |
+| Cài (macOS, Linux) | `curl -fsSL https://antigravity.google/cli/install.sh \| bash`                                                                                                                                                                              |
+| Đăng nhập          | Không có lệnh `login`. Lần đầu chạy `agy` (tương tác) hỏi: Google OAuth (mở trình duyệt, rồi **dán mã** lại vào terminal) hoặc Google Cloud project. Cần terminal thật → nút Đăng nhập mở cửa sổ terminal hệ điều hành chạy `agy` (R-AG-21) |
+| Dò đăng nhập       | Không có lệnh chính thức. Giữ `login: 'unknown'` (spec-log #39); lượt AI lỗi vì chưa đăng nhập hiện qua E027 kèm gợi ý bấm Đăng nhập                                                                                                        |
+| Sau khi cài        | PATH mới chỉ có ở tiến trình mở **sau** khi cài: server dò lại bằng đường dẫn mặc định `%LOCALAPPDATA%gyingy.exe` (Windows) hoặc nhắc khởi động lại ReactCraft                                                                              |
+
+Lệnh cài chạy script tải từ mạng: Studio hiện đúng lệnh và người dùng bấm xác nhận mỗi lần, như S-54 với cài dependency.
