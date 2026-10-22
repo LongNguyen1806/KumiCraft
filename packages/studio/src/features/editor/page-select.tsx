@@ -279,7 +279,7 @@ function PageManageButtons({ onOpenPages, onOpenDrafts }: PageManageButtonsProps
         data-testid="pages-manage"
         title={t('pages.manage')}
         onClick={onOpenPages}
-        className="rounded border border-border bg-field px-2 py-1 text-xs text-ink hover:bg-field-hover"
+        className="shrink-0 whitespace-nowrap rounded border border-border bg-field px-2 py-1 text-xs text-ink hover:bg-field-hover"
       >
         {t('pages.manage')}
       </button>
@@ -288,7 +288,7 @@ function PageManageButtons({ onOpenPages, onOpenDrafts }: PageManageButtonsProps
         data-testid="drafts-manage"
         title={t('drafts.manage')}
         onClick={onOpenDrafts}
-        className="rounded border border-border bg-field px-2 py-1 text-xs text-ink hover:bg-field-hover"
+        className="shrink-0 whitespace-nowrap rounded border border-border bg-field px-2 py-1 text-xs text-ink hover:bg-field-hover"
       >
         {t('drafts.manage')}
       </button>

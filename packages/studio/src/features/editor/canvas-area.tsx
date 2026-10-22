@@ -26,7 +26,7 @@ import {
   UntrustedPrompt,
 } from './canvas-prompts.tsx';
 import { useCanvasViewStore } from './canvas-view-store.ts';
-import { fitZoom, useElementWidth, type Zoom, ZoomSelect } from './canvas-zoom.tsx';
+import { fitZoom, useElementWidth, type Zoom } from './canvas-zoom.tsx';
 import { PageSelect } from './page-select.tsx';
 import { PortBusyBanner } from './port-busy-banner.tsx';
 import { useOpenInEditor } from './use-open-in-editor.ts';
@@ -220,8 +220,6 @@ function CanvasToolbarSection({
       frames={s.frames}
       activeFrameId={s.activeFrame.id}
       onSelectFrame={s.setActiveFrameId}
-      zoom={s.zoom}
-      onSelectZoom={s.setZoom}
       mode={s.mode}
       onToggleMode={() => {
         s.setMode((m) => (m === 'design' ? 'preview' : 'design'));
@@ -309,8 +307,6 @@ type CanvasToolbarProps = {
   readonly frames: readonly Frame[];
   readonly activeFrameId: string;
   readonly onSelectFrame: (id: string) => void;
-  readonly zoom: Zoom;
-  readonly onSelectZoom: (zoom: Zoom) => void;
   readonly mode: CanvasMode;
   readonly onToggleMode: () => void;
 };
@@ -319,8 +315,6 @@ function CanvasToolbar({
   frames,
   activeFrameId,
   onSelectFrame,
-  zoom,
-  onSelectZoom,
   mode,
   onToggleMode,
 }: CanvasToolbarProps) {
@@ -331,7 +325,6 @@ function CanvasToolbar({
       <div className="flex min-w-0 items-center gap-3">
         <DrawToolbar />
         <FrameSelect frames={frames} activeId={activeFrameId} onChange={onSelectFrame} />
-        <ZoomSelect zoom={zoom} onChange={onSelectZoom} />
         <GridSelect />
         <PageSelect />
         <span

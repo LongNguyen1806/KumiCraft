@@ -1,10 +1,11 @@
-// Zoom of the Canvas (SPEC-04 R-RN-21): fixed steps, or "Fit" that follows the Canvas width.
+// Zoom of the Canvas (SPEC-04 R-RN-21): slider, in/out buttons, or "Fit" that follows the Canvas width.
 import { type ChangeEvent, type RefObject, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useCanvasViewStore } from './canvas-view-store.ts';
+
 export type Zoom = number | 'fit';
 
-const STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 /** Side padding of the Canvas viewport (`p-4`). */
 const VIEWPORT_PADDING = 32;
 
@@ -32,32 +33,154 @@ export function useElementWidth(ref: RefObject<HTMLElement | undefined>): number
   return width;
 }
 
-export function ZoomSelect({
-  zoom,
-  onChange,
-}: {
-  readonly zoom: Zoom;
-  readonly onChange: (zoom: Zoom) => void;
-}) {
+export type CanvasZoomSliderProps = {
+  readonly zoom?: Zoom | undefined;
+  readonly displayedZoom?: number | undefined;
+  readonly onZoomChange?: ((zoom: Zoom) => void) | undefined;
+  readonly onZoomIn?: (() => void) | undefined;
+  readonly onZoomOut?: (() => void) | undefined;
+  readonly onZoomFit?: (() => void) | undefined;
+  readonly onZoomReset?: (() => void) | undefined;
+};
+
+type ZoomFitButtonProps = {
+  readonly isFit: boolean;
+  readonly onFit: () => void;
+};
+
+function ZoomFitButton({ isFit, onFit }: ZoomFitButtonProps) {
   const { t } = useTranslation();
   return (
-    <label className="flex items-center gap-1.5 text-ink-soft">
-      {t('editor.zoom')}
-      <select
-        value={zoom}
-        onChange={(e: ChangeEvent<HTMLSelectElement>) => {
-          onChange(e.target.value === 'fit' ? 'fit' : Number(e.target.value));
-        }}
-        className="rounded border border-border bg-field px-2 py-1 text-ink"
-        data-testid="canvas-zoom-select"
+    <button
+      type="button"
+      data-testid="canvas-zoom-fit"
+      title={t('editor.zoomFit')}
+      onClick={onFit}
+      className={`rounded px-2 py-0.5 text-xs transition-colors ${
+        isFit
+          ? 'border border-border bg-field font-medium text-ink shadow-xs'
+          : 'text-ink-soft hover:bg-field hover:text-ink'
+      }`}
+    >
+      {t('editor.zoomFit')}
+    </button>
+  );
+}
+
+type ZoomSliderInputProps = {
+  readonly percent: number;
+  readonly onChange: (zoom: number) => void;
+};
+
+function ZoomSliderInput({ percent, onChange }: ZoomSliderInputProps) {
+  const { t } = useTranslation();
+  return (
+    <input
+      type="range"
+      min={10}
+      max={200}
+      step={5}
+      value={percent}
+      aria-label={t('editor.zoom')}
+      data-testid="canvas-zoom-slider"
+      onChange={(e: ChangeEvent<HTMLInputElement>) => {
+        onChange(Math.max(0.1, Math.min(2, Number(e.target.value) / 100)));
+      }}
+      className="h-1 w-20 cursor-pointer accent-ink-soft bg-border rounded-lg"
+    />
+  );
+}
+
+type ZoomRangeProps = {
+  readonly displayedZoom: number;
+  readonly percent: number;
+  readonly onZoomChange: (zoom: number) => void;
+  readonly onZoomIn: () => void;
+  readonly onZoomOut: () => void;
+  readonly onZoomReset: () => void;
+};
+
+function ZoomRangeControls({
+  displayedZoom,
+  percent,
+  onZoomChange,
+  onZoomIn,
+  onZoomOut,
+  onZoomReset,
+}: ZoomRangeProps) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <button
+        type="button"
+        data-testid="canvas-zoom-out"
+        title={t('shortcuts.actions.zoomOut')}
+        aria-label={t('shortcuts.actions.zoomOut')}
+        onClick={onZoomOut}
+        disabled={displayedZoom <= 0.1}
+        className="flex size-5 items-center justify-center rounded text-sm text-ink-soft transition-colors hover:bg-field hover:text-ink disabled:opacity-30"
       >
-        <option value="fit">{t('editor.zoomFit')}</option>
-        {STEPS.map((step) => (
-          <option key={step} value={step}>
-            {`${String(step * 100)}%`}
-          </option>
-        ))}
-      </select>
-    </label>
+        −
+      </button>
+      <ZoomSliderInput percent={percent} onChange={onZoomChange} />
+      <button
+        type="button"
+        data-testid="canvas-zoom-in"
+        title={t('shortcuts.actions.zoomIn')}
+        aria-label={t('shortcuts.actions.zoomIn')}
+        onClick={onZoomIn}
+        disabled={displayedZoom >= 2}
+        className="flex size-5 items-center justify-center rounded text-sm text-ink-soft transition-colors hover:bg-field hover:text-ink disabled:opacity-30"
+      >
+        +
+      </button>
+      <button
+        type="button"
+        data-testid="canvas-zoom-percent"
+        title={t('shortcuts.actions.zoomReset')}
+        onClick={onZoomReset}
+        className="w-11 text-right font-mono text-xs text-ink-soft transition-colors hover:text-ink"
+      >
+        {`${String(percent)}%`}
+      </button>
+    </>
+  );
+}
+
+export function CanvasZoomSlider(props: CanvasZoomSliderProps = {}) {
+  const storeZoom = useCanvasViewStore((s) => s.zoom);
+  const storeDisplayed = useCanvasViewStore((s) => s.displayedZoom);
+  const storeSetZoom = useCanvasViewStore((s) => s.setZoom);
+  const storeZoomIn = useCanvasViewStore((s) => s.zoomIn);
+  const storeZoomOut = useCanvasViewStore((s) => s.zoomOut);
+  const storeZoomFit = useCanvasViewStore((s) => s.zoomFit);
+  const storeZoomReset = useCanvasViewStore((s) => s.zoomReset);
+
+  const zoom = props.zoom ?? storeZoom;
+  const displayedZoom = props.displayedZoom ?? storeDisplayed;
+  const setZoom = props.onZoomChange ?? storeSetZoom;
+  const zoomIn = props.onZoomIn ?? storeZoomIn;
+  const zoomOut = props.onZoomOut ?? storeZoomOut;
+  const zoomFit = props.onZoomFit ?? storeZoomFit;
+  const zoomReset = props.onZoomReset ?? storeZoomReset;
+
+  const isFit = zoom === 'fit';
+  const percent = Math.round(displayedZoom * 100);
+
+  return (
+    <div
+      className="flex items-center gap-1.5 text-xs text-ink-soft select-none"
+      data-testid="canvas-zoom-control"
+    >
+      <ZoomFitButton isFit={isFit} onFit={zoomFit} />
+      <ZoomRangeControls
+        displayedZoom={displayedZoom}
+        percent={percent}
+        onZoomChange={setZoom}
+        onZoomIn={zoomIn}
+        onZoomOut={zoomOut}
+        onZoomReset={zoomReset}
+      />
+    </div>
   );
 }

@@ -126,7 +126,7 @@ describe('CanvasArea', () => {
 
     expect(screen.getByTestId('canvas-route').textContent).toBe('/products/42');
     expect(screen.getByTestId('canvas-frame-select')).toBeDefined();
-    expect(screen.getByTestId('canvas-zoom-select')).toBeDefined();
+    expect(screen.getByTestId('pages-manage')).toBeDefined();
   });
 
   it('sandboxes the project page so it cannot navigate the Studio [S-100]', () => {
