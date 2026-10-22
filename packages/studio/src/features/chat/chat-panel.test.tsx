@@ -7,6 +7,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import * as agentClient from '../../api/agent-client.ts';
 import { ApiError } from '../../api/http.ts';
 import * as projectClient from '../../api/project-client.ts';
+import { useAgentsStore } from '../../store/agents-store.ts';
 import { RightPanel } from '../editor/side-panels.tsx';
 import { DEFAULT_THEME } from '../inspector/use-project-theme.ts';
 import { ChatBackends } from './chat-backends.tsx';
@@ -71,6 +72,7 @@ describe('ChatPanel tabs and locks [R-CH-01, R-CH-06, R-CH-07]', () => {
     sessionStorage.setItem('reactcraft.sessionToken', 'tok-panel');
     localStorage.clear();
     await i18next.changeLanguage('vi');
+    useAgentsStore.getState().reset();
     useChatStore.getState().reset();
     vi.spyOn(projectClient, 'fetchProject').mockResolvedValue(MOCK_PROJECT);
     vi.spyOn(agentClient, 'fetchTurns').mockResolvedValue([]);
@@ -107,17 +109,15 @@ describe('ChatPanel tabs and locks [R-CH-01, R-CH-06, R-CH-07]', () => {
     expect(screen.getByTestId('chat-send')).toHaveProperty('disabled', true);
   });
 
-  it('Scenario 4: locks chat when no agents installed [R-CH-06]', async () => {
+  it('Scenario 4: shows onboarding install when no agents installed [R-CH-06]', async () => {
     vi.spyOn(agentClient, 'fetchAgents').mockResolvedValue([
       { id: 'agy', installed: false, login: 'unknown', loginAvailable: false },
       { id: 'claude', installed: false, login: 'unknown', loginAvailable: false },
     ]);
 
     render(<ChatPanel trusted />);
-    const lock = await screen.findByTestId('chat-locked-no-agent');
-    expect(lock.textContent).toContain(
-      'Chưa cài agent AI (agy hoặc claude). Cài agent rồi mở lại tab này.',
-    );
+    const onboarding = await screen.findByTestId('agent-onboarding-install');
+    expect(onboarding).toBeDefined();
     expect(screen.getByTestId('chat-input')).toHaveProperty('disabled', true);
   });
 

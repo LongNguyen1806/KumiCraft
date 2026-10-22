@@ -1,7 +1,15 @@
 // Unit tests for agent-client (WP-3.05a, Situation 1).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { fetchAgents, fetchTurnDiff, fetchTurns, revertTurn, startTurn } from './agent-client.ts';
+import {
+  fetchAgents,
+  fetchTurnDiff,
+  fetchTurns,
+  installAgent,
+  openAgentLogin,
+  revertTurn,
+  startTurn,
+} from './agent-client.ts';
 import { ApiError } from './http.ts';
 
 function stubFetchData(data: unknown, status = 200): void {
@@ -78,6 +86,16 @@ describe('agent-client (Situation 1)', () => {
 
     stubFetchData(validTurn);
     expect(await revertTurn('turn000001')).toEqual(validTurn);
+
+    const validInstall = { jobId: 'job_install_1' };
+    stubFetchData(validInstall, 202);
+    expect(await installAgent('agy', ['powershell', 'install.ps1'])).toEqual(validInstall);
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(new Response(undefined, { status: 204 }))),
+    );
+    await expect(openAgentLogin('agy')).resolves.toBeUndefined();
   });
 
   it('rejects with invalidResponse when fetchTurns response is missing state', async () => {

@@ -1,5 +1,6 @@
-// Agent endpoints (WP-3.05a, R-AG-10, R-AG-11, R-AG-15, R-AG-16).
+// Agent endpoints (WP-3.05a, WP-3.06c, R-AG-10, R-AG-11, R-AG-15, R-AG-16, R-AG-21).
 import {
+  type AgentId,
   type AgentStatus,
   AgentStatusSchema,
   JobStartedSchema,
@@ -52,6 +53,20 @@ const TurnSummariesSchema = arraySchema(TurnSummarySchema);
 
 export async function fetchAgents(): Promise<readonly AgentStatus[]> {
   return parseResponse(AgentStatusesSchema, await apiGet('agents'));
+}
+
+export async function installAgent(
+  id: AgentId,
+  command: readonly string[],
+): Promise<{ readonly jobId: string }> {
+  return parseResponse(
+    JobStartedSchema,
+    await apiPost(`agents/${encodeURIComponent(id)}/install`, { command }),
+  );
+}
+
+export async function openAgentLogin(id: AgentId): Promise<void> {
+  await apiPost(`agents/${encodeURIComponent(id)}/login`);
 }
 
 export async function startTurn(request: StartTurnRequest): Promise<{ readonly jobId: string }> {

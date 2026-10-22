@@ -135,6 +135,14 @@
     },
     "packageManager": "Package manager cho dự án mới",
     "packageManagerHelp": "Dùng để cài dependency cho dự án ReactCraft tạo ra. Dự án có sẵn dùng package manager của chính nó.",
+    "agent": "Trợ lý AI",
+    "agentPreferred": "Chọn trợ lý AI",
+    "agentPreferredHelp": "Tự động sẽ ưu tiên trợ lý sẵn sàng. Bạn cũng có thể chọn cố định.",
+    "agents": {
+      "auto": "Tự động",
+      "agy": "Antigravity",
+      "claude": "Claude Code"
+    },
     "saving": "Đang lưu…",
     "saved": "Đã lưu"
   },

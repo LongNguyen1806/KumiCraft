@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { EDITORS, PACKAGE_MANAGERS } from '../../api/settings-client.ts';
@@ -5,7 +6,9 @@ import { ChoicePill } from '../../components/ui/choice-pill.tsx';
 import { Dialog } from '../../components/ui/dialog.tsx';
 import { LANGUAGES } from '../../i18n/i18n.ts';
 import { errorText } from '../../routes/error-text.ts';
+import { useAgentsStore } from '../../store/agents-store.ts';
 import { useSettingsStore } from '../../store/settings-store.ts';
+import { AgentSection } from '../agents/agent-section.tsx';
 
 type SettingsDialogProps = { readonly open: boolean; readonly onClose: () => void };
 
@@ -16,6 +19,14 @@ type SettingsDialogProps = { readonly open: boolean; readonly onClose: () => voi
  */
 export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const { t } = useTranslation();
+  const refreshAgents = useAgentsStore((state) => state.refresh);
+
+  useEffect(() => {
+    if (open) {
+      void refreshAgents();
+    }
+  }, [open, refreshAgents]);
+
   return (
     <Dialog
       open={open}
@@ -29,6 +40,9 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
       <Section title={t('settings.tools')}>
         <EditorChoice />
         <PackageManagerChoice />
+      </Section>
+      <Section title={t('settings.agent')}>
+        <AgentSection />
       </Section>
       <SaveStatus />
     </Dialog>
@@ -50,7 +64,9 @@ function EditorChoice() {
             name="editor"
             value={value}
             checked={editor === value}
-            onChange={() => void update({ editor: value })}
+            onChange={() => {
+              void update({ editor: value });
+            }}
           >
             {t(`settings.editors.${value}`)}
           </ChoicePill>
@@ -76,7 +92,9 @@ function PackageManagerChoice() {
             name="package-manager"
             value={value}
             checked={settings?.packageManager === value}
-            onChange={() => void update({ packageManager: value })}
+            onChange={() => {
+              void update({ packageManager: value });
+            }}
           >
             {value}
           </ChoicePill>

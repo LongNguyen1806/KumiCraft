@@ -135,6 +135,14 @@
     },
     "packageManager": "Package manager for new projects",
     "packageManagerHelp": "Installs the dependencies of a project ReactCraft creates. An existing project keeps its own.",
+    "agent": "AI Assistant",
+    "agentPreferred": "Preferred AI assistant",
+    "agentPreferredHelp": "Auto chooses the ready assistant. You can also pick a fixed one.",
+    "agents": {
+      "auto": "Auto",
+      "agy": "Antigravity",
+      "claude": "Claude Code"
+    },
     "saving": "Saving…",
     "saved": "Saved"
   },

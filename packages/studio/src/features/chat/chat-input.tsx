@@ -1,11 +1,13 @@
 // Multi-line prompt input with keyboard submit (Ctrl+Enter / Cmd+Enter) and error notice (WP-3.05a, R-CH-01).
-import type { TurnContext } from '@reactcraft/shared';
+import type { AgentId, TurnContext } from '@reactcraft/shared';
+import type { TFunction } from 'i18next';
 import { ArrowUp } from 'lucide-react';
-import { type KeyboardEvent, useState } from 'react';
+import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { startTurn } from '../../api/agent-client.ts';
-import { errorText, toErrorInfo } from '../../routes/error-text.ts';
+import { type ErrorInfo, errorText, toErrorInfo } from '../../routes/error-text.ts';
+import { type LoginFlow, useAgentsStore } from '../../store/agents-store.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
@@ -39,6 +41,35 @@ function buildTurnContext(): TurnContext {
   };
 }
 
+function handleStartTurnError(
+  info: ErrorInfo,
+  promptToSend: string,
+  docsToSend: readonly string[],
+  setSendError: (err: string | undefined) => void,
+  tError: TFunction<'errors'>,
+): void {
+  useChatStore.setState((s) => ({
+    turns: s.turns.filter((t) => t.state !== 'running'),
+    draft: promptToSend,
+    docs: docsToSend,
+  }));
+
+  if (info.code === 'E026') {
+    const rawAgent = info.params?.agent;
+    const agentId: AgentId = rawAgent === 'claude' ? 'claude' : 'agy';
+    if (info.params?.reason === 'notLoggedIn') {
+      void useAgentsStore.getState().startLogin(agentId, true);
+      return;
+    }
+    if (info.params?.reason === 'notInstalled') {
+      void useAgentsStore.getState().refresh();
+      return;
+    }
+  }
+
+  setSendError(errorText(tError, info.code, info.params));
+}
+
 function useSendTurn() {
   const { t: tError } = useTranslation('errors');
   const [sendError, setSendError] = useState<string>();
@@ -57,13 +88,7 @@ function useSendTurn() {
       });
       useChatStore.getState().setRunningJobId(res.jobId);
     } catch (err) {
-      const info = toErrorInfo(err);
-      setSendError(errorText(tError, info.code, info.params));
-      useChatStore.setState((s) => ({
-        turns: s.turns.filter((t) => t.state !== 'running'),
-        draft: promptToSend,
-        docs: docsToSend,
-      }));
+      handleStartTurnError(toErrorInfo(err), promptToSend, docsToSend, setSendError, tError);
     }
   };
 
@@ -98,11 +123,39 @@ export type ChatInputProps = {
   readonly disabled?: boolean;
 };
 
+/** How long "Signed in" stays on screen once the request is sent again. */
+const LOGIN_DONE_VISIBLE_MS = 1000;
+
+function useAutoResend(send: (prompt: string, docs: readonly string[]) => Promise<void>) {
+  const loginFlow = useAgentsStore((s) => s.loginFlow);
+  const sentFlowRef = useRef<LoginFlow | undefined>(undefined);
+
+  useEffect(() => {
+    if (loginFlow?.phase !== 'done' || !loginFlow.resend || sentFlowRef.current === loginFlow) {
+      return;
+    }
+    // The ref survives StrictMode's second effect run, so the request goes out once.
+    sentFlowRef.current = loginFlow;
+    const currentDraft = useChatStore.getState().draft.trim();
+    const currentDocs = useChatStore.getState().docs;
+    if (currentDraft) {
+      void send(currentDraft, currentDocs);
+    }
+    // Not cleared on cleanup: a re-render must not keep the card open. Only this flow is closed.
+    setTimeout(() => {
+      if (useAgentsStore.getState().loginFlow === loginFlow) {
+        useAgentsStore.getState().finishLogin();
+      }
+    }, LOGIN_DONE_VISIBLE_MS);
+  }, [loginFlow, send]);
+}
+
 export function ChatInput({ disabled = false }: ChatInputProps) {
   const { t } = useTranslation('chat');
   const draft = useChatStore((s) => s.draft);
   const setDraft = useChatStore((s) => s.setDraft);
   const { sendError, send } = useSendTurn();
+  useAutoResend(send);
 
   const trimmed = draft.trim();
   const canSend = !disabled && Boolean(trimmed);

@@ -5,10 +5,11 @@ import { useTranslation } from 'react-i18next';
 
 import { cancelJob } from '../../api/jobs-client.ts';
 import { errorText } from '../../routes/error-text.ts';
+import { useAgentsStore } from '../../store/agents-store.ts';
 import { ChatFiles } from './chat-files.tsx';
 import { ChatMarkdown } from './chat-markdown.tsx';
 import { ChatRevert } from './chat-revert.tsx';
-import type { ChatItem, ChatTurnView } from './chat-store.ts';
+import { type ChatItem, type ChatTurnView, useChatStore } from './chat-store.ts';
 
 function ToolIcon({ name }: { readonly name: string }) {
   const lower = name.toLowerCase();
@@ -143,6 +144,42 @@ function TurnSummaryView({ turn }: { readonly turn: ChatTurnView }) {
   );
 }
 
+function ClaudeLoginHint({ turn }: { readonly turn: ChatTurnView }) {
+  const { t } = useTranslation('chat');
+  const startLogin = useAgentsStore((s) => s.startLogin);
+  const isClaudeFailed =
+    turn.state === 'failed' &&
+    turn.error?.code === 'E027' &&
+    (turn.error.params?.agent === 'claude' || turn.summary?.agent === 'claude');
+
+  if (!isClaudeFailed) return undefined;
+
+  const handleLogin = () => {
+    const userItem = turn.items.find((i) => i.kind === 'user');
+    const promptText = userItem?.text ?? turn.summary?.prompt;
+    if (promptText && !useChatStore.getState().draft) {
+      useChatStore.getState().setDraft(promptText);
+    }
+    void startLogin('claude', true);
+  };
+
+  return (
+    <div
+      data-testid="chat-login-hint"
+      className="flex items-center justify-between gap-2 rounded-lg bg-amber-50 border border-amber-200 p-2 text-xs text-amber-900 mt-1"
+    >
+      <span>{t('loginHintClaude')}</span>
+      <button
+        type="button"
+        onClick={handleLogin}
+        className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary-hover cursor-pointer"
+      >
+        {t('login')}
+      </button>
+    </div>
+  );
+}
+
 function TurnRowView({ turn, turnIdx }: { readonly turn: ChatTurnView; readonly turnIdx: number }) {
   const { t } = useTranslation('chat');
   const hasDivider = turn.items.some((i) => i.kind === 'divider');
@@ -158,6 +195,7 @@ function TurnRowView({ turn, turnIdx }: { readonly turn: ChatTurnView; readonly 
         <ChatItemView key={`${String(turnIdx)}-${String(itemIdx)}`} item={item} />
       ))}
       <TurnSummaryView turn={turn} />
+      <ClaudeLoginHint turn={turn} />
       {turn.summary !== undefined && (
         <>
           <ChatFiles turnId={turn.summary.id} files={turn.summary.files} />
