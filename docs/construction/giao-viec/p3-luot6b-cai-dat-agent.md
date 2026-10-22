@@ -202,7 +202,7 @@ export type AgentSetupService = {
 ### 3.9. Spec-log (số tiếp theo sau #48)
 
 - `#49` R-AG-21: lệnh cài chính thức theo hệ điều hành (bảng 3.2). Đường dẫn dự phòng macOS/Linux (`~/.local/bin`) chưa kiểm trên máy thật.
-- `#50` R-AG-21: đăng nhập mở terminal hệ điều hành chạy agent không tham số (màn đăng nhập agy cần terminal thật, qua ống dẫn thì không chạy, VG-17). Không dùng job `agent.login`, nhưng giữ nó trong `JOB_KINDS`. Dò đăng nhập agy bằng `agy models`; claude giữ `unknown`. Mã 0 = `loggedIn` chờ chủ dự án xác nhận sau khi đăng nhập.
+- `#50` R-AG-21: đăng nhập mở terminal hệ điều hành chạy agent không tham số (màn đăng nhập agy cần terminal thật, qua ống dẫn thì không chạy, VG-17). Không dùng job `agent.login`, nhưng giữ nó trong `JOB_KINDS`. Dò đăng nhập agy bằng `agy models`; claude giữ `unknown`. Mã 0 = `loggedIn` (chủ dự án đã kiểm 2026-10-22).
 - `#51` R-AG-10: dò thêm đường dẫn mặc định của trình cài khi PATH cũ; lệnh tìm được dùng cho lượt AI và Đăng nhập. Agent `loggedOut` thì `resolve()` trả E026 `notLoggedIn`, lượt AI không chạy.
 
 ## 4. Tình huống test
@@ -235,7 +235,7 @@ Unit test với `ProcessPort` giả (ghi lại argv, trả kết quả theo argv
 
 `npm run dev`. Gọi API bằng cách mở `http://127.0.0.1:<cổng server>/api/agents` không chạy được vì cần token, nên kiểm qua test là chính. Phần kiểm tay đầy đủ để sau lượt 6c, khi có giao diện.
 
-Có một việc nên làm ngay trên cmd, để chốt spec-log #50: chạy `agy`, đăng nhập xong thì thoát, rồi chạy `agy models`. Thấy danh sách model (mã 0) là đúng giả định.
+Đã kiểm 2026-10-22: `agy models` trả mã 0 và danh sách model khi đã đăng nhập; mã 1 với "Please sign in" khi chưa.
 
 ## 6. Bẫy đã biết
 
