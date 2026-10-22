@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { initI18n } from '../../i18n/i18n.ts';
+import { useCanvasViewStore } from './canvas-view-store.ts';
 import { CanvasZoomSlider, fitZoom } from './canvas-zoom.tsx';
 
 describe('Canvas zoom [R-RN-21]', () => {
@@ -61,5 +62,30 @@ describe('Canvas zoom [R-RN-21]', () => {
     expect(percentBtn.textContent).toBe('100%');
     fireEvent.click(percentBtn);
     expect(onZoomReset).toHaveBeenCalledTimes(1);
+  });
+
+  it('steps out below 50 % and in up to 400 %, never the wrong way [R-RN-21]', () => {
+    const view = useCanvasViewStore.getState();
+    view.setZoom(0.3);
+    view.zoomOut();
+    expect(useCanvasViewStore.getState().zoom).toBe(0.25);
+    view.setZoom(0.1);
+    view.zoomOut();
+    expect(useCanvasViewStore.getState().zoom).toBe(0.1);
+    view.setZoom(3.5);
+    view.zoomIn();
+    expect(useCanvasViewStore.getState().zoom).toBe(4);
+    view.zoomIn();
+    expect(useCanvasViewStore.getState().zoom).toBe(4);
+  });
+
+  it('lets the slider reach the whole 10 %–400 % range [R-RN-21]', () => {
+    const onZoomChange = vi.fn();
+    render(<CanvasZoomSlider zoom={1} displayedZoom={1} onZoomChange={onZoomChange} />);
+    const slider = screen.getByTestId('canvas-zoom-slider');
+    expect(slider.getAttribute('min')).toBe('10');
+    expect(slider.getAttribute('max')).toBe('400');
+    fireEvent.change(slider, { target: { value: '400' } });
+    expect(onZoomChange).toHaveBeenCalledWith(4);
   });
 });

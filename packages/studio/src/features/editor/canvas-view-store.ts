@@ -9,7 +9,10 @@ export type Zoom = number | 'fit';
 export type CanvasGridSize = 1 | 4 | 8 | 16;
 export const CANVAS_GRID_SIZES: readonly CanvasGridSize[] = [1, 4, 8, 16];
 
-export const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
+/** R-RN-21: zoom runs from 10 % to 400 %. */
+export const MIN_ZOOM = 0.1;
+export const MAX_ZOOM = 4;
+export const ZOOM_STEPS = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4] as const;
 
 export type CanvasViewState = {
   readonly mode: CanvasMode;
@@ -94,10 +97,10 @@ export function setStoredDraftFile(projectId: string, file: string | undefined):
 
 function stepZoom(current: number, direction: 'in' | 'out'): number {
   if (direction === 'in') {
-    return ZOOM_STEPS.find((s) => s > current + 0.001) ?? 2;
+    return ZOOM_STEPS.find((s) => s > current + 0.001) ?? MAX_ZOOM;
   }
   const reversed = [...ZOOM_STEPS].reverse();
-  return reversed.find((s) => s < current - 0.001) ?? 0.5;
+  return reversed.find((s) => s < current - 0.001) ?? MIN_ZOOM;
 }
 
 function updateFrames(frames: readonly Frame[], activeId: string) {

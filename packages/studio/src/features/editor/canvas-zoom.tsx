@@ -2,7 +2,7 @@
 import { type ChangeEvent, type RefObject, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useCanvasViewStore } from './canvas-view-store.ts';
+import { MAX_ZOOM, MIN_ZOOM, useCanvasViewStore } from './canvas-view-store.ts';
 
 export type Zoom = number | 'fit';
 
@@ -77,14 +77,14 @@ function ZoomSliderInput({ percent, onChange }: ZoomSliderInputProps) {
   return (
     <input
       type="range"
-      min={10}
-      max={200}
+      min={MIN_ZOOM * 100}
+      max={MAX_ZOOM * 100}
       step={5}
       value={percent}
       aria-label={t('editor.zoom')}
       data-testid="canvas-zoom-slider"
       onChange={(e: ChangeEvent<HTMLInputElement>) => {
-        onChange(Math.max(0.1, Math.min(2, Number(e.target.value) / 100)));
+        onChange(Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Number(e.target.value) / 100)));
       }}
       className="h-1 w-20 cursor-pointer accent-ink-soft bg-border rounded-lg"
     />
@@ -117,7 +117,7 @@ function ZoomRangeControls({
         title={t('shortcuts.actions.zoomOut')}
         aria-label={t('shortcuts.actions.zoomOut')}
         onClick={onZoomOut}
-        disabled={displayedZoom <= 0.1}
+        disabled={displayedZoom <= MIN_ZOOM}
         className="flex size-5 items-center justify-center rounded text-sm text-ink-soft transition-colors hover:bg-field hover:text-ink disabled:opacity-30"
       >
         −
@@ -129,7 +129,7 @@ function ZoomRangeControls({
         title={t('shortcuts.actions.zoomIn')}
         aria-label={t('shortcuts.actions.zoomIn')}
         onClick={onZoomIn}
-        disabled={displayedZoom >= 2}
+        disabled={displayedZoom >= MAX_ZOOM}
         className="flex size-5 items-center justify-center rounded text-sm text-ink-soft transition-colors hover:bg-field hover:text-ink disabled:opacity-30"
       >
         +
