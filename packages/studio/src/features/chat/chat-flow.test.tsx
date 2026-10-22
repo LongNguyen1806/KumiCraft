@@ -341,4 +341,31 @@ describe('ChatFlow execution [R-CH-01, R-CH-02, R-CH-03]', () => {
 
     expect(screen.getByTestId<HTMLTextAreaElement>('chat-input').value).toBe('Chữ cần giữ');
   });
+
+  it('ends a running turn the server no longer knows after the connection comes back [R-CH-03]', async () => {
+    vi.spyOn(agentClient, 'startTurn').mockResolvedValue({ jobId: 'job0099' });
+    const fetchJobSpy = vi
+      .spyOn(jobsClient, 'fetchJob')
+      .mockRejectedValue(new ApiError(404, 'E015', { resource: 'job', id: 'job0099' }));
+
+    render(<ChatPanel trusted />);
+    const input = await screen.findByTestId('chat-input');
+    fireEvent.change(input, { target: { value: 'chạy lệnh remote control' } });
+    fireEvent.click(screen.getByTestId('chat-send'));
+    await screen.findByTestId('chat-cancel');
+
+    // The server restarts: the stream drops, then a new socket opens.
+    for (const socket of [...sockets]) socket.close();
+
+    await vi.waitFor(
+      () => {
+        expect(fetchJobSpy).toHaveBeenCalledWith('job0099');
+        expect(screen.queryByTestId('chat-cancel')).toBeNull();
+      },
+      { timeout: 4000 },
+    );
+    const [turn] = useChatStore.getState().turns;
+    expect(turn?.state).toBe('failed');
+    expect(screen.getByTestId<HTMLTextAreaElement>('chat-input').disabled).toBe(false);
+  });
 });

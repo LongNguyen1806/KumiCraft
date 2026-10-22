@@ -1,6 +1,7 @@
-// Real-time server events listener for AI turns (WP-3.05a, WP-3.05b, R-CH-03).
+// Real-time server events listener for AI turns (WP-3.05a, WP-3.05b, R-CH-03); resyncs after a lost connection.
 import {
   AgentEventMessageSchema,
+  type JobStatus,
   type StudioServerEvent,
   TurnSummarySchema,
 } from '@reactcraft/shared';
@@ -8,6 +9,7 @@ import { useEffect } from 'react';
 
 import { createEventsClient } from '../../api/events-client.ts';
 import { isRecord } from '../../api/http.ts';
+import { fetchJob } from '../../api/jobs-client.ts';
 import { useChatStore } from './chat-store.ts';
 
 function handleAgentEvent(payload: unknown): void {
@@ -54,11 +56,51 @@ function dispatchServerEvent(event: StudioServerEvent): void {
   }
 }
 
+function applyJobStatus(status: JobStatus): void {
+  const store = useChatStore.getState();
+  if (status.state === 'completed') {
+    const summary = TurnSummarySchema.safeParse(status.result);
+    store.finishJobCompleted(status.id, summary.success ? summary.data : undefined);
+  } else if (status.state === 'failed' && status.error !== undefined) {
+    store.finishJobFailed(status.id, status.error);
+  } else if (status.state === 'cancelled') {
+    store.finishJobCancelled(status.id);
+  }
+}
+
+/**
+ * After the event stream comes back, asks for each running turn's job: its end may have been
+ * missed, or a restarted server no longer knows the job and the turn will never end on its own.
+ */
+async function resyncRunningTurns(): Promise<void> {
+  const running = useChatStore
+    .getState()
+    .turns.filter((turn) => turn.state === 'running' && turn.jobId !== '');
+  for (const turn of running) {
+    try {
+      applyJobStatus(await fetchJob(turn.jobId));
+    } catch {
+      useChatStore.getState().finishJobFailed(turn.jobId, { code: 'E027' });
+    }
+  }
+}
+
 export function useChatEvents(): void {
   useEffect(() => {
+    let lostConnection = false;
     const client = createEventsClient({
       onEvent: (event) => {
         dispatchServerEvent(event);
+      },
+      onConnectionChange: (connected) => {
+        if (!connected) {
+          lostConnection = true;
+          return;
+        }
+        if (lostConnection) {
+          lostConnection = false;
+          void resyncRunningTurns();
+        }
       },
     });
     return () => {

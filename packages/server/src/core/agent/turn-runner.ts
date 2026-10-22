@@ -22,6 +22,7 @@ import type { AgentService } from './agent-service.ts';
 import type { AgentAdapter, AgentCommand } from './agent-types.ts';
 import { buildPrompt } from './prompt.ts';
 import type { TurnSnapshotStore } from './snapshot/snapshot-types.ts';
+import { settleInterruptedTurns } from './turn-interrupted.ts';
 import type { TurnStore } from './turn-store.ts';
 
 export const AGENT_TURN_TIMEOUT_MS = 30 * 60 * 1000;
@@ -327,37 +328,56 @@ async function runTurn(
   );
 }
 
+/** Checks the request, then runs the turn as a job; the turn counts as active until the job ends. */
+async function startTurn(
+  deps: TurnRunnerDeps,
+  activeTurnIds: Set<string>,
+  request: StartTurnRequest,
+): Promise<Result<{ readonly jobId: string; readonly turnId: string }>> {
+  const pRes = deps.project();
+  if (!pRes.ok) return pRes;
+  if (!pRes.value.trusted) {
+    return err({ code: 'E011', params: { reason: 'untrusted' } });
+  }
+  const aRes = await deps.agents.resolve();
+  if (!aRes.ok) return aRes;
+
+  for (const doc of request.docs) {
+    const docExists = await deps.fs.exists(pRes.value.root, doc);
+    if (!docExists) {
+      return err({ code: 'E015', params: { resource: 'file', id: doc } });
+    }
+  }
+
+  const turnId = deps.newTurnId ? deps.newTurnId() : nanoid(10);
+  activeTurnIds.add(turnId);
+  const jobRes = deps.jobs.start('agent.turn', 'agent.turn', async (ctx) => {
+    try {
+      return await runTurn(ctx, deps, pRes.value, aRes.value, turnId, request);
+    } finally {
+      activeTurnIds.delete(turnId);
+    }
+  });
+  if (!jobRes.ok) {
+    activeTurnIds.delete(turnId);
+    return jobRes;
+  }
+  return ok({ jobId: jobRes.value.jobId, turnId });
+}
+
 export function createTurnRunner(deps: TurnRunnerDeps): TurnRunner {
+  /** Turns running in this server; any other "running" turn was cut off by a restart. */
+  const activeTurnIds = new Set<string>();
   return {
-    async start(request) {
-      const pRes = deps.project();
-      if (!pRes.ok) return pRes;
-      if (!pRes.value.trusted) {
-        return err({ code: 'E011', params: { reason: 'untrusted' } });
-      }
-      const aRes = await deps.agents.resolve();
-      if (!aRes.ok) return aRes;
-
-      for (const doc of request.docs) {
-        const docExists = await deps.fs.exists(pRes.value.root, doc);
-        if (!docExists) {
-          return err({ code: 'E015', params: { resource: 'file', id: doc } });
-        }
-      }
-
-      const turnId = deps.newTurnId ? deps.newTurnId() : nanoid(10);
-      const jobRes = deps.jobs.start('agent.turn', 'agent.turn', (ctx) =>
-        runTurn(ctx, deps, pRes.value, aRes.value, turnId, request),
-      );
-      if (!jobRes.ok) return jobRes;
-      return ok({ jobId: jobRes.value.jobId, turnId });
-    },
+    start: (request) => startTurn(deps, activeTurnIds, request),
 
     async list() {
       const pRes = deps.project();
       if (!pRes.ok) return pRes;
       const summaries = await deps.store.list(pRes.value.id);
-      return ok(summaries);
+      return ok(
+        await settleInterruptedTurns(deps.store, pRes.value.id, summaries, activeTurnIds, deps.now),
+      );
     },
 
     async diff(turnId, file) {
