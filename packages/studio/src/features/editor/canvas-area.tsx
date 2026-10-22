@@ -4,7 +4,7 @@ import {
   type RunnerStatus,
   tailwindMajorOf,
 } from '@reactcraft/shared';
-import { type ChangeEvent, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { errorText } from '../../routes/error-text.ts';
@@ -12,12 +12,11 @@ import { BuildErrorBanner } from '../canvas-errors/build-error-banner.tsx';
 import { RuntimeErrorList } from '../canvas-errors/runtime-error-list.tsx';
 import { DesignBar } from '../design/design-bar.tsx';
 import { DndErrorBanner } from '../dnd/dnd-error-banner.tsx';
-import { CanvasImagePicker, DrawToolbar } from '../draw/draw-toolbar.tsx';
+import { CanvasImagePicker } from '../draw/draw-toolbar.tsx';
 import { registerFreeFrameCommands } from '../free-frame/free-frame-commands.ts';
 import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
 import { type TextEditWarning, useCanvasTextEdit } from '../text-edit/use-canvas-text-edit.ts';
 import { IframeFrame } from './canvas-frame.tsx';
-import { GridSelect } from './canvas-grid-select.tsx';
 import {
   ErrorView,
   NeedsInstallPrompt,
@@ -217,9 +216,6 @@ function CanvasToolbarSection({
 }) {
   return (
     <CanvasToolbar
-      frames={s.frames}
-      activeFrameId={s.activeFrame.id}
-      onSelectFrame={s.setActiveFrameId}
       mode={s.mode}
       onToggleMode={() => {
         s.setMode((m) => (m === 'design' ? 'preview' : 'design'));
@@ -272,60 +268,17 @@ export function CanvasArea(props: CanvasAreaProps) {
   );
 }
 
-function FrameSelect({
-  frames,
-  activeId,
-  onChange,
-}: {
-  readonly frames: readonly Frame[];
-  readonly activeId: string;
-  readonly onChange: (id: string) => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <label className="flex items-center gap-1.5 text-ink-soft">
-      {t('editor.frame')}
-      <select
-        value={activeId}
-        onChange={(e: ChangeEvent<HTMLSelectElement>) => {
-          onChange(e.target.value);
-        }}
-        className="rounded border border-border bg-field px-2 py-1 text-ink"
-        data-testid="canvas-frame-select"
-      >
-        {frames.map((f) => (
-          <option key={f.id} value={f.id}>
-            {f.label} ({String(f.width)}×{String(f.height)})
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
 type CanvasToolbarProps = {
-  readonly frames: readonly Frame[];
-  readonly activeFrameId: string;
-  readonly onSelectFrame: (id: string) => void;
   readonly mode: CanvasMode;
   readonly onToggleMode: () => void;
 };
 
-function CanvasToolbar({
-  frames,
-  activeFrameId,
-  onSelectFrame,
-  mode,
-  onToggleMode,
-}: CanvasToolbarProps) {
+function CanvasToolbar({ mode, onToggleMode }: CanvasToolbarProps) {
   const { t } = useTranslation();
   const route = useSelectionStore((s) => s.currentRoute);
   return (
     <header className="flex h-11 items-center justify-between border-b border-line bg-card/60 px-4 text-xs backdrop-blur-md">
       <div className="flex min-w-0 items-center gap-3">
-        <DrawToolbar />
-        <FrameSelect frames={frames} activeId={activeFrameId} onChange={onSelectFrame} />
-        <GridSelect />
         <PageSelect />
         <span
           className="min-w-0 truncate font-mono text-ink-soft"
