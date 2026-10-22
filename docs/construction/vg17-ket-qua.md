@@ -38,3 +38,14 @@ Nguồn: codelab chính thức của Google "Hands-on with Antigravity CLI" (`co
 | Sau khi cài        | PATH mới chỉ có ở tiến trình mở **sau** khi cài: server dò lại bằng đường dẫn mặc định `%LOCALAPPDATA%gyingy.exe` (Windows) hoặc nhắc khởi động lại ReactCraft                                                                              |
 
 Lệnh cài chạy script tải từ mạng: Studio hiện đúng lệnh và người dùng bấm xác nhận mỗi lần, như S-54 với cài dependency.
+
+## Bổ sung 2026-10-22 (chiều): dò đăng nhập và đăng nhập qua ống dẫn
+
+| Việc                            | Kết quả trên máy chủ dự án                                                                                                                                                                 |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Lượt `-p` khi chưa đăng nhập    | Chủ dự án thấy agy mở trình duyệt đăng nhập rồi chờ dán mã vào terminal. ReactCraft chạy agy với stdin `ignore` nên lượt treo                                                              |
+| `agy models` khi chưa đăng nhập | 1 giây, mã 1, stderr `Error: Please sign in to view available models. Launch the CLI without arguments to sign in.` → dùng làm lệnh dò đăng nhập, không tốn lượt AI                        |
+| `agy models` khi đã đăng nhập   | **Chưa kiểm**; giả định mã 0 và in danh sách model (spec-log #50)                                                                                                                          |
+| `agy` không tham số qua ống dẫn | Không in gì, đứng im tới khi bị dừng (15 s) → màn đăng nhập cần terminal thật; không thể nhận mã trong Studio rồi chuyển qua stdin. Đăng nhập = mở cửa sổ terminal hệ điều hành chạy `agy` |
+| Thư mục người dùng trống        | `agy -p` vẫn chạy với `USERPROFILE`/`APPDATA`/`LOCALAPPDATA` trỏ thư mục tạm → không giả lập được "chưa đăng nhập" bằng cách đổi thư mục                                                   |
+| Terminal nhúng trong app        | Làm được bằng node-pty + xterm.js nhưng cần thư viện gốc theo hệ điều hành; để sau (khi đóng gói desktop)                                                                                  |
