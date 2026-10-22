@@ -33,7 +33,7 @@ function isReasonPath(path: string): path is ValidReasonPath {
   return VALID_REASON_PATHS.has(path);
 }
 
-/** Message, then the sentence of each known reason, then the code: "… … (E023)". */
+/** Message, then the sentence of each known reason (or E021 `missing`), then the code: "… … (E023)". */
 export function errorText(
   tError: TFunction<'errors'>,
   code: string,
@@ -47,6 +47,9 @@ export function errorText(
   const reasons: string[] = [];
   if (typeof params?.['reason'] === 'string') {
     reasons.push(params['reason']);
+  } else if (typeof params?.['missing'] === 'string') {
+    // E021 names what is missing (`missing: 'terminal'`), not a `reason`.
+    reasons.push(params['missing']);
   } else if (Array.isArray(params?.['reasons'])) {
     for (const item of params['reasons']) {
       if (typeof item === 'string') {

@@ -245,4 +245,29 @@ describe('fake-agent.mjs', () => {
     expect(recorded.envKeys).toContain('GH_TOKEN');
     expect(recorded.envKeys).not.toContain('REACTCRAFT_TEST_SECRET');
   });
+
+  it('[R-QA-12] handles models argument with and without RC_FAKE_AGENT_LOGIN=loggedOut, and skips record file', async () => {
+    const recordFileLoggedIn = join(tempDir, 'record-logged-in.json');
+    const handleLoggedIn = proc.spawn(process.execPath, [FAKE_AGENT_PATH, 'models'], {
+      cwd: tempDir,
+      env: { RC_FAKE_AGENT_RECORD: recordFileLoggedIn },
+    });
+    const resLoggedIn = await handleLoggedIn.wait();
+    expect(resLoggedIn.exitCode).toBe(0);
+    expect(resLoggedIn.stdout.trim()).toBe('fake-model');
+    expect(existsSync(recordFileLoggedIn)).toBe(false);
+
+    const recordFileLoggedOut = join(tempDir, 'record-logged-out.json');
+    const handleLoggedOut = proc.spawn(process.execPath, [FAKE_AGENT_PATH, 'models'], {
+      cwd: tempDir,
+      env: {
+        RC_FAKE_AGENT_RECORD: recordFileLoggedOut,
+        RC_FAKE_AGENT_LOGIN: 'loggedOut',
+      },
+    });
+    const resLoggedOut = await handleLoggedOut.wait();
+    expect(resLoggedOut.exitCode).toBe(1);
+    expect(resLoggedOut.stderr.toLowerCase()).toContain('sign in');
+    expect(existsSync(recordFileLoggedOut)).toBe(false);
+  });
 });

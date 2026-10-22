@@ -122,7 +122,12 @@
   },
   "E021": {
     "title": "Chưa cấu hình",
-    "message": "Còn thiếu thứ cần thiết: hãy mở dự án, hoặc cài editor, package manager."
+    "message": "Còn thiếu thứ cần thiết: hãy mở dự án, hoặc cài editor, package manager.",
+    "reasons": {
+      "agent": "Trợ lý AI này chưa được cài.",
+      "terminal": "Không mở được cửa sổ terminal. Hãy tự mở terminal và chạy lệnh agy.",
+      "installer": "Máy chưa có PowerShell/bash để chạy trình cài."
+    }
   },
   "E023": {
     "title": "Không thể sửa trực quan",

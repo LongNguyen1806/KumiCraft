@@ -1,7 +1,21 @@
 // Service assembly for the local server (SPEC-01 section 3.2).
+import { homedir } from 'node:os';
+
+import type { AgentId } from '@reactcraft/shared';
+
+import {
+  agentSetupPlans,
+  type SetupEnvironment,
+  terminalCommand,
+} from './adapters/system/agent-setup-plans.ts';
 import { agyAdapter } from './core/agent/adapters/agy.ts';
 import { claudeAdapter } from './core/agent/adapters/claude.ts';
 import { type AgentService, createAgentService } from './core/agent/agent-service.ts';
+import {
+  type AgentSetupService,
+  createAgentSetupService,
+} from './core/agent/agent-setup-service.ts';
+import type { AgentCommand } from './core/agent/agent-types.ts';
 import { createTurnSnapshotStore, type TurnSnapshotStore } from './core/agent/snapshot/index.ts';
 import { createTurnRunner, type TurnRunner } from './core/agent/turn-runner.ts';
 import { createTurnStore, type TurnStore } from './core/agent/turn-store.ts';
@@ -32,6 +46,7 @@ export type ServiceDeps = Omit<ProjectServiceDeps, 'runnerService'> & {
   readonly runnerScriptPath?: string | undefined;
   readonly cacheDir: string;
   readonly dataDir: string;
+  readonly setupEnv?: SetupEnvironment | undefined;
 };
 
 export type CoreServices = {
@@ -43,6 +58,7 @@ export type CoreServices = {
   mirrorService: MirrorService;
   usageCounter: UsageCounter;
   agentService: AgentService;
+  agentSetupService: AgentSetupService;
   turnSnapshotStore: TurnSnapshotStore;
   turnStore: TurnStore;
   turnRunner: TurnRunner;
@@ -97,20 +113,44 @@ function createRunnerProxy(runnerHolder: { current?: RunnerService | undefined }
   };
 }
 
+function buildFallbackCommands(
+  plans: ReturnType<typeof agentSetupPlans>,
+): Partial<Record<AgentId, AgentCommand>> {
+  const fallbackCommands: Partial<Record<AgentId, AgentCommand>> = {};
+  if (plans.agy?.fallbackCommand !== undefined) {
+    fallbackCommands.agy = { command: plans.agy.fallbackCommand, prefixArgs: [] };
+  }
+  if (plans.claude?.fallbackCommand !== undefined) {
+    fallbackCommands.claude = { command: plans.claude.fallbackCommand, prefixArgs: [] };
+  }
+  return fallbackCommands;
+}
+
 function createAuxiliaryServices(deps: ServiceDeps, processPort: ProcessPort, fs: FileSystemPort) {
+  const setupEnv = deps.setupEnv ?? {
+    platform: process.platform,
+    env: process.env,
+    homeDir: homedir(),
+  };
+  const plans = agentSetupPlans(setupEnv);
+  const fallbackCommands = buildFallbackCommands(plans);
+  const terminalAvailable = terminalCommand(setupEnv, '') !== undefined;
   const usageCounter = createUsageCounter(fs);
   const sourceEditorService = createSourceEditorService({ fs, usageCounter });
   const agentService = createAgentService({
     process: processPort,
     settings: () => deps.config.settings(),
     adapters: { agy: agyAdapter, claude: claudeAdapter },
+    fallbackCommands,
+    plans,
+    terminalAvailable,
   });
   const turnSnapshotStore = createTurnSnapshotStore({
     fs,
     dataDir: deps.dataDir,
     logger: deps.logger,
   });
-  return { usageCounter, sourceEditorService, agentService, turnSnapshotStore };
+  return { usageCounter, sourceEditorService, agentService, turnSnapshotStore, plans, setupEnv };
 }
 
 function createAgentTurnServices(
@@ -213,6 +253,21 @@ function initProjectServices(
   return { historyService, jobService, mirrorService, projectService };
 }
 
+function createAgentSetup(
+  processPort: ProcessPort,
+  jobService: JobService,
+  auxiliary: ReturnType<typeof createAuxiliaryServices>,
+) {
+  return createAgentSetupService({
+    process: processPort,
+    jobs: jobService,
+    agents: auxiliary.agentService,
+    homeDir: auxiliary.setupEnv.homeDir,
+    plans: auxiliary.plans,
+    terminal: (cmd) => terminalCommand(auxiliary.setupEnv, cmd),
+  });
+}
+
 export function createServices(
   deps: ServiceDeps,
   studioOrigin: string,
@@ -249,10 +304,16 @@ export function createServices(
     auxiliary,
   );
 
+  const agentSetupService = createAgentSetup(processPort, projectServices.jobService, auxiliary);
+
   return {
     ...projectServices,
     runnerService,
     ...agentTurns,
-    ...auxiliary,
+    usageCounter: auxiliary.usageCounter,
+    sourceEditorService: auxiliary.sourceEditorService,
+    agentService: auxiliary.agentService,
+    agentSetupService,
+    turnSnapshotStore: auxiliary.turnSnapshotStore,
   };
 }

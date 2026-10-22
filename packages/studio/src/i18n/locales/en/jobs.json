@@ -2,5 +2,8 @@
   "install": {
     "running": "Installing dependencies…",
     "cancelled": "Install cancelled. You can install again."
+  },
+  "agentInstall": {
+    "running": "Installing AI assistant…"
   }
 }

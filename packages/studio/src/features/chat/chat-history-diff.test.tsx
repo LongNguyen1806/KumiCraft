@@ -97,7 +97,7 @@ describe('Chat files, diff, revert, history, and new conversation [WP-3.05b]', (
     useChatStore.getState().reset();
     vi.spyOn(projectClient, 'fetchProject').mockResolvedValue(MOCK_PROJECT);
     vi.spyOn(agentClient, 'fetchAgents').mockResolvedValue([
-      { id: 'agy', installed: true, login: 'unknown' },
+      { id: 'agy', installed: true, login: 'unknown', loginAvailable: false },
     ]);
     vi.spyOn(agentClient, 'fetchTurns').mockResolvedValue([]);
   });

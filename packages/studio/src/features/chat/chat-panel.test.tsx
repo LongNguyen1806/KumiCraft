@@ -76,7 +76,7 @@ describe('ChatPanel tabs and locks [R-CH-01, R-CH-06, R-CH-07]', () => {
     vi.spyOn(agentClient, 'fetchTurns').mockResolvedValue([]);
     vi.spyOn(projectClient, 'fetchProjectTheme').mockResolvedValue(DEFAULT_THEME);
     vi.spyOn(agentClient, 'fetchAgents').mockResolvedValue([
-      { id: 'agy', installed: true, login: 'unknown' },
+      { id: 'agy', installed: true, login: 'unknown', loginAvailable: false },
     ]);
   });
 
@@ -109,8 +109,8 @@ describe('ChatPanel tabs and locks [R-CH-01, R-CH-06, R-CH-07]', () => {
 
   it('Scenario 4: locks chat when no agents installed [R-CH-06]', async () => {
     vi.spyOn(agentClient, 'fetchAgents').mockResolvedValue([
-      { id: 'agy', installed: false, login: 'unknown' },
-      { id: 'claude', installed: false, login: 'unknown' },
+      { id: 'agy', installed: false, login: 'unknown', loginAvailable: false },
+      { id: 'claude', installed: false, login: 'unknown', loginAvailable: false },
     ]);
 
     render(<ChatPanel trusted />);

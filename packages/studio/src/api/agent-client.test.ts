@@ -37,8 +37,14 @@ describe('agent-client (Situation 1)', () => {
 
   it('parses valid responses for all agent endpoints', async () => {
     const validAgents = [
-      { id: 'agy', installed: true, login: 'unknown' as const, version: '1.0.0' },
-      { id: 'claude', installed: false, login: 'unknown' as const },
+      {
+        id: 'agy',
+        installed: true,
+        login: 'unknown' as const,
+        version: '1.0.0',
+        loginAvailable: true,
+      },
+      { id: 'claude', installed: false, login: 'unknown' as const, loginAvailable: false },
     ];
     stubFetchData(validAgents);
     expect(await fetchAgents()).toEqual(validAgents);

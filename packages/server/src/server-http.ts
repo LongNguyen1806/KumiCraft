@@ -64,7 +64,7 @@ function buildRouteConfigs(
       fs: ctx.fs,
     },
     jobRoutes: { jobService: ctx.jobService },
-    agentRoutes: { agentService: ctx.agentService },
+    agentRoutes: { agentService: ctx.agentService, setupService: ctx.agentSetupService },
     agentTurnRoutes: { turnRunner: ctx.turnRunner },
     historyRoutes: {
       historyService: ctx.historyService,

@@ -20,6 +20,17 @@ function runVersion() {
   terminate(0);
 }
 
+function runModels() {
+  if (process.env.RC_FAKE_AGENT_LOGIN === 'loggedOut') {
+    process.stderr.write(
+      'Error: Please sign in to view available models. Launch the CLI without arguments to sign in.\n',
+    );
+    terminate(1);
+  }
+  process.stdout.write('fake-model\n');
+  terminate(0);
+}
+
 function parseArgs(args) {
   let prompt;
   let outputFormat;
@@ -159,6 +170,9 @@ async function main() {
   const rawArgs = process.argv.slice(2);
   if (rawArgs.length === 1 && rawArgs[0] === '--version') {
     runVersion();
+  }
+  if (rawArgs.length === 1 && rawArgs[0] === 'models') {
+    runModels();
   }
 
   const parsed = parseArgs(rawArgs);

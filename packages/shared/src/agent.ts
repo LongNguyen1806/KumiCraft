@@ -16,8 +16,16 @@ export const AgentStatusSchema = z.strictObject({
   installed: z.boolean(),
   version: z.string().max(100).optional(),
   login: z.enum(AGENT_LOGIN_STATES),
+  installCommand: z.array(z.string().min(1).max(2000)).min(1).max(10).optional(),
+  docsUrl: z.url().max(500).optional(),
+  loginAvailable: z.boolean(),
 });
 export type AgentStatus = z.infer<typeof AgentStatusSchema>;
+
+export const AgentInstallRequestSchema = z.strictObject({
+  command: z.array(z.string().min(1).max(2000)).min(1).max(10),
+});
+export type AgentInstallRequest = z.infer<typeof AgentInstallRequestSchema>;
 
 export const AgentEventSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('message'), text: z.string().max(100_000) }),

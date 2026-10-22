@@ -8,6 +8,8 @@ export {
   AgentEventSchema,
   type AgentId,
   AgentIdSchema,
+  type AgentInstallRequest,
+  AgentInstallRequestSchema,
   type AgentLoginState,
   AgentLoginStateSchema,
   type AgentStatus,

@@ -1,7 +1,8 @@
 // agy adapter: builds args and parses stream-json output (WP-3.03a, S-111, S-112).
-import { type AgentEvent, AgentEventSchema } from '@reactcraft/shared';
+import { type AgentEvent, AgentEventSchema, type AgentLoginState } from '@reactcraft/shared';
 import { z } from 'zod';
 
+import type { ProcessOutput } from '../../ports/process-port.ts';
 import type { AgentAdapter, AgentCommand, AgentTurnArgs } from '../agent-types.ts';
 
 const AGY_DEFAULT_COMMAND: AgentCommand = {
@@ -108,5 +109,15 @@ export const agyAdapter: AgentAdapter = {
     } catch {
       return undefined;
     }
+  },
+  loginProbe: {
+    args: ['models'],
+    classify(output: ProcessOutput): AgentLoginState {
+      if (output.exitCode === 0) return 'loggedIn';
+      if (/sign in/i.test(output.stdout) || /sign in/i.test(output.stderr)) {
+        return 'loggedOut';
+      }
+      return 'unknown';
+    },
   },
 };

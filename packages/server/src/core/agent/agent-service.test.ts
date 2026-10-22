@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import { createNodeProcess } from '../../adapters/system/node-process.ts';
+import type { ChildProcessHandle, ProcessPort, SpawnOptions } from '../ports/process-port.ts';
 import type { Settings } from '../shared/user-config.ts';
 import { agyAdapter } from './adapters/agy.ts';
 import { claudeAdapter } from './adapters/claude.ts';
@@ -18,6 +19,41 @@ function makeSettings(preferred: 'auto' | 'agy' | 'claude'): () => Settings {
     editor: 'vscode',
     agent: { preferred },
   });
+}
+
+function createMockProcessPort(
+  handler: (
+    command: string,
+    args: readonly string[],
+    options: SpawnOptions,
+  ) => {
+    exitCode: number;
+    stdout?: string;
+    stderr?: string;
+    lines?: readonly string[];
+  },
+): ProcessPort {
+  return {
+    spawn(command: string, args: readonly string[], options: SpawnOptions): ChildProcessHandle {
+      const out = handler(command, args, options);
+      const stdout = out.stdout ?? '';
+      const stderr = out.stderr ?? '';
+      const lines = out.lines ?? stdout.split(/\r?\n/).filter((l) => l.length > 0);
+      return {
+        onLine(cb: (line: string) => void): void {
+          for (const l of lines) cb(l);
+        },
+        wait: () =>
+          Promise.resolve({
+            exitCode: out.exitCode,
+            stdout,
+            stderr,
+            lines,
+          }),
+        kill: () => Promise.resolve(),
+      };
+    },
+  };
 }
 
 describe('AgentService', () => {
@@ -37,8 +73,14 @@ describe('AgentService', () => {
 
     const statuses = await service.statuses();
     expect(statuses).toEqual([
-      { id: 'agy', installed: true, version: '0.0.0-fake', login: 'unknown' },
-      { id: 'claude', installed: false, login: 'unknown' },
+      {
+        id: 'agy',
+        installed: true,
+        version: '0.0.0-fake',
+        login: 'loggedIn',
+        loginAvailable: false,
+      },
+      { id: 'claude', installed: false, login: 'unknown', loginAvailable: false },
     ]);
 
     // auto -> agy
@@ -93,5 +135,203 @@ describe('AgentService', () => {
     expect(elapsed).toBeLessThan(2000);
     expect(statuses[0]?.installed).toBe(false);
     expect(statuses[0]?.id).toBe('agy');
+  });
+
+  it('[R-AG-10] falls back to fallbackCommand when primary version check fails with 127', async () => {
+    const fallbackExe = '/opt/bin/agy';
+    const fakeProc = createMockProcessPort((cmd, args) => {
+      if (cmd === 'agy' && args[0] === '--version') {
+        return { exitCode: 127, stdout: '', stderr: 'command not found' };
+      }
+      if (cmd === fallbackExe && args[0] === '--version') {
+        return { exitCode: 0, stdout: '1.4.3\n', stderr: '' };
+      }
+      if (cmd === fallbackExe && args[0] === 'models') {
+        return { exitCode: 0, stdout: 'gemini-pro\n', stderr: '' };
+      }
+      return { exitCode: 127, stdout: '', stderr: 'unknown' };
+    });
+
+    const service = createAgentService({
+      process: fakeProc,
+      settings: makeSettings('agy'),
+      adapters: { agy: agyAdapter, claude: claudeAdapter },
+      fallbackCommands: { agy: { command: fallbackExe, prefixArgs: [] } },
+    });
+
+    const statuses = await service.statuses();
+    expect(statuses[0]?.installed).toBe(true);
+    expect(statuses[0]?.version).toBe('1.4.3');
+
+    const resolved = await service.resolve();
+    expect(resolved.ok).toBe(true);
+    if (resolved.ok) {
+      expect(resolved.value.command.command).toBe(fallbackExe);
+    }
+  });
+
+  it('[R-AG-10, R-QA-12] does not try fallback when an explicit test command fails', async () => {
+    let triedFallback = false;
+    const fakeProc = createMockProcessPort((cmd) => {
+      if (cmd === '/opt/bin/agy') {
+        triedFallback = true;
+        return { exitCode: 0, stdout: '1.4.3\n', stderr: '' };
+      }
+      return { exitCode: 127, stdout: '', stderr: 'not found' };
+    });
+
+    const service = createAgentService({
+      process: fakeProc,
+      settings: makeSettings('auto'),
+      adapters: { agy: agyAdapter, claude: claudeAdapter },
+      commands: { agy: { command: 'nonexistent-test-agent', prefixArgs: [] } },
+      fallbackCommands: { agy: { command: '/opt/bin/agy', prefixArgs: [] } },
+    });
+
+    const statuses = await service.statuses();
+    expect(statuses[0]?.installed).toBe(false);
+    expect(triedFallback).toBe(false);
+  });
+
+  it('[R-AG-10, R-AG-21] probes agy login state across models exit codes and outputs', async () => {
+    const spawned: Array<{ cmd: string; args: readonly string[] }> = [];
+    let modelsResult = { exitCode: 0, stdout: 'model-1', stderr: '' };
+
+    const fakeProc = createMockProcessPort((cmd, args) => {
+      spawned.push({ cmd, args });
+      if (args[0] === '--version') {
+        return { exitCode: 0, stdout: '1.0.0\n', stderr: '' };
+      }
+      if (args[0] === 'models') {
+        return modelsResult;
+      }
+      return { exitCode: 127, stdout: '', stderr: '' };
+    });
+
+    const service = createAgentService({
+      process: fakeProc,
+      settings: makeSettings('auto'),
+      adapters: { agy: agyAdapter, claude: claudeAdapter },
+    });
+
+    modelsResult = { exitCode: 0, stdout: 'model-1', stderr: '' };
+    let statuses = await service.statuses();
+    expect(statuses[0]?.login).toBe('loggedIn');
+    expect(spawned.some((s) => s.cmd === 'agy' && s.args[0] === 'models')).toBe(true);
+
+    modelsResult = { exitCode: 1, stdout: '', stderr: 'Please sign in to view available models' };
+    statuses = await service.statuses();
+    expect(statuses[0]?.login).toBe('loggedOut');
+
+    modelsResult = { exitCode: 1, stdout: '', stderr: 'Network unreachable' };
+    statuses = await service.statuses();
+    expect(statuses[0]?.login).toBe('unknown');
+
+    modelsResult = { exitCode: 124, stdout: '', stderr: '' };
+    statuses = await service.statuses();
+    expect(statuses[0]?.login).toBe('unknown');
+  });
+
+  it('[R-AG-21] keeps claude login as unknown and does not spawn any login probe for claude', async () => {
+    const spawnedArgs: Array<readonly string[]> = [];
+    const fakeProc = createMockProcessPort((cmd, args) => {
+      spawnedArgs.push(args);
+      if (cmd === 'claude' && args[0] === '--version') {
+        return { exitCode: 0, stdout: '2.0.0\n', stderr: '' };
+      }
+      return { exitCode: 127, stdout: '', stderr: '' };
+    });
+
+    const service = createAgentService({
+      process: fakeProc,
+      settings: makeSettings('claude'),
+      adapters: { agy: agyAdapter, claude: claudeAdapter },
+    });
+
+    const statuses = await service.statuses();
+    const claudeStatus = statuses.find((s) => s.id === 'claude');
+    expect(claudeStatus?.installed).toBe(true);
+    expect(claudeStatus?.login).toBe('unknown');
+
+    const claudeCalls = spawnedArgs.filter((args) => args[0] !== '--version');
+    expect(claudeCalls).toHaveLength(0);
+  });
+
+  it('[R-AG-21] rejects resolve() with E026 notLoggedIn when preferred agy is loggedOut', async () => {
+    const fakeProc = createMockProcessPort((_cmd, args) => {
+      if (args[0] === '--version') {
+        return { exitCode: 0, stdout: '1.0.0\n', stderr: '' };
+      }
+      if (args[0] === 'models') {
+        return { exitCode: 1, stdout: '', stderr: 'Please sign in to continue' };
+      }
+      return { exitCode: 127, stdout: '', stderr: '' };
+    });
+
+    const service = createAgentService({
+      process: fakeProc,
+      settings: makeSettings('agy'),
+      adapters: { agy: agyAdapter, claude: claudeAdapter },
+    });
+
+    const res = await service.resolve();
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.error.code).toBe('E026');
+      expect(res.error.params).toEqual({
+        agent: 'agy',
+        reason: 'notLoggedIn',
+      });
+    }
+  });
+
+  it('[R-AG-10] auto preference skips loggedOut agy to choose installed claude, or returns E026 if only agy is installed', async () => {
+    const procWithBoth = createMockProcessPort((cmd, args) => {
+      if (args[0] === '--version') {
+        return { exitCode: 0, stdout: '1.0.0\n', stderr: '' };
+      }
+      if (cmd === 'agy' && args[0] === 'models') {
+        return { exitCode: 1, stdout: '', stderr: 'Please sign in' };
+      }
+      return { exitCode: 127, stdout: '', stderr: '' };
+    });
+
+    const serviceWithBoth = createAgentService({
+      process: procWithBoth,
+      settings: makeSettings('auto'),
+      adapters: { agy: agyAdapter, claude: claudeAdapter },
+    });
+
+    const res1 = await serviceWithBoth.resolve();
+    expect(res1.ok).toBe(true);
+    if (res1.ok) {
+      expect(res1.value.adapter.id).toBe('claude');
+    }
+
+    const procOnlyAgy = createMockProcessPort((cmd, args) => {
+      if (cmd === 'agy' && args[0] === '--version') {
+        return { exitCode: 0, stdout: '1.0.0\n', stderr: '' };
+      }
+      if (cmd === 'agy' && args[0] === 'models') {
+        return { exitCode: 1, stdout: '', stderr: 'Please sign in' };
+      }
+      return { exitCode: 127, stdout: '', stderr: '' };
+    });
+
+    const serviceOnlyAgy = createAgentService({
+      process: procOnlyAgy,
+      settings: makeSettings('auto'),
+      adapters: { agy: agyAdapter, claude: claudeAdapter },
+    });
+
+    const res2 = await serviceOnlyAgy.resolve();
+    expect(res2.ok).toBe(false);
+    if (!res2.ok) {
+      expect(res2.error.code).toBe('E026');
+      expect(res2.error.params).toEqual({
+        agent: 'agy',
+        reason: 'notLoggedIn',
+      });
+    }
   });
 });

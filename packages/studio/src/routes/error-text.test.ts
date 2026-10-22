@@ -39,6 +39,18 @@ describe('error-text [V-80]', () => {
     expect(result.endsWith('(E001)')).toBe(true);
   });
 
+  it('explains what E021 says is missing, and stays generic for an unlisted item [V-80, R-AG-21]', () => {
+    const tError = getT();
+    const terminal = errorText(tError, 'E021', { missing: 'terminal' });
+    expect(terminal).toContain(
+      'Could not open a terminal window. Please open a terminal and run the agy command manually.',
+    );
+    expect(terminal.endsWith('(E021)')).toBe(true);
+
+    const editor = errorText(tError, 'E021', { missing: 'editor' });
+    expect(editor).toBe(`${tError('E021.message')} (E021)`);
+  });
+
   it('ignores unknown reason without leaking technical names [V-80]', () => {
     const tError = getT();
     const result = errorText(tError, 'E017', { reason: 'zzz' });

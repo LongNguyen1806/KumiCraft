@@ -98,7 +98,7 @@ describe('ChatFlow execution [R-CH-01, R-CH-02, R-CH-03]', () => {
     useSelectionStore.getState().clearSelection();
     vi.spyOn(projectClient, 'fetchProject').mockResolvedValue(MOCK_PROJECT);
     vi.spyOn(agentClient, 'fetchAgents').mockResolvedValue([
-      { id: 'agy', installed: true, login: 'unknown' },
+      { id: 'agy', installed: true, login: 'unknown', loginAvailable: false },
     ]);
     vi.spyOn(agentClient, 'fetchTurns').mockResolvedValue([]);
   });

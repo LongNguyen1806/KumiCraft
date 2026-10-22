@@ -122,7 +122,12 @@
   },
   "E021": {
     "title": "Not Configured",
-    "message": "Something required is missing: open a project, or install the editor or package manager."
+    "message": "Something required is missing: open a project, or install the editor or package manager.",
+    "reasons": {
+      "agent": "This AI assistant is not installed.",
+      "terminal": "Could not open a terminal window. Please open a terminal and run the agy command manually.",
+      "installer": "PowerShell or bash is not available to run the installer."
+    }
   },
   "E023": {
     "title": "Source Not Editable",
