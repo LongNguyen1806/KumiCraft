@@ -1,7 +1,6 @@
 'use no memo';
 // Virtual row layout for long file lists (WP-3.05b, ADR-FE-21).
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
-import type { RefObject } from 'react';
 
 export type VirtualFileRowsResult = {
   readonly items: readonly VirtualItem[];
@@ -10,11 +9,11 @@ export type VirtualFileRowsResult = {
 
 export function useVirtualFileRows(
   count: number,
-  scrollRef: RefObject<HTMLDivElement | undefined>,
+  scrollElement: HTMLDivElement,
 ): VirtualFileRowsResult {
   const virtualizer = useVirtualizer({
     count,
-    getScrollElement: () => scrollRef.current ?? document.getElementById(''),
+    getScrollElement: () => scrollElement,
     estimateSize: () => 28,
   });
 

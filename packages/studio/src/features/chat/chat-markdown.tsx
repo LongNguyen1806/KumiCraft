@@ -11,7 +11,7 @@ function SafeLink({ href, children }: SafeLinkProps) {
         href={href}
         target="_blank"
         rel="noreferrer"
-        className="text-brand-ink underline hover:opacity-80"
+        className="text-accent underline hover:opacity-80"
       >
         {children}
       </a>

@@ -62,7 +62,7 @@ function DocInput({ onAdd }: DocInputProps) {
         setVal(e.target.value);
       }}
       onKeyDown={handleKeyDown}
-      className="w-full rounded-md border border-border bg-field px-2.5 py-1 text-xs text-ink placeholder:text-ink-faint focus:border-brand focus:outline-none"
+      className="w-full rounded-md border border-border bg-field px-2.5 py-1 text-xs text-ink placeholder:text-ink-faint focus:border-ink-soft focus:outline-none"
     />
   );
 }

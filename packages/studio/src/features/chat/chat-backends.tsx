@@ -83,7 +83,7 @@ function AddBackendDialog({ onClose, onAdded, onFail }: AddBackendDialogProps) {
             onClick={() => {
               void handleConfirm();
             }}
-            className="rounded-full bg-brand px-4 py-1.5 text-xs font-medium text-white hover:bg-brand-hover disabled:opacity-40 cursor-pointer"
+            className="rounded-full bg-primary px-4 py-1.5 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 cursor-pointer"
           >
             {t('confirmBackend')}
           </button>

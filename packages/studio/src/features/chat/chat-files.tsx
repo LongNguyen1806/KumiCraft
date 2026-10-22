@@ -2,7 +2,7 @@
 import type { TurnFile, TurnFileChange } from '@reactcraft/shared';
 import type { VirtualItem } from '@tanstack/react-virtual';
 import { ExternalLink } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { openInEditor } from '../../api/editor-client.ts';
@@ -127,53 +127,63 @@ function VirtualRowItem({
   );
 }
 
-function VirtualFileList({
-  files,
-  turnId,
-  selectedPath,
-  onToggle,
-  openErrors,
-  onOpen,
-}: {
+type VirtualFileListProps = {
   readonly files: readonly TurnFile[];
   readonly turnId: string;
   readonly selectedPath?: string | undefined;
   readonly onToggle: (path: string) => void;
   readonly openErrors: Readonly<Record<string, string>>;
   readonly onOpen: (path: string) => void;
-}) {
-  const scrollRef = useRef<HTMLDivElement>(undefined);
-  const { items, totalSize } = useVirtualFileRows(files.length, scrollRef);
+};
 
+/** Rows of a virtual list; mounted only once its scroll box exists (ADR-FE-21). */
+function VirtualRows({
+  scrollElement,
+  files,
+  turnId,
+  selectedPath,
+  onToggle,
+  openErrors,
+  onOpen,
+}: VirtualFileListProps & { readonly scrollElement: HTMLDivElement }) {
+  const { items, totalSize } = useVirtualFileRows(files.length, scrollElement);
+  return (
+    <div style={{ height: `${String(totalSize)}px`, width: '100%', position: 'relative' }}>
+      {items.map((virtualItem) => {
+        const file = files[virtualItem.index];
+        if (file === undefined) return undefined;
+        return (
+          <VirtualRowItem
+            key={String(virtualItem.index)}
+            virtualItem={virtualItem}
+            file={file}
+            turnId={turnId}
+            isSelected={selectedPath === file.path}
+            onToggle={() => {
+              onToggle(file.path);
+            }}
+            openError={openErrors[file.path]}
+            onOpen={() => {
+              onOpen(file.path);
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function VirtualFileList(props: VirtualFileListProps) {
+  // The virtualizer needs the scroll box itself, so the rows wait until React has attached it.
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement>();
   return (
     <div
       ref={(el) => {
-        scrollRef.current = el ?? undefined;
+        setScrollElement(el ?? undefined);
       }}
       className="max-h-64 overflow-auto border border-border/60 rounded relative"
     >
-      <div style={{ height: `${String(totalSize)}px`, width: '100%', position: 'relative' }}>
-        {items.map((virtualItem) => {
-          const file = files[virtualItem.index];
-          if (file === undefined) return undefined;
-          return (
-            <VirtualRowItem
-              key={String(virtualItem.index)}
-              virtualItem={virtualItem}
-              file={file}
-              turnId={turnId}
-              isSelected={selectedPath === file.path}
-              onToggle={() => {
-                onToggle(file.path);
-              }}
-              openError={openErrors[file.path]}
-              onOpen={() => {
-                onOpen(file.path);
-              }}
-            />
-          );
-        })}
-      </div>
+      {scrollElement !== undefined && <VirtualRows {...props} scrollElement={scrollElement} />}
     </div>
   );
 }

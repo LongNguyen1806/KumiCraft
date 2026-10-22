@@ -59,7 +59,7 @@ function ChatItemView({ item }: { readonly item: ChatItem }) {
   if (item.kind === 'user') {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[85%] rounded-2xl bg-brand px-3 py-2 text-xs text-white leading-relaxed whitespace-pre-wrap break-words">
+        <div className="max-w-[85%] rounded-2xl bg-primary px-3 py-2 text-xs text-white leading-relaxed whitespace-pre-wrap break-words">
           {item.text}
         </div>
       </div>

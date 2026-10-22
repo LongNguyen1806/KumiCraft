@@ -86,7 +86,7 @@ function ChatSendButton({ canSend, onSend }: ChatSendButtonProps) {
         title={t('send')}
         aria-label={t('send')}
         onClick={onSend}
-        className="flex size-7 items-center justify-center rounded-full bg-brand text-white hover:bg-brand-hover disabled:opacity-40 cursor-pointer"
+        className="flex size-7 items-center justify-center rounded-full bg-primary text-on-charcoal hover:bg-primary-hover disabled:opacity-40 cursor-pointer"
       >
         <ArrowUp className="size-4" />
       </button>
@@ -129,7 +129,7 @@ export function ChatInput({ disabled = false }: ChatInputProps) {
           {sendError}
         </p>
       )}
-      <div className="relative rounded-xl border border-border bg-card p-2 shadow-xs focus-within:border-brand focus-within:ring-1 focus-within:ring-brand">
+      <div className="relative rounded-xl border border-border bg-card p-2 shadow-xs focus-within:border-ink-soft focus-within:ring-1 focus-within:ring-line">
         <textarea
           data-testid="chat-input"
           disabled={disabled}
