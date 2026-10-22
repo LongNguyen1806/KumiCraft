@@ -1,4 +1,4 @@
-// Real-time server events listener for AI turns (WP-3.05a, R-CH-03).
+// Real-time server events listener for AI turns (WP-3.05a, WP-3.05b, R-CH-03).
 import {
   AgentEventMessageSchema,
   type StudioServerEvent,
@@ -21,8 +21,8 @@ function handleJobCompleted(payload: unknown): void {
   if (payload['kind'] !== 'agent.turn') return;
   const jobId = payload['jobId'];
   const summaryParsed = TurnSummarySchema.safeParse(payload['result']);
-  const fileCount = summaryParsed.success ? summaryParsed.data.files.length : undefined;
-  useChatStore.getState().finishJobCompleted(jobId, fileCount);
+  const summary = summaryParsed.success ? summaryParsed.data : undefined;
+  useChatStore.getState().finishJobCompleted(jobId, summary);
 }
 
 function handleJobFailed(payload: unknown): void {

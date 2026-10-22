@@ -7,11 +7,19 @@
   "cancel": "Hủy",
   "turnDone": "Xong · {{count}} file đã đổi",
   "turnCancelled": "Đã hủy",
+  "turnFailed": "Thất bại",
   "addBackend": "Thêm backend",
   "confirmBackend": "Gắn",
   "cancelBackend": "Hủy",
   "attachDoc": "Đính kèm tài liệu",
   "docInputPlaceholder": "Đường dẫn tài liệu tương đối (Enter để thêm)…",
   "selectFolder": "Chọn thư mục backend",
-  "remove": "Gỡ"
+  "remove": "Gỡ",
+  "newConversation": "Hội thoại mới",
+  "openInEditor": "Mở trong editor",
+  "diffLoading": "Đang tải diff…",
+  "revertTurn": "Hoàn tác lượt này",
+  "revertConfirmPrompt": "Hoàn tác {{count}} file của lượt này về như trước?",
+  "confirmRevert": "Đồng ý",
+  "reverted": "Đã hoàn tác"
 }

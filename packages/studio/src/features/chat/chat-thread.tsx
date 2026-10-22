@@ -1,11 +1,13 @@
-// Chat thread rendering user prompts, agent messages, tool invocations, and summaries (WP-3.05a, R-CH-03).
+// Chat thread rendering user prompts, agent messages, tools, summaries, files, and revert (WP-3.05a, WP-3.05b).
 import type { TFunction } from 'i18next';
 import { FileText, Pencil, Search, Terminal, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { cancelJob } from '../../api/jobs-client.ts';
 import { errorText } from '../../routes/error-text.ts';
+import { ChatFiles } from './chat-files.tsx';
 import { ChatMarkdown } from './chat-markdown.tsx';
+import { ChatRevert } from './chat-revert.tsx';
 import type { ChatItem, ChatTurnView } from './chat-store.ts';
 
 function ToolIcon({ name }: { readonly name: string }) {
@@ -43,6 +45,16 @@ function ToolItemRow({ item }: { readonly item: Extract<ChatItem, { kind: 'tool'
   );
 }
 
+function HistoryTimeLabel({ startedAt }: { readonly startedAt: string }) {
+  const { i18n } = useTranslation();
+  const formatted = new Intl.DateTimeFormat(i18n.language, {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(startedAt));
+
+  return <span className="text-[10px] text-ink-faint select-none">{formatted}</span>;
+}
+
 function ChatItemView({ item }: { readonly item: ChatItem }) {
   if (item.kind === 'user') {
     return (
@@ -63,11 +75,14 @@ function ChatItemView({ item }: { readonly item: ChatItem }) {
   if (item.kind === 'tool') {
     return <ToolItemRow item={item} />;
   }
-  return (
-    <div className="rounded-lg bg-rose-50 border border-rose-200 p-2 text-xs text-rose-700">
-      {item.message}
-    </div>
-  );
+  if (item.kind === 'error') {
+    return (
+      <div className="rounded-lg bg-rose-50 border border-rose-200 p-2 text-xs text-rose-700">
+        {item.message}
+      </div>
+    );
+  }
+  return undefined;
 }
 
 function getSummaryText(
@@ -76,13 +91,17 @@ function getSummaryText(
   tError: TFunction<'errors'>,
 ): string {
   if (turn.state === 'completed') {
-    return tChat('turnDone', { count: turn.fileCount ?? 0 });
+    const count = turn.summary?.files.length ?? 0;
+    return tChat('turnDone', { count });
   }
   if (turn.state === 'cancelled') {
     return tChat('turnCancelled');
   }
-  if (turn.state === 'failed' && turn.error !== undefined) {
-    return errorText(tError, turn.error.code, turn.error.params);
+  if (turn.state === 'failed') {
+    if (turn.error !== undefined) {
+      return errorText(tError, turn.error.code, turn.error.params);
+    }
+    return tChat('turnFailed');
   }
   return '';
 }
@@ -95,7 +114,7 @@ function TurnSummaryView({ turn }: { readonly turn: ChatTurnView }) {
     return (
       <div className="flex items-center justify-between pt-1 text-xs text-ink-soft">
         <span className="italic animate-pulse">…</span>
-        {turn.jobId && (
+        {Boolean(turn.jobId) && !turn.history && (
           <button
             type="button"
             data-testid="chat-cancel"
@@ -124,16 +143,48 @@ function TurnSummaryView({ turn }: { readonly turn: ChatTurnView }) {
   );
 }
 
+function TurnRowView({ turn, turnIdx }: { readonly turn: ChatTurnView; readonly turnIdx: number }) {
+  const { t } = useTranslation('chat');
+  const hasDivider = turn.items.some((i) => i.kind === 'divider');
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      {turn.history && turn.summary?.startedAt && (
+        <div className="flex justify-end">
+          <HistoryTimeLabel startedAt={turn.summary.startedAt} />
+        </div>
+      )}
+      {turn.items.map((item, itemIdx) => (
+        <ChatItemView key={`${String(turnIdx)}-${String(itemIdx)}`} item={item} />
+      ))}
+      <TurnSummaryView turn={turn} />
+      {turn.summary !== undefined && (
+        <>
+          <ChatFiles turnId={turn.summary.id} files={turn.summary.files} />
+          <ChatRevert turnId={turn.summary.id} summary={turn.summary} />
+        </>
+      )}
+      {hasDivider && (
+        <div
+          data-testid="chat-divider"
+          className="my-2 flex items-center justify-center gap-2 border-t border-dashed border-border/80 pt-2 text-[11px] text-ink-faint"
+        >
+          <span>{t('newConversation')}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ChatThread({ turns }: { readonly turns: readonly ChatTurnView[] }) {
   return (
     <div className="flex flex-col gap-4 overflow-y-auto pr-1">
       {turns.map((turn, turnIdx) => (
-        <div key={`${turn.jobId}-${String(turnIdx)}`} className="flex flex-col gap-2.5">
-          {turn.items.map((item, itemIdx) => (
-            <ChatItemView key={`${String(turnIdx)}-${String(itemIdx)}`} item={item} />
-          ))}
-          <TurnSummaryView turn={turn} />
-        </div>
+        <TurnRowView
+          key={`${turn.jobId}-${turn.turnId ?? ''}-${String(turnIdx)}`}
+          turn={turn}
+          turnIdx={turnIdx}
+        />
       ))}
     </div>
   );

@@ -25,10 +25,22 @@ describe('chat store [R-CH-03]', () => {
     const store = useChatStore.getState();
     store.startLocal('Add a button');
     store.setRunningJobId('job0010');
-    useChatStore.getState().finishJobCompleted('job0010', 2);
+    useChatStore.getState().finishJobCompleted('job0010', {
+      id: 'turn000001',
+      agent: 'agy',
+      startedAt: '2026-10-22T00:00:00.000Z',
+      prompt: 'Add a button',
+      state: 'completed',
+      files: [
+        { path: 'src/App.tsx', change: 'modified' },
+        { path: 'src/Button.tsx', change: 'created' },
+      ],
+      revertible: true,
+      notices: [],
+    });
 
     const [turn] = useChatStore.getState().turns;
     expect(turn?.state).toBe('completed');
-    expect(turn?.fileCount).toBe(2);
+    expect(turn?.summary?.files.length).toBe(2);
   });
 });

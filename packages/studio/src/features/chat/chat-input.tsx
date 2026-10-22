@@ -1,4 +1,4 @@
-// Multi-line chat input with Ctrl+Enter send and context payload construction (WP-3.05a, R-CH-01, R-CH-02, R-CH-03).
+// Multi-line prompt input with keyboard submit (Ctrl+Enter / Cmd+Enter) and error notice (WP-3.05a, R-CH-01).
 import type { TurnContext } from '@reactcraft/shared';
 import { ArrowUp } from 'lucide-react';
 import { type KeyboardEvent, useState } from 'react';
@@ -12,39 +12,31 @@ import { resolveTargetTag } from '../structure/structure-commands.ts';
 import { useChatStore } from './chat-store.ts';
 
 function buildTurnContext(): TurnContext {
+  const selection = useSelectionStore.getState();
+  const canvas = useCanvasViewStore.getState();
   const hidden = useChatStore.getState().hidden;
-  const context: {
-    element?: { loc: string; tag: string };
-    route?: string;
-    frame?: { id: string; width: number };
-  } = {};
 
-  if (!hidden.element) {
-    const selectedRefs = useSelectionStore.getState().selectedRefs;
-    const lastRef = selectedRefs[selectedRefs.length - 1];
-    if (lastRef !== undefined) {
-      const tag = resolveTargetTag(lastRef);
-      if (tag !== undefined) {
-        context.element = { loc: lastRef.loc, tag };
-      }
-    }
-  }
+  const firstRef = selection.selectedRefs[0];
+  const tag = firstRef !== undefined ? resolveTargetTag(firstRef) : undefined;
 
-  if (!hidden.page) {
-    const currentRoute = useSelectionStore.getState().currentRoute;
-    if (currentRoute) context.route = currentRoute;
-  }
+  const element =
+    !hidden.element && firstRef !== undefined && tag !== undefined
+      ? { loc: firstRef.loc, tag }
+      : undefined;
 
-  if (!hidden.frame) {
-    const activeFrameId = useCanvasViewStore.getState().activeFrameId;
-    const frames = useCanvasViewStore.getState().frames;
-    const activeFrame = frames.find((f) => f.id === activeFrameId);
-    if (activeFrame !== undefined) {
-      context.frame = { id: activeFrame.id, width: activeFrame.width };
-    }
-  }
+  const route = !hidden.page && selection.currentRoute ? selection.currentRoute : undefined;
 
-  return context;
+  const activeFrame = canvas.frames.find((f) => f.id === canvas.activeFrameId);
+  const frame =
+    !hidden.frame && activeFrame !== undefined
+      ? { id: activeFrame.id, width: activeFrame.width }
+      : undefined;
+
+  return {
+    ...(element !== undefined ? { element } : {}),
+    ...(route !== undefined ? { route } : {}),
+    ...(frame !== undefined ? { frame } : {}),
+  };
 }
 
 function useSendTurn() {
@@ -110,16 +102,23 @@ export function ChatInput({ disabled = false }: ChatInputProps) {
   const { t } = useTranslation('chat');
   const draft = useChatStore((s) => s.draft);
   const setDraft = useChatStore((s) => s.setDraft);
-  const docs = useChatStore((s) => s.docs);
   const { sendError, send } = useSendTurn();
 
   const trimmed = draft.trim();
   const canSend = !disabled && Boolean(trimmed);
 
+  const handleSend = () => {
+    const currentDraft = useChatStore.getState().draft.trim();
+    const currentDocs = useChatStore.getState().docs;
+    if (!disabled && currentDraft) {
+      void send(currentDraft, currentDocs);
+    }
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault();
-      if (canSend) void send(trimmed, docs);
+      handleSend();
     }
   };
 
@@ -143,12 +142,7 @@ export function ChatInput({ disabled = false }: ChatInputProps) {
           onKeyDown={handleKeyDown}
           className="w-full resize-none border-0 bg-transparent text-xs text-ink placeholder:text-ink-faint focus:outline-none disabled:opacity-50"
         />
-        <ChatSendButton
-          canSend={canSend}
-          onSend={() => {
-            void send(trimmed, docs);
-          }}
-        />
+        <ChatSendButton canSend={canSend} onSend={handleSend} />
       </div>
     </div>
   );

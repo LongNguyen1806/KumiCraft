@@ -1,5 +1,5 @@
-// Zustand store for AI chat panel state and turns (WP-3.05a, R-CH-01, R-CH-02, R-CH-03).
-import type { AgentEvent } from '@reactcraft/shared';
+// Zustand store for AI chat panel state and turns (WP-3.05a, WP-3.05b, R-CH-01, R-CH-02, R-CH-03, R-CH-05).
+import type { AgentEvent, TurnSummary } from '@reactcraft/shared';
 import { create, type StateCreator } from 'zustand';
 
 import type { ErrorInfo } from '../../routes/error-text.ts';
@@ -8,14 +8,16 @@ export type ChatItem =
   | { readonly kind: 'user'; readonly text: string }
   | { readonly kind: 'message'; readonly text: string }
   | { readonly kind: 'tool'; readonly name: string; readonly target?: string | undefined }
-  | { readonly kind: 'error'; readonly message: string };
+  | { readonly kind: 'error'; readonly message: string }
+  | { readonly kind: 'divider' };
 
 export type ChatTurnView = {
   readonly jobId: string;
   readonly turnId?: string | undefined;
   readonly state: 'running' | 'completed' | 'failed' | 'cancelled';
   readonly items: readonly ChatItem[];
-  readonly fileCount?: number | undefined;
+  readonly summary?: TurnSummary | undefined;
+  readonly history?: boolean | undefined;
   readonly error?: ErrorInfo | undefined;
 };
 
@@ -26,7 +28,7 @@ export type ChatHiddenContext = {
 };
 
 /** How a turn ended, as the server reported it. */
-type TurnOutcome = Pick<ChatTurnView, 'state' | 'fileCount' | 'error'>;
+type TurnOutcome = Pick<ChatTurnView, 'state' | 'summary' | 'error'>;
 
 export type ChatState = {
   readonly turns: readonly ChatTurnView[];
@@ -48,9 +50,12 @@ export type ChatState = {
   readonly startLocal: (prompt: string, initialJobId?: string) => void;
   readonly setRunningJobId: (jobId: string) => void;
   readonly applyAgentEvent: (turnId: string, event: AgentEvent) => void;
-  readonly finishJobCompleted: (jobId: string, fileCount?: number) => void;
+  readonly finishJobCompleted: (jobId: string, summary?: TurnSummary) => void;
   readonly finishJobFailed: (jobId: string, error: ErrorInfo) => void;
   readonly finishJobCancelled: (jobId: string) => void;
+  readonly loadHistory: (summaries: readonly TurnSummary[]) => void;
+  readonly markReverted: (turnId: string, summary: TurnSummary) => void;
+  readonly newConversation: () => void;
   readonly reset: () => void;
 };
 
@@ -111,6 +116,47 @@ function createInputActions(set: SetState) {
   };
 }
 
+function toHistoryTurn(summary: TurnSummary): ChatTurnView {
+  return {
+    jobId: '',
+    turnId: summary.id,
+    state: summary.state,
+    items: [{ kind: 'user', text: summary.prompt }],
+    summary,
+    history: true,
+  };
+}
+
+function mergeHistory(
+  existingTurns: readonly ChatTurnView[],
+  summaries: readonly TurnSummary[],
+): readonly ChatTurnView[] {
+  const liveTurns = existingTurns.filter((t) => !t.history);
+  const liveTurnIds = new Set(
+    liveTurns
+      .map((t) => t.turnId)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0),
+  );
+
+  const updatedLiveTurns = liveTurns.map((t) => {
+    if (t.turnId !== undefined && t.summary === undefined) {
+      const match = summaries.find((s) => s.id === t.turnId);
+      if (match !== undefined) return { ...t, summary: match };
+    }
+    return t;
+  });
+
+  const historyTurns = summaries.filter((s) => !liveTurnIds.has(s.id)).map(toHistoryTurn);
+
+  historyTurns.sort((a, b) => {
+    const aTime = a.summary?.startedAt ?? '';
+    const bTime = b.summary?.startedAt ?? '';
+    return aTime.localeCompare(bTime);
+  });
+
+  return [...historyTurns, ...updatedLiveTurns];
+}
+
 function createTurnLifecycleActions(set: SetState) {
   return {
     startLocal: (prompt: string, initialJobId = '') => {
@@ -158,14 +204,40 @@ function settle(state: ChatState, jobId: string, outcome: TurnOutcome): Partial<
 
 function createJobOutcomeActions(set: SetState) {
   return {
-    finishJobCompleted: (jobId: string, fileCount?: number) => {
-      set((state) => settle(state, jobId, { state: 'completed', fileCount }));
+    finishJobCompleted: (jobId: string, summary?: TurnSummary) => {
+      set((state) => settle(state, jobId, { state: 'completed', summary }));
     },
     finishJobFailed: (jobId: string, error: ErrorInfo) => {
       set((state) => settle(state, jobId, { state: 'failed', error }));
     },
     finishJobCancelled: (jobId: string) => {
       set((state) => settle(state, jobId, { state: 'cancelled' }));
+    },
+    loadHistory: (summaries: readonly TurnSummary[]) => {
+      set((state) => ({ turns: mergeHistory(state.turns, summaries) }));
+    },
+    markReverted: (turnId: string, summary: TurnSummary) => {
+      set((state) => ({
+        turns: state.turns.map((t) => (t.turnId === turnId ? { ...t, summary } : t)),
+      }));
+    },
+    newConversation: () => {
+      set((state) => {
+        if (state.turns.length === 0) return { hasConversation: false };
+        const lastIndex = state.turns.length - 1;
+        const lastTurn = state.turns[lastIndex];
+        if (lastTurn === undefined || lastTurn.items.some((i) => i.kind === 'divider')) {
+          return { hasConversation: false };
+        }
+        const updatedLast: ChatTurnView = {
+          ...lastTurn,
+          items: [...lastTurn.items, { kind: 'divider' }],
+        };
+        return {
+          hasConversation: false,
+          turns: [...state.turns.slice(0, lastIndex), updatedLast],
+        };
+      });
     },
     reset: () => {
       set({

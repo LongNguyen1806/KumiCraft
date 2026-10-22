@@ -100,6 +100,7 @@ describe('ChatFlow execution [R-CH-01, R-CH-02, R-CH-03]', () => {
     vi.spyOn(agentClient, 'fetchAgents').mockResolvedValue([
       { id: 'agy', installed: true, login: 'unknown' },
     ]);
+    vi.spyOn(agentClient, 'fetchTurns').mockResolvedValue([]);
   });
 
   afterEach(() => {

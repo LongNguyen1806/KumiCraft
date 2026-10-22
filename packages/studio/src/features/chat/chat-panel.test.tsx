@@ -73,6 +73,7 @@ describe('ChatPanel tabs and locks [R-CH-01, R-CH-06, R-CH-07]', () => {
     await i18next.changeLanguage('vi');
     useChatStore.getState().reset();
     vi.spyOn(projectClient, 'fetchProject').mockResolvedValue(MOCK_PROJECT);
+    vi.spyOn(agentClient, 'fetchTurns').mockResolvedValue([]);
     vi.spyOn(projectClient, 'fetchProjectTheme').mockResolvedValue(DEFAULT_THEME);
     vi.spyOn(agentClient, 'fetchAgents').mockResolvedValue([
       { id: 'agy', installed: true, login: 'unknown' },
