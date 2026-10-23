@@ -55,5 +55,21 @@ describe('buildPrompt [R-AG-13, S-117]', () => {
       expect(longRes.error.code).toBe('E016');
       expect(longRes.error.params?.['reason']).toBe('promptTooLong');
     }
+
+    const imageRes = buildPrompt({
+      request: 'Clone this UI',
+      context: {},
+      mirrors: [],
+      docs: [],
+      images: ['/cache/chat-images/p1/img01.png', '/cache/chat-images/p1/img02.png'],
+    });
+    expect(imageRes.ok).toBe(true);
+    if (imageRes.ok) {
+      expect(imageRes.value).toContain(
+        'Images the user attached (read them with your file tools):',
+      );
+      expect(imageRes.value).toContain('- /cache/chat-images/p1/img01.png');
+      expect(imageRes.value).toContain('- /cache/chat-images/p1/img02.png');
+    }
   });
 });

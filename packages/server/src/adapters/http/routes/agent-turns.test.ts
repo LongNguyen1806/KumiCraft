@@ -3,17 +3,19 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { TurnSummary } from '@reactcraft/shared';
+import type { ProjectInfo, TurnSummary } from '@reactcraft/shared';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  makeTestProjectInfo,
   SCRIPTS_DIR,
   setupTurnRunnerTest,
   type TestTurnEnv,
   waitForJobEnd,
   writeTestProjectFiles,
 } from '../../../core/agent/test-support.ts';
+import { err, ok, type Result } from '../../../core/shared/result.ts';
 import { createSessionInfoProvider } from '../../../core/shared/session.ts';
 import { createHttpApp } from '../create-http-app.ts';
 
@@ -52,11 +54,13 @@ describe('Agent turns routes [R-AG-15]', () => {
   let tempDir: string;
   let env: TestTurnEnv;
   let app: FastifyInstance;
+  let currentProject: Result<ProjectInfo>;
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), 'rc-agent-turn-routes-'));
     env = setupTurnRunnerTest(tempDir);
     await writeTestProjectFiles(env.projectRoot, env.dataDir, env.cacheDir);
+    currentProject = ok(makeTestProjectInfo(env.projectRoot));
 
     app = await createHttpApp({
       logLevel: 'silent',
@@ -67,7 +71,11 @@ describe('Agent turns routes [R-AG-15]', () => {
         features: [],
         readProject: () => ({ state: 'open', id: 'p_12345678', name: 'test', trusted: true }),
       }),
-      agentTurnRoutes: { turnRunner: env.turnRunner },
+      agentTurnRoutes: {
+        turnRunner: env.turnRunner,
+        chatImages: env.chatImages,
+        getProjectInfo: () => currentProject,
+      },
     });
   });
 
@@ -142,5 +150,43 @@ describe('Agent turns routes [R-AG-15]', () => {
     const revErr = revAgain.json<ErrorResponseBody>().error;
     expect(revErr.code).toBe('E016');
     expect(revErr.params?.reason).toBe('alreadyReverted');
+  });
+
+  it('Situation 16: POST /agent/images handles untrusted (E011), unopened (E021), and accepts large body under bodyLimit [R-CH-02]', async () => {
+    currentProject = ok(makeTestProjectInfo(env.projectRoot, { trusted: false }));
+    const untrustedRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/agent/images',
+      headers: HEADERS,
+      body: JSON.stringify({ kind: 'png', dataBase64: 'aW1hZ2U=' }),
+    });
+    expect(untrustedRes.statusCode).toBe(403);
+    expect(untrustedRes.json()).toMatchObject({ error: { code: 'E011' } });
+
+    currentProject = err({ code: 'E021', params: { missing: 'project' } });
+    const unopenedRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/agent/images',
+      headers: HEADERS,
+      body: JSON.stringify({ kind: 'png', dataBase64: 'aW1hZ2U=' }),
+    });
+    expect(unopenedRes.statusCode).toBe(409);
+    expect(unopenedRes.json()).toMatchObject({ error: { code: 'E021' } });
+
+    currentProject = ok(makeTestProjectInfo(env.projectRoot, { trusted: true }));
+    const rawPng = new Uint8Array(4_500_000);
+    rawPng.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const base64Data = Buffer.from(rawPng).toString('base64');
+    expect(base64Data.length).toBeGreaterThan(5_000_000);
+
+    const validRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/agent/images',
+      headers: HEADERS,
+      body: JSON.stringify({ kind: 'png', dataBase64: base64Data }),
+    });
+    expect(validRes.statusCode).toBe(201);
+    const data = validRes.json<{ data: { id: string } }>().data;
+    expect(data.id).toMatch(/^[A-Za-z0-9_-]{10}$/);
   });
 });

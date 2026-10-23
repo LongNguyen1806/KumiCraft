@@ -8,23 +8,34 @@ import { InspectorPanel } from '../inspector/inspector-panel.tsx';
 import { useProjectTheme } from '../inspector/use-project-theme.ts';
 import { LayerTree } from '../layers/layer-tree.tsx';
 import { LibraryPanel } from '../library/library-panel.tsx';
+import { PanelHeaderContext } from './panel-header-context.ts';
 
 type PanelProps = {
   readonly label: string;
   readonly title: string;
   readonly tabs: ReactNode;
+  readonly onHeaderSlotRef?: ((el: HTMLDivElement | undefined) => void) | undefined;
   readonly children: ReactNode;
 };
 
 /** A frosted panel: thin title and pill tabs (approved mockup). */
-function Panel({ label, title, tabs, children }: PanelProps) {
+function Panel({ label, title, tabs, onHeaderSlotRef, children }: PanelProps) {
   return (
     <aside
       aria-label={label}
       className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-panel bg-card shadow-soft backdrop-blur-xl"
     >
-      <div className="flex items-center gap-2 px-4 pt-4 pb-2.5">
+      <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-2.5">
         <h2 className="truncate text-[19px] font-light tracking-tight">{title}</h2>
+        {onHeaderSlotRef !== undefined && (
+          <div
+            ref={(el) => {
+              onHeaderSlotRef(el ?? undefined);
+            }}
+            data-testid="panel-header-actions"
+            className="flex items-center gap-1"
+          />
+        )}
       </div>
       <div role="tablist" className="mx-3 flex gap-0.5 rounded-full bg-field p-[3px]">
         {tabs}
@@ -169,6 +180,45 @@ function saveRightPanelTab(tab: RightPanelTab): void {
   }
 }
 
+type RightPanelTabsProps = {
+  readonly tab: RightPanelTab;
+  readonly onSelectTab: (tab: RightPanelTab) => void;
+};
+
+function RightPanelTabs({ tab, onSelectTab }: RightPanelTabsProps) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <Tab
+        selected={tab === 'properties'}
+        onClick={() => {
+          onSelectTab('properties');
+        }}
+      >
+        {t('editor.properties')}
+      </Tab>
+      <Tab
+        selected={tab === 'brand'}
+        testId="right-tab-brand"
+        onClick={() => {
+          onSelectTab('brand');
+        }}
+      >
+        {t('brand.tab')}
+      </Tab>
+      <Tab
+        selected={tab === 'chat'}
+        testId="right-tab-chat"
+        onClick={() => {
+          onSelectTab('chat');
+        }}
+      >
+        {t('editor.ai')}
+      </Tab>
+    </>
+  );
+}
+
 export type RightPanelProps = {
   readonly trusted?: boolean;
 };
@@ -178,6 +228,7 @@ export function RightPanel({ trusted = false }: RightPanelProps) {
   const { t } = useTranslation();
   const theme = useProjectTheme();
   const [tab, setTab] = useState<RightPanelTab>(readRightPanelTab);
+  const [headerSlot, setHeaderSlot] = useState<HTMLDivElement | undefined>(undefined);
 
   const handleSetTab = (nextTab: RightPanelTab) => {
     setTab(nextTab);
@@ -186,41 +237,19 @@ export function RightPanel({ trusted = false }: RightPanelProps) {
 
   const title =
     tab === 'brand' ? t('brand.tab') : tab === 'chat' ? t('editor.ai') : t('editor.properties');
-  const tabs = (
-    <>
-      <Tab
-        selected={tab === 'properties'}
-        onClick={() => {
-          handleSetTab('properties');
-        }}
-      >
-        {t('editor.properties')}
-      </Tab>
-      <Tab
-        selected={tab === 'brand'}
-        testId="right-tab-brand"
-        onClick={() => {
-          handleSetTab('brand');
-        }}
-      >
-        {t('brand.tab')}
-      </Tab>
-      <Tab
-        selected={tab === 'chat'}
-        testId="right-tab-chat"
-        onClick={() => {
-          handleSetTab('chat');
-        }}
-      >
-        {t('editor.ai')}
-      </Tab>
-    </>
-  );
+
   return (
-    <Panel label={t('editor.rightPanel')} title={title} tabs={tabs}>
-      {tab === 'properties' && <InspectorPanel theme={theme} />}
-      {tab === 'brand' && <BrandPanel />}
-      {tab === 'chat' && <ChatPanel trusted={trusted} />}
-    </Panel>
+    <PanelHeaderContext.Provider value={tab === 'chat' ? headerSlot : undefined}>
+      <Panel
+        label={t('editor.rightPanel')}
+        title={title}
+        tabs={<RightPanelTabs tab={tab} onSelectTab={handleSetTab} />}
+        onHeaderSlotRef={setHeaderSlot}
+      >
+        {tab === 'properties' && <InspectorPanel theme={theme} />}
+        {tab === 'brand' && <BrandPanel />}
+        {tab === 'chat' && <ChatPanel trusted={trusted} />}
+      </Panel>
+    </PanelHeaderContext.Provider>
   );
 }

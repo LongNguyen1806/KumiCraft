@@ -5,11 +5,22 @@ import { create, type StateCreator } from 'zustand';
 import type { ErrorInfo } from '../../routes/error-text.ts';
 
 export type ChatItem =
-  | { readonly kind: 'user'; readonly text: string }
+  | {
+      readonly kind: 'user';
+      readonly text: string;
+      readonly images?: readonly string[] | undefined;
+    }
   | { readonly kind: 'message'; readonly text: string }
   | { readonly kind: 'tool'; readonly name: string; readonly target?: string | undefined }
   | { readonly kind: 'error'; readonly message: string }
   | { readonly kind: 'divider' };
+
+export type ChatImageAttachment = {
+  readonly localId: string;
+  readonly previewUrl: string;
+  readonly state: 'uploading' | 'ready';
+  readonly id?: string | undefined;
+};
 
 export type ChatTurnView = {
   readonly jobId: string;
@@ -39,15 +50,22 @@ export type ChatState = {
   readonly earlyOutcomes: Readonly<Record<string, TurnOutcome>>;
   readonly draft: string;
   readonly docs: readonly string[];
+  readonly images: readonly ChatImageAttachment[];
+  readonly imageError?: string | undefined;
   readonly hidden: ChatHiddenContext;
   readonly hasConversation: boolean;
 
   readonly setDraft: (draft: string) => void;
   readonly addDoc: (path: string) => void;
   readonly removeDoc: (path: string) => void;
+  readonly addImage: (image: ChatImageAttachment) => void;
+  readonly updateImage: (localId: string, patch: Partial<ChatImageAttachment>) => void;
+  readonly removeImage: (localId: string) => void;
+  readonly clearImages: () => void;
+  readonly setImageError: (err?: string) => void;
   readonly setHidden: (key: keyof ChatHiddenContext, value: boolean) => void;
   readonly clearHidden: () => void;
-  readonly startLocal: (prompt: string, initialJobId?: string) => void;
+  readonly startLocal: (prompt: string, initialJobId?: string, images?: readonly string[]) => void;
   readonly setRunningJobId: (jobId: string) => void;
   readonly applyAgentEvent: (turnId: string, event: AgentEvent) => void;
   readonly finishJobCompleted: (jobId: string, summary?: TurnSummary) => void;
@@ -107,6 +125,28 @@ function createInputActions(set: SetState) {
     removeDoc: (path: string) => {
       set((state) => ({ docs: state.docs.filter((d) => d !== path) }));
     },
+    addImage: (image: ChatImageAttachment) => {
+      set((state) => {
+        if (state.images.length >= 5) return state;
+        return { images: [...state.images, image] };
+      });
+    },
+    updateImage: (localId: string, patch: Partial<ChatImageAttachment>) => {
+      set((state) => ({
+        images: state.images.map((img) => (img.localId === localId ? { ...img, ...patch } : img)),
+      }));
+    },
+    removeImage: (localId: string) => {
+      set((state) => ({
+        images: state.images.filter((img) => img.localId !== localId),
+      }));
+    },
+    clearImages: () => {
+      set({ images: [], imageError: undefined });
+    },
+    setImageError: (imageError?: string) => {
+      set({ imageError });
+    },
     setHidden: (key: keyof ChatHiddenContext, value: boolean) => {
       set((state) => ({ hidden: { ...state.hidden, [key]: value } }));
     },
@@ -159,7 +199,7 @@ function mergeHistory(
 
 function createTurnLifecycleActions(set: SetState) {
   return {
-    startLocal: (prompt: string, initialJobId = '') => {
+    startLocal: (prompt: string, initialJobId = '', images?: readonly string[]) => {
       set((state) => ({
         turns: [
           ...state.turns,
@@ -167,11 +207,17 @@ function createTurnLifecycleActions(set: SetState) {
             jobId: initialJobId,
             turnId: undefined,
             state: 'running',
-            items: [{ kind: 'user', text: prompt }],
+            items: [
+              {
+                kind: 'user',
+                text: prompt,
+                ...(images !== undefined && images.length > 0 ? { images } : {}),
+              },
+            ],
           },
         ],
         draft: '',
-        docs: [],
+        images: [],
         hidden: INITIAL_HIDDEN,
         hasConversation: true,
       }));
@@ -221,6 +267,11 @@ function createJobOutcomeActions(set: SetState) {
         turns: state.turns.map((t) => (t.turnId === turnId ? { ...t, summary } : t)),
       }));
     },
+  };
+}
+
+function createConversationActions(set: SetState) {
+  return {
     newConversation: () => {
       set((state) => {
         if (state.turns.length === 0) return { hasConversation: false };
@@ -245,6 +296,8 @@ function createJobOutcomeActions(set: SetState) {
         earlyOutcomes: {},
         draft: '',
         docs: [],
+        images: [],
+        imageError: undefined,
         hidden: INITIAL_HIDDEN,
         hasConversation: false,
       });
@@ -257,9 +310,12 @@ export const useChatStore = create<ChatState>((set) => ({
   earlyOutcomes: {},
   draft: '',
   docs: [],
+  images: [],
+  imageError: undefined,
   hidden: INITIAL_HIDDEN,
   hasConversation: false,
   ...createInputActions(set),
   ...createTurnLifecycleActions(set),
   ...createJobOutcomeActions(set),
+  ...createConversationActions(set),
 }));

@@ -188,17 +188,17 @@ describe('ChatFlow execution [R-CH-01, R-CH-02, R-CH-03]', () => {
     const startTurnSpy = vi.spyOn(agentClient, 'startTurn').mockResolvedValue({ jobId: 'job0001' });
 
     render(<ChatPanel trusted />);
-    const attachBtn = await screen.findByTestId('chat-attach');
-    fireEvent.click(attachBtn);
+    const importBtn = await screen.findByTestId('chat-import');
+    fireEvent.click(importBtn);
 
-    const docInput = screen.getByTestId('chat-doc-input');
-    fireEvent.change(docInput, { target: { value: 'docs/a.md' } });
-    fireEvent.keyDown(docInput, { key: 'Enter' });
+    const pathInput1 = await screen.findByTestId('chat-import-path');
+    fireEvent.change(pathInput1, { target: { value: 'docs/a.md' } });
+    fireEvent.click(screen.getByTestId('chat-import-confirm'));
 
-    fireEvent.click(attachBtn);
-    const docInput2 = screen.getByTestId('chat-doc-input');
-    fireEvent.change(docInput2, { target: { value: 'docs/b.md' } });
-    fireEvent.keyDown(docInput2, { key: 'Enter' });
+    fireEvent.click(screen.getByTestId('chat-import'));
+    const pathInput2 = await screen.findByTestId('chat-import-path');
+    fireEvent.change(pathInput2, { target: { value: 'docs/b.md' } });
+    fireEvent.click(screen.getByTestId('chat-import-confirm'));
 
     expect(screen.getByTestId('chat-doc-0').textContent).toContain('docs/a.md');
     expect(screen.getByTestId('chat-doc-1').textContent).toContain('docs/b.md');
@@ -215,7 +215,7 @@ describe('ChatFlow execution [R-CH-01, R-CH-02, R-CH-03]', () => {
         docs: ['docs/b.md'],
       }),
     );
-    expect(screen.queryByTestId('chat-doc-0')).toBeNull();
+    expect(screen.getByTestId('chat-doc-0').textContent).toContain('docs/b.md');
   });
 
   it('Scenario 9: streams agent messages and tools, ignoring different turnId [R-CH-03]', async () => {

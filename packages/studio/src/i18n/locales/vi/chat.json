@@ -8,12 +8,22 @@
   "turnDone": "Xong · {{count}} file đã đổi",
   "turnCancelled": "Đã hủy",
   "turnFailed": "Thất bại",
-  "addBackend": "Thêm backend",
-  "confirmBackend": "Gắn",
-  "cancelBackend": "Hủy",
-  "attachDoc": "Đính kèm tài liệu",
-  "docInputPlaceholder": "Đường dẫn tài liệu tương đối (Enter để thêm)…",
-  "selectFolder": "Chọn thư mục backend",
+  "import": {
+    "button": "Nhập thư mục",
+    "title": "Nhập thư mục hoặc tài liệu",
+    "hintDoc": "AI sẽ đọc {{path}} ở các tin nhắn tiếp theo.",
+    "hintBackend": "AI sẽ đọc bản sao chỉ đọc của {{path}} ở các tin nhắn tiếp theo. AI không sửa được thư mục gốc.",
+    "hintRoot": "Đây là thư mục dự án, AI đã đọc sẵn.",
+    "add": "Thêm",
+    "cancel": "Hủy"
+  },
+  "image": {
+    "button": "Thêm ảnh",
+    "uploading": "Đang tải ảnh…",
+    "notAnImage": "Chỉ chấp nhận ảnh PNG, JPG, WebP, GIF.",
+    "tooLarge": "Ảnh quá lớn (tối đa 5 MB).",
+    "maxImages": "Tối đa 5 ảnh."
+  },
   "remove": "Gỡ",
   "newConversation": "Hội thoại mới",
   "openInEditor": "Mở trong editor",

@@ -90,6 +90,8 @@
       "imageNotFound": "Không tìm thấy file ảnh.",
       "invalidImage": "Dữ liệu ảnh không hợp lệ.",
       "tooLarge": "Ảnh vượt quá kích thước cho phép.",
+      "imageTooLarge": "Ảnh quá lớn (tối đa 5 MB).",
+      "notAnImage": "File không phải là ảnh hợp lệ hoặc là file SVG.",
       "unsupportedImage": "Định dạng ảnh không được hỗ trợ.",
       "unsafeSvg": "File SVG chứa mã không an toàn.",
       "tokenExists": "Token đã tồn tại trong @theme.",

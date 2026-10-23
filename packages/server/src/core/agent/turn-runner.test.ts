@@ -292,4 +292,74 @@ describe('TurnRunner core lifecycle [WP-3.03b]', () => {
       expect(() => process.kill(pid, 0)).toThrow();
     }
   });
+
+  it('Situation 17: passes image directory and adds image prompt [R-CH-02]', async () => {
+    const png = new Uint8Array(100);
+    png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const saveRes = await env.chatImages.save('p_12345678', 'png', png);
+    expect(saveRes.ok).toBe(true);
+    if (!saveRes.ok) return;
+
+    const recordFile = join(tempDir, 'rec-img17.json');
+    process.env['RC_FAKE_AGENT_RECORD'] = recordFile;
+    process.env['RC_FAKE_AGENT_SCRIPT'] = join(SCRIPTS_DIR, 'success-edit.json');
+
+    const startRes = await env.turnRunner.start({
+      prompt: 'clone this UI',
+      context: {},
+      conversation: 'new',
+      docs: [],
+      images: [saveRes.value.id],
+    });
+    expect(startRes.ok).toBe(true);
+    if (!startRes.ok) return;
+
+    await waitForJobEnd(env.eventBus, startRes.value.jobId);
+    expect(existsSync(recordFile)).toBe(true);
+
+    const rec = readRecordJson(recordFile);
+    expect(rec.argv).toContain('--add-dir');
+    const imageDir = env.chatImages.dirOf('p_12345678');
+    expect(rec.argv).toContain(imageDir);
+
+    const fullArgv = rec.argv.join(' ');
+    expect(fullArgv).toContain('Images the user attached (read them with your file tools):');
+    expect(fullArgv).toContain(join(imageDir, `${saveRes.value.id}.png`));
+  });
+
+  it('Situation 18: rejects missing images with E015 without starting agent [R-CH-02]', async () => {
+    const startRes = await env.turnRunner.start({
+      prompt: 'use missing image',
+      context: {},
+      conversation: 'new',
+      docs: [],
+      images: ['missingId01'],
+    });
+    expect(startRes).toEqual({
+      ok: false,
+      error: { code: 'E015', params: { resource: 'image', id: 'missingId01' } },
+    });
+  });
+
+  it('Situation 19: turn without images retains identical prompt and arguments [R-CH-02]', async () => {
+    const recordFile = join(tempDir, 'rec-img19.json');
+    process.env['RC_FAKE_AGENT_RECORD'] = recordFile;
+    process.env['RC_FAKE_AGENT_SCRIPT'] = join(SCRIPTS_DIR, 'success-edit.json');
+
+    const startRes = await env.turnRunner.start({
+      prompt: 'no image turn',
+      context: {},
+      conversation: 'new',
+      docs: [],
+      images: [],
+    });
+    expect(startRes.ok).toBe(true);
+    if (!startRes.ok) return;
+
+    await waitForJobEnd(env.eventBus, startRes.value.jobId);
+    const rec = readRecordJson(recordFile);
+    const fullArgv = rec.argv.join(' ');
+    expect(fullArgv).not.toContain('Images the user attached');
+    expect(fullArgv).not.toContain('chat-images');
+  });
 });

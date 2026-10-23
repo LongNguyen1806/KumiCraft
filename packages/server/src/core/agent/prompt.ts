@@ -11,6 +11,7 @@ export type PromptInput = {
   readonly context: TurnContext;
   readonly mirrors: readonly { readonly label: string; readonly dir: string }[];
   readonly docs: readonly string[];
+  readonly images?: readonly string[] | undefined;
   readonly guide?: string | undefined;
 };
 
@@ -35,6 +36,12 @@ function buildContextLines(input: PromptInput): readonly string[] {
     lines.push('Documents the user pointed to:');
     for (const doc of input.docs) {
       lines.push(`- ${doc}`);
+    }
+  }
+  if (input.images !== undefined && input.images.length > 0) {
+    lines.push('Images the user attached (read them with your file tools):');
+    for (const image of input.images) {
+      lines.push(`- ${image}`);
     }
   }
   return lines;

@@ -90,11 +90,28 @@ export const TurnContextSchema = z.strictObject({
 });
 export type TurnContext = z.infer<typeof TurnContextSchema>;
 
+export const CHAT_IMAGE_KINDS = ['png', 'jpg', 'webp', 'gif'] as const;
+export const ChatImageKindSchema = z.enum(CHAT_IMAGE_KINDS);
+export type ChatImageKind = z.infer<typeof ChatImageKindSchema>;
+
+export const ChatImageUploadSchema = z.strictObject({
+  kind: ChatImageKindSchema,
+  dataBase64: z.string().min(1).max(7_000_000), // about 5 MB once decoded
+});
+export type ChatImageUpload = z.infer<typeof ChatImageUploadSchema>;
+
+export const ChatImageSchema = z.strictObject({ id: z.string().regex(/^[A-Za-z0-9_-]{10}$/) });
+export type ChatImage = z.infer<typeof ChatImageSchema>;
+
 export const StartTurnRequestSchema = z.strictObject({
   prompt: z.string().trim().min(1).max(20_000),
   context: TurnContextSchema,
   conversation: z.enum(['new', 'continue']),
   docs: z.array(RelPathSchema).max(10),
+  images: z
+    .array(z.string().regex(/^[A-Za-z0-9_-]{10}$/))
+    .max(5)
+    .optional(),
 });
 export type StartTurnRequest = z.infer<typeof StartTurnRequestSchema>;
 

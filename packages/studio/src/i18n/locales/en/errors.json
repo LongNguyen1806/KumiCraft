@@ -90,6 +90,8 @@
       "imageNotFound": "Image file not found.",
       "invalidImage": "Invalid image data.",
       "tooLarge": "Image exceeds allowed size.",
+      "imageTooLarge": "Image exceeds allowed size (maximum 5 MB).",
+      "notAnImage": "File is not a valid image or is an SVG file.",
       "unsupportedImage": "Unsupported image format.",
       "unsafeSvg": "SVG file contains unsafe content.",
       "tokenExists": "Token already exists in @theme.",

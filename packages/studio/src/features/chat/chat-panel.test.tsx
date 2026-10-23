@@ -10,7 +10,6 @@ import * as projectClient from '../../api/project-client.ts';
 import { useAgentsStore } from '../../store/agents-store.ts';
 import { RightPanel } from '../editor/side-panels.tsx';
 import { DEFAULT_THEME } from '../inspector/use-project-theme.ts';
-import { ChatBackends } from './chat-backends.tsx';
 import { ChatPanel } from './chat-panel.tsx';
 import { useChatStore } from './chat-store.ts';
 
@@ -145,7 +144,7 @@ describe('ChatPanel tabs and locks [R-CH-01, R-CH-06, R-CH-07]', () => {
       roots: [],
     });
 
-    render(<ChatBackends />);
+    render(<ChatPanel trusted />);
     const chip = await screen.findByTestId('chat-backend-be00000001');
     expect(chip.textContent).toContain('API Gateway');
 
@@ -154,16 +153,16 @@ describe('ChatPanel tabs and locks [R-CH-01, R-CH-06, R-CH-07]', () => {
     if (removeBtn) fireEvent.click(removeBtn);
     expect(removeSpy).toHaveBeenCalledWith('be00000001');
 
-    fireEvent.click(screen.getByTestId('chat-add-backend'));
+    fireEvent.click(screen.getByTestId('chat-import'));
     const dirEntry = await screen.findByTestId('dir-entry-backend');
     fireEvent.click(dirEntry);
 
-    fireEvent.click(screen.getByTestId('chat-backend-confirm'));
+    fireEvent.click(screen.getByTestId('chat-import-confirm'));
     await vi.waitFor(() => {
       expect(addSpy).toHaveBeenCalledWith('/srv/backend');
     });
 
-    const errorEl = await screen.findByTestId('chat-backend-error');
+    const errorEl = await screen.findByTestId('chat-import-error');
     expect(errorEl.textContent).toContain('E016');
   });
 });

@@ -3,6 +3,8 @@ import {
   type AgentId,
   type AgentStatus,
   AgentStatusSchema,
+  type ChatImageKind,
+  ChatImageSchema,
   JobStartedSchema,
   type StartTurnRequest,
   TurnDiffSchema,
@@ -67,6 +69,13 @@ export async function installAgent(
 
 export async function openAgentLogin(id: AgentId): Promise<void> {
   await apiPost(`agents/${encodeURIComponent(id)}/login`);
+}
+
+export async function uploadChatImage(
+  kind: ChatImageKind,
+  dataBase64: string,
+): Promise<{ readonly id: string }> {
+  return parseResponse(ChatImageSchema, await apiPost('agent/images', { kind, dataBase64 }));
 }
 
 export async function startTurn(request: StartTurnRequest): Promise<{ readonly jobId: string }> {

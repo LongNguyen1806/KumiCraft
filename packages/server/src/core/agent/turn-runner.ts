@@ -20,6 +20,7 @@ import { redactSecrets } from '../shared/redact-secrets.ts';
 import { type AppError, err, ok, type Result } from '../shared/result.ts';
 import type { AgentService } from './agent-service.ts';
 import type { AgentAdapter, AgentCommand } from './agent-types.ts';
+import type { ChatImageStore } from './chat-images.ts';
 import { buildPrompt } from './prompt.ts';
 import type { TurnSnapshotStore } from './snapshot/snapshot-types.ts';
 import { settleInterruptedTurns } from './turn-interrupted.ts';
@@ -47,6 +48,7 @@ export type TurnRunnerDeps = {
   readonly now: () => Date;
   readonly newTurnId?: () => string;
   readonly timeoutMs?: number | undefined;
+  readonly chatImages?: ChatImageStore | undefined;
 };
 
 export type TurnRunner = {
@@ -61,17 +63,13 @@ export type TurnRunner = {
 type MirrorDir = { readonly backendId: string; readonly label: string; readonly dir: string };
 
 function redactEventSecrets(event: AgentEvent): AgentEvent {
-  if (event.kind === 'message') {
-    return { ...event, text: redactSecrets(event.text) };
-  }
+  if (event.kind === 'message') return { ...event, text: redactSecrets(event.text) };
+  if (event.kind === 'error') return { ...event, message: redactSecrets(event.message) };
   if (event.kind === 'tool') {
     return {
       ...event,
       ...(event.target !== undefined ? { target: redactSecrets(event.target) } : {}),
     };
-  }
-  if (event.kind === 'error') {
-    return { ...event, message: redactSecrets(event.message) };
   }
   return event;
 }
@@ -194,12 +192,45 @@ type TurnPreparation = {
   readonly notices: TurnNotice[];
 };
 
+function createInitialTurnSummary(
+  turnId: string,
+  agent: AgentStatus['id'],
+  prompt: string,
+  startedAt: string,
+  notices: TurnNotice[],
+): TurnSummary {
+  return {
+    id: turnId,
+    agent,
+    startedAt,
+    prompt,
+    state: 'running',
+    files: [],
+    revertible: false,
+    notices,
+  };
+}
+
+function computeAdapterArgs(
+  resolved: ResolvedAgent,
+  prompt: string,
+  mirrors: readonly { readonly dir: string }[],
+  conversationId?: string,
+  imageDir?: string,
+): readonly string[] {
+  const mirrorDirs =
+    imageDir !== undefined ? [...mirrors.map((m) => m.dir), imageDir] : mirrors.map((m) => m.dir);
+  const adapterArgs = resolved.adapter.buildArgs({ prompt, mirrorDirs, conversationId });
+  return [...resolved.command.prefixArgs, ...adapterArgs];
+}
+
 async function prepareTurnRun(
   deps: TurnRunnerDeps,
   projectInfo: ProjectInfo,
   resolved: ResolvedAgent,
   turnId: string,
   request: StartTurnRequest,
+  imagePaths: readonly string[],
 ): Promise<Result<TurnPreparation>> {
   const capRes = await deps.snapshots.capture(projectInfo.id, projectInfo.root, turnId);
   if (!capRes.ok) return err(capRes.error);
@@ -214,6 +245,7 @@ async function prepareTurnRun(
     context: request.context,
     mirrors,
     docs: request.docs,
+    images: imagePaths.length > 0 ? imagePaths : undefined,
     guide,
   });
   if (!promptRes.ok) return err(promptRes.error);
@@ -224,25 +256,20 @@ async function prepareTurnRun(
     request.conversation,
     resolved.status.id,
   );
-  const initialSummary: TurnSummary = {
-    id: turnId,
-    agent: resolved.status.id,
-    startedAt: deps.now().toISOString(),
-    prompt: request.prompt,
-    state: 'running',
-    files: [],
-    revertible: false,
+  const initialSummary = createInitialTurnSummary(
+    turnId,
+    resolved.status.id,
+    request.prompt,
+    deps.now().toISOString(),
     notices,
-  };
+  );
   await deps.store.save(projectInfo.id, initialSummary);
 
-  const mirrorDirs = mirrors.map((m) => m.dir);
-  const adapterArgs = resolved.adapter.buildArgs({
-    prompt: promptRes.value,
-    mirrorDirs,
-    conversationId,
-  });
-  const args = [...resolved.command.prefixArgs, ...adapterArgs];
+  const imageDir =
+    imagePaths.length > 0 && deps.chatImages !== undefined
+      ? deps.chatImages.dirOf(projectInfo.id)
+      : undefined;
+  const args = computeAdapterArgs(resolved, promptRes.value, mirrors, conversationId, imageDir);
   const readyIds = new Set(mirrors.map((m) => m.backendId));
 
   return ok({ initialSummary, args, readyIds, notices });
@@ -299,9 +326,10 @@ async function runTurn(
   resolved: ResolvedAgent,
   turnId: string,
   request: StartTurnRequest,
+  imagePaths: readonly string[],
 ): Promise<Result<TurnSummary>> {
   const timeoutMs = deps.timeoutMs ?? AGENT_TURN_TIMEOUT_MS;
-  const prepRes = await prepareTurnRun(deps, projectInfo, resolved, turnId, request);
+  const prepRes = await prepareTurnRun(deps, projectInfo, resolved, turnId, request, imagePaths);
   if (!prepRes.ok) return err(prepRes.error);
 
   const { exitCode, hasErrorEvent } = await executeAgentProcess(
@@ -349,11 +377,22 @@ async function startTurn(
     }
   }
 
+  let imagePaths: readonly string[] = [];
+  const reqImages = request.images ?? [];
+  if (reqImages.length > 0) {
+    if (deps.chatImages === undefined) {
+      return err({ code: 'E015', params: { resource: 'image', id: reqImages[0] ?? '' } });
+    }
+    const imgRes = await deps.chatImages.resolve(pRes.value.id, reqImages);
+    if (!imgRes.ok) return imgRes;
+    imagePaths = imgRes.value;
+  }
+
   const turnId = deps.newTurnId ? deps.newTurnId() : nanoid(10);
   activeTurnIds.add(turnId);
   const jobRes = deps.jobs.start('agent.turn', 'agent.turn', async (ctx) => {
     try {
-      return await runTurn(ctx, deps, pRes.value, aRes.value, turnId, request);
+      return await runTurn(ctx, deps, pRes.value, aRes.value, turnId, request, imagePaths);
     } finally {
       activeTurnIds.delete(turnId);
     }

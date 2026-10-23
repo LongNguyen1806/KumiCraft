@@ -18,6 +18,7 @@ import { silentLogger } from '../workspace/test-support.ts';
 import { agyAdapter } from './adapters/agy.ts';
 import { claudeAdapter } from './adapters/claude.ts';
 import { type AgentService, createAgentService } from './agent-service.ts';
+import { type ChatImageStore, createChatImageStore } from './chat-images.ts';
 import { createTurnSnapshotStore } from './snapshot/snapshot-store.ts';
 import type { TurnSnapshotStore } from './snapshot/snapshot-types.ts';
 import { createTurnRunner, type TurnRunner } from './turn-runner.ts';
@@ -43,6 +44,7 @@ export type TestTurnEnv = {
   readonly mirror: MirrorService;
   readonly snapshots: TurnSnapshotStore;
   readonly store: TurnStore;
+  readonly chatImages: ChatImageStore;
   readonly turnRunner: TurnRunner;
 };
 
@@ -128,22 +130,14 @@ function createTestAgentService(settings?: Settings): AgentService {
   });
 }
 
-export function setupTurnRunnerTest(
-  baseDir: string,
-  options: SetupTurnRunnerOptions = {},
-): TestTurnEnv {
-  const projectRoot = join(baseDir, 'project');
-  const dataDir = join(baseDir, 'data');
+function createRunnerDeps(baseDir: string, options: SetupTurnRunnerOptions) {
   const cacheDir = join(baseDir, 'cache');
-
-  const eventBus = createEventBus();
-  const jobs = createJobService({
-    system: { now: () => new Date() },
-    logger: silentLogger,
-    eventBus,
+  const dataDir = join(baseDir, 'data');
+  const chatImages = createChatImageStore({
+    fs: realFs,
+    cacheDir,
+    now: () => new Date(),
   });
-
-  const agentService = createTestAgentService(options.userSettings);
   const mirror = createMirrorService({ fs: realFs, cacheDir, logger: silentLogger });
   const snapshots = createTurnSnapshotStore(
     { fs: realFs, dataDir, logger: silentLogger },
@@ -153,21 +147,43 @@ export function setupTurnRunnerTest(
     { fs: realFs, dataDir },
     options.keepTurns !== undefined ? { keepTurns: options.keepTurns } : {},
   );
+  return { cacheDir, dataDir, chatImages, mirror, snapshots, store };
+}
 
-  const getProject = (): Result<ProjectInfo> =>
-    options.projectError ?? ok(options.projectInfo ?? makeTestProjectInfo(projectRoot));
-
-  const trackingProc = {
+function createTrackingProc() {
+  return {
     spawn: (cmd: string, args: readonly string[], opts: Parameters<typeof proc.spawn>[2]) => {
       const handle = proc.spawn(cmd, args, opts);
       lastSpawnedPid = handle.pid;
       return handle;
     },
   };
+}
+
+export function setupTurnRunnerTest(
+  baseDir: string,
+  options: SetupTurnRunnerOptions = {},
+): TestTurnEnv {
+  const projectRoot = join(baseDir, 'project');
+  const { cacheDir, dataDir, chatImages, mirror, snapshots, store } = createRunnerDeps(
+    baseDir,
+    options,
+  );
+
+  const eventBus = createEventBus();
+  const jobs = createJobService({
+    system: { now: () => new Date() },
+    logger: silentLogger,
+    eventBus,
+  });
+
+  const agentService = createTestAgentService(options.userSettings);
+  const getProject = (): Result<ProjectInfo> =>
+    options.projectError ?? ok(options.projectInfo ?? makeTestProjectInfo(projectRoot));
 
   const turnRunner = createTurnRunner({
     fs: realFs,
-    process: trackingProc,
+    process: createTrackingProc(),
     jobs,
     agents: agentService,
     mirror: options.customMirror ?? mirror,
@@ -178,9 +194,21 @@ export function setupTurnRunnerTest(
     logger: silentLogger,
     now: () => new Date(),
     timeoutMs: options.timeoutMs,
+    chatImages,
   });
 
-  return { projectRoot, dataDir, cacheDir, eventBus, jobs, mirror, snapshots, store, turnRunner };
+  return {
+    projectRoot,
+    dataDir,
+    cacheDir,
+    eventBus,
+    jobs,
+    mirror,
+    snapshots,
+    store,
+    chatImages,
+    turnRunner,
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
