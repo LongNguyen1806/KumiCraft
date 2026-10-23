@@ -8,6 +8,7 @@ import { InspectorPanel } from '../inspector/inspector-panel.tsx';
 import { useProjectTheme } from '../inspector/use-project-theme.ts';
 import { LayerTree } from '../layers/layer-tree.tsx';
 import { LibraryPanel } from '../library/library-panel.tsx';
+import { useStyleEditable } from '../project/use-style-edit.ts';
 import { PanelHeaderContext } from './panel-header-context.ts';
 
 type PanelProps = {
@@ -187,6 +188,7 @@ type RightPanelTabsProps = {
 
 function RightPanelTabs({ tab, onSelectTab }: RightPanelTabsProps) {
   const { t } = useTranslation();
+  const editable = useStyleEditable();
   return (
     <>
       <Tab
@@ -197,15 +199,17 @@ function RightPanelTabs({ tab, onSelectTab }: RightPanelTabsProps) {
       >
         {t('editor.properties')}
       </Tab>
-      <Tab
-        selected={tab === 'brand'}
-        testId="right-tab-brand"
-        onClick={() => {
-          onSelectTab('brand');
-        }}
-      >
-        {t('brand.tab')}
-      </Tab>
+      {editable && (
+        <Tab
+          selected={tab === 'brand'}
+          testId="right-tab-brand"
+          onClick={() => {
+            onSelectTab('brand');
+          }}
+        >
+          {t('brand.tab')}
+        </Tab>
+      )}
       <Tab
         selected={tab === 'chat'}
         testId="right-tab-chat"
@@ -227,8 +231,11 @@ export type RightPanelProps = {
 export function RightPanel({ trusted = false }: RightPanelProps) {
   const { t } = useTranslation();
   const theme = useProjectTheme();
+  const editable = useStyleEditable();
   const [tab, setTab] = useState<RightPanelTab>(readRightPanelTab);
   const [headerSlot, setHeaderSlot] = useState<HTMLDivElement | undefined>(undefined);
+
+  const activeTab: RightPanelTab = !editable && tab === 'brand' ? 'properties' : tab;
 
   const handleSetTab = (nextTab: RightPanelTab) => {
     setTab(nextTab);
@@ -236,19 +243,23 @@ export function RightPanel({ trusted = false }: RightPanelProps) {
   };
 
   const title =
-    tab === 'brand' ? t('brand.tab') : tab === 'chat' ? t('editor.ai') : t('editor.properties');
+    activeTab === 'brand'
+      ? t('brand.tab')
+      : activeTab === 'chat'
+        ? t('editor.ai')
+        : t('editor.properties');
 
   return (
-    <PanelHeaderContext.Provider value={tab === 'chat' ? headerSlot : undefined}>
+    <PanelHeaderContext.Provider value={activeTab === 'chat' ? headerSlot : undefined}>
       <Panel
         label={t('editor.rightPanel')}
         title={title}
-        tabs={<RightPanelTabs tab={tab} onSelectTab={handleSetTab} />}
+        tabs={<RightPanelTabs tab={activeTab} onSelectTab={handleSetTab} />}
         onHeaderSlotRef={setHeaderSlot}
       >
-        {tab === 'properties' && <InspectorPanel theme={theme} />}
-        {tab === 'brand' && <BrandPanel />}
-        {tab === 'chat' && <ChatPanel trusted={trusted} />}
+        {activeTab === 'properties' && <InspectorPanel theme={theme} />}
+        {activeTab === 'brand' && <BrandPanel />}
+        {activeTab === 'chat' && <ChatPanel trusted={trusted} />}
       </Panel>
     </PanelHeaderContext.Provider>
   );

@@ -6,6 +6,7 @@ import {
   BackendInfoSchema,
   ProjectInfoSchema,
   ProjectProbeSchema,
+  StylingReportSchema,
   SupportReportSchema,
   ThemeInfoSchema,
 } from './project.ts';
@@ -137,5 +138,17 @@ describe('DirectoryListingSchema', () => {
       truncated: true,
     };
     expect(DirectoryListingSchema.safeParse(listing).success).toBe(true);
+  });
+});
+
+describe('StylingReportSchema [R-PJ-02]', () => {
+  it('validates StylingReport with systems and globalCss', () => {
+    const report = {
+      systems: [{ id: 'tailwind', version: '4.0.0' }, { id: 'css' }],
+      primary: 'tailwind',
+      editable: true,
+      globalCss: ['src/index.css'],
+    };
+    expect(StylingReportSchema.safeParse(report).success).toBe(true);
   });
 });

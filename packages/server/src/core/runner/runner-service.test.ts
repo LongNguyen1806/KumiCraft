@@ -358,17 +358,26 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
     expect(spawnOpts?.cwd).toBe(openState.root);
   });
 
-  it('R-DR-12: passes the drafts folder and the Tailwind CSS to the Bridge plugin', async () => {
+  it('R-DR-12: passes the drafts folder and globalCss to the Bridge plugin', async () => {
     workspaceState = {
       ...openState,
-      support: { ...openState.support, tailwindCss: 'src/index.css' },
+      support: {
+        ...openState.support,
+        styling: {
+          systems: [{ id: 'tailwind', version: '4.0.0' }],
+          primary: 'tailwind',
+          editable: true,
+          globalCss: ['src/index.css'],
+        },
+        tailwindCss: 'src/index.css',
+      },
     };
     const runner = createRunnerService(makeDeps());
     await runner.start();
     const startMsg = mockHandle.sentMessages[0] as RunnerToChildMessage;
     expect(startMsg.type === 'start' && startMsg.options).toMatchObject({
       draftsDir: 'src/drafts',
-      tailwindCss: 'src/index.css',
+      globalCss: ['src/index.css'],
     });
 
     mockHandle = createMockHandle();
@@ -388,7 +397,7 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
     await second.start();
     const secondMsg = mockHandle.sentMessages[0] as RunnerToChildMessage;
     expect(secondMsg.type === 'start' && secondMsg.options.draftsDir).toBe('src/sketches');
-    expect(secondMsg.type === 'start' && 'tailwindCss' in secondMsg.options).toBe(false);
+    expect(secondMsg.type === 'start' && 'globalCss' in secondMsg.options).toBe(false);
   });
 
   it("passes the user's port to the runner and reports when the project's port is busy [R-RN-04, R-RN-27]", async () => {

@@ -275,11 +275,13 @@ class RunnerExecution {
       ...(project.file.devPort === undefined ? {} : { projectPort: project.file.devPort }),
       nonce,
       studioOrigin: this.deps.studioOrigin,
-      // R-DR-12: the Bridge plugin serves drafts from this folder with the project's Tailwind CSS.
+      // R-DR-12: the Bridge plugin serves drafts from this folder with the project's global CSS (Round S1).
       draftsDir: project.file.designDirs?.drafts ?? DEFAULT_DESIGN_DIRS.drafts,
-      ...(project.support.tailwindCss === undefined
-        ? {}
-        : { tailwindCss: project.support.tailwindCss }),
+      ...(project.support.styling !== undefined && project.support.styling.globalCss.length > 0
+        ? { globalCss: project.support.styling.globalCss }
+        : project.support.tailwindCss !== undefined
+          ? { globalCss: [project.support.tailwindCss] }
+          : {}),
     });
 
     const handle = this.deps.process.spawn(process.execPath, [entryPath], {

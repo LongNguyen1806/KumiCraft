@@ -1,8 +1,10 @@
-// Canvas drawing tools toolbar and shared image picker mount (WP-2.09b, R-DT-10..R-DT-15).
+// Canvas drawing tools toolbar and shared image picker mount (WP-2.09b, R-DT-10..R-DT-15, Round S1).
 import type { DrawTool } from '@reactcraft/shared';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { useStyleEditable } from '../project/use-style-edit.ts';
 import { useImagePickerStore } from './draw-commands.ts';
 import { ImagePickerDialog } from './image-picker-dialog.tsx';
 
@@ -46,8 +48,17 @@ export function DrawToolbar() {
   const mode = useCanvasViewStore((s) => s.mode);
   const tool = useCanvasViewStore((s) => s.tool);
   const setTool = useCanvasViewStore((s) => s.setTool);
+  const editable = useStyleEditable();
+
+  useEffect(() => {
+    if (!editable && tool !== 'select') {
+      setTool('select');
+    }
+  }, [editable, tool, setTool]);
 
   if (mode !== 'design') return undefined;
+
+  const visibleTools = editable ? TOOLS : TOOLS.filter((item) => item.id === 'select');
 
   return (
     <div
@@ -56,7 +67,7 @@ export function DrawToolbar() {
       data-testid="draw-toolbar"
       className="flex items-center gap-0.5 rounded-md border border-border bg-field p-0.5"
     >
-      {TOOLS.map((item) => {
+      {visibleTools.map((item) => {
         const active = tool === item.id;
         const label = t(item.labelKey);
         const titleText = `${label} (${item.shortcut})`;

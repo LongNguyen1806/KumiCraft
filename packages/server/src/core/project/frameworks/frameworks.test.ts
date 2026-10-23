@@ -48,6 +48,10 @@ describe('M-FW: Framework detection', () => {
     expect(result.report.language).toBe('ts');
     expect(result.report.viteConfig).toBe('vite.config.ts');
     expect(result.report.tailwindCss).toBe('src/index.css');
+    // Situation #1 [R-PJ-02]
+    expect(result.report.styling?.primary).toBe('tailwind');
+    expect(result.report.styling?.editable).toBe(true);
+    expect(result.report.styling?.globalCss).toEqual(['src/index.css']);
   });
 
   it('reports E001 noVite when project has next but no vite [R-FW-02]', async () => {
@@ -106,9 +110,7 @@ describe('M-FW: Framework detection', () => {
     expect(result.report.supported).toBe(false);
     expect(result.report.reasons).toContain('viteVersion');
     expect(result.report.reasons).toContain('reactVersion');
-    expect(result.report.reasons).toContain('noTailwind');
     expect(result.report.reasons).toContain('noViteConfig');
-    expect(result.report.reasons).toContain('noTailwindCss');
   });
 
   it('uses installed version in node_modules over declared range [R-PJ-03]', async () => {
@@ -145,5 +147,22 @@ describe('M-FW: Framework detection', () => {
     await writeFile(join(dir, 'yarn.lock'), '');
     const r2 = await detectFramework({ root: dir, fs: nodeFs, packageJson: {} });
     expect(r2.report.packageManager).toBe('yarn');
+  });
+
+  it('Situation #5: dep tailwindcss 3.4 + @tailwind base is supported but not editable [R-PJ-02]', async () => {
+    const pkg = {
+      dependencies: { react: '^19.0.0' },
+      devDependencies: { vite: '^8.0.0', tailwindcss: '^3.4.0' },
+    };
+    await writeFile(join(dir, 'package.json'), JSON.stringify(pkg));
+    await writeFile(join(dir, 'vite.config.ts'), 'export default {}');
+    await mkdir(join(dir, 'src'), { recursive: true });
+    await writeFile(join(dir, 'src/index.css'), '@tailwind base;\n@tailwind components;');
+
+    const result = await detectFramework({ root: dir, fs: nodeFs, packageJson: pkg });
+
+    expect(result.report.supported).toBe(true);
+    expect(result.report.reasons).toEqual([]);
+    expect(result.report.styling?.editable).toBe(false);
   });
 });

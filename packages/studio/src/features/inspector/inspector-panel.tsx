@@ -18,9 +18,12 @@ import { useOpenInEditor } from '../editor/use-open-in-editor.ts';
 import { FreeFramePageWarning } from '../free-frame/free-frame-page-warning.tsx';
 import { FreeFrameSection } from '../free-frame/free-frame-section.tsx';
 import { FreeFrameToggle } from '../free-frame/free-frame-toggle.tsx';
+import { useProjectInfo } from '../project/project-store.ts';
+import { useStyleEditable } from '../project/use-style-edit.ts';
 import { ColorField } from './components/color-field.tsx';
 import { ElementPath } from './components/element-path.tsx';
 import { InspectorHeader } from './components/inspector-header.tsx';
+import { InspectorStyleUnsupportedBanner } from './components/inspector-style-unsupported-banner.tsx';
 import { OtherClassesSection } from './components/other-classes-section.tsx';
 import { PropertyField } from './components/property-field.tsx';
 import { TagAttributesSection } from './components/tag-attributes-section.tsx';
@@ -157,6 +160,7 @@ function InspectorPropertyGroups({
 }
 
 type ElementSectionsProps = {
+  readonly editable: boolean;
   readonly source: ElementSource;
   readonly tokens: readonly ClassToken[];
   readonly currentScope: Scope;
@@ -170,7 +174,22 @@ type ElementSectionsProps = {
   readonly onAttributeChange: (name: EditableAttr, value: string | undefined) => void;
 };
 
+function EditorAlert({
+  errorInfo,
+}: {
+  readonly errorInfo?: ReturnType<typeof useOpenInEditor>['errorInfo'] | undefined;
+}) {
+  const { t: tError } = useTranslation('errors');
+  if (errorInfo === undefined) return undefined;
+  return (
+    <p role="alert" className="text-xs text-danger">
+      {errorText(tError, errorInfo.code, errorInfo.params)}
+    </p>
+  );
+}
+
 function ElementSections({
+  editable,
   source,
   tokens,
   currentScope,
@@ -183,18 +202,19 @@ function ElementSections({
   onRawChange,
   onAttributeChange,
 }: ElementSectionsProps) {
-  const { t: tError } = useTranslation('errors');
   const editor = useOpenInEditor();
   return (
     <div className="flex flex-col gap-1">
-      <InspectorPropertyGroups
-        tokens={tokens}
-        currentScope={currentScope}
-        frameWidth={frameWidth}
-        ctx={ctx}
-        isLocked={isLocked}
-        onPropertyValueChange={onPropChange}
-      />
+      {editable && (
+        <InspectorPropertyGroups
+          tokens={tokens}
+          currentScope={currentScope}
+          frameWidth={frameWidth}
+          ctx={ctx}
+          isLocked={isLocked}
+          onPropertyValueChange={onPropChange}
+        />
+      )}
       <TagAttributesSection
         tag={source.tag}
         attributes={source.attributes}
@@ -204,17 +224,15 @@ function ElementSections({
           editor.open(source.loc);
         }}
       />
-      {editor.errorInfo !== undefined && (
-        <p role="alert" className="text-xs text-danger">
-          {errorText(tError, editor.errorInfo.code, editor.errorInfo.params)}
-        </p>
+      <EditorAlert errorInfo={editor.errorInfo} />
+      {editable && (
+        <OtherClassesSection
+          tokens={tokens}
+          rawClassString={rawClassString}
+          onRawClassChange={onRawChange}
+          disabled={isLocked}
+        />
       )}
-      <OtherClassesSection
-        tokens={tokens}
-        rawClassString={rawClassString}
-        onRawClassChange={onRawChange}
-        disabled={isLocked}
-      />
     </div>
   );
 }
@@ -266,6 +284,16 @@ function InspectorStatusFeedback({
   );
 }
 
+function FreeFrameGroup({ source }: { readonly source: ElementSource }) {
+  return (
+    <>
+      <FreeFramePageWarning source={source} />
+      <FreeFrameToggle source={source} />
+      <FreeFrameSection source={source} />
+    </>
+  );
+}
+
 function InspectorSingleTargetView({
   target,
   ctx,
@@ -277,21 +305,23 @@ function InspectorSingleTargetView({
   const attrEdit = useAttributeEdit(target);
   const { isLocked, isAttrLocked } = computeTargetLocks(target, attrEdit.isSaving);
   const displayedError = liveEdit.error ?? attrEdit.error ?? target.error;
+  const editable = useStyleEditable();
+  const project = useProjectInfo();
 
   return (
     <div className="flex flex-col gap-2" data-testid="inspector-panel">
       <ElementPath />
       <InspectorHeader target={target} />
+      {!editable && <InspectorStyleUnsupportedBanner styling={project?.support.styling} />}
       <InspectorStatusFeedback
         loading={target.loading && target.source === undefined}
         error={displayedError}
       />
       {target.source && (
         <>
-          <FreeFramePageWarning source={target.source} />
-          <FreeFrameToggle source={target.source} />
-          <FreeFrameSection source={target.source} />
+          {editable && <FreeFrameGroup source={target.source} />}
           <ElementSections
+            editable={editable}
             source={target.source}
             tokens={tokens}
             currentScope={target.currentScope}

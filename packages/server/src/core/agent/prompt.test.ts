@@ -72,4 +72,56 @@ describe('buildPrompt [R-AG-13, S-117]', () => {
       expect(imageRes.value).toContain('- /cache/chat-images/p1/img02.png');
     }
   });
+
+  it('[R-AG-13] 2. prompt with CSS, with Tailwind, and without styling (Situation #10)', () => {
+    const cssRes = buildPrompt({
+      request: 'Change color',
+      context: {},
+      mirrors: [],
+      docs: [],
+      styling: {
+        systems: [{ id: 'css' }],
+        primary: 'css',
+        editable: false,
+        globalCss: ['src/index.css'],
+      },
+    });
+    expect(cssRes.ok).toBe(true);
+    if (cssRes.ok) {
+      expect(cssRes.value).toContain(
+        "Styling: plain CSS. Keep using the project's styling approach; do not add Tailwind.",
+      );
+    }
+
+    const twRes = buildPrompt({
+      request: 'Change color',
+      context: {},
+      mirrors: [],
+      docs: [],
+      styling: {
+        systems: [{ id: 'tailwind', version: '4.0.0' }],
+        primary: 'tailwind',
+        editable: true,
+        globalCss: ['src/index.css'],
+      },
+    });
+    expect(twRes.ok).toBe(true);
+    if (twRes.ok) {
+      expect(twRes.value).toContain(
+        "Styling: Tailwind 4.0.0. Keep using the project's styling approach.",
+      );
+      expect(twRes.value).not.toContain('do not add Tailwind');
+    }
+
+    const legacyRes = buildPrompt({
+      request: 'Change color',
+      context: {},
+      mirrors: [],
+      docs: [],
+    });
+    expect(legacyRes.ok).toBe(true);
+    if (legacyRes.ok) {
+      expect(legacyRes.value).not.toContain('Styling:');
+    }
+  });
 });

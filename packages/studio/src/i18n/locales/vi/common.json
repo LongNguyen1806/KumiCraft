@@ -180,6 +180,10 @@
     "supported": "✓ Dự án hợp lệ",
     "unsupported": "Dự án không được hỗ trợ",
     "cssPath": "CSS: {{path}}",
+    "stylingLabel": "Kiểu dáng: {{styling}}",
+    "styleEditable": "Chỉnh kiểu dáng trực quan: có",
+    "styleNotEditable": "Chỉnh kiểu dáng trực quan: chưa hỗ trợ cho hệ này, dùng AI để đổi kiểu dáng",
+    "styleUnsupportedInspector": "Chỉnh kiểu dáng trực quan chưa hỗ trợ cho {{system}}. Chọn phần tử rồi nhờ AI ở tab AI.",
     "probing": "Đang kiểm tra thư mục…",
     "opening": "Đang mở…",
     "creating": "Đang tạo…",
@@ -564,5 +568,9 @@
     "emptyGroup": "Chưa có token nào",
     "noThemeFile": "Dự án chưa có file CSS Tailwind",
     "invalidName": "Tên gồm chữ thường, số, gạch ngang; bắt đầu bằng chữ (tối đa 40 ký tự)"
+  },
+  "styling": {
+    "css": "CSS thường",
+    "none": "Không rõ"
   }
 }

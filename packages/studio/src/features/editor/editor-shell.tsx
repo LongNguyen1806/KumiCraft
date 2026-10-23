@@ -6,6 +6,7 @@ import { useDesignTargetSync } from '../design/design-store.ts';
 import { useHistorySync } from '../history/history-store.ts';
 import { InstallDialog } from '../project/install-dialog.tsx';
 import { ProjectDialog } from '../project/project-dialog.tsx';
+import { useProjectStore } from '../project/project-store.ts';
 import { ShortcutHelp } from '../shortcuts/shortcut-help.tsx';
 import { useShortcuts } from '../shortcuts/use-shortcuts.ts';
 import { TrustPrompt } from '../trust/trust-prompt.tsx';
@@ -104,6 +105,10 @@ function useProjectLoader(trusted: boolean) {
       active = false;
     };
   }, [trusted]);
+
+  useEffect(() => {
+    useProjectStore.getState().setProject(projectInfo);
+  }, [projectInfo]);
 
   const refreshProject = async () => {
     try {

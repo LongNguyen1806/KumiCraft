@@ -152,8 +152,8 @@ export async function editProjectTheme(
     return err({ code: 'E021', params: { missing: 'project' } });
   }
   const cssPath = current.support.tailwindCss;
-  if (!cssPath) {
-    return err({ code: 'E016', params: { reason: 'noThemeFile' } });
+  if (!cssPath || current.support.styling?.editable === false) {
+    return err({ code: 'E021', params: { missing: 'styleAdapter' } });
   }
   const root = current.root;
 

@@ -3,6 +3,7 @@
   "search": "Search blocks…",
   "insertImage": "Image…",
   "hint": "Select an element and click a block, or drag a block onto the Canvas",
+  "unsupportedForSystem": "Tailwind template blocks are not supported for this styling system. Use the Components tab to insert project components.",
   "categories": {
     "layout": "Layout",
     "content": "Content",

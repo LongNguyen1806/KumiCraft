@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { newWorkspaceFile, ThemeEditSchema } from '@reactcraft/shared';
+import { newWorkspaceFile, type StylingReport, ThemeEditSchema } from '@reactcraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createHistoryService, type HistoryService } from '../history/history-service.ts';
@@ -56,7 +56,8 @@ const fakeProcess: ProcessPort = {
 
 function makeOpenWorkspace(
   root: string,
-  tailwindCss = 'src/index.css',
+  tailwindCss: string | undefined = 'src/index.css',
+  styling?: StylingReport,
 ): {
   state: WorkspaceState;
   deps: ProjectServiceDeps;
@@ -95,6 +96,7 @@ function makeOpenWorkspace(
       framework: 'vite-react',
       language: 'ts',
       tailwindCss,
+      styling,
     },
     trusted: true,
     needsInstall: false,
@@ -286,5 +288,30 @@ describe('countTokenUses & ProjectService theme operations [R-TH-11, R-TH-13, M-
     const { state, deps } = makeOpenWorkspace(dir);
     const usageRes = await countProjectThemeUsage(state, deps, 'color', 'brand');
     expect(usageRes).toEqual({ ok: true, value: { count: 3 } });
+  });
+
+  it('#13: editProjectTheme on non-Tailwind/plain CSS project returns E021 missing styleAdapter and does not write file [Situation #8, R-TH-01]', async () => {
+    await mkdir(join(dir, 'src'), { recursive: true });
+    const cssFullPath = join(dir, 'src', 'index.css');
+    const originalCss = '.button { color: red; }\n';
+    await writeFile(cssFullPath, originalCss);
+    const { state, deps } = makeOpenWorkspace(dir, undefined, {
+      systems: [{ id: 'css' }],
+      primary: 'css',
+      editable: false,
+      globalCss: ['src/index.css'],
+    });
+
+    const res = await editProjectTheme(state, deps, {
+      op: 'set',
+      kind: 'color',
+      name: 'brand',
+      value: '#1d4ed8',
+    });
+    expect(res).toEqual({
+      ok: false,
+      error: { code: 'E021', params: { missing: 'styleAdapter' } },
+    });
+    expect(await readFile(cssFullPath, 'utf8')).toBe(originalCss);
   });
 });

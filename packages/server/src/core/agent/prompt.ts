@@ -1,5 +1,5 @@
-// Prompt construction for agent turns (WP-3.03b, R-AG-13, S-111, S-117).
-import type { TurnContext } from '@reactcraft/shared';
+// Prompt construction for agent turns (WP-3.03b, R-AG-13, S-111, S-117, Round S1).
+import type { StylingReport, StylingSystem, TurnContext } from '@reactcraft/shared';
 
 import { err, ok, type Result } from '../shared/result.ts';
 
@@ -13,7 +13,44 @@ export type PromptInput = {
   readonly docs: readonly string[];
   readonly images?: readonly string[] | undefined;
   readonly guide?: string | undefined;
+  readonly styling?: StylingReport | undefined;
 };
+
+function formatSystemName(sys: StylingSystem): string {
+  const versionSuffix = sys.version !== undefined ? ` ${sys.version}` : '';
+  switch (sys.id) {
+    case 'tailwind':
+      return `Tailwind${versionSuffix}`;
+    case 'css':
+      return 'plain CSS';
+    case 'cssModules':
+      return 'CSS Modules';
+    case 'sass':
+      return `Sass${versionSuffix}`;
+    case 'less':
+      return `Less${versionSuffix}`;
+    case 'bootstrap':
+      return `Bootstrap${versionSuffix}`;
+    case 'styledComponents':
+      return `styled-components${versionSuffix}`;
+    case 'emotion':
+      return `Emotion${versionSuffix}`;
+    case 'mui':
+      return `MUI${versionSuffix}`;
+    case 'antd':
+      return `Ant Design${versionSuffix}`;
+    case 'chakra':
+      return `Chakra UI${versionSuffix}`;
+  }
+}
+
+function buildStylingLine(styling: StylingReport): string | undefined {
+  if (styling.systems.length === 0) return undefined;
+  const names = styling.systems.map(formatSystemName).join(', ');
+  const hasTailwind = styling.systems.some((s) => s.id === 'tailwind');
+  const tailwindWarning = hasTailwind ? '' : '; do not add Tailwind';
+  return `Styling: ${names}. Keep using the project's styling approach${tailwindWarning}.`;
+}
 
 function buildContextLines(input: PromptInput): readonly string[] {
   const lines: string[] = [];
@@ -25,6 +62,12 @@ function buildContextLines(input: PromptInput): readonly string[] {
   }
   if (input.context.frame !== undefined) {
     lines.push(`Viewport: ${input.context.frame.id}, ${String(input.context.frame.width)} px`);
+  }
+  if (input.styling !== undefined) {
+    const stylingLine = buildStylingLine(input.styling);
+    if (stylingLine !== undefined) {
+      lines.push(stylingLine);
+    }
   }
   if (input.mirrors.length > 0) {
     lines.push('Backend mirrors (read-only copies; never edit them):');

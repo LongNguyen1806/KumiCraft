@@ -91,7 +91,7 @@ async function listenVite(
         nonce: options.nonce,
         studioOrigin: options.studioOrigin,
         draftsDir: options.draftsDir,
-        tailwindCss: options.tailwindCss,
+        globalCss: options.globalCss,
       }),
     ],
   });

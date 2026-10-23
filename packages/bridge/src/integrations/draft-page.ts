@@ -15,8 +15,8 @@ export type DraftPageOptions = {
   readonly rootDir: string;
   /** Project-relative drafts folder (`designDirs.drafts`). */
   readonly draftsDir: string;
-  /** Project-relative Tailwind CSS entry (`SupportReport.tailwindCss`). */
-  readonly tailwindCss?: string | undefined;
+  /** Project-relative global CSS entries (`SupportReport.styling.globalCss`, Round S1). */
+  readonly globalCss?: readonly string[] | undefined;
 };
 
 type NextFunction = (err?: unknown) => void;
@@ -99,12 +99,15 @@ function escapeHtml(text: string): string {
  */
 export function draftEntryCode(input: {
   readonly file: string;
-  readonly tailwindCss?: string | undefined;
+  readonly globalCss?: readonly string[] | undefined;
   readonly routerPackage?: string | undefined;
 }): string {
   const lines: string[] = [];
-  if (input.tailwindCss !== undefined)
-    lines.push(`import ${JSON.stringify(`/${input.tailwindCss}`)};`);
+  if (input.globalCss !== undefined) {
+    for (const css of input.globalCss) {
+      lines.push(`import ${JSON.stringify(`/${css}`)};`);
+    }
+  }
   lines.push("import { createElement } from 'react';");
   lines.push("import { createRoot } from 'react-dom/client';");
   if (input.routerPackage !== undefined) {
@@ -191,20 +194,20 @@ export function draftFileOfEntryId(id: string, draftsDir: string): string | unde
 export function createDraftPageHooks(options: {
   readonly rootDir: string;
   readonly draftsDir?: string | undefined;
-  readonly tailwindCss?: string | undefined;
+  readonly globalCss?: readonly string[] | undefined;
 }) {
-  const { rootDir, draftsDir, tailwindCss } = options;
+  const { rootDir, draftsDir, globalCss } = options;
   let routerPackage: Promise<string | undefined> | undefined;
   const entryCode = async (file: string): Promise<string> => {
     routerPackage ??= detectRouterPackage(rootDir);
-    return draftEntryCode({ file, tailwindCss, routerPackage: await routerPackage });
+    return draftEntryCode({ file, globalCss, routerPackage: await routerPackage });
   };
 
   return {
     // Added before Vite's own middlewares, so its SPA fallback never answers the draft URL.
     configureServer(server: DraftDevServer): void {
       if (draftsDir === undefined) return;
-      server.middlewares.use(createDraftMiddleware({ rootDir, draftsDir, tailwindCss }, server));
+      server.middlewares.use(createDraftMiddleware({ rootDir, draftsDir, globalCss }, server));
     },
 
     resolveId(id: string): string | undefined {

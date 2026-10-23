@@ -247,6 +247,7 @@ async function prepareTurnRun(
     docs: request.docs,
     images: imagePaths.length > 0 ? imagePaths : undefined,
     guide,
+    styling: projectInfo.support.styling,
   });
   if (!promptRes.ok) return err(promptRes.error);
 

@@ -41,8 +41,8 @@ export const RunnerOptionsSchema = z.strictObject({
   host: z.literal('127.0.0.1'),
   /** Drafts folder the Bridge plugin serves at `/__reactcraft/draft` (R-DR-12). */
   draftsDir: z.string().min(1).optional(),
-  /** The project's Tailwind CSS entry, loaded by the draft page (R-DR-12). */
-  tailwindCss: z.string().min(1).optional(),
+  /** Global CSS entries loaded by the draft page (R-DR-12, Round S1). */
+  globalCss: z.array(z.string().min(1)).optional(),
 });
 export type RunnerOptions = z.infer<typeof RunnerOptionsSchema>;
 

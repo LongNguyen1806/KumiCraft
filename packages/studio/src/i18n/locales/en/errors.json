@@ -128,7 +128,8 @@
     "reasons": {
       "agent": "This AI assistant is not installed.",
       "terminal": "Could not open a terminal window. Please open a terminal and run the agy command manually.",
-      "installer": "PowerShell or bash is not available to run the installer."
+      "installer": "PowerShell or bash is not available to run the installer.",
+      "styleAdapter": "This project does not support visual styling yet."
     }
   },
   "E023": {

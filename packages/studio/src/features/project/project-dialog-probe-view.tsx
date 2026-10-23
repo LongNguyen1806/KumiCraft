@@ -3,7 +3,40 @@ import type { PackageManager, ProjectProbe } from '@reactcraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { systemsCombinedName } from './styling-label.ts';
+
 const PACKAGE_MANAGERS: readonly PackageManager[] = ['pnpm', 'npm', 'yarn'];
+
+function SupportedStylingInfo({
+  support,
+}: {
+  readonly support: Extract<ProjectProbe, { readonly kind: 'project' }>['support'];
+}) {
+  const { t } = useTranslation();
+  const styling =
+    support.styling ??
+    (support.tailwindCss !== undefined
+      ? {
+          systems: [{ id: 'tailwind' as const }],
+          primary: 'tailwind' as const,
+          editable: true,
+          globalCss: [support.tailwindCss],
+        }
+      : undefined);
+  if (styling === undefined) return undefined;
+  return (
+    <>
+      <span data-testid="probe-styling" className="text-xs text-ink-soft">
+        {t('project.stylingLabel', {
+          styling: systemsCombinedName(styling.systems, t),
+        })}
+      </span>
+      <span data-testid="probe-style-edit" className="text-xs text-ink-faint">
+        {styling.editable ? t('project.styleEditable') : t('project.styleNotEditable')}
+      </span>
+    </>
+  );
+}
 
 function SupportedProjectView({
   probe,
@@ -28,6 +61,7 @@ function SupportedProjectView({
           {t('project.cssPath', { path: probe.support.tailwindCss })}
         </span>
       )}
+      <SupportedStylingInfo support={probe.support} />
       <button
         type="button"
         onClick={onOpen}

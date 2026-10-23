@@ -59,7 +59,7 @@ describe('draftEntryCode [R-DR-12]', () => {
   it('R-DR-12: loads the Tailwind CSS, wraps MemoryRouter and mounts on #root', () => {
     const code = draftEntryCode({
       file: 'src/drafts/Mockup.tsx',
-      tailwindCss: 'src/index.css',
+      globalCss: ['src/index.css'],
       routerPackage: 'react-router-dom',
     });
     expect(code).toContain('import "/src/index.css";');
@@ -67,6 +67,19 @@ describe('draftEntryCode [R-DR-12]', () => {
     expect(code).toContain('import * as draftModule from "/src/drafts/Mockup.tsx";');
     expect(code).toContain("document.getElementById('root')");
     expect(code).toContain('createElement(MemoryRouter, null, createElement(Draft))');
+  });
+
+  it('R-DR-12: imports multiple globalCss entries in order before component [Situation #9]', () => {
+    const code = draftEntryCode({
+      file: 'src/drafts/Mockup.tsx',
+      globalCss: ['src/index.css', 'src/theme.css'],
+    });
+    const indexPos = code.indexOf('import "/src/index.css";');
+    const themePos = code.indexOf('import "/src/theme.css";');
+    const compPos = code.indexOf('import * as draftModule from "/src/drafts/Mockup.tsx";');
+    expect(indexPos).toBeGreaterThan(-1);
+    expect(themePos).toBeGreaterThan(indexPos);
+    expect(compPos).toBeGreaterThan(themePos);
   });
 
   it('R-DR-12: without a router or CSS it renders the component alone', () => {
@@ -94,7 +107,7 @@ describe('draft page on the dev server [R-DR-12]', () => {
     nextCalls = 0;
 
     const middleware = createDraftMiddleware(
-      { rootDir: root, draftsDir: 'src/drafts', tailwindCss: 'src/index.css' },
+      { rootDir: root, draftsDir: 'src/drafts', globalCss: ['src/index.css'] },
       {
         transformIndexHtml: (url, html) => {
           transformedUrls.push(url);
@@ -183,7 +196,7 @@ describe('draft page on the dev server [R-DR-12]', () => {
       nonce: 'n',
       studioOrigin: 'http://127.0.0.1:4173',
       draftsDir: 'src/drafts',
-      tailwindCss: 'src/index.css',
+      globalCss: ['src/index.css'],
     });
     const id = plugin.resolveId(
       `${DRAFT_ENTRY_PREFIX}${encodeURIComponent('src/drafts/Mockup.tsx')}`,

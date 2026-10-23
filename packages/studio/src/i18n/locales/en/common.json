@@ -180,6 +180,10 @@
     "supported": "✓ Valid project",
     "unsupported": "Project not supported",
     "cssPath": "CSS: {{path}}",
+    "stylingLabel": "Styling: {{styling}}",
+    "styleEditable": "Visual styling: available",
+    "styleNotEditable": "Visual styling: not supported for this system yet, use AI to change styling",
+    "styleUnsupportedInspector": "Visual styling is not supported for {{system}} yet. Select an element and ask AI in the AI tab.",
     "probing": "Probing folder…",
     "opening": "Opening…",
     "creating": "Creating…",
@@ -564,5 +568,9 @@
     "emptyGroup": "No tokens yet",
     "noThemeFile": "Project has no Tailwind CSS file",
     "invalidName": "Lowercase letters, digits, hyphens; must start with a letter (max 40 chars)"
+  },
+  "styling": {
+    "css": "plain CSS",
+    "none": "Unknown"
   }
 }

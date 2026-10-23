@@ -200,4 +200,76 @@ describe('ProjectDialog', () => {
 
     expect(screen.queryByTestId('open-project-btn')).toBeNull();
   });
+
+  it('Situation #13: probe CSS Modules project shows probe-styling and probe-style-edit [R-PJ-02]', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        const url =
+          typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        if (url.includes('/api/v1/project/dirs/list')) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                data: { path: '/test/css-modules', entries: [] },
+              }),
+              { status: 200 },
+            ),
+          );
+        }
+
+        if (url.includes('/api/v1/project/probe')) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                data: {
+                  kind: 'project',
+                  hasWorkspace: true,
+                  support: {
+                    supported: true,
+                    reasons: [],
+                    framework: 'vite-react',
+                    versions: {},
+                    language: 'ts',
+                    styling: {
+                      systems: [{ id: 'cssModules' }, { id: 'css' }],
+                      primary: 'cssModules',
+                      editable: false,
+                      globalCss: ['src/index.css'],
+                    },
+                  },
+                },
+              }),
+              { status: 200 },
+            ),
+          );
+        }
+        return Promise.resolve(new Response(JSON.stringify({ data: {} }), { status: 200 }));
+      }),
+    );
+
+    render(
+      <ProjectDialog
+        open={true}
+        initialPath="/test/css-modules"
+        onClose={vi.fn()}
+        onProjectOpened={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      const stylingEl = screen.getByTestId('probe-styling');
+      expect(stylingEl.textContent).toContain('CSS Modules');
+      expect(stylingEl.textContent).toContain(
+        i18next.t('styling.css', { defaultValue: 'CSS thường' }),
+      );
+      const editEl = screen.getByTestId('probe-style-edit');
+      expect(editEl.textContent).toContain(
+        i18next.t('project.styleNotEditable', {
+          defaultValue:
+            'Chỉnh kiểu dáng trực quan: chưa hỗ trợ cho hệ này, dùng AI để đổi kiểu dáng',
+        }),
+      );
+    });
+  });
 });

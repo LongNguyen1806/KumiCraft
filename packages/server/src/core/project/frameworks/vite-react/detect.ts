@@ -1,8 +1,9 @@
-// Detection logic for vite-react framework adapter (SPEC-04 R-PJ-03 to R-PJ-06).
+// Detection logic for vite-react framework adapter (SPEC-04 R-PJ-03 to R-PJ-06, Round S1).
 import type { PackageManager, RelPath, SupportReport, UnsupportedReason } from '@reactcraft/shared';
 
 import type { FileSystemPort } from '../../../ports/file-system-port.ts';
 import type { DetectInput } from '../types.ts';
+import { detectStyling } from './styling.ts';
 
 const VITE_CONFIG_CANDIDATES = [
   'vite.config.ts',
@@ -26,7 +27,7 @@ type PackageJsonLike = {
   readonly packageManager?: string;
 };
 
-function parseMajorVersion(raw: string): number | undefined {
+export function parseMajorVersion(raw: string): number | undefined {
   const cleaned = raw.replace(/^[~^>=<v\s]+/, '').trim();
   const match = cleaned.match(/^(\d+)/);
   if (!match) return undefined;
@@ -36,7 +37,7 @@ function parseMajorVersion(raw: string): number | undefined {
   return Number.isNaN(num) ? undefined : num;
 }
 
-async function resolvePackageVersion(
+export async function resolvePackageVersion(
   fs: FileSystemPort,
   root: string,
   pkgName: string,
@@ -136,7 +137,6 @@ function checkDependencyReasons(
   allDeps: Record<string, string>,
   viteInfo: { readonly major?: number | undefined },
   reactInfo: { readonly major?: number | undefined },
-  tailwindInfo: { readonly major?: number | undefined },
 ): UnsupportedReason[] {
   const reasons: UnsupportedReason[] = [];
   if (allDeps['vite'] === undefined) {
@@ -150,13 +150,16 @@ function checkDependencyReasons(
   } else if (reactInfo.major !== 18 && reactInfo.major !== 19) {
     reasons.push('reactVersion');
   }
-
-  if (allDeps['tailwindcss'] === undefined) {
-    reasons.push('noTailwind');
-  } else if (tailwindInfo.major !== 4) {
-    reasons.push('tailwindVersion');
-  }
   return reasons;
+}
+
+async function findViteConfig(fs: FileSystemPort, root: string): Promise<RelPath | undefined> {
+  for (const candidate of VITE_CONFIG_CANDIDATES) {
+    if (await fs.exists(root, candidate)) {
+      return candidate;
+    }
+  }
+  return undefined;
 }
 
 export async function detectViteReact(input: DetectInput): Promise<SupportReport> {
@@ -172,23 +175,22 @@ export async function detectViteReact(input: DetectInput): Promise<SupportReport
     resolvePackageVersion(input.fs, input.root, 'tailwindcss', allDeps['tailwindcss']),
   ]);
 
-  const reasons = checkDependencyReasons(allDeps, viteInfo, reactInfo, tailwindInfo);
-
-  let viteConfig: RelPath | undefined;
-  for (const candidate of VITE_CONFIG_CANDIDATES) {
-    if (await input.fs.exists(input.root, candidate)) {
-      viteConfig = candidate;
-      break;
-    }
-  }
+  const reasons = checkDependencyReasons(allDeps, viteInfo, reactInfo);
+  const viteConfig = await findViteConfig(input.fs, input.root);
   if (viteConfig === undefined) {
     reasons.push('noViteConfig');
   }
 
   const tailwindCss = await detectTailwindCss(input.fs, input.root, 'src');
-  if (tailwindCss === undefined) {
-    reasons.push('noTailwindCss');
-  }
+
+  const styling = await detectStyling({
+    fs: input.fs,
+    root: input.root,
+    sourceDir: 'src',
+    allDeps,
+    tailwindCss,
+    tailwindVersion: tailwindInfo.version,
+  });
 
   const isTs = await input.fs.exists(input.root, 'tsconfig.json');
   const language = isTs ? 'ts' : 'js';
@@ -209,5 +211,6 @@ export async function detectViteReact(input: DetectInput): Promise<SupportReport
     packageManager,
     viteConfig,
     tailwindCss,
+    styling,
   };
 }

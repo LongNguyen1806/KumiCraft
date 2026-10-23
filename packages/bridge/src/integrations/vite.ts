@@ -11,8 +11,8 @@ export type BridgePluginOptions = {
   readonly sourceExtensions?: readonly string[] | undefined;
   /** Drafts folder served at `/__reactcraft/draft` (R-DR-12); absent: no draft page. */
   readonly draftsDir?: string | undefined;
-  /** The project's Tailwind CSS entry, loaded by the draft page (R-DR-12). */
-  readonly tailwindCss?: string | undefined;
+  /** The project's global CSS entries, loaded by the draft page (R-DR-12, Round S1). */
+  readonly globalCss?: readonly string[] | undefined;
 };
 
 /** The URL the page loads; served as a module so Vite gives it `import.meta.hot` (R-BR-17). */

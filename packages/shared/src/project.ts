@@ -19,6 +19,7 @@ export const UNSUPPORTED_REASONS = [
   'viteVersion',
   'noReact',
   'reactVersion',
+  // Retained for backwards compatibility with saved probe data; no longer produced by detect (Round S1)
   'noTailwind',
   'tailwindVersion',
   'noViteConfig',
@@ -26,6 +27,36 @@ export const UNSUPPORTED_REASONS = [
 ] as const;
 export const UnsupportedReasonSchema = z.enum(UNSUPPORTED_REASONS);
 export type UnsupportedReason = z.infer<typeof UnsupportedReasonSchema>;
+
+export const STYLING_SYSTEMS = [
+  'tailwind',
+  'css',
+  'cssModules',
+  'sass',
+  'less',
+  'bootstrap',
+  'styledComponents',
+  'emotion',
+  'mui',
+  'antd',
+  'chakra',
+] as const;
+export const StylingSystemIdSchema = z.enum(STYLING_SYSTEMS);
+export type StylingSystemId = z.infer<typeof StylingSystemIdSchema>;
+
+export const StylingSystemSchema = z.strictObject({
+  id: StylingSystemIdSchema,
+  version: z.string().max(50).optional(),
+});
+export type StylingSystem = z.infer<typeof StylingSystemSchema>;
+
+export const StylingReportSchema = z.strictObject({
+  systems: z.array(StylingSystemSchema).max(20),
+  primary: StylingSystemIdSchema.optional(),
+  editable: z.boolean(),
+  globalCss: z.array(RelPathSchema).max(20),
+});
+export type StylingReport = z.infer<typeof StylingReportSchema>;
 
 export const PACKAGE_MANAGERS = ['pnpm', 'npm', 'yarn'] as const;
 export const PackageManagerSchema = z.enum(PACKAGE_MANAGERS);
@@ -44,6 +75,7 @@ export const SupportReportSchema = z.strictObject({
   packageManager: PackageManagerSchema.optional(),
   viteConfig: RelPathSchema.optional(),
   tailwindCss: RelPathSchema.optional(),
+  styling: StylingReportSchema.optional(),
 });
 export type SupportReport = z.infer<typeof SupportReportSchema>;
 

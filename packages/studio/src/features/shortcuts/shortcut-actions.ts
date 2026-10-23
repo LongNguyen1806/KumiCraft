@@ -10,6 +10,8 @@ import { nudgeDelta, nudgeSelection } from '../free-frame/free-nudge.ts';
 import { useHistoryStore } from '../history/history-store.ts';
 import { siblingMoveTarget } from '../inspector/sibling-move.ts';
 import { useLayerMenuStore } from '../layer-menu/layer-menu-store.ts';
+import { useProjectStore } from '../project/project-store.ts';
+import { isStyleEditable } from '../project/use-style-edit.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import {
@@ -145,6 +147,9 @@ function runNudgeShortcut(action: ShortcutAction): boolean {
 function runDrawToolShortcut(action: ShortcutAction): boolean {
   const canvas = useCanvasViewStore.getState();
   if (canvas.mode !== 'design') return false;
+  const project = useProjectStore.getState().project;
+  const editable = isStyleEditable(project);
+  if (!editable && action !== 'toolSelect') return false;
   switch (action) {
     case 'toolSelect':
       canvas.setTool('select');

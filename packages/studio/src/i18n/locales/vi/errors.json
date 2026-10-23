@@ -128,7 +128,8 @@
     "reasons": {
       "agent": "Trợ lý AI này chưa được cài.",
       "terminal": "Không mở được cửa sổ terminal. Hãy tự mở terminal và chạy lệnh agy.",
-      "installer": "Máy chưa có PowerShell/bash để chạy trình cài."
+      "installer": "Máy chưa có PowerShell/bash để chạy trình cài.",
+      "styleAdapter": "Dự án này chưa hỗ trợ chỉnh kiểu dáng trực quan."
     }
   },
   "E023": {

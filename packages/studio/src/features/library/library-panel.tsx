@@ -14,6 +14,7 @@ import { type ErrorInfo, errorText } from '../../routes/error-text.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { ImagePickerDialog } from '../draw/image-picker-dialog.tsx';
 import { insertImageFromSelection } from '../draw/insert-image.ts';
+import { useStyleEditable } from '../project/use-style-edit.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { insertBlock } from './insert-block.ts';
@@ -254,18 +255,60 @@ function LibraryCategories({ categories, blocks, disabled, onSelect }: LibraryCa
   );
 }
 
+function LibraryUnsupportedNotice() {
+  const { t } = useTranslation('library');
+  return (
+    <div className="p-4 text-xs text-ink-soft">
+      <p>
+        {t('unsupportedForSystem', {
+          defaultValue:
+            'Mẫu phần tử có sẵn dùng Tailwind chưa hỗ trợ cho hệ này. Dùng tab Thành phần để chèn component của dự án.',
+        })}
+      </p>
+    </div>
+  );
+}
+
+function LibraryContent({
+  editable,
+  activeCategories,
+  visibleBlocks,
+  hasSelection,
+  inserting,
+  onSelect,
+}: {
+  readonly editable: boolean;
+  readonly activeCategories: readonly LibraryBlockCategory[];
+  readonly visibleBlocks: readonly LibraryBlock[];
+  readonly hasSelection: boolean;
+  readonly inserting: boolean;
+  readonly onSelect: (block: LibraryBlock) => void;
+}) {
+  if (!editable) return <LibraryUnsupportedNotice />;
+  return (
+    <LibraryCategories
+      categories={activeCategories}
+      blocks={visibleBlocks}
+      disabled={!hasSelection || inserting}
+      onSelect={onSelect}
+    />
+  );
+}
+
 export function LibraryPanel() {
   const { t } = useTranslation('library');
   const selectedRefs = useSelectionStore((s) => s.selectedRefs);
   const [query, setQuery] = useState('');
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const editable = useStyleEditable();
 
   const hasSelection = selectedRefs.length === 1;
   const filteredBlocks = useFilteredLibraryBlocks(query);
+  const visibleBlocks = editable ? filteredBlocks : [];
   const { inserting, errorInfo, handleInsert, handlePickImage } = useLibraryInsert(hasSelection);
 
   const activeCategories = CATEGORIES.filter((cat) =>
-    filteredBlocks.some((b) => b.category === cat),
+    visibleBlocks.some((b) => b.category === cat),
   );
 
   return (
@@ -284,12 +327,14 @@ export function LibraryPanel() {
         errorInfo={errorInfo}
       />
 
-      <LibraryCategories
-        categories={activeCategories}
-        blocks={filteredBlocks}
-        disabled={!hasSelection || inserting}
-        onSelect={(block) => {
-          void handleInsert(block);
+      <LibraryContent
+        editable={editable}
+        activeCategories={activeCategories}
+        visibleBlocks={visibleBlocks}
+        hasSelection={hasSelection}
+        inserting={inserting}
+        onSelect={(b) => {
+          void handleInsert(b);
         }}
       />
 
@@ -298,8 +343,8 @@ export function LibraryPanel() {
         onClose={() => {
           setImagePickerOpen(false);
         }}
-        onPick={(choice) => {
-          void handlePickImage(choice);
+        onPick={(c) => {
+          void handlePickImage(c);
         }}
       />
     </aside>
