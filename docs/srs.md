@@ -3,11 +3,11 @@
 ## Local-First Visual Studio for React Code, with a Local AI Agent
 
 **Tên mã:** ReactCraft Local  
-**Phiên bản:** 5.0  
+**Phiên bản:** 5.1  
 **Trạng thái:** Draft — chờ duyệt  
-**Ngày:** 2026-10-13  
+**Ngày:** 2026-10-13 (5.1: 2026-10-24)  
 **Loại sản phẩm:** Studio chỉnh sửa trực quan chạy trên mã nguồn React thật, có ô chat điều khiển AI agent cài sẵn trên máy  
-**Dự án được hỗ trợ:** Vite + React + Tailwind CSS (TypeScript hoặc JavaScript)  
+**Dự án được hỗ trợ:** Vite + React + Tailwind CSS (TypeScript hoặc JavaScript); từ 5.1 mở rộng theo mục 8: mọi hệ CSS phổ biến và nhiều framework  
 **Mô hình triển khai:** Local-first, không có cloud backend riêng  
 **API key AI:** Không dùng. AI chạy qua agent người dùng đã cài và đăng nhập
 
@@ -46,6 +46,14 @@ Lý do: quy trình của người dùng mục tiêu là **backend trước, fron
 - AI Provider Gateway, lưu API key, ngữ cảnh AI tự dựng, prompt tự viết.
 - Backend Scanner và các bộ trích xuất (OpenAPI, JS/TS, Django), Data Source Catalog, dữ liệu mẫu, proxy dữ liệu.
 - User Component dạng model, Design Token dạng model (thay bằng thao tác trên code và `@theme` của Tailwind).
+
+## 0.4. Thay đổi ở v5.1 (2026-10-24, theo chủ dự án)
+
+- ReactCraft là công cụ thiết kế cho **dự án có sẵn** của người dùng, không chỉ dự án nó tạo ra.
+- Chỉnh kiểu dáng như nhau cho Tailwind, CSS thường, CSS Modules, Bootstrap qua một lớp style; hệ chưa có adapter thì báo lý do và mở trong editor, giống nhau ở mọi hệ (không có "chế độ rút gọn").
+- Danh sách trang và Thêm trang dựa vào việc **quét dự án** tìm nơi khai báo route và kiểu viết trang; không giả định quy ước.
+- Thêm framework theo thứ tự: React chạy webpack/CRA, Express + Pug, Vue, ASP.NET Core Razor.
+- Đoạn mã chèn vào được định dạng (chỉ đoạn đó).
 
 ---
 
@@ -130,13 +138,13 @@ Thư mục backend (người dùng) ── chỉ đọc, sao ra bản sao
 | Mã | Nguyên tắc |
 |---|---|
 | PR-01 | **Mã nguồn là nguồn sự thật duy nhất.** ReactCraft không giữ bản sao giao diện ở dạng khác |
-| PR-02 | **Thay đổi tối thiểu:** chỉ đổi đúng phần cần đổi (một chuỗi class, một đoạn chữ, một thẻ JSX); không định dạng lại file |
+| PR-02 | **Thay đổi tối thiểu:** chỉ đổi đúng phần cần đổi (một chuỗi class, một khai báo CSS, một đoạn chữ, một thẻ); không định dạng lại file. Riêng đoạn mã vừa chèn được định dạng để dễ đọc (FR-32) |
 | PR-03 | **Không ghi file hỏng:** mỗi lần sửa phải phân tích lại được trước khi ghi |
 | PR-04 | **Mọi thay đổi hoàn tác được:** chỉnh trên Studio có Undo; mỗi lượt AI có "Hoàn tác lượt này" |
 | PR-05 | **Backend chỉ đọc:** agent chỉ thấy bản sao; file bí mật không bao giờ được sao |
 | PR-06 | **Không API key:** AI chạy bằng agent người dùng đã cài và đăng nhập |
 | PR-07 | **Không chạy code của dự án lạ khi chưa tin cậy:** dev server và agent chỉ chạy khi dự án đã được tin cậy |
-| PR-08 | **Studio tôn trọng quy ước Tailwind:** sửa bằng class Tailwind chuẩn; giá trị ngoài thang dùng giá trị tùy ý (`p-[13px]`) |
+| PR-08 | **Studio tôn trọng hệ CSS của dự án:** dự án Tailwind sửa bằng class Tailwind chuẩn (giá trị ngoài thang dùng giá trị tùy ý `p-[13px]`); Bootstrap dùng utility của Bootstrap khi đúng thang; CSS thường, CSS Modules, Sass, Less sửa rule trong file của dự án. Không bao giờ thêm hệ CSS mà dự án không dùng |
 
 ---
 
@@ -144,12 +152,13 @@ Thư mục backend (người dùng) ── chỉ đọc, sao ra bản sao
 
 | Thuật ngữ | Nghĩa |
 |---|---|
-| Dự án (Project) | Thư mục frontend Vite + React + Tailwind người dùng mở trong ReactCraft. Cũng là workspace: cấu hình nằm ở `<dự án>/.reactcraft/workspace.json` |
+| Dự án (Project) | Thư mục frontend người dùng mở trong ReactCraft (phạm vi ở mục 8). Cũng là workspace: cấu hình nằm ở `<dự án>/.reactcraft/workspace.json` |
 | Backend liên kết | Thư mục backend người dùng thêm vào để AI đọc |
 | Dev server | Máy chủ phát triển Vite **của chính dự án**, do ReactCraft khởi chạy |
 | Cầu nối (Bridge) | Plugin Vite và script nhỏ ReactCraft chèn vào dev server (không ghi vào dự án) để Studio biết phần tử nào ứng với dòng code nào |
 | Vị trí nguồn | `file:dòng:cột` của thẻ JSX tạo ra một phần tử trên Canvas |
-| Thao tác sửa nguồn | Một thay đổi có cấu trúc lên mã nguồn: đổi class, đổi chữ, đổi thuộc tính, chèn, di chuyển, xóa, bọc thẻ JSX |
+| Thao tác sửa nguồn | Một thay đổi có cấu trúc lên mã nguồn: đổi class, đổi khai báo CSS, đổi chữ, đổi thuộc tính, chèn, di chuyển, xóa, bọc thẻ |
+| Hệ CSS | Cách dự án viết kiểu dáng: Tailwind, Bootstrap, CSS thường, CSS Modules, Sass, Less… Mỗi hệ có một adapter trong lớp style |
 | Lượt AI | Một lần người dùng gửi yêu cầu trong chat và agent làm việc cho tới khi xong |
 | Agent | Công cụ AI dòng lệnh cài trên máy: Antigravity CLI (`agy`), Claude Code CLI (`claude`) |
 
@@ -162,10 +171,11 @@ Thư mục backend (người dùng) ── chỉ đọc, sao ra bản sao
 | Bộ dựng | Vite 7, 8 | |
 | React | 18, 19 | |
 | Ngôn ngữ | TypeScript, JavaScript (JSX) | |
-| Tailwind CSS | v4 | v3 |
-| Điều hướng trang | `react-router` 6, 7 theo quy ước của ReactCraft (mục FR-50) | Quy ước khác: chỉ xem, điều hướng bằng thanh địa chỉ |
+| Kiểu dáng (hệ CSS) | Tailwind v4 | Phiên bản 1 (Phase 4): Tailwind v3, CSS thường, CSS Modules, Bootstrap 5, Sass, Less. Sau: CSS-in-JS (styled-components, Emotion), thư viện UI (MUI, antd, Chakra) |
+| Điều hướng trang | `react-router` 6, 7: ReactCraft quét dự án tìm nơi khai báo route (FR-50) | Router khác (TanStack Router, wouter): chỉ xem, điều hướng bằng thanh địa chỉ |
+| Framework | React + Vite | Phiên bản 1 (Phase 4): React chạy webpack/CRA, Express + Pug, Vue, ASP.NET Core Razor |
 | Package manager | pnpm, npm, yarn | bun |
-| Cấu trúc | Một dự án một thư mục | Monorepo |
+| Cấu trúc | Một dự án một thư mục | Monorepo (Phase 4) |
 
 Dự án ngoài phạm vi: ReactCraft báo E001 kèm lý do cụ thể và không chạy gì.
 
@@ -201,10 +211,10 @@ Dự án ngoài phạm vi: ReactCraft báo E001 kèm lý do cụ thể và khôn
 
 | Mã | Yêu cầu |
 |---|---|
-| FR-20 | Inspector đọc class Tailwind của phần tử thành các nhóm: Bố cục, Vị trí trong cha, Kích thước, Khoảng cách, Chữ, Màu, Viền, Hiệu ứng, Hiển thị. Sửa một ô là đổi đúng class tương ứng trong file |
+| FR-20 | Inspector đọc kiểu dáng của phần tử theo hệ CSS của dự án (class Tailwind, utility Bootstrap, rule CSS, CSS Modules…) thành các nhóm: Bố cục, Vị trí trong cha, Kích thước, Khoảng cách, Chữ, Màu, Viền, Hiệu ứng, Hiển thị. Sửa một ô là đổi đúng class tương ứng trong file |
 | FR-21 | Sửa theo khung: ở khung khác khung chuẩn thì ghi class có tiền tố breakpoint (`max-sm:`… với `desktop-first`, `md:`… với `mobile-first`) |
 | FR-22 | Sửa theo trạng thái `hover:`, `focus:`, `disabled:` |
-| FR-23 | Giá trị theo thang Tailwind (ví dụ `p-4`) hoặc tùy ý (`p-[13px]`); token màu của `@theme` hiện theo tên |
+| FR-23 | Giá trị theo thang của hệ CSS (Tailwind `p-4`, Bootstrap `p-3`) hoặc giá trị tùy ý; token (`@theme`, biến CSS `--*`, biến Sass) hiện theo tên. Sửa một rule CSS dùng chung thì báo số phần tử bị ảnh hưởng và cho chọn sửa chung hay chỉ phần tử đang chọn |
 | FR-24 | Sửa chữ trực tiếp trên Canvas (nhấp đúp) khi đoạn chữ là chữ tĩnh trong JSX |
 | FR-25 | Sửa thuộc tính: `href`, `src`, `alt`, `placeholder`, `type` của nút |
 | FR-26 | Kéo khối từ Library thả vào Canvas: chèn đoạn JSX vào đúng chỗ trong file |
@@ -213,13 +223,14 @@ Dự án ngoài phạm vi: ReactCraft báo E001 kèm lý do cụ thể và khôn
 | FR-29 | Undo/Redo mọi chỉnh sửa trên Studio; không hoàn tác được khi file đã bị sửa từ nơi khác (báo rõ) |
 | FR-30 | Phần tử không sửa trực quan được (class là biểu thức, nằm ngoài thư mục nguồn của dự án) hiện chỉ đọc, kèm lý do và nút mở trong editor |
 | FR-31 | Phím tắt trên Windows và macOS |
+| FR-32 | Đoạn mã chèn vào (Library, Component, dán, công cụ của agent) được định dạng theo Prettier của dự án hoặc thụt lề theo file; phần còn lại của file không đổi |
 
 ## D. TRANG
 
 | Mã | Yêu cầu |
 |---|---|
-| FR-50 | Danh sách trang lấy từ file định tuyến theo quy ước của ReactCraft (`src/routes.tsx`, `createBrowserRouter`) |
-| FR-51 | Thêm trang: tạo file trang và mục định tuyến; đường dẫn tự sinh từ tên (bỏ dấu tiếng Việt) |
+| FR-50 | Danh sách trang lấy từ việc quét dự án: từ file khởi động đi theo `import` tới nơi khai báo route (`createBrowserRouter`, `useRoutes`, `<Routes>`), ở file nào cũng được. Không chắc chắn thì hỏi người dùng |
+| FR-51 | Thêm trang: tạo file trang và mục định tuyến; đường dẫn tự sinh từ tên (bỏ dấu tiếng Việt). Trang mới viết theo kiểu của các trang có sẵn (thư mục, tên file, cách export, component bọc ngoài). Dự án chưa có router: đề xuất cài, có xác nhận |
 | FR-52 | Đổi tên, xóa trang (xóa có xác nhận, Undo được) |
 
 ## E. AI (CHAT)
@@ -240,8 +251,8 @@ Dự án ngoài phạm vi: ReactCraft báo E001 kèm lý do cụ thể và khôn
 
 | Mã | Yêu cầu |
 |---|---|
-| FR-70 | Library gồm các khối JSX + Tailwind dựng sẵn (Hàng, Cột, Lưới, Section, Tiêu đề, Đoạn văn, Ảnh, Nút, Liên kết, Form, Ô nhập, Bảng, Card, Thanh điều hướng, Chân trang, Hero…), có tìm kiếm `vi` và `en` |
-| FR-71 | Quản lý token màu, cỡ chữ, bo góc trong `@theme` của file CSS chính (sau phiên bản 1 phần cơ bản) |
+| FR-70 | Library gồm các khối dựng sẵn viết theo hệ CSS của dự án (Hàng, Cột, Lưới, Section, Tiêu đề, Đoạn văn, Ảnh, Nút, Liên kết, Form, Ô nhập, Bảng, Card, Thanh điều hướng, Chân trang, Hero…), có tìm kiếm `vi` và `en` |
+| FR-71 | Quản lý token màu, cỡ chữ, bo góc của hệ CSS dự án: `@theme` (Tailwind 4), cấu hình Tailwind 3, biến CSS `:root`, biến Bootstrap |
 | FR-72 | Tách vùng chọn thành component mới (file mới, chỗ cũ thay bằng thẻ component) |
 
 ---
@@ -256,7 +267,9 @@ Dự án ngoài phạm vi: ReactCraft báo E001 kèm lý do cụ thể và khôn
 | L-04 | Phần tử lặp trong `.map` | Sửa mẫu chung, nhãn "lặp N lần" |
 | L-05 | Dự án đang lỗi build | Canvas hiện lớp phủ lỗi; Inspector, Layer Tree vẫn đọc theo lần chạy được gần nhất; sửa nguồn vẫn được |
 | L-06 | File bị sửa từ bên ngoài | Canvas cập nhật; các bước Undo của file đó không còn dùng được |
-| L-07 | Dự án dùng định tuyến khác quy ước | Danh sách trang chỉ đọc; điều hướng bằng thanh địa chỉ |
+| L-07 | Route sinh bằng code (`.map`, hàm) hoặc router khác `react-router` | Danh sách trang theo phần đọc được; Thêm trang chỉ tạo file và chỉ chỗ thêm route bằng tay; router khác: điều hướng bằng thanh địa chỉ |
+| L-08 | Rule CSS dùng chung cho nhiều phần tử | Báo "Ảnh hưởng N phần tử"; chọn sửa chung hoặc tạo class riêng cho phần tử |
+| L-09 | Hệ CSS chưa có adapter (CSS-in-JS, thư viện UI) | Kiểu dáng chỉ đọc, có lý do và nút mở trong editor, như nhau ở mọi hệ |
 
 ---
 

@@ -56,6 +56,19 @@ Mỗi khối chia thành nhiều lượt (≤ 600 dòng code, ≤ 15 tình huố
 
 Tốn: **cao** (một lần, nhưng tránh phải sửa lại hợp đồng ở giữa phase).
 
+**Đã làm 2026-10-24:**
+
+- SRS lên 5.1 (mục 0.4, PR-02, PR-08, mục 8, FR-20, FR-23, FR-32 mới, FR-50, FR-51, FR-70, FR-71, L-07, L-08, L-09).
+- `docs/spec.md`:
+  - C-03, ADR-BE-35 (lớp style), ADR-BE-36 (adapter ghép, Proposed), ADR-BE-37 (tìm route), ADR-BE-38 (định dạng đoạn chèn);
+  - bảng công nghệ thêm `postcss`, `postcss-scss`, `postcss-less`;
+  - PB-10, PB-11; VG-19 đến VG-22;
+  - SPEC-04 mục 25: M-FM, M-ST, M-RT chi tiết, M-FX khung;
+  - SPEC-03 mục 9, SPEC-06 fixture, SPEC-07 mục 6 (WP-4.00 đến 4.90).
+- `scripts/trace-scope.json`: `R-FM`, `R-ST`, `R-RT` thuộc phase 4.
+
+**Đổi so với kế hoạch:** VG-19 (cascade CSS) làm ở lượt đầu của K2. VG-20 đến 22 làm ở đầu đợt Pug, Vue, Razor, vì cần cài framework đó và kết quả chỉ dùng cho đợt đó. Rà các mã phase 4 đang treo để lại cho K9.
+
 ### K1. Định dạng JSX vừa chèn (quyết định 1)
 
 - Sau mỗi thao tác chèn (MCP `insert_jsx`, Thư viện, Component, dán), định dạng **chỉ phần vừa chèn**:

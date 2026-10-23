@@ -95,6 +95,11 @@
       "phase": 3
     },
     {
+      "pattern": "^R-(FM|ST|RT)-",
+      "phase": 4,
+      "reason": "Phase 4 modules M-FM, M-ST, M-RT (WP-4.00, 2026-10-24)"
+    },
+    {
       "pattern": "^AC-(0[1-4]|06|1[0-2])$",
       "phase": 1
     },

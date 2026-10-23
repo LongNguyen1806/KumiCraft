@@ -24,16 +24,16 @@ SRS v5.0 mô tả **hệ thống phải làm gì**. Tài liệu này mô tả **
 
 ## 0.2. Cấu trúc và tiến độ viết lại
 
-| Phần    | Nội dung                                                          | Trạng thái                                          |
-| ------- | ----------------------------------------------------------------- | --------------------------------------------------- |
-| Phần 0  | Hướng dẫn sử dụng tài liệu                                        | Đã viết lại                                         |
-| SPEC-01 | Kiến trúc kỹ thuật & tech stack (gộp backend và Studio)           | Đã viết lại                                         |
-| SPEC-02 | Quy chuẩn code & repo                                             | Đã viết lại                                         |
-| SPEC-03 | Giao tiếp: API REST, sự kiện WebSocket, giao thức cầu nối, mã lỗi | Đã viết lại                                         |
-| SPEC-04 | Đặc tả module theo phase                                          | Đã viết lại (Phase 1–3 chi tiết, Phase 4 mức khung) |
-| SPEC-05 | Bảo mật                                                           | Đã viết lại                                         |
-| SPEC-06 | Chất lượng & kiểm thử                                             | Đã viết lại                                         |
-| SPEC-07 | Quy trình thi công, phase, cổng nghiệm thu                        | Đã viết lại                                         |
+| Phần    | Nội dung                                                          | Trạng thái                                                                                   |
+| ------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Phần 0  | Hướng dẫn sử dụng tài liệu                                        | Đã viết lại                                                                                  |
+| SPEC-01 | Kiến trúc kỹ thuật & tech stack (gộp backend và Studio)           | Đã viết lại                                                                                  |
+| SPEC-02 | Quy chuẩn code & repo                                             | Đã viết lại                                                                                  |
+| SPEC-03 | Giao tiếp: API REST, sự kiện WebSocket, giao thức cầu nối, mã lỗi | Đã viết lại                                                                                  |
+| SPEC-04 | Đặc tả module theo phase                                          | Đã viết lại (Phase 1–3 chi tiết; Phase 4: M-FM, M-ST, M-RT chi tiết, phần còn lại mức khung) |
+| SPEC-05 | Bảo mật                                                           | Đã viết lại                                                                                  |
+| SPEC-06 | Chất lượng & kiểm thử                                             | Đã viết lại                                                                                  |
+| SPEC-07 | Quy trình thi công, phase, cổng nghiệm thu                        | Đã viết lại                                                                                  |
 
 ---
 
@@ -108,16 +108,16 @@ Chốt kiến trúc runtime, cách tổ chức mã nguồn và **toàn bộ côn
 
 ## 2. RÀNG BUỘC
 
-| Mã   | Ràng buộc                                                                                    | Nguồn              |
-| ---- | -------------------------------------------------------------------------------------------- | ------------------ |
-| C-01 | Chạy hoàn toàn trên máy người dùng. Mạng chỉ cần khi cài dependency và khi agent AI làm việc | SRS PR-06, SEC-09  |
-| C-02 | Mã nguồn dự án là nguồn sự thật duy nhất của giao diện                                       | SRS PR-01          |
-| C-03 | Dự án được hỗ trợ: Vite 7/8, React 18/19, TypeScript hoặc JavaScript, Tailwind v4            | SRS mục 8          |
-| C-04 | Không ghi vào thư mục backend; không bao giờ đọc file bí mật                                 | SRS SEC-02, SEC-04 |
-| C-05 | Hệ điều hành phát triển chính là Windows; hỗ trợ macOS và Linux                              | SRS NFR-11         |
-| C-06 | Canvas là trang của dev server dự án, **khác origin** với Studio                             | Hệ quả của C-02    |
-| C-07 | Không lưu API key; AI qua agent dòng lệnh người dùng đã cài                                  | SRS PR-06          |
-| C-08 | Một người dùng, một phiên trên một dự án                                                     | SRS NG-01          |
+| Mã   | Ràng buộc                                                                                                                                                                             | Nguồn              |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| C-01 | Chạy hoàn toàn trên máy người dùng. Mạng chỉ cần khi cài dependency và khi agent AI làm việc                                                                                          | SRS PR-06, SEC-09  |
+| C-02 | Mã nguồn dự án là nguồn sự thật duy nhất của giao diện                                                                                                                                | SRS PR-01          |
+| C-03 | Dự án được hỗ trợ: Vite 7/8, React 18/19, TypeScript hoặc JavaScript, Tailwind v4. Phase 4 mở rộng: mọi hệ CSS qua lớp style (ADR-BE-35), framework khác qua adapter ghép (ADR-BE-36) | SRS mục 8          |
+| C-04 | Không ghi vào thư mục backend; không bao giờ đọc file bí mật                                                                                                                          | SRS SEC-02, SEC-04 |
+| C-05 | Hệ điều hành phát triển chính là Windows; hỗ trợ macOS và Linux                                                                                                                       | SRS NFR-11         |
+| C-06 | Canvas là trang của dev server dự án, **khác origin** với Studio                                                                                                                      | Hệ quả của C-02    |
+| C-07 | Không lưu API key; AI qua agent dòng lệnh người dùng đã cài                                                                                                                           | SRS PR-06          |
+| C-08 | Một người dùng, một phiên trên một dự án                                                                                                                                              | SRS NG-01          |
 
 ---
 
@@ -253,6 +253,10 @@ reactcraft/
 | Chất lượng code           | ESLint + typescript-eslint + Prettier                                                | ADR-BE-27     | Accepted                                              |
 | Chạy dự án                | Vite của chính dự án, trong tiến trình con, plugin Bridge chèn vào cấu hình lúc chạy | ADR-BE-28     | Accepted — chờ VG-15                                  |
 | Phân tích và sửa mã nguồn | `@babel/parser` + bộ duyệt cây tự viết + `magic-string`                              | ADR-BE-29     | Accepted — chờ VG-16                                  |
+| Lớp style, phân tích CSS  | Interface `StyleAdapter` + `postcss`, `postcss-scss`, `postcss-less`                 | ADR-BE-35     | Accepted — chờ VG-19 (Phase 4)                        |
+| Adapter framework         | Ghép từng phần: nhận diện, runner/proxy, đóng dấu vị trí, template adapter, route    | ADR-BE-36     | Proposed (Phase 4, đợt 4)                             |
+| Tìm route                 | Phân tích tĩnh bằng `@babel/parser`, theo `import` từ file khởi động                 | ADR-BE-37     | Accepted (Phase 4)                                    |
+| Định dạng đoạn chèn       | Prettier **của dự án** (không đóng gói) hoặc bộ định dạng JSX tự viết                | ADR-BE-38     | Accepted (Phase 4)                                    |
 | Lịch sử sửa               | Lưu nội dung trước/sau từng file kèm hash                                            | ADR-BE-30     | Accepted                                              |
 | Tiến trình con            | `cross-spawn`, mảng tham số, không shell                                             | ADR-BE-31     | Accepted                                              |
 | Khung dự án mới           | Template nội bộ + package manager của người dùng                                     | ADR-BE-32     | Accepted                                              |
@@ -481,6 +485,68 @@ Phần giải thích đầy đủ của các ADR này có trong bản 0.18; dư�
 
 ---
 
+### ADR-BE-35 — Lớp style: một interface cho mọi hệ CSS
+
+**Trạng thái:** Accepted — chờ VG-19 (bổ sung 2026-10-24 theo chủ dự án, Phase 4)
+
+**Bối cảnh:** Inspector, Brand, Library, công cụ vẽ, MCP và lời nhắc AI đang đọc và ghi thẳng class Tailwind 4 (ADR-FE-06). Dự án dùng CSS thường, CSS Modules, Bootstrap bị ẩn công cụ kiểu dáng. Chủ dự án yêu cầu mọi hệ CSS chỉnh được như nhau qua **một interface** (style-parity, không có chế độ rút gọn).
+
+**Quyết định:**
+
+- Mọi phần giao diện chỉ dùng **mô hình thuộc tính chung** của SPEC-04 M-ST: `PropertyId` (dùng lại danh sách thuộc tính của M-TW), `StyleScope` (breakpoint, trạng thái), `StyleValue` (giá trị CSS + token), `StyleSource` (nguồn của giá trị).
+- Mỗi hệ CSS là một `StyleAdapter` ở `server/src/core/style/adapters/<id>/`: đọc (`read`), lập kế hoạch ghi (`plan`), token (`tokens`), dựng khối mẫu (`renderBlock`). Module khác **không** rẽ nhánh theo hệ CSS (ESLint chặn như R-FW-03).
+- **Trình duyệt quyết định cascade:** Bridge gửi danh sách rule khớp phần tử (thứ tự thắng, selector, media, file nguồn lấy từ `data-vite-dev-id` của thẻ `<style>`) và giá trị tính (`getComputedStyle`). Server **không** tự tính độ ưu tiên selector.
+- **Server ánh xạ về nguồn:** đọc file CSS bằng `postcss` (`postcss-scss`, `postcss-less` cho Sass, Less), tìm rule theo selector + media + thứ tự, ghi bằng sửa văn bản tối thiểu như M-SE (QC-98). JSX vẫn ghi bằng thao tác của M-SE (`setClassName`).
+- Tailwind 4 trở thành adapter đầu tiên, dùng lại nguyên `shared/src/tailwind` (reader, writer); hành vi không đổi.
+- Một lần đổi là **một mục lịch sử**, kể cả khi đụng hai file (JSX + CSS) (R-HI-11).
+
+**Hệ quả:** thêm `postcss`, `postcss-scss`, `postcss-less` vào `server` (bảng mục 4). Bridge có thêm thông điệp `style-probe` (SPEC-03 mục 7, viết ở lượt đầu của khối K2). ADR-FE-06 giữ nguyên cho phần Tailwind, nằm sau interface.
+
+### ADR-BE-36 — Adapter framework ghép từng phần
+
+**Trạng thái:** Proposed — chi tiết ở đầu đợt 4 của Phase 4 (bổ sung 2026-10-24 theo chủ dự án)
+
+**Bối cảnh:** `FrameworkAdapter` (M-FW) có hình dạng React + Vite: một runner Vite, plugin Babel đóng dấu `data-rc-loc`, sửa bằng AST Babel. Chủ dự án yêu cầu mở được React chạy webpack, Express + Pug, Vue, ASP.NET Core Razor.
+
+**Quyết định (khung):**
+
+- `FrameworkAdapter` tách thành năm phần ghép được: **nhận diện** (`package.json`, `*.csproj`…), **runner** (dev server của dự án hoặc **proxy** đứng trước server của dự án để chèn Bridge vào HTML), **đóng dấu vị trí** (plugin build, hook trình biên dịch template, hoặc cách VG-21 chọn), **template adapter** (đọc file template thành cây có vị trí; thực hiện các thao tác của M-SE cho ngôn ngữ đó, giữ định dạng), **bộ tìm route** (M-RT).
+- Bridge client, Canvas, Inspector, lịch sử, chat, MCP, lớp style (ADR-BE-35) **không đổi**: chúng chỉ làm việc với `data-rc-loc` và các thao tác chung. Thao tác mà một ngôn ngữ template chưa làm được trả lý do, như nhau ở mọi framework.
+- Proxy và runner mới tuân S-01 đến S-08 và S-80 (chỉ chạy khi dự án đã tin cậy).
+
+**Hệ quả:** M-FW (SPEC-04 mục 1) giữ nguyên cho `vite-react` cho tới đợt 4; ADR này chuyển sang Accepted khi chi tiết hóa. Đợt 1 đến 3 không được thêm code phụ thuộc framework ngoài chỗ R-FW-03 cho phép.
+
+### ADR-BE-37 — Bộ tìm route bằng phân tích tĩnh
+
+**Trạng thái:** Accepted (bổ sung 2026-10-24 theo chủ dự án, Phase 4)
+
+**Bối cảnh:** R-PG-10 chỉ nhận `src/routes.tsx` với `createBrowserRouter([...])` của template. Dự án cũ đặt route ở file khác, khai báo bằng `<Routes>`, mảng import từ file khác; trang được viết theo nhiều kiểu. Chủ dự án yêu cầu app **quét dự án** để biết, không giả định.
+
+**Quyết định:**
+
+- Quét **tĩnh** bằng `@babel/parser` (đã có, ADR-BE-29): bắt đầu từ file khởi động, đi theo `import` tĩnh (đường dẫn tương đối và alias của `tsconfig`/`vite.config`), có giới hạn độ sâu và số file. **Không chạy code** của dự án.
+- Nhận ra các kiểu khai báo của `react-router` 6, 7; kết quả gồm nơi khai báo (`file:dòng`, kiểu), danh sách trang và **mẫu trang** học từ trang có sẵn.
+- Không chắc chắn thì **hỏi người dùng**, không đoán. Dự án chưa có router: đề xuất cài, có xác nhận.
+- Bộ tìm route là một phần của adapter framework (ADR-BE-36); `vite-react` và React chạy webpack dùng chung bộ cho `react-router`.
+
+**Hệ quả:** M-PG đọc trang từ M-RT; R-PG-10 thành một trường hợp của M-RT.
+
+### ADR-BE-38 — Định dạng đoạn mã vừa chèn
+
+**Trạng thái:** Accepted (bổ sung 2026-10-24 theo chủ dự án, Phase 4)
+
+**Bối cảnh:** agent gọi công cụ MCP chèn JSX viết liền một dòng; file của người dùng có dòng rất dài. PR-02 cấm định dạng lại file.
+
+**Quyết định:**
+
+- Chỉ định dạng **đoạn vừa chèn**, không đụng byte nào khác của file.
+- Dùng **Prettier của chính dự án** khi dự án đã tin cậy, có `prettier` trong `node_modules` và có file cấu hình Prettier; ReactCraft **không** đóng gói Prettier. Không có thì dùng bộ định dạng JSX tự viết (mỗi phần tử con một dòng, thụt lề theo R-SE-09).
+- Định dạng lỗi hoặc quá thời gian thì chèn nguyên văn; thao tác chèn không bao giờ thất bại vì định dạng.
+
+**Hệ quả:** nạp Prettier của dự án là chạy code của dự án (cả plugin trong cấu hình), nên chỉ làm khi dự án đã tin cậy (S-80), trong tiến trình con có thời hạn (ADR-BE-31).
+
+---
+
 ## 8. NGÂN SÁCH HIỆU NĂNG
 
 | Mã    | Chỉ tiêu                                                          | Ngân sách                           | SRS    |
@@ -494,6 +560,8 @@ Phần giải thích đầy đủ của các ADR này có trong bản 0.18; dư�
 | PB-07 | Đổi ngôn ngữ Studio                                               | ≤ 200 ms, không tải lại             | NFR-12 |
 | PB-08 | Làm mới bản sao backend                                           | ≤ 10 s cho 50 MB                    | NFR-05 |
 | PB-09 | Bộ nhớ server (không tính tiến trình con)                         | ≤ 400 MB                            | —      |
+| PB-10 | Quét route (M-RT, R-RT-10)                                        | ≤ 500 ms cho 300 file               | —      |
+| PB-11 | `POST /style/read` cho một phần tử (M-ST, gồm `style-probe`)      | ≤ 150 ms (P95), dự án mẫu           | NFR-02 |
 
 Mã PB của bản 0.18 không còn hiệu lực.
 
@@ -511,6 +579,10 @@ Mã PB của bản 0.18 không còn hiệu lực.
 | VG-16 | Sửa nguồn khứ hồi          | ADR-BE-29, 30            | Bộ 40 file mẫu (TS, JS, nhiều kiểu định dạng, CRLF, BOM): đổi class, đổi chữ, chèn, xóa, di chuyển thẻ; diff chỉ ở đúng chỗ; Undo đúng từng byte; file sai cú pháp sau sửa không được ghi; PB-02, PB-03 đạt                                                                                                                                                                 | Chưa làm   |
 | VG-17 | Agent chạy không tương tác | ADR-BE-33, 34            | Với `agy` (và `claude` nếu có): chạy không cần tương tác, sửa được file trong dự án, **không** chạy lệnh shell khi cấu hình chặn, có luồng tiến trình đọc được, hủy được, tiếp tục hội thoại được; dò được trạng thái "chưa cài" và "chưa đăng nhập"; một yêu cầu mẫu (đọc bản sao backend Express, viết lớp gọi API và một trang) chạy hết; thư mục backend thật không đổi | Chưa làm   |
 | VG-18 | Khung dự án và cài đặt     | ADR-BE-32                | Tạo khung + cài bằng pnpm, npm, yarn trên Windows và macOS; dev server chạy được ngay; thời gian cài ghi lại                                                                                                                                                                                                                                                                | Chưa làm   |
+| VG-19 | Cascade CSS về nguồn       | ADR-BE-35                | Với dự án mẫu CSS thường, CSS Modules, Bootstrap 5 trên Chromium, Firefox, WebKit: Bridge đọc được rule khớp theo thứ tự thắng và file nguồn (`data-vite-dev-id`); server tìm đúng `file:dòng` bằng `postcss`; sửa một khai báo thì HMR cập nhật không tải lại trang. Làm ở lượt đầu của khối K2                                                                            |
+| VG-20 | Đóng dấu vị trí cho Pug    | ADR-BE-36                | Hook trình biên dịch Pug gắn `data-rc-loc` cho mọi thẻ mà không sửa file của dự án; proxy chèn Bridge vào HTML của Express. Làm ở đầu đợt Pug                                                                                                                                                                                                                               |
+| VG-21 | ASP.NET Core Razor         | ADR-BE-36                | `dotnet watch` chạy qua runner; cách gắn `data-rc-loc` không ghi vào code người dùng; bộ đọc `.cshtml` đủ cho HTML tĩnh + `@`. Làm ở đầu đợt Razor                                                                                                                                                                                                                          |
+| VG-22 | Vue SFC                    | ADR-BE-36                | Plugin trình biên dịch template Vue gắn `data-rc-loc`; sửa `<template>` giữ định dạng. Làm ở đầu đợt Vue                                                                                                                                                                                                                                                                    |
 
 VG-02 đến VG-06, VG-08 đến VG-11, VG-14 của bản 0.18: không còn hiệu lực.
 
@@ -1348,10 +1420,11 @@ type TreeNode = {
 
 ## 9. ENDPOINT CỦA PHASE SAU
 
-| Phase | Endpoint                                                                                                                                                                         |
-| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2     | Trang: `GET`, `POST`, `PATCH`, `DELETE /project/pages` (SPEC-04 mục 18); `GET /source/element-text`, `POST /source/edits/batch`, thao tác cấu trúc (SPEC-04 mục 14)              |
-| 3     | `GET /agents`, `POST /agent/turns` (job `agent.turn`), `GET /agent/turns`, `GET /agent/turns/{id}/diff`, `POST /agent/turns/{id}/revert`; sự kiện `agent.event` (SPEC-04 mục 23) |
+| Phase | Endpoint                                                                                                                                                                                                                                                |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2     | Trang: `GET`, `POST`, `PATCH`, `DELETE /project/pages` (SPEC-04 mục 18); `GET /source/element-text`, `POST /source/edits/batch`, thao tác cấu trúc (SPEC-04 mục 14)                                                                                     |
+| 3     | `GET /agents`, `POST /agent/turns` (job `agent.turn`), `GET /agent/turns`, `GET /agent/turns/{id}/diff`, `POST /agent/turns/{id}/revert`; sự kiện `agent.event` (SPEC-04 mục 23)                                                                        |
+| 4     | `POST /style/read`, `POST /style/apply`, `GET`/`PATCH /style/tokens` (SPEC-04 mục 25.2); `GET /project/routes`, `POST /project/router-setup`, `POST /project/pages` thêm `siteId` (mục 25.3); thông điệp Bridge `style-probe` (viết ở lượt đầu khối K2) |
 
 Endpoint của bản 0.18 bị xóa ở WP-1.01: `POST /workspace`, `GET /workspace/document`, `POST /workspace/operations`, `POST /workspace/reload`, `GET /workspace/backups`, `POST /workspace/backups/{id}/restore`, `POST /workspace/trust` (thay bằng `POST /project/trust`).
 
@@ -1409,7 +1482,7 @@ Mã theo SRS v5.0 mục 13. **Đã bỏ (1.0), không dùng lại:** E004, E005,
 
 # SPEC-04 — ĐẶC TẢ MODULE
 
-**Phiên bản phần:** 1.0. Phase 1 đến 3 chi tiết; Phase 4 ở mức khung (mục 25).  
+**Phiên bản phần:** 1.0. Phase 1 đến 3 chi tiết; Phase 4: M-FM, M-ST, M-RT chi tiết, phần còn lại ở mức khung (mục 25).  
 **Trạng thái:** Draft — chờ duyệt  
 **Truy vết:** SRS v5.0 FR-01 đến FR-30 (phần Phase 1), L-01 đến L-06; SPEC-03
 
@@ -2185,7 +2258,7 @@ type PagesInfo = { convention: boolean; routesFile?: RelPath; pages: PageInfo[] 
 
 | Mã      | Quy tắc                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| R-PG-10 | Quy ước (adapter `vite-react`): `src/routes.tsx` (hoặc `.jsx`) có lời gọi `createBrowserRouter([...])` với mảng **viết sẵn**; mỗi mục là object có `path` là chuỗi và `element` là một thẻ component viết hoa được import từ `./pages/…`; `children` lồng nhau được nối đường dẫn. Khác quy ước: `convention: false` (L-07), danh sách trang lấy từ những gì đọc được, thêm/sửa/xóa bị khóa                                                                                                                                                                                                                                                                                                                                                                                                    |
+| R-PG-10 | Quy ước (adapter `vite-react`): `src/routes.tsx` (hoặc `.jsx`) có lời gọi `createBrowserRouter([...])` với mảng **viết sẵn**; mỗi mục là object có `path` là chuỗi và `element` là một thẻ component viết hoa được import từ `./pages/…`; `children` lồng nhau được nối đường dẫn. Khác quy ước: `convention: false` (L-07), danh sách trang lấy từ những gì đọc được, thêm/sửa/xóa bị khóa. Từ Phase 4 đây là một trường hợp của M-RT; `convention` theo R-RT-08                                                                                                                                                                                                                                                                                                                              |
 | R-PG-11 | Thêm trang: hộp thoại có **tên trang**, **đường dẫn URL**, **thư mục** và **tên file**. Tên → tên component PascalCase không dấu (`Giới thiệu` → `GioiThieu`); URL mặc định theo R-PJ-11 (`/gioi-thieu`); thư mục mặc định `designDirs.pages`, người dùng **chọn thư mục có sẵn hoặc gõ thư mục mới** (ví dụ `src/pages/product`, `src/features/product`), thư mục chưa có thì tạo; tên file mặc định `<Tên>.tsx` (`.jsx` với dự án JS), sửa được. Thư mục phải nằm trong `sourceDir`, không trong `node_modules`, qua S-20 đến S-23 (sai: E012). Nội dung file mới: component trả `<main className="mx-auto max-w-5xl p-8"><h1 className="text-3xl font-bold">{tên}</h1></main>`. ReactCraft biết một file là trang nhờ mục route trong `routes.tsx` (R-PG-10), **không** nhờ thư mục chứa nó |
 | R-PG-12 | Thêm import sau import cuối của `routes`; thêm mục route vào cuối mảng gốc; mảng gốc chỉ có một mục `path: '/'` có `children` (bố cục chung) thì thêm vào cuối `children` với đường dẫn tương đối                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | R-PG-13 | Đường dẫn đã có: E016 `pathExists`; file đã có: E016 `fileExists`. Mọi thao tác trang là một mục lịch sử (có thể gồm tạo, xóa file — R-HI-11)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -2526,35 +2599,273 @@ type TurnSummary = {
 
 ---
 
-## 25. PHASE 4 — MODULE (MỨC KHUNG)
+## 25. PHASE 4 — MODULE
 
-Chi tiết quy tắc và bảng kiểm thử viết ở đầu Phase 4 (WP-4.00), trước khi làm (CW-50).
+Viết ở WP-4.00 (2026-10-24, theo kế hoạch `docs/construction/giao-viec/p4-ke-hoach.md` và quyết định của chủ dự án). M-FM, M-ST, M-RT chi tiết; M-FX và các module còn lại ở mức khung, chi tiết hóa ở đầu đợt tương ứng (CW-50).
 
-| Mã   | Module                | Nội dung chính                                                                                                                                                          |
-| ---- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| M-TK | Token `@theme`        | Xem, sửa, thêm biến `--color-*`, `--text-*`, `--radius-*` trong file CSS chính bằng sửa văn bản tối thiểu (như M-SE); Undo; Inspector cập nhật danh sách token (FR-71)  |
-| M-XC | Tách component        | Vùng chọn (cùng cha) → file component mới trong `src/components/`, chỗ cũ thay bằng thẻ component, thêm import; biến dùng trong vùng chọn thành props (FR-72)           |
-| M-MF | Nhiều khung cạnh nhau | Nhiều iframe cùng origin dev server, mỗi iframe một nonce riêng; vùng chọn đồng bộ theo `loc`                                                                           |
-| M-BC | Kiểm tra build        | Chạy `tsc --noEmit` và `vite build` của dự án theo yêu cầu (bổ sung loại tiến trình vào S-50 khi làm), hiện lỗi có `file:dòng`                                          |
-| M-SC | Mở rộng phạm vi       | `className={cn('tĩnh', …)}` sửa được phần chuỗi tĩnh (L-01 đầy đủ); breakpoint tùy biến; cạnh riêng của viền, bo góc; Tailwind v3; monorepo (`node_modules` treo ở gốc) |
-| M-RL | Phát hành             | Tài liệu người dùng `vi`/`en`, kiểm tra giấy phép, SBOM, kiểm tra máy sạch, phát hành 1.0 (S-90 đến S-96)                                                               |
+| Mã                                 | Module                           | Khối kế hoạch | Mức      |
+| ---------------------------------- | -------------------------------- | ------------- | -------- |
+| M-FM                               | Định dạng đoạn mã vừa chèn       | K1            | Chi tiết |
+| M-ST                               | Lớp style                        | K2            | Chi tiết |
+| M-RT                               | Bộ tìm route và mẫu trang        | K3            | Chi tiết |
+| M-FX                               | Adapter framework ghép từng phần | K4 đến K8     | Khung    |
+| M-MF, M-BC, M-SC, M-TK, M-XC, M-RL | Phần còn lại của khung cũ        | K9, K10       | Khung    |
+
+### 25.1. M-FM — ĐỊNH DẠNG ĐOẠN MÃ VỪA CHÈN
+
+**Mục đích:** đoạn JSX do Library, panel Component, dán, công cụ MCP chèn vào trông như người viết tay (ADR-BE-38).
+
+```ts
+type SnippetFormatInput = {
+  readonly file: RelPath;
+  readonly code: string; // đoạn JSX sắp chèn
+  readonly baseIndent: string; // thụt lề của dòng nơi chèn (R-SE-09)
+  readonly indentUnit: string; // đơn vị thụt lề của file (R-SE-09)
+  readonly eol: '\n' | '\r\n';
+};
+interface SnippetFormatter {
+  format(input: SnippetFormatInput): Promise<string>; // không bao giờ reject: lỗi thì trả `code`
+}
+```
+
+| Mã      | Quy tắc                                                                                                                                                                                                                                                                                              |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-FM-01 | Áp dụng cho thao tác `insert` (Library, Component, công cụ vẽ, MCP `insert_jsx`) và dán (M-CB). Không áp dụng cho `duplicate`, `move`, `wrap` (đoạn đã có định dạng của người dùng)                                                                                                                  |
+| R-FM-02 | Chỉ đoạn chèn được định dạng: so với ghi không định dạng, file chỉ khác **bên trong vùng chèn**. Dòng đầu nối vào vị trí chèn như hiện nay; các dòng sau mang `baseIndent` + thụt lề lồng nhau bằng `indentUnit`; xuống dòng theo `eol` của file                                                     |
+| R-FM-03 | Bộ định dạng: dự án **đã tin cậy**, có `prettier` tìm được từ thư mục dự án và có file cấu hình Prettier (`.prettierrc*`, `prettier.config.*`, khóa `prettier` trong `package.json`) → Prettier của dự án, chạy trong tiến trình con, thời hạn 2 s. Ngược lại → bộ định dạng tự viết                 |
+| R-FM-04 | Bộ định dạng tự viết: mỗi phần tử con và mỗi đoạn chữ một dòng; thuộc tính giữ trên dòng của thẻ khi dòng không quá `printWidth` (của cấu hình Prettier nếu đọc được, mặc định 100), quá thì mỗi thuộc tính một dòng; thẻ không có con viết tự đóng `<Tag />`; không đổi nội dung chuỗi và biểu thức |
+| R-FM-05 | Prettier lỗi, quá hạn, hoặc kết quả không phân tích lại được (PR-03) → chèn đoạn chưa định dạng, ghi log `warn`; thao tác vẫn thành công                                                                                                                                                             |
+| R-FM-06 | Định dạng nằm trong cùng một mục lịch sử với thao tác chèn; Undo trả file về đúng từng byte                                                                                                                                                                                                          |
+
+**Kiểm thử bắt buộc**
+
+| #   | Tình huống                                                                          | Kỳ vọng                                                               | Loại        |
+| --- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ----------- |
+| 1   | MCP chèn `<section><h2>A</h2><p>B</p></section>` một dòng vào `div` thụt 6 dấu cách | Ba dòng con thụt 8 dấu cách; phần còn lại của file không đổi byte nào | Unit        |
+| 2   | File thụt bằng tab, CRLF                                                            | Đoạn chèn dùng tab và CRLF                                            | Unit        |
+| 3   | Dự án tin cậy có Prettier + `.prettierrc` (`printWidth: 60`)                        | Kết quả bằng Prettier của dự án                                       | Integration |
+| 4   | Dự án chưa tin cậy có Prettier                                                      | Dùng bộ tự viết, không nạp Prettier                                   | Unit        |
+| 5   | Prettier của dự án treo quá 2 s                                                     | Chèn đoạn chưa định dạng, log `warn`, thao tác thành công             | Integration |
+| 6   | Chèn rồi Undo                                                                       | File về đúng từng byte                                                | Unit        |
+
+### 25.2. M-ST — LỚP STYLE
+
+**Mục đích:** chỉnh kiểu dáng trực quan như nhau cho mọi hệ CSS (ADR-BE-35, style-parity). Thay thế dần việc Inspector, Brand, Library, công cụ vẽ, MCP đọc ghi thẳng class Tailwind.
+
+```ts
+type StyleSystemId =
+  'tailwind4' | 'tailwind3' | 'bootstrap5' | 'cssModules' | 'css' | 'sass' | 'less';
+type StyleScope = { readonly breakpoint: Breakpoint; readonly state?: InteractionState }; // như Scope của M-TW
+type StyleValue = { readonly css: string; readonly token?: string }; // '16px'; token: tên token khi giá trị lấy từ token
+type StyleSource =
+  | { readonly kind: 'class'; readonly system: StyleSystemId; readonly className: string } // utility trên phần tử
+  | {
+      readonly kind: 'rule';
+      readonly system: StyleSystemId;
+      readonly file: RelPath;
+      readonly line: number;
+      readonly selector: string;
+      readonly media?: string;
+      readonly affects: number; // số phần tử trên trang khớp selector
+    }
+  | { readonly kind: 'inline' } // thuộc tính style={...}
+  | { readonly kind: 'external'; readonly href: string } // file ngoài sourceDir (node_modules, CDN)
+  | { readonly kind: 'inherited' }; // chỉ có giá trị tính, không có khai báo riêng
+type StyleProperty = {
+  readonly id: PropertyId; // danh sách thuộc tính của M-TW (mục 8)
+  readonly value?: StyleValue;
+  readonly source?: StyleSource;
+  readonly editable: boolean;
+  readonly reason?: 'expression' | 'external' | 'noAdapter' | 'inlineDynamic';
+};
+type StyleReading = {
+  readonly primary: StyleSystemId; // hệ dùng khi ghi thuộc tính chưa có nguồn (R-ST-03)
+  readonly scope: StyleScope;
+  readonly properties: readonly StyleProperty[];
+};
+type StyleChange = {
+  readonly property: PropertyId;
+  readonly value?: StyleValue; // vắng: bỏ khai báo
+  readonly scope: StyleScope;
+  readonly target: 'element' | 'rule'; // R-ST-06
+};
+type TokenKind = 'color' | 'font' | 'fontSize' | 'radius' | 'shadow' | 'spacing';
+type StyleToken = {
+  readonly kind: TokenKind;
+  readonly name: string;
+  readonly value: string;
+  readonly file: RelPath;
+  readonly line: number;
+  readonly editable: boolean;
+};
+// POST /style/read  { ref, scope }               → StyleReading
+// POST /style/apply { ref, guard, changes }      → StructureResult   (một mục lịch sử)
+// GET  /style/tokens                             → { system: StyleSystemId; tokens: StyleToken[] }
+// PATCH /style/tokens ThemeEdit (M-TH, kind mở rộng theo TokenKind) → { system; tokens }
+
+interface StyleAdapter {
+  readonly id: StyleSystemId;
+  read(input: StyleReadInput): StyleReading; // phần tử nguồn (M-SE) + kết quả style-probe của Bridge
+  plan(input: StylePlanInput): Result<readonly FileChange[]>; // FileChange: thao tác M-SE trên JSX hoặc sửa văn bản CSS
+  tokens(input: TokenInput): readonly StyleToken[];
+  renderBlock(block: NeutralBlock, lang: 'vi' | 'en'): RenderedBlock; // JSX + rule CSS cần thêm (R-ST-11)
+}
+```
+
+| Mã      | Quy tắc                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-ST-01 | Inspector, Brand, Library, công cụ vẽ, MCP, lời nhắc AI chỉ dùng các kiểu trên và các endpoint `/style/*`. Code riêng của từng hệ chỉ nằm ở `server/src/core/style/adapters/<id>/` và phần Tailwind sẵn có ở `shared/src/tailwind/`; ESLint chặn module khác import `style/adapters/` (như R-FW-03)                                                                                                                                                                                 |
+| R-ST-02 | Adapter theo `support.styling` (lượt S1). Thứ tự làm và mức hỗ trợ ở Phase 4: `tailwind4` (đã có, chuyển vào interface), `css`, `cssModules`, `bootstrap5`, `tailwind3`, `sass`, `less`. styled-components, Emotion, MUI, antd, Chakra chưa có adapter: thuộc tính `editable: false`, `reason: 'noAdapter'`, có nút mở trong editor (như E023), giống nhau ở mọi hệ                                                                                                                 |
+| R-ST-03 | **Hệ chính** (`primary`) dùng khi ghi một thuộc tính chưa có nguồn: lưu ở `workspace.json` khóa `styling.primary`; mặc định theo thứ tự `tailwind4`, `tailwind3`, `bootstrap5`, `cssModules` (khi phần tử đã dùng `styles.x`), `css`. Người dùng đổi trong Cài đặt dự án                                                                                                                                                                                                            |
+| R-ST-04 | **Đọc:** Bridge trả `style-probe` cho phần tử: các rule khớp theo thứ tự cascade thắng trước (selector, media, file nguồn từ `data-vite-dev-id` của thẻ `<style>` hoặc `href` của `<link>`), và giá trị tính của các thuộc tính trong danh sách M-TW tại khung đang xem. Giá trị hiện trong Inspector là giá trị tính; nguồn là khai báo thắng. Server tìm rule trong file bằng `postcss` theo selector + media + thứ tự xuất hiện                                                  |
+| R-ST-05 | **Phạm vi ảnh hưởng:** nguồn `rule` mang `affects` = số phần tử trên trang đang xem khớp selector (Bridge đếm). Inspector hiện "Ảnh hưởng N phần tử" khi N > 1, kèm câu "có thể có ở trang khác"                                                                                                                                                                                                                                                                                    |
+| R-ST-06 | **Ghi `target: 'rule'`:** sửa khai báo trong rule nguồn (đổi giá trị nếu đã có, thêm dòng nếu chưa, thụt lề theo khối). **Ghi `target: 'element'`:** tạo class riêng cho phần tử, tên `<class gốc hoặc tên thẻ>-<4 ký tự nanoid>`, thêm vào `className` (M-SE) và thêm rule vào file CSS mà file component đã import (chưa import file CSS nào: tạo `<Tên>.css` cạnh file và thêm câu import). Nguồn `class` (Tailwind, Bootstrap) luôn là `element`                                |
+| R-ST-07 | **Mặc định `target`:** khi nguồn là rule có `affects > 1`, Inspector có công tắc "Sửa: tất cả N phần tử / chỉ phần tử này"; mặc định do chủ dự án chốt ở lượt giao việc đầu tiên của khối K2 (đề xuất: "tất cả"); lựa chọn nhớ theo phần tử trong phiên                                                                                                                                                                                                                             |
+| R-ST-08 | **CSS Modules:** nguồn là rule `.x` trong `.module.css` được import thành `styles`; `className={styles.x}` khi ghi `element` thành ``className={`${styles.x} ${styles.<mới>}`}``, tên class mới là định danh JS hợp lệ dạng camelCase (`<gốc><4 ký tự>`, ví dụ `boxA1b2`). `className` là biểu thức khác: `editable: false`, `reason: 'expression'` (L-01)                                                                                                                          |
+| R-ST-09 | **Khung và trạng thái:** Tailwind giữ variant như R-TW; CSS, CSS Modules, Sass, Less ghi vào `@media` có đúng điều kiện của breakpoint dự án (`max-width` với `desktop-first`, `min-width` với `mobile-first`), dùng lại khối `@media` cùng điều kiện có sẵn trong file, chưa có thì thêm ở cuối file; trạng thái ghi vào rule `selector:hover`, `:focus`, `:disabled`. Bootstrap: dùng utility có hậu tố breakpoint khi có (`p-md-3`, `d-lg-flex`), không có thì rơi về CSS thường |
+| R-ST-10 | **Giá trị:** Tailwind theo M-TW (thang, tùy ý, token `@theme`). Bootstrap 5: dùng utility khi giá trị đúng thang (khoảng cách 0–5, màu theme, `rounded-*`, `fs-*`, `fw-*`, `d-*`, `flex-*`), không đúng thang thì rule CSS (`target: 'element'`). CSS: giá trị CSS nguyên văn; chọn từ danh sách token thì ghi `var(--tên)` (CSS) hoặc `$tên` (Sass)                                                                                                                                |
+| R-ST-11 | **Token:** Tailwind 4: `@theme` (M-TH như cũ). Tailwind 3: `theme`/`theme.extend` trong `tailwind.config.*`, chỉ sửa được khi là object viết sẵn. CSS: biến `--*` trong `:root` của file CSS toàn cục. Bootstrap: biến `--bs-*` ghi đè trong file của dự án, biến Sass (`$primary`…) khai báo trước `@import`/`@use "bootstrap"`. Panel Brand dùng `/style/tokens`; R-TH-11 đến R-TH-14 áp dụng cho mọi hệ                                                                          |
+| R-ST-12 | **Khối Library:** khối định nghĩa dạng trung tính (thẻ, vai trò, thuộc tính kiểu theo `PropertyId`); `renderBlock` của hệ chính dựng JSX (class Tailwind; class Bootstrap `container`, `row`, `col`, `btn btn-primary`, `card`; CSS thường: class có nghĩa + rule thêm vào file CSS như R-ST-06). R-LB-11 thành quy tắc riêng của adapter Tailwind                                                                                                                                  |
+| R-ST-13 | **Xem trước khi kéo:** trong lúc kéo thanh trượt hay gõ, Bridge gắn tạm `style` nội tuyến lên phần tử (như cách xem trước class hiện có); thả hoặc Enter mới gọi `/style/apply`                                                                                                                                                                                                                                                                                                     |
+| R-ST-14 | **Kiểm sau khi ghi:** phân tích lại CSS và JSX trước khi ghi (PR-03); sau HMR, Bridge đo lại giá trị tính. Không bằng giá trị đã đặt (rule khác đè, `!important`): giữ thay đổi, Inspector hiện "Bị ghi đè bởi `file:dòng`" kèm nút mở trong editor                                                                                                                                                                                                                                 |
+| R-ST-15 | Một lần `/style/apply` là **một mục lịch sử**, kể cả khi sửa nhiều file hoặc tạo file CSS mới (R-HI-11). File CSS bị sửa từ ngoài: các bước Undo của file đó bỏ như R-HI-05                                                                                                                                                                                                                                                                                                         |
+| R-ST-16 | MCP: công cụ `set_style` nhận `StyleChange` (thêm ở khối K2); `set_class` giữ cho dự án Tailwind. Lời nhắc AI (R-AG-13) ghi hệ chính và hệ có trong dự án như hiện nay                                                                                                                                                                                                                                                                                                              |
+
+**Kiểm thử bắt buộc** (fixture mới: `react-css`, `react-css-modules`, `react-bootstrap5`, xem SPEC-06 mục 3)
+
+| #   | Tình huống                                                      | Kỳ vọng                                                                                       | Loại        |
+| --- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------- |
+| 1   | Dự án Tailwind 4 hiện có: mọi test Inspector, Brand, Library cũ | Xanh nguyên, không sửa test (Tailwind đi qua interface)                                       | Unit        |
+| 2   | CSS: `.card { padding: 16px }` dùng ở 3 thẻ, chọn một thẻ       | Inspector hiện `padding 16px`, nguồn `Card.css:4`, "Ảnh hưởng 3 phần tử"                      | Integration |
+| 3   | Đổi padding 24px, "tất cả"                                      | Chỉ dòng `padding` trong rule đổi; 3 thẻ đổi; Undo về đúng từng byte                          | Unit + E2E  |
+| 4   | Đổi padding 24px, "chỉ phần tử này"                             | `className` thêm `card-xxxx`; rule mới cuối `Card.css`; chỉ một thẻ đổi; một mục lịch sử      | Unit        |
+| 5   | Đổi ở khung Mobile, dự án `desktop-first`                       | Khai báo vào `@media (max-width: …)` có sẵn hoặc mới ở cuối file                              | Unit        |
+| 6   | CSS Modules: `className={styles.box}`, "chỉ phần tử này"        | ``className={`${styles.box} ${styles.boxA1b2}`}``; rule `.boxA1b2` thêm cuối `Box.module.css` | Unit        |
+| 7   | CSS Modules: `className={cn(styles.a, x)}`                      | `editable: false`, `reason: 'expression'`                                                     | Unit        |
+| 8   | Bootstrap: `p-2`, đặt padding 1rem                              | `p-2` → `p-3`                                                                                 | Unit        |
+| 9   | Bootstrap: đặt padding 13px                                     | Rule CSS riêng cho phần tử (`target: 'element'`)                                              | Unit        |
+| 10  | Rule thắng nằm trong `node_modules/bootstrap/dist/css`          | Nguồn `external`, `editable: false` cho rule đó; ghi tạo rule của dự án                       | Integration |
+| 11  | Rule của dự án bị `!important` khác đè sau khi ghi              | Thông báo "Bị ghi đè bởi `file:dòng`"                                                         | E2E         |
+| 12  | Brand: dự án CSS có `:root { --brand: #2563eb }`                | Hiện token `brand`; đổi giá trị chỉ sửa dòng đó                                               | Unit        |
+| 13  | Library: thả khối Nút vào dự án Bootstrap                       | JSX có `className="btn btn-primary"`, không có class Tailwind                                 | Unit        |
+| 14  | Dự án styled-components                                         | Thuộc tính `editable: false`, `reason: 'noAdapter'`, nút mở trong editor                      | Component   |
+| 15  | Lint: file trong `source-editor/` import `style/adapters/css`   | ESLint báo lỗi                                                                                | Lint        |
+
+### 25.3. M-RT — BỘ TÌM ROUTE VÀ MẪU TRANG
+
+**Mục đích:** danh sách trang và "Thêm trang" chạy trên dự án có sẵn mà không giả định quy ước (ADR-BE-37). Thay R-PG-10 bằng kết quả quét.
+
+```ts
+type RouteDeclKind =
+  | 'dataRouter' // createBrowserRouter / createHashRouter / createMemoryRouter([...])
+  | 'useRoutes' // useRoutes([...])
+  | 'jsxRoutes'; // <Routes><Route path element /></Routes>
+type RouteSite = {
+  readonly id: string; // `${file}:${line}`
+  readonly file: RelPath;
+  readonly line: number;
+  readonly kind: RouteDeclKind;
+  readonly basePath: string; // đường dẫn của route cha chứa vị trí thêm ('/' ở gốc)
+  readonly readable: boolean; // false: mảng sinh bằng code, spread, map
+};
+type PagePattern = {
+  readonly dir: RelPath; // thư mục chung của các trang
+  readonly fileCase: 'pascal' | 'kebab' | 'camel';
+  readonly suffix?: string; // 'Page' khi đa số trang có hậu tố
+  readonly ext: '.tsx' | '.jsx' | '.js' | '.ts';
+  readonly exportKind: 'named' | 'default';
+  readonly lazy: boolean; // route file dùng lazy(() => import(...))
+  readonly wrapper?: { readonly component: string; readonly importFrom: string }; // ví dụ <PageLayout> từ components
+  readonly sample: RelPath; // trang dùng làm mẫu
+};
+type RoutesScan = {
+  readonly status: 'found' | 'ambiguous' | 'none' | 'unreadable';
+  readonly reason?: 'noRouter' | 'otherRouter' | 'noDeclaration' | 'dynamic' | 'tooManyFiles';
+  readonly sites: readonly RouteSite[];
+  readonly target?: string; // RouteSite.id nơi thêm trang khi status = 'found'
+  readonly pages: readonly PageInfo[];
+  readonly pattern?: PagePattern;
+};
+// GET  /project/routes                 → RoutesScan
+// POST /project/pages { …R-PG-11, siteId?, routeOnly?: false } → StructureResult   (siteId bắt buộc khi 'ambiguous')
+// POST /project/router-setup {}         → job 'install' + StructureResult            (R-RT-09)
+```
+
+| Mã      | Quy tắc                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-RT-01 | **Điểm bắt đầu:** file trong `<script type="module" src>` của `index.html` (Vite); không có thì `src/main.*`, `src/index.*`. Đi theo `import` tĩnh, `export … from` và `lazy(() => import('…'))`: đường dẫn tương đối và alias của `tsconfig` `paths` / `resolve.alias` viết sẵn của `vite.config`. Chỉ file trong `sourceDir`, đuôi `.ts`, `.tsx`, `.js`, `.jsx`; tối đa 300 file, độ sâu 10 (quá: `unreadable`, `tooManyFiles`). Không chạy code của dự án                                                         |
+| R-RT-02 | **Nhận ra khai báo** của `react-router` / `react-router-dom` 6, 7: `dataRouter` với mảng viết sẵn hoặc định danh trỏ tới mảng viết sẵn (cùng file hoặc import); `useRoutes([...])`; `<Routes>` chứa `<Route path element={<X />} />` lồng nhau. Mục route có `path`, `index`, `element`, `Component`, `lazy`, `children`. Spread, `.map`, hàm sinh mảng: phần đó `readable: false`                                                                                                                                   |
+| R-RT-03 | **Trạng thái:** không có `react-router` trong dependency → `none` (`noRouter`); có router khác (`@tanstack/react-router`, `wouter`) → `none` (`otherRouter`); có `react-router` nhưng không tìm thấy khai báo → `none` (`noDeclaration`); đúng một site đọc được để thêm → `found`; nhiều site gốc (nhiều router, router lồng trong trang) → `ambiguous`; site duy nhất không đọc được → `unreadable` (`dynamic`)                                                                                                    |
+| R-RT-04 | **Nơi thêm:** trong site được chọn, nếu có route bố cục (mục có `element` là layout và `children`) chứa nhiều trang nhất thì thêm vào cuối `children` của nó với đường dẫn tương đối (như R-PG-12); không thì cuối mảng hoặc sau `<Route>` anh em cuối cùng. Thụt lề theo R-SE-09; import thêm sau import cuối của file route, đúng kiểu `lazy` nếu file đang dùng                                                                                                                                                   |
+| R-RT-05 | **`ambiguous`:** hộp thoại Thêm trang có ô chọn site (`file:dòng` + đoạn xem trước) bắt buộc chọn. **`unreadable`:** Thêm trang chỉ tạo file trang (`routeOnly` không áp dụng), hiện "Thêm route bằng tay ở `file:dòng`" kèm nút mở trong editor. Không bao giờ ghi vào phần `readable: false`                                                                                                                                                                                                                       |
+| R-RT-06 | **Mẫu trang:** lấy các trang mà site được chọn trỏ tới. `dir` = thư mục chung nhiều nhất; `fileCase`, `suffix`, `ext`, `exportKind` = kiểu của đa số (hòa: theo trang mới sửa gần nhất); `wrapper` = component của dự án bọc ngoài cùng (`return <X>…</X>`) xuất hiện ở ≥ một nửa số trang. `sample` = trang đầu tiên có đủ các đặc điểm trên. Không có trang nào: dùng mặc định của R-PG-11                                                                                                                         |
+| R-RT-07 | **Nội dung trang mới:** theo `pattern` (kiểu export, đuôi file, `wrapper` và câu import của nó), thân trang là tiêu đề tên trang như R-PG-11. **Không** chép logic, state, gọi API của trang mẫu. Hộp thoại R-PG-11 điền sẵn thư mục, tên file theo `pattern`; người dùng sửa được                                                                                                                                                                                                                                   |
+| R-RT-08 | Danh sách trang (`pages`) gộp từ mọi site đọc được; `PagesInfo.convention` (R-PG-10) = `status === 'found'`. Đổi tên, xóa trang (R-PG-14) chỉ cho trang nằm trong site `readable`                                                                                                                                                                                                                                                                                                                                    |
+| R-RT-09 | **Cài router** (`none` + `noRouter`): Studio hỏi xác nhận, liệt kê thay đổi: thêm `react-router` 7 vào `package.json` và cài bằng package manager của dự án (job `install`, M-PJ); tạo file route theo template (một route `/` trỏ tới component gốc hiện tại); sửa entry để render `<RouterProvider>`. Chỉ khi entry có dạng `createRoot(…).render(<X />)` (có hoặc không `StrictMode`); khác thì từ chối kèm lý do. Thay đổi file là một mục lịch sử; việc cài gói không hoàn tác được (nói rõ trong hộp xác nhận) |
+| R-RT-10 | Kết quả quét lưu theo hash các file đã đọc; file nào trong số đó đổi (watcher, M-HI) thì quét lại khi cần. Quét ≤ 500 ms với 300 file trên máy chuẩn (PB-xx thêm ở WP-4.00)                                                                                                                                                                                                                                                                                                                                          |
+| R-RT-11 | MCP `create_page` và nút Thêm trang dùng chung dịch vụ này. Lời nhắc AI có `file:dòng` của site được chọn và `pattern` khi người dùng nhờ tạo trang                                                                                                                                                                                                                                                                                                                                                                  |
+
+**Kiểm thử bắt buộc** (fixture mới: `react-routes-jsx`, `react-routes-split`, `react-no-router`)
+
+| #   | Tình huống                                                                     | Kỳ vọng                                                                                    | Loại        |
+| --- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ----------- |
+| 1   | Template ReactCraft (`src/routes.tsx`)                                         | `found`, đúng như R-PG-10 cũ; test M-PG cũ xanh nguyên                                     | Unit        |
+| 2   | `main.tsx` → `App.tsx` có `<Routes>` lồng `<Route element={<Layout/>}>`        | `found`, `jsxRoutes`; thêm "Liên hệ" thành `<Route path="lien-he" …/>` cuối nhóm Layout    | Unit        |
+| 3   | Mảng route ở `src/router/index.ts`, `createBrowserRouter(routes)` ở `main.tsx` | `found`, site ở `src/router/index.ts`; import trang mới thêm vào file đó                   | Unit        |
+| 4   | Route dùng `lazy(() => import('./pages/X'))`                                   | Trang mới cũng `lazy`                                                                      | Unit        |
+| 5   | Trang tên `ProductsPage.jsx`, `export default`, bọc `<PageLayout>`             | `pattern`: pascal, `Page`, `.jsx`, default, wrapper `PageLayout`; trang mới theo đúng kiểu | Unit        |
+| 6   | Hai `createBrowserRouter` ở hai file                                           | `ambiguous`; `POST /project/pages` thiếu `siteId` → E016                                   | Unit        |
+| 7   | `routes = pages.map(…)`                                                        | `unreadable`; Thêm trang chỉ tạo file, hiện chỗ thêm tay                                   | Unit        |
+| 8   | Không có `react-router`                                                        | `none`, `noRouter`; Cài router tạo file route, sửa entry; Undo trả các file                | Integration |
+| 9   | Có `wouter`                                                                    | `none`, `otherRouter`; không đề xuất cài                                                   | Unit        |
+| 10  | Import vòng tròn, 400 file                                                     | Không lặp vô hạn; `tooManyFiles`                                                           | Unit        |
+| 11  | Sửa file route từ ngoài                                                        | Lần đọc sau quét lại, danh sách trang mới                                                  | Integration |
+| 12  | Dự án thật kiểu MarketLink (kiểm tay)                                          | Thêm trang vào đúng file route của dự án, theo kiểu trang có sẵn                           | Kiểm tay    |
+
+### 25.4. M-FX — ADAPTER FRAMEWORK GHÉP TỪNG PHẦN (MỨC KHUNG)
+
+Theo ADR-BE-36. Chi tiết (kiểu, quy tắc `R-FX-xx`, bảng kiểm thử) viết ở đầu đợt 4, sau đó mỗi framework một mục con viết ở đầu đợt của nó:
+
+| Phần             | Nội dung khung                                                                                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Nhận diện        | `package.json`, `*.csproj`, file cấu hình → framework, phiên bản, ngôn ngữ template, hệ CSS (`support.styling`)                                              |
+| Runner           | Dev server của dự án (Vite, webpack, `node`/`nodemon`, `dotnet watch`), hoặc proxy trên `127.0.0.1` đứng trước server của dự án, chèn Bridge vào HTML trả về |
+| Đóng dấu vị trí  | `data-rc-loc` qua plugin build (Vite, webpack), hook trình biên dịch template (Pug, VG-20; Vue, VG-22), cách VG-21 chọn cho Razor                            |
+| Template adapter | Cây có vị trí của ngôn ngữ template; các thao tác M-SE (class, chữ, thuộc tính, chèn, xóa, di chuyển, bọc) giữ định dạng; thao tác chưa làm được trả lý do   |
+| Route            | Bộ tìm route của M-RT cho framework đó (Express `app.get`/`res.render`; ASP.NET Core `Pages/`, controller + `Views/`; `vue-router`)                          |
+
+Thứ tự (quyết định 2026-10-24): React chạy webpack/CRA, JavaScript thuần, monorepo → Express + Pug → Vue → ASP.NET Core Razor.
+
+### 25.5. MODULE CÒN LẠI CỦA KHUNG CŨ
+
+| Mã   | Module                | Nội dung chính                                                                                                                                                         |
+| ---- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M-TK | Token `@theme`        | Phần lớn đã có ở M-TH (Phase 2); phần còn lại gộp vào token của M-ST (R-ST-11)                                                                                         |
+| M-XC | Tách component        | Phần lớn đã có ở M-CP (Phase 2); rà phần thiếu của FR-72 (biến dùng trong vùng chọn thành props) ở đợt 8                                                               |
+| M-MF | Nhiều khung cạnh nhau | Nhiều iframe cùng origin dev server, mỗi iframe một nonce riêng; vùng chọn đồng bộ theo `loc`                                                                          |
+| M-BC | Kiểm tra build        | Chạy lệnh kiểm build của framework theo yêu cầu (`tsc --noEmit` + `vite build`, `webpack`, `dotnet build`; bổ sung loại tiến trình vào S-50), hiện lỗi có `file:dòng`  |
+| M-SC | Mở rộng phạm vi       | `className={cn('tĩnh', …)}` sửa được phần chuỗi tĩnh (L-01 đầy đủ); breakpoint tùy biến; cạnh riêng của viền, bo góc. Tailwind v3 chuyển sang M-ST, monorepo sang M-FX |
+| M-RL | Phát hành             | Tài liệu người dùng `vi`/`en`, kiểm tra giấy phép, SBOM, kiểm tra máy sạch, phát hành 1.0 (S-90 đến S-96)                                                              |
 
 ---
 
 ## 26. TRUY VẾT SPEC-04 PHASE 2–4
 
-| SRS                 | Module                    |
-| ------------------- | ------------------------- |
-| FR-26, FR-27, FR-28 | M-SE (mục 14), M-DD, M-CB |
-| FR-31               | M-KB                      |
-| FR-16, FR-50 đến 52 | M-PG                      |
-| FR-60 đến FR-68     | M-MR, M-AG, M-CH          |
-| FR-70               | M-LB                      |
-| FR-71, FR-72        | M-TK, M-XC                |
-| AC-05               | M-DD #5                   |
-| AC-07               | M-PG                      |
-| AC-08, AC-09        | M-AG #7, #8               |
-| AC-11 (secrets)     | M-MR                      |
+| SRS                                        | Module                    |
+| ------------------------------------------ | ------------------------- |
+| FR-26, FR-27, FR-28                        | M-SE (mục 14), M-DD, M-CB |
+| FR-31                                      | M-KB                      |
+| FR-16, FR-50 đến 52                        | M-PG                      |
+| FR-60 đến FR-68                            | M-MR, M-AG, M-CH          |
+| FR-70                                      | M-LB                      |
+| FR-71, FR-72                               | M-TK, M-XC                |
+| FR-20 đến FR-23, FR-70, FR-71 (mọi hệ CSS) | M-ST (mục 25.2)           |
+| FR-50, FR-51, L-07                         | M-RT (mục 25.3)           |
+| FR-26 đến FR-28 (định dạng đoạn chèn)      | M-FM (mục 25.1)           |
+| AC-05                                      | M-DD #5                   |
+| AC-07                                      | M-PG                      |
+| AC-08, AC-09                               | M-AG #7, #8               |
+| AC-11 (secrets)                            | M-MR                      |
 
 ---
 
@@ -2890,12 +3201,14 @@ Viết ở WP-1.02, thay các helper của Phase 0 trong `e2e/support/` (`startC
 
 ## 3. FIXTURE
 
-| Fixture                          | Mục đích                                                                          | Quy tắc                                                                |
-| -------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `fixtures/projects/*`            | Dự án chạy được (SPEC-04 mục 11.1)                                                | Nằm trong pnpm workspace; dependency ghim chính xác; không sửa tại chỗ |
-| `fixtures/source-corpus/`        | 40 file nguồn + `*.expected.*` cho từng thao tác                                  | `.gitattributes` đánh dấu `-text` cho file CRLF, BOM                   |
-| `fixtures/backends/*`            | Backend mẫu Express có API sản phẩm, `.env` chứa `RC_SECRET_MARKER_<n>` (Phase 3) | Không chạy được backend trong test, chỉ đọc                            |
-| `fixtures/agents/fake-agent.mjs` | Agent giả lập (mục 5, Phase 3)                                                    | Không gọi mạng                                                         |
+| Fixture                                                                       | Mục đích                                                                          | Quy tắc                                                                |
+| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `fixtures/projects/*`                                                         | Dự án chạy được (SPEC-04 mục 11.1)                                                | Nằm trong pnpm workspace; dependency ghim chính xác; không sửa tại chỗ |
+| `fixtures/source-corpus/`                                                     | 40 file nguồn + `*.expected.*` cho từng thao tác                                  | `.gitattributes` đánh dấu `-text` cho file CRLF, BOM                   |
+| `fixtures/backends/*`                                                         | Backend mẫu Express có API sản phẩm, `.env` chứa `RC_SECRET_MARKER_<n>` (Phase 3) | Không chạy được backend trong test, chỉ đọc                            |
+| `fixtures/agents/fake-agent.mjs`                                              | Agent giả lập (mục 5, Phase 3)                                                    | Không gọi mạng                                                         |
+| `fixtures/projects/react-css`, `react-css-modules`, `react-bootstrap5`        | Lớp style (SPEC-04 mục 25.2)                                                      | Vite + React, không Tailwind; cùng một trang mẫu cho cả ba             |
+| `fixtures/projects/react-routes-jsx`, `react-routes-split`, `react-no-router` | Bộ tìm route (SPEC-04 mục 25.3)                                                   | Kiểu route khác template; trang viết theo nhiều kiểu                   |
 
 ---
 
@@ -3058,17 +3371,30 @@ Lý do dùng agent giả lập (chủ dự án đồng ý 2026-10-20): (1) test 
 
 ---
 
-## 6. PHASE 4 — NÂNG CAO VÀ PHÁT HÀNH
+## 6. PHASE 4 — MỌI DỰ ÁN, MỌI HỆ CSS VÀ PHÁT HÀNH
 
-| Mã      | Nội dung                                                                            |
-| ------- | ----------------------------------------------------------------------------------- |
-| WP-4.00 | Chi tiết hóa SPEC-04 mục 25 và bộ test nghiệm thu Phase 4 (CW-50)                   |
-| WP-4.01 | Token trong `@theme` (màu, cỡ chữ, bo góc): xem, sửa, thêm                          |
-| WP-4.02 | Tách vùng chọn thành component (file mới, thay chỗ cũ)                              |
-| WP-4.03 | Xem nhiều khung cạnh nhau                                                           |
-| WP-4.04 | Kiểm tra build (`tsc --noEmit`, `vite build`) theo yêu cầu                          |
-| WP-4.05 | Mở rộng phạm vi: Tailwind v3, dự án JavaScript thuần, monorepo                      |
-| WP-4.06 | Tài liệu người dùng `vi`/`en`, kiểm tra giấy phép, kiểm tra máy sạch, phát hành 1.0 |
+Kế hoạch tổng quát: `docs/construction/giao-viec/p4-ke-hoach.md` (2026-10-24). Mỗi khối chia thành lượt khi viết bản giao việc.
+
+| Mã      | Khối   | Nội dung                                                                                   | Cổng |
+| ------- | ------ | ------------------------------------------------------------------------------------------ | ---- |
+| WP-4.00 | K0     | Chi tiết hóa SPEC-04 mục 25, ADR-BE-35 đến 38, VG-19 đến 22, bộ test nghiệm thu (CW-50)    | —    |
+| WP-4.10 | K1     | M-FM: định dạng đoạn mã vừa chèn                                                           | —    |
+| WP-4.20 | K2     | M-ST: lớp style; adapter Tailwind 4, CSS, CSS Modules, Bootstrap 5, Tailwind 3, Sass, Less | G4a  |
+| WP-4.30 | K3     | M-RT: bộ tìm route, mẫu trang, cài router                                                  | G4b  |
+| WP-4.40 | K4, K5 | M-FX: adapter framework ghép; React chạy webpack/CRA, JavaScript thuần, monorepo           | G4c  |
+| WP-4.50 | K6     | Express + Pug                                                                              | G4d  |
+| WP-4.60 | K7     | Vue                                                                                        | G4e  |
+| WP-4.70 | K8     | ASP.NET Core Razor                                                                         | G4f  |
+| WP-4.80 | K9     | M-MF, M-BC, M-SC, M-XC còn lại; hiệu năng PB-01 đến PB-05                                  | —    |
+| WP-4.90 | K10    | M-RL: tài liệu người dùng, giấy phép, máy sạch, phát hành 1.0                              | G4   |
+
+WP-4.01 đến WP-4.06 của bản trước được gộp:
+
+- token và tách component vào WP-4.20, WP-4.80;
+- nhiều khung, kiểm tra build vào WP-4.80;
+- Tailwind v3 vào WP-4.20;
+- JavaScript thuần, monorepo vào WP-4.40;
+- phát hành vào WP-4.90.
 
 ---
 
@@ -3186,3 +3512,4 @@ Tài liệu thi công của hướng cũ (Design Model) được chuyển vào `
 | 2026-10-19 | 1.0 (bổ sung 7)    | Theo chủ dự án: R-SL-13 (chuột phải → Chọn lớp), R-SL-14 (đường dẫn phần tử trong Inspector) để chọn phần tử lồng nhau không phải bấm lặp; R-AG-19 (AI dùng thao tác của app qua MCP, ưu tiên hơn sửa file), R-AG-20 (ghi thiếu sót công cụ vào `.reactcraft/tool-gaps.json`)                                                                                                                                                                                                                                                                                             |
 | 2026-10-20 | 1.0 (bổ sung 8)    | Theo chủ dự án: R-CH-07 (nút Thêm backend trong panel chat, nhiều đường dẫn, dùng chung danh sách R-PJ-14; agent đọc file nào do người dùng yêu cầu); ghi lý do dùng agent giả lập cho test tự động, giữ kiểm tay với agent thật ở cổng G3 (SPEC-07 mục 5)                                                                                                                                                                                                                                                                                                                |
 | 2026-10-20 | 1.0 (bổ sung 9)    | Theo chủ dự án: R-AG-21 (nút Cài đặt và Đăng nhập agent trong Studio qua luồng chính thức của agent; ReactCraft không giữ thông tin đăng nhập)                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 2026-10-24 | 1.0 (WP-4.00)      | Theo chủ dự án: Phase 4 mở rộng cho mọi hệ CSS và nhiều framework. SPEC-04 mục 25 viết lại: M-FM (định dạng đoạn chèn), M-ST (lớp style), M-RT (bộ tìm route) chi tiết; M-FX và module cũ ở mức khung. SPEC-01: C-03, ADR-BE-35 đến 38, bảng công nghệ, PB-10, PB-11, VG-19 đến 22. SPEC-03 mục 9, SPEC-06 fixture, SPEC-07 mục 6 (WP-4.00 đến 4.90, cổng G4a đến G4f)                                                                                                                                                                                                    |
