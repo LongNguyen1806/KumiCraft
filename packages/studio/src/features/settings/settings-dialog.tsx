@@ -9,6 +9,8 @@ import { errorText } from '../../routes/error-text.ts';
 import { useAgentsStore } from '../../store/agents-store.ts';
 import { useSettingsStore } from '../../store/settings-store.ts';
 import { AgentSection } from '../agents/agent-section.tsx';
+import { ToolGapsSection } from '../agents/tool-gaps-section.tsx';
+import { useProjectInfo } from '../project/project-store.ts';
 
 type SettingsDialogProps = { readonly open: boolean; readonly onClose: () => void };
 
@@ -20,6 +22,8 @@ type SettingsDialogProps = { readonly open: boolean; readonly onClose: () => voi
 export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const { t } = useTranslation();
   const refreshAgents = useAgentsStore((state) => state.refresh);
+  const { t: tChat } = useTranslation('chat');
+  const project = useProjectInfo();
 
   useEffect(() => {
     if (open) {
@@ -44,6 +48,12 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
       <Section title={t('settings.agent')}>
         <AgentSection />
       </Section>
+      {/* The gaps live in the project, which must be open and trusted (R-AG-20). */}
+      {project?.trusted === true && (
+        <Section title={tChat('toolGaps.title')}>
+          <ToolGapsSection open={open} projectRoot={project.root} />
+        </Section>
+      )}
       <SaveStatus />
     </Dialog>
   );

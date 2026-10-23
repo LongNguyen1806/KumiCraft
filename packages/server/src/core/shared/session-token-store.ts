@@ -23,16 +23,20 @@ export type SessionTokenDeps = {
   readonly now?: () => Date;
 };
 
-async function readStored(deps: SessionTokenDeps, now: Date): Promise<string | undefined> {
-  const read = await deps.fs.readText(deps.dir, SESSION_FILE, { maxBytes: 1024 });
-  if (!read.ok) return undefined;
+/** The token in a session file while it is fresh, else undefined (also read by `reactcraft mcp`). */
+export function parseSessionToken(text: string, now: Date): string | undefined {
   try {
-    const stored = StoredSchema.parse(JSON.parse(read.value));
+    const stored = StoredSchema.parse(JSON.parse(text));
     const age = now.getTime() - Date.parse(stored.createdAt);
     return age >= 0 && age < SESSION_TOKEN_MAX_AGE_MS ? stored.token : undefined;
   } catch {
     return undefined; // broken file: a new token replaces it
   }
+}
+
+async function readStored(deps: SessionTokenDeps, now: Date): Promise<string | undefined> {
+  const read = await deps.fs.readText(deps.dir, SESSION_FILE, { maxBytes: 1024 });
+  return read.ok ? parseSessionToken(read.value, now) : undefined;
 }
 
 /** The saved token while it is fresh, else a new one (saved with mode 0600). */

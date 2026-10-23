@@ -1,7 +1,13 @@
 // Source Editor HTTP endpoints (SPEC-03 section 5.5, SPEC-04 section 6).
 import type { HistoryLabel, StructureEdit } from '@reactcraft/shared';
-import { BatchEditRequestSchema, EditRequestSchema, issuesToDetails } from '@reactcraft/shared';
+import {
+  BatchEditRequestSchema,
+  EditRequestSchema,
+  issuesToDetails,
+  PAGE_TREE_MAX_DEPTH,
+} from '@reactcraft/shared';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { z } from 'zod';
 
 import type { HistoryService } from '../../../core/history/history-service.ts';
 import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
@@ -60,6 +66,32 @@ function buildStructureHistoryLabel(edit: StructureEdit): HistoryLabel {
     key: `history:${edit.kind}`,
     params: { tag, count: String(edit.elements.length) },
   };
+}
+
+const TreeQuerySchema = z.strictObject({
+  file: z.string().min(1).max(1024),
+  maxDepth: z.coerce.number().int().min(1).max(PAGE_TREE_MAX_DEPTH).optional(),
+});
+
+/** GET /source/tree: element tree of one JSX file for external AI agents (R-AG-19). */
+async function handleGetPageTree(
+  deps: SourceRoutesDeps,
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const projectRoot = deps.getProjectRoot();
+  if (!projectRoot) return sendError(reply, NO_PROJECT);
+  const query = TreeQuerySchema.safeParse(request.query);
+  if (!query.success) {
+    return sendError(reply, { code: 'E016', details: issuesToDetails(query.error.issues) });
+  }
+  const result = await deps.sourceEditorService.getPageTree(
+    projectRoot,
+    query.data.file,
+    query.data.maxDepth,
+  );
+  if (!result.ok) return sendError(reply, result.error);
+  return reply.status(200).send({ data: result.value });
 }
 
 async function handleGetElementText(
@@ -155,6 +187,7 @@ async function handleApplyBatchEdit(
 export function registerSourceRoutes(api: FastifyInstance, deps: SourceRoutesDeps): void {
   api.get('/source/element', (req, rep) => handleGetElement(deps, req, rep));
   api.get('/source/element-text', (req, rep) => handleGetElementText(deps, req, rep));
+  api.get('/source/tree', (req, rep) => handleGetPageTree(deps, req, rep));
   api.post('/source/edits', { bodyLimit: 10 * 1024 * 1024 }, (req, rep) =>
     handleApplyEdit(deps, req, rep),
   );

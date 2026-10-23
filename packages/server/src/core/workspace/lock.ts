@@ -31,7 +31,8 @@ const sleep = (ms: number) =>
     setTimeout(resolve, ms);
   });
 
-function parseLock(text: string): LockInfo | undefined {
+/** The lock's content, or undefined when it is not a lock (also read by `reactcraft mcp`). */
+export function parseLock(text: string): LockInfo | undefined {
   try {
     const value = JSON.parse(text) as Partial<LockInfo>;
     const isValid =

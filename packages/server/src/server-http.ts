@@ -70,6 +70,10 @@ function buildRouteConfigs(
       chatImages: ctx.chatImages,
       getProjectInfo: () => ctx.projectService.getProjectInfo(),
     },
+    toolGapRoutes: {
+      store: ctx.toolGapStore,
+      getProjectInfo: () => ctx.projectService.getProjectInfo(),
+    },
     historyRoutes: {
       historyService: ctx.historyService,
       getProjectRoot,

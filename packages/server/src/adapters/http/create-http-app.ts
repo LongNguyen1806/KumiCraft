@@ -25,6 +25,7 @@ import { registerRunnerRoutes, type RunnerRoutesDeps } from './routes/runner.ts'
 import { registerSessionRoutes } from './routes/session.ts';
 import { registerSettingsRoutes, type SettingsRoutesDeps } from './routes/settings.ts';
 import { registerSourceRoutes, type SourceRoutesDeps } from './routes/source.ts';
+import { registerToolGapRoutes, type ToolGapRoutesDeps } from './routes/tool-gaps.ts';
 import { registerSecurity, type SecurityOptions } from './security.ts';
 import { sendError } from './send-error.ts';
 
@@ -45,6 +46,7 @@ export type HttpAppOptions = {
   readonly jobRoutes?: JobRoutesDeps;
   readonly agentRoutes?: AgentRoutesDeps;
   readonly agentTurnRoutes?: AgentTurnRoutesDeps;
+  readonly toolGapRoutes?: ToolGapRoutesDeps;
   /** Directory of the built Studio. When absent, only the API is served. */
   readonly studioDir?: string;
 };
@@ -135,6 +137,9 @@ async function registerApiRoutes(app: FastifyInstance, options: HttpAppOptions):
       }
       if (options.agentTurnRoutes !== undefined) {
         registerAgentTurnRoutes(api, options.agentTurnRoutes);
+      }
+      if (options.toolGapRoutes !== undefined) {
+        registerToolGapRoutes(api, options.toolGapRoutes);
       }
       if (options.eventRoutes !== undefined) {
         registerEventRoutes(api, options.eventRoutes);

@@ -64,4 +64,22 @@ describe('parseCliArgs', () => {
     }
     expect(USAGE_EXIT_CODE).toBe(2);
   });
+
+  it('reads the mcp command, its directory and port [R-AG-19]', () => {
+    expect(parseCliArgs(['mcp', 'ws'], CWD)).toEqual({
+      ok: true,
+      mcp: { projectDir: resolve(CWD, 'ws'), port: undefined },
+    });
+    expect(parseCliArgs(['mcp'], CWD)).toEqual({
+      ok: true,
+      mcp: { projectDir: CWD, port: undefined },
+    });
+    expect(parseCliArgs(['mcp', '--port', '4310'], CWD)).toEqual({
+      ok: true,
+      mcp: { projectDir: CWD, port: 4310 },
+    });
+    expect(parseCliArgs(['mcp', '--port', 'x'], CWD).ok).toBe(false);
+    expect(parseCliArgs(['mcp', '--no-open'], CWD).ok).toBe(false);
+    expect(USAGE).toContain('reactcraft mcp [project-dir]');
+  });
 });

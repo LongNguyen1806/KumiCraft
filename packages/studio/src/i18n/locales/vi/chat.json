@@ -62,5 +62,22 @@
   "loginWaitingNotice": "Đang chờ bạn đăng nhập…",
   "loginManualDone": "Tôi đã đăng nhập xong — gửi lại",
   "loginReopen": "Mở lại cửa sổ",
-  "loginHintClaude": "Có thể Claude Code chưa đăng nhập"
+  "loginHintClaude": "Có thể Claude Code chưa đăng nhập",
+  "toolGaps": {
+    "title": "Công cụ còn thiếu",
+    "help": "Khi agent bên ngoài (Claude Code, Antigravity…) cần thao tác mà ReactCraft chưa có, nó ghi vào đây.",
+    "empty": "Chưa có mục nào.",
+    "connect": "Nối Claude Code với dự án này (chạy một lần trong terminal):",
+    "copy": "Copy lệnh",
+    "copied": "Đã copy",
+    "count": "×{{count}}",
+    "refresh": "Làm mới",
+    "export": "Xuất Markdown",
+    "showMore": "Xem thêm",
+    "showLess": "Thu gọn",
+    "markdownTitle": "Công cụ ReactCraft còn thiếu",
+    "markdownWhy": "Vì sao",
+    "markdownExample": "Ví dụ",
+    "markdownLast": "Lần gần nhất"
+  }
 }

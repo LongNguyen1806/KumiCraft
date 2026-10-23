@@ -18,6 +18,7 @@ import {
 import type { AgentCommand } from './core/agent/agent-types.ts';
 import { type ChatImageStore, createChatImageStore } from './core/agent/chat-images.ts';
 import { createTurnSnapshotStore, type TurnSnapshotStore } from './core/agent/snapshot/index.ts';
+import { createToolGapStore, type ToolGapStore } from './core/agent/tool-gaps.ts';
 import { createTurnRunner, type TurnRunner } from './core/agent/turn-runner.ts';
 import { createTurnStore, type TurnStore } from './core/agent/turn-store.ts';
 import { createHistoryService, type HistoryService } from './core/history/history-service.ts';
@@ -64,6 +65,7 @@ export type CoreServices = {
   turnStore: TurnStore;
   turnRunner: TurnRunner;
   chatImages: ChatImageStore;
+  toolGapStore: ToolGapStore;
 };
 
 /** History, jobs and the watcher that reports files changed outside ReactCraft (R-HI-05). */
@@ -185,7 +187,8 @@ function createAgentTurnServices(
     now: () => new Date(),
     chatImages,
   });
-  return { turnStore, turnRunner, chatImages };
+  const toolGapStore = createToolGapStore({ fs, logger: deps.logger, now: () => new Date() });
+  return { turnStore, turnRunner, chatImages, toolGapStore };
 }
 
 function createProjectWithWatch(

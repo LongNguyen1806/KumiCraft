@@ -20,7 +20,8 @@ import {
   type SafeParseResult,
 } from './http.ts';
 
-function arraySchema<T>(itemSchema: ResponseSchema<T>): ResponseSchema<readonly T[]> {
+/** A response schema for a JSON array of items, for clients whose package has no zod of its own. */
+export function arraySchema<T>(itemSchema: ResponseSchema<T>): ResponseSchema<readonly T[]> {
   return {
     safeParse(data: unknown): SafeParseResult<readonly T[]> {
       if (!Array.isArray(data)) {

@@ -47,7 +47,9 @@ export type { ProjectService } from './core/project/project-service.ts';
 export type { RunnerService } from './core/runner/runner-service.ts';
 export type { AppError, ErrorCode, Result } from './core/shared/result.ts';
 export type { Platform, ProjectState, SessionInfo } from './core/shared/session.ts';
+export { parseSessionToken, SESSION_FILE } from './core/shared/session-token-store.ts';
 export type { SourceEditorService } from './core/source-editor/source-editor-service.ts';
+export { LOCK_FILE, type LockInfo, parseLock } from './core/workspace/lock.ts';
 
 /** ADR-BE-03: the server never listens on another interface. */
 export const HOST = '127.0.0.1';

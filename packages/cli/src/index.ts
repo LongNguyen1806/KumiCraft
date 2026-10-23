@@ -7,6 +7,7 @@ import open from 'open';
 
 import packageJson from '../package.json' with { type: 'json' };
 import { type CliOptions, parseCliArgs, USAGE, USAGE_EXIT_CODE } from './args.ts';
+import { runMcpCommand } from './mcp/mcp-command.ts';
 import { startFailureMessage } from './messages.ts';
 import { findStudioDir } from './paths.ts';
 import { attemptsFor, portFor, type PortPlan } from './port-choice.ts';
@@ -70,7 +71,14 @@ ${USAGE}`);
     console.log(parsed.show === 'help' ? USAGE : packageJson.version);
     return;
   }
-  const { options } = parsed;
+  if ('mcp' in parsed) {
+    await runMcpCommand(parsed.mcp, packageJson.version);
+    return;
+  }
+  await serve(parsed.options);
+}
+
+async function serve(options: CliOptions): Promise<void> {
   if (!isDirectory(options.workspaceDir)) fail(`not a directory: ${options.workspaceDir}`);
 
   // Development only (`pnpm dev`): the Studio comes from the Vite dev server, which proxies the API.

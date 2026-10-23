@@ -1,6 +1,7 @@
 // Live edit hook for Inspector (SPEC-04 R-IN-13, R-IN-14, R-IN-20).
 import type { ClassContext, ClassValue, PropertyId } from '@reactcraft/shared';
 import { writeValue } from '@reactcraft/shared';
+import type { TFunction } from 'i18next';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -158,7 +159,7 @@ function handleEditError(
   err: unknown,
   queue: LiveEditQueue,
   target: Extract<InspectorTarget, { readonly kind: 'element' }>,
-  t: ReturnType<typeof useTranslation>['t'],
+  t: TFunction,
   setOptimistic: (val: string) => void,
   setError: (msg: string | undefined) => void,
 ): void {
@@ -178,7 +179,7 @@ function useLiveQueue(
   throttleMs: number,
   serverClass: string,
   target: Extract<InspectorTarget, { readonly kind: 'element' }>,
-  t: ReturnType<typeof useTranslation>['t'],
+  t: TFunction,
   setOptimisticClass: (val: string) => void,
   setError: (msg: string | undefined) => void,
   setIsSaving: (saving: boolean) => void,

@@ -5,6 +5,7 @@ import type {
   EditResult,
   ElementSource,
   ElementText,
+  PageTree,
   Result,
   SourceEdit,
   StructureEdit,
@@ -20,6 +21,7 @@ import { createUsageCounter, type UsageCounter } from './component-usages.ts';
 import { executeEditBatch } from './edit-batch.ts';
 import { executeEditMutation, parseModifiedCode } from './edit-mutations.ts';
 import { fileQueueKey, queueFileTask } from './file-queue.ts';
+import { readPageTree } from './page-tree.ts';
 import {
   buildElementSource,
   cacheAst,
@@ -56,6 +58,8 @@ export type WrittenFile = {
 export interface SourceEditorService {
   getElement(projectRoot: string, loc: string): Promise<Result<ElementSource>>;
   getElementText(projectRoot: string, loc: string): Promise<Result<ElementText>>;
+  /** Element tree of one JSX file for external AI agents (R-AG-19). */
+  getPageTree(projectRoot: string, file: string, maxDepth?: number): Promise<Result<PageTree>>;
   /**
    * Applies one edit. `onWritten` runs inside the queue of the file, right after the write, so the
    * history records exactly the bytes this edit replaced, even when edits of the file overlap.
@@ -258,6 +262,20 @@ async function executeGetElementText(
   return getElementTextFromAst(code, ast, rel, line, column);
 }
 
+/** R-SE-14: replaces the usages of the enclosing component by its count over the project. */
+async function withUsages(
+  usageCounter: UsageCounter,
+  sourceDir: string,
+  projectRoot: string,
+  element: ElementSource,
+): Promise<ElementSource> {
+  const file = parseLocString(element.loc)?.file;
+  if (element.component === undefined || file === undefined) return element;
+  const { name } = element.component;
+  const usages = await usageCounter.count(projectRoot, sourceDir, file, name);
+  return { ...element, component: { name, usages } };
+}
+
 export function createSourceEditorService(
   deps: SourceEditorDeps,
   config: SourceEditorConfig = {},
@@ -266,25 +284,17 @@ export function createSourceEditorService(
   const sourceExtensions = config.sourceExtensions ?? ['.jsx', '.tsx'];
   const usageCounter = deps.usageCounter ?? createUsageCounter(deps.fs);
 
-  /** R-SE-14: replaces the usages of the enclosing component by its count over the project. */
-  const withUsages = async (
-    projectRoot: string,
-    element: ElementSource,
-  ): Promise<ElementSource> => {
-    const file = parseLocString(element.loc)?.file;
-    if (element.component === undefined || file === undefined) return element;
-    const { name } = element.component;
-    const usages = await usageCounter.count(projectRoot, sourceDir, file, name);
-    return { ...element, component: { name, usages } };
-  };
-
   return {
     async getElement(projectRoot, loc) {
       const found = await executeGetElement(deps, projectRoot, loc, sourceDir, sourceExtensions);
-      return found.ok ? ok(await withUsages(projectRoot, found.value)) : found;
+      if (!found.ok) return found;
+      return ok(await withUsages(usageCounter, sourceDir, projectRoot, found.value));
     },
     getElementText(projectRoot, loc) {
       return executeGetElementText(deps, projectRoot, loc, sourceDir, sourceExtensions);
+    },
+    getPageTree(projectRoot, file, maxDepth) {
+      return readPageTree(deps.fs, projectRoot, file, { sourceDir, sourceExtensions, maxDepth });
     },
     async applyEdit(projectRoot, edit, onWritten) {
       const valRes = validateLocAndExt(edit.loc, sourceDir, sourceExtensions);
@@ -295,7 +305,8 @@ export function createSourceEditorService(
         performEditOnFile(deps, projectRoot, rel, { line, column }, edit, onWritten),
       );
       if (!edited.ok) return edited;
-      return ok({ ...edited.value, element: await withUsages(projectRoot, edited.value.element) });
+      const element = await withUsages(usageCounter, sourceDir, projectRoot, edited.value.element);
+      return ok({ ...edited.value, element });
     },
     applyStructureEdit(projectRoot, edit, onWritten) {
       return executeStructureEdit(

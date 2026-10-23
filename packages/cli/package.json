@@ -15,9 +15,10 @@
     "dist"
   ],
   "dependencies": {
+    "@babel/parser": "7.29.9",
     "@fastify/static": "10.1.6",
     "@fastify/websocket": "11.3.4",
-    "@babel/parser": "7.29.9",
+    "@modelcontextprotocol/sdk": "1.32.1",
     "chokidar": "5.0.0",
     "cross-spawn": "7.0.6",
     "diff": "9.0.0",

@@ -127,6 +127,14 @@ export const ToolGapSchema = z.strictObject({
 });
 export type ToolGap = z.infer<typeof ToolGapSchema>;
 
+/** What an external agent sends when no tool does what it needs (R-AG-20). */
+export const ToolGapReportSchema = z.strictObject({
+  need: z.string().trim().min(1).max(200),
+  why: z.string().max(2000),
+  example: z.string().max(4000),
+});
+export type ToolGapReport = z.infer<typeof ToolGapReportSchema>;
+
 export const AgentEventMessageSchema = z.strictObject({
   turnId: z.string().regex(/^[A-Za-z0-9_-]{10}$/),
   event: AgentEventSchema,

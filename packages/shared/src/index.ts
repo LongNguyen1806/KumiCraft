@@ -24,6 +24,8 @@ export {
   type StartTurnRequest,
   StartTurnRequestSchema,
   type ToolGap,
+  type ToolGapReport,
+  ToolGapReportSchema,
   ToolGapSchema,
   TURN_FILE_CHANGES,
   TURN_NOTICE_CODES,
@@ -154,6 +156,7 @@ export * from './job.ts';
 export { LIBRARY_BLOCKS, type LibraryBlock, type LibraryBlockCategory } from './library/blocks.ts';
 export { type LibraryBlockLabelsResolver, normalizeText, searchBlocks } from './library/search.ts';
 export { pageNames, type PageNamesResult, toComponentName, toRoutePath } from './page-names.ts';
+export * from './page-tree.ts';
 export {
   type AddPage,
   AddPageSchema,

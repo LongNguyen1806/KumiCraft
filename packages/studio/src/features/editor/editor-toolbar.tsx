@@ -1,4 +1,5 @@
 import type { HistoryLabel } from '@reactcraft/shared';
+import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -18,11 +19,7 @@ export type EditorToolbarProps = {
   readonly onOpenProject?: () => void;
 };
 
-function resolveDraftHistoryLabel(
-  key: string,
-  name: string,
-  t: ReturnType<typeof useTranslation>['t'],
-): string | undefined {
+function resolveDraftHistoryLabel(key: string, name: string, t: TFunction): string | undefined {
   if (key === 'history:draftCreate' || key === 'history.draftCreate') {
     return t('history.draftCreate', { name });
   }
@@ -44,7 +41,7 @@ function resolveDraftHistoryLabel(
 function resolveThemeHistoryLabel(
   label: HistoryLabel,
   name: string,
-  t: ReturnType<typeof useTranslation>['t'],
+  t: TFunction,
 ): string | undefined {
   if (label.key !== 'history:theme' && label.key !== 'history.theme') return undefined;
   const op = label.params?.['op'];
@@ -53,10 +50,7 @@ function resolveThemeHistoryLabel(
   return t('history.themeSet', { name });
 }
 
-function resolveHistoryLabel(
-  label: HistoryLabel | undefined,
-  t: ReturnType<typeof useTranslation>['t'],
-): string | undefined {
+function resolveHistoryLabel(label: HistoryLabel | undefined, t: TFunction): string | undefined {
   if (label === undefined) return undefined;
   const name = label.params?.['name'] ?? '';
   const draft = resolveDraftHistoryLabel(label.key, name, t);

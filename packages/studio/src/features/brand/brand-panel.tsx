@@ -156,7 +156,7 @@ function BrandGroupSection(props: BrandGroupSectionProps) {
 
 function getGroupConfigs(
   theme: ThemeInfo,
-  t: ReturnType<typeof useTranslation>['t'],
+  t: TFunction,
 ): readonly { kind: ThemeTokenKind; title: string; tokens: readonly ThemeToken[] }[] {
   return [
     { kind: 'color', title: t('brand.colors'), tokens: theme.colors },
@@ -184,7 +184,7 @@ async function runBrandEdit(
   }
 }
 
-function useBrandActions(t: ReturnType<typeof useTranslation>['t'], tErrors: TFunction<'errors'>) {
+function useBrandActions(t: TFunction, tErrors: TFunction<'errors'>) {
   const [addingKind, setAddingKind] = useState<ThemeTokenKind | undefined>(undefined);
   const [errorMsg, setErrorMsg] = useState<string | undefined>(undefined);
 
