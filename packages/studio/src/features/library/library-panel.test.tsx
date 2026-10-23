@@ -54,21 +54,22 @@ describe('Library Panel and Insertion (Scenarios #14, #15)', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it('Scenario 15: LibraryPanel sets aria-disabled, keeps blocks draggable, and shows hint when no selection; inserts when selected, then selects the new element [R-LB-14, R-LB-15]', async () => {
+  it('Scenario 15: LibraryPanel keeps blocks draggable, locks + and shows hint when no selection; + inserts when selected, then selects the new element [R-LB-14, R-LB-15]', async () => {
     const spy = vi.spyOn(sourceClient, 'applyStructureEdit').mockResolvedValue({
       changed: true,
       files: ['src/Home.tsx'],
       locs: ['src/Home.tsx:25:5'],
     });
 
-    // 1. Render when nothing is selected: aria-disabled="true", draggable="true", click does not call API
+    // 1. Render when nothing is selected: the block stays draggable, its + button is locked
     const { rerender } = render(<LibraryPanel />);
 
     expect(screen.getByTestId('library-hint')).toBeDefined();
     const buttonBlock = screen.getByTestId('library-block-form.button');
-    expect(buttonBlock.getAttribute('aria-disabled')).toBe('true');
+    const addButton = screen.getByTestId<HTMLButtonElement>('library-add-form.button');
     expect(buttonBlock.getAttribute('draggable')).toBe('true');
-    fireEvent.click(buttonBlock);
+    expect(addButton.disabled).toBe(true);
+    fireEvent.click(addButton);
     expect(spy).not.toHaveBeenCalled();
 
     // 2. Select an element on Canvas
@@ -77,10 +78,12 @@ describe('Library Panel and Insertion (Scenarios #14, #15)', () => {
     rerender(<LibraryPanel />);
 
     expect(screen.queryByTestId('library-hint')).toBeNull();
-    expect(buttonBlock.getAttribute('aria-disabled')).toBe('false');
+    expect(addButton.disabled).toBe(false);
 
-    // 3. Click the block to insert
+    // 3. A click on the block itself inserts nothing (owner, 2026-10-23); its + button does
     fireEvent.click(buttonBlock);
+    expect(spy).not.toHaveBeenCalled();
+    fireEvent.click(addButton);
 
     await waitFor(() => {
       expect(spy).toHaveBeenCalled();

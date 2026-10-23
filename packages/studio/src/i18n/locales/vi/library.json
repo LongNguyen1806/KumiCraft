@@ -2,7 +2,8 @@
   "title": "Thư viện",
   "search": "Tìm kiếm khối…",
   "insertImage": "Ảnh…",
-  "hint": "Chọn một phần tử rồi bấm khối, hoặc kéo khối vào Canvas",
+  "hint": "Kéo khối vào Canvas, hoặc chọn một phần tử rồi bấm + trên khối để chèn",
+  "add": "Chèn {{name}} tại phần tử đang chọn",
   "unsupportedForSystem": "Mẫu phần tử có sẵn dùng Tailwind chưa hỗ trợ cho hệ này. Dùng tab Thành phần để chèn component của dự án.",
   "categories": {
     "layout": "Bố cục",

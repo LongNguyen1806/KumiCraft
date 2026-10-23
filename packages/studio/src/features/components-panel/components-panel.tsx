@@ -3,6 +3,7 @@ import { normalizeText, type ProjectComponent } from '@reactcraft/shared';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { InsertButton } from '../../components/ui/insert-button.tsx';
 import { type ErrorInfo, errorText } from '../../routes/error-text.ts';
 import { useDesignStore } from '../design/design-store.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
@@ -18,22 +19,21 @@ type ComponentItemProps = {
   readonly onSelect: (component: ProjectComponent) => void;
 };
 
+/** Dragged onto the Canvas, or inserted at the selection with its + button (R-CP-13). */
 function ComponentItem({ component, isSelf, disabled, onSelect }: ComponentItemProps) {
   const { t } = useTranslation();
-  const isDisabled = disabled || isSelf;
+  const addTitle = isSelf
+    ? t('components.selfInsert')
+    : t('components.add', { name: component.name });
 
   return (
-    <button
-      type="button"
+    <div
       data-testid={`component-item-${component.name}`}
-      aria-disabled={isDisabled}
+      aria-disabled={isSelf}
       title={isSelf ? t('components.selfInsert') : undefined}
-      draggable={!isDisabled}
-      onClick={() => {
-        if (!isDisabled) onSelect(component);
-      }}
+      draggable={!isSelf}
       onDragStart={(e) => {
-        if (isDisabled) return;
+        if (isSelf) return;
         e.dataTransfer.setData('text/plain', component.name);
         e.dataTransfer.effectAllowed = 'copy';
         useDndStore.getState().startDrag({ source: 'component', component });
@@ -44,7 +44,7 @@ function ComponentItem({ component, isSelf, disabled, onSelect }: ComponentItemP
           useDndStore.getState().endDrag();
         }
       }}
-      className="flex flex-col items-start gap-1 rounded-lg border border-border/50 bg-field/50 p-2.5 text-left transition-all hover:border-accent hover:bg-accent/5 aria-disabled:opacity-40 w-full"
+      className="relative flex w-full cursor-grab flex-col items-start gap-1 rounded-lg border border-border/50 bg-field/50 p-2.5 pr-8 text-left transition-all hover:border-accent hover:bg-accent/5 active:cursor-grabbing aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
     >
       <div className="flex w-full items-center justify-between gap-1.5">
         <span className="text-xs font-medium text-ink leading-tight">{component.name}</span>
@@ -60,7 +60,15 @@ function ComponentItem({ component, isSelf, disabled, onSelect }: ComponentItemP
       <span className="text-[11px] text-ink-soft">
         {t('components.usages', { count: component.usages })}
       </span>
-    </button>
+      <InsertButton
+        testId={`component-add-${component.name}`}
+        label={addTitle}
+        disabled={disabled || isSelf}
+        onInsert={() => {
+          onSelect(component);
+        }}
+      />
+    </div>
   );
 }
 

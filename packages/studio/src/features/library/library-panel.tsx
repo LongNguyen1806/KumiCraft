@@ -9,6 +9,7 @@ import {
 import { createElement, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { InsertButton } from '../../components/ui/insert-button.tsx';
 import { resources } from '../../i18n/i18n.ts';
 import { type ErrorInfo, errorText } from '../../routes/error-text.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
@@ -40,24 +41,24 @@ function BlockIcon({ name, className }: { readonly name: string; readonly classN
 
 type BlockItemProps = {
   readonly block: LibraryBlock;
+  /** The + button is locked: nothing selected, or an insert is running. Dragging always works. */
   readonly disabled: boolean;
   readonly onSelect: (block: LibraryBlock) => void;
 };
 
+/**
+ * A block is dragged onto the Canvas; only its + button inserts at the selection (R-LB-14). A click
+ * on the block itself does nothing, so picking a block never changes the page by accident.
+ */
 function BlockItem({ block, disabled, onSelect }: BlockItemProps) {
   const { t } = useTranslation('library');
   const rawKey = block.labelKey.replace(/^library:blocks\./, '');
   const label = isBlockKey(rawKey) ? t(`blocks.${rawKey}`) : block.id;
 
   return (
-    <button
-      type="button"
+    <div
       data-testid={`library-block-${block.id}`}
-      aria-disabled={disabled}
       draggable
-      onClick={() => {
-        if (!disabled) onSelect(block);
-      }}
       onDragStart={(e) => {
         e.dataTransfer.setData('text/plain', block.id);
         e.dataTransfer.effectAllowed = 'copy';
@@ -69,11 +70,19 @@ function BlockItem({ block, disabled, onSelect }: BlockItemProps) {
           useDndStore.getState().endDrag();
         }
       }}
-      className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border/50 bg-field/50 p-3 text-center transition-all hover:border-accent hover:bg-accent/5 aria-disabled:opacity-40"
+      className="relative flex cursor-grab flex-col items-center justify-center gap-2 rounded-lg border border-border/50 bg-field/50 p-3 text-center transition-all hover:border-accent hover:bg-accent/5 active:cursor-grabbing"
     >
       <BlockIcon name={block.icon} className="h-5 w-5 text-ink-soft" />
       <span className="text-xs font-medium text-ink leading-tight">{label}</span>
-    </button>
+      <InsertButton
+        testId={`library-add-${block.id}`}
+        label={t('add', { name: label })}
+        disabled={disabled}
+        onInsert={() => {
+          onSelect(block);
+        }}
+      />
+    </div>
   );
 }
 

@@ -485,6 +485,7 @@
     "layout": "Layout",
     "empty": "This project has no components yet",
     "selfInsert": "A component cannot be inserted into itself",
+    "add": "Insert {{name}} at the selected element",
     "extract": {
       "title": "Extract component",
       "button": "Extract component",

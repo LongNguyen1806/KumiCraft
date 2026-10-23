@@ -485,6 +485,7 @@
     "layout": "Bố cục",
     "empty": "Dự án chưa có component",
     "selfInsert": "Không chèn component vào chính nó",
+    "add": "Chèn {{name}} tại phần tử đang chọn",
     "extract": {
       "title": "Tạo component",
       "button": "Tạo component",

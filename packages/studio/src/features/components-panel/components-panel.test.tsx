@@ -83,7 +83,7 @@ describe('ComponentsPanel (Scenarios #11, #12) [R-CP-12, R-CP-13]', () => {
     expect(screen.queryByTestId('component-item-Header')).toBeNull();
   });
 
-  it('Scenario 12: click ProductCard when section selected calls applyStructureEdit [R-CP-13]', async () => {
+  it('Scenario 12: + on ProductCard when section selected calls applyStructureEdit [R-CP-13]', async () => {
     vi.spyOn(projectClient, 'fetchComponents').mockResolvedValue([...mockComponents]);
     const spy = vi.spyOn(sourceClient, 'applyStructureEdit').mockResolvedValue({
       changed: true,
@@ -116,8 +116,10 @@ describe('ComponentsPanel (Scenarios #11, #12) [R-CP-12, R-CP-13]', () => {
 
     render(<ComponentsPanel />);
 
-    const productCardBtn = await screen.findByTestId('component-item-ProductCard');
-    fireEvent.click(productCardBtn);
+    // A click on the item itself inserts nothing; its + button does.
+    fireEvent.click(await screen.findByTestId('component-item-ProductCard'));
+    expect(spy).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId('component-add-ProductCard'));
 
     expect(spy).toHaveBeenCalledWith({
       kind: 'insert',
