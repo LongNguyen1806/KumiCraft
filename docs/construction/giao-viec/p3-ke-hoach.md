@@ -61,6 +61,8 @@ Lượt 1 và 3 không cần VG-17 nên làm trước trong lúc chờ spike. N�
 6. Tắt mạng hoặc đăng xuất agent → chat báo lỗi rõ (E026/E027); Canvas, Inspector vẫn dùng được.
 7. Máy chưa có agent: Cài đặt hiện "chưa cài", nút Cài đặt chạy lệnh chính thức; sau đó Đăng nhập; chat mở khóa.
 8. Lặp bước 2–3 trên WorkTracker (backend Django) ở giao diện `en`.
+9. **Lệnh không bao giờ kết thúc** (chủ dự án thử 2026-10-23 với "chạy lệnh remote control"): gửi yêu cầu khiến agent chạy một lệnh chạy nền mãi (`agy remote-control`, `npm run dev`…). Kỳ vọng: lượt hiện "đang chạy" kèm nút Hủy; bấm Hủy → lượt dừng, **không còn tiến trình nào** của lượt (kiểm Task Manager, kể cả tiến trình con agent tự bật); không bấm thì tới 30 phút báo hết giờ.
+10. **Server khởi động lại giữa lượt** (lỗi tìm được 2026-10-23 khi thử bước 9): đang có lượt chạy thì tắt và bật lại `npm run dev`. Kỳ vọng: ô chat không bị khóa mãi; lượt đó hiện "Lỗi" sau khi Studio nối lại, gửi tiếp được.
 
 ## 6. Rủi ro đã biết
 
