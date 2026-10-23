@@ -253,12 +253,14 @@ export default defineConfig(
     rules: { 'max-lines-per-function': 'off' },
   },
 
-  // The CLI, runner scripts, and repository scripts are allowed to exit and print (QC-52).
+  // The CLI, runner scripts, repository scripts and the E2E server launcher are programs of their
+  // own: they are allowed to exit and print (QC-52).
   {
     files: [
       'packages/cli/src/**/*.ts',
       'packages/server/src/runners/**/*.ts',
       'scripts/**/*.{mjs,ts}',
+      'e2e/support/agent-studio.ts',
     ],
     rules: {
       'no-console': 'off',

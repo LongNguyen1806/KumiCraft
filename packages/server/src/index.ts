@@ -5,6 +5,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import type { AgentId } from '@reactcraft/shared';
 import envPaths from 'env-paths';
 
 import { createNodeFileSystem } from './adapters/fs/node-file-system.ts';
@@ -14,6 +15,7 @@ import { createNodeProcess } from './adapters/system/node-process.ts';
 import { createNodeSystem } from './adapters/system/node-system.ts';
 import { createChokidarWatcher } from './adapters/watcher/chokidar-watcher.ts';
 import type { AgentService } from './core/agent/agent-service.ts';
+import type { AgentCommand } from './core/agent/agent-types.ts';
 import type { TurnSnapshotStore } from './core/agent/snapshot/index.ts';
 import type { TurnRunner } from './core/agent/turn-runner.ts';
 import type { HistoryService } from './core/history/history-service.ts';
@@ -38,6 +40,7 @@ import { type CoreServices, createServices } from './server-services.ts';
 
 export type { LogLevel } from './adapters/http/create-http-app.ts';
 export type { AgentService } from './core/agent/agent-service.ts';
+export type { AgentCommand } from './core/agent/agent-types.ts';
 export type { TurnSnapshotStore } from './core/agent/snapshot/index.ts';
 export type { TurnRunner } from './core/agent/turn-runner.ts';
 export type { TurnStore } from './core/agent/turn-store.ts';
@@ -82,6 +85,8 @@ export type StartServerOptions = {
     readonly eventBus?: EventBusPort;
     readonly watcher?: WatcherPort;
     readonly runnerScriptPath?: string | undefined;
+    /** R-QA-12: E2E tests point the agents at `fake-agent.mjs` here, never via user env vars. */
+    readonly agentCommands?: Partial<Record<AgentId, AgentCommand>> | undefined;
   };
 };
 
@@ -193,6 +198,7 @@ async function initServerContext(
       initialRoot: options.workspaceDir,
       cacheDir,
       dataDir,
+      agentCommands: options.deps?.agentCommands,
     },
     studioOriginOf(options),
     processPort,

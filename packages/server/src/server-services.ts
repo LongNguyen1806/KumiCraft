@@ -49,6 +49,8 @@ export type ServiceDeps = Omit<ProjectServiceDeps, 'runnerService'> & {
   readonly cacheDir: string;
   readonly dataDir: string;
   readonly setupEnv?: SetupEnvironment | undefined;
+  /** Test commands that replace the agents' real CLIs (R-QA-12). */
+  readonly agentCommands?: Partial<Record<AgentId, AgentCommand>> | undefined;
 };
 
 export type CoreServices = {
@@ -145,6 +147,7 @@ function createAuxiliaryServices(deps: ServiceDeps, processPort: ProcessPort, fs
     process: processPort,
     settings: () => deps.config.settings(),
     adapters: { agy: agyAdapter, claude: claudeAdapter },
+    commands: deps.agentCommands,
     fallbackCommands,
     plans,
     terminalAvailable,

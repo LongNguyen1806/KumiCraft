@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { REPO_ROOT } from './copy-fixture.ts';
 
 const CLI_ENTRY = join(REPO_ROOT, 'packages', 'cli', 'dist', 'index.js');
+const AGENT_STUDIO = join(REPO_ROOT, 'e2e', 'support', 'agent-studio.ts');
 const START_TIMEOUT_MS = 15_000;
 
 export type CliSession = {
@@ -42,16 +43,12 @@ function waitForUrl(child: ChildProcess): Promise<string> {
   });
 }
 
-export async function startCli(workspaceDir: string, configDir: string): Promise<CliSession> {
-  if (!existsSync(CLI_ENTRY)) throw new Error('Run `pnpm build` before the E2E tests.');
-  const child = spawn(
-    process.execPath,
-    [CLI_ENTRY, workspaceDir, '--no-open', '--log-level', 'warn'],
-    {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env, REACTCRAFT_CONFIG_DIR: configDir },
-    },
-  );
+/** Runs `node <args>` until it prints the Studio URL, and gives the test its API and a stop. */
+async function startSession(args: readonly string[], env: NodeJS.ProcessEnv): Promise<CliSession> {
+  const child = spawn(process.execPath, args, {
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env, ...env },
+  });
   // Resolves once, however many times the test stops the session.
   const exited = new Promise<void>((resolve) => {
     child.on('exit', () => {
@@ -82,4 +79,35 @@ export async function startCli(workspaceDir: string, configDir: string): Promise
     },
     stop,
   };
+}
+
+export async function startCli(workspaceDir: string, configDir: string): Promise<CliSession> {
+  if (!existsSync(CLI_ENTRY)) throw new Error('Run `pnpm build` before the E2E tests.');
+  return startSession([CLI_ENTRY, workspaceDir, '--no-open', '--log-level', 'warn'], {
+    REACTCRAFT_CONFIG_DIR: configDir,
+  });
+}
+
+export type AgentStudioDirs = {
+  readonly config: string;
+  /** Backend mirrors and chat images (envPaths cache). */
+  readonly cache: string;
+  /** Turn snapshots and summaries (envPaths data). */
+  readonly data: string;
+};
+
+/**
+ * Runs the server with the agents replaced by `fake-agent.mjs` (R-QA-12), using the built Studio.
+ * `script` is the fake agent's JSON script (R-QA-11); `record` is where it writes what it received.
+ */
+export async function startAgentStudio(
+  workspaceDir: string,
+  dirs: AgentStudioDirs,
+  fake: { readonly script: string; readonly record: string },
+): Promise<CliSession> {
+  if (!existsSync(CLI_ENTRY)) throw new Error('Run `pnpm build` before the E2E tests.');
+  return startSession([AGENT_STUDIO, workspaceDir, dirs.config, dirs.cache, dirs.data], {
+    RC_FAKE_AGENT_SCRIPT: fake.script,
+    RC_FAKE_AGENT_RECORD: fake.record,
+  });
 }

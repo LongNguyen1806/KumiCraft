@@ -1,6 +1,6 @@
 {
   "$comment": "Phase in which each R-xx, V-xx, S-xx, AC-xx code of docs/spec.md 1.0 must have a test (SPEC-06 section 6, SPEC-07 sections 3 to 6). First matching pattern wins. Update in the same change as the spec.",
-  "currentPhase": 2,
+  "currentPhase": 3,
   "rules": [
     {
       "pattern": "^(R-IN-21|R-SL-12|S-86|R-SE-16)$",
