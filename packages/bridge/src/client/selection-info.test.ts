@@ -38,7 +38,35 @@ describe('collectSelectionInfo [R-BR-16]', () => {
         instances: 3,
         domClass: 'second flex p-4',
         rect: { x: 10, y: 20, width: 100, height: 50 },
+        ancestors: [],
       },
+    ]);
+  });
+
+  it('lists the real ancestors of a repeated copy, nearest first, with their copy index [R-BR-16, R-CP-11]', () => {
+    document.body.innerHTML = `
+      <main data-rc-loc="src/pages/Home.tsx:5:3">
+        <div data-rc-loc="src/pages/Home.tsx:8:5">
+          <article data-rc-loc="src/components/ProductCard.tsx:4:3">
+            <h3 data-rc-loc="src/components/ProductCard.tsx:5:5">A</h3>
+          </article>
+          <span><article data-rc-loc="src/components/ProductCard.tsx:4:3">
+            <h3 data-rc-loc="src/components/ProductCard.tsx:5:5">B</h3>
+          </article></span>
+        </div>
+      </main>
+    `;
+
+    const [info] = collectSelectionInfo(
+      [{ loc: 'src/components/ProductCard.tsx:5:5', index: 1 }],
+      document.body,
+      [],
+    );
+
+    expect(info?.ancestors).toEqual([
+      { loc: 'src/components/ProductCard.tsx:4:3', index: 1 },
+      { loc: 'src/pages/Home.tsx:8:5', index: 0 },
+      { loc: 'src/pages/Home.tsx:5:3', index: 0 },
     ]);
   });
 

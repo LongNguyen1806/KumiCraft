@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { InsertButton } from '../../components/ui/insert-button.tsx';
 import { resources } from '../../i18n/i18n.ts';
 import { type ErrorInfo, errorText } from '../../routes/error-text.ts';
+import { SelectInFileHint } from '../design/select-in-file-hint.tsx';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { ImagePickerDialog } from '../draw/image-picker-dialog.tsx';
 import { insertImageFromSelection } from '../draw/insert-image.ts';
@@ -117,7 +118,6 @@ type LibraryStatusHintProps = {
 function LibraryStatusHint({ hasSelection, errorInfo }: LibraryStatusHintProps) {
   const { t } = useTranslation('library');
   const { t: tError } = useTranslation('errors');
-  const { t: tCommon } = useTranslation('common');
 
   if (!hasSelection) {
     return (
@@ -136,7 +136,7 @@ function LibraryStatusHint({ hasSelection, errorInfo }: LibraryStatusHintProps) 
         data-testid="library-hint"
         className="rounded bg-amber-500/10 border border-amber-500/20 p-2 text-[11px] text-amber-900 dark:text-amber-200"
       >
-        {tCommon('design.selectInFile', errorInfo.params ?? {})}
+        <SelectInFileHint info={errorInfo} />
       </p>
     );
   }

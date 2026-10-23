@@ -3,8 +3,7 @@ import type { ImageSource, InsertTarget, Placement } from '@reactcraft/shared';
 
 import { applyStructureEdit } from '../../api/source-client.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';
-import { useDesignStore } from '../design/design-store.ts';
-import { insertAnchor } from '../design/design-target.ts';
+import { selectionAnchor } from '../design/selection-anchor.ts';
 import { placementTailwindMajor } from '../editor/canvas-view-store.ts';
 import { determineInsertTarget } from '../library/insert-block.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
@@ -66,18 +65,9 @@ export async function insertImageFromSelection(
     return { ok: false };
   }
 
-  const treeNodes = useSelectionStore.getState().treeNodes;
-  const designFile = useDesignStore.getState().target?.file;
-  const anchor = insertAnchor(ref, treeNodes, designFile);
-  if (!anchor) {
-    return {
-      ok: false,
-      error: {
-        code: 'design.selectInFile',
-        params: { file: designFile ?? '' },
-      },
-    };
-  }
+  const resolved = selectionAnchor(ref);
+  if (!resolved.ok) return { ok: false, error: resolved.error };
+  const anchor = resolved.anchor;
 
   const tag = resolveTargetTag(anchor) ?? 'div';
   const target = determineInsertTarget(anchor, tag);

@@ -38,6 +38,12 @@ export const useDesignStore = create<DesignState>((set, get) => ({
   },
 }));
 
+/** The file inserts and edits go to: the open component in component mode, else the page's. */
+export function currentDesignFile(): string | undefined {
+  const { componentMode, target } = useDesignStore.getState();
+  return componentMode?.filePath ?? target?.file;
+}
+
 function draftTargetOf(draftFile: string, route: string): DesignTarget {
   const baseName =
     draftFile

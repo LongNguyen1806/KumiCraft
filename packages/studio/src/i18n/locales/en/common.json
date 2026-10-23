@@ -455,6 +455,8 @@
     },
     "unknownFile": "The file of this page is unknown",
     "selectInFile": "Select an element in {{file}}",
+    "selectInFileForeign": "{{name}} lives in {{foreignFile}}, outside the file you are designing. Select an element in {{file}}, or open {{name}} to insert there.",
+    "openForeign": "Open {{name}}",
     "back": "Back to page",
     "usages": "Used in {{count}} places"
   },

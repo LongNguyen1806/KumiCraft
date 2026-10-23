@@ -26,6 +26,11 @@ export const ElementInfoSchema = z.strictObject({
   rect: RectSchema.optional(),
   instances: z.number().int().min(1),
   domClass: z.string().max(4000).optional(),
+  /**
+   * Elements with `data-rc-loc` around this one in the page, nearest first. Unlike `tree`, which only
+   * lists the children of a repeated element's first copy, this is the real chain of this copy.
+   */
+  ancestors: z.array(ElementRefSchema).max(200).optional(),
 });
 export type ElementInfo = z.infer<typeof ElementInfoSchema>;
 

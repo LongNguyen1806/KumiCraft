@@ -56,7 +56,8 @@ function fileOfLoc(loc: string): string {
 
 /**
  * Resolves element to insert into when currently selected element belongs to a different file (R-CP-11).
- * Ascends `parent` indices in `treeNodes` to the first ancestor whose loc file equals `designFile`.
+ * Takes the nearest ancestor in `designFile` from the Bridge's `ancestors` of this copy; without them,
+ * ascends `parent` indices in `treeNodes`, which only knows the first copy of a repeated element.
  * Returns original ref if designFile is undefined or ref already belongs to designFile.
  * Returns undefined if no ancestor belongs to designFile.
  */
@@ -64,12 +65,13 @@ export function insertAnchor(
   ref: ElementRef,
   treeNodes: readonly TreeNode[],
   designFile: RelPath | undefined,
+  ancestors?: readonly ElementRef[],
 ): ElementRef | undefined {
   if (designFile === undefined || designFile === '') return ref;
   if (fileOfLoc(ref.loc) === designFile) return ref;
+  if (ancestors !== undefined) return ancestors.find((a) => fileOfLoc(a.loc) === designFile);
 
   let currentIndex = treeNodes.findIndex((n) => n.ref.loc === ref.loc && n.ref.index === ref.index);
-
   while (currentIndex !== -1) {
     const node = treeNodes[currentIndex];
     if (node === undefined || node.parent === undefined) break;

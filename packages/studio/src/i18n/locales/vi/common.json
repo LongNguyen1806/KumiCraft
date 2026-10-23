@@ -455,6 +455,8 @@
     },
     "unknownFile": "Chưa biết file của trang này",
     "selectInFile": "Chọn một phần tử trong {{file}}",
+    "selectInFileForeign": "{{name}} nằm trong {{foreignFile}}, ngoài file đang thiết kế. Chọn một phần tử trong {{file}}, hoặc mở {{name}} để chèn vào đó.",
+    "openForeign": "Mở {{name}}",
     "back": "Quay lại trang",
     "usages": "Đang dùng ở {{count}} vị trí"
   },

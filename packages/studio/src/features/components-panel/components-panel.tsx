@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { InsertButton } from '../../components/ui/insert-button.tsx';
 import { type ErrorInfo, errorText } from '../../routes/error-text.ts';
 import { useDesignStore } from '../design/design-store.ts';
+import { SelectInFileHint } from '../design/select-in-file-hint.tsx';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
@@ -97,9 +98,11 @@ function ComponentSearchHeader({ query, onQueryChange, errorInfo }: ComponentSea
 
       {errorInfo !== undefined && (
         <p role="alert" className="text-xs text-danger" data-testid="components-error">
-          {errorInfo.code === 'design.selectInFile'
-            ? t('design.selectInFile', errorInfo.params ?? {})
-            : errorText(tError, errorInfo.code, errorInfo.params)}
+          {errorInfo.code === 'design.selectInFile' ? (
+            <SelectInFileHint info={errorInfo} />
+          ) : (
+            errorText(tError, errorInfo.code, errorInfo.params)
+          )}
         </p>
       )}
     </div>
@@ -120,7 +123,7 @@ function useFilteredComponents(
 export function ComponentsPanel() {
   const { t } = useTranslation();
   const components = useProjectComponents();
-  const designFile = useDesignStore((s) => s.target?.file);
+  const designFile = useDesignStore((s) => s.componentMode?.filePath ?? s.target?.file);
   const selectedRefs = useSelectionStore((s) => s.selectedRefs);
   const [query, setQuery] = useState('');
   const [inserting, setInserting] = useState(false);

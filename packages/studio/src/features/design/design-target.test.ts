@@ -89,4 +89,23 @@ describe('insertAnchor', () => {
     // 4. No ancestor belongs to Home.tsx -> returns undefined
     expect(insertAnchor(orphanRef, treeNodes, designFile)).toBeUndefined();
   });
+
+  it('[R-CP-11] uses the Bridge ancestors of this copy before the tree, which only knows the first copy', () => {
+    const designFile = 'src/pages/Home.tsx';
+    // The h3 of the second ProductCard: not in `tree` at all.
+    const secondTitle: ElementRef = { loc: 'src/components/ProductCard.tsx:5:5', index: 1 };
+    const ancestors: readonly ElementRef[] = [
+      { loc: 'src/components/ProductCard.tsx:4:3', index: 1 },
+      { loc: 'src/pages/Home.tsx:8:5', index: 0 },
+      { loc: 'src/pages/Home.tsx:5:3', index: 0 },
+    ];
+
+    expect(insertAnchor(secondTitle, treeNodes, designFile)).toBeUndefined();
+    expect(insertAnchor(secondTitle, treeNodes, designFile, ancestors)).toEqual({
+      loc: 'src/pages/Home.tsx:8:5',
+      index: 0,
+    });
+    // Header of the layout: its real ancestors are all outside the page.
+    expect(insertAnchor(headerRef, treeNodes, designFile, [layoutDivRef])).toBeUndefined();
+  });
 });

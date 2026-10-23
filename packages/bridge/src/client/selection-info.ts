@@ -2,7 +2,30 @@ import type { ElementInfo, ElementRef } from '@reactcraft/shared';
 
 export const MAX_DOM_CLASS = 4000;
 
-function resolveFoundInfo(ref: ElementRef, el: Element, instances: number): ElementInfo {
+const MAX_ANCESTORS = 200;
+
+/** Refs of the `data-rc-loc` ancestors of `el`, nearest first, with the index of each copy. */
+function ancestorRefs(el: Element, byLoc: ReadonlyMap<string, readonly Element[]>): ElementRef[] {
+  const refs: ElementRef[] = [];
+  for (
+    let node = el.parentElement;
+    node && refs.length < MAX_ANCESTORS;
+    node = node.parentElement
+  ) {
+    const loc = node.getAttribute('data-rc-loc') ?? '';
+    if (loc === '') continue;
+    const index = byLoc.get(loc)?.indexOf(node) ?? -1;
+    if (index >= 0) refs.push({ loc, index });
+  }
+  return refs;
+}
+
+function resolveFoundInfo(
+  ref: ElementRef,
+  el: Element,
+  instances: number,
+  ancestors: readonly ElementRef[],
+): ElementInfo {
   const r = el.getBoundingClientRect();
   const rect = {
     x: r.x,
@@ -20,6 +43,7 @@ function resolveFoundInfo(ref: ElementRef, el: Element, instances: number): Elem
     rect,
     instances,
     ...(domClass !== undefined ? { domClass } : {}),
+    ancestors: [...ancestors],
   };
 }
 
@@ -43,13 +67,19 @@ export function collectSelectionInfo(
   root: ParentNode,
   previous: readonly ElementInfo[],
 ): ElementInfo[] {
-  const allElements = Array.from(root.querySelectorAll('[data-rc-loc]'));
+  const byLoc = new Map<string, Element[]>();
+  for (const el of root.querySelectorAll('[data-rc-loc]')) {
+    const loc = el.getAttribute('data-rc-loc') ?? '';
+    const list = byLoc.get(loc);
+    if (list === undefined) byLoc.set(loc, [el]);
+    else list.push(el);
+  }
   return refs.map((ref) => {
-    const matches = allElements.filter((el) => el.getAttribute('data-rc-loc') === ref.loc);
+    const matches = byLoc.get(ref.loc) ?? [];
     const el = matches[ref.index];
     const instances = Math.max(1, matches.length);
     if (el !== undefined) {
-      return resolveFoundInfo(ref, el, instances);
+      return resolveFoundInfo(ref, el, instances, ancestorRefs(el, byLoc));
     }
     return resolveMissingInfo(ref, instances, previous);
   });
