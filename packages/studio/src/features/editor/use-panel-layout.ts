@@ -1,12 +1,12 @@
-// Side panels of the Editor: 200 to 480 px wide, hidden or shown, remembered by
-// the browser. Not sensitive, so localStorage is fine (SPEC-05 S-02).
+// Side panels of the Editor: 300 to 480 px (left), 360 to 480 px (right), hidden or shown,
+// remembered by the browser. Not sensitive, so localStorage is fine (SPEC-05 S-02).
 import { create } from 'zustand';
 
 export type Side = 'left' | 'right';
 
-export const MIN_PANEL = 200;
+export const MIN_PANEL: Record<Side, number> = { left: 300, right: 360 };
 export const MAX_PANEL = 480;
-const DEFAULT_WIDTH: Record<Side, number> = { left: 268, right: 308 };
+const DEFAULT_WIDTH: Record<Side, number> = { left: 300, right: 360 };
 const KEY = 'reactcraft.panels';
 
 export type PanelLayout = {
@@ -16,8 +16,8 @@ export type PanelLayout = {
 
 const DEFAULT_LAYOUT: PanelLayout = { width: DEFAULT_WIDTH, visible: { left: true, right: true } };
 
-export const clampWidth = (width: number): number =>
-  Math.round(Math.min(MAX_PANEL, Math.max(MIN_PANEL, width)));
+export const clampWidth = (side: Side, width: number): number =>
+  Math.round(Math.min(MAX_PANEL, Math.max(MIN_PANEL[side], width)));
 
 /** Reads the saved layout; anything missing or wrong falls back to the default. */
 export function readLayout(): PanelLayout {
@@ -25,7 +25,7 @@ export function readLayout(): PanelLayout {
     const saved = JSON.parse(localStorage.getItem(KEY) ?? '{}') as Partial<PanelLayout>;
     const width = (side: Side) => {
       const value = saved.width?.[side];
-      return typeof value === 'number' ? clampWidth(value) : DEFAULT_WIDTH[side];
+      return typeof value === 'number' ? clampWidth(side, value) : DEFAULT_WIDTH[side];
     };
     const visible = (side: Side) => saved.visible?.[side] !== false;
     return {
@@ -79,7 +79,7 @@ export const usePanelLayoutStore = create<PanelStore>((set) => ({
     set((state) => {
       const next: PanelLayout = {
         ...state.layout,
-        width: { ...state.layout.width, [side]: clampWidth(width) },
+        width: { ...state.layout.width, [side]: clampWidth(side, width) },
       };
       saveLayout(next);
       return { layout: next };

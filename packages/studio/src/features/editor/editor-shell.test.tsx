@@ -183,9 +183,14 @@ describe('frame helpers', () => {
     expect(isApplePlatform('Mozilla/5.0 (Windows NT 10.0; Win64; x64)')).toBe(false);
   });
 
-  it('keeps panel widths between 200 and 480 px and survives broken storage', () => {
-    expect([clampWidth(50), clampWidth(300), clampWidth(900)]).toEqual([200, 300, 480]);
+  it('keeps panel widths bounded and survives broken storage', () => {
+    expect([clampWidth('left', 50), clampWidth('left', 350), clampWidth('left', 900)]).toEqual([
+      300, 350, 480,
+    ]);
+    expect([clampWidth('right', 50), clampWidth('right', 400), clampWidth('right', 900)]).toEqual([
+      360, 400, 480,
+    ]);
     localStorage.setItem('reactcraft.panels', '{ broken');
-    expect(readLayout().width).toEqual({ left: 268, right: 308 });
+    expect(readLayout().width).toEqual({ left: 300, right: 360 });
   });
 });
