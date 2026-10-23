@@ -39,6 +39,7 @@ import { createProjectWatch, type ProjectWatch } from './core/project/project-wa
 import { createRunnerService, type RunnerService } from './core/runner/runner-service.ts';
 import { ok } from './core/shared/result.ts';
 import { createUsageCounter, type UsageCounter } from './core/source-editor/component-usages.ts';
+import { createSnippetFormatter } from './core/source-editor/snippet-format.ts';
 import {
   createSourceEditorService,
   type SourceEditorService,
@@ -49,6 +50,8 @@ export type ServiceDeps = Omit<ProjectServiceDeps, 'runnerService'> & {
   readonly cacheDir: string;
   readonly dataDir: string;
   readonly setupEnv?: SetupEnvironment | undefined;
+  /** `runners/format-snippet`, the child that runs the project's Prettier (M-FM). */
+  readonly formatScriptPath?: string | undefined;
   /** Test commands that replace the agents' real CLIs (R-QA-12). */
   readonly agentCommands?: Partial<Record<AgentId, AgentCommand>> | undefined;
 };
@@ -132,7 +135,33 @@ function buildFallbackCommands(
   return fallbackCommands;
 }
 
-function createAuxiliaryServices(deps: ServiceDeps, processPort: ProcessPort, fs: FileSystemPort) {
+/** M-FM: the project's Prettier only for a trusted project, else the built-in layout. */
+function createProjectSnippetFormatter(
+  deps: ServiceDeps,
+  processPort: ProcessPort,
+  fs: FileSystemPort,
+  projectService: ProjectService,
+) {
+  const isTrusted = () => {
+    const info = projectService.getProjectInfo();
+    return info.ok && info.value.trusted;
+  };
+  return createSnippetFormatter({
+    fs,
+    logger: deps.logger,
+    prettier:
+      deps.formatScriptPath === undefined
+        ? undefined
+        : { process: processPort, scriptPath: deps.formatScriptPath, isTrusted },
+  });
+}
+
+function createAuxiliaryServices(
+  deps: ServiceDeps,
+  processPort: ProcessPort,
+  fs: FileSystemPort,
+  projectService: ProjectService,
+) {
   const setupEnv = deps.setupEnv ?? {
     platform: process.platform,
     env: process.env,
@@ -142,7 +171,11 @@ function createAuxiliaryServices(deps: ServiceDeps, processPort: ProcessPort, fs
   const fallbackCommands = buildFallbackCommands(plans);
   const terminalAvailable = terminalCommand(setupEnv, '') !== undefined;
   const usageCounter = createUsageCounter(fs);
-  const sourceEditorService = createSourceEditorService({ fs, usageCounter });
+  const sourceEditorService = createSourceEditorService({
+    fs,
+    usageCounter,
+    formatSnippet: createProjectSnippetFormatter(deps, processPort, fs, projectService),
+  });
   const agentService = createAgentService({
     process: processPort,
     settings: () => deps.config.settings(),
@@ -236,7 +269,7 @@ function createRunnersAndAuxiliary(
     studioOrigin,
   );
   runnerHolder.current = runnerService;
-  const auxiliary = createAuxiliaryServices(deps, processPort, fs);
+  const auxiliary = createAuxiliaryServices(deps, processPort, fs, projectService);
   return { runnerService, auxiliary };
 }
 

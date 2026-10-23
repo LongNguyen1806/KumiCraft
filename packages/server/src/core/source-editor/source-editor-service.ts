@@ -22,6 +22,7 @@ import { executeEditBatch } from './edit-batch.ts';
 import { executeEditMutation, parseModifiedCode } from './edit-mutations.ts';
 import { fileQueueKey, queueFileTask } from './file-queue.ts';
 import { readPageTree } from './page-tree.ts';
+import { createSnippetFormatter, type SnippetFormatter } from './snippet-format.ts';
 import {
   buildElementSource,
   cacheAst,
@@ -39,6 +40,8 @@ const MAX_FILE_SIZE = 1024 * 1024; // 1 MB (R-SE-01)
 export type SourceEditorDeps = {
   readonly fs: FileSystemPort;
   readonly usageCounter?: UsageCounter | undefined;
+  /** Lays out inserted JSX (M-FM); absent: the built-in layout without the project's Prettier. */
+  readonly formatSnippet?: SnippetFormatter | undefined;
 };
 
 export type SourceEditorConfig = {
@@ -286,6 +289,7 @@ export function createSourceEditorService(
   const sourceDir = config.sourceDir ?? 'src';
   const sourceExtensions = config.sourceExtensions ?? ['.jsx', '.tsx'];
   const usageCounter = deps.usageCounter ?? createUsageCounter(deps.fs);
+  const formatSnippet = deps.formatSnippet ?? createSnippetFormatter({ fs: deps.fs });
 
   return {
     async getElement(projectRoot, loc) {
@@ -322,6 +326,7 @@ export function createSourceEditorService(
         sourceExtensions,
         edit,
         onWritten,
+        formatSnippet,
       );
     },
     applyEditBatch(projectRoot, edits, onWritten) {

@@ -170,6 +170,14 @@ function resolveCorePorts(options: StartServerOptions, platform: Platform) {
   };
 }
 
+/** Service options the CLI does not pass: test agent commands and the Prettier child (M-FM). */
+function childScriptDeps(options: StartServerOptions) {
+  return {
+    agentCommands: options.deps?.agentCommands,
+    formatScriptPath: resolveRunnerScript(undefined, 'format-snippet'),
+  };
+}
+
 async function initServerContext(
   options: StartServerOptions,
   platform: Platform,
@@ -198,7 +206,7 @@ async function initServerContext(
       initialRoot: options.workspaceDir,
       cacheDir,
       dataDir,
-      agentCommands: options.deps?.agentCommands,
+      ...childScriptDeps(options),
     },
     studioOriginOf(options),
     processPort,
@@ -239,23 +247,27 @@ export function resolveTemplateDir(): string {
   return candidates.find((dir) => existsSync(join(dir, 'package.json'))) ?? candidates[0] ?? '';
 }
 
-export function resolveRunnerScript(customPath?: string): string {
+/**
+ * A child-process script of `runners/` (`vite-react`, `format-snippet`): next to the bundled CLI
+ * (`dist/runners/*.js`), or the TypeScript source when the server runs from the repository.
+ */
+export function resolveRunnerScript(customPath?: string, name = 'vite-react'): string {
   if (customPath && existsSync(customPath)) return customPath;
   const rels = [
-    './runners/vite-react.js',
-    './runners/vite-react.ts',
-    '../runners/vite-react.js',
-    '../runners/vite-react.ts',
-    '../../runners/vite-react.js',
-    '../../runners/vite-react.ts',
-    '../../../server/src/runners/vite-react.ts',
-    '../../../../packages/server/src/runners/vite-react.ts',
+    `./runners/${name}.js`,
+    `./runners/${name}.ts`,
+    `../runners/${name}.js`,
+    `../runners/${name}.ts`,
+    `../../runners/${name}.js`,
+    `../../runners/${name}.ts`,
+    `../../../server/src/runners/${name}.ts`,
+    `../../../../packages/server/src/runners/${name}.ts`,
   ];
   for (const rel of rels) {
     const p = fileURLToPath(new URL(rel, import.meta.url));
     if (existsSync(p)) return p;
   }
-  return fileURLToPath(new URL('./runners/vite-react.js', import.meta.url));
+  return fileURLToPath(new URL(`./runners/${name}.js`, import.meta.url));
 }
 
 /**

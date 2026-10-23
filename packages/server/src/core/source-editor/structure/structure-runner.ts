@@ -11,6 +11,7 @@ import { err, ok } from '@reactcraft/shared';
 import type { FileSystemPort } from '../../ports/file-system-port.ts';
 import { type AstNode, detectFormat, parseJsxAst } from '../ast-helpers.ts';
 import { commitPreparedFiles, type PreparedFileWrite, withFileLocks } from '../file-commit.ts';
+import type { SnippetFormatter } from '../snippet-format.ts';
 import { computeSha256, getCachedAst } from '../source-editor-lookup.ts';
 import type { WrittenFile } from '../source-editor-service.ts';
 import {
@@ -313,10 +314,11 @@ export async function executeStructureEdit(
   sourceExtensions: readonly string[],
   edit: StructureEdit,
   onWritten?: (files: readonly WrittenFile[]) => void,
+  formatSnippet?: SnippetFormatter,
 ): Promise<Result<StructureResult>> {
   if (edit.kind === 'insertImage') {
     const runner = (iEdit: InsertEdit, cb?: (f: readonly WrittenFile[]) => void) =>
-      executeStructureEdit(fs, projectRoot, sourceDir, sourceExtensions, iEdit, cb);
+      executeStructureEdit(fs, projectRoot, sourceDir, sourceExtensions, iEdit, cb, formatSnippet);
     return executeInsertImage(fs, projectRoot, edit, runner, onWritten);
   }
 
@@ -336,6 +338,11 @@ export async function executeStructureEdit(
       : undefined;
 
   const { byFile, sortedFiles } = groupGuardsByFile(validatedGuards);
+  // R-FM-01: an inserted snippet is laid out before it is planned, so the plan re-indents it.
+  const planned =
+    edit.kind === 'insert' && formatSnippet !== undefined && targetGuard !== undefined
+      ? { ...edit, jsx: await formatSnippet({ projectRoot, file: targetGuard.rel, jsx: edit.jsx }) }
+      : edit;
 
   return withFileLocks(projectRoot, sortedFiles, () =>
     performLockedStructureEdit(
@@ -343,7 +350,7 @@ export async function executeStructureEdit(
       projectRoot,
       sortedFiles,
       byFile,
-      edit,
+      planned,
       targetGuard,
       validatedGuards,
       onWritten,

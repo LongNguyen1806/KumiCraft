@@ -6,6 +6,7 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
     'runners/vite-react': '../server/src/runners/vite-react.ts',
+    'runners/format-snippet': '../server/src/runners/format-snippet.ts',
   },
   format: 'esm',
   platform: 'node',
