@@ -188,6 +188,13 @@ export function registerSourceRoutes(api: FastifyInstance, deps: SourceRoutesDep
   api.get('/source/element', (req, rep) => handleGetElement(deps, req, rep));
   api.get('/source/element-text', (req, rep) => handleGetElementText(deps, req, rep));
   api.get('/source/tree', (req, rep) => handleGetPageTree(deps, req, rep));
+  api.get('/source/files', async (_req, rep) => {
+    const projectRoot = deps.getProjectRoot();
+    if (!projectRoot) return sendError(rep, NO_PROJECT);
+    const result = await deps.sourceEditorService.listFiles(projectRoot);
+    if (!result.ok) return sendError(rep, result.error);
+    return rep.status(200).send({ data: result.value });
+  });
   api.post('/source/edits', { bodyLimit: 10 * 1024 * 1024 }, (req, rep) =>
     handleApplyEdit(deps, req, rep),
   );

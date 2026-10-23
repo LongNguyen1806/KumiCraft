@@ -1,9 +1,11 @@
-// Tools ReactCraft offers external AI agents over MCP (R-AG-19, R-AG-20). Round 7a: reading the
-// project and reporting missing tools; editing tools come in round 7b.
+// Tools ReactCraft offers external AI agents over MCP (R-AG-19, R-AG-20): reading the project and
+// reporting missing tools here; editing tools in mcp-edit-tools.ts and mcp-structure-tools.ts.
 import { PAGE_TREE_MAX_DEPTH, ToolGapReportSchema } from '@reactcraft/shared';
 import { z } from 'zod';
 
 import type { ApiClient, ApiResult } from './api-client.ts';
+import { EDIT_TOOLS } from './mcp-edit-tools.ts';
+import { STRUCTURE_TOOLS } from './mcp-structure-tools.ts';
 
 export type McpTool = {
   readonly name: string;
@@ -48,13 +50,20 @@ async function mapped(result: Promise<ApiResult>, map: (data: unknown) => unknow
   return done.ok ? { ok: true as const, data: map(done.data) } : done;
 }
 
-export const MCP_TOOLS: readonly McpTool[] = [
+const READ_TOOLS: readonly McpTool[] = [
   {
     name: 'reactcraft_get_project',
     description:
       'The open project: name, folder, design frames, page and component folders, language and styling system.',
     input: NoInput,
     run: (api) => mapped(api.get('project'), projectSummary),
+  },
+  {
+    name: 'reactcraft_list_files',
+    description:
+      'Code and style files under the source folder (pages, components, CSS). Use it to find files without guessing.',
+    input: NoInput,
+    run: (api) => api.get('source/files'),
   },
   {
     name: 'reactcraft_list_pages',
@@ -115,3 +124,5 @@ export const MCP_TOOLS: readonly McpTool[] = [
     run: (api) => api.get('tool-gaps'),
   },
 ];
+
+export const MCP_TOOLS: readonly McpTool[] = [...READ_TOOLS, ...EDIT_TOOLS, ...STRUCTURE_TOOLS];

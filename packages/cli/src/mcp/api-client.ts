@@ -7,6 +7,7 @@ export type ApiResult =
 export type ApiClient = {
   get(path: string, query?: Readonly<Record<string, string>>): Promise<ApiResult>;
   post(path: string, body: unknown): Promise<ApiResult>;
+  patch(path: string, body: unknown): Promise<ApiResult>;
 };
 
 export type ApiClientDeps = {
@@ -41,7 +42,11 @@ export function createApiClient(deps: ApiClientDeps): ApiClient {
   const doFetch = deps.fetch ?? fetch;
   const notRunning = `No ReactCraft session has the project ${deps.projectDir} open. Start ReactCraft ("npx reactcraft"), open this project and trust it.`;
 
-  const send = async (method: 'GET' | 'POST', path: string, body?: unknown): Promise<ApiResult> => {
+  const send = async (
+    method: 'GET' | 'POST' | 'PATCH',
+    path: string,
+    body?: unknown,
+  ): Promise<ApiResult> => {
     const address = await deps.locate();
     if (address === undefined) return { ok: false, message: notRunning };
     try {
@@ -69,6 +74,9 @@ export function createApiClient(deps: ApiClientDeps): ApiClient {
     },
     post(path, body) {
       return send('POST', path, body);
+    },
+    patch(path, body) {
+      return send('PATCH', path, body);
     },
   };
 }

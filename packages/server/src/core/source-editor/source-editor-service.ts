@@ -30,6 +30,7 @@ import {
   getCachedAst,
   validateLocAndExt,
 } from './source-editor-lookup.ts';
+import { listSourceFiles, type SourceFiles } from './source-files.ts';
 import { getElementTextFromAst } from './structure/element-text.ts';
 import { executeStructureEdit } from './structure/structure-runner.ts';
 
@@ -60,6 +61,8 @@ export interface SourceEditorService {
   getElementText(projectRoot: string, loc: string): Promise<Result<ElementText>>;
   /** Element tree of one JSX file for external AI agents (R-AG-19). */
   getPageTree(projectRoot: string, file: string, maxDepth?: number): Promise<Result<PageTree>>;
+  /** Code and style files of the source folder for external AI agents (R-AG-19). */
+  listFiles(projectRoot: string): Promise<Result<SourceFiles>>;
   /**
    * Applies one edit. `onWritten` runs inside the queue of the file, right after the write, so the
    * history records exactly the bytes this edit replaced, even when edits of the file overlap.
@@ -295,6 +298,9 @@ export function createSourceEditorService(
     },
     getPageTree(projectRoot, file, maxDepth) {
       return readPageTree(deps.fs, projectRoot, file, { sourceDir, sourceExtensions, maxDepth });
+    },
+    listFiles(projectRoot) {
+      return listSourceFiles(deps.fs, projectRoot, sourceDir);
     },
     async applyEdit(projectRoot, edit, onWritten) {
       const valRes = validateLocAndExt(edit.loc, sourceDir, sourceExtensions);

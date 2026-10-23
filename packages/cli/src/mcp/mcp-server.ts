@@ -6,8 +6,11 @@ import type { ApiClient } from './api-client.ts';
 import { MCP_TOOLS } from './mcp-tools.ts';
 
 export const MCP_INSTRUCTIONS =
-  'Build and change the open ReactCraft project with these tools. Read before you write. When you ' +
-  'need an operation no tool offers, call reactcraft_report_tool_gap, then continue as best you can.';
+  'Build and change the open ReactCraft project with these tools instead of editing files. Read ' +
+  'before you write: every edit needs the loc of an element from reactcraft_get_page_tree, and locs ' +
+  'change after an edit, so read the tree again before the next one. Each edit is one step the ' +
+  'user can undo in the ReactCraft Studio. When you need an operation no tool offers, call ' +
+  'reactcraft_report_tool_gap, then continue as best you can.';
 
 type ToolResult = {
   content: { type: 'text'; text: string }[];

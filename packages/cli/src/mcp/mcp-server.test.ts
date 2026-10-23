@@ -55,21 +55,37 @@ afterEach(() => {
 });
 
 describe('reactcraft mcp server [R-AG-19]', () => {
-  it('lists the nine read and report tools with object input schemas [R-AG-19]', async () => {
+  it('lists the read, edit and report tools with object input schemas [R-AG-19]', async () => {
     const { client } = await connect(() => jsonResponse(200, { data: {} }));
 
     const { tools } = await client.listTools();
 
     expect(tools.map((tool) => tool.name).sort()).toEqual([
+      'reactcraft_create_page',
+      'reactcraft_duplicate_elements',
       'reactcraft_get_element',
       'reactcraft_get_page_tree',
       'reactcraft_get_project',
       'reactcraft_get_theme',
+      'reactcraft_insert_image',
+      'reactcraft_insert_jsx',
       'reactcraft_list_assets',
       'reactcraft_list_components',
+      'reactcraft_list_files',
       'reactcraft_list_pages',
       'reactcraft_list_tool_gaps',
+      'reactcraft_move_elements',
+      'reactcraft_redo',
+      'reactcraft_remove_elements',
       'reactcraft_report_tool_gap',
+      'reactcraft_set_attribute',
+      'reactcraft_set_class_name',
+      'reactcraft_set_text',
+      'reactcraft_set_theme_token',
+      'reactcraft_undo',
+      'reactcraft_unwrap_element',
+      'reactcraft_update_classes',
+      'reactcraft_wrap_elements',
     ]);
     for (const tool of tools) {
       expect(tool.description?.length ?? 0).toBeGreaterThan(10);
