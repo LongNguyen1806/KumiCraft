@@ -107,6 +107,22 @@ Tốn: **vừa**.
 
 Tốn: **rất cao** (khối lớn nhất của phase; chia khoảng 6 đến 8 lượt).
 
+**Chia lượt (chủ dự án, 2026-10-24): mỗi khối 1–2 lượt, không có lượt cổng riêng.** E2E của khối Claude viết trong lượt QA; chủ dự án kiểm tay sau K3 và trước khi phát hành. Còn khoảng 13 lượt.
+
+| Lượt           | Nội dung                                                                                                                      | Ai                   | Trạng thái |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------- | ---------- |
+| K2a, K2b       | Đọc + sửa CSS thường, VG-19                                                                                                   | Claude               | Xong       |
+| K2c            | CSS Modules (`p4-luot-k2c-css-modules.md`)                                                                                    | Gemini               | Đang làm   |
+| K2d            | Bootstrap 5 + `:hover`/`:focus`/`:disabled` + xem trước khi kéo (R-ST-13)                                                     | Gemini               | —          |
+| K2e            | Token/Brand mọi hệ + khối Library theo hệ chính + Tailwind 3, Sass, Less; Claude đưa Tailwind 4 vào interface chung ở lượt QA | Gemini + Claude      | —          |
+| K3             | Bộ tìm route, mẫu trang, Cài router                                                                                           | Gemini               | —          |
+| K4/K5 (2 lượt) | Tách adapter framework · React webpack/CRA, JS thuần, monorepo                                                                | Gemini               | —          |
+| K6 (2 lượt)    | Express + Pug: VG-20 + proxy + đóng dấu · sửa template + route                                                                | Claude (VG) + Gemini | —          |
+| K7             | Vue                                                                                                                           | Gemini               | —          |
+| K8 (2 lượt)    | Razor: VG-21 + `dotnet watch` + bộ đọc `.cshtml` · sửa + route                                                                | Claude (VG) + Gemini | —          |
+| K9             | Nhiều khung, kiểm tra build, `cn()`, breakpoint, viền, hiệu năng                                                              | Gemini               | —          |
+| K10            | Tài liệu, giấy phép, phát hành 1.0                                                                                            | Gemini + Claude      | —          |
+
 ### K3. Bộ tìm route và mẫu trang (quyết định 2)
 
 - **Bộ tìm route:**
@@ -208,7 +224,7 @@ Tốn: **vừa**.
 
 ## 5. Thứ tự và các cổng con
 
-Phase này rất lớn, nên đặt cổng con. Mỗi cổng có `pnpm verify` xanh, E2E của phần đó và kiểm tay của chủ dự án.
+Phase này rất lớn, nên đặt cổng con. Từ 2026-10-24 cổng con không còn là lượt riêng: `pnpm verify` + E2E chạy trong lượt QA của khối; chủ dự án kiểm tay sau K3 và trước phát hành.
 
 | Đợt | Khối    | Cổng    | Kết quả người dùng thấy                                                          |
 | --- | ------- | ------- | -------------------------------------------------------------------------------- |

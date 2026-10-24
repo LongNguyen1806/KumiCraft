@@ -14,7 +14,7 @@ Tài liệu giao việc của hướng cũ (Design Model) ở `../archive-0.18/g
 | 4. QA             | Claude    | **Tự chạy** `pnpm verify`, đọc từng file đổi (không tin báo cáo), đối chiếu test với từng tình huống, sửa lỗi nhỏ                                                                  |
 | 5. Kiểm tay       | Chủ dự án | Chạy mục **Kiểm tay** của bản giao việc trên dự án mới tạo và dự án có sẵn (SPEC-06 mục 7). Đạt thì commit; lỗi thì Claude sửa trước lượt sau                                      |
 
-Kích thước mỗi lần giao: khoảng ≤ 600 dòng code, ≤ 15 test, một tiêu chí xong.
+Kích thước mỗi lần giao: khoảng ≤ 600 dòng code, ≤ 15 test, một tiêu chí xong. **Từ Phase 4 (chủ dự án, 2026-10-24):** bỏ giới hạn này; mỗi khối K của `p4-ke-hoach.md` là 1–2 lượt, test theo bảng của bản giao việc, Claude viết E2E của khối trong lượt QA.
 
 ### Quy tắc gỡ lỗi của Gemini (bắt buộc)
 
