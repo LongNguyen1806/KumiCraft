@@ -107,28 +107,38 @@ Tốn: **vừa**.
 
 Tốn: **rất cao** (khối lớn nhất của phase; chia khoảng 6 đến 8 lượt).
 
-**Chia lượt (chủ dự án, 2026-10-24): mỗi khối 1–2 lượt, không có lượt cổng riêng.** E2E của khối Claude viết trong lượt QA; chủ dự án kiểm tay sau K3 và trước khi phát hành. Còn khoảng 13 lượt (2026-10-25: K3 thành 3 lượt K3a–K3c vì thêm cây thư mục). **Phát hành (chủ dự án 2026-10-25): phương án A**, làm đủ mọi framework (K3 đến K9) rồi mới phát hành 1.0 ở K10; không phát hành bản React + Vite riêng trước.
+**Chia lượt (chủ dự án, 2026-10-24): mỗi khối 1–2 lượt, không có lượt cổng riêng.** E2E của khối Claude viết trong lượt QA; chủ dự án kiểm tay sau K3 và trước khi phát hành. Còn khoảng 13 lượt (2026-10-25: K3 thành 4 lượt K3a–K3d vì thêm thanh hoạt động và cây thư mục). **Phát hành (chủ dự án 2026-10-25): phương án A**, làm đủ mọi framework (K3 đến K9) rồi mới phát hành 1.0 ở K10; không phát hành bản React + Vite riêng trước.
 
-| Lượt           | Nội dung                                                                                                                                               | Ai                   | Trạng thái |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------- | ---------- |
-| K2a, K2b       | Đọc + sửa CSS thường, VG-19                                                                                                                            | Claude               | Xong       |
-| K2c            | CSS Modules (`p4-luot-k2c-css-modules.md`)                                                                                                             | Gemini               | Xong       |
-| K2d            | Bootstrap 5 + `:hover`/`:focus`/`:disabled` + xem trước khi kéo (R-ST-13), `p4-luot-k2d-bootstrap-trang-thai.md`                                       | Gemini               | Xong       |
-| K2e            | Token/Brand mọi hệ (CSS, Sass, Less, Bootstrap) + sửa Sass/Less, `p4-luot-k2e-token-sass-less.md`                                                      | Gemini               | Đang làm   |
-| K2f            | Khối Library theo hệ chính + Tailwind 3; Claude đưa Tailwind 4 vào interface chung ở lượt QA, E2E Bootstrap/Sass/Less                                  | Gemini + Claude      | —          |
-| K3a, K3b, K3c  | Cây thư mục + mở/đánh dấu · bộ chọn thư mục cho Thêm trang, Tách component, Đưa nháp, `designDirs` nhiều thư mục · bộ tìm route, mẫu trang, Cài router | Gemini               | —          |
-| K4/K5 (2 lượt) | Tách adapter framework · React webpack/CRA, JS thuần, monorepo                                                                                         | Gemini               | —          |
-| K6 (2 lượt)    | Express + Pug: VG-20 + proxy + đóng dấu · sửa template + route                                                                                         | Claude (VG) + Gemini | —          |
-| K7             | Vue                                                                                                                                                    | Gemini               | —          |
-| K8 (2 lượt)    | Razor: VG-21 + `dotnet watch` + bộ đọc `.cshtml` · sửa + route                                                                                         | Claude (VG) + Gemini | —          |
-| K9             | Nhiều khung, kiểm tra build, `cn()`, breakpoint, viền, hiệu năng                                                                                       | Gemini               | —          |
-| K10            | Tài liệu, giấy phép, phát hành 1.0                                                                                                                     | Gemini + Claude      | —          |
+| Lượt           | Nội dung                                                                                                                                                    | Ai                   | Trạng thái |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ---------- |
+| K2a, K2b       | Đọc + sửa CSS thường, VG-19                                                                                                                                 | Claude               | Xong       |
+| K2c            | CSS Modules (`p4-luot-k2c-css-modules.md`)                                                                                                                  | Gemini               | Xong       |
+| K2d            | Bootstrap 5 + `:hover`/`:focus`/`:disabled` + xem trước khi kéo (R-ST-13), `p4-luot-k2d-bootstrap-trang-thai.md`                                            | Gemini               | Xong       |
+| K2e            | Token/Brand mọi hệ (CSS, Sass, Less, Bootstrap) + sửa Sass/Less, `p4-luot-k2e-token-sass-less.md`                                                           | Gemini               | Đang làm   |
+| K2f            | Khối Library theo hệ chính + Tailwind 3; Claude đưa Tailwind 4 vào interface chung ở lượt QA, E2E Bootstrap/Sass/Less                                       | Gemini + Claude      | —          |
+| K3a–K3d        | Thanh hoạt động kiểu VS Code · cây thư mục (xem, mở, tạo, đổi tên, xóa) · bộ chọn thư mục, `designDirs` nhiều thư mục · bộ tìm route, mẫu trang, Cài router | Gemini               | —          |
+| K4/K5 (2 lượt) | Tách adapter framework · React webpack/CRA, JS thuần, monorepo                                                                                              | Gemini               | —          |
+| K6 (2 lượt)    | Express + Pug: VG-20 + proxy + đóng dấu · sửa template + route                                                                                              | Claude (VG) + Gemini | —          |
+| K7             | Vue                                                                                                                                                         | Gemini               | —          |
+| K8 (2 lượt)    | Razor: VG-21 + `dotnet watch` + bộ đọc `.cshtml` · sửa + route                                                                                              | Claude (VG) + Gemini | —          |
+| K9             | Nhiều khung, kiểm tra build, `cn()`, breakpoint, viền, hiệu năng                                                                                            | Gemini               | —          |
+| K10            | Tài liệu, giấy phép, phát hành 1.0                                                                                                                          | Gemini + Claude      | —          |
 
 ### K3. Cây thư mục dự án, bộ tìm route và mẫu trang (quyết định 2; chủ dự án 2026-10-25)
 
 **Ý tưởng (chủ dự án 2026-10-25):** hiện cây thư mục thật của dự án trong KumiCraft. Người dùng **tự chọn** thư mục để tạo trang, component, layout, thay vì KumiCraft đoán chỗ đặt. Cây cho **xem, mở, tạo mới, đổi tên, xóa** (chủ dự án 2026-10-25: người dùng biết code, lỗi do đổi tên/xóa thì họ tự sửa). Trước khi đổi tên/xóa: cảnh báo cụ thể danh sách file đang `import` file đó (hoặc số file trong thư mục) sẽ lỗi; file là trang có trong router thì dùng luồng Xóa trang / Đổi tên trang sẵn có (`page-delete.ts`, `page-rename.ts`, tự sửa route). Mọi đổi tên/xóa là **một mục lịch sử**, Undo khôi phục đúng từng byte. Không kéo thả để di chuyển file (dùng đổi tên đường dẫn).
 
 **Gốc vấn đề hôm nay:** thư mục làm việc bị cố định trong `workspace.json` khóa `designDirs` (`pages`, `layouts`, `components`, `drafts`), mỗi loại **một** thư mục; chỗ cần chọn thư mục khác thì là **ô gõ đường dẫn tay**. Dự án thật như WorkTracker (`layouts/`, `router/`, `stores/`, `services/`, `pages/<nhóm>/`) vì vậy khó dùng.
+
+**Thanh hoạt động bên trái (chủ dự án 2026-10-25), kiểu VS Code.** Hôm nay sidebar trái là 3 tab (Lớp, Thư viện, Component) trong `features/editor/side-panels.tsx`; phải là 3 tab (Thuộc tính, Brand, Chat); Trang và Bản nháp mở bằng hộp thoại đè lên Canvas (`pages-dialog.tsx`, `drafts-dialog.tsx`). Thêm Thư mục thì hàng tab không đủ chỗ, tính năng sau càng khó xếp. Đổi thành:
+
+- Một **dãy icon dọc ngoài cùng bên trái**; bấm icon mở panel tương ứng; bấm lại icon đang mở thì **thu gọn** panel để Canvas rộng ra; nhớ panel đang mở theo từng máy (như `kumicraft.leftPanelTab` hiện có).
+- Icon trên (theo thứ tự): **Thư mục** (mới), **Lớp**, **Thư viện**, **Component**, **Trang** (hộp thoại thành panel), **Bản nháp** (hộp thoại thành panel), **Brand** (chuyển từ panel phải sang).
+- Icon dưới cùng: **Cài đặt** (chuyển từ thanh trên).
+- Panel phải chỉ còn **Thuộc tính** và **Chat AI** (hai thứ dùng cùng lúc với Canvas).
+- Mỗi icon có tooltip vi/en, phím tắt mở (`Ctrl/Cmd+Shift+E` Thư mục, các phím khác chọn không trùng phím tắt có sẵn), và **huy hiệu** khi cần (số lỗi build ở Thư mục, số bản nháp).
+- **Giữ nút đóng/mở sidebar** (chủ dự án 2026-10-25): hai nút tròn bật/tắt panel trái, phải trên thanh công cụ Canvas (`PanelToggle` trong `editor-toolbar.tsx`) và phím tắt `panels` giữ nguyên tác dụng. Đóng panel trái thì **dãy icon vẫn hiện** (mảnh, như VS Code) để mở lại bằng một lần bấm icon; bấm icon khi panel đang đóng thì mở đúng panel đó và nút tròn chuyển sang trạng thái mở. Nút tròn, phím tắt và việc bấm lại icon đang mở dùng **chung một trạng thái** (không lệch nhau).
+- Thêm tính năng sau này = thêm một mục vào danh sách icon (một mảng cấu hình), không sửa bố cục.
 
 **Thống kê tính năng đã có hưởng lợi từ cây thư mục** (đã kiểm code 2026-10-25):
 
@@ -150,17 +160,18 @@ Tốn: **rất cao** (khối lớn nhất của phase; chia khoảng 6 đến 8 
 | 14  | **Dự án lồng thư mục** (K5 monorepo; ví dụ WorkTracker có `backend/` + `frontend/`)            | Phải mở đúng thư mục `frontend/`                                                                       | Mở từ gốc repo → cây hiện cả repo, người dùng chọn thư mục ứng dụng                                      | K5    |
 | 15  | **Framework khác** (K6 Pug `views/`, K7 Vue `src/views/`, K8 Razor `Pages/`)                   | Mỗi framework phải có cách đoán chỗ đặt trang riêng                                                    | Cùng một giao diện "chọn thư mục → tạo trang"; adapter chỉ cần biết đuôi file và mẫu file                | K6–K8 |
 
-**Chia lượt K3:**
+**Chia lượt K3 (2026-10-25: 4 lượt vì thêm thanh hoạt động):**
 
-| Lượt    | Tính năng (số trong bảng)               | Người dùng thấy gì                                                                                                                                                                                                                                                                                                                                                                                        |
-| ------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **K3a** | Cây thư mục + 6, 7, 8, 9 + đổi tên, xóa | Panel "Thư mục" bên trái (cạnh Lớp, Component): cây thật của dự án, bỏ qua `node_modules`, `dist`, `.git`, `.kumicraft`, cập nhật khi file thêm/xóa từ ngoài. Bấm file giao diện → mở chế độ sửa; chuột phải → "Mở trong editor", "Đổi tên", "Xóa" (cảnh báo danh sách file đang import, Undo được). Phần tử đang chọn, file lỗi build, file AI vừa sửa đều có dấu trên cây. Kéo file/thư mục vào ô chat. |
-| **K3b** | 1, 2, 3, 4, 5, 12, 13                   | Mọi ô gõ đường dẫn thư mục (Thêm trang, Tách component, Đưa nháp) thành **bộ chọn thư mục** dùng chung với cây; chuột phải thư mục → "Thêm trang ở đây", "Đặt làm thư mục component"…; `designDirs` cho nhiều thư mục mỗi loại (đổi định dạng `workspace.json`, chuyển đổi một lần); panel Component thấy component ở mọi thư mục đã đặt; chọn chỗ đặt file CSS mới và file token Brand.                  |
-| **K3c** | 10, 11 + bộ tìm route + Cài router      | Thêm trang tự thêm route đúng file router (kể cả `router/AppRouter.jsx` như WorkTracker), trang mới viết theo mẫu các file cùng thư mục; không chắc thì hỏi bằng cách bấm file router trên cây; dự án chưa có router có nút "Cài router".                                                                                                                                                                 |
+| Lượt    | Tính năng (số trong bảng)               | Người dùng thấy gì                                                                                                                                                                                                                                                                                                                                                                        |
+| ------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **K3a** | Thanh hoạt động bên trái                | Dãy icon dọc kiểu VS Code; Lớp, Thư viện, Component, Trang, Bản nháp, Brand, Cài đặt thành các panel mở bằng icon; bấm lại để thu gọn; panel phải còn Thuộc tính và Chat. Chưa có tính năng mới, chỉ sắp lại cho gọn và chừa chỗ.                                                                                                                                                         |
+| **K3b** | Cây thư mục + 6, 7, 8, 9 + đổi tên, xóa | Icon "Thư mục": cây thật của dự án, bỏ qua `node_modules`, `dist`, `.git`, `.kumicraft`, cập nhật khi file thêm/xóa từ ngoài. Bấm file giao diện → mở chế độ sửa; chuột phải → "Mở trong editor", "Tạo file/thư mục", "Đổi tên", "Xóa" (cảnh báo danh sách file đang import, Undo được). Phần tử đang chọn, file lỗi build, file AI vừa sửa có dấu trên cây. Kéo file/thư mục vào ô chat. |
+| **K3c** | 1, 2, 3, 4, 5, 12, 13                   | Mọi ô gõ đường dẫn thư mục (Thêm trang, Tách component, Đưa nháp) thành **bộ chọn thư mục** dùng chung với cây; chuột phải thư mục → "Thêm trang ở đây", "Đặt làm thư mục component"…; `designDirs` cho nhiều thư mục mỗi loại (đổi định dạng `workspace.json`, chuyển đổi một lần); panel Component thấy component ở mọi thư mục đã đặt; chọn chỗ đặt file CSS mới và file token Brand.  |
+| **K3d** | 10, 11 + bộ tìm route + Cài router      | Thêm trang tự thêm route đúng file router (kể cả `router/AppRouter.jsx` như WorkTracker), trang mới viết theo mẫu các file cùng thư mục; không chắc thì hỏi bằng cách bấm file router trên cây; dự án chưa có router có nút "Cài router".                                                                                                                                                 |
 
-Mục 14, 15 làm trong K5 đến K8, dùng lại cây và bộ chọn thư mục của K3a, K3b.
+Mục 14, 15 làm trong K5 đến K8, dùng lại cây và bộ chọn thư mục của K3b, K3c.
 
-**Bộ tìm route (K3c):**
+**Bộ tìm route (K3d):**
 
 - đi từ file khởi động (`main.*`, `index.*`, entry trong `index.html`) theo các `import`;
 - nhận ra các kiểu: `createBrowserRouter([...])`, `<Routes><Route/></Routes>`, mảng route import từ file khác, route lồng nhau, `lazy()`;
@@ -169,9 +180,9 @@ Mục 14, 15 làm trong K5 đến K8, dùng lại cây và bộ chọn thư mụ
 - **dự án chưa có router:** nút "Cài router" (cài `react-router`, tạo file route, sửa entry) có xác nhận trước và hoàn tác được;
 - đổi R-PG-10 thành "quy ước đọc được của bộ tìm route"; MCP `create_page` dùng chung. Framework khác (K5 đến K8) có bộ tìm route riêng: Express `app.get` / `router.get` + `res.render`; ASP.NET Core `Pages/` hoặc controller + `Views/`; Vue `vue-router`.
 
-**Mẫu trang (K3c):** trang mới học theo các file trong thư mục người dùng chọn (import component chung, bọc layout, cách đặt tên, đuôi file); thư mục trống thì học theo thư mục trang gần nhất.
+**Mẫu trang (K3d):** trang mới học theo các file trong thư mục người dùng chọn (import component chung, bọc layout, cách đặt tên, đuôi file); thư mục trống thì học theo thư mục trang gần nhất.
 
-Tốn: K3a **vừa đến cao** (thêm đổi tên, xóa), K3b **vừa đến cao** (đổi `designDirs`), K3c **cao**.
+Tốn: K3a **vừa**, K3b **vừa đến cao** (đổi tên, xóa), K3c **vừa đến cao** (đổi `designDirs`), K3d **cao**.
 
 ### K4. Adapter framework tổng quát
 
