@@ -13,7 +13,13 @@ import { customAlphabet } from 'nanoid';
 
 import { asAstNode, type AstNode, isAstNode, parseJsxAst } from '../source-editor/ast-helpers.ts';
 import { findNodeAt } from '../source-editor/source-editor-lookup.ts';
-import { appendRule, setDeclarationAt } from './css-edit.ts';
+import {
+  appendRule,
+  hasStateInSelector,
+  setDeclarationAt,
+  upsertRuleDeclaration,
+  withStateSelector,
+} from './css-edit.ts';
 import { locateRuleByIndex } from './css-locate.ts';
 import { readFile, type StyleApplied, type StyleApplyDeps, writeFile } from './style-apply.ts';
 import { projectFileOf } from './style-service.ts';
@@ -179,8 +185,7 @@ export async function applyModulesToRule(
   root: string,
   rule: MatchedRule,
   longhand: string,
-  value: string | undefined,
-  media: string | undefined,
+  change: StyleApplyRequest['change'],
 ): Promise<Result<StyleApplied>> {
   if (rule.sheet.kind !== 'module') {
     return err({ code: 'E016', params: { reason: 'externalSheet' } });
@@ -189,22 +194,20 @@ export async function applyModulesToRule(
   if (file === undefined) return err({ code: 'E016', params: { reason: 'externalSheet' } });
   const css = await readFile(deps.fs, root, file);
   if (!css.ok) return css;
-  const inPlace = media === undefined || rule.media.length > 0;
-  if (!inPlace && value === undefined) return ok({ files: [] });
+  const located = locateRuleByIndex(css.value, rule.ruleIndex, []);
+  if (located === undefined) return err({ code: 'E016', params: { reason: 'ruleNotFound' } });
 
-  let next: Result<string>;
-  if (inPlace) {
-    next = setDeclarationAt(css.value, rule.ruleIndex, longhand, value);
-  } else {
-    const located = locateRuleByIndex(css.value, rule.ruleIndex, []);
-    if (located === undefined) return err({ code: 'E016', params: { reason: 'ruleNotFound' } });
-    next = appendRule(
-      css.value,
-      located.selector,
-      [{ property: longhand, value: value ?? '' }],
-      media,
-    );
-  }
+  const { value, media, state } = change;
+  const inPlaceMedia = media === undefined || rule.media.length > 0;
+  const inPlaceState = state === undefined || hasStateInSelector(located.selector, state);
+  const inPlace = inPlaceMedia && inPlaceState;
+  const effectiveMedia = rule.media[0] ?? media;
+  const targetSelector =
+    state === undefined ? located.selector : withStateSelector(located.selector, state);
+
+  const next = inPlace
+    ? setDeclarationAt(css.value, rule.ruleIndex, longhand, value)
+    : upsertRuleDeclaration(css.value, targetSelector, longhand, value, effectiveMedia);
   if (!next.ok) return next;
   if (next.value === css.value) return ok({ files: [] });
   const written = await writeFile(deps.fs, root, file, css.value, next.value);
@@ -227,21 +230,21 @@ function memberText(objectName: string, key: string): string {
 async function applyNewOwnClass(
   deps: StyleApplyDeps,
   root: string,
-  jsxFile: string,
-  jsxCode: string,
-  parsed: ParsedClassName,
+  info: JsxElementInfo,
   cssFile: string,
   longhand: string,
-  value: string | undefined,
-  media: string | undefined,
+  change: StyleApplyRequest['change'],
 ): Promise<Result<StyleApplied>> {
+  const { value, media, state } = change;
   if (value === undefined) return ok({ files: [] });
+  const { code: jsxCode, jsxFile, parsed } = info;
   const idGen = deps.newId ?? customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 4);
   const newClass = `${identifierBase(parsed.properties[0])}_rc${idGen()}`;
+  const selector = state === undefined ? `.${newClass}` : `.${newClass}:${state}`;
 
   const css = await readFile(deps.fs, root, cssFile);
   if (!css.ok) return css;
-  const nextCss = appendRule(css.value, `.${newClass}`, [{ property: longhand, value }], media);
+  const nextCss = appendRule(css.value, selector, [{ property: longhand, value }], media);
   if (!nextCss.ok) return nextCss;
 
   const allProps = [...parsed.properties, newClass];
@@ -277,11 +280,12 @@ async function ownRuleOf(
 ): Promise<MatchedRule | undefined> {
   const css = await readFile(deps.fs, root, cssFile);
   if (!css.ok) return undefined;
+  const re = new RegExp(`^\\.${ownProp}(?::[\\w-]+)*$`);
   return probeRules.find(
     (r) =>
       r.sheet.kind === 'module' &&
       projectFileOf(root, r.sheet.id) === cssFile &&
-      locateRuleByIndex(css.value, r.ruleIndex, [])?.selector.trim() === `.${ownProp}`,
+      re.test(locateRuleByIndex(css.value, r.ruleIndex, [])?.selector.trim() ?? ''),
   );
 }
 
@@ -323,7 +327,7 @@ export async function applyModulesToElement(
 ): Promise<Result<StyleApplied>> {
   const info = await loadJsxElementInfo(deps, root, request.probe.ref.loc);
   if (!info.ok) return info;
-  const { ast, code, jsxFile, parsed } = info.value;
+  const { ast, jsxFile, parsed } = info.value;
   const importPath = findModuleImport(ast, parsed.objectName);
   if (importPath === undefined) {
     return err({ code: 'E016', params: { reason: 'moduleImportNotFound' } });
@@ -335,21 +339,10 @@ export async function applyModulesToElement(
       ? undefined
       : await ownRuleOf(deps, root, cssFile, ownProp, request.probe.rules);
   if (own !== undefined) {
-    const { value, media } = request.change;
-    return applyModulesToRule(deps, root, own, longhand, value, media);
+    return applyModulesToRule(deps, root, own, longhand, request.change);
   }
 
-  return applyNewOwnClass(
-    deps,
-    root,
-    jsxFile,
-    code,
-    parsed,
-    cssFile,
-    longhand,
-    request.change.value,
-    request.change.media,
-  );
+  return applyNewOwnClass(deps, root, info.value, cssFile, longhand, request.change);
 }
 
 export async function applyModulesChange(
@@ -363,14 +356,7 @@ export async function applyModulesChange(
   const ruleInProject =
     winnerRule?.sheet.kind === 'module' && projectFileOf(root, winnerRule.sheet.id) !== undefined;
   if (request.change.target === 'rule' && winnerRule !== undefined && ruleInProject) {
-    return applyModulesToRule(
-      deps,
-      root,
-      winnerRule,
-      longhand,
-      request.change.value,
-      request.change.media,
-    );
+    return applyModulesToRule(deps, root, winnerRule, longhand, request.change);
   }
   return applyModulesToElement(deps, root, request, longhand);
 }

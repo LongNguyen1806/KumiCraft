@@ -1,11 +1,30 @@
 // Minimal text edits of a CSS file (SPEC-04 M-ST, R-ST-06, R-ST-09, QC-98): one declaration or one
 // new rule changes; every other byte of the file stays as it was.
-import { err, ok, type Result } from '@kumicraft/shared';
+import { err, ok, type Result, splitSelectorList, type StyleState } from '@kumicraft/shared';
 import postcss, { type AtRule, type Declaration, type Root, type Rule } from 'postcss';
 
 import { findRule, findRuleByIndex, normalizeMedia, type RuleKey } from './css-locate.ts';
 
 export type CssDeclaration = { readonly property: string; readonly value: string };
+
+export function findRuleBySelector(root: Root, selector: string, media?: string): Rule | undefined {
+  return findRule(root, {
+    selector,
+    media: media === undefined ? [] : [media],
+    occurrence: 0,
+  });
+}
+
+export function hasStateInSelector(selector: string, state: StyleState): boolean {
+  return new RegExp(`(?<!:):${state}(?![\\w-])`).test(selector);
+}
+
+export function withStateSelector(selector: string, state: StyleState): string {
+  // Top-level commas only: `:is(.a, .b)` is one part (R-ST-09).
+  return splitSelectorList(selector)
+    .map((part) => (hasStateInSelector(part, state) ? part : `${part}:${state}`))
+    .join(', ');
+}
 
 function parse(css: string): Result<Root> {
   try {
@@ -173,4 +192,21 @@ export function appendRule(
       : `@media ${media} {${eol}${ruleText(selector, declarations, '  ', eol)}${eol}}`;
   const head = css.trimEnd();
   return checked(`${head}${head === '' ? '' : `${eol}${eol}`}${text}${eol}`);
+}
+
+export function upsertRuleDeclaration(
+  css: string,
+  selector: string,
+  property: string,
+  value: string | undefined,
+  media?: string,
+): Result<string> {
+  const root = parse(css);
+  if (!root.ok) return root;
+  const rule = findRuleBySelector(root.value, selector, media);
+  if (rule !== undefined) {
+    return applyDeclarationToRule(css, rule, property, value);
+  }
+  if (value === undefined) return ok(css);
+  return appendRule(css, selector, [{ property, value }], media);
 }

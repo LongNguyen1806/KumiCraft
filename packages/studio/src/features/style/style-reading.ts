@@ -4,6 +4,7 @@ import {
   CSS_LONGHAND_OF,
   type ElementRef,
   type StyleReading,
+  type StyleState as StyleInteractionState,
 } from '@kumicraft/shared';
 import { useEffect, useState } from 'react';
 
@@ -15,7 +16,10 @@ export const PROBE_TIMEOUT_MS = 2_000;
 const PROBED_LONGHANDS = [...new Set(Object.values(CSS_LONGHAND_OF))];
 
 /** Asks the Bridge for the rules of `ref`; undefined when it does not answer in time. */
-export function requestStyleProbe(ref: ElementRef): Promise<BridgeStyleProbePayload | undefined> {
+export function requestStyleProbe(
+  ref: ElementRef,
+  interactionState?: StyleInteractionState,
+): Promise<BridgeStyleProbePayload | undefined> {
   return new Promise((resolve) => {
     const stop = studioBridgeChannel.registerStyleProbeListener((payload) => {
       if (payload.ref.loc !== ref.loc || payload.ref.index !== ref.index) return;
@@ -27,7 +31,7 @@ export function requestStyleProbe(ref: ElementRef): Promise<BridgeStyleProbePayl
       stop();
       resolve(undefined);
     }, PROBE_TIMEOUT_MS);
-    studioBridgeChannel.styleProbe(ref, PROBED_LONGHANDS);
+    studioBridgeChannel.styleProbe(ref, PROBED_LONGHANDS, interactionState);
   });
 }
 
@@ -36,8 +40,11 @@ export type StyleState = {
   readonly reading: StyleReading;
 };
 
-export async function fetchStyleState(ref: ElementRef): Promise<StyleState | undefined> {
-  const probe = await requestStyleProbe(ref);
+export async function fetchStyleState(
+  ref: ElementRef,
+  interactionState?: StyleInteractionState,
+): Promise<StyleState | undefined> {
+  const probe = await requestStyleProbe(ref, interactionState);
   if (probe?.found !== true) return undefined;
   return { probe, reading: await readStyle(probe) };
 }
@@ -53,21 +60,25 @@ export type UseStyleState = {
  * rebuilt (a new layer tree arrives after HMR) or `refresh` is called. A reading of another
  * element is never shown.
  */
-export function useStyleState(enabled: boolean): UseStyleState {
+export function useStyleState(
+  enabled: boolean,
+  interactionState?: StyleInteractionState,
+): UseStyleState {
   const ref = useSelectionStore((s) => s.selectedRefs.at(-1));
   const tree = useSelectionStore((s) => s.treeNodes);
   const [result, setResult] = useState<{ key: string; state?: StyleState | undefined }>();
   const [version, setVersion] = useState(0);
   const loc = ref?.loc;
   const index = ref?.index;
-  const key = loc === undefined ? undefined : `${loc}#${String(index)}`;
+  const key =
+    loc === undefined ? undefined : `${loc}#${String(index)}#${interactionState ?? 'default'}`;
 
   useEffect(() => {
     if (!enabled || loc === undefined || index === undefined || key === undefined) return;
     let active = true;
     const load = async () => {
       try {
-        const state = await fetchStyleState({ loc, index });
+        const state = await fetchStyleState({ loc, index }, interactionState);
         if (active) setResult({ key, state });
       } catch {
         if (active) setResult({ key });
@@ -77,7 +88,7 @@ export function useStyleState(enabled: boolean): UseStyleState {
     return () => {
       active = false;
     };
-  }, [enabled, loc, index, key, tree, version]);
+  }, [enabled, loc, index, key, interactionState, tree, version]);
 
   return {
     state: enabled && result?.key === key ? result?.state : undefined,

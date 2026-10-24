@@ -34,6 +34,7 @@ import {
   type KeyPress,
   matchShortcut,
   type StudioDragOverPayload,
+  type StyleState,
 } from '@kumicraft/shared';
 
 import { isApplePlatform } from '../../app/platform.ts';
@@ -56,11 +57,8 @@ function handleBridgeShortcut(payload: unknown): void {
     shift: res.data.shift,
     alt: res.data.alt,
   };
-  const apple = isApplePlatform();
-  const action = matchShortcut(press, apple);
-  if (action) {
-    runShortcut(action);
-  }
+  const action = matchShortcut(press, isApplePlatform());
+  if (action) runShortcut(action);
 }
 
 function handleErrorBridgePayload(type: string, payload: unknown): boolean {
@@ -254,8 +252,16 @@ export class BridgeChannel {
     };
   }
 
-  styleProbe(ref: ElementRef, properties: readonly string[]): void {
-    this.sendMessage('style-probe', { ref, properties });
+  styleProbe(ref: ElementRef, properties: readonly string[], state?: StyleState): void {
+    this.sendMessage('style-probe', { ref, properties, ...(state === undefined ? {} : { state }) });
+  }
+
+  sendStylePreview(ref: ElementRef, property: string, value: string): void {
+    this.sendMessage('style-preview', { ref, property, value });
+  }
+
+  clearStylePreview(): void {
+    this.sendMessage('style-preview-clear', {});
   }
 
   setGrid(size: 1 | 4 | 8 | 16): void {
@@ -343,38 +349,26 @@ export class BridgeChannel {
   private handleTextEditMessage(type: string, payload: unknown): void {
     if (type === 'text-edit-request') {
       const res = BridgeTextEditRequestPayloadSchema.safeParse(payload);
-      if (res.success) {
-        for (const l of this.textEditListeners) l.onTextEditRequest?.(res.data);
-      }
+      if (res.success) for (const l of this.textEditListeners) l.onTextEditRequest?.(res.data);
     } else if (type === 'text-commit') {
       const res = BridgeTextCommitPayloadSchema.safeParse(payload);
-      if (res.success) {
-        for (const l of this.textEditListeners) l.onTextCommit?.(res.data);
-      }
+      if (res.success) for (const l of this.textEditListeners) l.onTextCommit?.(res.data);
     } else if (type === 'text-cancel') {
       const res = BridgeTextCancelPayloadSchema.safeParse(payload);
-      if (res.success) {
-        for (const l of this.textEditListeners) l.onTextCancel?.(res.data);
-      }
+      if (res.success) for (const l of this.textEditListeners) l.onTextCancel?.(res.data);
     }
   }
 
   private handleFreeFrameMessage(type: string, payload: unknown): void {
     if (type === 'free-measure') {
       const res = BridgeFreeMeasurePayloadSchema.safeParse(payload);
-      if (res.success) {
-        for (const l of this.freeFrameListeners) l.onFreeMeasure?.(res.data);
-      }
+      if (res.success) for (const l of this.freeFrameListeners) l.onFreeMeasure?.(res.data);
     } else if (type === 'free-move') {
       const res = BridgeFreeMovePayloadSchema.safeParse(payload);
-      if (res.success) {
-        for (const l of this.freeFrameListeners) l.onFreeMove?.(res.data);
-      }
+      if (res.success) for (const l of this.freeFrameListeners) l.onFreeMove?.(res.data);
     } else if (type === 'free-resize') {
       const res = BridgeFreeResizePayloadSchema.safeParse(payload);
-      if (res.success) {
-        for (const l of this.freeFrameListeners) l.onFreeResize?.(res.data);
-      }
+      if (res.success) for (const l of this.freeFrameListeners) l.onFreeResize?.(res.data);
     }
   }
 
@@ -400,13 +394,7 @@ export class BridgeChannel {
       this.waiting.set(type, payload);
       return;
     }
-    const msg = {
-      rc: 1,
-      nonce: this.nonce,
-      type,
-      payload,
-    };
-    this.iframeWindow.postMessage(msg, this.runnerOrigin);
+    this.iframeWindow.postMessage({ rc: 1, nonce: this.nonce, type, payload }, this.runnerOrigin);
   }
 }
 

@@ -282,4 +282,18 @@ export function Card() {
       css.replace('padding: 16px;', 'padding: 16px;\n  padding-top: 24px;'),
     );
   });
+
+  it('appends .card:hover at the end of .module.css when target is rule and state is hover [R-ST-08, R-ST-09]', async () => {
+    const res = await apply([cardRule()], {
+      property: 'paddingTop',
+      value: '24px',
+      target: 'rule',
+      state: 'hover',
+    });
+
+    expect(res.ok && res.value.files.map((f) => f.path)).toEqual(['src/Card.module.css']);
+    expect(await read('src/Card.module.css')).toBe(
+      `${MODULE_CSS}\n.card:hover {\n  padding-top: 24px;\n}\n`,
+    );
+  });
 });

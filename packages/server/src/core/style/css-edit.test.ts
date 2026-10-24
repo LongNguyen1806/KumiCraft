@@ -1,7 +1,14 @@
 // Minimal CSS edits of the style layer (SPEC-04 M-ST, R-ST-06, R-ST-09).
+import postcss from 'postcss';
 import { describe, expect, it } from 'vitest';
 
-import { appendRule, setDeclarationAt, setRuleDeclaration } from './css-edit.ts';
+import {
+  appendRule,
+  findRuleBySelector,
+  setDeclarationAt,
+  setRuleDeclaration,
+  withStateSelector,
+} from './css-edit.ts';
 
 const CSS = `.card {
   padding: 16px;
@@ -96,5 +103,24 @@ describe('appendRule [R-ST-06, R-ST-09]', () => {
     expect(fresh.ok && fresh.value).toBe(
       `${CSS}\n@media (min-width: 768px) {\n  .x {\n    color: red;\n  }\n}\n`,
     );
+  });
+
+  it('findRuleBySelector distinguishes rules with the same selector inside and outside @media [R-ST-09]', () => {
+    const root = postcss.parse(CSS);
+    const outside = findRuleBySelector(root, ' .card ');
+    const inside = findRuleBySelector(root, '.card', '(max-width: 640px)');
+    const missing = findRuleBySelector(root, '.card', '(min-width: 1024px)');
+
+    expect(outside?.source?.start?.line).toBe(1);
+    expect(inside?.source?.start?.line).toBe(7);
+    expect(missing).toBeUndefined();
+  });
+});
+
+describe('withStateSelector [R-ST-09]', () => {
+  it('adds the state to each top-level part only, keeping :is() lists whole', () => {
+    expect(withStateSelector(':is(.a, .b) p, .c', 'hover')).toBe(':is(.a, .b) p:hover, .c:hover');
+    expect(withStateSelector('.btn:focus', 'focus')).toBe('.btn:focus');
+    expect(withStateSelector('.btn:focus-visible', 'focus')).toBe('.btn:focus-visible:focus');
   });
 });

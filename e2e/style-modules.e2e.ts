@@ -33,6 +33,16 @@ const computedOf = (frame: Frame, selector: string, property: string) =>
     [selector, property] as const,
   );
 
+/** The element's own inline value: the live preview of R-ST-13 sits there until the CSS is written. */
+const inlineOf = (frame: Frame, selector: string, property: string) =>
+  frame.evaluate(
+    ([sel, prop]) =>
+      Array.from(document.querySelectorAll<HTMLElement>(sel)).map((el) =>
+        el.style.getPropertyValue(prop),
+      ),
+    [selector, property] as const,
+  );
+
 test.beforeEach(async ({ browserName }) => {
   folder = await copyFixture('projects/react-css-modules');
   config = await makeTempDir(`style-modules-config-${browserName}`);
@@ -89,14 +99,19 @@ test('CSS Modules: the source rule behind a hashed class, "all 3" and "only this
   await page.getByTestId('style-target-element').check();
   const fontSize = page.getByTestId('style-input-fontSize');
   await fontSize.fill('22px');
-  await fontSize.press('Enter');
+  // R-ST-13: typing shows the value on the Canvas at once; nothing is written before Enter.
   await expect.poll(() => computedOf(frame, 'main > p', 'font-size')).toEqual(['22px', '18px']);
-  expect(await readFile(homeTsx, 'utf8')).toMatch(
-    /<p className=\{`\$\{styles\.lead\} \$\{styles\.lead_rc[a-z0-9]{4}\}`\}>Hàng mới về/,
-  );
-  expect(await readFile(homeCss, 'utf8')).toMatch(
-    /\n\.lead_rc[a-z0-9]{4} \{\n {2}font-size: 22px;\n\}\n$/,
-  );
+  expect(await readFile(homeTsx, 'utf8')).toBe(before.home);
+  await fontSize.press('Enter');
+  await expect
+    .poll(() => readFile(homeTsx, 'utf8'))
+    .toMatch(/<p className=\{`\$\{styles\.lead\} \$\{styles\.lead_rc[a-z0-9]{4}\}`\}>Hàng mới về/);
+  await expect
+    .poll(() => readFile(homeCss, 'utf8'))
+    .toMatch(/\n\.lead_rc[a-z0-9]{4} \{\n {2}font-size: 22px;\n\}\n$/);
+  // The preview is gone and the page shows the written CSS.
+  await expect.poll(() => inlineOf(frame, 'main > p', 'font-size')).toEqual(['', '']);
+  await expect.poll(() => computedOf(frame, 'main > p', 'font-size')).toEqual(['22px', '18px']);
   await undo.click();
   // One history entry, written back file by file: wait for both.
   await expect.poll(() => readFile(homeTsx, 'utf8')).toBe(before.home);

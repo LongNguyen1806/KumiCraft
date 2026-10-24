@@ -47,7 +47,11 @@ export function registerStyleRoutes(api: FastifyInstance, deps: StyleRoutesDeps)
       return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
     }
     const applied = await applyStyleChange(
-      { fs: deps.fs, sourceEditor: deps.sourceEditorService },
+      {
+        fs: deps.fs,
+        sourceEditor: deps.sourceEditorService,
+        styling: project.value.support.styling,
+      },
       project.value.root,
       parsed.data,
     );

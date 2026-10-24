@@ -22,6 +22,10 @@ export const STYLE_SYSTEM_IDS = [
 export const StyleSystemIdSchema = z.enum(STYLE_SYSTEM_IDS);
 export type StyleSystemId = z.infer<typeof StyleSystemIdSchema>;
 
+export const STYLE_STATES = ['hover', 'focus', 'disabled'] as const;
+export const StyleStateSchema = z.enum(STYLE_STATES);
+export type StyleState = z.infer<typeof StyleStateSchema>;
+
 /**
  * Inspector properties (the `PropertyId`s of M-TW) that are one CSS longhand. The style layer reads
  * them from the browser by these names (R-ST-04); grouped properties (`paddingX`) come later.
@@ -104,6 +108,28 @@ export const CSS_SHORTHANDS_OF: Readonly<Record<string, readonly string[]>> = {
   left: ['inset'],
 };
 
+/** Splits a selector list on its top-level commas (not those inside `:is(a, b)` or `[x="a,b"]`). */
+export function splitSelectorList(list: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let quote: string | undefined;
+  let start = 0;
+  for (let i = 0; i < list.length; i++) {
+    const ch = list[i];
+    if (quote !== undefined) {
+      if (ch === quote) quote = undefined;
+    } else if (ch === '"' || ch === "'") quote = ch;
+    else if (ch === '(' || ch === '[') depth++;
+    else if (ch === ')' || ch === ']') depth--;
+    else if (ch === ',' && depth === 0) {
+      parts.push(list.slice(start, i).trim());
+      start = i + 1;
+    }
+  }
+  parts.push(list.slice(start).trim());
+  return parts.filter((p) => p !== '');
+}
+
 // ---- Bridge protocol (SPEC-03 section 7) ---------------------------------------------------------
 
 /** Where a CSS rule lives in the page: a Vite module (`data-vite-dev-id`), a `<link>`, or a bare `<style>`. */
@@ -134,12 +160,31 @@ export const MatchedRuleSchema = z.strictObject({
 });
 export type MatchedRule = z.infer<typeof MatchedRuleSchema>;
 
+/** A CSS value: one value, never a way to close the declaration or the rule. */
+export const CssValueSchema = z
+  .string()
+  .min(1)
+  .max(500)
+  .refine((v) => !/[;{}]/.test(v) && !v.includes('/*'), { message: 'invalidValue' });
+
 // Studio -> Bridge: style-probe (R-ST-04)
 export const StudioStyleProbePayloadSchema = z.strictObject({
   ref: ElementRefSchema,
   properties: z.array(z.string().min(1).max(100)).max(120), // CSS longhands
+  state: StyleStateSchema.optional(),
 });
 export type StudioStyleProbePayload = z.infer<typeof StudioStyleProbePayloadSchema>;
+
+// Studio -> Bridge: style-preview and style-preview-clear (R-ST-13)
+export const StudioStylePreviewPayloadSchema = z.strictObject({
+  ref: ElementRefSchema,
+  property: z.string().min(1).max(100), // CSS longhand
+  value: CssValueSchema,
+});
+export type StudioStylePreviewPayload = z.infer<typeof StudioStylePreviewPayloadSchema>;
+
+export const StudioStylePreviewClearPayloadSchema = z.strictObject({});
+export type StudioStylePreviewClearPayload = z.infer<typeof StudioStylePreviewClearPayloadSchema>;
 
 // Bridge -> Studio: style-probe-result, rules in cascade order, winner first (R-ST-04)
 export const BridgeStyleProbePayloadSchema = z.strictObject({
@@ -202,19 +247,13 @@ export type StyleReadRequest = z.infer<typeof StyleReadRequestSchema>;
 
 // ---- REST: POST /style/apply (R-ST-06 to R-ST-09, R-ST-15) ---------------------------------------
 
-/** A CSS value: one value, never a way to close the declaration or the rule. */
-export const CssValueSchema = z
-  .string()
-  .min(1)
-  .max(500)
-  .refine((v) => !/[;{}]/.test(v) && !v.includes('/*'), { message: 'invalidValue' });
-
 export const StyleChangeSchema = z.strictObject({
   property: z.string().min(1).max(60), // a key of CSS_LONGHAND_OF
   value: CssValueSchema.optional(), // absent: remove the declaration
   target: z.enum(['rule', 'element']),
   /** `@media` condition of the frame being edited, absent on the base frame (R-ST-09). */
   media: z.string().min(1).max(200).optional(),
+  state: StyleStateSchema.optional(),
 });
 export type StyleChange = z.infer<typeof StyleChangeSchema>;
 

@@ -14,6 +14,7 @@ import {
 } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
+import { parseUtility } from './bootstrap-utilities.ts';
 import { locateRule, locateRuleByIndex } from './css-locate.ts';
 
 const MAX_CSS_BYTES = 2 * 1024 * 1024;
@@ -93,6 +94,34 @@ function locateInFile(
   return { line: loc.declarations[longhand] ?? loc.line, selector: rule.selector };
 }
 
+function isBootstrapSheet(rule: MatchedRule): boolean {
+  if (rule.sheet.kind === 'link') return rule.sheet.href.toLowerCase().includes('bootstrap');
+  if (rule.sheet.kind === 'module') {
+    return rule.sheet.id.replaceAll('\\', '/').toLowerCase().includes('node_modules/bootstrap/');
+  }
+  return false;
+}
+
+function externalRuleSource(
+  rule: MatchedRule,
+  href: string,
+  primary: StyleSystemId | undefined,
+): { source: StyleSource; editable: boolean; reason?: StyleProperty['reason'] } {
+  if (isBootstrapSheet(rule)) {
+    const sel = rule.selector.trim();
+    if (/^\.[\w-]+$/.test(sel)) {
+      const className = sel.slice(1);
+      if (parseUtility(className) !== undefined) {
+        return { source: { kind: 'class', system: 'bootstrap5', className }, editable: true };
+      }
+    }
+    if (primary === 'bootstrap5') {
+      return { source: { kind: 'external', href }, editable: true };
+    }
+  }
+  return { source: { kind: 'external', href }, editable: false, reason: 'external' };
+}
+
 /** Where a winning rule lives: a line of a project file, or a sheet the project does not own. */
 async function ruleSource(
   fs: FileSystemPort,
@@ -100,18 +129,15 @@ async function ruleSource(
   rule: MatchedRule,
   longhand: string,
   cache: Map<string, string | undefined>,
+  primary: StyleSystemId | undefined,
 ): Promise<{ source: StyleSource; editable: boolean; reason?: StyleProperty['reason'] }> {
   if (rule.sheet.kind !== 'module') {
     const href = rule.sheet.kind === 'link' ? rule.sheet.href : '';
-    return { source: { kind: 'external', href }, editable: false, reason: 'external' };
+    return externalRuleSource(rule, href, primary);
   }
   const file = projectFileOf(root, rule.sheet.id);
   if (file === undefined) {
-    return {
-      source: { kind: 'external', href: rule.sheet.id },
-      editable: false,
-      reason: 'external',
-    };
+    return externalRuleSource(rule, rule.sheet.id, primary);
   }
   if (!cache.has(file)) {
     const read = await fs.readText(root, file, { maxBytes: MAX_CSS_BYTES });
@@ -160,7 +186,7 @@ export function createStyleService(deps: { readonly fs: FileSystemPort }): Style
           properties.push({
             id,
             value,
-            ...(await ruleSource(deps.fs, project.root, winner.rule, longhand, cache)),
+            ...(await ruleSource(deps.fs, project.root, winner.rule, longhand, cache, primary)),
           });
         }
       }

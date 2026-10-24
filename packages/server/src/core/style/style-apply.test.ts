@@ -188,4 +188,65 @@ describe('applyStyleChange [R-ST-06, R-ST-09]', () => {
         .success,
     ).toBe(false);
   });
+
+  it('adds .btn-buy:hover on first hover edit and updates it in place on second edit [R-ST-09]', async () => {
+    const btnCss = `.btn-buy {\n  background-color: #0d6efd;\n}\n`;
+    await fs.writeFile(path.join(root, 'src/Card.css'), btnCss);
+    const btnRule = cardRule({
+      selector: '.btn-buy',
+      declarations: [{ property: 'background-color', value: '#0d6efd', important: false }],
+    });
+
+    await apply([btnRule], {
+      property: 'backgroundColor',
+      value: '#084298',
+      target: 'rule',
+      state: 'hover',
+    });
+    expect(await read('src/Card.css')).toBe(
+      `${btnCss}\n.btn-buy:hover {\n  background-color: #084298;\n}\n`,
+    );
+
+    const hoverRule = cardRule({
+      selector: '.btn-buy:hover',
+      ruleIndex: 1,
+      declarations: [{ property: 'background-color', value: '#084298', important: false }],
+    });
+    await apply([hoverRule, btnRule], {
+      property: 'backgroundColor',
+      value: '#052c65',
+      target: 'rule',
+      state: 'hover',
+    });
+    expect(await read('src/Card.css')).toBe(
+      `${btnCss}\n.btn-buy:hover {\n  background-color: #052c65;\n}\n`,
+    );
+  });
+
+  it('writes .<own-class>:focus for target element with state focus and reuses the own class [R-ST-09]', async () => {
+    const first = await apply([cardRule()], {
+      property: 'paddingTop',
+      value: '24px',
+      target: 'element',
+      state: 'focus',
+    });
+
+    expect(first.ok && first.value.className).toBe('card-ab10');
+    expect(await read('src/Card.tsx')).toContain('className="card card-ab10"');
+    expect(await read('src/Card.css')).toBe(
+      `${CARD_CSS}\n.card.card-ab10:focus {\n  padding-top: 24px;\n}\n`,
+    );
+
+    const ownFocus = cardRule({ selector: '.card.card-ab10:focus', occurrence: 0 });
+    await apply([ownFocus, cardRule()], {
+      property: 'paddingTop',
+      value: '32px',
+      target: 'element',
+      state: 'focus',
+    });
+    expect(await read('src/Card.tsx')).toContain('className="card card-ab10"');
+    expect(await read('src/Card.css')).toBe(
+      `${CARD_CSS}\n.card.card-ab10:focus {\n  padding-top: 32px;\n}\n`,
+    );
+  });
 });

@@ -263,4 +263,39 @@ describe('createStyleService().read [R-ST-04, R-ST-05]', () => {
       editable: true,
     });
   });
+
+  it('probes Bootstrap .p-3 rule from node_modules/bootstrap/dist/css/bootstrap.min.css as class p-3 with editable: true [R-ST-04, R-ST-10]', async () => {
+    const service = createStyleService({ fs: nodeFs });
+    const reading = await service.read(
+      { root, styling: { systems: [{ id: 'bootstrap' }], editable: true, globalCss: [] } },
+      probe({
+        rules: [
+          rule({
+            sheet: {
+              kind: 'module',
+              id: path
+                .join(root, 'node_modules/bootstrap/dist/css/bootstrap.min.css')
+                .replaceAll('\\', '/'),
+            },
+            selector: '.p-3',
+            declarations: [{ property: 'padding-top', value: '1rem', important: true }],
+          }),
+        ],
+        computed: { 'padding-top': '16px' },
+      }),
+    );
+
+    expect(reading.primary).toBe('bootstrap5');
+    const byId = Object.fromEntries(reading.properties.map((p) => [p.id, p]));
+    expect(byId['paddingTop']).toEqual({
+      id: 'paddingTop',
+      value: { css: '16px' },
+      source: {
+        kind: 'class',
+        system: 'bootstrap5',
+        className: 'p-3',
+      },
+      editable: true,
+    });
+  });
 });

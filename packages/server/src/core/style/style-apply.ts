@@ -10,6 +10,7 @@ import {
   ok,
   type Result,
   type StyleApplyRequest,
+  type StylingReport,
 } from '@kumicraft/shared';
 import { customAlphabet } from 'nanoid';
 
@@ -18,9 +19,15 @@ import { parseJsxAst } from '../source-editor/ast-helpers.ts';
 import { computeSha256 } from '../source-editor/source-editor-lookup.ts';
 import type { SourceEditorService, WrittenFile } from '../source-editor/source-editor-service.ts';
 import { findImportInsertPosition } from '../source-editor/structure/imports.ts';
-import { appendRule, setRuleDeclaration } from './css-edit.ts';
+import {
+  hasStateInSelector,
+  setRuleDeclaration,
+  upsertRuleDeclaration,
+  withStateSelector,
+} from './css-edit.ts';
+import { tryApplyBootstrapChange } from './style-apply-bootstrap.ts';
 import { applyModulesChange, isModulesApplicable } from './style-apply-modules.ts';
-import { projectFileOf, winnerFor } from './style-service.ts';
+import { primarySystem, projectFileOf, winnerFor } from './style-service.ts';
 
 const MAX_CSS_BYTES = 2 * 1024 * 1024;
 /** Classes made by KumiCraft for one element end in `-` and four letters or digits. */
@@ -30,6 +37,7 @@ export type StyleApplyDeps = {
   readonly fs: FileSystemPort;
   readonly sourceEditor: Pick<SourceEditorService, 'getElement' | 'applyEdit'>;
   readonly newId?: (() => string) | undefined;
+  readonly styling?: StylingReport | undefined;
 };
 
 export type StyleApplied = {
@@ -73,29 +81,28 @@ export async function writeFile(
   });
 }
 
-/** "All N elements": the winning rule, or the same selector inside the frame's `@media`. */
+/** "All N elements": the winning rule, or the same selector inside the frame's `@media` or `:state`. */
 async function applyToRule(
   deps: StyleApplyDeps,
   root: string,
   target: ProjectRule,
   longhand: string,
-  value: string | undefined,
-  media: string | undefined,
+  change: StyleApplyRequest['change'],
 ): Promise<Result<StyleApplied>> {
   const css = await readFile(deps.fs, root, target.file);
   if (!css.ok) return css;
+  const { value, media, state } = change;
   // A rule already under a @media that applies to this frame is the one to change; only a rule of
   // every frame gets the frame's own @media (R-ST-09).
-  const inPlace = media === undefined || target.rule.media.length > 0;
-  if (!inPlace && value === undefined) return ok({ files: [] });
+  const inPlaceMedia = media === undefined || target.rule.media.length > 0;
+  const inPlaceState = state === undefined || hasStateInSelector(target.rule.selector, state);
+  const inPlace = inPlaceMedia && inPlaceState;
+  const effectiveMedia = target.rule.media[0] ?? media;
+  const targetSelector =
+    state === undefined ? target.rule.selector : withStateSelector(target.rule.selector, state);
   const next = inPlace
     ? setRuleDeclaration(css.value, target.rule, longhand, value)
-    : appendRule(
-        css.value,
-        target.rule.selector,
-        [{ property: longhand, value: value ?? '' }],
-        media,
-      );
+    : upsertRuleDeclaration(css.value, targetSelector, longhand, value, effectiveMedia);
   if (!next.ok) return next;
   if (next.value === css.value) return ok({ files: [] });
   const written = await writeFile(deps.fs, root, target.file, css.value, next.value);
@@ -128,7 +135,7 @@ export function mergeWrites(files: readonly WrittenFile[]): WrittenFile[] {
   return [...byPath.values()];
 }
 
-type ElementContext = {
+export type ElementContext = {
   readonly jsxFile: string;
   /** The tag in the source, not the one the request claims. */
   readonly tag: string;
@@ -136,7 +143,7 @@ type ElementContext = {
   readonly className: string | undefined;
 };
 
-async function elementContext(
+export async function elementContext(
   deps: StyleApplyDeps,
   root: string,
   loc: string,
@@ -184,13 +191,13 @@ function newClassName(ctx: ElementContext, newId: (() => string) | undefined): s
   return `${base}-${(newId ?? customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 4))()}`;
 }
 
-/** Adds `newClass` to the element's static `className` (M-SE `setClassName`). */
-async function addClass(
+/** Sets `nextClasses` as the element's static `className` (M-SE `setClassName`). */
+export async function addClass(
   deps: StyleApplyDeps,
   root: string,
   request: StyleApplyRequest,
   ctx: ElementContext,
-  newClass: string,
+  nextClasses: readonly string[],
   writes: WrittenFile[],
 ): Promise<Result<unknown>> {
   return deps.sourceEditor.applyEdit(
@@ -200,12 +207,25 @@ async function addClass(
       loc: request.probe.ref.loc,
       tag: ctx.tag,
       before: ctx.className,
-      after: [...ctx.classes, newClass].join(' '),
+      after: nextClasses.join(' '),
     },
     (file) => {
       writes.push(file);
     },
   );
+}
+
+function elementSelector(
+  winner: ProjectRule | undefined,
+  newClass: string,
+  state: StyleApplyRequest['change']['state'],
+): string {
+  const winnerSel =
+    winner !== undefined && !winner.rule.selector.includes(',')
+      ? winner.rule.selector.replace(/(?::[\w-]+)+$/, '')
+      : '';
+  const base = `${winnerSel}.${newClass}`;
+  return state === undefined ? base : withStateSelector(base, state);
 }
 
 /** "Only this element": a class of its own, kept for the next change (R-ST-06). */
@@ -221,29 +241,32 @@ async function applyToElement(
   if (!ctx.ok) return ctx;
   const own = ctx.value.classes.find((c) => OWN_CLASS.test(c));
   const ownRule =
-    own === undefined ? undefined : probe.rules.find((r) => r.selector.endsWith(`.${own}`));
+    own === undefined
+      ? undefined
+      : probe.rules.find((r) => new RegExp(`\\.${own}(?::[\\w-]+)*$`).test(r.selector));
   const ownTarget = projectRule(root, ownRule);
-  if (ownTarget !== undefined)
-    return applyToRule(deps, root, ownTarget, longhand, change.value, change.media);
+  if (ownTarget !== undefined) return applyToRule(deps, root, ownTarget, longhand, change);
   if (change.value === undefined) return ok({ files: [] });
 
-  const newClass = newClassName(ctx.value, deps.newId);
-  const winnerSelector =
-    winner !== undefined && !winner.rule.selector.includes(',') ? winner.rule.selector : '';
-  const selector = `${winnerSelector}.${newClass}`;
+  const newClass = own ?? newClassName(ctx.value, deps.newId);
+  const selector = elementSelector(winner, newClass, change.state);
 
   const writes: WrittenFile[] = [];
-  const classEdit = await addClass(deps, root, request, ctx.value, newClass, writes);
-  if (!classEdit.ok) return classEdit;
+  if (own === undefined) {
+    const nextClasses = [...ctx.value.classes, newClass];
+    const classEdit = await addClass(deps, root, request, ctx.value, nextClasses, writes);
+    if (!classEdit.ok) return classEdit;
+  }
 
   const cssFile = await cssFileFor(deps, root, ctx.value.jsxFile, winner, writes);
   if (!cssFile.ok) return cssFile;
   const css = await readFile(deps.fs, root, cssFile.value);
   const cssBefore = css.ok ? css.value : undefined;
-  const next = appendRule(
+  const next = upsertRuleDeclaration(
     cssBefore ?? '',
     selector,
-    [{ property: longhand, value: change.value }],
+    longhand,
+    change.value,
     change.media,
   );
   if (!next.ok) return next;
@@ -267,8 +290,15 @@ export async function applyStyleChange(
     return applyModulesChange(deps, root, request, longhand, winnerRule);
   }
   const target = winner.kind === 'rule' ? projectRule(root, winner.rule) : undefined;
-  if (request.change.target === 'rule' && target !== undefined) {
-    return applyToRule(deps, root, target, longhand, request.change.value, request.change.media);
+  const toProjectRule = request.change.target === 'rule' && target !== undefined;
+  // "All N elements" of a rule the project owns stays a CSS edit; a utility class only changes
+  // this one element (R-ST-07, R-ST-10).
+  if (!toProjectRule && primarySystem(deps.styling) === 'bootstrap5') {
+    const boot = await tryApplyBootstrapChange(deps, root, request);
+    if (boot !== undefined) return boot;
+  }
+  if (toProjectRule) {
+    return applyToRule(deps, root, target, longhand, request.change);
   }
   return applyToElement(deps, root, request, longhand, target);
 }

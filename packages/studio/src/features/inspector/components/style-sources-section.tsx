@@ -1,18 +1,24 @@
 // Style properties of the selected element in a plain CSS project: value, where it is declared,
-// and editing through the style layer (SPEC-04 M-ST, R-ST-04 to R-ST-07, R-ST-09).
+// and editing through the style layer (SPEC-04 M-ST, R-ST-04 to R-ST-07, R-ST-09, R-ST-10, R-ST-13).
 import {
   CSS_LONGHAND_OF,
+  CssValueSchema,
+  type ElementRef,
   type ProjectInfo,
   type StyleProperty,
   type StyleReading,
+  type StyleState,
+  StyleStateSchema,
   type StyleSystemId,
 } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { studioBridgeChannel } from '../../selection/bridge-channel.ts';
 import { useStyleState } from '../../style/style-reading.ts';
 import {
   type StyleTarget,
+  useStyleElementState,
   useStyleTarget,
   useStyleTargetStore,
 } from '../../style/style-target-store.ts';
@@ -37,8 +43,8 @@ const CORE_PROPERTIES = [
   'backgroundColor',
   'borderRadius',
 ];
-/** Systems whose changes the style layer writes so far (K2b: plain CSS; K2c: CSS Modules). */
-const WRITABLE: readonly StyleSystemId[] = ['css', 'cssModules'];
+/** Systems whose changes the style layer writes so far (K2b: plain CSS; K2c: CSS Modules; K2d: Bootstrap 5). */
+const WRITABLE: readonly StyleSystemId[] = ['css', 'cssModules', 'bootstrap5'];
 
 function SourceText({ property }: { readonly property: StyleProperty }) {
   const { t } = useTranslation();
@@ -55,6 +61,13 @@ function SourceText({ property }: { readonly property: StyleProperty }) {
       </span>
     );
   }
+  if (source?.kind === 'class') {
+    return (
+      <span className="font-mono">
+        {t('inspector.styleSources.class', { className: source.className })}
+      </span>
+    );
+  }
   if (source?.kind === 'inline') return <span>{t('inspector.styleSources.inline')}</span>;
   if (source?.kind === 'inherited' || source === undefined) return undefined;
   return <span>{t('inspector.styleSources.external')}</span>;
@@ -63,14 +76,36 @@ function SourceText({ property }: { readonly property: StyleProperty }) {
 type RowProps = {
   readonly property: StyleProperty;
   readonly writable: boolean;
+  readonly elementRef?: ElementRef | undefined;
+  readonly interactionState?: StyleState | undefined;
   readonly onCommit: (id: string, value: string) => void;
 };
 
-function StyleRow({ property, writable, onCommit }: RowProps) {
+function previewDraft(
+  elementRef: ElementRef | undefined,
+  interactionState: StyleState | undefined,
+  longhand: string,
+  nextDraft: string,
+): void {
+  if (interactionState !== undefined || elementRef === undefined) return;
+  const trimmed = nextDraft.trim();
+  if (trimmed.length > 0 && CssValueSchema.safeParse(trimmed).success) {
+    studioBridgeChannel.sendStylePreview(elementRef, longhand, trimmed);
+  } else {
+    studioBridgeChannel.clearStylePreview();
+  }
+}
+
+function StyleRow({ property, writable, elementRef, interactionState, onCommit }: RowProps) {
   const [draft, setDraft] = useState<string>();
   const current = property.value?.css ?? '';
+  const longhand = CSS_LONGHAND_OF[property.id] ?? property.id;
   const commit = () => {
-    if (draft !== undefined && draft.trim() !== current) onCommit(property.id, draft.trim());
+    if (draft !== undefined && draft.trim() !== current) {
+      onCommit(property.id, draft.trim());
+    } else {
+      studioBridgeChannel.clearStylePreview();
+    }
     setDraft(undefined);
   };
   return (
@@ -78,27 +113,58 @@ function StyleRow({ property, writable, onCommit }: RowProps) {
       data-testid={`style-source-${property.id}`}
       className="grid grid-cols-[7rem_1fr] items-center gap-x-2 gap-y-0.5"
     >
-      <span className="truncate font-mono text-ink">
-        {CSS_LONGHAND_OF[property.id] ?? property.id}
-      </span>
+      <span className="truncate font-mono text-ink">{longhand}</span>
       <input
         data-testid={`style-input-${property.id}`}
         className="rounded border border-border bg-field px-1.5 py-0.5 font-mono text-ink disabled:opacity-60"
         value={draft ?? current}
         disabled={!writable || property.source?.kind === 'inline'}
         onChange={(e) => {
-          setDraft(e.target.value);
+          const next = e.target.value;
+          setDraft(next);
+          previewDraft(elementRef, interactionState, longhand, next);
         }}
         onBlur={commit}
         onKeyDown={(e) => {
           if (e.key === 'Enter') commit();
-          if (e.key === 'Escape') setDraft(undefined);
+          if (e.key === 'Escape') {
+            setDraft(undefined);
+            studioBridgeChannel.clearStylePreview();
+          }
         }}
       />
       <span className="col-start-2 text-[11px] text-ink-soft">
         <SourceText property={property} />
       </span>
     </li>
+  );
+}
+
+type StateSelectProps = {
+  readonly value: StyleState | undefined;
+  readonly onChange?: ((next: StyleState | undefined) => void) | undefined;
+};
+
+function StateSelect({ value, onChange }: StateSelectProps) {
+  const { t } = useTranslation();
+  return (
+    <label className="flex items-center gap-2 text-ink-soft">
+      <span>{t('inspector.state')}</span>
+      <select
+        data-testid="style-state"
+        className="rounded border border-border bg-field px-1.5 py-0.5 text-ink"
+        value={value ?? ''}
+        onChange={(e) => {
+          const parsed = StyleStateSchema.safeParse(e.target.value);
+          onChange?.(parsed.success ? parsed.data : undefined);
+        }}
+      >
+        <option value="">{t('inspector.stateNone')}</option>
+        <option value="hover">{t('inspector.stateHover')}</option>
+        <option value="focus">{t('inspector.stateFocus')}</option>
+        <option value="disabled">{t('inspector.stateDisabled')}</option>
+      </select>
+    </label>
   );
 }
 
@@ -136,6 +202,9 @@ function TargetSwitch({ count, value, onChange }: TargetSwitchProps) {
 type StyleSourcesSectionProps = {
   readonly reading: StyleReading;
   readonly writable?: boolean;
+  readonly elementRef?: ElementRef | undefined;
+  readonly interactionState?: StyleState | undefined;
+  readonly onStateChange?: (state: StyleState | undefined) => void;
   readonly target?: StyleTarget;
   readonly onTargetChange?: (target: StyleTarget) => void;
   readonly onCommit?: (id: string, value: string) => void;
@@ -145,6 +214,9 @@ type StyleSourcesSectionProps = {
 export function StyleSourcesSection({
   reading,
   writable = false,
+  elementRef,
+  interactionState,
+  onStateChange,
   target = 'rule',
   onTargetChange,
   onCommit,
@@ -162,6 +234,7 @@ export function StyleSourcesSection({
   return (
     <section data-testid="style-sources" className="space-y-2 text-xs">
       <h3 className="font-medium text-ink">{t('inspector.styleSources.title')}</h3>
+      {writable && <StateSelect value={interactionState} onChange={onStateChange} />}
       {writable && shared > 1 && onTargetChange !== undefined && (
         <TargetSwitch count={shared} value={target} onChange={onTargetChange} />
       )}
@@ -171,6 +244,8 @@ export function StyleSourcesSection({
             key={p.id}
             property={p}
             writable={writable}
+            elementRef={elementRef}
+            interactionState={interactionState}
             onCommit={onCommit ?? (() => undefined)}
           />
         ))}
@@ -191,9 +266,10 @@ type CssStyleEditorProps = {
 
 /** The style layer in the Inspector for projects without the Tailwind editor (M-ST). */
 export function CssStyleEditor({ project, target: inspected }: CssStyleEditorProps) {
-  const { state, refresh } = useStyleState(true);
-  const ref = state?.probe.ref;
-  const elementKey = ref === undefined ? undefined : `${ref.loc}#${String(ref.index)}`;
+  const elementKey = `${inspected.ref.loc}#${String(inspected.ref.index)}`;
+  const interactionState = useStyleElementState(elementKey);
+  const { state, refresh } = useStyleState(true, interactionState);
+  const ref = state?.probe.ref ?? inspected.ref;
   const target = useStyleTarget(elementKey);
   const primary = state?.reading.primary;
   const writable = primary !== undefined && WRITABLE.includes(primary);
@@ -204,6 +280,7 @@ export function CssStyleEditor({ project, target: inspected }: CssStyleEditorPro
     mode: project?.responsiveMode ?? 'desktop-first',
     tag: inspected.source?.tag ?? 'div',
     target,
+    interactionState,
   });
 
   return (
@@ -213,10 +290,14 @@ export function CssStyleEditor({ project, target: inspected }: CssStyleEditorPro
         <StyleSourcesSection
           reading={state.reading}
           writable={writable}
+          elementRef={ref}
+          interactionState={interactionState}
+          onStateChange={(next) => {
+            useStyleTargetStore.getState().setState(elementKey, next);
+          }}
           target={target}
           onTargetChange={(next) => {
-            if (elementKey !== undefined)
-              useStyleTargetStore.getState().setTarget(elementKey, next);
+            useStyleTargetStore.getState().setTarget(elementKey, next);
           }}
           onCommit={commit}
           error={error}

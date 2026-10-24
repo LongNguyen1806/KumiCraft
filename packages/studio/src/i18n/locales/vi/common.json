@@ -365,6 +365,7 @@
     "styleSources": {
       "title": "Nguồn kiểu dáng",
       "affects": "Ảnh hưởng {{count}} phần tử",
+      "class": "class {{className}}",
       "inline": "thuộc tính style",
       "external": "ngoài dự án",
       "target": {

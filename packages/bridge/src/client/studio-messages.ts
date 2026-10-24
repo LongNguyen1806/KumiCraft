@@ -17,6 +17,9 @@ import {
   StudioSetGridPayloadSchema,
   StudioSetModePayloadSchema,
   StudioSetToolPayloadSchema,
+  StudioStylePreviewClearPayloadSchema,
+  type StudioStylePreviewPayload,
+  StudioStylePreviewPayloadSchema,
   type StudioStyleProbePayload,
   StudioStyleProbePayloadSchema,
   type StudioTextEditStartPayload,
@@ -37,6 +40,8 @@ export type StudioMessageHandlers = {
   handleMeasureFree: (ref: ElementRef) => void;
   handleSetTool?: ((tool: DrawTool) => void) | undefined;
   handleStyleProbe?: ((data: StudioStyleProbePayload) => void) | undefined;
+  handleStylePreview?: ((data: StudioStylePreviewPayload) => void) | undefined;
+  handleStylePreviewClear?: (() => void) | undefined;
 };
 
 /** Free frame and drawing tool messages (R-FF-10, R-FF-11, R-DT-10). */
@@ -124,6 +129,16 @@ export function dispatchStudioMessage(
     case 'style-probe': {
       const parsed = StudioStyleProbePayloadSchema.safeParse(payload);
       if (parsed.success) handlers.handleStyleProbe?.(parsed.data);
+      break;
+    }
+    case 'style-preview': {
+      const parsed = StudioStylePreviewPayloadSchema.safeParse(payload);
+      if (parsed.success) handlers.handleStylePreview?.(parsed.data);
+      break;
+    }
+    case 'style-preview-clear': {
+      const parsed = StudioStylePreviewClearPayloadSchema.safeParse(payload);
+      if (parsed.success) handlers.handleStylePreviewClear?.();
       break;
     }
     case 'design-file': {

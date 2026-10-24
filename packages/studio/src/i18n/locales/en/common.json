@@ -365,6 +365,7 @@
     "styleSources": {
       "title": "Style sources",
       "affects": "Affects {{count}} elements",
+      "class": "class {{className}}",
       "inline": "style attribute",
       "external": "outside the project",
       "target": {

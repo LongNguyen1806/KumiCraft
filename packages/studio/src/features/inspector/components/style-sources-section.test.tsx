@@ -148,4 +148,56 @@ describe('StyleSourcesSection [R-ST-04, R-ST-05]', () => {
     const input = screen.getByTestId<HTMLInputElement>('style-input-paddingTop');
     expect(input.disabled).toBe(false);
   });
+
+  it('enables inputs, shows "class p-3", and renders style-state select when primary: "bootstrap5" [R-ST-02]', () => {
+    vi.mocked(useStyleState).mockReturnValue({
+      state: {
+        probe: {
+          ref: { loc: 'src/Home.tsx:8:5', index: 0 },
+          found: true,
+          rules: [],
+          inline: [],
+          computed: {},
+        },
+        reading: {
+          primary: 'bootstrap5',
+          properties: [
+            {
+              id: 'paddingTop',
+              value: { css: '16px' },
+              source: {
+                kind: 'class',
+                system: 'bootstrap5',
+                className: 'p-3',
+              },
+              editable: true,
+            },
+          ],
+        },
+      },
+      refresh: vi.fn(),
+    });
+
+    render(
+      <CssStyleEditor
+        target={{
+          kind: 'element',
+          ref: { loc: 'src/Home.tsx:8:5', index: 0 },
+          loading: false,
+          warnings: [],
+          currentScope: { breakpoint: 'base' },
+          writePrefix: '',
+          setInteractionState: vi.fn(),
+          refresh: vi.fn(),
+        }}
+      />,
+    );
+
+    expect(screen.queryByTestId('inspector-style-unsupported')).toBeNull();
+    const input = screen.getByTestId<HTMLInputElement>('style-input-paddingTop');
+    expect(input.disabled).toBe(false);
+    expect(screen.getByTestId('style-source-paddingTop').textContent).toContain('class p-3');
+    const stateSelect = screen.getByTestId<HTMLSelectElement>('style-state');
+    expect(stateSelect.value).toBe('');
+  });
 });

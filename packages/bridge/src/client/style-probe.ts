@@ -4,9 +4,11 @@ import {
   type BridgeStyleProbePayload,
   CSS_SHORTHANDS_OF,
   type MatchedRule,
+  splitSelectorList,
   type StudioStyleProbePayload,
   type StyleDeclaration,
   type StyleSheetRef,
+  type StyleState,
 } from '@kumicraft/shared';
 
 const MAX_RULES = 100;
@@ -19,28 +21,6 @@ type Candidate = {
   /** Document order of the rule across all sheets: a later rule wins a tie. */
   readonly position: number;
 };
-
-/** Splits a selector list on its top-level commas (not those inside `:is(a, b)` or `[x="a,b"]`). */
-export function splitSelectorList(list: string): string[] {
-  const parts: string[] = [];
-  let depth = 0;
-  let quote: string | undefined;
-  let start = 0;
-  for (let i = 0; i < list.length; i++) {
-    const ch = list[i];
-    if (quote !== undefined) {
-      if (ch === quote) quote = undefined;
-    } else if (ch === '"' || ch === "'") quote = ch;
-    else if (ch === '(' || ch === '[') depth++;
-    else if (ch === ')' || ch === ']') depth--;
-    else if (ch === ',' && depth === 0) {
-      parts.push(list.slice(start, i).trim());
-      start = i + 1;
-    }
-  }
-  parts.push(list.slice(start).trim());
-  return parts.filter((p) => p !== '');
-}
 
 function maxSpecificity(list: readonly Specificity[]): Specificity {
   return list.reduce<Specificity>((best, s) => (compare(s, best) > 0 ? s : best), [0, 0, 0]);
@@ -97,10 +77,46 @@ function declarationsOf(
   return found;
 }
 
-function matchingSpecificity(el: Element, selectorText: string): Specificity | undefined {
+function lastCompoundStart(selector: string): number {
+  let depth = 0;
+  let quote: string | undefined;
+  let splitAt = 0;
+  for (let i = 0; i < selector.length; i++) {
+    const ch = selector[i];
+    if (quote !== undefined) {
+      if (ch === quote) quote = undefined;
+    } else if (ch === '"' || ch === "'") quote = ch;
+    else if (ch === '(' || ch === '[') depth++;
+    else if (ch === ')' || ch === ']') depth--;
+    else if (depth === 0 && (ch === ' ' || ch === '\t' || ch === '>' || ch === '+' || ch === '~')) {
+      splitAt = i + 1;
+    }
+  }
+  return splitAt;
+}
+
+function stripStateInTail(part: string, state: StyleState): string | undefined {
+  const tokenRe = new RegExp(`(?<!:):${state}(?![\\w-])`);
+  if (!tokenRe.test(part)) return part;
+  if (new RegExp(`:not\\([^)]*(?<!:):${state}(?![\\w-])[^)]*\\)`).test(part)) return undefined;
+  const splitAt = lastCompoundStart(part);
+  const head = part.slice(0, splitAt);
+  const tail = part.slice(splitAt);
+  if (tokenRe.test(head)) return undefined;
+  const strippedTail = tail.replace(new RegExp(`(?<!:):${state}(?![\\w-])`, 'g'), '').trim() || '*';
+  return `${head}${strippedTail}`;
+}
+
+function matchingSpecificity(
+  el: Element,
+  selectorText: string,
+  state?: StyleState,
+): Specificity | undefined {
   const matching = splitSelectorList(selectorText).filter((part) => {
+    const toMatch = state === undefined ? part : stripStateInTail(part, state);
+    if (toMatch === undefined) return false;
     try {
-      return el.matches(part);
+      return el.matches(toMatch);
     } catch {
       return false;
     }
@@ -113,6 +129,7 @@ type WalkState = {
   readonly properties: readonly string[];
   readonly view: Window;
   readonly sheet: StyleSheetRef;
+  readonly targetState: StyleState | undefined;
   /** Rules seen so far per `selector|media`, matched or not, so `occurrence` counts as in the file. */
   readonly seen: Map<string, number>;
   readonly out: Candidate[];
@@ -128,7 +145,7 @@ function visitStyleRule(state: WalkState, rule: CSSStyleRule, media: readonly st
   const ruleIndex = state.ruleIndex;
   state.ruleIndex++;
   state.position++;
-  const specificity = matchingSpecificity(state.el, rule.selectorText);
+  const specificity = matchingSpecificity(state.el, rule.selectorText, state.targetState);
   if (specificity === undefined) return;
   const declarations = declarationsOf(rule.style, state.properties);
   if (declarations.length === 0) return;
@@ -175,18 +192,43 @@ function walkRules(
   }
 }
 
-function countMatches(doc: Document, selector: string): number {
+function countMatches(doc: Document, selector: string, state?: StyleState): number {
+  const query =
+    state === undefined
+      ? selector
+      : splitSelectorList(selector)
+          .map((p) => stripStateInTail(p, state))
+          .filter((p): p is string => p !== undefined)
+          .join(', ');
+  if (query === '') return 0;
   try {
-    return doc.querySelectorAll(selector).length;
+    return doc.querySelectorAll(query).length;
   } catch {
     return 0;
   }
+}
+
+function computedForProperty(
+  property: string,
+  rules: readonly MatchedRule[],
+  computed: CSSStyleDeclaration,
+  state?: StyleState,
+): string {
+  if (state !== undefined) {
+    const decls = rules.flatMap((r) => r.declarations);
+    const imp = decls.find((d) => d.property === property && d.important);
+    if (imp !== undefined) return imp.value;
+    const normal = decls.find((d) => d.property === property);
+    if (normal !== undefined) return normal.value;
+  }
+  return computed.getPropertyValue(property).trim();
 }
 
 /** R-ST-04: every page rule that declares one of `properties` for `el`, the cascade winner first. */
 export function probeStyles(
   el: Element,
   properties: readonly string[],
+  targetState?: StyleState,
 ): Omit<BridgeStyleProbePayload, 'ref' | 'found'> {
   const doc = el.ownerDocument;
   const view = doc.defaultView ?? window;
@@ -204,6 +246,7 @@ export function probeStyles(
       properties,
       view,
       sheet: sheetRefOf(sheet),
+      targetState,
       seen: new Map(),
       out,
       position,
@@ -216,12 +259,15 @@ export function probeStyles(
   const computed = view.getComputedStyle(el);
   const style =
     el instanceof view.HTMLElement || el instanceof view.SVGElement ? el.style : undefined;
+  const matchedRules = out
+    .slice(0, MAX_RULES)
+    .map((c) => ({ ...c.rule, affects: countMatches(doc, c.rule.selector, targetState) }));
   return {
-    rules: out
-      .slice(0, MAX_RULES)
-      .map((c) => ({ ...c.rule, affects: countMatches(doc, c.rule.selector) })),
+    rules: matchedRules,
     inline: style === undefined ? [] : declarationsOf(style, properties),
-    computed: Object.fromEntries(properties.map((p) => [p, computed.getPropertyValue(p).trim()])),
+    computed: Object.fromEntries(
+      properties.map((p) => [p, computedForProperty(p, matchedRules, computed, targetState)]),
+    ),
   };
 }
 
@@ -233,5 +279,5 @@ export function answerStyleProbe(
   const el = doc.querySelectorAll(`[data-rc-loc="${request.ref.loc}"]`)[request.ref.index];
   if (el === undefined)
     return { ref: request.ref, found: false, rules: [], inline: [], computed: {} };
-  return { ref: request.ref, found: true, ...probeStyles(el, request.properties) };
+  return { ref: request.ref, found: true, ...probeStyles(el, request.properties, request.state) };
 }

@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
+import { splitSelectorList } from '@kumicraft/shared';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { answerStyleProbe, selectorSpecificity, splitSelectorList } from './style-probe.ts';
+import { answerStyleProbe, selectorSpecificity } from './style-probe.ts';
 
 describe('style-probe [R-ST-04]', () => {
   afterEach(() => {
@@ -86,5 +87,43 @@ describe('style-probe [R-ST-04]', () => {
       inline: [],
       computed: {},
     });
+  });
+
+  it('orders :hover rule first and sets computed.color to red when state is hover [R-ST-09]', () => {
+    const style = document.createElement('style');
+    style.textContent = '.a { color: blue; } .a:hover { color: red; }';
+    document.head.append(style);
+    document.body.innerHTML = '<button data-rc-loc="src/Btn.tsx:1:1" class="a"></button>';
+
+    const answer = answerStyleProbe(
+      {
+        ref: { loc: 'src/Btn.tsx:1:1', index: 0 },
+        properties: ['color'],
+        state: 'hover',
+      },
+      document,
+    );
+
+    expect(answer.found).toBe(true);
+    expect(answer.rules.map((r) => r.selector)).toEqual(['.a:hover', '.a']);
+    expect(answer.computed['color']).toBe('red');
+  });
+
+  it('excludes .a:hover rule when state is omitted [R-ST-04]', () => {
+    const style = document.createElement('style');
+    style.textContent = '.a { color: blue; } .a:hover { color: red; }';
+    document.head.append(style);
+    document.body.innerHTML = '<button data-rc-loc="src/Btn.tsx:1:1" class="a"></button>';
+
+    const answer = answerStyleProbe(
+      {
+        ref: { loc: 'src/Btn.tsx:1:1', index: 0 },
+        properties: ['color'],
+      },
+      document,
+    );
+
+    expect(answer.found).toBe(true);
+    expect(answer.rules.map((r) => r.selector)).toEqual(['.a']);
   });
 });
