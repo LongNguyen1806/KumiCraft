@@ -1,5 +1,13 @@
 // Tests for fake-agent test double and script execution (R-QA-10 to R-QA-13, S-111, S-115).
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,7 +29,8 @@ describe('fake-agent.mjs', () => {
   const proc = createNodeProcess();
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'rc-fake-agent-test-'));
+    // realpathSync: macOS tmpdir is a symlink (/var -> /private/var) and child cwd reports the real path.
+    tempDir = realpathSync(mkdtempSync(join(tmpdir(), 'rc-fake-agent-test-')));
   });
 
   afterEach(() => {

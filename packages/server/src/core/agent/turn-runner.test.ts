@@ -1,6 +1,6 @@
 // Tests for turn runner core lifecycle (WP-3.03b, R-AG-11, R-AG-12, R-AG-14, R-AG-17, S-110 to S-116).
 import { existsSync, readFileSync } from 'node:fs';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -44,7 +44,8 @@ describe('TurnRunner core lifecycle [WP-3.03b]', () => {
   let env: TestTurnEnv;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(join(tmpdir(), 'rc-turn-runner-'));
+    // realpath: macOS tmpdir is a symlink (/var -> /private/var) and child cwd reports the real path.
+    tempDir = await realpath(await mkdtemp(join(tmpdir(), 'rc-turn-runner-')));
     env = setupTurnRunnerTest(tempDir);
     await writeTestProjectFiles(env.projectRoot, env.dataDir, env.cacheDir);
   });
