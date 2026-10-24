@@ -52,4 +52,9 @@ export interface FileSystemPort {
   rename(root: string, from: string, to: string): Promise<Result<void>>;
   /** Size and modification time without following symlinks (lstat). Missing: E015; outside root: E012. */
   stat(root: string, path: string): Promise<Result<FileStat>>;
+  /**
+   * The folder's real path: symlinks resolved and, on Windows, 8.3 short names expanded. Vite and
+   * the Bridge see module ids by real path, so a project root must be one too. Missing: unchanged.
+   */
+  realRoot(path: string): Promise<string>;
 }

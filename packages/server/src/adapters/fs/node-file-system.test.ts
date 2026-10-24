@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -73,6 +73,15 @@ describe('NodeFileSystem', () => {
     await symlink(join(root, 'real'), join(root, 'alias'), isWindows ? 'junction' : 'dir');
 
     expect(codeOf(await fs.writeTextAtomic(root, 'alias', 'x'))).toBe('E012');
+  });
+
+  it('gives a project folder opened through a link its real path, a missing one unchanged [S-22]', async () => {
+    await mkdir(join(root, 'real'));
+    const alias = join(root, 'alias');
+    await symlink(join(root, 'real'), alias, isWindows ? 'junction' : 'dir');
+
+    expect(await fs.realRoot(alias)).toBe(await realpath(join(root, 'real')));
+    expect(await fs.realRoot(join(root, 'missing'))).toBe(join(root, 'missing'));
   });
 
   it('matches the root case-insensitively on Windows [S-23]', async () => {

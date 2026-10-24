@@ -90,11 +90,14 @@ class ProjectServiceImpl implements ProjectService {
   }
 
   async open(targetPath?: string): Promise<Result<ProjectInfo>> {
-    const root =
+    const given =
       targetPath ?? (this.current.status === 'open' ? this.current.root : this.deps.initialRoot);
-    if (!root) {
+    if (!given) {
       return err({ code: 'E021', params: { missing: 'project' } });
     }
+    // Vite reports module ids by real path (macOS /var -> /private/var, Windows RUNNER~1), so the
+    // root must match or the Bridge stamps no file of the project.
+    const root = await this.deps.fs.realRoot(given);
     const moved = await moveLegacyWorkspace(this.deps.fs, root);
     if (!moved.ok) this.deps.logger.warn({ code: moved.error.code }, 'cannot move .reactcraft');
 

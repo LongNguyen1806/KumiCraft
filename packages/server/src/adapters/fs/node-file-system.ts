@@ -267,6 +267,15 @@ async function statFile(platform: Platform, root: string, path: string): Promise
   }
 }
 
+/** A project folder's real path; a folder that cannot be resolved keeps the given path. */
+async function realRoot(path: string): Promise<string> {
+  try {
+    return await realpath(path);
+  } catch {
+    return path;
+  }
+}
+
 export function createNodeFileSystem(platform: Platform): FileSystemPort {
   return {
     readText: (root, path, options) => readText(platform, root, path, options),
@@ -309,5 +318,6 @@ export function createNodeFileSystem(platform: Platform): FileSystemPort {
       });
     },
     stat: (root, path) => statFile(platform, root, path),
+    realRoot,
   };
 }
