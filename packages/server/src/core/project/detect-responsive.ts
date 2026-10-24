@@ -1,5 +1,5 @@
 // Detect responsiveMode by scanning source files (SPEC-04 R-PJ-09).
-import type { ResponsiveMode } from '@reactcraft/shared';
+import type { ResponsiveMode } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 

@@ -1,6 +1,6 @@
 // Align and distribute operations for elements in a free frame (SPEC-04 section 18E, R-FF-17, WP-2.12b).
-import type { AttributeLevelEdit, ElementRef } from '@reactcraft/shared';
-import { applyPlacement } from '@reactcraft/shared';
+import type { AttributeLevelEdit, ElementRef } from '@kumicraft/shared';
+import { applyPlacement } from '@kumicraft/shared';
 import { create } from 'zustand';
 
 import { editSourceBatch } from '../../api/source-client.ts';

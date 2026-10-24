@@ -1,4 +1,4 @@
-import { DEFAULT_DESIGN_DIRS, type DesignDirs } from '@reactcraft/shared';
+import { DEFAULT_DESIGN_DIRS, type DesignDirs } from '@kumicraft/shared';
 import { type SyntheticEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

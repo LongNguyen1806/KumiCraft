@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { LIBRARY_BLOCKS } from '@reactcraft/shared';
+import { LIBRARY_BLOCKS } from '@kumicraft/shared';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 

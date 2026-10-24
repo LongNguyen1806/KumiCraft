@@ -1,7 +1,7 @@
 // List of components and layouts for Studio component panel (SPEC-04 M-CP, R-CP-11..13).
 import * as path from 'node:path';
 
-import type { ProjectComponent, ProjectInfo } from '@reactcraft/shared';
+import type { ProjectComponent, ProjectInfo } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import {
@@ -37,7 +37,7 @@ async function collectFiles(
 }
 
 async function readConfigComponents(fs: FileSystemPort, root: string): Promise<readonly string[]> {
-  const read = await fs.readText(root, '.reactcraft/components.json');
+  const read = await fs.readText(root, '.kumicraft/components.json');
   if (!read.ok) return [];
   try {
     const parsed = JSON.parse(read.value) as { readonly files?: readonly unknown[] };

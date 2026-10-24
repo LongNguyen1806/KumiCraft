@@ -1,5 +1,5 @@
 // Image attachments management for chat panel (R-CH-02, CW-52).
-import type { ChatImageKind } from '@reactcraft/shared';
+import type { ChatImageKind } from '@kumicraft/shared';
 import type { TFunction } from 'i18next';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,5 +1,5 @@
 // Extract component modal dialog (SPEC-04 R-CP-14, spec-log #24).
-import { pageNames, type StructureResult, toComponentName } from '@reactcraft/shared';
+import { pageNames, type StructureResult, toComponentName } from '@kumicraft/shared';
 import type { TFunction } from 'i18next';
 import { type SyntheticEvent, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';

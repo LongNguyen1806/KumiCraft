@@ -8,8 +8,8 @@ import type {
   PropertyId,
   Scope,
   ThemeInfo,
-} from '@reactcraft/shared';
-import { BREAKPOINT_WIDTHS, parseClasses } from '@reactcraft/shared';
+} from '@kumicraft/shared';
+import { BREAKPOINT_WIDTHS, parseClasses } from '@kumicraft/shared';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 

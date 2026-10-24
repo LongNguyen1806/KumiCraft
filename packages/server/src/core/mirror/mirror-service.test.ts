@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, symlink, utimes, writeFile } from 'node:fs/promises
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { BackendInfo } from '@reactcraft/shared';
+import type { BackendInfo } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createNodeFileSystem } from '../../adapters/fs/node-file-system.ts';
@@ -21,7 +21,7 @@ let cacheDir: string;
 let backendDir: string;
 
 beforeEach(async () => {
-  baseDir = await mkdtemp(join(tmpdir(), 'reactcraft-mirror-test-'));
+  baseDir = await mkdtemp(join(tmpdir(), 'kumicraft-mirror-test-'));
   cacheDir = join(baseDir, 'cache');
   backendDir = join(baseDir, 'backend');
   await mkdir(cacheDir, { recursive: true });

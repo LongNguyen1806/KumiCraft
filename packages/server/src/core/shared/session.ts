@@ -1,5 +1,5 @@
 // Session information returned by GET /api/v1/session (SPEC-03 section 5.1).
-import type { FeatureId } from '@reactcraft/shared';
+import type { FeatureId } from '@kumicraft/shared';
 
 import type { AppError } from './result.ts';
 
@@ -46,7 +46,7 @@ export function createSessionInfoProvider(input: SessionInfoInput): () => Sessio
   });
 }
 
-/** Narrows `process.platform` to the platforms ReactCraft supports. */
+/** Narrows `process.platform` to the platforms KumiCraft supports. */
 export function toSupportedPlatform(value: string): Platform | undefined {
   return value === 'win32' || value === 'darwin' || value === 'linux' ? value : undefined;
 }

@@ -1,6 +1,6 @@
 // Multi-file atomic commit and locking for Source Editor (R-SE-29).
-import type { Result } from '@reactcraft/shared';
-import { ok } from '@reactcraft/shared';
+import type { Result } from '@kumicraft/shared';
+import { ok } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { AstNode } from './ast-helpers.ts';

@@ -1,5 +1,5 @@
 // Frame size select dropdown for the Canvas.
-import type { Frame } from '@reactcraft/shared';
+import type { Frame } from '@kumicraft/shared';
 import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 

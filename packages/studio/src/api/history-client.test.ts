@@ -1,5 +1,5 @@
 // History client reads the real server answers (R-HI-01, R-HI-02).
-import type { HistoryStep } from '@reactcraft/shared';
+import type { HistoryStep } from '@kumicraft/shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { redoHistory, undoHistory } from './history-client.ts';

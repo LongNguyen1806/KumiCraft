@@ -1,5 +1,5 @@
 // Unit tests for Free Frame Studio features (Scenarios 12–16, R-FF-10..19).
-import type { ElementSource } from '@reactcraft/shared';
+import type { ElementSource } from '@kumicraft/shared';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -115,7 +115,7 @@ describe('Studio: Free Frame features [Scenarios 12–16]', () => {
 
     expect(useCanvasViewStore.getState().grid).toBe(16);
     expect(setGridSpy).toHaveBeenCalledWith(16);
-    expect(localStorage.getItem('reactcraft:canvas-grid')).toBe('16');
+    expect(localStorage.getItem('kumicraft:canvas-grid')).toBe('16');
   });
 
   it('Scenario 15: displays warning on regular page and hides it on draft page [R-FF-19]', async () => {

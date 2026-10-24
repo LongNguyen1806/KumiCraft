@@ -1,5 +1,5 @@
 // LayerTree row rendering component (SPEC-04 M-LT).
-import type { TreeNode } from '@reactcraft/shared';
+import type { TreeNode } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
 import { useDndStore } from '../dnd/dnd-store.ts';

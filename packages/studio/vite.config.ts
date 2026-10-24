@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-const apiPort = process.env.REACTCRAFT_API_PORT ?? '4310';
+const apiPort = process.env.KUMICRAFT_API_PORT ?? '4310';
 
 export default defineConfig({
   // React Compiler (VG-13) through `oxc-transform-react`, the Rust port of the compiler.

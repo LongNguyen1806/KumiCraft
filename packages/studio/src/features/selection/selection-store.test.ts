@@ -1,5 +1,5 @@
 // Unit tests for the selection store (R-SL-05, R-SL-10).
-import type { ElementRef, TreeNode } from '@reactcraft/shared';
+import type { ElementRef, TreeNode } from '@kumicraft/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useSelectionStore } from './selection-store.ts';

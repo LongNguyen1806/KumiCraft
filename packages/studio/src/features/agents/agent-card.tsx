@@ -1,5 +1,5 @@
 // Displays one AI agent status, docs link, and context actions (R-AG-10, R-AG-21).
-import type { AgentId, AgentStatus } from '@reactcraft/shared';
+import type { AgentId, AgentStatus } from '@kumicraft/shared';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 

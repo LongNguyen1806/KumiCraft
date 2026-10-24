@@ -1,5 +1,5 @@
 // Opening a folder with the built CLI: a folder without a project, a project pulled from Git that
-// asks for trust (S-80, S-81) and remembers it (S-82), and a broken or old `.reactcraft/workspace.json`
+// asks for trust (S-80, S-81) and remembers it (S-82), and a broken or old `.kumicraft/workspace.json`
 // that is shown, never overwritten (V-105). Projects are copies of the supported fixture (R-PJ-07).
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -21,7 +21,7 @@ const start = async () => {
   return session;
 };
 
-/** `.reactcraft/workspace.json` of SPEC-03 section 3, as a project pulled from Git has it. */
+/** `.kumicraft/workspace.json` of SPEC-03 section 3, as a project pulled from Git has it. */
 const PROJECT = {
   schemaVersion: 2,
   id: 'e2eshop001',
@@ -42,8 +42,8 @@ const PROJECT = {
 async function writeProject(text = JSON.stringify(PROJECT, undefined, 2)) {
   await folder.remove();
   folder = await copyFixture('projects/vite8-react19-ts');
-  await mkdir(join(folder.path, '.reactcraft'), { recursive: true });
-  const file = join(folder.path, '.reactcraft', 'workspace.json');
+  await mkdir(join(folder.path, '.kumicraft'), { recursive: true });
+  const file = join(folder.path, '.kumicraft', 'workspace.json');
   await writeFile(file, text);
   return file;
 }
@@ -106,11 +106,11 @@ test('a 0.18 workspace.json is reported and left untouched [V-105]', async ({ pa
   expect(await readFile(file, 'utf8')).toBe(old);
 });
 
-test('a second ReactCraft on the same project is refused while the first runs [E018]', async () => {
+test('a second KumiCraft on the same project is refused while the first runs [E018]', async () => {
   await writeProject();
   await start();
 
-  await expect(start()).rejects.toThrow(/already open in another ReactCraft session/);
+  await expect(start()).rejects.toThrow(/already open in another KumiCraft session/);
 });
 
 test('a new project is created, trusted, installed and shown on the canvas [AC-01, R-QA-03] @network', async ({
@@ -157,7 +157,7 @@ test('a new project is created, trusted, installed and shown on the canvas [AC-0
   const pkgJson = JSON.parse(pkgJsonText) as { name?: string };
   expect(pkgJson.name).toBe('shop');
 
-  const wsStat = await stat(join(folder.path, '.reactcraft', 'workspace.json'));
+  const wsStat = await stat(join(folder.path, '.kumicraft', 'workspace.json'));
   expect(wsStat.isFile()).toBe(true);
 
   const viteStat = await stat(join(folder.path, 'node_modules', 'vite'));
@@ -172,7 +172,7 @@ test('keeps the Studio settings in the test config folder [R-QA-02]', async () =
   expect(json.language).toBe('en');
 });
 
-test('a Studio tab still open reconnects when ReactCraft runs again [S-05a]', async ({ page }) => {
+test('a Studio tab still open reconnects when KumiCraft runs again [S-05a]', async ({ page }) => {
   await writeProject();
   const first = await start();
   await first.api('project/trust', 'POST', { trusted: true });

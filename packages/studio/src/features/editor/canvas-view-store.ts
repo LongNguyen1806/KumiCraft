@@ -1,5 +1,5 @@
 // Zustand store for Canvas view state (zoom, frame, mode, tool) (SPEC-04 R-RN-21, R-KB-12, R-DT-10).
-import { defaultFrames, type DrawTool, type Frame, type Placement } from '@reactcraft/shared';
+import { defaultFrames, type DrawTool, type Frame, type Placement } from '@kumicraft/shared';
 import { create } from 'zustand';
 
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
@@ -57,7 +57,7 @@ export function placementTailwindMajor(placement: Placement | undefined): 3 | 4 
   return placement === undefined ? undefined : useCanvasViewStore.getState().tailwindMajor;
 }
 
-const GRID_STORAGE_KEY = 'reactcraft:canvas-grid';
+const GRID_STORAGE_KEY = 'kumicraft:canvas-grid';
 
 export function getStoredGrid(): CanvasGridSize {
   try {
@@ -78,7 +78,7 @@ export function setStoredGrid(grid: CanvasGridSize): void {
   }
 }
 
-const DRAFT_STORAGE_PREFIX = 'reactcraft:draft:';
+const DRAFT_STORAGE_PREFIX = 'kumicraft:draft:';
 
 export function getStoredDraftFile(projectId: string): string | undefined {
   try {

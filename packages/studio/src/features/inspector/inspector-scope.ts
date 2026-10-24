@@ -5,7 +5,7 @@ import {
   type InteractionState,
   type ResponsiveMode,
   type Scope,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { useMemo } from 'react';
 
 export function computeWritePrefix(scope: Scope, mode: ResponsiveMode): string {

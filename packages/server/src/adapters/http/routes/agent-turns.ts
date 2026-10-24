@@ -4,7 +4,7 @@ import {
   type ProjectInfo,
   type Result,
   StartTurnRequestSchema,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 

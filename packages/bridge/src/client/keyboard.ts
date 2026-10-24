@@ -1,5 +1,5 @@
 // Keyboard shortcut forwarding for bridge (R-BR-18, R-KB-10, R-KB-12).
-import { type KeyPress, matchShortcut } from '@reactcraft/shared';
+import { type KeyPress, matchShortcut } from '@kumicraft/shared';
 
 /** Check if the target is a typing element without relying on prototype instanceof. */
 export function isTypingTarget(target: unknown): boolean {

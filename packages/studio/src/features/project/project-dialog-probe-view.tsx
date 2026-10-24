@@ -1,5 +1,5 @@
 // Probe result view and create project form for ProjectDialog (SPEC-04 M-PJ).
-import type { PackageManager, ProjectProbe } from '@reactcraft/shared';
+import type { PackageManager, ProjectProbe } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

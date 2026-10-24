@@ -1,5 +1,5 @@
 // Settings → Missing tools (R-AG-20, round 7a).
-import type { ToolGap } from '@reactcraft/shared';
+import type { ToolGap } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
@@ -63,7 +63,7 @@ describe('Missing tools section [R-AG-20]', () => {
 
     expect(await screen.findByTestId('tool-gaps-empty')).toBeDefined();
     expect(screen.getByTestId('tool-gaps').textContent).toContain(
-      String.raw`claude mcp add reactcraft -- npx reactcraft mcp "D:\work\shop"`,
+      String.raw`claude mcp add kumicraft -- npx kumicraft mcp "D:\work\shop"`,
     );
     expect(screen.getByTestId<HTMLButtonElement>('tool-gaps-export').disabled).toBe(true);
   });

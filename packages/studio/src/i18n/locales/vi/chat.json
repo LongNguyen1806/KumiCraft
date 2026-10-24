@@ -56,7 +56,7 @@
   "loginStep1": "chọn đăng nhập Google trong cửa sổ terminal vừa mở;",
   "loginStep2": "đăng nhập trên trình duyệt rồi bấm Copy mã;",
   "loginStep3Bold": "dán mã vào cửa sổ terminal đó,",
-  "loginStep3Rest": "không dán vào ReactCraft.",
+  "loginStep3Rest": "không dán vào KumiCraft.",
   "loginDoneNotice": "✓ Đã đăng nhập",
   "loginTimeoutNotice": "Chưa thấy đăng nhập xong",
   "loginWaitingNotice": "Đang chờ bạn đăng nhập…",
@@ -65,7 +65,7 @@
   "loginHintClaude": "Có thể Claude Code chưa đăng nhập",
   "toolGaps": {
     "title": "Công cụ còn thiếu",
-    "help": "Khi agent bên ngoài (Claude Code, Antigravity…) cần thao tác mà ReactCraft chưa có, nó ghi vào đây.",
+    "help": "Khi agent bên ngoài (Claude Code, Antigravity…) cần thao tác mà KumiCraft chưa có, nó ghi vào đây.",
     "empty": "Chưa có mục nào.",
     "connect": "Nối Claude Code với dự án này (chạy một lần trong terminal):",
     "copy": "Copy lệnh",
@@ -75,7 +75,7 @@
     "export": "Xuất Markdown",
     "showMore": "Xem thêm",
     "showLess": "Thu gọn",
-    "markdownTitle": "Công cụ ReactCraft còn thiếu",
+    "markdownTitle": "Công cụ KumiCraft còn thiếu",
     "markdownWhy": "Vì sao",
     "markdownExample": "Ví dụ",
     "markdownLast": "Lần gần nhất"

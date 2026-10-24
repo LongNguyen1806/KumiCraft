@@ -1,4 +1,4 @@
-import type { ElementInfo, ElementRef } from '@reactcraft/shared';
+import type { ElementInfo, ElementRef } from '@kumicraft/shared';
 
 export const MAX_DOM_CLASS = 4000;
 

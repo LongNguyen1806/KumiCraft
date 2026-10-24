@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import type { BridgeDrawEndPayload } from '@reactcraft/shared';
+import type { BridgeDrawEndPayload } from '@kumicraft/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { buildDrawEnd, DrawController, drawTarget, findDrawContainer } from './draw-tool.ts';

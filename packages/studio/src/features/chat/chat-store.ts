@@ -1,5 +1,5 @@
 // Zustand store for AI chat panel state and turns (WP-3.05a, WP-3.05b, R-CH-01, R-CH-02, R-CH-03, R-CH-05).
-import type { AgentEvent, TurnSummary } from '@reactcraft/shared';
+import type { AgentEvent, TurnSummary } from '@kumicraft/shared';
 import { create, type StateCreator } from 'zustand';
 
 import type { ErrorInfo } from '../../routes/error-text.ts';

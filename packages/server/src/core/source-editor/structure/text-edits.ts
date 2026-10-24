@@ -1,5 +1,5 @@
 // Text range replacement without MagicString, tracking new offsets for marks (SPEC-04 section 14).
-import { err, ok, type Result } from '@reactcraft/shared';
+import { err, ok, type Result } from '@kumicraft/shared';
 
 export type TextEdit = {
   readonly start: number;

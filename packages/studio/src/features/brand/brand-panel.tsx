@@ -3,7 +3,7 @@ import {
   type ThemeInfo,
   type ThemeToken,
   type ThemeTokenKind,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { matchShortcut } from '@reactcraft/shared';
+import { matchShortcut } from '@kumicraft/shared';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 

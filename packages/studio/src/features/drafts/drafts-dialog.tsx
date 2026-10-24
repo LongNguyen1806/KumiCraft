@@ -1,4 +1,4 @@
-import type { DraftInfo } from '@reactcraft/shared';
+import type { DraftInfo } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

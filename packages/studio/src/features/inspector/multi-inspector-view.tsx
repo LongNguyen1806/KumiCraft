@@ -7,8 +7,8 @@ import type {
   ElementSource,
   PropertyId,
   Scope,
-} from '@reactcraft/shared';
-import { parseClasses, readValue } from '@reactcraft/shared';
+} from '@kumicraft/shared';
+import { parseClasses, readValue } from '@kumicraft/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

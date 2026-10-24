@@ -1,5 +1,5 @@
 // Hook for dev server runner status and WebSocket logs (SPEC-04 M-RN, R-PJ-24).
-import { type RunnerStatus, RunnerStatusSchema } from '@reactcraft/shared';
+import { type RunnerStatus, RunnerStatusSchema } from '@kumicraft/shared';
 import { useCallback, useEffect } from 'react';
 import { create } from 'zustand';
 

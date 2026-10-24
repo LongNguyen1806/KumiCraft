@@ -1,5 +1,5 @@
 // Agent types and adapter interface (WP-3.03a, SPEC-06 section 5, S-111, S-112).
-import type { AgentEvent, AgentId, AgentLoginState } from '@reactcraft/shared';
+import type { AgentEvent, AgentId, AgentLoginState } from '@kumicraft/shared';
 
 import type { ProcessOutput } from '../ports/process-port.ts';
 

@@ -1,5 +1,5 @@
 // Reacts to files of the open project changing on disk (R-HI-05, V-70, S-84).
-import { WORKSPACE_FILE } from '@reactcraft/shared';
+import { WORKSPACE_FILE } from '@kumicraft/shared';
 
 import { computeSha256, type HistoryService } from '../history/history-service.ts';
 import type { EventBusPort } from '../ports/event-bus-port.ts';
@@ -16,7 +16,7 @@ export type ProjectWatchDeps = {
   readonly history: Pick<HistoryService, 'handleExternalChange'>;
   readonly logger: LoggerPort;
   readonly eventBus?: EventBusPort | undefined;
-  /** `.reactcraft/workspace.json` changed on disk. */
+  /** `.kumicraft/workspace.json` changed on disk. */
   readonly onWorkspaceFileChanged: () => Promise<void>;
 };
 
@@ -32,7 +32,7 @@ async function currentHash(fs: FileSystemPort, root: string, file: string): Prom
   return read.ok ? computeSha256(read.value) : '';
 }
 
-/** Files edited outside ReactCraft (R-HI-05); ReactCraft's own data under .reactcraft/ is not. */
+/** Files edited outside KumiCraft (R-HI-05); KumiCraft's own data under .kumicraft/ is not. */
 async function externalChanges(
   deps: ProjectWatchDeps,
   root: string,
@@ -40,7 +40,7 @@ async function externalChanges(
 ): Promise<string[]> {
   const changed: string[] = [];
   for (const file of files) {
-    if (file.startsWith('.reactcraft/')) continue;
+    if (file.startsWith('.kumicraft/')) continue;
     const hash = await currentHash(deps.fs, root, file);
     if (deps.history.handleExternalChange(file, hash)) changed.push(file);
   }

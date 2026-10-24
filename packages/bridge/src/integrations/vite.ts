@@ -1,4 +1,4 @@
-// Vite plugin bridge connecting target project dev server to ReactCraft Studio (SPEC-04 M-BR, R-BR-04, R-BR-05).
+// Vite plugin bridge connecting target project dev server to KumiCraft Studio (SPEC-04 M-BR, R-BR-04, R-BR-05).
 import { BRIDGE_CLIENT_CODE } from '../client/bridge-client.generated.ts';
 import { transformJsx } from '../transform/transform-jsx.ts';
 import { createDraftPageHooks, type DraftDevServer } from './draft-page.ts';
@@ -9,15 +9,15 @@ export type BridgePluginOptions = {
   readonly nonce: string;
   readonly studioOrigin: string;
   readonly sourceExtensions?: readonly string[] | undefined;
-  /** Drafts folder served at `/__reactcraft/draft` (R-DR-12); absent: no draft page. */
+  /** Drafts folder served at `/__kumicraft/draft` (R-DR-12); absent: no draft page. */
   readonly draftsDir?: string | undefined;
   /** The project's global CSS entries, loaded by the draft page (R-DR-12, Round S1). */
   readonly globalCss?: readonly string[] | undefined;
 };
 
 /** The URL the page loads; served as a module so Vite gives it `import.meta.hot` (R-BR-17). */
-export const BRIDGE_CLIENT_URL = '/@reactcraft/bridge-client.js';
-const BRIDGE_CLIENT_ID = '\0reactcraft-bridge-client';
+export const BRIDGE_CLIENT_URL = '/@kumicraft/bridge-client.js';
+const BRIDGE_CLIENT_ID = '\0kumicraft-bridge-client';
 
 export type HtmlTagDescriptor = {
   readonly tag: string;
@@ -52,11 +52,11 @@ function createIndexHtmlTags(options: BridgePluginOptions): readonly HtmlTagDesc
   ];
 }
 
-export function createReactCraftBridgePlugin(options: BridgePluginOptions) {
+export function createKumiCraftBridgePlugin(options: BridgePluginOptions) {
   const draftPage = createDraftPageHooks(options);
 
   return {
-    name: 'reactcraft:bridge',
+    name: 'kumicraft:bridge',
     apply: 'serve' as const,
     enforce: 'pre' as const,
 
@@ -76,7 +76,7 @@ export function createReactCraftBridgePlugin(options: BridgePluginOptions) {
       },
     },
 
-    // R-DR-12: the draft preview page at `/__reactcraft/draft`.
+    // R-DR-12: the draft preview page at `/__kumicraft/draft`.
     configureServer(server: DraftDevServer): void {
       draftPage.configureServer(server);
     },

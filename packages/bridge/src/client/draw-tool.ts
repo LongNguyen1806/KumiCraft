@@ -6,7 +6,7 @@ import {
   type InsertTarget,
   parseLocString,
   snap,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { getCandidateChain } from './candidate-chain.ts';
 import { canContain, type DropRect } from './drop-target.ts';

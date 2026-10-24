@@ -24,7 +24,7 @@ Kích thước mỗi lần giao: khoảng ≤ 600 dòng code, ≤ 15 test, một
 4. **Sửa 3 lần mà một test vẫn đỏ thì dừng**, báo: tên test, thông báo lỗi, đã thử gì, nghi ngờ gì. Không thử lần thứ 4.
 5. **Cấm** làm test qua bằng cách: sửa file test khóa, thêm `waitForTimeout`, `if (...) return` trong test, `skip`, nới ngưỡng, `eslint-disable`, `@ts-ignore`, `as any`. Thấy test có vẻ sai thì dừng và báo.
 6. Trong lúc làm chỉ chạy lệnh nhanh cho phần đang sửa: `pnpm exec eslint <file>`, `pnpm exec tsc --noEmit -p packages/<gói>`, `pnpm exec vitest run <file>` (chạy từ thư mục gốc repo). Chạy chờ kết quả, không chạy nền.
-7. Cuối cùng chạy một lần `pnpm verify` (CW-51, CW-53). `pnpm test:e2e` (bộ hồi quy, Chromium) chỉ chạy khi bản giao việc ghi rõ (lượt sửa Bridge, runner, phiên). Sửa shared hoặc bridge thì chạy `pnpm --filter @reactcraft/bridge build` trước.
+7. Cuối cùng chạy một lần `pnpm verify` (CW-51, CW-53). `pnpm test:e2e` (bộ hồi quy, Chromium) chỉ chạy khi bản giao việc ghi rõ (lượt sửa Bridge, runner, phiên). Sửa shared hoặc bridge thì chạy `pnpm --filter @kumicraft/bridge build` trước.
 8. Tự chạy thử mục **Kiểm tay** trên dự án mẫu khi làm được, và ghi bước nào đã thử vào báo cáo.
 
 ## Lỗi lint hay vấp (viết đúng ngay từ đầu)
@@ -47,7 +47,7 @@ Các lượt Phase 2 đều phải sửa lại những lỗi sau ở cuối. Vi�
 - Chỉ sửa file trong phạm vi bản giao việc; cần sửa ngoài phạm vi, thêm thư viện, hoặc đổi hành vi người dùng thấy thì **dừng và báo**.
 - Không sửa `docs/spec.md`; chỗ lệch ghi vào `docs/construction/spec-log.md` (CW-61).
 - Test gắn mã quy tắc `[R-xx]`, `[V-xx]`, `[S-xx]`, `[AC-xx]` (QC-93); `pnpm trace` phải xanh.
-- Test không chạm cấu hình thật của người dùng: `REACTCRAFT_CONFIG_DIR` và thư mục tạm (R-QA-02). Fixture không sửa tại chỗ (QC-06, R-QA-01).
+- Test không chạm cấu hình thật của người dùng: `KUMICRAFT_CONFIG_DIR` và thư mục tạm (R-QA-02). Fixture không sửa tại chỗ (QC-06, R-QA-01).
 - Test kiểm kết quả thật (đọc file trên đĩa, so từng byte khi spec yêu cầu); **cấm** test không có `expect` cuối hoặc thoát sớm bằng `if`.
 - Không viết E2E mới. Sửa test E2E cũ chỉ khi bản giao việc cho phép (thay đổi hành vi có chủ đích).
 

@@ -1,4 +1,4 @@
-import { matchShortcut } from '@reactcraft/shared';
+import { matchShortcut } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -190,7 +190,7 @@ describe('frame helpers', () => {
     expect([clampWidth('right', 50), clampWidth('right', 400), clampWidth('right', 900)]).toEqual([
       360, 400, 480,
     ]);
-    localStorage.setItem('reactcraft.panels', '{ broken');
+    localStorage.setItem('kumicraft.panels', '{ broken');
     expect(readLayout().width).toEqual({ left: 300, right: 360 });
   });
 });

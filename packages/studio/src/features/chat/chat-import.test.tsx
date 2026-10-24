@@ -1,5 +1,5 @@
 // Tests for chat import folder/doc functionality (R-CH-02, R-MR-01, R-AG-21).
-import type { BackendInfo, ProjectInfo } from '@reactcraft/shared';
+import type { BackendInfo, ProjectInfo } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -46,7 +46,7 @@ describe('Chat Import Part A [R-CH-02, R-MR-01, R-AG-21]', () => {
   });
 
   beforeEach(async () => {
-    sessionStorage.setItem('reactcraft.sessionToken', 'tok-import');
+    sessionStorage.setItem('kumicraft.sessionToken', 'tok-import');
     localStorage.clear();
     await i18next.changeLanguage('vi');
     useAgentsStore.getState().reset();
@@ -276,7 +276,7 @@ describe('Chat Import Part A [R-CH-02, R-MR-01, R-AG-21]', () => {
   });
 
   it('places chat-import and chat-add-image in panel header when rendered in RightPanel [R-CH-02]', async () => {
-    localStorage.setItem('reactcraft.rightPanelTab', 'chat');
+    localStorage.setItem('kumicraft.rightPanelTab', 'chat');
     render(<RightPanel trusted />);
     const headerActions = await screen.findByTestId('panel-header-actions');
     const importBtn = await screen.findByTestId('chat-import');

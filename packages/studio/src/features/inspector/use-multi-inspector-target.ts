@@ -1,5 +1,5 @@
 // Hook managing Inspector multi-target selection and batch source loading (M-IN, R-CB-15).
-import { type ElementRef, parseLocString } from '@reactcraft/shared';
+import { type ElementRef, parseLocString } from '@kumicraft/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { createEventsClient } from '../../api/events-client.ts';

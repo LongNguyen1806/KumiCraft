@@ -1,6 +1,6 @@
 // Unit tests for an Inspector field keeping what the user types while it has focus (R-IN-20).
-import type { ClassContext, Scope } from '@reactcraft/shared';
-import { BREAKPOINT_WIDTHS, parseClasses } from '@reactcraft/shared';
+import type { ClassContext, Scope } from '@kumicraft/shared';
+import { BREAKPOINT_WIDTHS, parseClasses } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 

@@ -1,5 +1,5 @@
 // Tests for SettingsDialog agent section and cross-component reactivity (R-AG-10, R-AG-21, R-CH-06).
-import type { AgentStatus, JobStatus, ProjectInfo } from '@reactcraft/shared';
+import type { AgentStatus, JobStatus, ProjectInfo } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -84,7 +84,7 @@ describe('Settings AgentSection [R-AG-10, R-AG-21, R-CH-06]', () => {
 
   beforeEach(async () => {
     sockets = [];
-    sessionStorage.setItem('reactcraft.sessionToken', 'token-test');
+    sessionStorage.setItem('kumicraft.sessionToken', 'token-test');
     vi.stubGlobal('WebSocket', FakeSocket);
     await i18next.changeLanguage('vi');
     useAgentsStore.getState().reset();

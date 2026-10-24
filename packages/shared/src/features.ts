@@ -37,7 +37,7 @@ export const RELEASED_PHASE: number = 0;
  * A feature is enabled when its phase is at most {@link RELEASED_PHASE}, or when the development
  * override names it.
  *
- * @param override - Value of `REACTCRAFT_FEATURES`: `all`, or feature ids separated by commas.
+ * @param override - Value of `KUMICRAFT_FEATURES`: `all`, or feature ids separated by commas.
  *   Unknown ids are ignored.
  * @returns Enabled feature ids in declaration order.
  */

@@ -3,11 +3,11 @@ import { readFile, stat } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { join, posix } from 'node:path';
 
-/** Canvas URL of a draft: `/__reactcraft/draft?file=<RelPath>` (R-DR-12, R-DR-13). */
-export const DRAFT_PAGE_PATH = '/__reactcraft/draft';
+/** Canvas URL of a draft: `/__kumicraft/draft?file=<RelPath>` (R-DR-12, R-DR-13). */
+export const DRAFT_PAGE_PATH = '/__kumicraft/draft';
 /** Module the draft page loads; the file rides in the path so Vite never strips it as a query. */
-export const DRAFT_ENTRY_PREFIX = '/@reactcraft/draft-entry/';
-const DRAFT_ENTRY_ID_PREFIX = '\0reactcraft-draft-entry/';
+export const DRAFT_ENTRY_PREFIX = '/@kumicraft/draft-entry/';
+const DRAFT_ENTRY_ID_PREFIX = '\0kumicraft-draft-entry/';
 
 const DRAFT_EXTENSIONS = ['.tsx', '.jsx'] as const;
 
@@ -144,7 +144,7 @@ function sendNotFound(res: ServerResponse): void {
   res.end('Not found');
 }
 
-/** Vite middleware answering `/__reactcraft/draft`; every other URL goes on to Vite. */
+/** Vite middleware answering `/__kumicraft/draft`; every other URL goes on to Vite. */
 export function createDraftMiddleware(
   options: DraftPageOptions,
   server: Pick<DraftDevServer, 'transformIndexHtml'>,
@@ -171,7 +171,7 @@ export function createDraftMiddleware(
   };
 }
 
-/** `/@reactcraft/draft-entry/<file>` → virtual id, only for a file inside the drafts folder. */
+/** `/@kumicraft/draft-entry/<file>` → virtual id, only for a file inside the drafts folder. */
 export function resolveDraftEntryId(id: string, draftsDir: string): string | undefined {
   if (!id.startsWith(DRAFT_ENTRY_PREFIX)) return undefined;
   let file: string;

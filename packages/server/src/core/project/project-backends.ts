@@ -5,7 +5,7 @@ import {
   serializeWorkspaceFile,
   WORKSPACE_FILE,
   type WorkspaceFile,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { nanoid } from 'nanoid';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';

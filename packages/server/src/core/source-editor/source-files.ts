@@ -1,6 +1,6 @@
 // Source files of the project for external AI agents (R-AG-19, round 7b): which pages, components
 // and style files exist, so an agent never has to guess a file name.
-import { ok, type Result } from '@reactcraft/shared';
+import { ok, type Result } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 

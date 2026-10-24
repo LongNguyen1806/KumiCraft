@@ -1,5 +1,5 @@
 // Visible node calculations for LayerTree (SPEC-04 M-LT).
-import type { TreeNode } from '@reactcraft/shared';
+import type { TreeNode } from '@kumicraft/shared';
 
 export type VisibleNodeMeta = {
   readonly node: TreeNode;

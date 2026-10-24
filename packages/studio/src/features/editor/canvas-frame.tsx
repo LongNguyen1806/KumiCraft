@@ -1,5 +1,5 @@
 // The project's page inside the Canvas (SPEC-04 M-RN R-RN-21 to R-RN-24, SPEC-05 S-100, S-102).
-import type { Frame } from '@reactcraft/shared';
+import type { Frame } from '@kumicraft/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -23,7 +23,7 @@ function pageUrl(origin: string): string {
 
 export function computeIframeSrc(origin: string, draftFile?: string): string {
   if (draftFile) {
-    return `${origin}/__reactcraft/draft?file=${encodeURIComponent(draftFile)}`;
+    return `${origin}/__kumicraft/draft?file=${encodeURIComponent(draftFile)}`;
   }
   return pageUrl(origin);
 }

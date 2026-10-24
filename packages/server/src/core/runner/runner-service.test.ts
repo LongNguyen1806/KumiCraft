@@ -1,4 +1,4 @@
-import type { RunnerToChildMessage } from '@reactcraft/shared';
+import type { RunnerToChildMessage } from '@kumicraft/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ServerEvent } from '../ports/event-bus-port.ts';
@@ -305,7 +305,7 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
 
     const spawnOpts = spawnedCalls[0]?.options as { env?: Record<string, string> } | undefined;
     expect(spawnOpts?.env?.NODE_ENV).toBe('development');
-    expect(spawnOpts?.env?.REACTCRAFT_SESSION_TOKEN).toBeUndefined();
+    expect(spawnOpts?.env?.KUMICRAFT_SESSION_TOKEN).toBeUndefined();
   });
 
   it('cuts long lines and keeps the last 500 lines for E025 [R-RN-08, V-71]', async () => {

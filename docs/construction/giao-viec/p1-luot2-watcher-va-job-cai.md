@@ -30,7 +30,7 @@ Hiện trạng: `history-service.ts` đã có `handleExternalChange(filePath, ne
     watch(root: string, onBatch: (files: readonly string[]) => void): WatchHandle;
   };
   ```
-- `packages/server/src/adapters/watcher/chokidar-watcher.ts`: dùng `chokidar`, `ignoreInitial: true`, bỏ `node_modules`, `.git`, `dist`, `.reactcraft/lock`, `.reactcraft/cache`; nghe `add`, `change`, `unlink`; gom đường dẫn trong cửa sổ 300 ms (không trùng lặp), đổi sang đường tương đối với `/`.
+- `packages/server/src/adapters/watcher/chokidar-watcher.ts`: dùng `chokidar`, `ignoreInitial: true`, bỏ `node_modules`, `.git`, `dist`, `.kumicraft/lock`, `.kumicraft/cache`; nghe `add`, `change`, `unlink`; gom đường dẫn trong cửa sổ 300 ms (không trùng lặp), đổi sang đường tương đối với `/`.
 - Nối adapter vào chỗ dựng deps trong `packages/server/src/index.ts`.
 
 ### A2. Xử lý trong core
@@ -38,16 +38,16 @@ Hiện trạng: `history-service.ts` đã có `handleExternalChange(filePath, ne
 - `handleExternalChange` của history **không** tự phát `project.filesChanged` nữa (chỉ trả `true`/`false` và vẫn phát `history.changed` khi bỏ mục). Sửa test hiện có của hàm này cho khớp, kê tên test trong báo cáo.
 - File mới `packages/server/src/core/project/project-watch.ts` (dùng trong `ProjectService`):
   1. Mở dự án (`open`) xong thì bắt đầu watch gốc dự án; `close()` và mở dự án khác thì `close()` watcher cũ (R-PJ-12).
-  2. Mỗi lô: với mỗi file (bỏ `.reactcraft/workspace.json`, xem mục 4): đọc nội dung qua `FileSystemPort`, tính SHA-256 (dùng lại cùng cách tính của history, không viết thuật toán thứ hai: export hàm hash hiện có nếu cần), file đã bị xóa thì hash là `''`; gọi `history.handleExternalChange(file, hash)`; gom các file trả `true`.
+  2. Mỗi lô: với mỗi file (bỏ `.kumicraft/workspace.json`, xem mục 4): đọc nội dung qua `FileSystemPort`, tính SHA-256 (dùng lại cùng cách tính của history, không viết thuật toán thứ hai: export hàm hash hiện có nếu cần), file đã bị xóa thì hash là `''`; gọi `history.handleExternalChange(file, hash)`; gom các file trả `true`.
   3. Có file sửa từ ngoài: phát **một** `project.filesChanged` `{ files }`, tối đa 100 mục, vượt thì thêm `truncated: true` (V-70).
-  4. `.reactcraft/workspace.json` đổi: đọc lại file, tính lại backends và tin cậy (khóa tin cậy có dấu vân tay backend, S-84) bằng các hàm sẵn có; cập nhật trạng thái hiện tại; phát `project.changed`; nếu `trusted` đổi thì phát thêm `session.changed`. File đọc lỗi: giữ trạng thái cũ, ghi log `warn`, không ném lỗi.
-- Ghi chú: ghi của ReactCraft qua Source Editor/History đã cập nhật `lastWrittenHashes`, nên tự ghi sẽ bị bỏ qua đúng R-HI-05. Không thêm cơ chế "tạm tắt watcher".
+  4. `.kumicraft/workspace.json` đổi: đọc lại file, tính lại backends và tin cậy (khóa tin cậy có dấu vân tay backend, S-84) bằng các hàm sẵn có; cập nhật trạng thái hiện tại; phát `project.changed`; nếu `trusted` đổi thì phát thêm `session.changed`. File đọc lỗi: giữ trạng thái cũ, ghi log `warn`, không ném lỗi.
+- Ghi chú: ghi của KumiCraft qua Source Editor/History đã cập nhật `lastWrittenHashes`, nên tự ghi sẽ bị bỏ qua đúng R-HI-05. Không thêm cơ chế "tạm tắt watcher".
 
 ### A3. Test phần A (gắn mã trong tên)
 
 Unit, dùng `WatcherPort` giả (gọi `onBatch` bằng tay) và FS giả/thư mục tạm:
 
-1. `[R-HI-05]` file có hash bằng hash ReactCraft vừa ghi → không có `project.filesChanged`, lịch sử giữ nguyên.
+1. `[R-HI-05]` file có hash bằng hash KumiCraft vừa ghi → không có `project.filesChanged`, lịch sử giữ nguyên.
 2. `[R-HI-05]` file đổi từ ngoài có mục lịch sử → mục bị bỏ, có `history.changed` và **một** `project.filesChanged` chứa file đó.
 3. `[V-70]` một lô 150 file đổi ngoài → `files` dài 100, `truncated: true`.
 4. `[S-84]` `workspace.json` đổi thêm backend khi đang tin cậy → `trusted: false`, có `project.changed` và `session.changed`.

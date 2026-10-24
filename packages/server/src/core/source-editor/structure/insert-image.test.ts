@@ -3,7 +3,7 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import type { InsertImageEdit } from '@reactcraft/shared';
+import type { InsertImageEdit } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createHistoryService } from '../../history/history-service.ts';

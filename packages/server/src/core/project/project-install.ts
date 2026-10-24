@@ -1,5 +1,5 @@
 // Project installation helpers (M-PJ).
-import type { PackageManager } from '@reactcraft/shared';
+import type { PackageManager } from '@kumicraft/shared';
 
 import type { JobContext, JobService } from '../jobs/job-service.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';

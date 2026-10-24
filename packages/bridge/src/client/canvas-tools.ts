@@ -1,6 +1,6 @@
 // Canvas tools added in Phase 2: free frame move/resize/measure and the right-click layer menu
 // (SPEC-04 section 18E R-FF-10..14, R-SL-13). Kept out of the runtime so it stays one screen of wiring.
-import type { DrawTool, ElementRef } from '@reactcraft/shared';
+import type { DrawTool, ElementRef } from '@kumicraft/shared';
 
 import { DrawController } from './draw-tool.ts';
 import { FreeDragController } from './free-frame/free-drag.ts';

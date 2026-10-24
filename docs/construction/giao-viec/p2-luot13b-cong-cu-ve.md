@@ -221,7 +221,7 @@ Hành vi:
 - **Phím `v` `f` `t` `i` khi đang gõ** (ô Inspector, sửa chữ trên Canvas) không được đổi công cụ: bảng phím đã lọc theo `isTypingTarget` và `shouldForwardShortcut`; giữ nguyên.
 - **Vào sửa chữ ngay sau chèn**: phần tử chưa có trong DOM cho tới khi HMR xong, nên phải chờ `treeNodes` có `loc` mới (không `setTimeout` cố định).
 - **Không đổi hành vi khi công cụ là Chọn**: mọi test cũ của Bridge và Studio phải còn xanh, không sửa assertion.
-- Sửa shared hoặc Bridge xong chạy `pnpm --filter @reactcraft/bridge build`.
+- Sửa shared hoặc Bridge xong chạy `pnpm --filter @kumicraft/bridge build`.
 - **Viết đúng lint ngay từ đầu**, `pnpm exec eslint <file>` sau mỗi file. File ≤ 400 dòng, hàm ≤ 50 dòng.
 
 ## 7. Báo cáo và commit

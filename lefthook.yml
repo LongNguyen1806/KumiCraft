@@ -2,18 +2,14 @@
 pre-commit:
   parallel: true
   commands:
+    # The runner reads the staged files from git and works in batches: a list of every path on
+    # one command line breaks on Windows for a large commit.
     format:
       glob: '*.{ts,tsx,js,json,md,css}'
-      run: pnpm prettier --write {staged_files}
-      stage_fixed: true
+      run: node scripts/run-staged.mjs format
     lint:
       glob: '*.{ts,tsx}'
-      # Templates and fixtures are whole projects with their own ESLint config, which ESLint 10
-      # would pick for their files; the repository lint skips them (eslint.config.js ignores).
-      exclude:
-        - 'templates/**'
-        - 'fixtures/**'
-      run: pnpm eslint {staged_files}
+      run: node scripts/run-staged.mjs lint
 commit-msg:
   commands:
     commitlint:

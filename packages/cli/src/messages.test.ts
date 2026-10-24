@@ -11,16 +11,16 @@ describe('startFailureMessage', () => {
       'D:\\Shop',
     );
 
-    expect(message).toContain('already open in another ReactCraft session');
+    expect(message).toContain('already open in another KumiCraft session');
     expect(message).toContain('on MY-PC at http://127.0.0.1:51234');
-    expect(message).toContain(join('D:\\Shop', '.reactcraft', 'lock'));
+    expect(message).toContain(join('D:\\Shop', '.kumicraft', 'lock'));
   });
 
   it('still says what to do when the busy session is unknown', () => {
     const message = startFailureMessage({ code: 'E018', params: { resource: 'workspace' } }, '/w');
 
     expect(message).not.toContain('http://');
-    expect(message).toContain(join('/w', '.reactcraft', 'lock'));
+    expect(message).toContain(join('/w', '.kumicraft', 'lock'));
   });
 
   it('shows the code and parameters of other failures', () => {

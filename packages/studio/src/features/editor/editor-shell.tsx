@@ -1,4 +1,4 @@
-import type { ProjectInfo } from '@reactcraft/shared';
+import type { ProjectInfo } from '@kumicraft/shared';
 import { useEffect, useState } from 'react';
 
 import { fetchProject } from '../../api/project-client.ts';

@@ -1,5 +1,5 @@
 // Revert turn button, confirmation dialog, and error reporting (WP-3.05b, R-CH-04).
-import type { TurnSummary } from '@reactcraft/shared';
+import type { TurnSummary } from '@kumicraft/shared';
 import type { TFunction } from 'i18next';
 import { RotateCcw } from 'lucide-react';
 import { useState } from 'react';

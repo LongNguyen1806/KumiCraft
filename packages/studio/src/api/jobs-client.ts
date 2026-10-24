@@ -1,5 +1,5 @@
 // Job endpoints (SPEC-03 section 4.2): status after a lost WebSocket, and cancel.
-import { type JobStatus, JobStatusSchema } from '@reactcraft/shared';
+import { type JobStatus, JobStatusSchema } from '@kumicraft/shared';
 
 import { apiGet, apiPost, parseResponse } from './http.ts';
 

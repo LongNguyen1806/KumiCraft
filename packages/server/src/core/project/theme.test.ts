@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { newWorkspaceFile, type StylingReport, ThemeEditSchema } from '@reactcraft/shared';
+import { newWorkspaceFile, type StylingReport, ThemeEditSchema } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createHistoryService, type HistoryService } from '../history/history-service.ts';

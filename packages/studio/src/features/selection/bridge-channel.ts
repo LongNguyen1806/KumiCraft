@@ -34,7 +34,7 @@ import {
   type KeyPress,
   matchShortcut,
   type StudioDragOverPayload,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { isApplePlatform } from '../../app/platform.ts';
 import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';

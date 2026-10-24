@@ -20,9 +20,9 @@ Chỉ làm phần còn thiếu dưới đây.
 
 ## 1. Mục tiêu (người dùng thấy gì)
 
-1. **Ctrl+C** khi ReactCraft đang chạy:
+1. **Ctrl+C** khi KumiCraft đang chạy:
    - dev server của dự án dừng; việc cài thư viện đang chạy bị hủy;
-   - tab Studio đang mở hiện ngay "ReactCraft đã dừng" (không đợi mất kết nối);
+   - tab Studio đang mở hiện ngay "KumiCraft đã dừng" (không đợi mất kết nối);
    - lệnh thoát trong tối đa 10 giây.
    - Bấm Ctrl+C lần hai thì thoát ngay.
 2. `pnpm package` tạo file `.tgz`. Có lệnh kiểm tra tự động: trong gói có đủ Studio, Bridge, template, không có `postinstall`.
@@ -58,11 +58,11 @@ Chỉ làm phần còn thiếu dưới đây.
 
 **CLI** `index.ts`:
 
-- `SIGINT`/`SIGTERM` lần đầu: in `Stopping ReactCraft…`, gọi `server.close()`. Song song đặt hẹn giờ 10 giây: hết giờ thì in cảnh báo và `process.exit(1)`. Đóng xong thì `exit(0)`.
+- `SIGINT`/`SIGTERM` lần đầu: in `Stopping KumiCraft…`, gọi `server.close()`. Song song đặt hẹn giờ 10 giây: hết giờ thì in cảnh báo và `process.exit(1)`. Đóng xong thì `exit(0)`.
 - Tín hiệu lần hai trong lúc đang dừng: in `Forced stop.` và `process.exit(1)` ngay.
 - Đưa logic này vào hàm thuần có thể test, ví dụ `createShutdown({ close, exit, log, setTimer })` trong `packages/cli/src/shutdown.ts`; `index.ts` chỉ nối.
 
-**Studio:** nhận `server.shuttingDown` → hiện ngay trạng thái mất kết nối có sẵn (`connection-lost`), câu "ReactCraft đã dừng" (`vi`) / "ReactCraft has stopped" (`en`). Khi server chạy lại, cơ chế kết nối lại hiện có (S-05a) vẫn hoạt động.
+**Studio:** nhận `server.shuttingDown` → hiện ngay trạng thái mất kết nối có sẵn (`connection-lost`), câu "KumiCraft đã dừng" (`vi`) / "KumiCraft has stopped" (`en`). Khi server chạy lại, cơ chế kết nối lại hiện có (S-05a) vẫn hoạt động.
 
 ### 3.2. Phần B — Gói cài (R-CL-03)
 
@@ -93,13 +93,13 @@ Chỉ làm phần còn thiếu dưới đây.
 
 | #   | Đầu vào                                                                                                          | Kết quả                                                                                         | Mã      |
 | --- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------- |
-| 1   | `createShutdown`: tín hiệu một lần, `close` xong sau 50 ms                                                       | in `Stopping ReactCraft…`; `exit(0)` đúng một lần; hẹn giờ 10 s bị hủy                          | R-CL-02 |
+| 1   | `createShutdown`: tín hiệu một lần, `close` xong sau 50 ms                                                       | in `Stopping KumiCraft…`; `exit(0)` đúng một lần; hẹn giờ 10 s bị hủy                           | R-CL-02 |
 | 2   | `close` không bao giờ xong; tiến thời gian 10 s (fake timers)                                                    | `exit(1)` đúng một lần, có cảnh báo                                                             | R-CL-02 |
 | 3   | Tín hiệu lần hai khi đang dừng                                                                                   | in `Forced stop.`; `exit(1)` ngay; `close` chỉ được gọi một lần                                 | R-CL-02 |
 | 4   | `RunningServer.close()` với eventBus giả, job giả đang chạy, runner giả                                          | thứ tự: phát `server.shuttingDown` → hủy job → `runner.dispose` → `project.close` → `app.close` | R-CL-02 |
 | 5   | Gọi `close()` hai lần cùng lúc                                                                                   | `runner.dispose` chỉ chạy một lần; cả hai promise xong                                          | R-CL-02 |
 | 6   | `job-service.cancelAll()` khi có một job cài đang chạy (tiến trình giả)                                          | tiến trình bị giết; job ở trạng thái hủy; job mới sau đó vẫn chạy được                          | R-CL-02 |
-| 7   | Studio nhận sự kiện `server.shuttingDown`                                                                        | `connection-lost` hiện ngay với câu "ReactCraft đã dừng" / "ReactCraft has stopped"             | R-CL-02 |
+| 7   | Studio nhận sự kiện `server.shuttingDown`                                                                        | `connection-lost` hiện ngay với câu "KumiCraft đã dừng" / "KumiCraft has stopped"               | R-CL-02 |
 | 8   | `check-package` trên danh sách file giả: đủ; thiếu Studio `index.html`; có `postinstall`; có `node_modules/x.js` | thoát 0; thoát 1 kèm tên mục thiếu; thoát 1; thoát 1 (tách phần kiểm thành hàm thuần để test)   | R-CL-03 |
 | 9   | Mỗi client trong `api/`: một test trả dữ liệu đúng (được parse) và một test trả dữ liệu thiếu trường bắt buộc    | đúng: trả đối tượng đã parse; sai: ném lỗi E016 `invalidResponse` (không trả dữ liệu hỏng)      | V-80    |
 | 10  | `grep -n "\bas [A-Z]" packages/studio/src/api/*.ts` (trừ `as const`)                                             | không còn dòng nào (ghi kết quả lệnh vào báo cáo)                                               | —       |
@@ -112,9 +112,9 @@ Chỉ làm phần còn thiếu dưới đây.
 ## 5. Kiểm tay (chủ dự án, sau lượt này)
 
 1. `pnpm package` rồi `pnpm check:package`: in "OK" kèm số file.
-2. `npm install -g artifacts/<file>.tgz` trong thư mục trống, `reactcraft`: Studio mở, tạo dự án mới tới Canvas.
-3. Đang cài thư viện thì Ctrl+C: lệnh thoát trong vài giây, không còn tiến trình `node` nào của dự án chạy (Task Manager); tab Studio hiện "ReactCraft đã dừng".
-4. Chạy lại `reactcraft`: tab Studio cũ tự kết nối lại.
+2. `npm install -g artifacts/<file>.tgz` trong thư mục trống, `kumicraft`: Studio mở, tạo dự án mới tới Canvas.
+3. Đang cài thư viện thì Ctrl+C: lệnh thoát trong vài giây, không còn tiến trình `node` nào của dự án chạy (Task Manager); tab Studio hiện "KumiCraft đã dừng".
+4. Chạy lại `kumicraft`: tab Studio cũ tự kết nối lại.
 
 ## 6. Bẫy đã biết
 

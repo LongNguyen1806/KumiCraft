@@ -1,5 +1,5 @@
 // Tests for useInspectorTarget, lock detection, warnings, and scope prefix calculation.
-import type { ElementSource, Frame } from '@reactcraft/shared';
+import type { ElementSource, Frame } from '@kumicraft/shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

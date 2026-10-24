@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { AgentEvent } from '@reactcraft/shared';
+import type { AgentEvent } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -25,7 +25,7 @@ describe('fake-agent.mjs', () => {
   });
 
   afterEach(() => {
-    delete process.env['REACTCRAFT_TEST_SECRET'];
+    delete process.env['KUMICRAFT_TEST_SECRET'];
     try {
       rmSync(tempDir, { recursive: true, force: true });
     } catch {
@@ -210,7 +210,7 @@ describe('fake-agent.mjs', () => {
   });
 
   it('[S-111, S-115, S-53] records invocation args, cwd, and sanitized env to RC_FAKE_AGENT_RECORD', async () => {
-    process.env['REACTCRAFT_TEST_SECRET'] = 'secret-token-123';
+    process.env['KUMICRAFT_TEST_SECRET'] = 'secret-token-123';
     const recordFile = join(tempDir, 'record.json');
     const mirrorDir = join(tempDir, 'mirror');
     mkdirSync(mirrorDir, { recursive: true });
@@ -243,7 +243,7 @@ describe('fake-agent.mjs', () => {
     expect(recorded.cwd).toBe(tempDir);
     expect(recorded.argv).toEqual(args);
     expect(recorded.envKeys).toContain('GH_TOKEN');
-    expect(recorded.envKeys).not.toContain('REACTCRAFT_TEST_SECRET');
+    expect(recorded.envKeys).not.toContain('KUMICRAFT_TEST_SECRET');
   });
 
   it('[R-QA-12] handles models argument with and without RC_FAKE_AGENT_LOGIN=loggedOut, and skips record file', async () => {

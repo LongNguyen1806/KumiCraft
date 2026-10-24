@@ -1,7 +1,7 @@
 {
   "E001": {
     "title": "Dự án không được hỗ trợ",
-    "message": "Dự án này chưa được hỗ trợ. ReactCraft cần Vite 7 hoặc 8, React 18 hoặc 19 và Tailwind CSS 4.",
+    "message": "Dự án này chưa được hỗ trợ. KumiCraft cần Vite 7 hoặc 8, React 18 hoặc 19 và Tailwind CSS 4.",
     "reasons": {
       "noPackageJson": "Không tìm thấy file package.json.",
       "noVite": "Dự án chưa cài Vite.",
@@ -16,11 +16,11 @@
   },
   "E002": {
     "title": "Khởi động server thất bại",
-    "message": "ReactCraft không khởi động được. Xem chi tiết trong terminal."
+    "message": "KumiCraft không khởi động được. Xem chi tiết trong terminal."
   },
   "E003": {
     "title": "Đọc file dự án thất bại",
-    "message": "Không đọc được file dự án .reactcraft/workspace.json.",
+    "message": "Không đọc được file dự án .kumicraft/workspace.json.",
     "reasons": {
       "tooLarge": "File vượt quá giới hạn kích thước.",
       "invalid": "Nội dung file không hợp lệ."
@@ -47,16 +47,16 @@
       "reservedName": "Tên đường dẫn trùng với tên dành riêng của hệ điều hành.",
       "driveRoot": "Gốc ổ đĩa không dùng làm dự án được; hãy chọn hoặc tạo một thư mục con.",
       "homeDir": "Thư mục người dùng không dùng làm dự án được; hãy chọn một thư mục con.",
-      "systemFolder": "Đây là thư mục hệ thống, ReactCraft không dùng nó."
+      "systemFolder": "Đây là thư mục hệ thống, KumiCraft không dùng nó."
     }
   },
   "E013": {
     "title": "Lỗi nội bộ",
-    "message": "ReactCraft gặp lỗi bên trong. Chi tiết có trong log ở terminal."
+    "message": "KumiCraft gặp lỗi bên trong. Chi tiết có trong log ở terminal."
   },
   "E014": {
     "title": "Chưa xác thực",
-    "message": "Phiên không hợp lệ hoặc đã hết hạn. Hãy mở lại ReactCraft từ đường dẫn in trong terminal."
+    "message": "Phiên không hợp lệ hoặc đã hết hạn. Hãy mở lại KumiCraft từ đường dẫn in trong terminal."
   },
   "E015": {
     "title": "Không tìm thấy",
@@ -188,7 +188,7 @@
   },
   "network": {
     "title": "Lỗi kết nối",
-    "message": "Không kết nối được tới server ReactCraft. Server còn chạy không?"
+    "message": "Không kết nối được tới server KumiCraft. Server còn chạy không?"
   },
   "unknown": {
     "title": "Lỗi không xác định",

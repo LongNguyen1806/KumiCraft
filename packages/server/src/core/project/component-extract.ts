@@ -7,7 +7,7 @@ import {
   parseLocString,
   type Result,
   type StructureResult,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { computeSha256 } from '../history/history-service.ts';
 import {
@@ -190,7 +190,7 @@ export async function updateConfigComponents(
   );
   if (inComponents || inLayouts) return;
 
-  const configPath = '.reactcraft/components.json';
+  const configPath = '.kumicraft/components.json';
   let files: string[] = [];
   const read = await deps.fs.readText(deps.projectRoot, configPath);
   if (read.ok) {

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Entry point of the `reactcraft` command (ADR-BE-03): start the Local Backend, open the Studio.
+// Entry point of the `kumicraft` command (ADR-BE-03): start the Local Backend, open the Studio.
 import { statSync } from 'node:fs';
 
-import { lastStudioPort, type RunningServer, startServer } from '@reactcraft/server';
+import { lastStudioPort, type RunningServer, startServer } from '@kumicraft/server';
 import open from 'open';
 
 import packageJson from '../package.json' with { type: 'json' };
@@ -14,7 +14,7 @@ import { attemptsFor, portFor, type PortPlan } from './port-choice.ts';
 import { createShutdown } from './shutdown.ts';
 
 function fail(message: string): never {
-  console.error(`reactcraft: ${message}`);
+  console.error(`kumicraft: ${message}`);
   process.exit(1);
 }
 
@@ -42,13 +42,13 @@ async function start(options: CliOptions, studio: StudioSource): Promise<Running
       logLevel: options.logLevel,
       ...(studio.studioDir === undefined ? {} : { studioDir: studio.studioDir }),
       ...(studio.devStudioUrl === undefined ? {} : { trustedOrigins: [studio.devStudioUrl] }),
-      ...(process.env.REACTCRAFT_FEATURES === undefined
+      ...(process.env.KUMICRAFT_FEATURES === undefined
         ? {}
-        : { featureOverride: process.env.REACTCRAFT_FEATURES }),
+        : { featureOverride: process.env.KUMICRAFT_FEATURES }),
       // Tests and side-by-side setups keep their settings apart from the user's (archive-0.18 spec-log #87).
-      ...(process.env.REACTCRAFT_CONFIG_DIR === undefined
+      ...(process.env.KUMICRAFT_CONFIG_DIR === undefined
         ? {}
-        : { deps: { configDir: process.env.REACTCRAFT_CONFIG_DIR } }),
+        : { deps: { configDir: process.env.KUMICRAFT_CONFIG_DIR } }),
     });
     if (result.ok) return result.value;
     const isPortBusy = result.error.code === 'E002' && result.error.params?.['step'] === 'listen';
@@ -62,7 +62,7 @@ async function start(options: CliOptions, studio: StudioSource): Promise<Running
 async function main(): Promise<void> {
   const parsed = parseCliArgs(process.argv.slice(2), process.cwd());
   if (!parsed.ok) {
-    console.error(`reactcraft: ${parsed.message}
+    console.error(`kumicraft: ${parsed.message}
 
 ${USAGE}`);
     process.exit(USAGE_EXIT_CODE);
@@ -82,10 +82,10 @@ async function serve(options: CliOptions): Promise<void> {
   if (!isDirectory(options.workspaceDir)) fail(`not a directory: ${options.workspaceDir}`);
 
   // Development only (`pnpm dev`): the Studio comes from the Vite dev server, which proxies the API.
-  const devStudioUrl = process.env.REACTCRAFT_DEV_STUDIO_URL;
+  const devStudioUrl = process.env.KUMICRAFT_DEV_STUDIO_URL;
   const studioDir = devStudioUrl === undefined ? findStudioDir() : undefined;
   if (devStudioUrl === undefined && studioDir === undefined) {
-    console.warn('reactcraft: the Studio has not been built; serving the API only.');
+    console.warn('kumicraft: the Studio has not been built; serving the API only.');
   }
 
   const server = await start(options, {
@@ -94,7 +94,7 @@ async function serve(options: CliOptions): Promise<void> {
   });
   // The token travels in the URL fragment, which browsers never send to a server (SPEC-05 section 3).
   const studioUrl = `${devStudioUrl ?? server.url}/#t=${server.sessionToken}`;
-  console.log(`ReactCraft ${packageJson.version} is running at ${server.url}`);
+  console.log(`KumiCraft ${packageJson.version} is running at ${server.url}`);
   console.log(`Studio: ${studioUrl}`);
   console.log('Press Ctrl+C to stop.');
 
@@ -118,7 +118,7 @@ async function serve(options: CliOptions): Promise<void> {
       await open(studioUrl);
     } catch (error) {
       console.warn(
-        `reactcraft: could not open a browser (${String(error)}); open the Studio URL above.`,
+        `kumicraft: could not open a browser (${String(error)}); open the Studio URL above.`,
       );
     }
   }

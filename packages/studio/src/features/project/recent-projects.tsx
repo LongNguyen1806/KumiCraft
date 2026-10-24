@@ -1,5 +1,5 @@
 // "Open again" list of the projects opened before (R-PJ-25): one click instead of browsing.
-import type { RecentProject } from '@reactcraft/shared';
+import type { RecentProject } from '@kumicraft/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

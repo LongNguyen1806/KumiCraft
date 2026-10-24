@@ -6,7 +6,7 @@ import {
   type InteractionState,
   parseLocString,
   type ResponsiveMode,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { createEventsClient, type StudioServerEvent } from '../../api/events-client.ts';

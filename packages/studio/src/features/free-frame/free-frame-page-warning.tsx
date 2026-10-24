@@ -1,4 +1,4 @@
-import { type ElementRef, type ElementSource, parseLocString } from '@reactcraft/shared';
+import { type ElementRef, type ElementSource, parseLocString } from '@kumicraft/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

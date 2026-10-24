@@ -5,7 +5,7 @@ import type { WebSocket } from 'ws';
 import type { EventBusPort } from '../../../core/ports/event-bus-port.ts';
 import { isTokenValid } from '../security.ts';
 
-const TOKEN_PROTOCOL_PREFIX = 'reactcraft.token.';
+const TOKEN_PROTOCOL_PREFIX = 'kumicraft.token.';
 const PING_INTERVAL_MS = 20_000; // SPEC-03 section 6
 
 export type EventRoutesDeps = {

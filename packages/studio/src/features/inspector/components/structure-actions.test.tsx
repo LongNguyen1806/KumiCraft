@@ -1,5 +1,5 @@
 // Component tests for StructureActions in Inspector (Scenario #16, SPEC-04 R-SE-25, R-SE-26).
-import type { ElementSource } from '@reactcraft/shared';
+import type { ElementSource } from '@kumicraft/shared';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 

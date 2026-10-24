@@ -1,5 +1,5 @@
 // Runs `install` as a job and follows it over WebSocket (R-PJ-13, R-PJ-22, SPEC-03 section 4.2).
-import { MAX_JOB_LINES } from '@reactcraft/shared';
+import { MAX_JOB_LINES } from '@kumicraft/shared';
 import { useRef, useState } from 'react';
 
 import { cancelJob } from '../../api/jobs-client.ts';

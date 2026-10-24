@@ -1,5 +1,5 @@
-import type { AttributeLevelEdit, ElementRef, ShortcutAction } from '@reactcraft/shared';
-import { applyPlacement, readClassPx } from '@reactcraft/shared';
+import type { AttributeLevelEdit, ElementRef, ShortcutAction } from '@kumicraft/shared';
+import { applyPlacement, readClassPx } from '@kumicraft/shared';
 
 import { editSourceBatch } from '../../api/source-client.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';

@@ -3,7 +3,7 @@ import {
   BridgeLayerMenuPayloadSchema,
   type ElementRef,
   type LayerMenuItem,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 

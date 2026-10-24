@@ -1,4 +1,4 @@
-// Finding the running ReactCraft server for `reactcraft mcp` (R-AG-19).
+// Finding the running KumiCraft server for `kumicraft mcp` (R-AG-19).
 import { join, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -16,7 +16,7 @@ function files(entries: Readonly<Record<string, string>>) {
   return (path: string) => Promise.resolve(entries[path]);
 }
 
-const lockPath = join(WS, '.reactcraft', 'lock');
+const lockPath = join(WS, '.kumicraft', 'lock');
 const sessionPath = join(CONFIG, 'session.json');
 
 describe('locateServer [R-AG-19]', () => {

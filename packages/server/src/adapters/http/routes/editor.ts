@@ -1,5 +1,5 @@
 // POST /api/v1/open-in-editor (SPEC-03 section 5.1, R-SL-06).
-import { issuesToDetails } from '@reactcraft/shared';
+import { issuesToDetails } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 

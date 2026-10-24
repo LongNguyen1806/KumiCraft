@@ -1,5 +1,5 @@
 // Structural edit guards for JSX elements (SPEC-04 R-SE-21).
-import { err, ok, type Result } from '@reactcraft/shared';
+import { err, ok, type Result } from '@kumicraft/shared';
 
 import { asAstNode, type AstNode } from '../ast-helpers.ts';
 import { jsxChildren } from './jsx-children.ts';

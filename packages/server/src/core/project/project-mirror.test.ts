@@ -6,7 +6,7 @@ import {
   serializeWorkspaceFile,
   WORKSPACE_FILE,
   type WorkspaceFile,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createNodeFileSystem } from '../../adapters/fs/node-file-system.ts';
@@ -43,7 +43,7 @@ const sampleFile: WorkspaceFile = newWorkspaceFile({
 
 async function writeWorkspace(dir: string, file: WorkspaceFile = sampleFile): Promise<void> {
   await writeSupportedProject(dir);
-  await mkdir(join(dir, '.reactcraft'), { recursive: true });
+  await mkdir(join(dir, '.kumicraft'), { recursive: true });
   await writeFile(join(dir, WORKSPACE_FILE), serializeWorkspaceFile(file));
 }
 

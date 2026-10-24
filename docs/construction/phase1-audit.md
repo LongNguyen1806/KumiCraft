@@ -131,7 +131,7 @@ Mỗi dòng ghi **hành vi phải kiểm trên code thật**. Test chỉ kiểm 
 | R-TW-10       | `shared/src/tailwind`                                  | `[13px_auto]` đọc ra `13px auto`; ghi ngược lại                                                        |
 | R-FW-03       | toàn repo                                              | Test quét: không file nào ngoài 3 thư mục cho phép so sánh `FrameworkId`/`'vite-react'`                |
 | R-FW-04       | `bridge/src/transform`, `client`                       | Test quét import: `transform/` không import Vite, `client/` không import React                         |
-| R-QA-02       | `e2e/support/cli-session.ts`                           | E2E khởi động CLI với `REACTCRAFT_CONFIG_DIR` (và DATA, CACHE) trỏ thư mục tạm                         |
+| R-QA-02       | `e2e/support/cli-session.ts`                           | E2E khởi động CLI với `KUMICRAFT_CONFIG_DIR` (và DATA, CACHE) trỏ thư mục tạm                          |
 | R-QA-04       | `scripts/trace.mjs`                                    | Test chạy trace trên một spec/test mẫu nhỏ: mã có tag được đếm, mã thiếu bị báo                        |
 | S-25          | `adapters/fs/node-file-system.ts:70`                   | Liệt kê thư mục có symlink trỏ ra ngoài → không đi theo                                                |
 | S-26          | `core/shared/paths.ts`                                 | Vi phạm → E012 và log `warn` có đường dẫn chuẩn hóa                                                    |

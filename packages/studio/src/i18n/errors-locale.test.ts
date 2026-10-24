@@ -1,4 +1,4 @@
-import { ERROR_CODES, RUNNER_ERROR_REASONS, UNSUPPORTED_REASONS } from '@reactcraft/shared';
+import { ERROR_CODES, RUNNER_ERROR_REASONS, UNSUPPORTED_REASONS } from '@kumicraft/shared';
 import { describe, expect, it } from 'vitest';
 
 import enErrors from './locales/en/errors.json';

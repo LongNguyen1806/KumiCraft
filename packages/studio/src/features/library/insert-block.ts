@@ -5,7 +5,7 @@ import {
   isContainerTag,
   type LibraryBlock,
   type Placement,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { applyStructureEdit } from '../../api/source-client.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';

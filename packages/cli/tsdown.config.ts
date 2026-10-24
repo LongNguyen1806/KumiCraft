@@ -17,7 +17,7 @@ export default defineConfig({
   fixedExtension: false,
   // Bundling a third-party CommonJS package breaks it in ESM (write-file-atomic reads __filename):
   // only the internal packages may be bundled, so a missing `dependencies` entry fails the build.
-  deps: { alwaysBundle: [/^@reactcraft\//], onlyBundle: [/^@reactcraft\//] },
+  deps: { alwaysBundle: [/^@kumicraft\//], onlyBundle: [/^@kumicraft\//] },
   copy: [
     { from: '../studio/dist', to: 'dist', rename: 'studio' },
     // ADR-BE-25: the project template ships inside the package (ADR-BE-32).

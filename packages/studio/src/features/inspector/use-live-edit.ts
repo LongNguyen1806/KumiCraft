@@ -1,6 +1,6 @@
 // Live edit hook for Inspector (SPEC-04 R-IN-13, R-IN-14, R-IN-20).
-import type { ClassContext, ClassValue, PropertyId } from '@reactcraft/shared';
-import { writeValue } from '@reactcraft/shared';
+import type { ClassContext, ClassValue, PropertyId } from '@kumicraft/shared';
+import { writeValue } from '@kumicraft/shared';
 import type { TFunction } from 'i18next';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

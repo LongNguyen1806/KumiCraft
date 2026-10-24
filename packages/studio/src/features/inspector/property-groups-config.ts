@@ -1,4 +1,4 @@
-import type { PropertyId } from '@reactcraft/shared';
+import type { PropertyId } from '@kumicraft/shared';
 import type { ParseKeys } from 'i18next';
 
 export type PropertyFieldDef = {

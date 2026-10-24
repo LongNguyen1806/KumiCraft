@@ -1,5 +1,5 @@
 // Tests for clipboard copy, cut, paste (SPEC-04 M-CB, Scenarios #9..#12).
-import type { ElementRef, TreeNode } from '@reactcraft/shared';
+import type { ElementRef, TreeNode } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';

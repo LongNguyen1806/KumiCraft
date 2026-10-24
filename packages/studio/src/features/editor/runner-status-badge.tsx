@@ -1,5 +1,5 @@
 // Dev server runner status badge displayed in editor toolbar (SPEC-04 M-RN, R-PJ-24).
-import type { RunnerStatus } from '@reactcraft/shared';
+import type { RunnerStatus } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
 import { useRunnerStatus } from './use-runner-status.ts';

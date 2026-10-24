@@ -1,5 +1,5 @@
 // Selection and keyboard navigation for LayerTree (SPEC-04 M-LT).
-import type { ElementRef, TreeNode } from '@reactcraft/shared';
+import type { ElementRef, TreeNode } from '@kumicraft/shared';
 import { useEffect, useRef } from 'react';
 
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';

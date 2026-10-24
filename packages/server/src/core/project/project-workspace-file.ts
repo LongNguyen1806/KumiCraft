@@ -1,12 +1,12 @@
 // Workspace file loading, creation and reload helpers (M-PJ, S-84).
-import type { DesignDirs, Frame, ResponsiveMode } from '@reactcraft/shared';
+import type { DesignDirs, Frame, ResponsiveMode } from '@kumicraft/shared';
 import {
   newWorkspaceFile,
   serializeWorkspaceFile,
   type SupportReport,
   WORKSPACE_FILE,
   type WorkspaceFile,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { nanoid } from 'nanoid';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
@@ -89,7 +89,7 @@ export async function loadOrCreateWorkspaceFile(
 
   const write = await deps.fs.writeTextAtomic(root, WORKSPACE_FILE, serializeWorkspaceFile(file));
   if (!write.ok) return write;
-  await deps.fs.writeTextAtomic(root, '.reactcraft/.gitignore', 'lock\ncache/\n');
+  await deps.fs.writeTextAtomic(root, '.kumicraft/.gitignore', 'lock\ncache/\n');
   return ok(file);
 }
 
@@ -105,7 +105,7 @@ export type ReloadWorkspaceDeps = {
 
 /**
  * `workspace.json` changed on disk (project.changed, S-84): the state read again from it, or
- * undefined when it is unreadable or equal to what ReactCraft holds (its own write).
+ * undefined when it is unreadable or equal to what KumiCraft holds (its own write).
  */
 export async function reloadOpenWorkspace(
   deps: ReloadWorkspaceDeps,

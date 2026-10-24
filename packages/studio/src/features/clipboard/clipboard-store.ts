@@ -1,5 +1,5 @@
 // Clipboard state store for copy/cut/paste (SPEC-04 M-CB, R-CB-10..13).
-import type { RelPath } from '@reactcraft/shared';
+import type { RelPath } from '@kumicraft/shared';
 import { create } from 'zustand';
 
 export type ClipboardEntry = {

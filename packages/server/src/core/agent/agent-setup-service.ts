@@ -1,5 +1,5 @@
 // Agent installation and login management service (WP-3.06b, R-AG-10, R-AG-21).
-import type { AgentId } from '@reactcraft/shared';
+import type { AgentId } from '@kumicraft/shared';
 
 import type { JobContext, JobService } from '../jobs/job-service.ts';
 import type { ProcessPort } from '../ports/process-port.ts';

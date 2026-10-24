@@ -2,7 +2,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { ToolGap } from '@reactcraft/shared';
+import type { ToolGap } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { makeTempDir, nodeFs, silentLogger } from '../workspace/test-support.ts';
@@ -58,7 +58,7 @@ describe('tool gap store [R-AG-20]', () => {
       count: 1,
       lastAt: new Date(Date.parse('2026-01-01T00:00:00.000Z') + i * 1000).toISOString(),
     }));
-    await mkdir(join(dir, '.reactcraft'), { recursive: true });
+    await mkdir(join(dir, '.kumicraft'), { recursive: true });
     await writeFile(join(dir, TOOL_GAPS_FILE), JSON.stringify({ version: 1, gaps: old }));
 
     await store().report(dir, report('brand new'));
@@ -70,7 +70,7 @@ describe('tool gap store [R-AG-20]', () => {
   });
 
   it('treats a broken file as empty and writes a good one next time [R-AG-20]', async () => {
-    await mkdir(join(dir, '.reactcraft'), { recursive: true });
+    await mkdir(join(dir, '.kumicraft'), { recursive: true });
     await writeFile(join(dir, TOOL_GAPS_FILE), '{ not json');
 
     expect(await store().list(dir)).toEqual([]);

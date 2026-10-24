@@ -1,18 +1,18 @@
-// Operations external AI agents needed but no ReactCraft tool offered (R-AG-20). Kept per project in
-// `.reactcraft/tool-gaps.json` so the owner sees what to build next.
+// Operations external AI agents needed but no KumiCraft tool offered (R-AG-20). Kept per project in
+// `.kumicraft/tool-gaps.json` so the owner sees what to build next.
 import {
   ok,
   type Result,
   type ToolGap,
   type ToolGapReport,
   ToolGapSchema,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { z } from 'zod';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { LoggerPort } from '../ports/logger-port.ts';
 
-export const TOOL_GAPS_FILE = '.reactcraft/tool-gaps.json';
+export const TOOL_GAPS_FILE = '.kumicraft/tool-gaps.json';
 /** R-AG-20: past this many entries the one seen longest ago goes. */
 export const MAX_TOOL_GAPS = 500;
 

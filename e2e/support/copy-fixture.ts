@@ -15,12 +15,12 @@ export type TempDir = {
 };
 
 /**
- * Creates an empty temporary folder whose name starts with `reactcraft-<label>-`. Removing it
+ * Creates an empty temporary folder whose name starts with `kumicraft-<label>-`. Removing it
  * retries while Windows still holds a file: a stopped session's runner closes Vite on its own
  * after the CLI is gone, which can take a moment.
  */
 export async function makeTempDir(label: string): Promise<TempDir> {
-  const path = await mkdtemp(join(tmpdir(), `reactcraft-${label}-`));
+  const path = await mkdtemp(join(tmpdir(), `kumicraft-${label}-`));
   return {
     path,
     remove: () => rm(path, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }),

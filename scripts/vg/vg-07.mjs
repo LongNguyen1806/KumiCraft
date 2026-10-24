@@ -12,7 +12,7 @@ const BATCH_PAYLOAD = JSON.stringify({
     { type: 'insert_node', id: 'n1', component: 'Container', parentId: 'root' },
     { type: 'update_props', id: 'n1', props: { className: 'p-4 flex gap-2' } },
     { type: 'insert_node', id: 'n2', component: 'Text', parentId: 'n1' },
-    { type: 'update_props', id: 'n2', props: { text: 'Hello ReactCraft' } },
+    { type: 'update_props', id: 'n2', props: { text: 'Hello KumiCraft' } },
   ],
 });
 

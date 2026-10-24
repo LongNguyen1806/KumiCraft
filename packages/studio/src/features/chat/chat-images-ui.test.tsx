@@ -1,5 +1,5 @@
 // UI tests for sending chat images (R-CH-02, CW-52).
-import type { ProjectInfo } from '@reactcraft/shared';
+import type { ProjectInfo } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -52,7 +52,7 @@ describe('Chat Images UI Part B [R-CH-02]', () => {
   });
 
   beforeEach(async () => {
-    sessionStorage.setItem('reactcraft.sessionToken', 'tok-images-ui');
+    sessionStorage.setItem('kumicraft.sessionToken', 'tok-images-ui');
     localStorage.clear();
     await i18next.changeLanguage('vi');
     useAgentsStore.getState().reset();

@@ -1,5 +1,5 @@
 // Tests for Agent Onboarding flows and install job integration (R-AG-10, R-AG-21, R-CH-06, S-54).
-import type { AgentStatus, JobStatus, ProjectInfo } from '@reactcraft/shared';
+import type { AgentStatus, JobStatus, ProjectInfo } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -94,7 +94,7 @@ describe('Agent Onboarding and Installation [R-AG-10, R-AG-21, R-CH-06, S-54]', 
 
   beforeEach(async () => {
     sockets = [];
-    sessionStorage.setItem('reactcraft.sessionToken', 'token-test');
+    sessionStorage.setItem('kumicraft.sessionToken', 'token-test');
     vi.stubGlobal('WebSocket', FakeSocket);
     await i18next.changeLanguage('vi');
     useAgentsStore.getState().reset();

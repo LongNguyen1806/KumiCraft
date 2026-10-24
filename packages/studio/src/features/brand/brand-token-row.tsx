@@ -1,4 +1,4 @@
-import { THEME_VAR_PREFIX, type ThemeToken, type ThemeTokenKind } from '@reactcraft/shared';
+import { THEME_VAR_PREFIX, type ThemeToken, type ThemeTokenKind } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

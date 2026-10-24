@@ -1,6 +1,6 @@
 // "Open in editor" (SPEC-03 section 5.1, R-SL-06): starts the editor chosen in Settings at the file
 // and position of an element. The command is a fixed argument array, never a shell (S-50, S-51).
-import { parseLocString, relPathProblem } from '@reactcraft/shared';
+import { parseLocString, relPathProblem } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { ProcessPort } from '../ports/process-port.ts';

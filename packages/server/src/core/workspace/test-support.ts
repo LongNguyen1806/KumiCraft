@@ -63,7 +63,7 @@ export function fakeSystem(
 }
 
 export async function makeTempDir(): Promise<{ dir: string; cleanup: () => Promise<void> }> {
-  const dir = await mkdtemp(join(tmpdir(), 'reactcraft-ws-'));
+  const dir = await mkdtemp(join(tmpdir(), 'kumicraft-ws-'));
   return { dir, cleanup: () => rm(dir, { recursive: true, force: true }) };
 }
 

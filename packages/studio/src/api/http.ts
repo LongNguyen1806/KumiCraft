@@ -1,6 +1,6 @@
 // REST client of the Studio (ADR-FE-17): adds the session token, unwraps `{ data }`, turns
 // `{ error }` into ApiError (SPEC-03 section 4.1).
-import { issuesToDetails } from '@reactcraft/shared';
+import { issuesToDetails } from '@kumicraft/shared';
 
 import { readSessionToken } from './session-token.ts';
 

@@ -66,7 +66,7 @@ afterEach(async () => {
 async function setupProject(subName = 'app') {
   const target = join(tempDir, subName);
   await cp(join(baseDir, 'base'), target, { recursive: true });
-  await rm(join(target, '.reactcraft', 'lock'), { force: true });
+  await rm(join(target, '.kumicraft', 'lock'), { force: true });
   const system = fakeSystem(1, new Set([1]));
   const history = createHistoryService({ fs: directWriteFs });
   const config = {

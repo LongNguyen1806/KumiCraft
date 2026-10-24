@@ -1,4 +1,4 @@
-import type { DirectoryListing } from '@reactcraft/shared';
+import type { DirectoryListing } from '@kumicraft/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

@@ -84,7 +84,7 @@ export function useDesignTargetSync(): void {
     let nextTarget: DesignTarget;
     if (draftFile) {
       nextTarget = draftTargetOf(draftFile, currentRoute);
-    } else if (currentRoute.startsWith('/__reactcraft/draft')) {
+    } else if (currentRoute.startsWith('/__kumicraft/draft')) {
       nextTarget = { kind: 'page', route: currentRoute };
     } else {
       nextTarget = designTargetOf(pages, currentRoute);

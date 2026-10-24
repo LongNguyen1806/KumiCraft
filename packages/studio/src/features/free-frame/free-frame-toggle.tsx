@@ -1,4 +1,4 @@
-import { type ElementRef, type ElementSource, isContainerTag } from '@reactcraft/shared';
+import { type ElementRef, type ElementSource, isContainerTag } from '@kumicraft/shared';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

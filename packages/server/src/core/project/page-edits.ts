@@ -8,4 +8,4 @@ export {
 } from './page-common.ts';
 export { deletePage } from './page-delete.ts';
 export { renamePage } from './page-rename.ts';
-export { pageNames, type PageNamesResult } from '@reactcraft/shared';
+export { pageNames, type PageNamesResult } from '@kumicraft/shared';

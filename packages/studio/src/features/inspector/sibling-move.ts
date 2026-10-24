@@ -1,6 +1,6 @@
 // Sibling move target calculation for Inspector Up/Down actions (SPEC-04 R-SE-24, section 3.3).
-import type { ElementRef, InsertTarget, TreeNode } from '@reactcraft/shared';
-import { parseLocString } from '@reactcraft/shared';
+import type { ElementRef, InsertTarget, TreeNode } from '@kumicraft/shared';
+import { parseLocString } from '@kumicraft/shared';
 
 /**
  * Calculates sibling move target for an element node in Layer Tree.

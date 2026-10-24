@@ -6,7 +6,7 @@ import {
   type StudioHighlightPayload,
   type StudioSelectPayload,
   type StudioTextEditStartPayload,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import {
   addWindowListeners,

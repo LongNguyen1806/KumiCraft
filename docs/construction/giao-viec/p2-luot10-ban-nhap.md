@@ -24,16 +24,16 @@
 
 ## 2. Đọc trước (CW-52)
 
-| File                                                                                                   | Lý do                                                                                                              |
-| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| `docs/spec.md` mục 18D (M-DR), R-CP-11, R-CP-14, R-CP-16, R-PG-11, R-PG-12, R-HI-11                    | Quy tắc                                                                                                            |
-| `packages/server/src/core/project/page-add.ts`, `page-common.ts`, `routes-ast.ts`                      | Tạo file, thêm route, khóa file, kiểm thư mục: **dùng lại** cho tạo bản nháp và "Chuyển thành trang"               |
-| `packages/server/src/core/project/component-extract.ts`, `component-scope.ts`, `components-list.ts`    | Tạo file component, đổi đường dẫn import, `.reactcraft/components.json`: **dùng lại** cho "Chuyển thành component" |
-| `packages/server/src/core/history/history-service.ts`                                                  | Mục lịch sử tạo, xóa file                                                                                          |
-| `packages/shared/src/workspace-file.ts` (`DesignDirsSchema`), `page-names.ts`                          | Thêm khóa `drafts`; tên PascalCase                                                                                 |
-| `packages/studio/src/features/editor/page-select.tsx`, `canvas-frame.tsx`, `canvas-view-store.ts`      | Ô Trang; `src` của iframe                                                                                          |
-| `packages/studio/src/features/design/design-store.ts`, `design-target.ts`, `design-bar.tsx`            | Thanh "Đang thiết kế", file đang thiết kế                                                                          |
-| `packages/studio/src/features/pages/add-page-form.tsx`, `features/components-panel/extract-dialog.tsx` | Mẫu form để dựng hộp thoại chuyển                                                                                  |
+| File                                                                                                   | Lý do                                                                                                             |
+| ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `docs/spec.md` mục 18D (M-DR), R-CP-11, R-CP-14, R-CP-16, R-PG-11, R-PG-12, R-HI-11                    | Quy tắc                                                                                                           |
+| `packages/server/src/core/project/page-add.ts`, `page-common.ts`, `routes-ast.ts`                      | Tạo file, thêm route, khóa file, kiểm thư mục: **dùng lại** cho tạo bản nháp và "Chuyển thành trang"              |
+| `packages/server/src/core/project/component-extract.ts`, `component-scope.ts`, `components-list.ts`    | Tạo file component, đổi đường dẫn import, `.kumicraft/components.json`: **dùng lại** cho "Chuyển thành component" |
+| `packages/server/src/core/history/history-service.ts`                                                  | Mục lịch sử tạo, xóa file                                                                                         |
+| `packages/shared/src/workspace-file.ts` (`DesignDirsSchema`), `page-names.ts`                          | Thêm khóa `drafts`; tên PascalCase                                                                                |
+| `packages/studio/src/features/editor/page-select.tsx`, `canvas-frame.tsx`, `canvas-view-store.ts`      | Ô Trang; `src` của iframe                                                                                         |
+| `packages/studio/src/features/design/design-store.ts`, `design-target.ts`, `design-bar.tsx`            | Thanh "Đang thiết kế", file đang thiết kế                                                                         |
+| `packages/studio/src/features/pages/add-page-form.tsx`, `features/components-panel/extract-dialog.tsx` | Mẫu form để dựng hộp thoại chuyển                                                                                 |
 
 ## 3. Hợp đồng
 
@@ -132,7 +132,7 @@ export const PromoteDraftSchema = z.strictObject({
   - Lỗi như thêm trang: `pathExists`, `fileExists`, `nameExists`, E012, `notConvention`.
 - **`as: 'component'`:**
   - Tạo file ở `dir` (mặc định `designDirs.components`) với nội dung đổi tên và đổi import như trên.
-  - Ghi `.reactcraft/components.json` khi thư mục nằm ngoài vùng `components`/`layouts`, như R-CP-14.
+  - Ghi `.kumicraft/components.json` khi thư mục nằm ngoài vùng `components`/`layouts`, như R-CP-14.
   - **Không** sửa file nào khác.
 - **Chung:**
   - `keepDraft: false`: xóa file bản nháp trong **cùng** mục lịch sử.
@@ -161,7 +161,7 @@ Các thao tác ghi trả `{ data: StructureResult }`. Kết quả tạo và nhâ
 **Iframe:**
 
 - `canvas-view-store.ts` thêm `draftFile?: string`, `openDraft(file)`, `closeDraft()`.
-- `IframeFrame`: khi có `draftFile` thì `src = ${origin}/__reactcraft/draft?file=${encodeURIComponent(draftFile)}`, không thì như hiện tại.
+- `IframeFrame`: khi có `draftFile` thì `src = ${origin}/__kumicraft/draft?file=${encodeURIComponent(draftFile)}`, không thì như hiện tại.
 - `key` của `IframeFrame` thêm `draftFile`, để đổi qua lại thì iframe tải lại.
 - Bản nháp đang mở được nhớ theo `projectId` trong `localStorage` (bọc `try/catch`). Mở lại dự án thì mở lại bản nháp nếu file còn trong danh sách.
 
@@ -206,7 +206,7 @@ Các thao tác ghi trả `{ data: StructureResult }`. Kết quả tạo và nhâ
 
 ### 3.5. Phần Claude làm (để Gemini biết, không sửa)
 
-- Plugin Bridge phục vụ `GET /__reactcraft/draft?file=<RelPath>` khi dev server chạy.
+- Plugin Bridge phục vụ `GET /__kumicraft/draft?file=<RelPath>` khi dev server chạy.
   - `file` không nằm trong thư mục bản nháp thì 404.
   - Trang nạp CSS Tailwind của dự án, import component, bọc `MemoryRouter` khi dự án có `react-router`/`react-router-dom`, gắn vào `#root`.
 - Runner truyền thư mục bản nháp cho plugin qua `RunnerOptions.draftsDir`. Claude thêm trường này vào shared và runner.
@@ -259,7 +259,7 @@ Trên WorkTracker:
 - **Dùng lại, không chép:** thêm route (`page-add.ts`), đổi đường dẫn import (`component-scope.ts`/`imports.ts`), kiểm thư mục (`page-common.ts`). Hàm cần dùng chung mà đang nội bộ thì export ra, không copy.
 - **Đổi tên khai báo:** chỉ đổi tên của component export (và `export default function X` nếu có), không đổi chữ trùng tên ở chỗ khác trong file.
 - **Iframe:** `IframeFrame` giữ `src` trong `useState`. Đổi URL phải đổi `key`, không sửa `src` tại chỗ.
-- **`currentRoute` khi mở bản nháp:** Bridge báo route của trang bản nháp (`/__reactcraft/draft`). Không được để `useDesignTargetSync` tưởng đây là một trang của router rồi tìm sai file.
+- **`currentRoute` khi mở bản nháp:** Bridge báo route của trang bản nháp (`/__kumicraft/draft`). Không được để `useDesignTargetSync` tưởng đây là một trang của router rồi tìm sai file.
 - **Giữ file ≤ 400 dòng, hàm ≤ 50 dòng.** Không đổi hành vi các lượt trước; test cũ xanh.
 
 ## 7. Báo cáo và commit

@@ -1,6 +1,6 @@
 // MCP tools that change one element's class names, text or attributes (R-AG-19, round 7b). Each
 // call is one history step; the Studio shows it at once and can undo it.
-import { EDITABLE_ATTRS } from '@reactcraft/shared';
+import { EDITABLE_ATTRS } from '@kumicraft/shared';
 import { z } from 'zod';
 
 import type { ApiClient, ApiResult } from './api-client.ts';
@@ -99,7 +99,7 @@ async function setAttribute(api: ApiClient, input: z.infer<typeof SetAttributeIn
 
 export const EDIT_TOOLS: readonly McpTool[] = [
   {
-    name: 'reactcraft_set_class_name',
+    name: 'kumicraft_set_class_name',
     description:
       'Replace the whole className of one element. Works for any styling system (Tailwind classes or CSS class names).',
     input: SetClassInput,
@@ -109,7 +109,7 @@ export const EDIT_TOOLS: readonly McpTool[] = [
     },
   },
   {
-    name: 'reactcraft_update_classes',
+    name: 'kumicraft_update_classes',
     description: 'Add and/or remove class names on one element, keeping the others.',
     input: UpdateClassesInput,
     run: (api, args) => {
@@ -118,7 +118,7 @@ export const EDIT_TOOLS: readonly McpTool[] = [
     },
   },
   {
-    name: 'reactcraft_set_text',
+    name: 'kumicraft_set_text',
     description: 'Replace the plain text inside one element (no JSX inside).',
     input: SetTextInput,
     run: (api, args) => {
@@ -127,7 +127,7 @@ export const EDIT_TOOLS: readonly McpTool[] = [
     },
   },
   {
-    name: 'reactcraft_set_attribute',
+    name: 'kumicraft_set_attribute',
     description: `Set or remove one attribute of an element: ${EDITABLE_ATTRS.join(', ')}.`,
     input: SetAttributeInput,
     run: (api, args) => setAttribute(api, SetAttributeInput.parse(args)),

@@ -23,7 +23,7 @@ function stubServer(status: number, body?: unknown) {
 }
 
 beforeEach(() => {
-  sessionStorage.setItem('reactcraft.sessionToken', 'tok');
+  sessionStorage.setItem('kumicraft.sessionToken', 'tok');
 });
 
 afterEach(() => {

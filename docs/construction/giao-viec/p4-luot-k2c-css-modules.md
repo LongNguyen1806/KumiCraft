@@ -51,7 +51,7 @@ Mở một dự án React + Vite dùng `Card.module.css` và `className={styles.
 
 - `MatchedRuleSchema` thêm `ruleIndex: z.number().int().min(0)`: thứ tự (từ 0) của rule này trong **sheet của nó**, tính mọi `CSSStyleRule` theo thứ tự tài liệu, **kể cả rule trong `@media` không áp dụng** và rule trong `@supports`/`@layer`. Đây đúng là thứ tự `walkRulesWithMedia` của server đi qua file nguồn.
 - Đếm trong `walkRules`/`visitStyleRule`/`countUnmatched` hiện có (thêm một bộ đếm riêng cho mỗi sheet, khác `position` là thứ tự toàn trang).
-- Sau khi sửa shared hoặc bridge: `pnpm --filter @reactcraft/bridge build`.
+- Sau khi sửa shared hoặc bridge: `pnpm --filter @kumicraft/bridge build`.
 
 ### 3.2. Server đọc (`packages/server/src/core/style/`)
 
@@ -85,7 +85,7 @@ Tạo **`style-apply-modules.ts`** (giữ `style-apply.ts` dưới 400 dòng). `
 
 ### 3.5. Fixture `fixtures/projects/react-css-modules/`
 
-Chép cấu trúc `fixtures/projects/react-css/`, đổi `id` trong `.reactcraft/workspace.json` (đúng 10 ký tự `[A-Za-z0-9_-]`, ví dụ `e2emods001`), `name` "React CSS Modules Fixture":
+Chép cấu trúc `fixtures/projects/react-css/`, đổi `id` trong `.kumicraft/workspace.json` (đúng 10 ký tự `[A-Za-z0-9_-]`, ví dụ `e2emods001`), `name` "React CSS Modules Fixture":
 
 - `src/components/Card.module.css`: `.card { padding: 16px; border-radius: 8px; }` và `@media (max-width: 640px) { .card { padding: 8px; } }`.
 - `src/components/Card.tsx`: `import styles from './Card.module.css';`, `<article className={styles.card}>`.
@@ -117,7 +117,7 @@ Chép cấu trúc `fixtures/projects/react-css/`, đổi `id` trong `.reactcraft
 - Tên class mới phải là định danh JS hợp lệ (`card_rcab10`), không có `-`.
 - `findNodeAt` cần `line`, `column` của `loc` (`parseLocString` trong `shared/src/source.ts`). Thẻ lấy từ mã nguồn, không tin `tag` của request (như `elementContext` trong `style-apply.ts`).
 - Sửa JSX thì xuống dòng (`\r\n`/`\n`) và BOM của file giữ nguyên (`detectFormat`).
-- `pnpm --filter @reactcraft/bridge build` sau khi đổi `shared` hoặc `bridge`, nếu không test `bridge-client-generated` đỏ.
+- `pnpm --filter @kumicraft/bridge build` sau khi đổi `shared` hoặc `bridge`, nếu không test `bridge-client-generated` đỏ.
 
 ## 6. Không được làm
 

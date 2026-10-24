@@ -27,7 +27,7 @@ Việc này chỉ làm ở **Bridge**. Studio không đổi.
 ### 2. Hàm thuần mới: `packages/bridge/src/client/selection-info.ts`
 
 ```ts
-import type { ElementInfo, ElementRef } from '@reactcraft/shared';
+import type { ElementInfo, ElementRef } from '@kumicraft/shared';
 
 export const MAX_DOM_CLASS = 4000;
 
@@ -110,16 +110,16 @@ Tổng ≤ 12 test. Mỗi test có `expect` về kết quả thật.
 
 ## Bẫy đã biết
 
-1. Client Bridge chạy trong trang người dùng: không import gì nặng ngoài `@reactcraft/shared` (kiểu). Hàm mới phải thuần, không đụng `window` ngoài `root` được truyền vào.
+1. Client Bridge chạy trong trang người dùng: không import gì nặng ngoài `@kumicraft/shared` (kiểu). Hàm mới phải thuần, không đụng `window` ngoài `root` được truyền vào.
 2. Phần tử trong iframe thuộc "vũ trụ" JavaScript khác: trong `selection-info.ts` không dùng `instanceof HTMLElement`.
 3. QC-40: không dùng `null` trong code mình viết. `getAttribute` trả `null` thì chuyển ngay: `el.getAttribute('class') ?? undefined`.
-4. Sau mọi lần sửa runtime phải chạy `pnpm --filter @reactcraft/bridge build`, nếu không `bridge-client-generated.test.ts` đỏ và E2E chạy client cũ.
+4. Sau mọi lần sửa runtime phải chạy `pnpm --filter @kumicraft/bridge build`, nếu không `bridge-client-generated.test.ts` đỏ và E2E chạy client cũ.
 5. Trên trình duyệt thật, `scroll` bắn rất dày: bắt buộc gộp 16 ms như trên, không gửi mỗi sự kiện.
 
 ## Kiểm tra trước khi báo xong
 
 1. `pnpm exec vitest run packages/bridge/src/client`
-2. `pnpm --filter @reactcraft/bridge build`, `pnpm build`, rồi `pnpm exec playwright test e2e/canvas-edit.e2e.ts --project=chromium`
+2. `pnpm --filter @kumicraft/bridge build`, `pnpm build`, rồi `pnpm exec playwright test e2e/canvas-edit.e2e.ts --project=chromium`
 3. Cuối cùng một lần: `pnpm verify`, `pnpm test:e2e`.
 4. Số dòng `bridge-client-runtime.ts` ≤ 400 (ghi số trong báo cáo).
 

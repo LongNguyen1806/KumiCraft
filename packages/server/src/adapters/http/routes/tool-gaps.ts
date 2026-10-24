@@ -4,7 +4,7 @@ import {
   type ProjectInfo,
   type Result,
   ToolGapReportSchema,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 
 import type { ToolGapStore } from '../../../core/agent/tool-gaps.ts';

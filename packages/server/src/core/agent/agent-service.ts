@@ -1,5 +1,5 @@
 // Agent detection and resolution service (WP-3.03a, WP-3.06b, R-AG-10, R-AG-21, S-110).
-import { AGENT_IDS, type AgentId, type AgentStatus } from '@reactcraft/shared';
+import { AGENT_IDS, type AgentId, type AgentStatus } from '@kumicraft/shared';
 
 import type { ProcessPort } from '../ports/process-port.ts';
 import { err, ok, type Result } from '../shared/result.ts';

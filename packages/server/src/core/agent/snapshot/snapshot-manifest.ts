@@ -1,5 +1,5 @@
 // Manifest reading, writing, and pruning for turn snapshots (S-113, ADR-BE-33).
-import { TurnFileSchema } from '@reactcraft/shared';
+import { TurnFileSchema } from '@kumicraft/shared';
 import { z } from 'zod';
 
 import type { FileSystemPort } from '../../ports/file-system-port.ts';

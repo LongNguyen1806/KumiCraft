@@ -1,5 +1,5 @@
 // Unit tests for useAttributeEdit hook (SPEC-04 R-IN-18, FR-25).
-import type { EditResult, ElementSource } from '@reactcraft/shared';
+import type { EditResult, ElementSource } from '@kumicraft/shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 

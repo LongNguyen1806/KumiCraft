@@ -1,5 +1,5 @@
 // Bundles the Bridge client (src/client/entry.ts) into the string the Vite plugin serves (R-BR-05).
-// `pnpm --filter @reactcraft/bridge build` rewrites src/client/bridge-client.generated.ts.
+// `pnpm --filter @kumicraft/bridge build` rewrites src/client/bridge-client.generated.ts.
 import { writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 

@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 // Bridge client runtime: Studio messages (V-110..V-114), navigation (R-BR-19), build errors (R-BR-17).
-import { type BridgeEnvelope, BridgeSelectionInfoPayloadSchema } from '@reactcraft/shared';
+import { type BridgeEnvelope, BridgeSelectionInfoPayloadSchema } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 
 import { BridgeClientRuntime, type HotContext } from './bridge-client-runtime.ts';

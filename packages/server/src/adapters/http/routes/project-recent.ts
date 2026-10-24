@@ -1,5 +1,5 @@
 // Projects opened before, for the "no project is open" screen (R-PJ-25).
-import type { RecentProject } from '@reactcraft/shared';
+import type { RecentProject } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 
 import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
@@ -12,7 +12,7 @@ export type RecentProjectRoutesDeps = {
 
 /** A folder moved or deleted since is left out; it stays in the config until it drops off. */
 async function stillThere(fs: FileSystemPort | undefined, entry: RecentProject): Promise<boolean> {
-  return fs === undefined || fs.exists(entry.path, '.reactcraft/workspace.json');
+  return fs === undefined || fs.exists(entry.path, '.kumicraft/workspace.json');
 }
 
 export function registerRecentProjectRoutes(

@@ -1,5 +1,5 @@
 // Tests for siblingMoveTarget (Scenario #17, SPEC-04 R-SE-24).
-import type { TreeNode } from '@reactcraft/shared';
+import type { TreeNode } from '@kumicraft/shared';
 import { describe, expect, it } from 'vitest';
 
 import { siblingMoveTarget } from './sibling-move.ts';

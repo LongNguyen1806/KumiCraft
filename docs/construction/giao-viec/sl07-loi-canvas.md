@@ -27,7 +27,7 @@ Bridge **đã gửi** cả 3 tin nhắn (`packages/bridge/src/client/bridge-clie
 ### 1. Store mới: `packages/studio/src/features/canvas-errors/canvas-error-store.ts`
 
 ```ts
-import type { BridgeBuildErrorPayload, BridgeRuntimeErrorPayload } from '@reactcraft/shared';
+import type { BridgeBuildErrorPayload, BridgeRuntimeErrorPayload } from '@kumicraft/shared';
 
 export type RuntimeErrorEntry = {
   readonly message: string;

@@ -1,11 +1,11 @@
 // Source Editor HTTP endpoints (SPEC-03 section 5.5, SPEC-04 section 6).
-import type { HistoryLabel, StructureEdit } from '@reactcraft/shared';
+import type { HistoryLabel, StructureEdit } from '@kumicraft/shared';
 import {
   BatchEditRequestSchema,
   EditRequestSchema,
   issuesToDetails,
   PAGE_TREE_MAX_DEPTH,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 

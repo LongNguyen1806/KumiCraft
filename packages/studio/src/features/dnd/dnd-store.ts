@@ -4,7 +4,7 @@ import type {
   LibraryBlock,
   Placement,
   ProjectComponent,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { create } from 'zustand';
 
 import type { ErrorInfo } from '../../routes/error-text.ts';

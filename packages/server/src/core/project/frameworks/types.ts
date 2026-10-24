@@ -1,5 +1,5 @@
 // Framework adapter types (SPEC-04 section 1, M-FW).
-import type { FrameworkId, RelPath, SupportReport } from '@reactcraft/shared';
+import type { FrameworkId, RelPath, SupportReport } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../../ports/file-system-port.ts';
 

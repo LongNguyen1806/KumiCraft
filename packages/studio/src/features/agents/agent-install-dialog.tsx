@@ -1,5 +1,5 @@
 // Dialog confirming agent install command and following install logs (R-AG-21, S-54).
-import type { AgentStatus } from '@reactcraft/shared';
+import type { AgentStatus } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
 import { Dialog } from '../../components/ui/dialog.tsx';

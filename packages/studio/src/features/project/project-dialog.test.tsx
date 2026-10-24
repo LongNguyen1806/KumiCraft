@@ -91,7 +91,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await i18next.changeLanguage('en');
-  sessionStorage.setItem('reactcraft.sessionToken', 'tok');
+  sessionStorage.setItem('kumicraft.sessionToken', 'tok');
   stubApi();
 });
 

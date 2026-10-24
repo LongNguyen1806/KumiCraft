@@ -4,7 +4,7 @@ import type {
   LibraryBlock,
   Placement,
   ProjectComponent,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import i18next from 'i18next';
 
 import { applyStructureEdit } from '../../api/source-client.ts';

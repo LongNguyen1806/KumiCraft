@@ -5,7 +5,7 @@ import {
   THEME_VAR_PREFIX,
   type ThemeEdit,
   type ThemeTokenKind,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 const COLOR_HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 const COLOR_FN_PREFIXES = [

@@ -3,7 +3,7 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import type { BridgeStyleProbePayload, MatchedRule, StylingSystemId } from '@reactcraft/shared';
+import type { BridgeStyleProbePayload, MatchedRule, StylingSystemId } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { nodeFs } from '../workspace/test-support.ts';

@@ -67,7 +67,7 @@ const SAMPLE_TEMPLATES = [
   `export function Comp() {
   return (
     <p className="description">
-      ReactCraft &amp; Vite 8 &lt;bản thử nghiệm&gt;
+      KumiCraft &amp; Vite 8 &lt;bản thử nghiệm&gt;
     </p>
   );
 }`,

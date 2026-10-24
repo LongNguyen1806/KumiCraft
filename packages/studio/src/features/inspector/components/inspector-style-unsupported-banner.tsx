@@ -1,5 +1,5 @@
 // Banner shown in Inspector when current project styling has no visual editor adapter (Round S1, R-PJ-02).
-import type { StylingReport } from '@reactcraft/shared';
+import type { StylingReport } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
 import { stylingLabel, systemDisplayName } from '../../project/styling-label.ts';

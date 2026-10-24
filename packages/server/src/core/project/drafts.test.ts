@@ -2,7 +2,7 @@
 import { cp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { ProjectInfo } from '@reactcraft/shared';
+import type { ProjectInfo } from '@kumicraft/shared';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { resolveTemplateDir } from '../../index.ts';
@@ -36,7 +36,7 @@ let service: ProjectService;
 
 async function setupProject(): Promise<ProjectInfo> {
   await cp(join(baseDir, 'base'), tempDir, { recursive: true });
-  await rm(join(tempDir, '.reactcraft', 'lock'), { force: true });
+  await rm(join(tempDir, '.kumicraft', 'lock'), { force: true });
   history = createHistoryService({ fs: directWriteFs });
   service = createProjectService({
     fs: directWriteFs,
@@ -281,7 +281,7 @@ describe('Drafts lifecycle (#1 - #14)', () => {
     expect(await directWriteFs.exists(tempDir, 'src/features/promo/PromoBox.tsx')).toBe(true);
     expect(await directWriteFs.exists(tempDir, 'src/drafts/PromoBox.tsx')).toBe(true);
 
-    const compJson = await readFile(join(tempDir, '.reactcraft/components.json'), 'utf8');
+    const compJson = await readFile(join(tempDir, '.kumicraft/components.json'), 'utf8');
     expect(compJson).toContain('src/features/promo/PromoBox.tsx');
   });
 

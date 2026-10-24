@@ -1,4 +1,4 @@
-# Kế hoạch hoàn thành ReactCraft (bàn giao cho người thực hiện tiếp theo)
+# Kế hoạch hoàn thành KumiCraft (bàn giao cho người thực hiện tiếp theo)
 
 Lập: 2026-10-12 · Người lập: Claude · Người nhận: Gemini (làm theo từng bước), sau đó Claude kiểm tra và sửa lỗi.
 
@@ -26,7 +26,7 @@ Tài liệu gốc để tra cứu: [spec.md](../spec.md) (SPEC-07 mục 5 đến
    - Studio: cấm chuỗi chữ trực tiếp trong JSX (i18next no-literal-string). Mọi chữ hiển thị qua `t('...')`, thêm khóa vào **cả hai** `packages/studio/src/i18n/locales/vi/common.json` và `en/common.json`; chạy `pnpm check:i18n`.
    - Import `.ts`/`.tsx` có đuôi file (ESM); đúng thứ tự import (eslint tự sửa bằng `pnpm lint --fix`).
 8. **Test gắn mã quy tắc** (QC-93): tên test chứa mã trong ngoặc vuông, ví dụ `it('... [R-SH-03]', ...)`. `pnpm trace` phải 100% cho phạm vi WP đang làm.
-9. **Test không bao giờ đụng cấu hình thật của người dùng** (`%APPDATA%\reactcraft-nodejs`). Dùng biến `REACTCRAFT_CONFIG_DIR` hoặc thư mục tạm.
+9. **Test không bao giờ đụng cấu hình thật của người dùng** (`%APPDATA%\kumicraft-nodejs`). Dùng biến `KUMICRAFT_CONFIG_DIR` hoặc thư mục tạm.
 10. **Giữ nguyên**: `babel-plugin-react-compiler` (đừng gỡ); email trong `SECURITY.md` (bỏ qua).
 11. **Kiểm tra cuối mỗi bước**: `pnpm verify` phải xanh (lint, typecheck, format, check:i18n, unit test, trace, build). Bước có giao diện thì thêm `pnpm test:e2e` (Chromium, Firefox, WebKit). Bước có hiệu năng thì thêm `pnpm bench`.
 12. **Sau mỗi bước**: cập nhật [progress.md](progress.md) (bảng WP và ngày cập nhật), [modules.md](modules.md) (trạng thái module), thêm báo cáo VG nếu có ở `docs/construction/vg/`.
@@ -144,7 +144,7 @@ Spec: ADR-BE-03, 25. Phụ thuộc: WP-1.05.
 1. Mọi tham số của ADR-BE-03 (`--port`, `--host` giữ 127.0.0.1, `--no-open`, `--log-level`, `--config-dir`...), `--help`, `--version` có thông báo rõ ràng, mã thoát đúng.
 2. Xử lý khoá E018 (workspace đang mở ở tiến trình khác) kèm báo cổng của phiên cũ.
 3. Tắt an toàn: Ctrl+C / SIGTERM lưu nốt thay đổi chờ ghi rồi mới thoát (kiểm bằng test kill).
-4. Đóng gói: `pnpm package` ra tarball; `npx ./reactcraft-<ver>.tgz` chạy được trong thư mục trống. Script `scripts/smoke` đã có, mở rộng cho tarball.
+4. Đóng gói: `pnpm package` ra tarball; `npx ./kumicraft-<ver>.tgz` chạy được trong thư mục trống. Script `scripts/smoke` đã có, mở rộng cho tarball.
 
 **Kiểm tra**
 
@@ -256,7 +256,7 @@ DR-02 của SPEC-07: mọi VG phụ thuộc phải Đạt giai đoạn A trướ
 
 ### BƯỚC 19 — WP-2.11: Bảo mật code xuất ra
 
-**Việc cần làm**: SPEC-05 mục 12 (thoát chuỗi, chặn URL `javascript:`, không nhúng secret, không import `reactcraft`).
+**Việc cần làm**: SPEC-05 mục 12 (thoát chuỗi, chặn URL `javascript:`, không nhúng secret, không import `kumicraft`).
 
 **Kiểm tra**: nhóm "Code xuất ra" SPEC-05 mục 17.1; NFR-12, NFR-13.
 

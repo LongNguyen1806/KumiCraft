@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { type InsertTarget, LIBRARY_BLOCKS } from '@reactcraft/shared';
+import { type InsertTarget, LIBRARY_BLOCKS } from '@kumicraft/shared';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';

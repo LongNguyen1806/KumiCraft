@@ -1,5 +1,5 @@
 // Long-running tasks with progress over WebSocket (SPEC-03 section 4.2, V-60 to V-62).
-import { type JobKind, type JobStatus, MAX_JOB_LINES } from '@reactcraft/shared';
+import { type JobKind, type JobStatus, MAX_JOB_LINES } from '@kumicraft/shared';
 import { nanoid } from 'nanoid';
 
 import type { EventBusPort } from '../ports/event-bus-port.ts';

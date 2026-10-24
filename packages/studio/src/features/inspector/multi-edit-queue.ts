@@ -6,8 +6,8 @@ import type {
   PropertyId,
   Scope,
   SetClassNameEdit,
-} from '@reactcraft/shared';
-import { writeValue } from '@reactcraft/shared';
+} from '@kumicraft/shared';
+import { writeValue } from '@kumicraft/shared';
 
 import type { MultiTargetItem } from './types.ts';
 

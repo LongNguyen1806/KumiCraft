@@ -67,7 +67,7 @@ Kiểm nhanh phần A: `pnpm exec vitest run packages/studio/src/features/editor
 - Ô **màu chữ, màu nền, màu viền** là nút có ô màu nhỏ; bấm mở bảng chọn gồm: "Màu của dự án" (token `--color-*` trong `@theme`), "Bảng màu Tailwind", và ô nhập mã màu tự do.
 - Ô **cỡ chữ, bo góc, bóng, font** liệt kê tên trong `@theme` của dự án **trước**, rồi tới các giá trị mặc định đang có.
 
-**Hiện trạng (đã kiểm):** API `GET /project/theme` đã đúng (R-PJ-17), `fetchProjectTheme()` có trong `api/project-client.ts` nhưng **không nơi nào gọi**; `side-panels.tsx` render `<InspectorPanel />` không truyền `theme`, nên Inspector luôn dùng theme rỗng. Phần lõi `@reactcraft/shared` đã đọc/ghi đúng (đã chạy thử với theme có `brand`, `hero`, `card`, `soft`, `display`):
+**Hiện trạng (đã kiểm):** API `GET /project/theme` đã đúng (R-PJ-17), `fetchProjectTheme()` có trong `api/project-client.ts` nhưng **không nơi nào gọi**; `side-panels.tsx` render `<InspectorPanel />` không truyền `theme`, nên Inspector luôn dùng theme rỗng. Phần lõi `@kumicraft/shared` đã đọc/ghi đúng (đã chạy thử với theme có `brand`, `hero`, `card`, `soft`, `display`):
 
 | Thao tác                                                                    | Kết quả                                 |
 | --------------------------------------------------------------------------- | --------------------------------------- |
@@ -153,7 +153,7 @@ Kiểm nhanh phần B: `pnpm exec vitest run packages/studio/src/features/inspec
 
 ### Phạm vi file phần B
 
-`scripts/gen-tailwind-palette.mjs` (mới), `package.json` (chỉ thêm script), `packages/shared/src/tailwind/palette.generated.ts` (mới), `palette.test.ts` (mới), `packages/shared/src/index.ts` (thêm export), `features/inspector/use-project-theme.ts` (mới) và test, `features/inspector/components/color-field.tsx` (mới) và test, `features/inspector/inspector-panel.tsx`, `inspector-panel.test.tsx`, `features/editor/side-panels.tsx`, `i18n/locales/{vi,en}/common.json`, `bridge-client.generated.ts` (chỉ khi `pnpm --filter @reactcraft/bridge build` đổi nó do shared đổi).
+`scripts/gen-tailwind-palette.mjs` (mới), `package.json` (chỉ thêm script), `packages/shared/src/tailwind/palette.generated.ts` (mới), `palette.test.ts` (mới), `packages/shared/src/index.ts` (thêm export), `features/inspector/use-project-theme.ts` (mới) và test, `features/inspector/components/color-field.tsx` (mới) và test, `features/inspector/inspector-panel.tsx`, `inspector-panel.test.tsx`, `features/editor/side-panels.tsx`, `i18n/locales/{vi,en}/common.json`, `bridge-client.generated.ts` (chỉ khi `pnpm --filter @kumicraft/bridge build` đổi nó do shared đổi).
 
 ---
 

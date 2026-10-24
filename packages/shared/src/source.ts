@@ -191,7 +191,7 @@ export const InsertImageEditSchema = z.strictObject({
 });
 export type InsertImageEdit = z.infer<typeof InsertImageEditSchema>;
 
-/** Largest JSX one insert takes: a Library block or a ReactCraft clipboard paste (S-17). */
+/** Largest JSX one insert takes: a Library block or a KumiCraft clipboard paste (S-17). */
 export const INSERT_JSX_MAX_BYTES = 1024 * 1024;
 
 export const InsertEditSchema = z.strictObject({

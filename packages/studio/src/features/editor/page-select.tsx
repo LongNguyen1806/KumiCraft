@@ -1,6 +1,6 @@
 // Page list on the Canvas toolbar (SPEC-04 M-PG R-PG-15): pick a page of the project to show it
 // in the Canvas; a page with `:param` asks for the value first.
-import type { DraftInfo, PageInfo } from '@reactcraft/shared';
+import type { DraftInfo, PageInfo } from '@kumicraft/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

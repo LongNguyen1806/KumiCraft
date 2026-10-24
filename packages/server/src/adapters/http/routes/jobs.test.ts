@@ -1,5 +1,5 @@
 // Tests for the job endpoints (SPEC-03 section 4.2).
-import { ok } from '@reactcraft/shared';
+import { ok } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

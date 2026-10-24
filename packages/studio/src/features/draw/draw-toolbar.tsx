@@ -1,5 +1,5 @@
 // Canvas drawing tools toolbar and shared image picker mount (WP-2.09b, R-DT-10..R-DT-16, Round S1).
-import type { DrawTool } from '@reactcraft/shared';
+import type { DrawTool } from '@kumicraft/shared';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 

@@ -4,7 +4,7 @@ import {
   AgentIdSchema,
   type TurnSummary,
   TurnSummarySchema,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { z } from 'zod';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';

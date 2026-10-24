@@ -2,7 +2,7 @@
 
 ## Local-First Visual Studio for React Code, with a Local AI Agent
 
-**Tên mã:** ReactCraft Local  
+**Tên mã:** KumiCraft Local  
 **Phiên bản:** 5.1  
 **Trạng thái:** Draft — chờ duyệt  
 **Ngày:** 2026-10-13 (5.1: 2026-10-24)  
@@ -23,8 +23,8 @@
 | Canvas hiển thị | Bản vẽ dựng từ Design Model | **Chính dự án đang chạy** (dev server của dự án) |
 | Sửa trực quan | Sửa Design Model | **Sửa trực tiếp file `.tsx`/`.jsx`/`.css`**, thay đổi nhỏ nhất, giữ nguyên định dạng |
 | Ra code | Bước "Xuất code" sinh file | Không có bước xuất: code luôn nằm sẵn trong dự án |
-| AI | ReactCraft tự gọi API của nhà cung cấp bằng API key | **Ô chat trong Studio điều khiển AI agent cài sẵn** (Antigravity CLI; Claude Code CLI là tùy chọn). AI ghi code thẳng vào dự án |
-| Đọc backend | ReactCraft tự quét bằng bộ trích xuất riêng | **AI agent tự đọc** bản sao chỉ đọc của thư mục backend |
+| AI | KumiCraft tự gọi API của nhà cung cấp bằng API key | **Ô chat trong Studio điều khiển AI agent cài sẵn** (Antigravity CLI; Claude Code CLI là tùy chọn). AI ghi code thẳng vào dự án |
+| Đọc backend | KumiCraft tự quét bằng bộ trích xuất riêng | **AI agent tự đọc** bản sao chỉ đọc của thư mục backend |
 
 Lý do: quy trình của người dùng mục tiêu là **backend trước, frontend sau** (tài liệu tính năng → backend → giao diện). Giao diện phải nối liền với backend thật và sửa được tự do bằng tay, bằng AI và bằng Studio, không bị giới hạn bởi một bộ thiết kế cố định.
 
@@ -32,7 +32,7 @@ Lý do: quy trình của người dùng mục tiêu là **backend trước, fron
 
 ## 0.2. Phần được giữ lại từ v4.0
 
-- Local-first, một lệnh `reactcraft` khởi động server local và mở Studio trong trình duyệt.
+- Local-first, một lệnh `kumicraft` khởi động server local và mở Studio trong trình duyệt.
 - Bảo mật cổng local: chỉ `127.0.0.1`, token phiên, kiểm tra Host và Origin.
 - Workspace trust: mở dự án lạ phải xác nhận tin cậy.
 - Khung thiết kế (Desktop, Tablet, Mobile), thu phóng, chế độ `desktop-first` hoặc `mobile-first`.
@@ -41,7 +41,7 @@ Lý do: quy trình của người dùng mục tiêu là **backend trước, fron
 
 ## 0.3. Phần bị loại bỏ khỏi v4.0
 
-- Design Model, Design Operation, file thiết kế `.reactcraft/pages/*.json`.
+- Design Model, Design Operation, file thiết kế `.kumicraft/pages/*.json`.
 - Code Generator, Export Manager, xuất HTML/CSS.
 - AI Provider Gateway, lưu API key, ngữ cảnh AI tự dựng, prompt tự viết.
 - Backend Scanner và các bộ trích xuất (OpenAPI, JS/TS, Django), Data Source Catalog, dữ liệu mẫu, proxy dữ liệu.
@@ -49,7 +49,7 @@ Lý do: quy trình của người dùng mục tiêu là **backend trước, fron
 
 ## 0.4. Thay đổi ở v5.1 (2026-10-24, theo chủ dự án)
 
-- ReactCraft là công cụ thiết kế cho **dự án có sẵn** của người dùng, không chỉ dự án nó tạo ra.
+- KumiCraft là công cụ thiết kế cho **dự án có sẵn** của người dùng, không chỉ dự án nó tạo ra.
 - Chỉnh kiểu dáng như nhau cho Tailwind, CSS thường, CSS Modules, Bootstrap qua một lớp style; hệ chưa có adapter thì báo lý do và mở trong editor, giống nhau ở mọi hệ (không có "chế độ rút gọn").
 - Danh sách trang và Thêm trang dựa vào việc **quét dự án** tìm nơi khai báo route và kiểu viết trang; không giả định quy ước.
 - Thêm framework theo thứ tự: React chạy webpack/CRA, Express + Pug, Vue, ASP.NET Core Razor.
@@ -61,7 +61,7 @@ Lý do: quy trình của người dùng mục tiêu là **backend trước, fron
 
 ## 1.1. Định vị
 
-ReactCraft Local là **studio thiết kế trực quan chạy trên chính mã nguồn React của dự án**. Người dùng mở thư mục frontend (trống hoặc đã có code) và các thư mục backend. Canvas chạy dự án thật; mọi chỉnh sửa trên Studio đều thành thay đổi trong file. Ô chat trong Studio giao việc cho AI agent trên máy, agent đọc backend và viết code frontend khớp với backend. Canvas cập nhật ngay theo code mới.
+KumiCraft Local là **studio thiết kế trực quan chạy trên chính mã nguồn React của dự án**. Người dùng mở thư mục frontend (trống hoặc đã có code) và các thư mục backend. Canvas chạy dự án thật; mọi chỉnh sửa trên Studio đều thành thay đổi trong file. Ô chat trong Studio giao việc cho AI agent trên máy, agent đọc backend và viết code frontend khớp với backend. Canvas cập nhật ngay theo code mới.
 
 ## 1.2. Không làm (non-goals)
 
@@ -107,7 +107,7 @@ Developer full-stack hoặc frontend làm việc **backend trước**: đã có 
 
 | # | Tình huống |
 |---|---|
-| U-01 | Mở thư mục frontend **trống**: ReactCraft tạo khung dự án Vite + React + Tailwind, rồi người dùng nhờ AI dựng các trang theo tài liệu tính năng và API của backend |
+| U-01 | Mở thư mục frontend **trống**: KumiCraft tạo khung dự án Vite + React + Tailwind, rồi người dùng nhờ AI dựng các trang theo tài liệu tính năng và API của backend |
 | U-02 | Mở dự án frontend **đã có**: chỉnh giao diện trực quan, nhờ AI thêm tính năng |
 | U-03 | Chọn một phần tử trên Canvas, nhờ AI sửa đúng phần đó |
 | U-04 | Tinh chỉnh khoảng cách, màu, chữ, responsive bằng Inspector; kéo thả thêm khối giao diện |
@@ -137,7 +137,7 @@ Thư mục backend (người dùng) ── chỉ đọc, sao ra bản sao
 
 | Mã | Nguyên tắc |
 |---|---|
-| PR-01 | **Mã nguồn là nguồn sự thật duy nhất.** ReactCraft không giữ bản sao giao diện ở dạng khác |
+| PR-01 | **Mã nguồn là nguồn sự thật duy nhất.** KumiCraft không giữ bản sao giao diện ở dạng khác |
 | PR-02 | **Thay đổi tối thiểu:** chỉ đổi đúng phần cần đổi (một chuỗi class, một khai báo CSS, một đoạn chữ, một thẻ); không định dạng lại file. Riêng đoạn mã vừa chèn được định dạng để dễ đọc (FR-32) |
 | PR-03 | **Không ghi file hỏng:** mỗi lần sửa phải phân tích lại được trước khi ghi |
 | PR-04 | **Mọi thay đổi hoàn tác được:** chỉnh trên Studio có Undo; mỗi lượt AI có "Hoàn tác lượt này" |
@@ -152,10 +152,10 @@ Thư mục backend (người dùng) ── chỉ đọc, sao ra bản sao
 
 | Thuật ngữ | Nghĩa |
 |---|---|
-| Dự án (Project) | Thư mục frontend người dùng mở trong ReactCraft (phạm vi ở mục 8). Cũng là workspace: cấu hình nằm ở `<dự án>/.reactcraft/workspace.json` |
+| Dự án (Project) | Thư mục frontend người dùng mở trong KumiCraft (phạm vi ở mục 8). Cũng là workspace: cấu hình nằm ở `<dự án>/.kumicraft/workspace.json` |
 | Backend liên kết | Thư mục backend người dùng thêm vào để AI đọc |
-| Dev server | Máy chủ phát triển Vite **của chính dự án**, do ReactCraft khởi chạy |
-| Cầu nối (Bridge) | Plugin Vite và script nhỏ ReactCraft chèn vào dev server (không ghi vào dự án) để Studio biết phần tử nào ứng với dòng code nào |
+| Dev server | Máy chủ phát triển Vite **của chính dự án**, do KumiCraft khởi chạy |
+| Cầu nối (Bridge) | Plugin Vite và script nhỏ KumiCraft chèn vào dev server (không ghi vào dự án) để Studio biết phần tử nào ứng với dòng code nào |
 | Vị trí nguồn | `file:dòng:cột` của thẻ JSX tạo ra một phần tử trên Canvas |
 | Thao tác sửa nguồn | Một thay đổi có cấu trúc lên mã nguồn: đổi class, đổi khai báo CSS, đổi chữ, đổi thuộc tính, chèn, di chuyển, xóa, bọc thẻ |
 | Hệ CSS | Cách dự án viết kiểu dáng: Tailwind, Bootstrap, CSS thường, CSS Modules, Sass, Less… Mỗi hệ có một adapter trong lớp style |
@@ -172,12 +172,12 @@ Thư mục backend (người dùng) ── chỉ đọc, sao ra bản sao
 | React | 18, 19 | |
 | Ngôn ngữ | TypeScript, JavaScript (JSX) | |
 | Kiểu dáng (hệ CSS) | Tailwind v4 | Phiên bản 1 (Phase 4): Tailwind v3, CSS thường, CSS Modules, Bootstrap 5, Sass, Less. Sau: CSS-in-JS (styled-components, Emotion), thư viện UI (MUI, antd, Chakra) |
-| Điều hướng trang | `react-router` 6, 7: ReactCraft quét dự án tìm nơi khai báo route (FR-50) | Router khác (TanStack Router, wouter): chỉ xem, điều hướng bằng thanh địa chỉ |
+| Điều hướng trang | `react-router` 6, 7: KumiCraft quét dự án tìm nơi khai báo route (FR-50) | Router khác (TanStack Router, wouter): chỉ xem, điều hướng bằng thanh địa chỉ |
 | Framework | React + Vite | Phiên bản 1 (Phase 4): React chạy webpack/CRA, Express + Pug, Vue, ASP.NET Core Razor |
 | Package manager | pnpm, npm, yarn | bun |
 | Cấu trúc | Một dự án một thư mục | Monorepo (Phase 4) |
 
-Dự án ngoài phạm vi: ReactCraft báo E001 kèm lý do cụ thể và không chạy gì.
+Dự án ngoài phạm vi: KumiCraft báo E001 kèm lý do cụ thể và không chạy gì.
 
 ---
 
@@ -187,12 +187,12 @@ Dự án ngoài phạm vi: ReactCraft báo E001 kèm lý do cụ thể và khôn
 
 | Mã | Yêu cầu |
 |---|---|
-| FR-01 | Nút **Project** chọn thư mục frontend. Thư mục trống: đề xuất tạo khung dự án từ template của ReactCraft (Vite + React + TypeScript + Tailwind v4 + react-router) |
+| FR-01 | Nút **Project** chọn thư mục frontend. Thư mục trống: đề xuất tạo khung dự án từ template của KumiCraft (Vite + React + TypeScript + Tailwind v4 + react-router) |
 | FR-02 | Thêm, gỡ một hoặc nhiều **thư mục backend** liên kết; lưu đường dẫn trong `workspace.json` |
 | FR-03 | Kiểm tra dự án có thuộc phạm vi mục 8 không; không thuộc thì báo lý do (E001) |
 | FR-04 | Cài dependency bằng package manager của dự án, chỉ sau khi người dùng xem đúng lệnh sẽ chạy và đồng ý |
 | FR-05 | Hỏi tin cậy trước khi chạy bất cứ thứ gì của dự án (dev server, cài đặt, agent) |
-| FR-06 | Chạy dev server của dự án qua ReactCraft, hiển thị trạng thái (đang khởi động, chạy, lỗi build kèm thông báo của Vite), khởi động lại được |
+| FR-06 | Chạy dev server của dự án qua KumiCraft, hiển thị trạng thái (đang khởi động, chạy, lỗi build kèm thông báo của Vite), khởi động lại được |
 
 ## B. CANVAS
 
@@ -237,9 +237,9 @@ Dự án ngoài phạm vi: ReactCraft báo E001 kèm lý do cụ thể và khôn
 
 | Mã | Yêu cầu |
 |---|---|
-| FR-60 | Ô chat trong Studio. Gửi yêu cầu thì ReactCraft chạy agent đã cài trên máy (ưu tiên Antigravity CLI; Claude Code CLI nếu có), không cần API key |
+| FR-60 | Ô chat trong Studio. Gửi yêu cầu thì KumiCraft chạy agent đã cài trên máy (ưu tiên Antigravity CLI; Claude Code CLI nếu có), không cần API key |
 | FR-61 | Dò agent đã cài; không có thì hướng dẫn cài và đăng nhập. Người dùng chọn agent trong Cài đặt |
-| FR-62 | Ngữ cảnh gửi kèm: phần tử đang chọn (vị trí nguồn), trang đang xem, khung đang xem, tài liệu dự án người dùng chỉ định, và quy ước của dự án (file hướng dẫn agent ReactCraft tạo) |
+| FR-62 | Ngữ cảnh gửi kèm: phần tử đang chọn (vị trí nguồn), trang đang xem, khung đang xem, tài liệu dự án người dùng chỉ định, và quy ước của dự án (file hướng dẫn agent KumiCraft tạo) |
 | FR-63 | Agent **ghi code thẳng vào dự án frontend**. Canvas tự cập nhật theo code mới |
 | FR-64 | Agent đọc backend qua **bản sao chỉ đọc** (không có file bí mật, không có `node_modules`, `.git`, thư mục build) |
 | FR-65 | Chat hiện tiến trình từng bước của agent, hủy được giữa chừng |
@@ -315,7 +315,7 @@ Dự án ngoài phạm vi: ReactCraft báo E001 kèm lý do cụ thể và khôn
 |---|---|
 | SEC-01 | Server chỉ lắng nghe `127.0.0.1`, có token phiên, kiểm tra Host và Origin |
 | SEC-02 | Thư mục backend không bao giờ bị ghi: agent chỉ nhận bản sao |
-| SEC-03 | ReactCraft chỉ ghi trong thư mục dự án frontend và thư mục dữ liệu của chính nó; chặn đường dẫn vượt phạm vi |
+| SEC-03 | KumiCraft chỉ ghi trong thư mục dự án frontend và thư mục dữ liệu của chính nó; chặn đường dẫn vượt phạm vi |
 | SEC-04 | File bí mật (`.env`, khóa, chứng chỉ…) không bao giờ được sao cho agent, không vào log |
 | SEC-05 | Không chạy dev server, cài đặt hay agent trên dự án chưa được tin cậy |
 | SEC-06 | Lệnh chạy tiến trình con là cố định, không qua shell, hiển thị cho người dùng trước khi cài dependency |

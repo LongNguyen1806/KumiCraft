@@ -1,4 +1,4 @@
-import { LIBRARY_BLOCKS, type TreeNode } from '@reactcraft/shared';
+import { LIBRARY_BLOCKS, type TreeNode } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';

@@ -4,11 +4,11 @@ import { describe, expect, it } from 'vitest';
 import { createNodeProcess, sanitizeEnvironment } from './node-process.ts';
 
 describe('sanitizeEnvironment [S-53]', () => {
-  it('strips only REACTCRAFT_* variables [S-53]', () => {
+  it('strips only KUMICRAFT_* variables [S-53]', () => {
     const raw = {
       PATH: '/usr/bin',
-      REACTCRAFT_PORT: '5420',
-      REACTCRAFT_CONFIG_DIR: '/tmp',
+      KUMICRAFT_PORT: '5420',
+      KUMICRAFT_CONFIG_DIR: '/tmp',
       GH_TOKEN: 'secret123',
       my_token: 'abc',
       USER: 'dev',
@@ -21,8 +21,8 @@ describe('sanitizeEnvironment [S-53]', () => {
     expect(sanitized['EXTRA']).toBe('yes');
     expect(sanitized['GH_TOKEN']).toBe('secret123');
     expect(sanitized['my_token']).toBe('abc');
-    expect(sanitized['REACTCRAFT_PORT']).toBeUndefined();
-    expect(sanitized['REACTCRAFT_CONFIG_DIR']).toBeUndefined();
+    expect(sanitized['KUMICRAFT_PORT']).toBeUndefined();
+    expect(sanitized['KUMICRAFT_CONFIG_DIR']).toBeUndefined();
   });
 });
 

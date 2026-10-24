@@ -24,7 +24,7 @@ const SIZES = [
 function startCli(workspace, config) {
   const child = spawn(process.execPath, [CLI, workspace, '--no-open', '--log-level', 'warn'], {
     stdio: ['ignore', 'pipe', 'pipe'],
-    env: { ...process.env, REACTCRAFT_CONFIG_DIR: config },
+    env: { ...process.env, KUMICRAFT_CONFIG_DIR: config },
   });
   return new Promise((resolve) => {
     let output = '';
@@ -99,10 +99,10 @@ async function check(page, name, results) {
   }
 }
 
-/** A `.reactcraft/workspace.json` (SPEC-03 section 3) written as a project pulled from Git. */
+/** A `.kumicraft/workspace.json` (SPEC-03 section 3) written as a project pulled from Git. */
 function writeProject(folder, text) {
   cpSync(FIXTURE, folder, { recursive: true });
-  mkdirSync(join(folder, '.reactcraft'), { recursive: true });
+  mkdirSync(join(folder, '.kumicraft'), { recursive: true });
   const file = {
     schemaVersion: 2,
     id: 'vg12000001',
@@ -119,7 +119,7 @@ function writeProject(folder, text) {
     ],
     primaryFrameId: 'desktop',
   };
-  writeFileSync(join(folder, '.reactcraft', 'workspace.json'), text ?? JSON.stringify(file));
+  writeFileSync(join(folder, '.kumicraft', 'workspace.json'), text ?? JSON.stringify(file));
 }
 
 /** Connection lost, then the project error screen after workspace.json breaks and the CLI restarts. */

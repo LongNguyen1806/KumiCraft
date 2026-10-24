@@ -1,5 +1,5 @@
 // Tag-specific HTML attributes section (SPEC-04 section 9 M-IN, R-IN-18, FR-25).
-import type { EditableAttr, ElementAttributes } from '@reactcraft/shared';
+import type { EditableAttr, ElementAttributes } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

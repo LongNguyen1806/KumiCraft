@@ -1,5 +1,5 @@
 // Other classes section and collapsible raw class string editor (SPEC-04 M-IN, R-IN-17).
-import type { ClassToken } from '@reactcraft/shared';
+import type { ClassToken } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

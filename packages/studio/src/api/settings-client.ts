@@ -10,7 +10,7 @@ import {
   type Settings,
   type SettingsPatch,
   SettingsSchema,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { apiGet, apiPatch, parseResponse } from './http.ts';
 

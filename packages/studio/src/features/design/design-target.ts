@@ -1,5 +1,5 @@
 // Pure utilities for design target matching and insert anchor resolution (SPEC-04 R-CP-11, spec-log #23).
-import type { ElementRef, PageInfo, RelPath, TreeNode } from '@reactcraft/shared';
+import type { ElementRef, PageInfo, RelPath, TreeNode } from '@kumicraft/shared';
 
 export type DesignTarget = {
   readonly kind: 'page' | 'layout' | 'component' | 'draft';

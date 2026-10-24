@@ -1,5 +1,5 @@
 // Image picker dialog (WP-2.09a, R-DT-13, R-DT-14).
-import type { ImageSource } from '@reactcraft/shared';
+import type { ImageSource } from '@kumicraft/shared';
 import { type ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

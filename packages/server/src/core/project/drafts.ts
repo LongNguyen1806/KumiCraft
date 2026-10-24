@@ -13,7 +13,7 @@ import {
   type RenameDraft,
   type Result,
   type StructureResult,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { computeSha256 } from '../history/history-service.ts';
 import {

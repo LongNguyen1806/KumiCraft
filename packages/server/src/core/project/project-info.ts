@@ -4,7 +4,7 @@ import {
   type PackageManager,
   type ProjectInfo,
   type SupportReport,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import type { Platform } from '../shared/session.ts';
 import { getInstallCommand } from './project-install.ts';

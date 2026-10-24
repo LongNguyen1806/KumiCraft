@@ -5,7 +5,7 @@ import {
   type LibraryBlock,
   type LibraryBlockCategory,
   searchBlocks,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { createElement, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

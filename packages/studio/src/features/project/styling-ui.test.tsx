@@ -1,5 +1,5 @@
 // Tests for Studio UI on plain CSS vs Tailwind 4 projects (SPEC-04 Round S1, R-PJ-02).
-import type { ElementSource, ProjectInfo } from '@reactcraft/shared';
+import type { ElementSource, ProjectInfo } from '@kumicraft/shared';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

@@ -3,7 +3,7 @@ import {
   issuesToDetails,
   StyleApplyRequestSchema,
   StyleReadRequestSchema,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 
 import type { HistoryService } from '../../../core/history/history-service.ts';

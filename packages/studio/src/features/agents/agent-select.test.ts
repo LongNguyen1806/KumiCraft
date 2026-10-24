@@ -1,5 +1,5 @@
 // Tests for agent selection and onboarding step logic (R-AG-10, R-AG-21).
-import type { AgentStatus } from '@reactcraft/shared';
+import type { AgentStatus } from '@kumicraft/shared';
 import { describe, expect, it } from 'vitest';
 
 import { onboardingStep, selectedAgent } from './agent-select.ts';

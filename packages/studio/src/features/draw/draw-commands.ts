@@ -5,7 +5,7 @@ import {
   LIBRARY_BLOCKS,
   type Placement,
   pxClass,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import i18next from 'i18next';
 import { create } from 'zustand';
 

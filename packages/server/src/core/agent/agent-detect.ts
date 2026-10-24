@@ -1,7 +1,7 @@
 // Agent CLI version and login detection (WP-3.06b, R-AG-10, R-AG-21).
 import { tmpdir } from 'node:os';
 
-import type { AgentId, AgentLoginState, AgentStatus } from '@reactcraft/shared';
+import type { AgentId, AgentLoginState, AgentStatus } from '@kumicraft/shared';
 
 import type { ProcessPort } from '../ports/process-port.ts';
 import type { AgentServiceDeps } from './agent-service.ts';

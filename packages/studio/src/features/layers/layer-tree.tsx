@@ -1,5 +1,5 @@
 // Layer Tree component displaying DOM hierarchy with 2-way sync (SPEC-04 M-SL, R-SL-07..09).
-import type { ElementRef, TreeNode } from '@reactcraft/shared';
+import type { ElementRef, TreeNode } from '@kumicraft/shared';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

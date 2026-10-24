@@ -30,11 +30,11 @@ export function createShutdown(deps: ShutdownDeps): () => Promise<void> {
     }
 
     stopping = true;
-    deps.log('Stopping ReactCraft…');
+    deps.log('Stopping KumiCraft…');
     const timer = setTimer(() => {
       timedOut = true;
       activeTimer = undefined;
-      deps.warn('reactcraft: shutdown timed out after 10s; forcing exit.');
+      deps.warn('kumicraft: shutdown timed out after 10s; forcing exit.');
       deps.exit(1);
     }, SHUTDOWN_TIMEOUT_MS);
     activeTimer = timer;
@@ -42,7 +42,7 @@ export function createShutdown(deps: ShutdownDeps): () => Promise<void> {
     try {
       await deps.close();
     } catch (error) {
-      deps.warn(`reactcraft: error while stopping (${String(error)})`);
+      deps.warn(`kumicraft: error while stopping (${String(error)})`);
     }
 
     if (!timedOut) {

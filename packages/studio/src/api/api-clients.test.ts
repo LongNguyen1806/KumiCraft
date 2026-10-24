@@ -34,7 +34,7 @@ async function expectInvalidResponse(promise: Promise<unknown>): Promise<void> {
 
 beforeEach(() => {
   sessionStorage.clear();
-  sessionStorage.setItem('reactcraft.sessionToken', 'tok');
+  sessionStorage.setItem('kumicraft.sessionToken', 'tok');
 });
 
 afterEach(() => {

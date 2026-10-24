@@ -3,7 +3,7 @@ import {
   type ServerEventType,
   type StudioServerEvent,
   StudioServerEventSchema,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { readSessionToken } from './session-token.ts';
 
@@ -67,8 +67,8 @@ function tryOpenSocket(
   }
   try {
     const ws = new WebSocket(options?.url ?? defaultWsUrl(), [
-      `reactcraft.token.${token}`,
-      'reactcraft.v1',
+      `kumicraft.token.${token}`,
+      'kumicraft.v1',
     ]);
     bindSocketListeners(ws, {
       onOpen: callbacks.onOpen,

@@ -128,7 +128,7 @@ jobs:
       - run: pnpm build
       # Installed as a developer would, without publishing: one tarball for every system.
       - run: pnpm package
-      - run: npm install -g ./artifacts/reactcraft-cli-0.0.0.tgz
+      - run: npm install -g ./artifacts/kumicraft-cli-0.0.0.tgz
       - run: node scripts/smoke-installed.mjs
 
   audit:

@@ -36,7 +36,7 @@ class MockWebSocket {
 describe('events-client', () => {
   beforeEach(() => {
     activeSockets = [];
-    sessionStorage.setItem('reactcraft.sessionToken', 'token-events-456');
+    sessionStorage.setItem('kumicraft.sessionToken', 'token-events-456');
     vi.stubGlobal('WebSocket', MockWebSocket);
   });
 

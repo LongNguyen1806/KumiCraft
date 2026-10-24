@@ -1,5 +1,5 @@
 // Bridge overlay in closed shadow root (SPEC-04 R-BR-11, R-BR-15, R-DD-10, R-DD-13).
-import type { ElementRef } from '@reactcraft/shared';
+import type { ElementRef } from '@kumicraft/shared';
 
 import type { DropRect, DropResult } from './drop-target.ts';
 import { FreeOverlay } from './free-frame/free-overlay.ts';

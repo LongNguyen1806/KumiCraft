@@ -1,6 +1,6 @@
 // Insertion of existing or uploaded images into JSX structures (WP-2.09a, R-DT-13, R-DT-14).
-import type { InsertEdit, InsertImageEdit, Result, StructureResult } from '@reactcraft/shared';
-import { err } from '@reactcraft/shared';
+import type { InsertEdit, InsertImageEdit, Result, StructureResult } from '@kumicraft/shared';
+import { err } from '@kumicraft/shared';
 
 import { computeBytesSha256 } from '../../history/history-file-io.ts';
 import type { FileSystemPort } from '../../ports/file-system-port.ts';

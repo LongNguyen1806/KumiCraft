@@ -1,7 +1,7 @@
-// Chat image storage in ReactCraft cache (R-CH-02, CW-52, S-118).
+// Chat image storage in KumiCraft cache (R-CH-02, CW-52, S-118).
 import { join } from 'node:path';
 
-import { CHAT_IMAGE_KINDS, type ChatImageKind } from '@reactcraft/shared';
+import { CHAT_IMAGE_KINDS, type ChatImageKind } from '@kumicraft/shared';
 import { nanoid } from 'nanoid';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';

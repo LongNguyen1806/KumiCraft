@@ -1,5 +1,5 @@
 // Shared structure commands for Inspector and keyboard shortcuts (SPEC-04 R-SE-24..28, R-KB-12).
-import type { ElementRef, StructureResult, TreeNode } from '@reactcraft/shared';
+import type { ElementRef, StructureResult, TreeNode } from '@kumicraft/shared';
 
 import { applyStructureEdit } from '../../api/source-client.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';

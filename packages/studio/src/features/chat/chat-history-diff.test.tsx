@@ -1,5 +1,5 @@
 // Tests for changed files, diff view, revert turn, history, and new conversation (WP-3.05b, Situations 1-12).
-import type { ProjectInfo, TurnFile, TurnSummary } from '@reactcraft/shared';
+import type { ProjectInfo, TurnFile, TurnSummary } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -91,7 +91,7 @@ describe('Chat files, diff, revert, history, and new conversation [WP-3.05b]', (
   beforeEach(async () => {
     sockets = [];
     vi.stubGlobal('WebSocket', FakeSocket);
-    sessionStorage.setItem('reactcraft.sessionToken', 'tok-chat');
+    sessionStorage.setItem('kumicraft.sessionToken', 'tok-chat');
     localStorage.clear();
     await i18next.changeLanguage('vi');
     useChatStore.getState().reset();

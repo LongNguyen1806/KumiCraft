@@ -1,5 +1,5 @@
 // Hook for Canvas Direct Text Editing (SPEC-04 section 10 M-TX, R-TX-01..08).
-import { type ElementRef, type ElementSource, parseLocString } from '@reactcraft/shared';
+import { type ElementRef, type ElementSource, parseLocString } from '@kumicraft/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { editSource, fetchElementSource } from '../../api/source-client.ts';

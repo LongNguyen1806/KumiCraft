@@ -19,7 +19,7 @@ Tính năng **đã có** (`no-project-screen.tsx`, `project-dialog.tsx`, `instal
 ## Đọc trước khi viết code (CW-52)
 
 1. `AGENTS.md`, `docs/construction/giao-viec/README.md` (mục quy tắc E2E: không `waitForTimeout`, không thoát sớm bằng `if`, `expect` cuối có nghĩa).
-2. `e2e/project-flow.e2e.ts`: `start()`, `open()`, `beforeEach`/`afterEach`, cách dùng `makeTempDir` và thư mục cấu hình riêng (`REACTCRAFT_CONFIG_DIR`, R-QA-02).
+2. `e2e/project-flow.e2e.ts`: `start()`, `open()`, `beforeEach`/`afterEach`, cách dùng `makeTempDir` và thư mục cấu hình riêng (`KUMICRAFT_CONFIG_DIR`, R-QA-02).
 3. `e2e/canvas-edit.e2e.ts`: `trustIfAsked`, `getCanvasFrame` (lấy Canvas iframe).
 4. `e2e/support/cli-session.ts`, `e2e/support/copy-fixture.ts`.
 5. `packages/studio/src/routes/no-project-screen.tsx` (`no-project-open-btn`), `packages/studio/src/features/project/project-dialog.tsx` (`create-project-name`, `create-project-pm`, `create-project-btn`), `install-dialog.tsx` (`install-command`, `install-btn`, `install-logs`, `install-error`), `packages/studio/src/features/trust/trust-prompt.tsx`.
@@ -57,7 +57,7 @@ Tên: `a new project is created, trusted, installed and shown on the canvas [AC-
   5. `install-dialog` hiện, `install-command` chứa `pnpm install`; bấm `install-btn`.
   6. Chờ `install-dialog` đóng (timeout tới 240 s). Nếu `install-error` hiện thì test phải **thất bại** kèm nội dung lỗi (dùng `expect(installError).toBeHidden()` cùng lúc chờ, hoặc `Promise.race` có `expect` rõ ràng; không nuốt lỗi).
   7. Trong Canvas iframe: `getByRole('heading', { name: 'Welcome' })` hiện (timeout 60 s).
-- Kiểm thêm trên đĩa sau khi xong: `folder/package.json` có tên `shop`; `folder/.reactcraft/workspace.json` tồn tại; `folder/node_modules/vite` tồn tại.
+- Kiểm thêm trên đĩa sau khi xong: `folder/package.json` có tên `shop`; `folder/.kumicraft/workspace.json` tồn tại; `folder/node_modules/vite` tồn tại.
 
 ### 3. Spec-log
 

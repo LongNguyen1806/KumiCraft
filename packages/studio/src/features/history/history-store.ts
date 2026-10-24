@@ -1,5 +1,5 @@
 // History store for Studio (SPEC-04 M-HI, R-HI-01..10).
-import type { HistoryLabel, HistoryState } from '@reactcraft/shared';
+import type { HistoryLabel, HistoryState } from '@kumicraft/shared';
 import { useEffect } from 'react';
 import { create } from 'zustand';
 

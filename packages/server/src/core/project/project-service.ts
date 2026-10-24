@@ -17,7 +17,7 @@ import {
   type ThemeTokenKind,
   type ThemeUsage,
   type WorkspaceFile,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { createJobService, type JobService } from '../jobs/job-service.ts';
 import { err, ok, type Result } from '../shared/result.ts';
@@ -28,6 +28,7 @@ import { extractComponent } from './component-extract.ts';
 import { createProject } from './create.ts';
 import { promoteDraft } from './draft-promote.ts';
 import { createDraft, deleteDraft, duplicateDraft, listDrafts, renameDraft } from './drafts.ts';
+import { moveLegacyWorkspace } from './legacy-workspace.ts';
 import {
   type AddPageInput,
   buildPageEditDeps,
@@ -94,6 +95,8 @@ class ProjectServiceImpl implements ProjectService {
     if (!root) {
       return err({ code: 'E021', params: { missing: 'project' } });
     }
+    const moved = await moveLegacyWorkspace(this.deps.fs, root);
+    if (!moved.ok) this.deps.logger.warn({ code: moved.error.code }, 'cannot move .reactcraft');
 
     const probed = await probeSupportedProject(root, {
       fs: this.deps.fs,

@@ -39,7 +39,7 @@ import {
   type ThemeTokenKind,
   type ThemeUsage,
   ThemeUsageSchema,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { apiDelete, apiGet, apiPatch, apiPost, parseResponse } from './http.ts';
 

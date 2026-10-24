@@ -1,8 +1,8 @@
-# ReactCraft Local
+# KumiCraft Local
 
 Studio thiết kế giao diện chạy trên máy (local-first): kéo thả trên layout có cấu trúc, đọc backend để hiểu API và dữ liệu, nhờ AI chỉnh sửa từng phần tử, rồi xuất code React + TypeScript + Tailwind (hoặc HTML/CSS) vào project thật.
 
-> Tên `reactcraft` là tên tạm (câu hỏi mở Q-01). Tên chính thức chốt trước khi phát hành.
+> Tên `kumicraft` là tên tạm (câu hỏi mở Q-01). Tên chính thức chốt trước khi phát hành.
 
 **Trạng thái:** Phase 1 (SPEC-07 mục 5), đang làm WP-1.06. Đã dùng thử được: tạo và mở workspace, màn hình lỗi kèm khôi phục bản sao lưu, khung Editor, Undo/Redo. Chưa có: hiển thị trang trên Canvas, kéo thả, chỉnh thuộc tính, xuất code.
 
@@ -39,15 +39,15 @@ Dành cho developer dùng **Windows** hoặc **macOS** (Linux làm như macOS). 
 
 ```sh
 pnpm install
-pnpm package        # tạo artifacts/reactcraft-cli-0.0.0.tgz
+pnpm package        # tạo artifacts/kumicraft-cli-0.0.0.tgz
 ```
 
-**2. Cài lệnh `reactcraft`** (một lần, sau đó gõ được ở mọi thư mục):
+**2. Cài lệnh `kumicraft`** (một lần, sau đó gõ được ở mọi thư mục):
 
-| Hệ điều hành            | Lệnh                                                  |
-| ----------------------- | ----------------------------------------------------- |
-| Windows (PowerShell)    | `npm install -g .\artifacts\reactcraft-cli-0.0.0.tgz` |
-| macOS, Linux (Terminal) | `npm install -g ./artifacts/reactcraft-cli-0.0.0.tgz` |
+| Hệ điều hành            | Lệnh                                                 |
+| ----------------------- | ---------------------------------------------------- |
+| Windows (PowerShell)    | `npm install -g .\artifacts\kumicraft-cli-0.0.0.tgz` |
+| macOS, Linux (Terminal) | `npm install -g ./artifacts/kumicraft-cli-0.0.0.tgz` |
 
 Trên macOS, nếu Node cài bằng file `.pkg` từ nodejs.org thì lệnh trên có thể báo thiếu quyền (`EACCES`). Khi đó cài Node bằng Homebrew (`brew install node`) hoặc nvm, hoặc thêm `sudo` trước lệnh.
 
@@ -55,25 +55,25 @@ Trên macOS, nếu Node cài bằng file `.pkg` từ nodejs.org thì lệnh trê
 
 ```sh
 cd duong-dan/du-an
-reactcraft
+kumicraft
 ```
 
 Trình duyệt tự mở Studio. Bấm `Ctrl+C` trong terminal để tắt; thay đổi chưa lưu được ghi nốt trước khi thoát. Lần sau chạy lại trong cùng thư mục, Studio mở đúng địa chỉ cũ và workspace còn nguyên.
 
-| Tham số                | Việc làm                                                    |
-| ---------------------- | ----------------------------------------------------------- |
-| `reactcraft <thư mục>` | Mở workspace ở thư mục khác thư mục hiện tại                |
-| `--no-open`            | Không tự mở trình duyệt (tự mở đường dẫn in trong terminal) |
-| `--port <số>`          | Dùng cổng cố định                                           |
+| Tham số               | Việc làm                                                    |
+| --------------------- | ----------------------------------------------------------- |
+| `kumicraft <thư mục>` | Mở workspace ở thư mục khác thư mục hiện tại                |
+| `--no-open`           | Không tự mở trình duyệt (tự mở đường dẫn in trong terminal) |
+| `--port <số>`         | Dùng cổng cố định                                           |
 
-**Cập nhật** sau khi kéo code mới: làm lại bước 1 và 2. **Gỡ:** `npm uninstall -g @reactcraft/cli`.
+**Cập nhật** sau khi kéo code mới: làm lại bước 1 và 2. **Gỡ:** `npm uninstall -g @kumicraft/cli`.
 
 ### Cài thử bản đóng gói
 
 ```sh
 pnpm package
 pnpm check:package
-npm install -g artifacts/reactcraft-cli-0.0.0.tgz
+npm install -g artifacts/kumicraft-cli-0.0.0.tgz
 node scripts/smoke-installed.mjs
 ```
 
@@ -87,7 +87,7 @@ Trình duyệt: Chrome, Edge, Firefox, Safari (đều có trong test tự độn
 
 Dự án đang thi công ở **chế độ local** (SPEC-07 mục 12.6): repo Git chỉ nằm trên máy, chưa đưa lên GitHub, chủ sản phẩm tự commit.
 
-Chạy trong thư mục `reactcraft` (PowerShell hoặc Terminal):
+Chạy trong thư mục `kumicraft` (PowerShell hoặc Terminal):
 
 ```sh
 # 1. Bật pnpm đúng phiên bản ghim.
@@ -120,7 +120,7 @@ Sau đó commit theo các bộ thay đổi đang chờ trong [`docs/construction
 | `pnpm changeset`                    | Thêm ghi chú thay đổi cho lần phát hành              | Bây giờ |
 | `pnpm dev`                          | Chạy server và Studio                                | WP-0.03 |
 | `pnpm build`                        | Build toàn bộ package                                | WP-0.03 |
-| `pnpm package`                      | Đóng gói lệnh `reactcraft` thành `.tgz` để cài thử   | WP-1.06 |
+| `pnpm package`                      | Đóng gói lệnh `kumicraft` thành `.tgz` để cài thử    | WP-1.06 |
 | `pnpm check:i18n`                   | Kiểm tra khớp khóa `vi`/`en`                         | WP-0.05 |
 | `pnpm test`, `pnpm test:e2e`        | Vitest, Playwright                                   | WP-0.06 |
 | `pnpm bench`                        | Benchmark ngân sách hiệu năng                        | WP-0.06 |
@@ -133,15 +133,15 @@ Lệnh chưa có in ra gói công việc sẽ làm nó và kết thúc bình th�
 ## Cấu trúc
 
 ```text
-reactcraft/
+kumicraft/
 ├── .github/          # CI, mẫu Pull Request, Dependabot
 ├── .changeset/       # ghi chú thay đổi cho phát hành
 ├── docs/             # SRS, Spec, báo cáo thi công (docs/construction)
 ├── packages/
-│   ├── model/        # @reactcraft/model: schema, operation, styling (dùng chung)
-│   ├── server/       # @reactcraft/server: Local Backend
-│   ├── studio/       # @reactcraft/studio: Studio UI
-│   └── cli/          # @reactcraft/cli: lệnh reactcraft
+│   ├── model/        # @kumicraft/model: schema, operation, styling (dùng chung)
+│   ├── server/       # @kumicraft/server: Local Backend
+│   ├── studio/       # @kumicraft/studio: Studio UI
+│   └── cli/          # @kumicraft/cli: lệnh kumicraft
 ├── templates/        # template Target Project mới
 ├── fixtures/         # project mẫu, backend mẫu, Design Document mẫu
 ├── e2e/              # test Playwright

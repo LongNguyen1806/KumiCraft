@@ -1,7 +1,7 @@
 // Backend mirror service (ADR-BE-34, R-MR-01 to R-MR-04, S-118, S-120 to S-125).
 import { join } from 'node:path';
 
-import type { BackendInfo } from '@reactcraft/shared';
+import type { BackendInfo } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { redactSecrets } from '../shared/redact-secrets.ts';

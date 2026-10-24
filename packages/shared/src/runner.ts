@@ -39,7 +39,7 @@ export const RunnerOptionsSchema = z.strictObject({
   nonce: z.string().min(1),
   studioOrigin: z.url(),
   host: z.literal('127.0.0.1'),
-  /** Drafts folder the Bridge plugin serves at `/__reactcraft/draft` (R-DR-12). */
+  /** Drafts folder the Bridge plugin serves at `/__kumicraft/draft` (R-DR-12). */
   draftsDir: z.string().min(1).optional(),
   /** Global CSS entries loaded by the draft page (R-DR-12, Round S1). */
   globalCss: z.array(z.string().min(1)).optional(),

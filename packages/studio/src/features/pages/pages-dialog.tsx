@@ -1,4 +1,4 @@
-import type { PageInfo, StructureResult } from '@reactcraft/shared';
+import type { PageInfo, StructureResult } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

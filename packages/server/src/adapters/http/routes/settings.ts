@@ -1,5 +1,5 @@
 // User settings endpoints (SPEC-03 section 5.2). There is no API key to store or return (V-108).
-import { issuesToDetails } from '@reactcraft/shared';
+import { issuesToDetails } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 
 import { type ConfigStore, SettingsPatchSchema } from '../../../core/shared/user-config.ts';

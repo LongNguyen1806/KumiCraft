@@ -21,7 +21,7 @@ Lượt này **chỉ làm Studio**. Không sửa server, shared, Bridge, `e2e/`,
    - Ô chat hiện thẻ "Đăng nhập Antigravity" với 3 bước:
      1. chọn đăng nhập Google trong cửa sổ terminal vừa mở;
      2. đăng nhập trên trình duyệt rồi bấm Copy mã;
-     3. **dán mã vào cửa sổ terminal đó**, không dán vào ReactCraft.
+     3. **dán mã vào cửa sổ terminal đó**, không dán vào KumiCraft.
    - Kèm vòng quay "Đang chờ bạn đăng nhập…", nút **Mở lại cửa sổ** và nút **Hủy**.
    - Studio dò `GET /agents` mỗi 3 s. Thấy agent đã `loggedIn` → thẻ chuyển "✓ Đã đăng nhập" rồi **tự gửi lại** đúng yêu cầu và tài liệu đính kèm đã có.
    - Sau 10 phút chưa xong thì dừng dò, hiện "Chưa thấy đăng nhập xong" với nút **Kiểm tra lại**.

@@ -11,7 +11,7 @@ import type {
   SourceEdit,
   StructureEdit,
   StructureResult,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createHistoryService, type HistoryService } from '../../history/history-service.ts';

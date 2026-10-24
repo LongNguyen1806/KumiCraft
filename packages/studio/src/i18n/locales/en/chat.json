@@ -56,7 +56,7 @@
   "loginStep1": "choose Google login in the terminal window that just opened;",
   "loginStep2": "sign in on your browser and click Copy code;",
   "loginStep3Bold": "paste the code into that terminal window,",
-  "loginStep3Rest": "do not paste it into ReactCraft.",
+  "loginStep3Rest": "do not paste it into KumiCraft.",
   "loginDoneNotice": "✓ Signed in",
   "loginTimeoutNotice": "Sign-in not detected yet",
   "loginWaitingNotice": "Waiting for you to sign in…",
@@ -65,7 +65,7 @@
   "loginHintClaude": "Claude Code may not be signed in",
   "toolGaps": {
     "title": "Missing tools",
-    "help": "When an external agent (Claude Code, Antigravity…) needs an operation ReactCraft does not have yet, it writes it here.",
+    "help": "When an external agent (Claude Code, Antigravity…) needs an operation KumiCraft does not have yet, it writes it here.",
     "empty": "Nothing yet.",
     "connect": "Connect Claude Code to this project (run once in a terminal):",
     "copy": "Copy command",
@@ -75,7 +75,7 @@
     "export": "Export Markdown",
     "showMore": "Show more",
     "showLess": "Show less",
-    "markdownTitle": "Missing ReactCraft tools",
+    "markdownTitle": "Missing KumiCraft tools",
     "markdownWhy": "Why",
     "markdownExample": "Example",
     "markdownLast": "Last seen"

@@ -1,5 +1,5 @@
 // Multi-line prompt input with keyboard submit (Ctrl+Enter / Cmd+Enter) and error notice (WP-3.05a, R-CH-01, R-CH-02).
-import type { AgentId, TurnContext } from '@reactcraft/shared';
+import type { AgentId, TurnContext } from '@kumicraft/shared';
 import type { TFunction } from 'i18next';
 import { ArrowUp } from 'lucide-react';
 import {

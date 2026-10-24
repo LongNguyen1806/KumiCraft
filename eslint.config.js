@@ -14,7 +14,7 @@ const JS_FILES = ['**/*.js', '**/*.mjs'];
 
 /** QC-03: other packages are imported only through their public entry point. */
 const NO_DEEP_PACKAGE_IMPORT = {
-  group: ['@reactcraft/*/src', '@reactcraft/*/src/**'],
+  group: ['@kumicraft/*/src', '@kumicraft/*/src/**'],
   message: 'Import from the package entry point only (QC-03).',
 };
 
@@ -149,7 +149,7 @@ export default defineConfig(
             {
               regex: '^(?!zod(?:/|$)|\\.{1,2}/).*',
               message:
-                '@reactcraft/shared may import only zod and its own files (SPEC-01 section 3.2).',
+                '@kumicraft/shared may import only zod and its own files (SPEC-01 section 3.2).',
             },
           ],
         },

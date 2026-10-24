@@ -4,7 +4,7 @@ import {
   BREAKPOINT_WIDTHS,
   type ClassContext,
   type ElementSource,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 import { MultiEditQueue } from './multi-edit-queue.ts';

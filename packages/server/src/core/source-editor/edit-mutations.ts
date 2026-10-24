@@ -6,8 +6,8 @@ import type {
   SetFlagEdit,
   SetTextEdit,
   SourceEdit,
-} from '@reactcraft/shared';
-import { err, ok } from '@reactcraft/shared';
+} from '@kumicraft/shared';
+import { err, ok } from '@kumicraft/shared';
 import type MagicString from 'magic-string';
 
 import { asAstNode, type AstNode } from './ast-helpers.ts';

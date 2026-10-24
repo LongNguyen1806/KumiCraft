@@ -251,7 +251,7 @@ Trên WorkTracker:
 - **Thứ tự tin nhắn:** Studio dùng `dropTarget` cuối cùng đã nhận; không đợi Bridge trả lời sau `drag-end`.
 - **Không viết E2E mới** (spec-log #21: test #4–6 của M-DD thay bằng unit + kiểm tay). Không chạy `pnpm test:e2e` trừ bước cuối dưới đây.
 - **Giới hạn:** file ≤ 400 dòng, hàm ≤ 50 dòng; `bridge-client-runtime.ts` đã 404 dòng: chuyển phần nối kéo thả vào `drag.ts`, không làm runtime dài thêm (tách nếu cần).
-- Sửa `shared`/`bridge` thì chạy `pnpm --filter @reactcraft/bridge build` trước khi test Studio (file `bridge-client.generated.ts` phải được sinh lại và commit).
+- Sửa `shared`/`bridge` thì chạy `pnpm --filter @kumicraft/bridge build` trước khi test Studio (file `bridge-client.generated.ts` phải được sinh lại và commit).
 
 ## 7. Báo cáo và commit
 

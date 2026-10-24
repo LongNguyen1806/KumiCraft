@@ -1,7 +1,7 @@
 // Project trust (SPEC-05 S-80 to S-84, R-PJ-15): a trust decision holds for one project, in one
-// folder, with one set of backend links. Links that change afterwards, while ReactCraft runs or
+// folder, with one set of backend links. Links that change afterwards, while KumiCraft runs or
 // while it is closed (a `git pull`), put the project back in restricted mode.
-import type { WorkspaceFile } from '@reactcraft/shared';
+import type { WorkspaceFile } from '@kumicraft/shared';
 
 export type TrustKey = {
   readonly id: string;

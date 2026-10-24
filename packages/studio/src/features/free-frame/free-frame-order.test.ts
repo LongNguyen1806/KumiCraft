@@ -1,5 +1,5 @@
 // Unit tests for layer order in free frame (SPEC-04 section 18E, R-FF-16, WP-2.12b).
-import type { ElementRef, TreeNode } from '@reactcraft/shared';
+import type { ElementRef, TreeNode } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';

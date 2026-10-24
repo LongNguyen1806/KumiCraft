@@ -1,5 +1,5 @@
 // Onboarding screens guiding user to install or choose an AI agent (R-AG-10, R-AG-21).
-import type { AgentId, AgentStatus } from '@reactcraft/shared';
+import type { AgentId, AgentStatus } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
 import { useSettingsStore } from '../../store/settings-store.ts';

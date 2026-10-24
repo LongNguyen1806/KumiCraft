@@ -1,7 +1,7 @@
 // Official installation plans and terminal launch commands by platform (WP-3.06b, R-AG-21, S-112).
 import path from 'node:path';
 
-import type { AgentId } from '@reactcraft/shared';
+import type { AgentId } from '@kumicraft/shared';
 
 export type AgentSetupPlan = {
   readonly installCommand: readonly string[];

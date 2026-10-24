@@ -1,5 +1,5 @@
 // Insert image operation (WP-2.09a, R-DT-13, R-DT-14).
-import type { ImageSource, InsertTarget, Placement } from '@reactcraft/shared';
+import type { ImageSource, InsertTarget, Placement } from '@kumicraft/shared';
 
 import { applyStructureEdit } from '../../api/source-client.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';

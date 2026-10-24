@@ -4,7 +4,7 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { err } from '@reactcraft/shared';
+import { err } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createEventBus } from '../ports/event-bus-port.ts';
@@ -305,7 +305,7 @@ describe('M-HI: History Service', () => {
     expect(history.getState().undoCount).toBe(1);
   });
 
-  it('ignores external change event when hash matches ReactCraft last write [R-HI-05]', () => {
+  it('ignores external change event when hash matches KumiCraft last write [R-HI-05]', () => {
     const bus = createEventBus();
     let filesChangedFired = false;
     bus.subscribe((e) => {

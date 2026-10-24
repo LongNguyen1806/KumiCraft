@@ -2,8 +2,8 @@
 import { createHash } from 'node:crypto';
 import * as path from 'node:path';
 
-import type { ElementSource, ElementSourceText } from '@reactcraft/shared';
-import { err, ok, parseLocString, relPathProblem, type Result } from '@reactcraft/shared';
+import type { ElementSource, ElementSourceText } from '@kumicraft/shared';
+import { err, ok, parseLocString, relPathProblem, type Result } from '@kumicraft/shared';
 
 import type { AstNode } from './ast-helpers.ts';
 import { asAstNode, getJsxTagName, parseJsxAst } from './ast-helpers.ts';

@@ -1,5 +1,5 @@
 // Shortcut help modal dialog (SPEC-04 section 19, R-KB-12).
-import { type ShortcutAction, shortcutLabel } from '@reactcraft/shared';
+import { type ShortcutAction, shortcutLabel } from '@kumicraft/shared';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 

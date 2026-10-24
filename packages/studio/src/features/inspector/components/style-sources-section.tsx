@@ -6,7 +6,7 @@ import {
   type StyleProperty,
   type StyleReading,
   type StyleSystemId,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

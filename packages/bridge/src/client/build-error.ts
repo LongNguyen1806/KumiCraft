@@ -1,4 +1,4 @@
-import type { BridgeBuildErrorPayload } from '@reactcraft/shared';
+import type { BridgeBuildErrorPayload } from '@kumicraft/shared';
 import { z } from 'zod';
 
 export const ViteErrorSchema = z.object({

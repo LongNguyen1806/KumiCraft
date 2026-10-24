@@ -1,4 +1,4 @@
-// `reactcraft mcp` seen by a real MCP client (R-AG-19, R-AG-20): tool list, calls through the REST
+// `kumicraft mcp` seen by a real MCP client (R-AG-19, R-AG-20): tool list, calls through the REST
 // API with the session token, readable errors, and nothing on stdout but the protocol.
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
@@ -54,44 +54,44 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('reactcraft mcp server [R-AG-19]', () => {
+describe('kumicraft mcp server [R-AG-19]', () => {
   it('lists the read, edit and report tools with object input schemas [R-AG-19]', async () => {
     const { client } = await connect(() => jsonResponse(200, { data: {} }));
 
     const { tools } = await client.listTools();
 
     expect(tools.map((tool) => tool.name).sort()).toEqual([
-      'reactcraft_create_page',
-      'reactcraft_duplicate_elements',
-      'reactcraft_get_element',
-      'reactcraft_get_page_tree',
-      'reactcraft_get_project',
-      'reactcraft_get_theme',
-      'reactcraft_insert_image',
-      'reactcraft_insert_jsx',
-      'reactcraft_list_assets',
-      'reactcraft_list_components',
-      'reactcraft_list_files',
-      'reactcraft_list_pages',
-      'reactcraft_list_tool_gaps',
-      'reactcraft_move_elements',
-      'reactcraft_redo',
-      'reactcraft_remove_elements',
-      'reactcraft_report_tool_gap',
-      'reactcraft_set_attribute',
-      'reactcraft_set_class_name',
-      'reactcraft_set_text',
-      'reactcraft_set_theme_token',
-      'reactcraft_undo',
-      'reactcraft_unwrap_element',
-      'reactcraft_update_classes',
-      'reactcraft_wrap_elements',
+      'kumicraft_create_page',
+      'kumicraft_duplicate_elements',
+      'kumicraft_get_element',
+      'kumicraft_get_page_tree',
+      'kumicraft_get_project',
+      'kumicraft_get_theme',
+      'kumicraft_insert_image',
+      'kumicraft_insert_jsx',
+      'kumicraft_list_assets',
+      'kumicraft_list_components',
+      'kumicraft_list_files',
+      'kumicraft_list_pages',
+      'kumicraft_list_tool_gaps',
+      'kumicraft_move_elements',
+      'kumicraft_redo',
+      'kumicraft_remove_elements',
+      'kumicraft_report_tool_gap',
+      'kumicraft_set_attribute',
+      'kumicraft_set_class_name',
+      'kumicraft_set_text',
+      'kumicraft_set_theme_token',
+      'kumicraft_undo',
+      'kumicraft_unwrap_element',
+      'kumicraft_update_classes',
+      'kumicraft_wrap_elements',
     ]);
     for (const tool of tools) {
       expect(tool.description?.length ?? 0).toBeGreaterThan(10);
       expect(tool.inputSchema.type).toBe('object');
     }
-    expect(client.getInstructions()).toContain('reactcraft_report_tool_gap');
+    expect(client.getInstructions()).toContain('kumicraft_report_tool_gap');
   });
 
   it('asks the server for the page tree with the session token [R-AG-19]', async () => {
@@ -99,7 +99,7 @@ describe('reactcraft mcp server [R-AG-19]', () => {
     const { client, calls } = await connect(() => jsonResponse(200, { data: tree }));
 
     const result = await client.callTool({
-      name: 'reactcraft_get_page_tree',
+      name: 'kumicraft_get_page_tree',
       arguments: { file: 'src/pages/Home.tsx' },
     });
 
@@ -111,26 +111,26 @@ describe('reactcraft mcp server [R-AG-19]', () => {
     expect(JSON.parse(textOf(result))).toEqual(tree);
   });
 
-  it('turns API errors and a stopped ReactCraft into readable tool errors [R-AG-19]', async () => {
+  it('turns API errors and a stopped KumiCraft into readable tool errors [R-AG-19]', async () => {
     const refused = await connect(() => jsonResponse(409, { error: { code: 'E011' } }));
     const stopped = await connect(() => jsonResponse(200, {}), false);
     const unreachable = await connect(() => Promise.reject(new TypeError('fetch failed')));
 
     const untrusted = await refused.client.callTool({
-      name: 'reactcraft_list_pages',
+      name: 'kumicraft_list_pages',
       arguments: {},
     });
     const notRunning = await stopped.client.callTool({
-      name: 'reactcraft_list_pages',
+      name: 'kumicraft_list_pages',
       arguments: {},
     });
-    const down = await unreachable.client.callTool({ name: 'reactcraft_get_theme', arguments: {} });
+    const down = await unreachable.client.callTool({ name: 'kumicraft_get_theme', arguments: {} });
 
     expect(untrusted.isError).toBe(true);
     expect(textOf(untrusted)).toMatch(/^E011: The project is not trusted/);
     expect(notRunning.isError).toBe(true);
-    expect(textOf(notRunning)).toContain('No ReactCraft session has the project D:/ws open');
-    expect(textOf(down)).toContain('No ReactCraft session has the project');
+    expect(textOf(notRunning)).toContain('No KumiCraft session has the project D:/ws open');
+    expect(textOf(down)).toContain('No KumiCraft session has the project');
     expect(stopped.calls).toEqual([]);
   });
 
@@ -146,10 +146,10 @@ describe('reactcraft mcp server [R-AG-19]', () => {
     });
 
     await client.callTool({
-      name: 'reactcraft_report_tool_gap',
+      name: 'kumicraft_report_tool_gap',
       arguments: { need: 'Set text color', why: 'no edit tools yet', example: 'h1 red' },
     });
-    const listed = await client.callTool({ name: 'reactcraft_list_tool_gaps', arguments: {} });
+    const listed = await client.callTool({ name: 'kumicraft_list_tool_gaps', arguments: {} });
 
     expect(calls[0]?.url).toBe('http://127.0.0.1:4310/api/v1/tool-gaps');
     expect(new Headers(calls[0]?.init?.headers).get('content-type')).toBe('application/json');
@@ -162,8 +162,8 @@ describe('reactcraft mcp server [R-AG-19]', () => {
     const write = vi.spyOn(process.stdout, 'write');
     const { client } = await connect(() => jsonResponse(500, { error: { code: 'E013' } }));
 
-    const result = await client.callTool({ name: 'reactcraft_get_project', arguments: {} });
-    const invalid = await client.callTool({ name: 'reactcraft_get_element', arguments: {} });
+    const result = await client.callTool({ name: 'kumicraft_get_project', arguments: {} });
+    const invalid = await client.callTool({ name: 'kumicraft_get_element', arguments: {} });
 
     expect(result.isError).toBe(true);
     expect(invalid.isError).toBe(true);

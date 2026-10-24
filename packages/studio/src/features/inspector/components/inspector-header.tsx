@@ -1,5 +1,5 @@
 // Header of Inspector: scope badge, interaction state, lock banner, and warnings (SPEC-04 M-IN, R-IN-12..16).
-import type { InteractionState } from '@reactcraft/shared';
+import type { InteractionState } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
 import { errorText } from '../../../routes/error-text.ts';

@@ -1,13 +1,13 @@
 # Thông báo cho Gemini: kế hoạch đã đổi sang Hướng 3
 
-Kế hoạch ReactCraft đã đổi hẳn. Mọi bản giao việc trước đây (bước 9C, Inspector theo Design Model, `buoc-*.md`) đều **hủy**. Đừng làm tiếp việc cũ nào.
+Kế hoạch KumiCraft đã đổi hẳn. Mọi bản giao việc trước đây (bước 9C, Inspector theo Design Model, `buoc-*.md`) đều **hủy**. Đừng làm tiếp việc cũ nào.
 
 ## Hướng mới (Hướng 3, chốt 2026-10-13)
 
 1. **Mã nguồn của dự án là nguồn sự thật duy nhất.** Không còn Design Model, Design Operation, file thiết kế JSON, sinh code hay xuất code.
 2. **Canvas chạy chính dự án React thật:** Vite của dự án chạy trong tiến trình con, hiện trong iframe. Một plugin "Bridge" gắn `data-rc-loc="file:dòng:cột"` vào thẻ JSX để chọn phần tử là ra đúng dòng code.
 3. **Sửa trên Studio là sửa thẳng file nguồn**, thay đổi tối thiểu (`@babel/parser` + `magic-string`). Sửa xong phân tích lại được thì mới ghi. Có Undo theo từng file.
-4. **AI chạy qua agent dòng lệnh đã cài trên máy** (Antigravity `agy`; Claude Code CLI tùy chọn). **Không có API key** trong ReactCraft. Agent đọc backend qua một bản sao chỉ đọc, không có file bí mật.
+4. **AI chạy qua agent dòng lệnh đã cài trên máy** (Antigravity `agy`; Claude Code CLI tùy chọn). **Không có API key** trong KumiCraft. Agent đọc backend qua một bản sao chỉ đọc, không có file bí mật.
 5. Phạm vi bản 1: Vite 7/8, React 18/19, Tailwind v4. Next.js thêm sau bằng một bộ chuyển đổi framework (M-FW).
 
 ## Tài liệu phải đọc trước khi làm bất cứ việc gì
@@ -26,7 +26,7 @@ Tài liệu cũ ở `docs/construction/archive-0.18/` **chỉ để tra bài h�
 
 - Đã **xóa**: `packages/model`, Design Store, Canvas dựng từ model, Overlay, kéo thả, Inspector, Layer Tree, Library cũ, cùng test và fixture của chúng.
 - Package hiện có: `packages/shared` (mới: mã lỗi, `workspace.json` v2, quy tắc responsive, cờ tính năng), `packages/server`, `packages/studio`, `packages/cli`. `packages/bridge` sẽ có ở WP-1.05.
-- Server đọc `.reactcraft/workspace.json` **phiên bản 2** (SPEC-03 mục 3). Có các endpoint `GET /session`, `GET`/`PATCH /settings`, `POST /project/trust`.
+- Server đọc `.kumicraft/workspace.json` **phiên bản 2** (SPEC-03 mục 3). Có các endpoint `GET /session`, `GET`/`PATCH /settings`, `POST /project/trust`.
 - Studio có: màn hình "Chưa mở dự án", màn hình lỗi dự án, khung Editor (Canvas chờ), hộp thoại tin cậy, Cài đặt (ngôn ngữ, editor, package manager).
 - `pnpm verify` và E2E trên 3 trình duyệt đang xanh.
 

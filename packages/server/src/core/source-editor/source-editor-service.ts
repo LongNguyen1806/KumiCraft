@@ -10,8 +10,8 @@ import type {
   SourceEdit,
   StructureEdit,
   StructureResult,
-} from '@reactcraft/shared';
-import { err, ok, parseLocString } from '@reactcraft/shared';
+} from '@kumicraft/shared';
+import { err, ok, parseLocString } from '@kumicraft/shared';
 import MagicString from 'magic-string';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';

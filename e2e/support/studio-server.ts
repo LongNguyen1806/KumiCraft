@@ -1,4 +1,4 @@
-// Playwright fixture: runs the built `reactcraft` CLI on a temporary workspace and hands the test
+// Playwright fixture: runs the built `kumicraft` CLI on a temporary workspace and hands the test
 // the Studio URL with its session token, read from the terminal output as a user would.
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -29,7 +29,7 @@ export const test = base.extend<{ studio: StudioServer }>({
       [CLI_ENTRY, workspace.path, '--no-open', '--log-level', 'warn'],
       {
         stdio: ['ignore', 'pipe', 'pipe'],
-        env: { ...process.env, REACTCRAFT_CONFIG_DIR: config.path },
+        env: { ...process.env, KUMICRAFT_CONFIG_DIR: config.path },
       },
     );
 

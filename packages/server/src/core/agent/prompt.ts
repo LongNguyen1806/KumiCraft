@@ -1,5 +1,5 @@
 // Prompt construction for agent turns (WP-3.03b, R-AG-13, S-111, S-117, Round S1).
-import type { StylingReport, StylingSystem, TurnContext } from '@reactcraft/shared';
+import type { StylingReport, StylingSystem, TurnContext } from '@kumicraft/shared';
 
 import { err, ok, type Result } from '../shared/result.ts';
 
@@ -95,13 +95,13 @@ export function buildPrompt(input: PromptInput): Result<string> {
 
   const contextLines = buildContextLines(input);
   if (contextLines.length > 0) {
-    sections.push(['--- ReactCraft context ---', ...contextLines].join('\n'));
+    sections.push(['--- KumiCraft context ---', ...contextLines].join('\n'));
   }
 
   if (input.guide !== undefined && input.guide.trim().length > 0) {
     const trimmedGuide =
       input.guide.length > GUIDE_MAX_CHARS ? input.guide.slice(0, GUIDE_MAX_CHARS) : input.guide;
-    sections.push(['--- Project guide (.reactcraft/agent-guide.md) ---', trimmedGuide].join('\n'));
+    sections.push(['--- Project guide (.kumicraft/agent-guide.md) ---', trimmedGuide].join('\n'));
   }
 
   const prompt = sections.join('\n\n');

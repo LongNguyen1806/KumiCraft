@@ -1,5 +1,5 @@
 // Detection logic for vite-react framework adapter (SPEC-04 R-PJ-03 to R-PJ-06, Round S1).
-import type { PackageManager, RelPath, SupportReport, UnsupportedReason } from '@reactcraft/shared';
+import type { PackageManager, RelPath, SupportReport, UnsupportedReason } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../../../ports/file-system-port.ts';
 import type { DetectInput } from '../types.ts';

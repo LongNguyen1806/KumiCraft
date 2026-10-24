@@ -1,5 +1,5 @@
 // Unit tests for the install dialog following the install job (R-PJ-13, R-PJ-22).
-import type { JobStatus } from '@reactcraft/shared';
+import type { JobStatus } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -65,7 +65,7 @@ describe('InstallDialog [R-PJ-22]', () => {
 
   beforeEach(() => {
     sockets = [];
-    sessionStorage.setItem('reactcraft.sessionToken', 'token-install');
+    sessionStorage.setItem('kumicraft.sessionToken', 'token-install');
     vi.stubGlobal('WebSocket', FakeSocket);
     vi.spyOn(projectClient, 'installProject').mockResolvedValue({ jobId: JOB_ID });
     vi.spyOn(jobsClient, 'fetchJob').mockResolvedValue(runningStatus);

@@ -1,5 +1,5 @@
 // Maps a rule the browser reports back to its line in a CSS file (SPEC-04 M-ST, R-ST-04, ADR-BE-35).
-import { CSS_SHORTHANDS_OF } from '@reactcraft/shared';
+import { CSS_SHORTHANDS_OF } from '@kumicraft/shared';
 import postcss, { type Container, type Rule } from 'postcss';
 
 export type RuleKey = {

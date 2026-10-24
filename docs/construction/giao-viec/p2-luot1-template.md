@@ -20,7 +20,7 @@ Hiện tại template chỉ có một trang "Welcome" nên không có gì để 
 | `docs/spec.md` R-PJ-10, R-PJ-11, R-PG-10, R-CP-10, kịch bản M-CP #1 | Quy ước `routes.tsx`, ba vùng thiết kế, tên component phải có |
 | `templates/vite-react-ts-tailwind4/**`                              | Template hiện tại (giữ cách viết import có đuôi `.tsx`)       |
 | `packages/server/src/core/project/create.ts`, `create.test.ts`      | Chép template; danh sách file đang **viết cứng**              |
-| `packages/server/src/core/project/pages.ts`, `theme.ts`             | Cách ReactCraft đọc trang và token `@theme` (test dùng lại)   |
+| `packages/server/src/core/project/pages.ts`, `theme.ts`             | Cách KumiCraft đọc trang và token `@theme` (test dùng lại)    |
 | `packages/server/src/core/ports/file-system-port.ts`                | `readDir`, `readText`, `writeTextAtomic`                      |
 
 ## 3. Phạm vi file
@@ -42,7 +42,7 @@ src/components/Header.tsx     mới; Footer.tsx, ProductCard.tsx
 src/components/ui/Button.tsx  mới; Card.tsx, Input.tsx, Badge.tsx
 src/pages/Home.tsx            viết lại; About.tsx, NotFound.tsx mới
 src/lib/utils.ts              mới: cn()
-.reactcraft/agent-guide.md    cập nhật theo cấu trúc mới
+.kumicraft/agent-guide.md    cập nhật theo cấu trúc mới
 ```
 
 Giữ `src/main.tsx`, `src/api/.gitkeep`, `_gitignore`, `vite.config.ts`, `tsconfig.json` (chỉ sửa nếu `build` hoặc `lint` bắt buộc, ghi lý do vào báo cáo).
@@ -61,9 +61,9 @@ Giữ `src/main.tsx`, `src/api/.gitkeep`, `_gitignore`, `vite.config.ts`, `tscon
 
 ## 4. Quy tắc nội dung template (bắt buộc)
 
-### 4.1. Thiết kế được bằng ReactCraft
+### 4.1. Thiết kế được bằng KumiCraft
 
-ReactCraft chỉ sửa được class là **chuỗi tĩnh** và chữ viết thẳng trong JSX. Vì vậy:
+KumiCraft chỉ sửa được class là **chuỗi tĩnh** và chữ viết thẳng trong JSX. Vì vậy:
 
 1. Mọi `className` là chuỗi tĩnh `className="..."`. **Cấm** `className={...}`, template literal, `cn(...)` trong JSX, class có điều kiện. `cn()` có trong `lib/utils.ts` cho lập trình viên dùng sau, template không dùng.
 2. **Cấm `.map(`** trong `src/pages`, `src/components`, `src/layouts`. Ba `ProductCard` viết ra ba lần, và menu Header viết từng `Link`, để mỗi phần tử sửa riêng được.
@@ -160,7 +160,7 @@ Test 5–8 đọc file thật trên đĩa. Viết một helper nhỏ trong file 
 ## 6. Tự kiểm bắt buộc trước khi báo xong
 
 1. `pnpm verify` xanh.
-2. Tạo dự án thật **ngoài repo** (ví dụ `D:\tmp\oakline-test`) bằng ReactCraft: `pnpm build`, rồi `node packages\cli\dist\index.js D:\tmp\oakline-test`, Project → Tạo dự án → cài bằng pnpm.
+2. Tạo dự án thật **ngoài repo** (ví dụ `D:\tmp\oakline-test`) bằng KumiCraft: `pnpm build`, rồi `node packages\cli\dist\index.js D:\tmp\oakline-test`, Project → Tạo dự án → cài bằng pnpm.
 3. Trong `D:\tmp\oakline-test` chạy `pnpm build` và `pnpm lint`. Cả hai phải **không lỗi**. Dán phần cuối output vào báo cáo.
    - Nếu `tsc` báo thiếu kiểu `node:url` trong `vite.config.ts` thì sửa đúng gốc: thêm `@types/node` vào template với phiên bản giống repo nếu repo có, không thì dừng và báo. Không tắt kiểm tra.
 4. Không chạy `pnpm test:e2e` ở lượt này.

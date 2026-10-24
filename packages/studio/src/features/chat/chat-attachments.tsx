@@ -1,5 +1,5 @@
 // Attachments bar rendering backends, docs, and images for chat (R-CH-02, R-MR-01, CW-52).
-import type { BackendInfo } from '@reactcraft/shared';
+import type { BackendInfo } from '@kumicraft/shared';
 import { FileText, Folder, Loader2, Server, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 

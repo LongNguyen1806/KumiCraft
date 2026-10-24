@@ -16,7 +16,7 @@ let root: string;
 let outside: string;
 
 beforeEach(async () => {
-  base = await mkdtemp(join(tmpdir(), 'reactcraft-fs-'));
+  base = await mkdtemp(join(tmpdir(), 'kumicraft-fs-'));
   root = join(base, 'workspace');
   outside = join(base, 'outside');
   await mkdir(root);
@@ -33,12 +33,12 @@ const codeOf = (result: { ok: boolean; error?: { code: string } }) =>
 
 describe('NodeFileSystem', () => {
   it('writes atomically, creating folders, and reads back', async () => {
-    const write = await fs.writeTextAtomic(root, '.reactcraft/pages/p.json', '{"a":1}\n');
-    const read = await fs.readText(root, '.reactcraft/pages/p.json');
+    const write = await fs.writeTextAtomic(root, '.kumicraft/pages/p.json', '{"a":1}\n');
+    const read = await fs.readText(root, '.kumicraft/pages/p.json');
 
     expect(write.ok).toBe(true);
     expect(read).toEqual({ ok: true, value: '{"a":1}\n' });
-    expect(await fs.exists(root, '.reactcraft/pages/p.json')).toBe(true);
+    expect(await fs.exists(root, '.kumicraft/pages/p.json')).toBe(true);
   });
 
   it('rejects traversal, absolute paths elsewhere and malformed paths [S-20, S-21, S-22]', async () => {
@@ -93,15 +93,15 @@ describe('NodeFileSystem', () => {
   });
 
   it('creates exclusively, lists, copies, renames and removes', async () => {
-    expect(await fs.createExclusive(root, '.reactcraft/lock', '1')).toEqual({
+    expect(await fs.createExclusive(root, '.kumicraft/lock', '1')).toEqual({
       ok: true,
       value: 'created',
     });
-    expect(await fs.createExclusive(root, '.reactcraft/lock', '2')).toEqual({
+    expect(await fs.createExclusive(root, '.kumicraft/lock', '2')).toEqual({
       ok: true,
       value: 'exists',
     });
-    await fs.copy(root, '.reactcraft/lock', 'backups/lock.bak');
+    await fs.copy(root, '.kumicraft/lock', 'backups/lock.bak');
     await fs.rename(root, 'backups/lock.bak', 'backups/lock.old');
 
     const listed = await fs.readDir(root, 'backups');

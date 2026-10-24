@@ -13,7 +13,7 @@ import {
   type StructureEdit,
   type StructureResult,
   StructureResultSchema,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { apiGet, apiPost, parseResponse } from './http.ts';
 

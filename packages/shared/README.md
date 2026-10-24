@@ -1,6 +1,6 @@
-# @reactcraft/shared
+# @kumicraft/shared
 
-Schemas and types shared by the Studio, the Local Server and the Bridge: error codes, the `.reactcraft/workspace.json` file, responsive rules and feature flags (SPEC-01 section 3.2 rule 2, SPEC-03).
+Schemas and types shared by the Studio, the Local Server and the Bridge: error codes, the `.kumicraft/workspace.json` file, responsive rules and feature flags (SPEC-01 section 3.2 rule 2, SPEC-03).
 
 - Runs in Node.js and in the browser. It may import only `zod` and its own files: no `node:*`, no DOM API.
 - Line coverage must stay at 90% or above (SPEC-02 section 9).

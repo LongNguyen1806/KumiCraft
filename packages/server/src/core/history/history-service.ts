@@ -1,6 +1,6 @@
 // History Service implementing M-HI (SPEC-03 section 5.6, SPEC-04 section 7).
-import type { HistoryLabel, HistoryState, HistoryStep, Result } from '@reactcraft/shared';
-import { err, ok } from '@reactcraft/shared';
+import type { HistoryLabel, HistoryState, HistoryStep, Result } from '@kumicraft/shared';
+import { err, ok } from '@kumicraft/shared';
 import { nanoid } from 'nanoid';
 
 import type { EventBusPort } from '../ports/event-bus-port.ts';

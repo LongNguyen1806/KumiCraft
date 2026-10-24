@@ -127,7 +127,7 @@ describe('source schemas and utilities', () => {
         tag: 'a',
         name: 'href',
         before: 'https://example.com',
-        after: 'https://reactcraft.dev',
+        after: 'https://kumicraft.dev',
       };
       expect(SetAttributeEditSchema.safeParse(edit).success).toBe(true);
       expect(SourceEditSchema.safeParse(edit).success).toBe(true);

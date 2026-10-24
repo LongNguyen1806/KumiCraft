@@ -1,7 +1,7 @@
 // Project trust in the Studio (SPEC-05 S-80, S-81): an untrusted project opens in restricted mode,
 // where nothing of the project runs. The first time in a tab the Studio asks; afterwards a bar
 // stays on top. The list of linked backends comes with GET /project (WP-1.03).
-import type { BackendInfo } from '@reactcraft/shared';
+import type { BackendInfo } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,7 +9,7 @@ import { setProjectTrust } from '../../api/project-client.ts';
 import { Dialog } from '../../components/ui/dialog.tsx';
 import { type ErrorInfo, errorText, toErrorInfo } from '../../routes/error-text.ts';
 
-const askedKey = (id: string) => `reactcraft.trustAsked.${id}`;
+const askedKey = (id: string) => `kumicraft.trustAsked.${id}`;
 
 function wasAsked(id: string): boolean {
   try {

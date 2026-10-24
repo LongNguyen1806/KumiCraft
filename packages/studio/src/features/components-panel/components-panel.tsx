@@ -1,5 +1,5 @@
 // Project Components Panel (SPEC-04 R-CP-11..13, spec-log #23).
-import { normalizeText, type ProjectComponent } from '@reactcraft/shared';
+import { normalizeText, type ProjectComponent } from '@kumicraft/shared';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

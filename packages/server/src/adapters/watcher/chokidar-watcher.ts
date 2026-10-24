@@ -1,4 +1,4 @@
-// Folder watcher on chokidar (ADR-BE-20): skips node_modules, .git, dist and ReactCraft's own
+// Folder watcher on chokidar (ADR-BE-20): skips node_modules, .git, dist and KumiCraft's own
 // lock and cache, and hands the changed paths over in batches of 300 ms.
 import { relative } from 'node:path';
 
@@ -9,7 +9,7 @@ import type { WatchHandle } from '../../core/ports/watcher-port.ts';
 export const WATCH_BATCH_MS = 300;
 
 const IGNORED_DIRS = new Set(['node_modules', '.git', 'dist']);
-const IGNORED_PATHS = ['.reactcraft/lock', '.reactcraft/cache'];
+const IGNORED_PATHS = ['.kumicraft/lock', '.kumicraft/cache'];
 
 /** Relative path with '/' separators, or undefined for the root itself. */
 function toRelative(root: string, path: string): string | undefined {

@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import type { BackendInfo } from '@reactcraft/shared';
+import type { BackendInfo } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';

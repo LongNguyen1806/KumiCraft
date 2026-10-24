@@ -1,5 +1,5 @@
 // Sends one Inspector change of plain CSS to the style layer (SPEC-04 M-ST, R-ST-06, R-ST-09).
-import { type Breakpoint, mediaForBreakpoint, type ResponsiveMode } from '@reactcraft/shared';
+import { type Breakpoint, mediaForBreakpoint, type ResponsiveMode } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

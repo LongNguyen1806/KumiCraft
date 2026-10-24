@@ -5,7 +5,7 @@ import { cp, mkdir, readdir, readFile, symlink, writeFile } from 'node:fs/promis
 import { connect, createServer, type Server } from 'node:net';
 import { join, resolve } from 'node:path';
 
-import type { RunnerToChildMessage } from '@reactcraft/shared';
+import type { RunnerToChildMessage } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { makeTempDir } from '../core/workspace/test-support.ts';
@@ -72,7 +72,7 @@ function occupy(port: number): Promise<Server> {
   });
 }
 
-/** Starts the runner with `port` as the ReactCraft fallback port; resolves its first message. */
+/** Starts the runner with `port` as the KumiCraft fallback port; resolves its first message. */
 function startRunner(port: number, projectPort?: number): Promise<unknown> {
   const runner = spawn(process.execPath, [RUNNER], {
     cwd: root,
@@ -156,7 +156,7 @@ describe('vite-react runner [R-RN-03]', () => {
   );
 
   it.skipIf(!existsSync(NODE_MODULES))(
-    "runs on the project's own port, and on the ReactCraft port when that one is taken [R-RN-04]",
+    "runs on the project's own port, and on the KumiCraft port when that one is taken [R-RN-04]",
     async () => {
       const projectPort = await freePort();
       await setProjectPort(projectPort);

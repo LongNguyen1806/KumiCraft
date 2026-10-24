@@ -1,5 +1,5 @@
 // Login assistance card with 3 steps, auto-polling state, and retry actions (R-AG-21).
-import type { AgentId } from '@reactcraft/shared';
+import type { AgentId } from '@kumicraft/shared';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 

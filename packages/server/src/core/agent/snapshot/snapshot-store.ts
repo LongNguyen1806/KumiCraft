@@ -1,5 +1,5 @@
 // Turn snapshot store implementation (WP-3.04, ADR-BE-33, ADR-BE-17, S-113, R-AG-12, R-AG-15).
-import type { TurnFile } from '@reactcraft/shared';
+import type { TurnFile } from '@kumicraft/shared';
 import { createTwoFilesPatch } from 'diff';
 
 import { computeSha256 } from '../../mirror/mirror-manifest.ts';

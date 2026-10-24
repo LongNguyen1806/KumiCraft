@@ -1,6 +1,6 @@
 // Right-click "Chọn lớp": every element under the pointer, outermost first (SPEC-04 R-SL-13).
-import type { BridgeLayerMenuPayload, LayerMenuItem } from '@reactcraft/shared';
-import { parseLocString } from '@reactcraft/shared';
+import type { BridgeLayerMenuPayload, LayerMenuItem } from '@kumicraft/shared';
+import { parseLocString } from '@kumicraft/shared';
 
 import { getCandidateChain, getRefForElement } from './candidate-chain.ts';
 import { extractElementLabel } from './dom-scanner.ts';

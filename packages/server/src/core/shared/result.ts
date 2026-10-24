@@ -1,9 +1,9 @@
-// Error model of the server. The types come from @reactcraft/shared (SPEC-03 section 4.1) so the
+// Error model of the server. The types come from @kumicraft/shared (SPEC-03 section 4.1) so the
 // Studio shares them; only the HTTP status of each code is a server concern.
-import type { ErrorCode } from '@reactcraft/shared';
+import type { ErrorCode } from '@kumicraft/shared';
 
-export type { AppError, ErrorCode, ErrorDetail, Result } from '@reactcraft/shared';
-export { err, ok } from '@reactcraft/shared';
+export type { AppError, ErrorCode, ErrorDetail, Result } from '@kumicraft/shared';
+export { err, ok } from '@kumicraft/shared';
 
 /** HTTP status of each error code (SPEC-03 section 10). */
 export const HTTP_STATUS_BY_CODE: Readonly<Record<ErrorCode, number>> = {

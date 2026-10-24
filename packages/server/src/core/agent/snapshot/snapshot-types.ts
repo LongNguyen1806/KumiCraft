@@ -1,5 +1,5 @@
 // Types and constants for agent turn snapshot and revert (WP-3.04, S-113, R-AG-12, R-AG-15).
-import type { TurnFile } from '@reactcraft/shared';
+import type { TurnFile } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../../ports/file-system-port.ts';
 import type { LoggerPort } from '../../ports/logger-port.ts';
@@ -17,7 +17,7 @@ export const SNAPSHOT_EXCLUDED_DIRS = [
   '.turbo',
   '.cache',
   'coverage',
-  '.reactcraft',
+  '.kumicraft',
 ] as const;
 
 export type SnapshotEntry = {

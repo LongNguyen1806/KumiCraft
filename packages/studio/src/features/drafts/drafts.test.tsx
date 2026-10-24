@@ -1,5 +1,5 @@
 // Unit tests for Studio drafts feature (SPEC-04 WP-2.11, R-DR-10 to R-DR-15).
-import type { DraftInfo } from '@reactcraft/shared';
+import type { DraftInfo } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -106,7 +106,7 @@ describe('Studio Drafts [R-DR-10 .. R-DR-15]', () => {
     expect(useCanvasViewStore.getState().draftFile).toBe('src/drafts/BanNhap1.tsx');
     const iframeSrc = computeIframeSrc('http://127.0.0.1:5173', 'src/drafts/BanNhap1.tsx');
     expect(iframeSrc).toBe(
-      'http://127.0.0.1:5173/__reactcraft/draft?file=src%2Fdrafts%2FBanNhap1.tsx',
+      'http://127.0.0.1:5173/__kumicraft/draft?file=src%2Fdrafts%2FBanNhap1.tsx',
     );
 
     await waitFor(() => {
@@ -137,8 +137,8 @@ describe('Studio Drafts [R-DR-10 .. R-DR-15]', () => {
   });
 
   it('reopens the draft remembered for the project, and forgets it after going back to a page [R-DR-13]', async () => {
-    localStorage.setItem('reactcraft:draft:shop000001', 'src/drafts/BanNhap1.tsx');
-    localStorage.setItem('reactcraft:draft:other00001', 'src/drafts/Other.tsx');
+    localStorage.setItem('kumicraft:draft:shop000001', 'src/drafts/BanNhap1.tsx');
+    localStorage.setItem('kumicraft:draft:other00001', 'src/drafts/Other.tsx');
     render(<PageSelect />);
 
     await waitFor(() => {
@@ -148,8 +148,8 @@ describe('Studio Drafts [R-DR-10 .. R-DR-15]', () => {
     fireEvent.change(screen.getByTestId('canvas-page-select'), { target: { value: '/' } });
 
     expect(useCanvasViewStore.getState().draftFile).toBeUndefined();
-    expect(localStorage.getItem('reactcraft:draft:shop000001')).toBeNull();
-    expect(localStorage.getItem('reactcraft:draft:other00001')).toBe('src/drafts/Other.tsx');
+    expect(localStorage.getItem('kumicraft:draft:shop000001')).toBeNull();
+    expect(localStorage.getItem('kumicraft:draft:other00001')).toBe('src/drafts/Other.tsx');
     localStorage.clear();
   });
 

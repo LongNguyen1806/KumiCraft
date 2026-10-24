@@ -4,7 +4,7 @@ import {
   CSS_LONGHAND_OF,
   type ElementRef,
   type StyleReading,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { useEffect, useState } from 'react';
 
 import { readStyle } from '../../api/style-client.ts';

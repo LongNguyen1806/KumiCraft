@@ -97,7 +97,7 @@ const SYSTEM_PREFIXES_POSIX = [
 ];
 const SYSTEM_PREFIXES_WIN = ['windows', 'program files', 'program files (x86)', 'programdata'];
 
-/** S-28: Root or backend cannot be drive root, home dir, system folders, or reactcraft config dir. */
+/** S-28: Root or backend cannot be drive root, home dir, system folders, or kumicraft config dir. */
 export function checkBlockedPath(
   path: string,
   platform: Platform,

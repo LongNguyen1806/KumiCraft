@@ -1,5 +1,5 @@
 // Tool gaps reported by external AI agents over MCP (R-AG-20).
-import { type ToolGap, ToolGapSchema } from '@reactcraft/shared';
+import { type ToolGap, ToolGapSchema } from '@kumicraft/shared';
 
 import { arraySchema } from './agent-client.ts';
 import { apiGet, parseResponse } from './http.ts';

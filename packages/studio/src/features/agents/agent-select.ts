@@ -1,5 +1,5 @@
 // Pure helpers for agent selection and onboarding progression (R-AG-10, R-AG-21).
-import type { AgentChoice, AgentId, AgentStatus } from '@reactcraft/shared';
+import type { AgentChoice, AgentId, AgentStatus } from '@kumicraft/shared';
 
 export type AgentPreferred = AgentChoice;
 

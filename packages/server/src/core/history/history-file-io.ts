@@ -1,8 +1,8 @@
 // File verification, atomic write, and rollback for HistoryService (SPEC-04, R-HI-04, R-HI-11).
 import { createHash } from 'node:crypto';
 
-import type { Result } from '@reactcraft/shared';
-import { ok } from '@reactcraft/shared';
+import type { Result } from '@kumicraft/shared';
+import { ok } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { HistoryFileChange } from './history-service.ts';

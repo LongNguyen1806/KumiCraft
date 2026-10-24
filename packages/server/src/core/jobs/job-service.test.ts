@@ -1,5 +1,5 @@
 // Tests for the job service (SPEC-03 section 4.2, V-61, V-62).
-import { err, ok } from '@reactcraft/shared';
+import { err, ok } from '@kumicraft/shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createEventBus, type ServerEvent } from '../ports/event-bus-port.ts';

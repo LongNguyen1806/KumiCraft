@@ -1,8 +1,8 @@
-// Command-line arguments of `reactcraft` (ADR-BE-03).
+// Command-line arguments of `kumicraft` (ADR-BE-03).
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
-import type { LogLevel } from '@reactcraft/server';
+import type { LogLevel } from '@kumicraft/server';
 
 export type CliOptions = {
   readonly workspaceDir: string;
@@ -11,9 +11,9 @@ export type CliOptions = {
   readonly logLevel: LogLevel;
 };
 
-/** `reactcraft mcp [project-dir]`: MCP server (stdio) for external AI agents (R-AG-19). */
+/** `kumicraft mcp [project-dir]`: MCP server (stdio) for external AI agents (R-AG-19). */
 export type McpOptions = {
-  /** The project the agent works on; ReactCraft must have it open (its lock tells the port). */
+  /** The project the agent works on; KumiCraft must have it open (its lock tells the port). */
   readonly projectDir: string;
   readonly port: number | undefined;
 };
@@ -27,12 +27,12 @@ export type ParsedArgs =
 /** Exit code for wrong arguments, after printing the usage (R-CL-01). */
 export const USAGE_EXIT_CODE = 2;
 
-export const USAGE = `Usage: reactcraft [dir] [options]
-       reactcraft mcp [project-dir] [--port <n>]
+export const USAGE = `Usage: kumicraft [dir] [options]
+       kumicraft mcp [project-dir] [--port <n>]
 
-Starts ReactCraft for the workspace folder dir (default: the current folder).
-"reactcraft mcp" serves ReactCraft's tools to an external AI agent over MCP (stdio) for the
-project in project-dir (default: the current folder), which ReactCraft must have open.
+Starts KumiCraft for the workspace folder dir (default: the current folder).
+"kumicraft mcp" serves KumiCraft's tools to an external AI agent over MCP (stdio) for the
+project in project-dir (default: the current folder), which KumiCraft must have open.
 
 Options:
   --port <n>           Studio port, 1024 to 65535 (default: the last one, or a free one)

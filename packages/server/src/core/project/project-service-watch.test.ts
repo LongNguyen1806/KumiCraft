@@ -7,7 +7,7 @@ import {
   serializeWorkspaceFile,
   WORKSPACE_FILE,
   type WorkspaceFile,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createEventBus, type ServerEvent } from '../ports/event-bus-port.ts';
@@ -44,7 +44,7 @@ async function setup() {
   const temp = await makeTempDir();
   const projectDir = join(temp.dir, 'work', 'frontend');
   const configDir = join(temp.dir, 'config');
-  await mkdir(join(projectDir, '.reactcraft'), { recursive: true });
+  await mkdir(join(projectDir, '.kumicraft'), { recursive: true });
   await mkdir(configDir, { recursive: true });
   await writeSupportedProject(projectDir);
   await writeFile(join(projectDir, WORKSPACE_FILE), serializeWorkspaceFile(sampleFile));
@@ -117,7 +117,7 @@ describe('ProjectService and files changed on disk', () => {
     }
   });
 
-  it('a workspace.json equal to the one held is ReactCraft own write [R-HI-05]', async () => {
+  it('a workspace.json equal to the one held is KumiCraft own write [R-HI-05]', async () => {
     const t = await setup();
     try {
       await t.service.open(t.projectDir);
@@ -149,7 +149,7 @@ describe('ProjectService and files changed on disk', () => {
     const t = await setup();
     try {
       const otherDir = join(t.dir, 'work', 'admin');
-      await mkdir(join(otherDir, '.reactcraft'), { recursive: true });
+      await mkdir(join(otherDir, '.kumicraft'), { recursive: true });
       await writeSupportedProject(otherDir);
       await writeFile(
         join(otherDir, WORKSPACE_FILE),

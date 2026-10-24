@@ -2,7 +2,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { WORKSPACE_FILE } from '@reactcraft/shared';
+import { WORKSPACE_FILE } from '@kumicraft/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 import { computeSha256, createHistoryService } from '../history/history-service.ts';
@@ -82,7 +82,7 @@ function pushEdit(
 }
 
 describe('project watch', () => {
-  it('ignores a file whose content is what ReactCraft wrote last [R-HI-05]', async () => {
+  it('ignores a file whose content is what KumiCraft wrote last [R-HI-05]', async () => {
     const t = await setup();
     try {
       await writeFile(join(t.dir, 'src/A.tsx'), 'mine');
@@ -148,12 +148,12 @@ describe('project watch', () => {
     }
   });
 
-  it('hands workspace.json to the project and skips other ReactCraft files [S-84]', async () => {
+  it('hands workspace.json to the project and skips other KumiCraft files [S-84]', async () => {
     const t = await setup();
     try {
       t.watch.start(t.dir);
 
-      t.watcher.emit([WORKSPACE_FILE, '.reactcraft/port']);
+      t.watcher.emit([WORKSPACE_FILE, '.kumicraft/port']);
 
       await vi.waitFor(() => {
         expect(t.onWorkspaceFileChanged).toHaveBeenCalledTimes(1);

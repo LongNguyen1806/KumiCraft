@@ -1,7 +1,7 @@
 // Draft AST and file analysis helpers (M-DR, R-DR-10 to R-DR-16).
 import * as path from 'node:path';
 
-import { err, ok, type Result } from '@reactcraft/shared';
+import { err, ok, type Result } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { isInside } from '../shared/paths.ts';

@@ -1,4 +1,4 @@
-import { type ElementRef, INSERT_JSX_MAX_BYTES, type TreeNode } from '@reactcraft/shared';
+import { type ElementRef, INSERT_JSX_MAX_BYTES, type TreeNode } from '@kumicraft/shared';
 
 import { applyStructureEdit, fetchElementText } from '../../api/source-client.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';

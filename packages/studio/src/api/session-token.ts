@@ -1,6 +1,6 @@
 // Session token in the Studio (SPEC-05 S-05, S-06): handed over in the URL fragment, kept only in
 // sessionStorage (gone when the tab closes, never shared between tabs). No localStorage, no cookie.
-const STORAGE_KEY = 'reactcraft.sessionToken';
+const STORAGE_KEY = 'kumicraft.sessionToken';
 
 /** Moves the token from `#t=` into sessionStorage and removes it from the address bar at once. */
 export function captureSessionToken(): void {

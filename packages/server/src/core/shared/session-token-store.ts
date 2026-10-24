@@ -1,4 +1,4 @@
-// Session token kept between runs (SPEC-05 S-05a): running ReactCraft again keeps the token, so a
+// Session token kept between runs (SPEC-05 S-05a): running KumiCraft again keeps the token, so a
 // Studio tab still open reconnects on its own. Kept in the user's config folder, never the project.
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
@@ -17,13 +17,13 @@ const StoredSchema = z.strictObject({
 
 export type SessionTokenDeps = {
   readonly fs: FileSystemPort;
-  /** The user's config folder (env-paths, or REACTCRAFT_CONFIG_DIR). */
+  /** The user's config folder (env-paths, or KUMICRAFT_CONFIG_DIR). */
   readonly dir: string;
   readonly logger: LoggerPort;
   readonly now?: () => Date;
 };
 
-/** The token in a session file while it is fresh, else undefined (also read by `reactcraft mcp`). */
+/** The token in a session file while it is fresh, else undefined (also read by `kumicraft mcp`). */
 export function parseSessionToken(text: string, now: Date): string | undefined {
   try {
     const stored = StoredSchema.parse(JSON.parse(text));

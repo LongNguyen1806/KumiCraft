@@ -22,7 +22,7 @@ const take = (pid: number, port: number, clock?: () => Date, host?: string) =>
   acquireLock(nodeFs, dir, system(pid, clock, host), port, FAST);
 
 const writeLock = async (text: string) => {
-  await mkdir(join(dir, '.reactcraft'), { recursive: true });
+  await mkdir(join(dir, '.kumicraft'), { recursive: true });
   await writeFile(join(dir, LOCK_FILE), text);
 };
 
@@ -76,7 +76,7 @@ describe('acquireLock', () => {
   });
 
   it('reclaims the lock after a restart when its pid now belongs to another program [R-PJ-19]', async () => {
-    // Before the restart: ReactCraft ran as pid 1 on port 5420, then the power went off.
+    // Before the restart: KumiCraft ran as pid 1 on port 5420, then the power went off.
     await take(1, 5420);
     // After the restart: another program got pid 1, nothing listens on 5420.
     alive.add(1);

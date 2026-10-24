@@ -1,4 +1,4 @@
-import type { DraftInfo, DraftsInfo } from '@reactcraft/shared';
+import type { DraftInfo, DraftsInfo } from '@kumicraft/shared';
 import { useEffect, useState } from 'react';
 
 import { createEventsClient, type StudioServerEvent } from '../../api/events-client.ts';

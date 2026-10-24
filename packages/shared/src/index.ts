@@ -1,4 +1,4 @@
-// Public entry point of @reactcraft/shared (QC-03).
+// Public entry point of @kumicraft/shared (QC-03).
 export {
   AGENT_IDS,
   AGENT_LOGIN_STATES,

@@ -1,6 +1,6 @@
 // Image discovery, classification, sanitization and paths (WP-2.09a, R-DT-13, R-DT-14).
-import type { Result } from '@reactcraft/shared';
-import { ok } from '@reactcraft/shared';
+import type { Result } from '@kumicraft/shared';
+import { ok } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 

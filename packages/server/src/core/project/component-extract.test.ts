@@ -66,7 +66,7 @@ afterEach(async () => {
 async function setupProject(subName = 'app') {
   const target = join(tempDir, subName);
   await cp(join(baseDir, 'base'), target, { recursive: true });
-  await rm(join(target, '.reactcraft', 'lock'), { force: true });
+  await rm(join(target, '.kumicraft', 'lock'), { force: true });
   const history = createHistoryService({ fs: directWriteFs });
 
   const service = createProjectService({
@@ -282,7 +282,7 @@ describe('component extraction (R-CP-14)', { timeout: 30_000 }, () => {
     });
     expect(res.ok).toBe(true);
 
-    const cfgContent = await readFile(join(target, '.reactcraft/components.json'), 'utf8');
+    const cfgContent = await readFile(join(target, '.kumicraft/components.json'), 'utf8');
     const parsedCfg = JSON.parse(cfgContent) as { files?: string[] };
     expect(parsedCfg.files).toContain('src/features/promo/PromoBox.tsx');
 

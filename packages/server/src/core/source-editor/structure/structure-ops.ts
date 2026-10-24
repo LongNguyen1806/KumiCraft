@@ -1,5 +1,5 @@
 // Structural text edit builders for insert, remove and duplicate (SPEC-04 R-SE-22, R-SE-25, R-SE-26).
-import { err, ok, type Placement, type Result } from '@reactcraft/shared';
+import { err, ok, type Placement, type Result } from '@kumicraft/shared';
 
 import {
   asAstNode,

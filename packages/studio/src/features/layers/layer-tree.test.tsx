@@ -1,4 +1,4 @@
-import type { TreeNode } from '@reactcraft/shared';
+import type { TreeNode } from '@kumicraft/shared';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

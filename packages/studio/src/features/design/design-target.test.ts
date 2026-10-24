@@ -1,4 +1,4 @@
-import type { ElementRef, PageInfo, TreeNode } from '@reactcraft/shared';
+import type { ElementRef, PageInfo, TreeNode } from '@kumicraft/shared';
 import { describe, expect, it } from 'vitest';
 
 import { designTargetOf, insertAnchor, matchPage } from './design-target.ts';

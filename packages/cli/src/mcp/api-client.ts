@@ -1,4 +1,4 @@
-// REST calls of the MCP session to the running ReactCraft server, with its session token (S-07).
+// REST calls of the MCP session to the running KumiCraft server, with its session token (S-07).
 import type { ServerAddress } from './server-locator.ts';
 
 export type ApiResult =
@@ -19,12 +19,12 @@ export type ApiClientDeps = {
 
 /** Short English words for the codes an agent meets; the code itself always comes first. */
 const CODE_MESSAGES: Readonly<Record<string, string>> = {
-  E011: 'The project is not trusted yet. Trust it in the ReactCraft Studio first.',
-  E014: 'ReactCraft refused the session. Restart ReactCraft and try again.',
+  E011: 'The project is not trusted yet. Trust it in the KumiCraft Studio first.',
+  E014: 'KumiCraft refused the session. Restart KumiCraft and try again.',
   E015: 'Not found.',
   E016: 'The request is not valid.',
   E017: 'The source changed since it was read. Read it again.',
-  E021: 'No project is open. Open a project in the ReactCraft Studio first.',
+  E021: 'No project is open. Open a project in the KumiCraft Studio first.',
   E023: 'This element or file cannot be read or edited with tools.',
 };
 
@@ -35,12 +35,12 @@ function describeError(body: unknown, status: number): string {
   const error = isRecord(body) && isRecord(body['error']) ? body['error'] : undefined;
   const code = typeof error?.['code'] === 'string' ? error['code'] : `HTTP ${String(status)}`;
   const params = isRecord(error?.['params']) ? ` ${JSON.stringify(error['params'])}` : '';
-  return `${code}: ${CODE_MESSAGES[code] ?? 'ReactCraft refused the request.'}${params}`;
+  return `${code}: ${CODE_MESSAGES[code] ?? 'KumiCraft refused the request.'}${params}`;
 }
 
 export function createApiClient(deps: ApiClientDeps): ApiClient {
   const doFetch = deps.fetch ?? fetch;
-  const notRunning = `No ReactCraft session has the project ${deps.projectDir} open. Start ReactCraft ("npx reactcraft"), open this project and trust it.`;
+  const notRunning = `No KumiCraft session has the project ${deps.projectDir} open. Start KumiCraft ("npx kumicraft"), open this project and trust it.`;
 
   const send = async (
     method: 'GET' | 'POST' | 'PATCH',

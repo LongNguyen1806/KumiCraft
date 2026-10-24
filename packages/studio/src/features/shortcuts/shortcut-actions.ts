@@ -1,5 +1,5 @@
 // Maps ShortcutAction to store/command invocations (SPEC-04 R-KB-12).
-import type { ShortcutAction } from '@reactcraft/shared';
+import type { ShortcutAction } from '@kumicraft/shared';
 
 import { openInEditor } from '../../api/editor-client.ts';
 import { copySelection, cutSelection, pasteClipboard } from '../clipboard/clipboard-actions.ts';

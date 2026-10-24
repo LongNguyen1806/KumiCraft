@@ -1,5 +1,5 @@
 // AI chat toolbar with new conversation, import folder, add image, and agent badge (R-CH-02, CW-52).
-import type { AgentStatus } from '@reactcraft/shared';
+import type { AgentStatus } from '@kumicraft/shared';
 import { FolderPlus, ImagePlus, Plus } from 'lucide-react';
 import type React from 'react';
 import { useContext, useRef } from 'react';

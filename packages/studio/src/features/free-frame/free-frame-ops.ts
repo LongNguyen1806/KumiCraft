@@ -1,6 +1,6 @@
 // Operations for enabling and disabling free frame mode (R-FF-10, WP-2.12a).
-import type { AttributeLevelEdit, BridgeFreeMeasurePayload, TreeNode } from '@reactcraft/shared';
-import { applyPlacement, parseLocString, snap } from '@reactcraft/shared';
+import type { AttributeLevelEdit, BridgeFreeMeasurePayload, TreeNode } from '@kumicraft/shared';
+import { applyPlacement, parseLocString, snap } from '@kumicraft/shared';
 
 import { editSourceBatch } from '../../api/source-client.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';

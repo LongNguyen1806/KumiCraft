@@ -1,4 +1,4 @@
-import type { BackendInfo, PackageManager, ProjectInfo, ProjectProbe } from '@reactcraft/shared';
+import type { BackendInfo, PackageManager, ProjectInfo, ProjectProbe } from '@kumicraft/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

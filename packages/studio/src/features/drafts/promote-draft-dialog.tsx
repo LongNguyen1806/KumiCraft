@@ -1,4 +1,4 @@
-import { type DraftInfo, pageNames, type StructureResult } from '@reactcraft/shared';
+import { type DraftInfo, pageNames, type StructureResult } from '@kumicraft/shared';
 import { type SyntheticEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

@@ -1,5 +1,5 @@
 // Store and hook for loading and subscribing to project theme (R-IN-19, R-PJ-17, R-TH-10).
-import type { ThemeInfo } from '@reactcraft/shared';
+import type { ThemeInfo } from '@kumicraft/shared';
 import { useEffect } from 'react';
 import { create } from 'zustand';
 

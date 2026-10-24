@@ -1,5 +1,5 @@
 // Where an insert from the Library, the Component panel or the image picker goes (R-CP-11, R-LB-14).
-import type { ElementRef } from '@reactcraft/shared';
+import type { ElementRef } from '@kumicraft/shared';
 
 import type { ErrorInfo } from '../../routes/error-text.ts';
 import { useComponentsStore } from '../components-panel/use-project-components.ts';

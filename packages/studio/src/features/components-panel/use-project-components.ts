@@ -1,5 +1,5 @@
 // Hook to fetch and keep project components up to date (SPEC-04 R-CP-12, spec-log #23).
-import type { ProjectComponent } from '@reactcraft/shared';
+import type { ProjectComponent } from '@kumicraft/shared';
 import { useEffect } from 'react';
 import { create } from 'zustand';
 
@@ -8,7 +8,7 @@ import { isRecord } from '../../api/http.ts';
 import { fetchComponents } from '../../api/project-client.ts';
 
 const COMPONENT_FILE = /\.(tsx|jsx)$/;
-const CONFIG_FILE = /(^|[\\/])\.reactcraft[\\/]components\.json$/;
+const CONFIG_FILE = /(^|[\\/])\.kumicraft[\\/]components\.json$/;
 
 function isRelevantFile(file: string): boolean {
   return COMPONENT_FILE.test(file) || CONFIG_FILE.test(file);

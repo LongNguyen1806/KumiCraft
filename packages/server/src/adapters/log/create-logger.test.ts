@@ -10,7 +10,7 @@ import { createRotatingFile, LOG_FILE_NAME } from './rotating-file.ts';
 let dir: string;
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'reactcraft-log-'));
+  dir = await mkdtemp(join(tmpdir(), 'kumicraft-log-'));
 });
 
 afterEach(async () => {

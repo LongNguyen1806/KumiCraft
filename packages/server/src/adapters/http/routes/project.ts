@@ -17,7 +17,7 @@ import {
   THEME_TOKEN_NAME,
   ThemeEditSchema,
   ThemeTokenKindSchema,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 

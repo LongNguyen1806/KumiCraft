@@ -1,7 +1,7 @@
 // Service assembly for the local server (SPEC-01 section 3.2).
 import { homedir } from 'node:os';
 
-import type { AgentId } from '@reactcraft/shared';
+import type { AgentId } from '@kumicraft/shared';
 
 import {
   agentSetupPlans,
@@ -73,7 +73,7 @@ export type CoreServices = {
   toolGapStore: ToolGapStore;
 };
 
-/** History, jobs and the watcher that reports files changed outside ReactCraft (R-HI-05). */
+/** History, jobs and the watcher that reports files changed outside KumiCraft (R-HI-05). */
 function createFileServices(
   deps: Pick<ProjectServiceDeps, 'fs' | 'system' | 'logger'>,
   eventBus: EventBusPort,

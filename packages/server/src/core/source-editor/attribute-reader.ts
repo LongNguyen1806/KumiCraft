@@ -4,8 +4,8 @@ import type {
   ElementAttributes,
   ElementClassName,
   StaticOrString,
-} from '@reactcraft/shared';
-import { EDITABLE_ATTRS } from '@reactcraft/shared';
+} from '@kumicraft/shared';
+import { EDITABLE_ATTRS } from '@kumicraft/shared';
 
 import type { AstNode } from './ast-helpers.ts';
 import { asAstNode } from './ast-helpers.ts';

@@ -1,5 +1,5 @@
 // Common types and validation for page operations (R-PG-11 to R-PG-14).
-import { DEFAULT_DESIGN_DIRS, type DesignDirs, err, ok, type Result } from '@reactcraft/shared';
+import { DEFAULT_DESIGN_DIRS, type DesignDirs, err, ok, type Result } from '@kumicraft/shared';
 
 import type { HistoryService } from '../history/history-service.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';

@@ -6,7 +6,7 @@ import {
   StyleApplyResultSchema,
   type StyleReading,
   StyleReadingSchema,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { apiPost, parseResponse } from './http.ts';
 

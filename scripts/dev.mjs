@@ -11,12 +11,12 @@ const children = [
   spawn(
     process.execPath,
     ['--watch', 'packages/cli/src/index.ts', '--port', API_PORT, ...process.argv.slice(2)],
-    { stdio: 'inherit', env: { ...process.env, REACTCRAFT_DEV_STUDIO_URL: STUDIO_URL } },
+    { stdio: 'inherit', env: { ...process.env, KUMICRAFT_DEV_STUDIO_URL: STUDIO_URL } },
   ),
-  spawn('pnpm', ['--filter', '@reactcraft/studio', 'dev'], {
+  spawn('pnpm', ['--filter', '@kumicraft/studio', 'dev'], {
     stdio: 'inherit',
     shell: isWindows,
-    env: { ...process.env, REACTCRAFT_API_PORT: API_PORT },
+    env: { ...process.env, KUMICRAFT_API_PORT: API_PORT },
   }),
 ];
 

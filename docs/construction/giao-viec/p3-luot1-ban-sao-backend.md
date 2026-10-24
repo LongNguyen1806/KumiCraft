@@ -6,7 +6,7 @@ Lượt này **chỉ làm server và shared**. Không sửa Studio, Bridge, `e2e
 
 ## 1. Mục tiêu (người dùng thấy gì)
 
-1. Gắn một backend vào dự án đã tin cậy: ReactCraft tạo **bản sao chỉ đọc** của backend trong thư mục cache của người dùng (`%LOCALAPPDATA%\reactcraft\Cache\mirrors\<projectId>\<backendId>\` trên Windows). Ở Phase 3 agent chỉ được đọc bản sao này, không bao giờ đọc backend thật.
+1. Gắn một backend vào dự án đã tin cậy: KumiCraft tạo **bản sao chỉ đọc** của backend trong thư mục cache của người dùng (`%LOCALAPPDATA%\kumicraft\Cache\mirrors\<projectId>\<backendId>\` trên Windows). Ở Phase 3 agent chỉ được đọc bản sao này, không bao giờ đọc backend thật.
 2. Bản sao **không có**: file bí mật (`.env`, khóa, `credentials*`…), `node_modules`, `.git`, thư mục build, file theo `.gitignore`, file nhị phân, file > 1 MB, symlink.
 3. Trong file được chép, giá trị bí mật bị thay bằng `«redacted»`. Ví dụ `SECRET_KEY = "abc"` của Django thành `SECRET_KEY = "«redacted»"`.
 4. Gỡ backend: bản sao của nó bị xóa.
@@ -223,7 +223,7 @@ Manifest: `{ "version": 1, "files": [{ "path", "size", "mtimeMs", "sha256" }] }`
 
 ### 3.6. Nối vào server
 
-- `StartServerOptions.deps` thêm `cacheDir?: string`. Mặc định `envPaths('reactcraft').cache`. Test truyền thư mục tạm.
+- `StartServerOptions.deps` thêm `cacheDir?: string`. Mặc định `envPaths('kumicraft').cache`. Test truyền thư mục tạm.
 - `ProjectServiceDeps` thêm `mirror?: Pick<MirrorService, 'refresh' | 'remove'> | undefined`.
 - `applyRemoveBackend` thành công → `await deps.mirror?.remove(projectId, id)`.
 - `applyAddBackend` thành công, dự án **tin cậy** và backend `status: 'ok'` → bắt đầu `refresh` ở nền (`void …catch`), không chờ, để thêm backend vẫn nhanh.
@@ -259,9 +259,9 @@ Test bản sao dùng **file thật** trong thư mục tạm (`mkdtemp`) với `c
 
 ## 5. Kiểm tay (chủ dự án)
 
-1. `pnpm build`, chạy `reactcraft` trong thư mục cha của **WorkTracker**, mở WorkTracker, tin cậy dự án.
+1. `pnpm build`, chạy `kumicraft` trong thư mục cha của **WorkTracker**, mở WorkTracker, tin cậy dự án.
 2. Hộp Project → thêm backend Django của WorkTracker.
-3. Mở `%LOCALAPPDATA%\reactcraft\Cache\mirrors\`. Có thư mục `<projectId>\<backendId>\` và file `<backendId>.manifest.json` nằm cạnh.
+3. Mở `%LOCALAPPDATA%\kumicraft\Cache\mirrors\`. Có thư mục `<projectId>\<backendId>\` và file `<backendId>.manifest.json` nằm cạnh.
 4. Trong bản sao: không có `.env`, `venv`, `__pycache__`, `.git`, `db.sqlite3` (nhị phân), `media/` nếu `.gitignore` loại.
 5. Mở `settings.py` trong bản sao: dòng `SECRET_KEY = ...` có `«redacted»`; file thật trong backend vẫn y nguyên.
 6. Sửa một file `.py` trong backend thật. Gỡ backend rồi thêm lại: bản sao có nội dung mới.
@@ -277,7 +277,7 @@ Test bản sao dùng **file thật** trong thư mục tạm (`mkdtemp`) với `c
 5. Không log nội dung file, lời nhắc, đường dẫn file trong backend (S-89). Log chỉ gồm `backendId`, số file, mã lỗi.
 6. Test 13 không được tạo file 50 MB thật. Dùng tham số giới hạn cho test như đã ghi.
 7. Test tạo junction trên Windows cần thư mục đích tồn tại. Xem cách làm ở `node-file-system.test.ts` dòng 65.
-8. Sửa shared thì chạy `pnpm --filter @reactcraft/bridge build` trước `pnpm verify`. Test `bridge-client-generated` so bundle với bản build mới.
+8. Sửa shared thì chạy `pnpm --filter @kumicraft/bridge build` trước `pnpm verify`. Test `bridge-client-generated` so bundle với bản build mới.
 9. Không sửa test có sẵn để cho qua. Nếu test cũ của `redactSecrets` đỏ sau khi sửa regex, dừng lại và báo.
 
 ## 7. Báo cáo và commit

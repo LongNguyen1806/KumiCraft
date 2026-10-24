@@ -1,5 +1,5 @@
 // claude adapter: builds args and parses stream-json output (WP-3.03a, S-111, S-112).
-import { type AgentEvent, AgentEventSchema } from '@reactcraft/shared';
+import { type AgentEvent, AgentEventSchema } from '@kumicraft/shared';
 import { z } from 'zod';
 
 import type { AgentAdapter, AgentCommand, AgentTurnArgs } from '../agent-types.ts';

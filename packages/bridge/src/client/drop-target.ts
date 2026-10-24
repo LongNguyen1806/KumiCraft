@@ -1,5 +1,5 @@
 // Pure drop-target calculation for Canvas drag-and-drop (SPEC-04 section 16 M-DD, R-DD-11..15).
-import { type ElementGuard, type InsertTarget, parseLocString } from '@reactcraft/shared';
+import { type ElementGuard, type InsertTarget, parseLocString } from '@kumicraft/shared';
 
 import { type GridTracks, readGridTracks } from './grid-cells.ts';
 

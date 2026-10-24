@@ -1,5 +1,5 @@
 // History REST client (SPEC-03 section 5.6, R-HI-01..10).
-import { type HistoryState, HistoryStateSchema, HistoryStepSchema } from '@reactcraft/shared';
+import { type HistoryState, HistoryStateSchema, HistoryStepSchema } from '@kumicraft/shared';
 
 import { apiGet, apiPost, parseResponse } from './http.ts';
 

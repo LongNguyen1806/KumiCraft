@@ -1,5 +1,5 @@
 // Window keyboard shortcuts hook for Studio (SPEC-04 R-KB-10, R-KB-12).
-import { type KeyPress, matchShortcut, WORKS_WHILE_TYPING } from '@reactcraft/shared';
+import { type KeyPress, matchShortcut, WORKS_WHILE_TYPING } from '@kumicraft/shared';
 import { useEffect } from 'react';
 
 import { isApplePlatform } from '../../app/platform.ts';

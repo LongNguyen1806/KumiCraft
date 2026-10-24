@@ -220,7 +220,7 @@ Ghi chú #12: grid chỉ khai báo cột thì Chrome vẫn trả `grid-template-
 - **`getComputedStyle` trong happy-dom** không tính layout: test `readGridTracks` bằng cách `vi.spyOn(window, 'getComputedStyle')` trả object giả; còn `DragController` thì tiêm `gridTracks` qua `DropEnv`.
 - **Không thay đổi hành vi cũ**: kéo khi không có anh em gần thì giống hệt lượt 11 (làm tròn theo lưới); thả ngoài grid giống hệt trước.
 - Bridge chạy ở mọi trang của dự án người dùng: **không** `console.log`, không ném lỗi ra ngoài; `getComputedStyle` trả số lạ thì bỏ qua (không vẽ ô).
-- Sửa xong chạy `pnpm --filter @reactcraft/bridge build` để sinh lại bundle.
+- Sửa xong chạy `pnpm --filter @kumicraft/bridge build` để sinh lại bundle.
 - **Viết đúng lint ngay từ đầu**, chạy `pnpm exec eslint <file>` sau mỗi file. File ≤ 400 dòng, hàm ≤ 50 dòng; `free-drag.ts` đã ~280 dòng, nên đặt logic gióng vào `smart-guides.ts` và chỉ nối ở `free-drag.ts`.
 
 ## 7. Báo cáo và commit

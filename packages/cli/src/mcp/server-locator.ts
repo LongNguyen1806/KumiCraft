@@ -1,17 +1,17 @@
-// Finds the ReactCraft server an MCP session talks to (R-AG-19): its port from the lock ReactCraft
+// Finds the KumiCraft server an MCP session talks to (R-AG-19): its port from the lock KumiCraft
 // keeps in the project it has open, its token from the session file in the user's config folder.
 // Read only.
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { LOCK_FILE, parseLock, parseSessionToken, SESSION_FILE } from '@reactcraft/server';
+import { LOCK_FILE, parseLock, parseSessionToken, SESSION_FILE } from '@kumicraft/server';
 
 import type { McpOptions } from '../args.ts';
 
 export type ServerAddress = { readonly port: number; readonly token: string };
 
 export type LocateDeps = {
-  /** The user's config folder (REACTCRAFT_CONFIG_DIR or env-paths), where `session.json` lives. */
+  /** The user's config folder (KUMICRAFT_CONFIG_DIR or env-paths), where `session.json` lives. */
   readonly configDir: string;
   readonly readText?: ((path: string) => Promise<string | undefined>) | undefined;
   readonly now?: (() => Date) | undefined;

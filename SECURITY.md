@@ -1,12 +1,12 @@
 # Security Policy
 
-ReactCraft Local runs a server on `127.0.0.1`, reads project folders and writes generated code. Security issues are taken seriously (see SPEC-05 in `docs/spec.md`).
+KumiCraft Local runs a server on `127.0.0.1`, reads project folders and writes generated code. Security issues are taken seriously (see SPEC-05 in `docs/spec.md`).
 
 ## Reporting a vulnerability
 
 Please **do not open a public issue**. Report privately by email to:
 
-security@reactcraft.dev
+security@kumicraft.dev
 
 Include the affected version, steps to reproduce and the impact you observed.
 

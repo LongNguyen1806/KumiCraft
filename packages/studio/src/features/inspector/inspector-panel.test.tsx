@@ -1,5 +1,5 @@
 // Component tests for InspectorPanel (SPEC-04 section 9 M-IN, scenarios 1, 2, 5, 6, 7).
-import type { ElementSource, Frame } from '@reactcraft/shared';
+import type { ElementSource, Frame } from '@kumicraft/shared';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 

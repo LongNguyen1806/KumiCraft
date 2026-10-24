@@ -53,7 +53,7 @@ describe('createProject with the real template', { timeout: 30_000 }, () => {
     const routes = await readFile(join(target, 'src', 'routes.tsx'), 'utf8');
     expect(routes).toContain('createBrowserRouter([');
     expect(await readFile(join(target, '.gitignore'), 'utf8')).toContain('node_modules');
-    expect(await readFile(join(target, '.reactcraft', 'agent-guide.md'), 'utf8')).toContain(
+    expect(await readFile(join(target, '.kumicraft', 'agent-guide.md'), 'utf8')).toContain(
       'src/routes.tsx',
     );
   });
@@ -145,7 +145,7 @@ describe('the created starter site', () => {
     const requiredFiles = [
       '.env.example',
       '.gitignore',
-      '.reactcraft/agent-guide.md',
+      '.kumicraft/agent-guide.md',
       'README.md',
       'eslint.config.js',
       'index.html',

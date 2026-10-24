@@ -1,4 +1,4 @@
-import { pageNames, type StructureResult } from '@reactcraft/shared';
+import { pageNames, type StructureResult } from '@kumicraft/shared';
 import type { TFunction } from 'i18next';
 import { type SyntheticEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';

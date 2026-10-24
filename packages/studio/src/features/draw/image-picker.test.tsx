@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import type { InsertTarget } from '@reactcraft/shared';
+import type { InsertTarget } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 

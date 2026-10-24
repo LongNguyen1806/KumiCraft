@@ -1,5 +1,5 @@
 // Store to share ProjectInfo loaded by editor-shell (Phase 3 Round S1).
-import type { ProjectInfo } from '@reactcraft/shared';
+import type { ProjectInfo } from '@kumicraft/shared';
 import { create } from 'zustand';
 
 export interface ProjectStoreState {

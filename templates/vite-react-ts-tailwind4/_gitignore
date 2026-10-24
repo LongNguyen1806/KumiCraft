@@ -1,4 +1,4 @@
 node_modules
 dist
-.reactcraft/lock
-.reactcraft/cache/
+.kumicraft/lock
+.kumicraft/cache/

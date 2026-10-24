@@ -1,5 +1,5 @@
 // Project backend hook for chat panel (WP-3.05a, R-CH-07).
-import type { BackendInfo } from '@reactcraft/shared';
+import type { BackendInfo } from '@kumicraft/shared';
 import { useCallback, useEffect, useState } from 'react';
 
 import { fetchProject } from '../../api/project-client.ts';

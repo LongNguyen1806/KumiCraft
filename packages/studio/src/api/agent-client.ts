@@ -10,7 +10,7 @@ import {
   TurnDiffSchema,
   type TurnSummary,
   TurnSummarySchema,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import {
   apiGet,

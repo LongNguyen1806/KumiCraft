@@ -14,7 +14,7 @@ import {
   RunnerToParentMessageSchema,
   type SupportReport,
   type WorkspaceFile,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { nanoid } from 'nanoid';
 
 import type { EventBusPort } from '../ports/event-bus-port.ts';
@@ -233,7 +233,7 @@ class RunnerExecution {
         this.onChildMessage(parsed.data);
       } else {
         this.logs.push(
-          '[reactcraft] ignored a message from the dev server process it does not know',
+          '[kumicraft] ignored a message from the dev server process it does not know',
         );
       }
     });

@@ -1,4 +1,4 @@
-import type { ThemeInfo } from '@reactcraft/shared';
+import type { ThemeInfo } from '@kumicraft/shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

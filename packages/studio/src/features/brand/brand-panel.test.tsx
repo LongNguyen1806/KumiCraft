@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import type { ThemeInfo } from '@reactcraft/shared';
+import type { ThemeInfo } from '@kumicraft/shared';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 

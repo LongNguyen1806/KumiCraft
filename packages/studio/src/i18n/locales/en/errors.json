@@ -1,7 +1,7 @@
 {
   "E001": {
     "title": "Unsupported Project",
-    "message": "This project is not supported. ReactCraft needs Vite 7 or 8, React 18 or 19 and Tailwind CSS 4.",
+    "message": "This project is not supported. KumiCraft needs Vite 7 or 8, React 18 or 19 and Tailwind CSS 4.",
     "reasons": {
       "noPackageJson": "No package.json file found.",
       "noVite": "Vite is not installed.",
@@ -16,11 +16,11 @@
   },
   "E002": {
     "title": "Server Init Failed",
-    "message": "ReactCraft could not start. Check the terminal for details."
+    "message": "KumiCraft could not start. Check the terminal for details."
   },
   "E003": {
     "title": "Workspace Load Failed",
-    "message": "The project file .reactcraft/workspace.json could not be read.",
+    "message": "The project file .kumicraft/workspace.json could not be read.",
     "reasons": {
       "tooLarge": "File exceeds the size limit.",
       "invalid": "File content is invalid."
@@ -47,16 +47,16 @@
       "reservedName": "Path name is reserved by the operating system.",
       "driveRoot": "A drive root cannot be a project; pick or create a subfolder.",
       "homeDir": "Your home folder cannot be a project; pick a subfolder.",
-      "systemFolder": "This is a system folder; ReactCraft does not use it."
+      "systemFolder": "This is a system folder; KumiCraft does not use it."
     }
   },
   "E013": {
     "title": "Internal Error",
-    "message": "Something went wrong inside ReactCraft. Details are in the terminal log."
+    "message": "Something went wrong inside KumiCraft. Details are in the terminal log."
   },
   "E014": {
     "title": "Unauthorized",
-    "message": "This session is invalid or has expired. Open ReactCraft again from the link shown in the terminal."
+    "message": "This session is invalid or has expired. Open KumiCraft again from the link shown in the terminal."
   },
   "E015": {
     "title": "Not Found",
@@ -188,7 +188,7 @@
   },
   "network": {
     "title": "Network Error",
-    "message": "Cannot reach the ReactCraft server. Is it still running?"
+    "message": "Cannot reach the KumiCraft server. Is it still running?"
   },
   "unknown": {
     "title": "Unknown Error",

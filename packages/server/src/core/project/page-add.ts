@@ -9,7 +9,7 @@ import {
   type PagesInfo,
   type Result,
   type StructureResult,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { computeSha256 } from '../history/history-service.ts';
 import { type AstNode, detectFormat, parseJsxAst } from '../source-editor/ast-helpers.ts';

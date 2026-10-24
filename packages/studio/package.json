@@ -1,5 +1,5 @@
 {
-  "name": "@reactcraft/studio",
+  "name": "@kumicraft/studio",
   "version": "0.0.0",
   "private": true,
   "description": "Studio UI: shell, Canvas host, Layer Tree, Inspector, chat",
@@ -8,7 +8,7 @@
   "dependencies": {
     "@fontsource/be-vietnam-pro": "5.3.0",
     "@fontsource/jetbrains-mono": "5.3.0",
-    "@reactcraft/shared": "workspace:*",
+    "@kumicraft/shared": "workspace:*",
     "@tanstack/react-virtual": "3.14.13",
     "clsx": "2.1.1",
     "i18next": "26.4.3",

@@ -1,5 +1,5 @@
 // Dev server options the runner forces on the project's Vite (S-104): loopback only, no CORS.
-import type { RunnerOptions } from '@reactcraft/shared';
+import type { RunnerOptions } from '@kumicraft/shared';
 
 /** `port` undefined: Vite takes the project's own port (its vite.config, else 5173) (R-RN-04). */
 export function devServerOptions(options: RunnerOptions, port: number | undefined) {

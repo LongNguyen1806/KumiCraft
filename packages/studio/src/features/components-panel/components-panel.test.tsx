@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import type { ProjectComponent } from '@reactcraft/shared';
+import type { ProjectComponent } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 

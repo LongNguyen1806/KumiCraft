@@ -1,5 +1,5 @@
 // Zustand store for Studio element selection, Layer Tree, and Canvas mode (SPEC-04 M-SL, R-SL-05).
-import type { ElementInfo, ElementRef, TreeNode } from '@reactcraft/shared';
+import type { ElementInfo, ElementRef, TreeNode } from '@kumicraft/shared';
 import { create } from 'zustand';
 
 export type CanvasMode = 'design' | 'preview';

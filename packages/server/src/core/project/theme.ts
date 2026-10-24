@@ -5,7 +5,7 @@ import type {
   ThemeToken,
   ThemeTokenKind,
   ThemeUsage,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { computeSha256, type HistoryService } from '../history/history-service.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
@@ -188,7 +188,7 @@ export async function editProjectTheme(
 }
 
 const SOURCE_FILE_RE = /\.(tsx|jsx|ts|js)$/;
-const IGNORED_DIRS = new Set(['node_modules', '.git', 'dist', '.reactcraft']);
+const IGNORED_DIRS = new Set(['node_modules', '.git', 'dist', '.kumicraft']);
 
 export async function countProjectThemeUsage(
   current: WorkspaceState,

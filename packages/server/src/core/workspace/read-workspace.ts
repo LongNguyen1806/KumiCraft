@@ -1,11 +1,11 @@
-// Reading `.reactcraft/workspace.json` (SPEC-03 section 3, V-105, V-106). A broken file is never
+// Reading `.kumicraft/workspace.json` (SPEC-03 section 3, V-105, V-106). A broken file is never
 // rewritten: the project stays in `error` until the user fixes it.
 import {
   parseWorkspaceFile,
   WORKSPACE_FILE,
   WORKSPACE_FILE_MAX_BYTES,
   type WorkspaceFile,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { jsonDepth, MAX_JSON_DEPTH } from '../shared/paths.ts';

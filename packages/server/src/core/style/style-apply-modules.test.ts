@@ -7,7 +7,7 @@ import {
   type BridgeStyleProbePayload,
   type MatchedRule,
   type StyleChange,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createSourceEditorService } from '../source-editor/source-editor-service.ts';

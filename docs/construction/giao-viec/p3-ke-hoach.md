@@ -47,7 +47,7 @@ Lượt 1 và 3 không cần VG-17 nên làm trước trong lúc chờ spike. N�
 | Test            | Gemini viết unit, component, integration. Test agent luôn dùng **agent giả lập** (quyết định 2026-10-20). Claude thêm `*-brief.test.ts` khóa các tình huống của bản giao việc khi QA |
 | E2E             | Chỉ ở cổng G3: AC-08, AC-09 (SPEC-04 M-AG #7, #8, M-CH) do Claude viết; bộ hồi quy chạy ở lượt đụng runner, phiên, Bridge                                                            |
 | Bí mật          | Mọi chuỗi đi tới agent, chat, log qua `redactSecrets`; test dùng chuỗi `RC_SECRET_MARKER_*` và khẳng định không lọt                                                                  |
-| Thư mục dữ liệu | Bản sao ở `envPaths('reactcraft').cache/mirrors/…`; ảnh chụp và lượt ở `envPaths('reactcraft').data/turns/<projectId>/…`; quyền `0700` trên macOS/Linux                              |
+| Thư mục dữ liệu | Bản sao ở `envPaths('kumicraft').cache/mirrors/…`; ảnh chụp và lượt ở `envPaths('kumicraft').data/turns/<projectId>/…`; quyền `0700` trên macOS/Linux                                |
 | Trace           | `currentPhase` giữ 2 trong lúc làm; mỗi lượt gắn mã `[R-xx]`, `[S-xx]` vào test; chuyển sang 3 ở cổng G3                                                                             |
 | Kiểm tay        | Mỗi bản giao việc có mục Kiểm tay; dự án mới + WorkTracker (backend Django). Lượt 4 trở đi có thêm bước với agent thật khi chủ dự án muốn                                            |
 

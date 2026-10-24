@@ -1,6 +1,6 @@
-// Edit tools of `reactcraft mcp` (R-AG-19, round 7b): each reads the element first and sends the
+// Edit tools of `kumicraft mcp` (R-AG-19, round 7b): each reads the element first and sends the
 // same edit the Studio sends, so the server's checks and the history apply unchanged.
-import type { ElementSource } from '@reactcraft/shared';
+import type { ElementSource } from '@kumicraft/shared';
 import { describe, expect, it } from 'vitest';
 
 import type { ApiClient, ApiResult } from './api-client.ts';
@@ -66,8 +66,8 @@ describe('MCP edit tools [R-AG-19]', () => {
   it('replaces and updates class names with the current value as the guard [R-AG-19]', async () => {
     const { api, writes } = fakeApi({ [BTN]: element(BTN) });
 
-    await run('reactcraft_set_class_name', api, { loc: BTN, className: ' rounded bg-red-600 ' });
-    await run('reactcraft_update_classes', api, {
+    await run('kumicraft_set_class_name', api, { loc: BTN, className: ' rounded bg-red-600 ' });
+    await run('kumicraft_update_classes', api, {
       loc: BTN,
       add: ['bg-red-600', 'shadow'],
       remove: ['bg-blue-600'],
@@ -103,8 +103,8 @@ describe('MCP edit tools [R-AG-19]', () => {
       }),
     });
 
-    const classes = await run('reactcraft_set_class_name', api, { loc: BTN, className: 'x' });
-    const text = await run('reactcraft_set_text', api, { loc: BTN, text: 'Hi' });
+    const classes = await run('kumicraft_set_class_name', api, { loc: BTN, className: 'x' });
+    const text = await run('kumicraft_set_text', api, { loc: BTN, text: 'Hi' });
 
     expect(classes.ok || classes.message).toMatch(/^E023/);
     expect(text.ok || text.message).toMatch(
@@ -120,9 +120,9 @@ describe('MCP edit tools [R-AG-19]', () => {
       [link]: element(link, { tag: 'a', attributes: { href: { kind: 'static', value: '/old' } } }),
     });
 
-    await run('reactcraft_set_text', api, { loc: BTN, text: 'Đặt hàng' });
-    await run('reactcraft_set_attribute', api, { loc: link, name: 'href', value: '/new' });
-    await run('reactcraft_set_attribute', api, { loc: link, name: 'href' });
+    await run('kumicraft_set_text', api, { loc: BTN, text: 'Đặt hàng' });
+    await run('kumicraft_set_attribute', api, { loc: link, name: 'href', value: '/new' });
+    await run('kumicraft_set_attribute', api, { loc: link, name: 'href' });
 
     expect(writes().map((call) => call.body)).toEqual([
       { edit: { kind: 'setText', loc: BTN, tag: 'button', before: 'Mua ngay', after: 'Đặt hàng' } },
@@ -143,15 +143,15 @@ describe('MCP edit tools [R-AG-19]', () => {
   it('turns where into sibling or child targets for inserts and moves [R-AG-19]', async () => {
     const { api, writes } = fakeApi({ [BTN]: element(BTN), [H1]: element(H1, { tag: 'h1' }) });
 
-    await run('reactcraft_insert_jsx', api, {
+    await run('kumicraft_insert_jsx', api, {
       target: { loc: BTN, where: 'after' },
       jsx: '<p>Free shipping</p>',
     });
-    await run('reactcraft_move_elements', api, {
+    await run('kumicraft_move_elements', api, {
       locs: [H1],
       target: { loc: BTN, where: 'inside-end' },
     });
-    await run('reactcraft_insert_image', api, {
+    await run('kumicraft_insert_image', api, {
       target: { loc: H1, where: 'before' },
       src: '/hero.png',
       alt: 'Hero',
@@ -191,10 +191,10 @@ describe('MCP edit tools [R-AG-19]', () => {
       { loc: BTN, tag: 'button' },
     ];
 
-    await run('reactcraft_remove_elements', api, { locs: [H1, BTN] });
-    await run('reactcraft_duplicate_elements', api, { locs: [H1, BTN] });
-    await run('reactcraft_wrap_elements', api, { locs: [H1, BTN], wrapper: 'row' });
-    await run('reactcraft_unwrap_element', api, { loc: BTN });
+    await run('kumicraft_remove_elements', api, { locs: [H1, BTN] });
+    await run('kumicraft_duplicate_elements', api, { locs: [H1, BTN] });
+    await run('kumicraft_wrap_elements', api, { locs: [H1, BTN], wrapper: 'row' });
+    await run('kumicraft_unwrap_element', api, { loc: BTN });
 
     expect(writes().map((call) => call.body)).toEqual([
       { edit: { kind: 'remove', elements: guards } },
@@ -207,7 +207,7 @@ describe('MCP edit tools [R-AG-19]', () => {
   it('stops before writing when an element moved [R-AG-19, E017]', async () => {
     const { api, writes } = fakeApi({ [BTN]: element(BTN) });
 
-    const result = await run('reactcraft_remove_elements', api, { locs: [BTN, 'src/x.tsx:1:1'] });
+    const result = await run('kumicraft_remove_elements', api, { locs: [BTN, 'src/x.tsx:1:1'] });
 
     expect(result.ok || result.message).toMatch(/^E017/);
     expect(writes()).toEqual([]);
@@ -216,15 +216,15 @@ describe('MCP edit tools [R-AG-19]', () => {
   it('creates pages, edits theme tokens and undoes or redoes through the API [R-AG-19]', async () => {
     const { api, writes } = fakeApi({});
 
-    await run('reactcraft_create_page', api, { name: 'Pricing', path: '/pricing' });
-    await run('reactcraft_set_theme_token', api, {
+    await run('kumicraft_create_page', api, { name: 'Pricing', path: '/pricing' });
+    await run('kumicraft_set_theme_token', api, {
       op: 'set',
       kind: 'color',
       name: 'brand',
       value: '#e11d48',
     });
-    await run('reactcraft_undo', api, {});
-    await run('reactcraft_redo', api, {});
+    await run('kumicraft_undo', api, {});
+    await run('kumicraft_redo', api, {});
 
     expect(writes()).toEqual([
       { method: 'POST', path: 'project/pages', body: { name: 'Pricing', path: '/pricing' } },

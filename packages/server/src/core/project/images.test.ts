@@ -18,7 +18,7 @@ describe('core/project/images [R-DT-13]', () => {
   let tmpDir: string;
 
   beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'reactcraft-images-test-'));
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'kumicraft-images-test-'));
   });
 
   afterEach(async () => {

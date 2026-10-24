@@ -14,7 +14,7 @@ import {
   draftFileOfEntryId,
   resolveDraftEntryId,
 } from './draft-page.ts';
-import { createReactCraftBridgePlugin } from './vite.ts';
+import { createKumiCraftBridgePlugin } from './vite.ts';
 
 describe('draftFileInDir [R-DR-12]', () => {
   it('R-DR-12: accepts only .tsx/.jsx files inside the drafts folder', () => {
@@ -138,7 +138,7 @@ describe('draft page on the dev server [R-DR-12]', () => {
   });
 
   it('R-DR-12: serves an HTML page with #root and the draft entry, through Vite', async () => {
-    const url = `/__reactcraft/draft?file=${encodeURIComponent('src/drafts/Mockup.tsx')}`;
+    const url = `/__kumicraft/draft?file=${encodeURIComponent('src/drafts/Mockup.tsx')}`;
     const res = await fetch(`${baseUrl}${url}`);
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/html');
@@ -158,7 +158,7 @@ describe('draft page on the dev server [R-DR-12]', () => {
       `?file=${encodeURIComponent('src/drafts/Missing.tsx')}`,
       '',
     ]) {
-      const res = await fetch(`${baseUrl}/__reactcraft/draft${query}`);
+      const res = await fetch(`${baseUrl}/__kumicraft/draft${query}`);
       expect(res.status).toBe(404);
     }
     expect(transformedUrls).toEqual([]);
@@ -190,7 +190,7 @@ describe('draft page on the dev server [R-DR-12]', () => {
       join(root, 'package.json'),
       JSON.stringify({ dependencies: { 'react-router-dom': '7.0.0' } }),
     );
-    const plugin = createReactCraftBridgePlugin({
+    const plugin = createKumiCraftBridgePlugin({
       rootDir: root,
       sourceDir: 'src',
       nonce: 'n',
@@ -208,7 +208,7 @@ describe('draft page on the dev server [R-DR-12]', () => {
   });
 
   it('R-DR-12: without a drafts folder the plugin adds no draft page', () => {
-    const plugin = createReactCraftBridgePlugin({
+    const plugin = createKumiCraftBridgePlugin({
       rootDir: root,
       sourceDir: 'src',
       nonce: 'n',

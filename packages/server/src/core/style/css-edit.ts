@@ -1,6 +1,6 @@
 // Minimal text edits of a CSS file (SPEC-04 M-ST, R-ST-06, R-ST-09, QC-98): one declaration or one
 // new rule changes; every other byte of the file stays as it was.
-import { err, ok, type Result } from '@reactcraft/shared';
+import { err, ok, type Result } from '@kumicraft/shared';
 import postcss, { type AtRule, type Declaration, type Root, type Rule } from 'postcss';
 
 import { findRule, findRuleByIndex, normalizeMedia, type RuleKey } from './css-locate.ts';

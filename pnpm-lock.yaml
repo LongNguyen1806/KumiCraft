@@ -90,7 +90,7 @@ importers:
       '@babel/parser':
         specifier: 7.29.9
         version: 7.29.9
-      '@reactcraft/shared':
+      '@kumicraft/shared':
         specifier: workspace:*
         version: link:../shared
       magic-string:
@@ -161,13 +161,13 @@ importers:
         specifier: 4.6.5
         version: 4.6.5
     devDependencies:
-      '@reactcraft/server':
+      '@kumicraft/server':
         specifier: workspace:*
         version: link:../server
-      '@reactcraft/shared':
+      '@kumicraft/shared':
         specifier: workspace:*
         version: link:../shared
-      '@reactcraft/studio':
+      '@kumicraft/studio':
         specifier: workspace:*
         version: link:../studio
       '@types/node':
@@ -188,10 +188,10 @@ importers:
       '@fastify/websocket':
         specifier: 11.3.4
         version: 11.3.4
-      '@reactcraft/bridge':
+      '@kumicraft/bridge':
         specifier: workspace:*
         version: link:../bridge
-      '@reactcraft/shared':
+      '@kumicraft/shared':
         specifier: workspace:*
         version: link:../shared
       chokidar:
@@ -258,7 +258,7 @@ importers:
       '@fontsource/jetbrains-mono':
         specifier: 5.3.0
         version: 5.3.0
-      '@reactcraft/shared':
+      '@kumicraft/shared':
         specifier: workspace:*
         version: link:../shared
       '@tanstack/react-virtual':

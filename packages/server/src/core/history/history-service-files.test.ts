@@ -14,7 +14,7 @@ describe('M-HI: History Service file create/delete [R-HI-11]', () => {
   const fakeNow = () => nowMs;
 
   beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'reactcraft-history-files-'));
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'kumicraft-history-files-'));
     nowMs = 1000;
   });
 

@@ -24,7 +24,7 @@ const store = () =>
   createConfigStore({ fs: createNodeFileSystem(platform), dir, platform, logger });
 
 beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'reactcraft-config-'));
+  dir = await mkdtemp(join(tmpdir(), 'kumicraft-config-'));
   warnings.length = 0;
 });
 

@@ -3,7 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { ProjectInfo } from '@reactcraft/shared';
+import type { ProjectInfo } from '@kumicraft/shared';
 
 import { createNodeFileSystem } from '../../adapters/fs/node-file-system.ts';
 import { createNodeProcess } from '../../adapters/system/node-process.ts';

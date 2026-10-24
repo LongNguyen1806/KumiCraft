@@ -4,7 +4,7 @@ import {
   type InsertTarget,
   parseLocString,
   type TreeNode,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { applyStructureEdit } from '../../api/source-client.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';

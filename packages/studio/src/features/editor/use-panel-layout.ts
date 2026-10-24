@@ -7,7 +7,7 @@ export type Side = 'left' | 'right';
 export const MIN_PANEL: Record<Side, number> = { left: 300, right: 360 };
 export const MAX_PANEL = 480;
 const DEFAULT_WIDTH: Record<Side, number> = { left: 300, right: 360 };
-const KEY = 'reactcraft.panels';
+const KEY = 'kumicraft.panels';
 
 export type PanelLayout = {
   readonly width: Readonly<Record<Side, number>>;

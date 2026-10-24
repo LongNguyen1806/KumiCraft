@@ -1,5 +1,5 @@
 // Breadcrumb navigation for nested element ancestors (SPEC-04 R-SL-14, WP-2.12c).
-import type { ElementRef, TreeNode } from '@reactcraft/shared';
+import type { ElementRef, TreeNode } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

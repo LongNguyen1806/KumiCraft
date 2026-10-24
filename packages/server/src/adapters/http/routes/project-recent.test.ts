@@ -22,8 +22,8 @@ describe('GET /project/recent [R-PJ-25]', () => {
 
   it('lists the recent projects that still have a workspace.json, newest first', async () => {
     const kept = join(dir, 'shop');
-    await mkdir(join(kept, '.reactcraft'), { recursive: true });
-    await writeFile(join(kept, '.reactcraft', 'workspace.json'), '{}');
+    await mkdir(join(kept, '.kumicraft'), { recursive: true });
+    await writeFile(join(kept, '.kumicraft', 'workspace.json'), '{}');
     const app = Fastify();
     registerRecentProjectRoutes(app, {
       fs: nodeFs,

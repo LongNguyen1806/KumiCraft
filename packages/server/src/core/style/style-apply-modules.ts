@@ -8,7 +8,7 @@ import {
   parseLocString,
   type Result,
   type StyleApplyRequest,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { customAlphabet } from 'nanoid';
 
 import { asAstNode, type AstNode, isAstNode, parseJsxAst } from '../source-editor/ast-helpers.ts';

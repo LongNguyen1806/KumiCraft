@@ -1,5 +1,5 @@
 // Unit tests for the project's page in the Canvas (R-RN-21 to R-RN-24, S-102).
-import type { Frame } from '@reactcraft/shared';
+import type { Frame } from '@kumicraft/shared';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 

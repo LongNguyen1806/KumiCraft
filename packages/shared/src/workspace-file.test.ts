@@ -19,9 +19,11 @@ const base = () =>
 
 describe('relPathProblem', () => {
   it('accepts project-relative paths [V-100]', () => {
-    expect(['src', 'src/pages/Home.tsx', '.reactcraft/workspace.json'].map(relPathProblem)).toEqual(
-      [undefined, undefined, undefined],
-    );
+    expect(['src', 'src/pages/Home.tsx', '.kumicraft/workspace.json'].map(relPathProblem)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
   });
 
   it('rejects absolute, parent, empty, backslash and control-character paths [V-100]', () => {
@@ -72,7 +74,7 @@ describe('parseWorkspaceFile', () => {
       const parsed = parseWorkspaceFile(value);
 
       expect(parsed.ok ? undefined : parsed.error.params).toEqual({
-        file: '.reactcraft/workspace.json',
+        file: '.kumicraft/workspace.json',
         reason: 'unsupportedVersion',
       });
     }

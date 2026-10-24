@@ -1,10 +1,5 @@
 // Agent section for the Settings dialog (R-AG-10, R-AG-21).
-import {
-  AGENT_CHOICES,
-  type AgentChoice,
-  type AgentId,
-  type AgentStatus,
-} from '@reactcraft/shared';
+import { AGENT_CHOICES, type AgentChoice, type AgentId, type AgentStatus } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
 import { ChoicePill } from '../../components/ui/choice-pill.tsx';

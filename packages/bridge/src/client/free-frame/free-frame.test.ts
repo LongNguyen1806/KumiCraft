@@ -5,7 +5,7 @@ import type {
   BridgeFreeMovePayload,
   BridgeFreeResizePayload,
   BridgeMoveIntentPayload,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { DragController } from '../drag.ts';

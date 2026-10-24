@@ -1,5 +1,5 @@
 {
-  "name": "@reactcraft/server",
+  "name": "@kumicraft/server",
   "version": "0.0.0",
   "private": true,
   "description": "Local Server: projects, dev server runner, source editing, history and the agent bridge",
@@ -18,8 +18,8 @@
     "@babel/parser": "7.29.9",
     "@fastify/static": "10.1.6",
     "@fastify/websocket": "11.3.4",
-    "@reactcraft/bridge": "workspace:*",
-    "@reactcraft/shared": "workspace:*",
+    "@kumicraft/bridge": "workspace:*",
+    "@kumicraft/shared": "workspace:*",
     "chokidar": "5.0.0",
     "cross-spawn": "7.0.6",
     "diff": "9.0.0",

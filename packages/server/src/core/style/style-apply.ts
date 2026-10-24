@@ -10,7 +10,7 @@ import {
   ok,
   type Result,
   type StyleApplyRequest,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { customAlphabet } from 'nanoid';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
@@ -23,7 +23,7 @@ import { applyModulesChange, isModulesApplicable } from './style-apply-modules.t
 import { projectFileOf, winnerFor } from './style-service.ts';
 
 const MAX_CSS_BYTES = 2 * 1024 * 1024;
-/** Classes made by ReactCraft for one element end in `-` and four letters or digits. */
+/** Classes made by KumiCraft for one element end in `-` and four letters or digits. */
 const OWN_CLASS = /^[A-Za-z][\w-]*-[a-z0-9]{4}$/;
 
 export type StyleApplyDeps = {

@@ -1,4 +1,4 @@
-import type { BackendInfo } from '@reactcraft/shared';
+import type { BackendInfo } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -54,7 +54,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   await i18next.changeLanguage('en');
   sessionStorage.clear();
-  sessionStorage.setItem('reactcraft.sessionToken', 'tok');
+  sessionStorage.setItem('kumicraft.sessionToken', 'tok');
 });
 
 afterEach(() => {
@@ -88,7 +88,7 @@ describe('project trust in the Studio', () => {
 
   it('trusts the project from the bar and lets the Studio read the session again', async () => {
     stubServer();
-    sessionStorage.setItem('reactcraft.trustAsked.shop000001', '1');
+    sessionStorage.setItem('kumicraft.trustAsked.shop000001', '1');
     const onTrusted = openUntrusted();
 
     fireEvent.click(screen.getByRole('button', { name: 'Review and trust' }));

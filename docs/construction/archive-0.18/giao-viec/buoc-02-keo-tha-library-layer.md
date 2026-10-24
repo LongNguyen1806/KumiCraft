@@ -4,7 +4,7 @@ Spec: SPEC-04.1 mục 9 (kéo thả), mục 10 (Library), mục 12 (Layer Tree),
 
 ## Hiện trạng đã kiểm (2026-10-13, Claude đọc code)
 
-- **Chưa có**: hàm `canInsert` trong model; preset (`@reactcraft/model/presets`); `@tanstack/react-virtual`; bộ icon Lucide (`lucide-react`).
+- **Chưa có**: hàm `canInsert` trong model; preset (`@kumicraft/model/presets`); `@tanstack/react-virtual`; bộ icon Lucide (`lucide-react`).
 - **Đã có, dùng lại**: `validateOperation`, `applyBatch`, `assignIds` (`packages/model/src/operations/`); kiểm tra cha-con V-10 ở `operations/precheck-tree.ts` và `schema/validate/rules-structure.ts`; spike VG-11 đã Đạt ở `packages/studio/spikes/vg-11/` (`drop-target.ts`: `findDropTarget`, `dropStops`; `main.tsx`: `DndContext` + `PointerSensor` khoảng cách 4 + `KeyboardSensor`, lớp phủ che iframe khi kéo).
 - Canvas thu phóng bằng `transform: scale` (spec-log #95); hệ số đọc qua `useCanvasScale()`. Iframe **cao bằng nội dung, không tự cuộn**; vùng cuộn là `<main data-testid="editor">` ở `canvas-area.tsx`.
 - Layer Tree hiện là danh sách phẳng trong `features/editor/side-panels.tsx` (`LayerList`); tab Library đang ghi "sẽ có sau" (`editor.libraryLater`).

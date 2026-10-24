@@ -1,5 +1,5 @@
 // Unit tests for keyboard nudge in free frame (SPEC-04 section 18E, R-FF-15, WP-2.12b).
-import type { ElementSource } from '@reactcraft/shared';
+import type { ElementSource } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';

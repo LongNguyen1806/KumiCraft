@@ -31,7 +31,7 @@ Lượt này **chỉ làm server**. Chưa chạy lượt AI (lượt 4), chưa l
 ### 3.1. `core/agent/agent-types.ts` (mới)
 
 ```ts
-import type { AgentEvent, AgentId } from '@reactcraft/shared';
+import type { AgentEvent, AgentId } from '@kumicraft/shared';
 
 /** How to start an agent: the real CLI name, or (tests only) `node fake-agent.mjs` (R-QA-12). */
 export type AgentCommand = { readonly command: string; readonly prefixArgs: readonly string[] };
@@ -188,15 +188,15 @@ Hết bước mà chưa `exit` → thoát 0. Trong chuỗi `emit`, giá trị `"
 
 ### 3.7. Sửa S-53 — `sanitizeEnvironment`
 
-S-53: "bỏ mọi biến `REACTCRAFT_*` và token phiên. Biến khác giữ nguyên (agent cần cấu hình đăng nhập của chính nó)". Token phiên của ReactCraft **không** nằm trong biến môi trường (lưu trong file cấu hình). Vì vậy chỉ bỏ biến bắt đầu bằng `REACTCRAFT_`, **bỏ** điều kiện `key.toLowerCase().includes('token')`.
+S-53: "bỏ mọi biến `KUMICRAFT_*` và token phiên. Biến khác giữ nguyên (agent cần cấu hình đăng nhập của chính nó)". Token phiên của KumiCraft **không** nằm trong biến môi trường (lưu trong file cấu hình). Vì vậy chỉ bỏ biến bắt đầu bằng `KUMICRAFT_`, **bỏ** điều kiện `key.toLowerCase().includes('token')`.
 
-Test cũ `strips REACTCRAFT_* and token env variables` đang khẳng định `SESSION_TOKEN`, `my_token` bị xóa, tức là khẳng định **sai** so với spec. Được phép sửa test đó: đổi tên thành `strips only REACTCRAFT_* variables [S-53]` và khẳng định `GH_TOKEN`, `my_token` **còn**, `REACTCRAFT_X` **mất**. Đây là ngoại lệ duy nhất được sửa test cũ.
+Test cũ `strips KUMICRAFT_* and token env variables` đang khẳng định `SESSION_TOKEN`, `my_token` bị xóa, tức là khẳng định **sai** so với spec. Được phép sửa test đó: đổi tên thành `strips only KUMICRAFT_* variables [S-53]` và khẳng định `GH_TOKEN`, `my_token` **còn**, `KUMICRAFT_X` **mất**. Đây là ngoại lệ duy nhất được sửa test cũ.
 
 ### 3.8. Spec-log (số tiếp theo sau #38)
 
 - `#39` R-AG-10: `login` luôn `'unknown'` vì VG-17 chưa có cách dò đăng nhập không tốn lượt; lỗi đăng nhập sẽ hiện qua E027 khi chạy lượt (lượt 4).
 - `#40` M-AG: sự kiện `message` của agy là **mẩu** chữ (`text_delta`); Studio nối các mẩu liền nhau. Adapter `claude` viết theo định dạng công bố, chưa kiểm bằng VG-17 vì máy chủ dự án chưa có `claude`. Adapter `claude` không truyền `--permission-mode`: người dùng tự cấu hình quyền trong Claude Code (S-112).
-- `#41` S-53: `sanitizeEnvironment` trước đây xóa mọi biến chứa `token` (kể cả biến đăng nhập của agent). Sửa: chỉ xóa `REACTCRAFT_*`.
+- `#41` S-53: `sanitizeEnvironment` trước đây xóa mọi biến chứa `token` (kể cả biến đăng nhập của agent). Sửa: chỉ xóa `KUMICRAFT_*`.
 
 ## 4. Tình huống test
 
@@ -215,16 +215,16 @@ Test agent giả lập spawn thật qua `createNodeProcess()` với `command: pr
 | 9   | Giả lập chạy `fail-midway.json`                                                                                                                                                                                                                                | Mã 1; `src/App.tsx` đã đổi; có sự kiện `error` `agy: ERROR`                                                                                                                                                                     | [R-QA-13]            |
 | 10  | Giả lập chạy `hang.json`; đợi dòng `init` qua `onLine`, rồi `kill()`                                                                                                                                                                                           | `wait()` xong trong < 5 s; `process.kill(pid, 0)` báo tiến trình không còn                                                                                                                                                      | [R-QA-13]            |
 | 11  | Giả lập với `write` có `path: "../outside.txt"`                                                                                                                                                                                                                | Mã 3; file ngoài không được tạo                                                                                                                                                                                                 | [R-QA-11]            |
-| 12  | Ghi lần gọi: spawn qua `createNodeProcess` với `env: { RC_FAKE_AGENT_RECORD: <file>, GH_TOKEN: 'x' }` khi `process.env` có `REACTCRAFT_TEST_SECRET` (đặt trong test, xóa ở `afterEach`); args từ adapter agy với một thư mục bản sao                           | File ghi: `cwd` là thư mục dự án tạm; `argv` bằng đúng `buildArgs`; `envKeys` có `GH_TOKEN`, **không** có `REACTCRAFT_TEST_SECRET`                                                                                              | [S-111, S-115, S-53] |
-| 13  | `sanitizeEnvironment` (sửa test cũ như mục 3.7)                                                                                                                                                                                                                | Chỉ `REACTCRAFT_*` bị xóa                                                                                                                                                                                                       | [S-53]               |
+| 12  | Ghi lần gọi: spawn qua `createNodeProcess` với `env: { RC_FAKE_AGENT_RECORD: <file>, GH_TOKEN: 'x' }` khi `process.env` có `KUMICRAFT_TEST_SECRET` (đặt trong test, xóa ở `afterEach`); args từ adapter agy với một thư mục bản sao                            | File ghi: `cwd` là thư mục dự án tạm; `argv` bằng đúng `buildArgs`; `envKeys` có `GH_TOKEN`, **không** có `KUMICRAFT_TEST_SECRET`                                                                                               | [S-111, S-115, S-53] |
+| 13  | `sanitizeEnvironment` (sửa test cũ như mục 3.7)                                                                                                                                                                                                                | Chỉ `KUMICRAFT_*` bị xóa                                                                                                                                                                                                        | [S-53]               |
 | 14  | `createAgentService` với `commands.agy` = giả lập, `commands.claude` = `{ command: 'rc-no-such-agent-xyz', prefixArgs: [] }`; `statuses()`; rồi `resolve()` với `preferred` lần lượt `auto`, `claude`, `agy`                                                   | `statuses` = `[{ id:'agy', installed:true, version:'0.0.0-fake', login:'unknown' }, { id:'claude', installed:false, login:'unknown' }]`; `auto` → agy; `claude` → E026 `{ agent:'claude', reason:'notInstalled' }`; `agy` → agy | [R-AG-10, R-QA-12]   |
 | 15  | Dò quá giờ: `commands.agy = { command: process.execPath, prefixArgs: ['-e', 'setTimeout(() => {}, 10000)'] }` (node chờ 10 s, bỏ qua `--version`), `detectTimeoutMs: 300`. Kèm route: `GET /api/v1/agents` có token → 200, `data` 2 phần tử; không token → 401 | agy `installed: false`, dò xong < 2 s; route đúng                                                                                                                                                                               | [R-AG-10]            |
 
 ## 5. Kiểm tay (chủ dự án)
 
-1. `pnpm build`, chạy `reactcraft` như thường lệ, mở Studio.
+1. `pnpm build`, chạy `kumicraft` như thường lệ, mở Studio.
 2. Mở DevTools của Studio (F12) → Console, chạy:
-   `fetch('/api/v1/agents', { headers: { authorization: 'Bearer ' + sessionStorage.getItem('reactcraft.sessionToken') } }).then(r => r.json()).then(console.log)`.
+   `fetch('/api/v1/agents', { headers: { authorization: 'Bearer ' + sessionStorage.getItem('kumicraft.sessionToken') } }).then(r => r.json()).then(console.log)`.
 3. Kết quả có `agy` `installed: true`, `version: "1.4.3"`; `claude` `installed: false`.
 4. Đổi tên tạm `agy.exe` (hoặc gỡ khỏi PATH), gọi lại: `agy` `installed: false`, phản hồi trong vài giây. Trả tên lại.
 5. Không có bước nào gọi AI thật hay tốn hạn mức.

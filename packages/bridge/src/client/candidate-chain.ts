@@ -1,4 +1,4 @@
-import type { ElementRef } from '@reactcraft/shared';
+import type { ElementRef } from '@kumicraft/shared';
 
 export type ClickModifiers = {
   readonly ctrlKey?: boolean;

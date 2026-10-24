@@ -1,5 +1,5 @@
 // Directory browser endpoints (SPEC-03 section 5.1, S-27).
-import type { DirectoryListing, DirectoryListingEntry } from '@reactcraft/shared';
+import type { DirectoryListing, DirectoryListingEntry } from '@kumicraft/shared';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import type { DirectoryEntry, FileSystemPort } from '../../../core/ports/file-system-port.ts';

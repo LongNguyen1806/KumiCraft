@@ -1,5 +1,5 @@
 // Shared free frame context and measurement helpers (SPEC-04 section 18E, WP-2.12b).
-import type { BridgeFreeMeasurePayload, ElementRef } from '@reactcraft/shared';
+import type { BridgeFreeMeasurePayload, ElementRef } from '@kumicraft/shared';
 
 import { fetchElementSourceByLoc } from '../../api/source-client.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';

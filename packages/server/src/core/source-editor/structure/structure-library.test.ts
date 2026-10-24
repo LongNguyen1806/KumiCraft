@@ -3,7 +3,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { LIBRARY_BLOCKS } from '@reactcraft/shared';
+import { LIBRARY_BLOCKS } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { directWriteFs, makeTempDir } from '../../workspace/test-support.ts';

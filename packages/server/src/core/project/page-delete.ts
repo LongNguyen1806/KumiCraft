@@ -1,5 +1,5 @@
 // Deleting a page from the router and filesystem (R-PG-14).
-import { err, ok, type Result, type StructureResult } from '@reactcraft/shared';
+import { err, ok, type Result, type StructureResult } from '@kumicraft/shared';
 
 import { computeSha256 } from '../history/history-service.ts';
 import { type AstNode, parseJsxAst } from '../source-editor/ast-helpers.ts';

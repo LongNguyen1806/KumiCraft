@@ -1,5 +1,5 @@
 // Main AI chat panel assembling onboarding, locks, thread, context, docs, backends, and input (WP-3.05a, R-AG-21).
-import type { AgentStatus, BackendInfo } from '@reactcraft/shared';
+import type { AgentStatus, BackendInfo } from '@kumicraft/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

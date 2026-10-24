@@ -5,8 +5,8 @@ import type {
   Result,
   StructureEdit,
   StructureResult,
-} from '@reactcraft/shared';
-import { err, ok } from '@reactcraft/shared';
+} from '@kumicraft/shared';
+import { err, ok } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../../ports/file-system-port.ts';
 import { type AstNode, detectFormat, parseJsxAst } from '../ast-helpers.ts';

@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 // Unit tests for DragController (SPEC-04 M-DD, R-DD-13, R-DD-14, R-DD-16, R-DD-17).
-import type { BridgeDropTargetPayload, BridgeMoveIntentPayload } from '@reactcraft/shared';
+import type { BridgeDropTargetPayload, BridgeMoveIntentPayload } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DragController } from './drag.ts';

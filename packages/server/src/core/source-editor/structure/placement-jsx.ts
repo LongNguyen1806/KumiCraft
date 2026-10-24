@@ -6,7 +6,7 @@ import {
   ok,
   type Placement,
   type Result,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import MagicString from 'magic-string';
 
 import { asAstNode, type AstNode, parseJsxAst } from '../ast-helpers.ts';

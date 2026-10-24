@@ -1,4 +1,4 @@
-// `.reactcraft/workspace.json`, schema version 2 (SPEC-03 section 3): what ReactCraft keeps about a
+// `.kumicraft/workspace.json`, schema version 2 (SPEC-03 section 3): what KumiCraft keeps about a
 // project besides its source code. The source code itself is never copied here (C-02).
 import { z } from 'zod';
 
@@ -6,7 +6,7 @@ import { RelPathSchema } from './rel-path.ts';
 import { type ResponsiveMode, ResponsiveModeSchema } from './responsive.ts';
 import { type AppError, err, ok, type Result } from './result.ts';
 
-export const WORKSPACE_DIR = '.reactcraft';
+export const WORKSPACE_DIR = '.kumicraft';
 export const WORKSPACE_FILE = `${WORKSPACE_DIR}/workspace.json`;
 export const WORKSPACE_SCHEMA_VERSION = 2;
 /** V-106 */

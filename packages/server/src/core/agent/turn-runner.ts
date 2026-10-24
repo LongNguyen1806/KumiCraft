@@ -7,7 +7,7 @@ import type {
   StartTurnRequest,
   TurnNotice,
   TurnSummary,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { nanoid } from 'nanoid';
 
 import type { JobContext, JobService } from '../jobs/job-service.ts';
@@ -237,7 +237,7 @@ async function prepareTurnRun(
 
   const notices: TurnNotice[] = [];
   const mirrors = await prepareMirrors(deps.mirror, projectInfo.id, projectInfo.backends, notices);
-  const guideRes = await deps.fs.readText(projectInfo.root, '.reactcraft/agent-guide.md');
+  const guideRes = await deps.fs.readText(projectInfo.root, '.kumicraft/agent-guide.md');
   const guide = guideRes.ok ? guideRes.value : undefined;
 
   const promptRes = buildPrompt({

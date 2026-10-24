@@ -1,6 +1,6 @@
 // Plan building per file for structure operations (SPEC-04 R-SE-22..28).
-import type { ElementGuard, Result, StructureEdit } from '@reactcraft/shared';
-import { err, ok } from '@reactcraft/shared';
+import type { ElementGuard, Result, StructureEdit } from '@kumicraft/shared';
+import { err, ok } from '@kumicraft/shared';
 
 import { asAstNode, type AstNode, getJsxTagName, parseJsxAst } from '../ast-helpers.ts';
 import { findNodeAt, validateLocAndExt } from '../source-editor-lookup.ts';

@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 
-import type { PageInfo, PagesInfo } from '@reactcraft/shared';
+import type { PageInfo, PagesInfo } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { asAstNode, type AstNode, isAstNode, parseJsxAst } from '../source-editor/ast-helpers.ts';

@@ -4,7 +4,7 @@ import {
   type ProjectAssets,
   ProjectAssetsSchema,
   type StructureResult,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { apiGet, parseResponse } from './http.ts';
 import { applyStructureEdit } from './source-client.ts';

@@ -1,5 +1,5 @@
 // Store for Canvas build errors and runtime errors (SPEC-04 M-RN, R-RN-25).
-import type { BridgeBuildErrorPayload, BridgeRuntimeErrorPayload } from '@reactcraft/shared';
+import type { BridgeBuildErrorPayload, BridgeRuntimeErrorPayload } from '@kumicraft/shared';
 import { create } from 'zustand';
 
 export type RuntimeErrorEntry = {

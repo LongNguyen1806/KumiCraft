@@ -4,7 +4,7 @@ Viết 2026-10-24, sau cổng G3 (verify 1217 test, trace Phase 3 351/351, E2E 3
 
 ## 1. Mục tiêu
 
-ReactCraft trở thành công cụ thiết kế cho **dự án có sẵn của người dùng**, không chỉ dự án React + Vite + Tailwind do nó tạo ra:
+KumiCraft trở thành công cụ thiết kế cho **dự án có sẵn của người dùng**, không chỉ dự án React + Vite + Tailwind do nó tạo ra:
 
 - Chỉnh kiểu dáng trực quan như nhau cho Tailwind, CSS thường, CSS Modules, Bootstrap (nguyên tắc style-parity: không có "chế độ rút gọn").
 - "Thêm trang" chạy trên dự án cũ bằng cách quét dự án để biết route đặt ở đâu và trang được viết theo kiểu nào.
@@ -170,7 +170,7 @@ Tốn: **vừa**.
 
 ### K6. Express + Pug (đại diện cho template render ở server)
 
-- Runner: chạy app Express của dự án, ReactCraft làm proxy để chèn Bridge.
+- Runner: chạy app Express của dự án, KumiCraft làm proxy để chèn Bridge.
 - Đóng dấu: hook trình biên dịch Pug thêm `data-rc-loc` (VG-20).
 - Template adapter Pug: Pug dựa vào thụt lề nên phải giữ đúng thụt lề khi chèn, di chuyển hoặc bọc.
 - Bộ tìm route Express; trang mới = một file view + route `res.render`.
@@ -192,7 +192,7 @@ Tốn: **cao**.
 - Nhận diện: `*.csproj` có `Microsoft.NET.Sdk.Web`, thư mục `Pages/` hoặc `Views/`.
 - Điều kiện: máy có .NET SDK. Thiếu thì báo như "chưa cài agent" (R-CH-06): lý do và cách cài.
 - Runner: `dotnet watch` + proxy chèn Bridge.
-- Đóng dấu: theo VG-21. Ứng viên là một TagHelper hoặc middleware chỉ chạy khi xem trong ReactCraft, không ghi vào code của người dùng.
+- Đóng dấu: theo VG-21. Ứng viên là một TagHelper hoặc middleware chỉ chạy khi xem trong KumiCraft, không ghi vào code của người dùng.
 - Template adapter `.cshtml`: bộ đọc riêng cho HTML + `@` (biểu thức, khối `@{ }`, `@if`, `@foreach`, TagHelper `asp-*`).
   - Thao tác chỉ chạm phần HTML tĩnh.
   - Phần trong khối C# thì báo "sửa trong editor".
@@ -218,7 +218,7 @@ Tốn: **vừa đến cao**.
 
 - Tài liệu người dùng `vi`/`en`, có danh sách framework và hệ CSS được hỗ trợ.
 - Kiểm tra giấy phép, SBOM, kiểm tra máy sạch, S-89a, S-90 đến S-96, S-130.
-- Phát hành gói `reactcraft` 1.0.
+- Phát hành gói `kumicraft` 1.0.
 
 Tốn: **vừa**.
 

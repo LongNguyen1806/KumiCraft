@@ -1,16 +1,16 @@
 {
   "app": {
-    "name": "ReactCraft",
+    "name": "KumiCraft",
     "version": "Version {{version}}"
   },
   "session": {
-    "connecting": "Connecting to ReactCraft…",
+    "connecting": "Connecting to KumiCraft…",
     "lost": {
-      "title": "Lost connection to ReactCraft",
+      "title": "Lost connection to KumiCraft",
       "body": "Trying to reconnect. You can keep working once the connection is back."
     },
     "stopped": {
-      "title": "ReactCraft has stopped"
+      "title": "KumiCraft has stopped"
     }
   },
   "language": {
@@ -20,14 +20,14 @@
   },
   "noProject": {
     "title": "No project is open",
-    "body": "ReactCraft opens the project in the folder where you started it. This folder has no ReactCraft project yet (.reactcraft/workspace.json).",
+    "body": "KumiCraft opens the project in the folder where you started it. This folder has no KumiCraft project yet (.kumicraft/workspace.json).",
     "folder": "Folder",
     "recent": "Open a recent project"
   },
   "projectError": {
     "title": "Cannot open the project",
-    "oldVersion": "This project was saved by an older ReactCraft that kept the design in JSON files. That format is no longer read.",
-    "howToFix": "ReactCraft never overwrites .reactcraft/workspace.json. Fix or remove the file, then start ReactCraft again."
+    "oldVersion": "This project was saved by an older KumiCraft that kept the design in JSON files. That format is no longer read.",
+    "howToFix": "KumiCraft never overwrites .kumicraft/workspace.json. Fix or remove the file, then start KumiCraft again."
   },
   "editor": {
     "canvas": "Canvas",
@@ -136,7 +136,7 @@
       "zed": "Zed"
     },
     "packageManager": "Package manager for new projects",
-    "packageManagerHelp": "Installs the dependencies of a project ReactCraft creates. An existing project keeps its own.",
+    "packageManagerHelp": "Installs the dependencies of a project KumiCraft creates. An existing project keeps its own.",
     "agent": "AI Assistant",
     "agentPreferred": "Preferred AI assistant",
     "agentPreferredHelp": "Auto chooses the ready assistant. You can also pick a fixed one.",
@@ -154,7 +154,7 @@
     "title": "Do you trust this project?",
     "intro": "Running a project runs its own code: the Vite configuration, its plugins and its dependencies. Trust only projects you know.",
     "project": "Project",
-    "restricted": "Until you trust it, ReactCraft does not start its dev server, install its dependencies or run an AI agent on it.",
+    "restricted": "Until you trust it, KumiCraft does not start its dev server, install its dependencies or run an AI agent on it.",
     "confirm": "Trust this project",
     "later": "Not now",
     "close": "Close",
@@ -228,7 +228,7 @@
     "devPort": {
       "title": "Frontend port in the Canvas",
       "placeholder": "Read from the project (e.g. 5173)",
-      "hint": "Empty: ReactCraft reads the project's port (--port in the dev script, vite.config, 5173 by default) so the backend accepts it as with npm run dev. Saving restarts the dev server.",
+      "hint": "Empty: KumiCraft reads the project's port (--port in the dev script, vite.config, 5173 by default) so the backend accepts it as with npm run dev. Saving restarts the dev server.",
       "save": "Save and restart",
       "invalid": "The port must be a number from 1024 to 65535, or empty"
     },

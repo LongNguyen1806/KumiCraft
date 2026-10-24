@@ -1,5 +1,5 @@
 // Tests for side panels and tab switching based on styling editable state (SPEC-04 Round S1, R-PJ-02).
-import type { ProjectInfo } from '@reactcraft/shared';
+import type { ProjectInfo } from '@kumicraft/shared';
 import { cleanup, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -53,7 +53,7 @@ describe('SidePanels - Situation #14 [R-PJ-02]', () => {
   });
 
   it('Situation #14: saved tab is brand, opening CSS project switches panel to Properties [R-PJ-02]', () => {
-    localStorage.setItem('reactcraft.rightPanelTab', 'brand');
+    localStorage.setItem('kumicraft.rightPanelTab', 'brand');
     useProjectStore.getState().setProject(CSS_PROJECT);
 
     render(<RightPanel />);

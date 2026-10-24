@@ -15,9 +15,9 @@ function validInput() {
     ],
     contents: {
       'package/package.json': JSON.stringify({
-        name: 'reactcraft',
+        name: 'kumicraft',
         version: '0.0.0',
-        bin: { reactcraft: './dist/index.js' },
+        bin: { kumicraft: './dist/index.js' },
       }),
       'package/dist/index.js': '#!/usr/bin/env node\nconsole.log("ok");\n',
       'package/dist/runners/vite-react.js': 'const BRIDGE_CLIENT_CODE = "data-rc-id";\n',
@@ -37,8 +37,8 @@ describe('checkPackage [R-CL-03]', () => {
     // (b) package.json with postinstall
     const bInput = validInput();
     bInput.contents['package/package.json'] = JSON.stringify({
-      name: 'reactcraft',
-      bin: { reactcraft: './dist/index.js' },
+      name: 'kumicraft',
+      bin: { kumicraft: './dist/index.js' },
       scripts: { postinstall: 'node x.js' },
     });
     const b = checkPackage(bInput);

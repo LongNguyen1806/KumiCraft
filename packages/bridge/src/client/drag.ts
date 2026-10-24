@@ -6,7 +6,7 @@ import type {
   InsertTarget,
   Placement,
   StudioDragOverPayload,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import {
   type DropCache,

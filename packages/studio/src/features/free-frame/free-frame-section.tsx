@@ -1,6 +1,6 @@
 // Free frame inspector section with X/Y/W/H, layer order, align and distribute (SPEC-04 section 18E, WP-2.12b).
-import type { ElementRef, ElementSource } from '@reactcraft/shared';
-import { applyPlacement, applySize, readClassPx } from '@reactcraft/shared';
+import type { ElementRef, ElementSource } from '@kumicraft/shared';
+import { applyPlacement, applySize, readClassPx } from '@kumicraft/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

@@ -6,7 +6,7 @@ import {
   JobFailedEventSchema,
   JobProgressEventSchema,
   type JobStatus,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { useEffect, useRef } from 'react';
 
 import { createEventsClient, type StudioServerEvent } from '../../api/events-client.ts';

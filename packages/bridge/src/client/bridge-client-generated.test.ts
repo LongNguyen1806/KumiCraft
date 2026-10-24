@@ -5,7 +5,7 @@ import { buildClientCode, generatedModule } from '../../scripts/build-client.ts'
 import { BRIDGE_CLIENT_CODE } from './bridge-client.generated.ts';
 
 describe('bridge-client.generated.ts', () => {
-  it('matches a fresh build of src/client/entry.ts (run `pnpm --filter @reactcraft/bridge build`)', async () => {
+  it('matches a fresh build of src/client/entry.ts (run `pnpm --filter @kumicraft/bridge build`)', async () => {
     const code = await buildClientCode();
 
     expect(BRIDGE_CLIENT_CODE).toBe(code);

@@ -1,5 +1,5 @@
 // Tests for agent discovery, install, and login routes (WP-3.03a, WP-3.06b, R-AG-10, R-AG-21, S-54).
-import { AgentStatusSchema } from '@reactcraft/shared';
+import { AgentStatusSchema } from '@kumicraft/shared';
 import { afterEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 

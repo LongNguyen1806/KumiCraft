@@ -21,7 +21,7 @@ import {
   StudioStyleProbePayloadSchema,
   type StudioTextEditStartPayload,
   StudioTextEditStartPayloadSchema,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 export type StudioMessageHandlers = {
   setMode: (mode: 'design' | 'preview') => void;

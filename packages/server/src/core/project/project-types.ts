@@ -20,7 +20,7 @@ import type {
   ThemeTokenKind,
   ThemeUsage,
   WorkspaceFile,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import type { HistoryService } from '../history/history-service.ts';
 import type { JobService } from '../jobs/job-service.ts';

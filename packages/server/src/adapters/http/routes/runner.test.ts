@@ -1,4 +1,4 @@
-import type { RunnerStatus } from '@reactcraft/shared';
+import type { RunnerStatus } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 

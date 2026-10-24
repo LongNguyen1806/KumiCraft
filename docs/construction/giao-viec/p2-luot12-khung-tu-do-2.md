@@ -219,7 +219,7 @@ Thêm `shortcuts.actions.nudge` (Dịch trong khung tự do / Nudge in free fram
 
 ## 6. Bẫy đã biết
 
-- **Không sửa `packages/bridge/src/client/`.** Sửa `shared/src/shortcuts.ts` xong thì chạy `pnpm --filter @reactcraft/bridge build` để bundle có phím mới.
+- **Không sửa `packages/bridge/src/client/`.** Sửa `shared/src/shortcuts.ts` xong thì chạy `pnpm --filter @kumicraft/bridge build` để bundle có phím mới.
 - **So ref bằng `loc` và `index`**; mỗi `loc` chỉ ghi một lần trong một batch (server từ chối `duplicateLoc`).
 - **Mũi tên không được ăn phím khi đang gõ** trong ô nhập (Inspector, hộp thoại): bảng phím đã lọc qua `isTypingTarget` ở Bridge; phía Studio kiểm cách lọc hiện có trong `shortcut-actions.ts` / listener phím và giữ đúng.
 - **Không gửi `placement` khi đổi thứ tự lớp**: placement sẽ ghi đè `left`/`top`.

@@ -1,4 +1,4 @@
-import { type ProjectProbe, type SupportReport, WORKSPACE_FILE } from '@reactcraft/shared';
+import { type ProjectProbe, type SupportReport, WORKSPACE_FILE } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { checkBlockedPath, checkPathSyntax, parentPath } from '../shared/paths.ts';

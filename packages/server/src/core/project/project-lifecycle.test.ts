@@ -7,7 +7,7 @@ import {
   serializeWorkspaceFile,
   WORKSPACE_FILE,
   type WorkspaceFile,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { ok } from '../shared/result.ts';
@@ -73,7 +73,7 @@ const shop: WorkspaceFile = newWorkspaceFile({
 });
 
 async function writeWorkspace(content: string | WorkspaceFile = shop) {
-  await mkdir(join(dir, '.reactcraft'), { recursive: true });
+  await mkdir(join(dir, '.kumicraft'), { recursive: true });
   const text = typeof content === 'string' ? content : serializeWorkspaceFile(content);
   await writeFile(join(dir, WORKSPACE_FILE), text);
 }
@@ -120,14 +120,14 @@ describe('opening a project', () => {
     });
   });
 
-  it('creates workspace.json and .reactcraft/.gitignore for a supported project [R-PJ-08]', async () => {
+  it('creates workspace.json and .kumicraft/.gitignore for a supported project [R-PJ-08]', async () => {
     await writeSupportedProject(dir);
 
     const opened = await service().open(dir);
 
     expect(opened).toMatchObject({ ok: true, value: { trusted: false, needsInstall: true } });
     expect(await nodeFs.exists(dir, WORKSPACE_FILE)).toBe(true);
-    expect(await readFile(join(dir, '.reactcraft', '.gitignore'), 'utf8')).toBe('lock\ncache/\n');
+    expect(await readFile(join(dir, '.kumicraft', '.gitignore'), 'utf8')).toBe('lock\ncache/\n');
   });
 
   it('puts every opened project in the recent list with its name [R-PJ-25]', async () => {
@@ -258,5 +258,28 @@ describe('the dev port of the Canvas', () => {
     const cleared = await project.patchProject({ devPort: 'auto' });
     expect(cleared.ok && cleared.value.devPort).toBeUndefined();
     expect(await readFile(join(dir, WORKSPACE_FILE), 'utf8')).not.toContain('devPort');
+  });
+});
+
+describe('a project opened under the old app name [R-PJ-26]', () => {
+  it('moves .reactcraft to .kumicraft once and keeps the project id', async () => {
+    await writeSupportedProject(dir);
+    await mkdir(join(dir, '.reactcraft'), { recursive: true });
+    await writeFile(join(dir, '.reactcraft', 'workspace.json'), serializeWorkspaceFile(shop));
+
+    const opened = await service().open(dir);
+
+    expect(opened).toMatchObject({ ok: true, value: { id: 'shop000001' } });
+    expect(await nodeFs.exists(dir, '.reactcraft')).toBe(false);
+  });
+
+  it('leaves .reactcraft alone when the project already has .kumicraft', async () => {
+    await writeSupportedProject(dir);
+    await writeWorkspace();
+    await mkdir(join(dir, '.reactcraft'), { recursive: true });
+
+    await service().open(dir);
+
+    expect(await nodeFs.exists(dir, '.reactcraft')).toBe(true);
   });
 });

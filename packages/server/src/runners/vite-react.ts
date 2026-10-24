@@ -5,12 +5,8 @@ import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { createReactCraftBridgePlugin } from '@reactcraft/bridge';
-import type {
-  RunnerOptions,
-  RunnerToChildMessage,
-  RunnerToParentMessage,
-} from '@reactcraft/shared';
+import { createKumiCraftBridgePlugin } from '@kumicraft/bridge';
+import type { RunnerOptions, RunnerToChildMessage, RunnerToParentMessage } from '@kumicraft/shared';
 
 import { devScriptPort, portInMessage } from './dev-script-port.ts';
 import { devServerOptions } from './vite-server-config.ts';
@@ -85,7 +81,7 @@ async function listenVite(
     server: devServerOptions(options, port),
     clearScreen: false,
     plugins: [
-      createReactCraftBridgePlugin({
+      createKumiCraftBridgePlugin({
         rootDir: options.root,
         sourceDir: options.sourceDir,
         nonce: options.nonce,
@@ -133,7 +129,7 @@ async function createAndListenVite(vitePath: string, options: RunnerOptions): Pr
     if (!isPortTaken(err)) throw err;
     busyPort = wanted ?? (err instanceof Error ? portInMessage(err.message) : undefined);
     console.warn(
-      `[reactcraft] Port ${String(busyPort)} of the project is in use (is \`npm run dev\` still running?), so the Canvas uses port ${String(options.port)}. A backend that only allows the project's port will refuse its requests.`,
+      `[kumicraft] Port ${String(busyPort)} of the project is in use (is \`npm run dev\` still running?), so the Canvas uses port ${String(options.port)}. A backend that only allows the project's port will refuse its requests.`,
     );
     server = await listenVite(rawModule, options, options.port);
   }

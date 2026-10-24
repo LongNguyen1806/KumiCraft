@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { WORKSPACE_FILE } from '@reactcraft/shared';
+import { WORKSPACE_FILE } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { readWorkspaceFile } from './read-workspace.ts';
@@ -12,7 +12,7 @@ let cleanup: () => Promise<void>;
 
 beforeEach(async () => {
   ({ dir, cleanup } = await makeTempDir());
-  await mkdir(join(dir, '.reactcraft'), { recursive: true });
+  await mkdir(join(dir, '.kumicraft'), { recursive: true });
 });
 
 afterEach(async () => {
@@ -29,8 +29,8 @@ describe('readWorkspaceFile [V-106]', () => {
       ok: false,
       error: {
         code: 'E003',
-        params: { file: '.reactcraft/workspace.json', reason: 'invalid' },
-        details: [{ path: '.reactcraft/workspace.json', message: 'JSON nested too deeply (S-29)' }],
+        params: { file: '.kumicraft/workspace.json', reason: 'invalid' },
+        details: [{ path: '.kumicraft/workspace.json', message: 'JSON nested too deeply (S-29)' }],
       },
     });
 
@@ -40,7 +40,7 @@ describe('readWorkspaceFile [V-106]', () => {
       ok: false,
       error: {
         code: 'E003',
-        params: { file: '.reactcraft/workspace.json', reason: 'tooLarge' },
+        params: { file: '.kumicraft/workspace.json', reason: 'tooLarge' },
       },
     });
   });

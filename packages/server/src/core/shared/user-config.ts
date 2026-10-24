@@ -3,7 +3,7 @@
 // the trusted projects (S-82: never stored in the project, so a project cannot trust itself) and
 // the projects opened recently (R-PJ-25).
 // No API key, ever (V-108).
-import { type RecentProject, RecentProjectsSchema } from '@reactcraft/shared';
+import { type RecentProject, RecentProjectsSchema } from '@kumicraft/shared';
 import { z } from 'zod';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
@@ -63,7 +63,7 @@ export type SettingsPatch = z.infer<typeof SettingsPatchSchema>;
 
 export type ConfigStoreDeps = {
   readonly fs: FileSystemPort;
-  /** The user's config folder (env-paths, or REACTCRAFT_CONFIG_DIR). */
+  /** The user's config folder (env-paths, or KUMICRAFT_CONFIG_DIR). */
   readonly dir: string;
   readonly platform: Platform;
   readonly logger: LoggerPort;

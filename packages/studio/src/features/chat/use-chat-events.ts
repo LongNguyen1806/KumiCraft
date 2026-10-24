@@ -4,7 +4,7 @@ import {
   type JobStatus,
   type StudioServerEvent,
   TurnSummarySchema,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { useEffect } from 'react';
 
 import { createEventsClient } from '../../api/events-client.ts';

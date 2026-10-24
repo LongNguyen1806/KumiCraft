@@ -1,6 +1,6 @@
 // Styling detection for Vite + React projects (Phase 3 Round S1, R-PJ-02).
-import type { RelPath, StylingReport, StylingSystem, StylingSystemId } from '@reactcraft/shared';
-import { STYLING_SYSTEMS } from '@reactcraft/shared';
+import type { RelPath, StylingReport, StylingSystem, StylingSystemId } from '@kumicraft/shared';
+import { STYLING_SYSTEMS } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../../../ports/file-system-port.ts';
 import { parseMajorVersion, resolvePackageVersion } from './detect.ts';

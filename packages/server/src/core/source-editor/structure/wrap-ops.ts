@@ -1,5 +1,5 @@
 // Text edit builders for wrap and unwrap operations (SPEC-04 R-SE-27, R-SE-28, section 4.3, 4.4).
-import { err, ok, type Result } from '@reactcraft/shared';
+import { err, ok, type Result } from '@kumicraft/shared';
 
 import { asAstNode, type AstNode } from '../ast-helpers.ts';
 import { jsxChildren } from './jsx-children.ts';

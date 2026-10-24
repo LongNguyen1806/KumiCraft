@@ -1,5 +1,5 @@
 // Flow tests for AI chat turns, context, docs, events, and job lifecycle (WP-3.05a, Scenarios 5-9, 11-13).
-import type { ProjectInfo } from '@reactcraft/shared';
+import type { ProjectInfo } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -91,7 +91,7 @@ describe('ChatFlow execution [R-CH-01, R-CH-02, R-CH-03]', () => {
   beforeEach(async () => {
     sockets = [];
     vi.stubGlobal('WebSocket', FakeSocket);
-    sessionStorage.setItem('reactcraft.sessionToken', 'tok-chat');
+    sessionStorage.setItem('kumicraft.sessionToken', 'tok-chat');
     localStorage.clear();
     await i18next.changeLanguage('vi');
     useChatStore.getState().reset();

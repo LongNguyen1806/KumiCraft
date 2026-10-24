@@ -1,5 +1,5 @@
 // The "dev port" field of the project dialog (R-RN-27).
-import { DEFAULT_DESIGN_DIRS, type ProjectInfo } from '@reactcraft/shared';
+import { DEFAULT_DESIGN_DIRS, type ProjectInfo } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 

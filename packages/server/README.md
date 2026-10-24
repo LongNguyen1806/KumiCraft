@@ -1,4 +1,4 @@
-# @reactcraft/server
+# @kumicraft/server
 
 Local Server: Fastify on `127.0.0.1`, project opening and trust, and later the dev server runner, the Source Editor, Undo history and the agent connection (SPEC-01 section 3).
 

@@ -1,6 +1,6 @@
-// Tools ReactCraft offers external AI agents over MCP (R-AG-19, R-AG-20): reading the project and
+// Tools KumiCraft offers external AI agents over MCP (R-AG-19, R-AG-20): reading the project and
 // reporting missing tools here; editing tools in mcp-edit-tools.ts and mcp-structure-tools.ts.
-import { PAGE_TREE_MAX_DEPTH, ToolGapReportSchema } from '@reactcraft/shared';
+import { PAGE_TREE_MAX_DEPTH, ToolGapReportSchema } from '@kumicraft/shared';
 import { z } from 'zod';
 
 import type { ApiClient, ApiResult } from './api-client.ts';
@@ -52,27 +52,27 @@ async function mapped(result: Promise<ApiResult>, map: (data: unknown) => unknow
 
 const READ_TOOLS: readonly McpTool[] = [
   {
-    name: 'reactcraft_get_project',
+    name: 'kumicraft_get_project',
     description:
       'The open project: name, folder, design frames, page and component folders, language and styling system.',
     input: NoInput,
     run: (api) => mapped(api.get('project'), projectSummary),
   },
   {
-    name: 'reactcraft_list_files',
+    name: 'kumicraft_list_files',
     description:
       'Code and style files under the source folder (pages, components, CSS). Use it to find files without guessing.',
     input: NoInput,
     run: (api) => api.get('source/files'),
   },
   {
-    name: 'reactcraft_list_pages',
+    name: 'kumicraft_list_pages',
     description: 'Pages of the project with their routes and files.',
     input: NoInput,
     run: (api) => api.get('project/pages'),
   },
   {
-    name: 'reactcraft_get_page_tree',
+    name: 'kumicraft_get_page_tree',
     description:
       'Element tree of one page or component file. Each element has a loc (file:line:column); use it with the other tools.',
     input: TreeInput,
@@ -85,41 +85,40 @@ const READ_TOOLS: readonly McpTool[] = [
     },
   },
   {
-    name: 'reactcraft_get_element',
+    name: 'kumicraft_get_element',
     description: 'One element by its loc: tag, className, text, editable attributes, component.',
     input: ElementInput,
     run: (api, args) => api.get('source/element', { loc: ElementInput.parse(args).loc }),
   },
   {
-    name: 'reactcraft_list_components',
+    name: 'kumicraft_list_components',
     description: 'Components of the project that can be placed on a page.',
     input: NoInput,
     run: (api) => api.get('project/components'),
   },
   {
-    name: 'reactcraft_list_assets',
+    name: 'kumicraft_list_assets',
     description: 'Images in the public folder of the project.',
     input: NoInput,
     run: (api) => api.get('project/assets'),
   },
   {
-    name: 'reactcraft_get_theme',
+    name: 'kumicraft_get_theme',
     description:
       'Design tokens of the project (colors, fonts, radii) when its styling system has them.',
     input: NoInput,
     run: (api) => api.get('project/theme'),
   },
   {
-    name: 'reactcraft_report_tool_gap',
+    name: 'kumicraft_report_tool_gap',
     description:
-      'Call this when you need an operation no ReactCraft tool offers. Say what you needed, why, and an example; then continue as best you can.',
+      'Call this when you need an operation no KumiCraft tool offers. Say what you needed, why, and an example; then continue as best you can.',
     input: ToolGapReportSchema,
     run: (api, args) => api.post('tool-gaps', ToolGapReportSchema.parse(args)),
   },
   {
-    name: 'reactcraft_list_tool_gaps',
-    description:
-      'Operations agents needed that ReactCraft does not offer yet, most reported first.',
+    name: 'kumicraft_list_tool_gaps',
+    description: 'Operations agents needed that KumiCraft does not offer yet, most reported first.',
     input: NoInput,
     run: (api) => api.get('tool-gaps'),
   },

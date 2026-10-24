@@ -14,7 +14,7 @@ function runCommand(command, args, cwd = process.cwd()) {
 
 function verifyBuildAndCompilerArtifacts() {
   console.log('\n[Part 1] Build & Compiler Output Analysis');
-  const buildRes = runCommand('pnpm', ['--filter', '@reactcraft/studio', 'build']);
+  const buildRes = runCommand('pnpm', ['--filter', '@kumicraft/studio', 'build']);
   if (!buildRes.ok) throw new Error(`Vite build failed:\n${buildRes.stderr}`);
 
   const studioDist = join('packages/studio', 'dist', 'assets');

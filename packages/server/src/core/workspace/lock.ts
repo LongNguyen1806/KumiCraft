@@ -8,7 +8,7 @@ import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { SystemPort } from '../ports/system-port.ts';
 import { err, ok, type Result } from '../shared/result.ts';
 
-export const LOCK_FILE = '.reactcraft/lock';
+export const LOCK_FILE = '.kumicraft/lock';
 
 export type LockInfo = {
   readonly pid: number;
@@ -31,7 +31,7 @@ const sleep = (ms: number) =>
     setTimeout(resolve, ms);
   });
 
-/** The lock's content, or undefined when it is not a lock (also read by `reactcraft mcp`). */
+/** The lock's content, or undefined when it is not a lock (also read by `kumicraft mcp`). */
 export function parseLock(text: string): LockInfo | undefined {
   try {
     const value = JSON.parse(text) as Partial<LockInfo>;

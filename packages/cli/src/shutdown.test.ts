@@ -19,7 +19,7 @@ describe('createShutdown', () => {
     await stop();
 
     expect(close).toHaveBeenCalledTimes(1);
-    expect(log).toHaveBeenCalledWith('Stopping ReactCraft…');
+    expect(log).toHaveBeenCalledWith('Stopping KumiCraft…');
     expect(exit).toHaveBeenCalledWith(0);
     expect(clearTimer).toHaveBeenCalledTimes(1);
     expect(warn).not.toHaveBeenCalled();
@@ -51,7 +51,7 @@ describe('createShutdown', () => {
     await stop();
 
     expect(close).toHaveBeenCalledTimes(1);
-    expect(log).toHaveBeenNthCalledWith(1, 'Stopping ReactCraft…');
+    expect(log).toHaveBeenNthCalledWith(1, 'Stopping KumiCraft…');
     expect(log).toHaveBeenNthCalledWith(2, 'Forced stop.');
     expect(exit).toHaveBeenCalledWith(1);
   });

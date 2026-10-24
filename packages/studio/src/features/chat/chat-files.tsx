@@ -1,5 +1,5 @@
 // List of changed files with diff drawer and open-in-editor action (WP-3.05b, R-CH-04).
-import type { TurnFile, TurnFileChange } from '@reactcraft/shared';
+import type { TurnFile, TurnFileChange } from '@kumicraft/shared';
 import type { VirtualItem } from '@tanstack/react-virtual';
 import { ExternalLink } from 'lucide-react';
 import { useState } from 'react';

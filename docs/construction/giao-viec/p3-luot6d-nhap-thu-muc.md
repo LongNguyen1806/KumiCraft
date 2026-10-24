@@ -139,13 +139,13 @@ Test cũ dùng `chat-add-backend`, `chat-attach`, `chat-doc-input`, `chat-backen
 3. Không `null`, `as`, `any`, `!`, eslint-disable. Ref dùng `el ?? undefined`.
 4. Hàm ≤ 50 dòng, file ≤ 400 dòng.
 5. `URL.createObjectURL` cho ảnh thu nhỏ phải `revokeObjectURL` khi bỏ ảnh hoặc unmount.
-6. Ảnh lưu ở **thư mục cache của ReactCraft**, **không bao giờ** ghi vào dự án người dùng.
+6. Ảnh lưu ở **thư mục cache của KumiCraft**, **không bao giờ** ghi vào dự án người dùng.
 7. Không lách luật lint bằng mẹo. Gặp luật cản thì đổi thiết kế hoặc dừng và báo.
 
 ## 7. Spec-log (số tiếp theo sau #52)
 
 - `#53` R-CH-02, R-MR-01: một nút "Import folder" ở đầu ô chat. Đường dẫn trong dự án (file hoặc thư mục) thành tài liệu đính kèm; ngoài dự án thì thành backend tham khảo (bản sao chỉ đọc). Chip giữ qua các tin nhắn tới khi người dùng xóa. Theo yêu cầu chủ dự án 2026-10-23.
-- `#54` R-CH-02: gửi ảnh trong chat (dán, kéo thả, nút chọn). Ảnh lưu ở cache của ReactCraft, agent đọc qua `--add-dir` và danh sách đường dẫn trong lời nhắc (đã thử agy `read_file` đọc được ảnh, 2026-10-23). Lịch sử lượt không lưu ảnh.
+- `#54` R-CH-02: gửi ảnh trong chat (dán, kéo thả, nút chọn). Ảnh lưu ở cache của KumiCraft, agent đọc qua `--add-dir` và danh sách đường dẫn trong lời nhắc (đã thử agy `read_file` đọc được ảnh, 2026-10-23). Lịch sử lượt không lưu ảnh.
 
 ## 8. Phần B: gửi ảnh
 

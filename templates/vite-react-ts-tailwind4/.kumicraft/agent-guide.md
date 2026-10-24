@@ -1,8 +1,8 @@
 # Project conventions for AI agents
 
-This project is edited both visually in ReactCraft and by AI agents. Keep the code easy to edit visually:
+This project is edited both visually in KumiCraft and by AI agents. Keep the code easy to edit visually:
 
-- React + TypeScript + Tailwind CSS v4. Style with Tailwind classes in a static `className="..."` string (`className` must be a static string literal, not `className={...}`, template literals, or `cn(...)` in JSX); ReactCraft can only edit static class strings.
+- React + TypeScript + Tailwind CSS v4. Style with Tailwind classes in a static `className="..."` string (`className` must be a static string literal, not `className={...}`, template literals, or `cn(...)` in JSX); KumiCraft can only edit static class strings.
 - Do not use `.map(` in `src/pages/`, `src/components/`, or `src/layouts/` for visual sections that need to be selected and styled individually in the canvas; write each item explicitly and keep display text directly in JSX.
 - Pages live in `src/pages/<Name>.tsx` and are registered in `src/routes.tsx` with `createBrowserRouter([...])`.
 - Shared page shells live in `src/layouts/` (e.g. `MainLayout.tsx` with `<Header />`, `<Outlet />`, and `<Footer />`).

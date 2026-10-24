@@ -1,5 +1,5 @@
 // Server HTTP server creation and auto-open (SPEC-05 S-01, S-02).
-import { resolveEnabledFeatures } from '@reactcraft/shared';
+import { resolveEnabledFeatures } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 
 import { createHttpApp } from './adapters/http/create-http-app.ts';
@@ -21,7 +21,7 @@ export async function autoOpenProject(
   workspaceDir?: string,
 ): Promise<Result<void>> {
   if (!workspaceDir) return ok(undefined);
-  const hasWorkspace = await fs.exists(workspaceDir, '.reactcraft/workspace.json');
+  const hasWorkspace = await fs.exists(workspaceDir, '.kumicraft/workspace.json');
   if (hasWorkspace) {
     const opened = await projectService.open(workspaceDir);
     if (!opened.ok) {

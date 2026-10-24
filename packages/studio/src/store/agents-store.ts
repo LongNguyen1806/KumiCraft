@@ -1,5 +1,5 @@
 // Store for AI agents discovery, status, and login flow (R-AG-10, R-AG-21, R-CH-06).
-import type { AgentId, AgentStatus } from '@reactcraft/shared';
+import type { AgentId, AgentStatus } from '@kumicraft/shared';
 import { create } from 'zustand';
 
 import { fetchAgents, openAgentLogin } from '../api/agent-client.ts';

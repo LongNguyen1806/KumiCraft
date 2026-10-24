@@ -1,6 +1,6 @@
 // Tests for MultiInspectorView (SPEC-04 M-IN, Scenarios #13..#15 [R-CB-15]).
-import type { ClassContext, ElementRef, ElementSource } from '@reactcraft/shared';
-import { BREAKPOINT_WIDTHS } from '@reactcraft/shared';
+import type { ClassContext, ElementRef, ElementSource } from '@kumicraft/shared';
+import { BREAKPOINT_WIDTHS } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';

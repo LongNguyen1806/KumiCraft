@@ -1,5 +1,5 @@
 // AST scope and import analysis for component extraction (SPEC-04 R-CP-14, spec-log #24).
-import { err, ok, type Result } from '@reactcraft/shared';
+import { err, ok, type Result } from '@kumicraft/shared';
 
 import { asAstNode, type AstNode, parseJsxAst } from '../source-editor/ast-helpers.ts';
 import { resolveRelativeImportSource } from '../source-editor/structure/imports.ts';

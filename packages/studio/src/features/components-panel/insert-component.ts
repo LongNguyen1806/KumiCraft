@@ -1,5 +1,5 @@
 // Component insertion logic (SPEC-04 R-CP-11..13, spec-log #23).
-import type { InsertTarget, Placement, ProjectComponent } from '@reactcraft/shared';
+import type { InsertTarget, Placement, ProjectComponent } from '@kumicraft/shared';
 
 import { applyStructureEdit } from '../../api/source-client.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';

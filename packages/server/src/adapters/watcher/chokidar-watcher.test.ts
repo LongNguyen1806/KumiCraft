@@ -37,9 +37,9 @@ describe('chokidar watcher [ADR-BE-20]', () => {
     expect(isIgnoredPath('packages/a/node_modules/x.js')).toBe(true);
     expect(isIgnoredPath('.git/HEAD')).toBe(true);
     expect(isIgnoredPath('dist/index.html')).toBe(true);
-    expect(isIgnoredPath('.reactcraft/lock')).toBe(true);
-    expect(isIgnoredPath('.reactcraft/cache/a.json')).toBe(true);
-    expect(isIgnoredPath('.reactcraft/workspace.json')).toBe(false);
+    expect(isIgnoredPath('.kumicraft/lock')).toBe(true);
+    expect(isIgnoredPath('.kumicraft/cache/a.json')).toBe(true);
+    expect(isIgnoredPath('.kumicraft/workspace.json')).toBe(false);
     expect(isIgnoredPath('src/pages/Home.tsx')).toBe(false);
   });
 });

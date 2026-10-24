@@ -1,5 +1,5 @@
 // Component tests for AgentBadge (R-AG-21).
-import type { AgentStatus } from '@reactcraft/shared';
+import type { AgentStatus } from '@kumicraft/shared';
 import { cleanup, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';

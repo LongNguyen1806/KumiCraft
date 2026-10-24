@@ -1,5 +1,5 @@
 // Agent discovery, installation and login endpoints (WP-3.03a, WP-3.06b, R-AG-10, R-AG-21).
-import { AgentIdSchema, AgentInstallRequestSchema } from '@reactcraft/shared';
+import { AgentIdSchema, AgentInstallRequestSchema } from '@kumicraft/shared';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 

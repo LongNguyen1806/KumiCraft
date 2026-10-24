@@ -1,5 +1,5 @@
 // Text edit builders for move operations (SPEC-04 R-SE-24, section 4.2).
-import { err, ok, type Placement, type Result } from '@reactcraft/shared';
+import { err, ok, type Placement, type Result } from '@kumicraft/shared';
 
 import type { AstNode } from '../ast-helpers.ts';
 import { extractElementText } from './element-text.ts';

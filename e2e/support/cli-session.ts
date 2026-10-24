@@ -1,5 +1,5 @@
-// Runs the built `reactcraft` CLI the way a user does, and stops it again, so a test can close the
-// Studio and come back later. Each session gets its own user settings (REACTCRAFT_CONFIG_DIR).
+// Runs the built `kumicraft` CLI the way a user does, and stops it again, so a test can close the
+// Studio and come back later. Each session gets its own user settings (KUMICRAFT_CONFIG_DIR).
 import { type ChildProcess, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -84,7 +84,7 @@ async function startSession(args: readonly string[], env: NodeJS.ProcessEnv): Pr
 export async function startCli(workspaceDir: string, configDir: string): Promise<CliSession> {
   if (!existsSync(CLI_ENTRY)) throw new Error('Run `pnpm build` before the E2E tests.');
   return startSession([CLI_ENTRY, workspaceDir, '--no-open', '--log-level', 'warn'], {
-    REACTCRAFT_CONFIG_DIR: configDir,
+    KUMICRAFT_CONFIG_DIR: configDir,
   });
 }
 

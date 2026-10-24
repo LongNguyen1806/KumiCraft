@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 // Unit tests for TextEditController (SPEC-04 section 10 M-TX, R-TX-01..08).
-import type { ElementRef } from '@reactcraft/shared';
+import type { ElementRef } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { normalizeText, TextEditController } from './text-edit.ts';

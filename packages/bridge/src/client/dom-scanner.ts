@@ -1,4 +1,4 @@
-import type { BridgeTreePayload, TreeNode } from '@reactcraft/shared';
+import type { BridgeTreePayload, TreeNode } from '@kumicraft/shared';
 
 /**
  * Extracts a label from an element according to R-SL-11:

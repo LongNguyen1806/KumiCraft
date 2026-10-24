@@ -1,4 +1,4 @@
-// The port a project's `dev` script gives Vite (`vite --port 3000`). ReactCraft starts Vite itself
+// The port a project's `dev` script gives Vite (`vite --port 3000`). KumiCraft starts Vite itself
 // instead of running the script, so it reads the flag to run on the same port (SPEC-04 R-RN-04).
 const PORT_FLAG = /(?:^|\s)--port(?:=|\s+)(\d{4,5})(?=\s|$)/;
 

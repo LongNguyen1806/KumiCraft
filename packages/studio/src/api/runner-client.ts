@@ -1,5 +1,5 @@
 // Runner REST client (SPEC-03 section 5.4, R-RN-01..09).
-import { type RunnerStatus, RunnerStatusSchema } from '@reactcraft/shared';
+import { type RunnerStatus, RunnerStatusSchema } from '@kumicraft/shared';
 
 import { apiGet, apiPost, parseResponse } from './http.ts';
 

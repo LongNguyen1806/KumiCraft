@@ -1,5 +1,5 @@
 // Test support and doubles for agent routes (WP-3.03a, WP-3.06b, R-AG-10, R-AG-21).
-import type { AgentId, AgentStatus } from '@reactcraft/shared';
+import type { AgentId, AgentStatus } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 
 import type { AgentService } from '../../../core/agent/agent-service.ts';

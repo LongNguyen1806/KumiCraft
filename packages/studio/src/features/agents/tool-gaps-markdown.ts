@@ -1,5 +1,5 @@
 // Markdown export of the tool gaps (R-AG-20): something the owner can paste into a plan or a brief.
-import type { ToolGap } from '@reactcraft/shared';
+import type { ToolGap } from '@kumicraft/shared';
 
 export type ToolGapsMarkdownLabels = {
   readonly title: string;

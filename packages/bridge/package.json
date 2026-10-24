@@ -1,8 +1,8 @@
 {
-  "name": "@reactcraft/bridge",
+  "name": "@kumicraft/bridge",
   "version": "0.0.0",
   "private": true,
-  "description": "ReactCraft Bridge: Vite transform plugin and client overlay running inside the target project",
+  "description": "KumiCraft Bridge: Vite transform plugin and client overlay running inside the target project",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@babel/parser": "7.29.9",
-    "@reactcraft/shared": "workspace:*",
+    "@kumicraft/shared": "workspace:*",
     "magic-string": "0.30.21"
   },
   "devDependencies": {

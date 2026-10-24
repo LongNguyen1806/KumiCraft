@@ -1,16 +1,16 @@
 {
   "app": {
-    "name": "ReactCraft",
+    "name": "KumiCraft",
     "version": "Phiên bản {{version}}"
   },
   "session": {
-    "connecting": "Đang kết nối tới ReactCraft…",
+    "connecting": "Đang kết nối tới KumiCraft…",
     "lost": {
-      "title": "Mất kết nối tới ReactCraft",
+      "title": "Mất kết nối tới KumiCraft",
       "body": "Đang thử kết nối lại. Bạn làm tiếp được khi kết nối trở lại."
     },
     "stopped": {
-      "title": "ReactCraft đã dừng"
+      "title": "KumiCraft đã dừng"
     }
   },
   "language": {
@@ -20,14 +20,14 @@
   },
   "noProject": {
     "title": "Chưa mở dự án nào",
-    "body": "ReactCraft mở dự án trong thư mục bạn chạy lệnh. Thư mục này chưa có dự án ReactCraft (.reactcraft/workspace.json).",
+    "body": "KumiCraft mở dự án trong thư mục bạn chạy lệnh. Thư mục này chưa có dự án KumiCraft (.kumicraft/workspace.json).",
     "folder": "Thư mục",
     "recent": "Mở lại dự án gần đây"
   },
   "projectError": {
     "title": "Không mở được dự án",
-    "oldVersion": "Dự án này được lưu bởi ReactCraft bản cũ, giữ thiết kế trong file JSON. Định dạng đó không còn được đọc.",
-    "howToFix": "ReactCraft không bao giờ ghi đè .reactcraft/workspace.json. Hãy sửa hoặc xóa file rồi chạy lại ReactCraft."
+    "oldVersion": "Dự án này được lưu bởi KumiCraft bản cũ, giữ thiết kế trong file JSON. Định dạng đó không còn được đọc.",
+    "howToFix": "KumiCraft không bao giờ ghi đè .kumicraft/workspace.json. Hãy sửa hoặc xóa file rồi chạy lại KumiCraft."
   },
   "editor": {
     "canvas": "Canvas",
@@ -136,7 +136,7 @@
       "zed": "Zed"
     },
     "packageManager": "Package manager cho dự án mới",
-    "packageManagerHelp": "Dùng để cài dependency cho dự án ReactCraft tạo ra. Dự án có sẵn dùng package manager của chính nó.",
+    "packageManagerHelp": "Dùng để cài dependency cho dự án KumiCraft tạo ra. Dự án có sẵn dùng package manager của chính nó.",
     "agent": "Trợ lý AI",
     "agentPreferred": "Chọn trợ lý AI",
     "agentPreferredHelp": "Tự động sẽ ưu tiên trợ lý sẵn sàng. Bạn cũng có thể chọn cố định.",
@@ -154,7 +154,7 @@
     "title": "Bạn có tin tưởng dự án này?",
     "intro": "Chạy một dự án là chạy code của chính nó: cấu hình Vite, các plugin và dependency. Chỉ tin cậy dự án bạn biết rõ.",
     "project": "Dự án",
-    "restricted": "Khi chưa tin cậy, ReactCraft không khởi động dev server, không cài dependency và không chạy agent AI trên dự án.",
+    "restricted": "Khi chưa tin cậy, KumiCraft không khởi động dev server, không cài dependency và không chạy agent AI trên dự án.",
     "confirm": "Tin cậy dự án này",
     "later": "Để sau",
     "close": "Đóng",
@@ -228,7 +228,7 @@
     "devPort": {
       "title": "Cổng chạy frontend trong Canvas",
       "placeholder": "Tự đọc (vd: 5173)",
-      "hint": "Để trống: ReactCraft đọc cổng của dự án (--port trong script dev, vite.config, mặc định 5173) để backend chấp nhận kết nối như khi chạy npm run dev. Lưu xong dev server chạy lại.",
+      "hint": "Để trống: KumiCraft đọc cổng của dự án (--port trong script dev, vite.config, mặc định 5173) để backend chấp nhận kết nối như khi chạy npm run dev. Lưu xong dev server chạy lại.",
       "save": "Lưu và chạy lại",
       "invalid": "Cổng phải là số từ 1024 đến 65535, hoặc để trống"
     },

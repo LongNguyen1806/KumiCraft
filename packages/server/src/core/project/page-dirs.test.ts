@@ -64,7 +64,7 @@ afterEach(async () => {
 async function setupProject(subName = 'app') {
   const target = join(tempDir, subName);
   await cp(join(baseDir, 'base'), target, { recursive: true });
-  await rm(join(target, '.reactcraft', 'lock'), { force: true });
+  await rm(join(target, '.kumicraft', 'lock'), { force: true });
   const system = fakeSystem(1, new Set([1]));
   const config = {
     isTrusted: () => true,
@@ -103,7 +103,7 @@ describe('page-dirs & designDirs [WP-2.05]', () => {
     if (!validRes.ok) return;
     expect(validRes.value.designDirs.pages).toBe('src/views');
 
-    const wsRaw = await readFile(join(target, '.reactcraft', 'workspace.json'), 'utf8');
+    const wsRaw = await readFile(join(target, '.kumicraft', 'workspace.json'), 'utf8');
     const ws = JSON.parse(wsRaw) as { designDirs?: { pages: string } };
     expect(ws.designDirs?.pages).toBe('src/views');
 
@@ -132,7 +132,7 @@ describe('page-dirs & designDirs [WP-2.05]', () => {
     });
   });
 
-  it('scenario 16: lists project dirs without node_modules or .reactcraft [R-PG-11]', async () => {
+  it('scenario 16: lists project dirs without node_modules or .kumicraft [R-PG-11]', async () => {
     const { service } = await setupProject();
     const dirsRes = await service.dirs();
     expect(dirsRes.ok).toBe(true);
@@ -141,6 +141,6 @@ describe('page-dirs & designDirs [WP-2.05]', () => {
     expect(dirsRes.value).toContain('src/pages');
     expect(dirsRes.value.some((d) => d.startsWith('src/components'))).toBe(true);
     expect(dirsRes.value.some((d) => d.includes('node_modules'))).toBe(false);
-    expect(dirsRes.value.some((d) => d.includes('.reactcraft'))).toBe(false);
+    expect(dirsRes.value.some((d) => d.includes('.kumicraft'))).toBe(false);
   });
 });

@@ -35,9 +35,9 @@ function checkManifest(filesSet, contents) {
       };
     }
   }
-  const binRel = typeof pkg.bin === 'string' ? pkg.bin : pkg.bin?.reactcraft;
+  const binRel = typeof pkg.bin === 'string' ? pkg.bin : pkg.bin?.kumicraft;
   if (typeof binRel !== 'string') {
-    return { ok: false, reason: 'bin', error: 'Missing bin.reactcraft in package/package.json' };
+    return { ok: false, reason: 'bin', error: 'Missing bin.kumicraft in package/package.json' };
   }
   const binPath = `package/${binRel.replace(/^\.\//, '')}`;
   const binText = contents[binPath] ?? '';

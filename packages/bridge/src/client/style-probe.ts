@@ -7,7 +7,7 @@ import {
   type StudioStyleProbePayload,
   type StyleDeclaration,
   type StyleSheetRef,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 const MAX_RULES = 100;
 

@@ -1,4 +1,4 @@
-import { type ElementRef, type ElementSource } from '@reactcraft/shared';
+import { type ElementRef, type ElementSource } from '@kumicraft/shared';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

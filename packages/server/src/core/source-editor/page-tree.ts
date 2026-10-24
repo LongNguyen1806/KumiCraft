@@ -9,7 +9,7 @@ import {
   type PageTreeNode,
   relPathProblem,
   type Result,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import {

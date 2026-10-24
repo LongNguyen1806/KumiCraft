@@ -3,7 +3,7 @@ import type {
   AttributeLevelEdit,
   BridgeFreeMeasurePayload,
   ElementSource,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';

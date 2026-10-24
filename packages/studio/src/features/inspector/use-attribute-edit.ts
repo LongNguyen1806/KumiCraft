@@ -1,5 +1,5 @@
 // Tag attribute edit hook for Inspector (SPEC-04 R-IN-18, FR-25; SPEC-03 R-SE-04..06).
-import type { EditableAttr } from '@reactcraft/shared';
+import type { EditableAttr } from '@kumicraft/shared';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

@@ -8,7 +8,7 @@ import {
   pageNames,
   type Result,
   type StructureResult,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { computeSha256, type HistoryFileChange } from '../history/history-service.ts';
 import { asAstNode, type AstNode, parseJsxAst } from '../source-editor/ast-helpers.ts';

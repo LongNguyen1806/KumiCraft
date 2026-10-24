@@ -1,5 +1,5 @@
 // Prompt and error views for Canvas (SPEC-04 M-RN, ADR-BE-28).
-import type { RunnerStatus } from '@reactcraft/shared';
+import type { RunnerStatus } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
 export function UntrustedPrompt({ onTrust }: { readonly onTrust?: (() => void) | undefined }) {

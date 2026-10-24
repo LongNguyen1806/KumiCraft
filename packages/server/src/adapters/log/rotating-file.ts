@@ -1,4 +1,4 @@
-// Log file with size rotation (SPEC-05 S-88): `reactcraft.log`, then `.1` to `.<keep - 1>`.
+// Log file with size rotation (SPEC-05 S-88): `kumicraft.log`, then `.1` to `.<keep - 1>`.
 // Synchronous writes so the last entries survive a crash or Ctrl+C.
 import {
   closeSync,
@@ -12,7 +12,7 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 
-export const LOG_FILE_NAME = 'reactcraft.log';
+export const LOG_FILE_NAME = 'kumicraft.log';
 export const DEFAULT_MAX_BYTES = 10 * 1024 * 1024;
 export const DEFAULT_KEEP = 5;
 

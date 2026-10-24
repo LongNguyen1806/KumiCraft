@@ -1,6 +1,6 @@
-// Settings → Missing tools (R-AG-20): what external AI agents needed and ReactCraft lacks, with the
+// Settings → Missing tools (R-AG-20): what external AI agents needed and KumiCraft lacks, with the
 // command that connects Claude Code and a Markdown export for planning.
-import type { ToolGap } from '@reactcraft/shared';
+import type { ToolGap } from '@kumicraft/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -80,7 +80,7 @@ function GapRow({ gap, index }: { readonly gap: ToolGap; readonly index: number 
 function ConnectHint({ projectRoot }: { readonly projectRoot: string }) {
   const { t } = useTranslation('chat');
   const [copied, setCopied] = useState(false);
-  const command = `claude mcp add reactcraft -- npx reactcraft mcp "${projectRoot}"`;
+  const command = `claude mcp add kumicraft -- npx kumicraft mcp "${projectRoot}"`;
   return (
     <div className="grid gap-1 py-2 text-xs text-ink-soft">
       <span>{t('toolGaps.connect')}</span>

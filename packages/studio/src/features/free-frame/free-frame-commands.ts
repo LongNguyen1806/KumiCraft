@@ -4,7 +4,7 @@ import type {
   BridgeFreeMovePayload,
   BridgeFreeResizePayload,
   Result,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import {
   applyPlacement,
   applySize,
@@ -13,7 +13,7 @@ import {
   hasFreePosition,
   ok,
   readClassPx,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { editSource, editSourceBatch, fetchElementSourceByLoc } from '../../api/source-client.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';

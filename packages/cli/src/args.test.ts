@@ -80,6 +80,6 @@ describe('parseCliArgs', () => {
     });
     expect(parseCliArgs(['mcp', '--port', 'x'], CWD).ok).toBe(false);
     expect(parseCliArgs(['mcp', '--no-open'], CWD).ok).toBe(false);
-    expect(USAGE).toContain('reactcraft mcp [project-dir]');
+    expect(USAGE).toContain('kumicraft mcp [project-dir]');
   });
 });

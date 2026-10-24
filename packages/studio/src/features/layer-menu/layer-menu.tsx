@@ -1,6 +1,6 @@
 // Context menu to pick layers under pointer on Canvas (SPEC-04 R-SL-13, WP-2.12c).
-import type { ElementRef, LayerMenuItem } from '@reactcraft/shared';
-import { parseLocString } from '@reactcraft/shared';
+import type { ElementRef, LayerMenuItem } from '@kumicraft/shared';
+import { parseLocString } from '@kumicraft/shared';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 

@@ -9,7 +9,7 @@ import {
   AgentEventSchema,
   type BackendInfo,
   TurnSummarySchema,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 

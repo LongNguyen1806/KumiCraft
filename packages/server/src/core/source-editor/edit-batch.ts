@@ -1,6 +1,6 @@
 // Batch edit executor for Source Editor (R-CB-15, spec-log #22).
-import type { AttributeLevelEdit, BatchEditResult, Result } from '@reactcraft/shared';
-import { err, ok } from '@reactcraft/shared';
+import type { AttributeLevelEdit, BatchEditResult, Result } from '@kumicraft/shared';
+import { err, ok } from '@kumicraft/shared';
 import MagicString from 'magic-string';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';

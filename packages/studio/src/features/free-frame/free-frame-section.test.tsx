@@ -1,5 +1,5 @@
 // Unit tests for FreeFrameSection (SPEC-04 section 18E, WP-2.12b, R-FF-11, R-FF-14, R-FF-17).
-import type { ElementSource } from '@reactcraft/shared';
+import type { ElementSource } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 

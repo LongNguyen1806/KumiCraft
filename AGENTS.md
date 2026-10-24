@@ -1,4 +1,4 @@
-# Quy Tắc Kỹ Thuật Dự Án reactcraft
+# Quy Tắc Kỹ Thuật Dự Án kumicraft
 
 1. **SỬA LỖI ĐÚNG BẢN CHẤT, TUYỆT ĐỐI KHÔNG DÙNG THỦ THUẬT LÁCH KIỂM THỬ**:
    - Khi gặp lỗi biên dịch (TypeScript), lỗi kiểm thử (Unit test), hoặc cảnh báo linter: AI phải phân tích đúng nguyên nhân gốc rễ kỹ thuật và giải quyết triệt để theo đúng kiến trúc, cơ chế chính quy của framework/thư viện và quy chuẩn dự án.

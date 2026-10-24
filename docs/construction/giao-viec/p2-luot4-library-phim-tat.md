@@ -102,7 +102,7 @@ export function shortcutLabel(action: ShortcutAction, apple: boolean): string;
 - Gọi `matchShortcut` với `isMac` hiện có. Có action thì `preventDefault` và gửi `shortcut` với **`key: event.key` nguyên văn** cùng các cờ modifier. Không gửi `'Undo'`/`'Redo'` nữa.
 - Giữ điều kiện: chỉ chế độ `design`, không khi đang sửa chữ.
 - Không chặn phím khi `event.target` là ô nhập của trang. Dùng cách kiểm như `isTypingTarget` của Studio, viết lại trong Bridge, không import code Studio.
-- Sau khi sửa phải chạy `pnpm --filter @reactcraft/bridge build`.
+- Sau khi sửa phải chạy `pnpm --filter @kumicraft/bridge build`.
 
 ### 3.3. Studio
 

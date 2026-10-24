@@ -1,4 +1,4 @@
-import type { InsertTarget, ProjectComponent } from '@reactcraft/shared';
+import type { InsertTarget, ProjectComponent } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';

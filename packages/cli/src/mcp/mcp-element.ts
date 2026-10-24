@@ -1,7 +1,7 @@
 // Shared steps of the MCP edit tools (R-AG-19, round 7b): read an element before changing it, so
 // each edit carries the tag and the current value the server checks (R-SE-02), and turn a simple
 // "where" into the server's insert target.
-import { type ElementSource, ElementSourceSchema, type InsertTarget } from '@reactcraft/shared';
+import { type ElementSource, ElementSourceSchema, type InsertTarget } from '@kumicraft/shared';
 import { z } from 'zod';
 
 import type { ApiClient, ApiResult } from './api-client.ts';
@@ -9,7 +9,7 @@ import type { ApiClient, ApiResult } from './api-client.ts';
 export const LocSchema = z
   .string()
   .min(1)
-  .describe('file:line:column of an element, as reactcraft_get_page_tree returns');
+  .describe('file:line:column of an element, as kumicraft_get_page_tree returns');
 
 export const WHERE = ['before', 'after', 'inside-start', 'inside-end'] as const;
 
@@ -31,7 +31,7 @@ export async function readElement(api: ApiClient, loc: string): Promise<Read<Ele
   if (!result.ok) return result;
   const parsed = ElementSourceSchema.safeParse(result.data);
   if (!parsed.success)
-    return { ok: false, message: 'E013: ReactCraft sent an element it could not read.' };
+    return { ok: false, message: 'E013: KumiCraft sent an element it could not read.' };
   return { ok: true, value: parsed.data };
 }
 

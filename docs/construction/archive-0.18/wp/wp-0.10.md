@@ -14,7 +14,7 @@ Bản trong repo là bản chính. Lịch sử thay đổi ghi lần chuyển.
 | Ngày       | Việc                                                                                          | Kết quả                                                |
 | ---------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | 2026-10-11 | `docs/spec.md` (bản chính, hiện là Spec 0.17), `docs/srs.md` (SRS v4.0), xuống dòng LF        | Xong                                                   |
-| 2026-10-11 | `PRJ/SPEC/Spec - ReactCraft Local.md` thành bản lưu (dừng ở Spec 0.15, có ghi chú đầu file)   | Xong                                                   |
+| 2026-10-11 | `PRJ/SPEC/Spec - KumiCraft Local.md` thành bản lưu (dừng ở Spec 0.15, có ghi chú đầu file)    | Xong                                                   |
 | 2026-10-11 | `README.md`, `LICENSE` (MIT, Q-17), `SECURITY.md`                                             | Xong, trừ email liên hệ bảo mật. Nằm trong `CS-0.01-1` |
 | 2026-10-11 | `docs/construction/`: `progress.md`, `modules.md`, `wp/`, `vg/`, `phases/` (SPEC-07 mục 12.5) | Xong                                                   |
 

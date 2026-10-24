@@ -1,5 +1,5 @@
 // Pure formatting functions for styling report labels and tooltips (SPEC-04 Round S1, R-PJ-02).
-import type { StylingReport, StylingSystem } from '@reactcraft/shared';
+import type { StylingReport, StylingSystem } from '@kumicraft/shared';
 import type { TFunction } from 'i18next';
 
 function parseMajor(version?: string): string | undefined {

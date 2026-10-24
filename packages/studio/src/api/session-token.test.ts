@@ -20,7 +20,7 @@ describe('captureSessionToken', () => {
   });
 
   it('keeps the stored token when the URL has none [S-06]', () => {
-    sessionStorage.setItem('reactcraft.sessionToken', 'kept');
+    sessionStorage.setItem('kumicraft.sessionToken', 'kept');
     window.history.replaceState(undefined, '', '/');
 
     captureSessionToken();

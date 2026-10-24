@@ -68,7 +68,7 @@ afterEach(async () => {
 async function setupProject(subName = 'app') {
   const target = join(tempDir, subName);
   await cp(join(baseDir, 'base'), target, { recursive: true });
-  await rm(join(target, '.reactcraft', 'lock'), { force: true });
+  await rm(join(target, '.kumicraft', 'lock'), { force: true });
   const history = createHistoryService({ fs: directWriteFs });
 
   const service = createProjectService({
@@ -183,13 +183,13 @@ describe('listProjectComponents', { timeout: 30_000 }, () => {
     expect(promoItems[0]?.importStatement).toBe("import Promo from '@/components/Promo';");
   });
 
-  it('[R-CP-12] handles .reactcraft/components.json valid, malformed, and missing file (scenario 5)', async () => {
+  it('[R-CP-12] handles .kumicraft/components.json valid, malformed, and missing file (scenario 5)', async () => {
     const { target, info } = await setupProject();
     const promoCode = 'export default function Promo() { return <div>Promo</div>; }';
     await mkdir(join(target, 'src', 'features', 'x'), { recursive: true });
     await writeFile(join(target, 'src', 'features', 'x', 'Promo.tsx'), promoCode, 'utf8');
 
-    const configPath = join(target, '.reactcraft', 'components.json');
+    const configPath = join(target, '.kumicraft', 'components.json');
     await writeFile(configPath, JSON.stringify({ files: ['src/features/x/Promo.tsx'] }), 'utf8');
 
     const counter = createUsageCounter(directWriteFs);

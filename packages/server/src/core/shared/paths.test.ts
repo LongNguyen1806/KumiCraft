@@ -15,7 +15,7 @@ const reason = (path: string, platform: 'win32' | 'linux' = 'win32') =>
 
 describe('checkPathSyntax', () => {
   it('accepts ordinary relative paths', () => {
-    expect(checkPathSyntax('.reactcraft/pages/p_home000001.json', 'win32')).toBeUndefined();
+    expect(checkPathSyntax('.kumicraft/pages/p_home000001.json', 'win32')).toBeUndefined();
     expect(checkPathSyntax('C:\\work\\shop', 'win32')).toBeUndefined();
   });
 

@@ -1,5 +1,5 @@
 // Tests for Chat panel tabs, lock states, and backends (WP-3.05a, Scenarios 2, 3, 4, 14).
-import type { BackendInfo, ProjectInfo } from '@reactcraft/shared';
+import type { BackendInfo, ProjectInfo } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -68,7 +68,7 @@ describe('ChatPanel tabs and locks [R-CH-01, R-CH-06, R-CH-07]', () => {
   beforeEach(async () => {
     sockets = [];
     vi.stubGlobal('WebSocket', FakeSocket);
-    sessionStorage.setItem('reactcraft.sessionToken', 'tok-panel');
+    sessionStorage.setItem('kumicraft.sessionToken', 'tok-panel');
     localStorage.clear();
     await i18next.changeLanguage('vi');
     useAgentsStore.getState().reset();

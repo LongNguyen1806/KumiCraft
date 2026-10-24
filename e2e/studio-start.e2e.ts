@@ -10,7 +10,7 @@ test('opens the Studio with its name and version and hides the token [S-05, S-06
 }) => {
   await page.goto(studio.studioUrl);
 
-  await expect(page.getByText('ReactCraft', { exact: true })).toBeVisible();
+  await expect(page.getByText('KumiCraft', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: ui('noProject.title') })).toBeVisible();
   await expect(page.getByTestId('studio-version')).toHaveText(/^Phiên bản \d+\.\d+\.\d+/);
   expect(page.url()).not.toContain('#t=');

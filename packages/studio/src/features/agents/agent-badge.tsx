@@ -1,5 +1,5 @@
 // Status badge at the top of the chat panel showing the active agent (R-AG-21).
-import type { AgentLoginState, AgentStatus } from '@reactcraft/shared';
+import type { AgentLoginState, AgentStatus } from '@kumicraft/shared';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 

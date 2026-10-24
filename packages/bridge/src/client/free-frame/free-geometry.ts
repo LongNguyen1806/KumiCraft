@@ -5,7 +5,7 @@ import {
   parseRawClasses,
   type Placement,
   snap,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import { getRefForElement } from '../candidate-chain.ts';
 

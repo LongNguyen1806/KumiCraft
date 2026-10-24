@@ -1,6 +1,6 @@
 // MCP tools that change the element structure, pages, theme and history (R-AG-19, round 7b). Edits
 // go through the same API as the Studio, so each is one history step the Studio can undo.
-import { AddPageSchema, ThemeEditSchema } from '@reactcraft/shared';
+import { AddPageSchema, ThemeEditSchema } from '@kumicraft/shared';
 import { z } from 'zod';
 
 import type { ApiClient, ApiResult } from './api-client.ts';
@@ -75,9 +75,9 @@ async function move(api: ApiClient, input: z.infer<typeof MoveInput>): Promise<A
 
 const ELEMENT_TOOLS: readonly McpTool[] = [
   {
-    name: 'reactcraft_insert_jsx',
+    name: 'kumicraft_insert_jsx',
     description:
-      'Insert JSX next to or inside an element and return the locs of what was inserted. ReactCraft keeps the JSX as you write it: put each element on its own line with 2-space indentation. Prefer components of the project (reactcraft_list_components) when one fits.',
+      'Insert JSX next to or inside an element and return the locs of what was inserted. KumiCraft keeps the JSX as you write it: put each element on its own line with 2-space indentation. Prefer components of the project (kumicraft_list_components) when one fits.',
     input: InsertJsxInput,
     run: (api, args) => {
       const { target, jsx } = InsertJsxInput.parse(args);
@@ -85,8 +85,8 @@ const ELEMENT_TOOLS: readonly McpTool[] = [
     },
   },
   {
-    name: 'reactcraft_insert_image',
-    description: 'Insert an <img> of an image that is in public/ (see reactcraft_list_assets).',
+    name: 'kumicraft_insert_image',
+    description: 'Insert an <img> of an image that is in public/ (see kumicraft_list_assets).',
     input: InsertImageInput,
     run: (api, args) => {
       const { target, src, alt, className } = InsertImageInput.parse(args);
@@ -100,27 +100,27 @@ const ELEMENT_TOOLS: readonly McpTool[] = [
     },
   },
   {
-    name: 'reactcraft_move_elements',
+    name: 'kumicraft_move_elements',
     description: 'Move elements next to or inside another element.',
     input: MoveInput,
     run: (api, args) => move(api, MoveInput.parse(args)),
   },
   {
-    name: 'reactcraft_duplicate_elements',
+    name: 'kumicraft_duplicate_elements',
     description: 'Duplicate elements; each copy goes right after its original.',
     input: LocsInput,
     run: (api, args) =>
       onElements(api, LocsInput.parse(args).locs, (elements) => ({ kind: 'duplicate', elements })),
   },
   {
-    name: 'reactcraft_remove_elements',
+    name: 'kumicraft_remove_elements',
     description: 'Remove elements (undo brings them back).',
     input: LocsInput,
     run: (api, args) =>
       onElements(api, LocsInput.parse(args).locs, (elements) => ({ kind: 'remove', elements })),
   },
   {
-    name: 'reactcraft_wrap_elements',
+    name: 'kumicraft_wrap_elements',
     description: 'Wrap sibling elements in a new row, column or grid container.',
     input: WrapInput,
     run: (api, args) => {
@@ -129,7 +129,7 @@ const ELEMENT_TOOLS: readonly McpTool[] = [
     },
   },
   {
-    name: 'reactcraft_unwrap_element',
+    name: 'kumicraft_unwrap_element',
     description: 'Remove a container element and keep its children in its place.',
     input: UnwrapInput,
     run: (api, args) =>
@@ -139,26 +139,26 @@ const ELEMENT_TOOLS: readonly McpTool[] = [
 
 const PROJECT_TOOLS: readonly McpTool[] = [
   {
-    name: 'reactcraft_create_page',
+    name: 'kumicraft_create_page',
     description: 'Create a page (file and route) in the project.',
     input: AddPageSchema,
     run: (api, args) => api.post('project/pages', AddPageSchema.parse(args)),
   },
   {
-    name: 'reactcraft_set_theme_token',
+    name: 'kumicraft_set_theme_token',
     description:
       'Set, add or remove one design token (color, font, fontSize, radius, shadow) when the styling system supports tokens.',
     input: ThemeEditSchema,
     run: (api, args) => api.patch('project/theme', ThemeEditSchema.parse(args)),
   },
   {
-    name: 'reactcraft_undo',
-    description: 'Undo the last change made in ReactCraft (by you or in the Studio).',
+    name: 'kumicraft_undo',
+    description: 'Undo the last change made in KumiCraft (by you or in the Studio).',
     input: NoInput,
     run: (api) => api.post('history/undo', {}),
   },
   {
-    name: 'reactcraft_redo',
+    name: 'kumicraft_redo',
     description: 'Redo the last undone change.',
     input: NoInput,
     run: (api) => api.post('history/redo', {}),

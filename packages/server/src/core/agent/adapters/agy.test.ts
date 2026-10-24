@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import type { AgentEvent } from '@reactcraft/shared';
+import type { AgentEvent } from '@kumicraft/shared';
 import { describe, expect, it } from 'vitest';
 
 import { agyAdapter } from './agy.ts';

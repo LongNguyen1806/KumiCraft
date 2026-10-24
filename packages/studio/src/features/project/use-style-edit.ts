@@ -1,5 +1,5 @@
 // Hook to determine if visual style editing is available (SPEC-04 Round S1, R-PJ-02).
-import type { ProjectInfo } from '@reactcraft/shared';
+import type { ProjectInfo } from '@kumicraft/shared';
 
 import { useProjectStore } from './project-store.ts';
 

@@ -1,6 +1,6 @@
-# Oakline — ReactCraft Starter
+# Oakline — KumiCraft Starter
 
-A modern React + TypeScript + Tailwind CSS v4 starter project built for visual editing in ReactCraft and code editing with your favorite IDE or AI agent.
+A modern React + TypeScript + Tailwind CSS v4 starter project built for visual editing in KumiCraft and code editing with your favorite IDE or AI agent.
 
 ## Getting Started
 
@@ -47,7 +47,7 @@ Run the following scripts using your package manager (`pnpm`, `npm`, or `yarn`):
 
 ## Design Zones
 
-ReactCraft organizes visual components into three design zones inside `src/`:
+KumiCraft organizes visual components into three design zones inside `src/`:
 
 1. **`src/pages/`**: Full route views (`Home.tsx`, `About.tsx`, `NotFound.tsx`) registered in `src/routes.tsx`.
 2. **`src/layouts/`**: Shared layout wrappers (`MainLayout.tsx`) that render persistent navigation and `<Outlet />`.
@@ -59,7 +59,7 @@ Keep all HTTP calls and backend data-fetching modules inside `src/api/`. Configu
 
 ## Visual Editing & Static `className` Convention
 
-To ensure every element can be selected and styled visually in ReactCraft's Inspector:
+To ensure every element can be selected and styled visually in KumiCraft's Inspector:
 
 - Always write Tailwind classes as static string literals: `className="flex items-center gap-4"`.
 - Avoid dynamic expressions (`className={...}`), template literals, or conditional class helpers on elements meant for visual editing.

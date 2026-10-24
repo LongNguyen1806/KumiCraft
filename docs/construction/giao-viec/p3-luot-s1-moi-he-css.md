@@ -4,7 +4,7 @@
 
 ## 0. Bối cảnh (quyết định của chủ dự án, 2026-10-23)
 
-Chủ dự án mở một dự án React + Vite viết JSX, dùng **154 file `.css` thường**, không có Tailwind. ReactCraft từ chối mở (`noTailwind`, `noTailwindCss`). Trình duyệt hiển thị mọi loại CSS như nhau, nên Canvas cũng phải **xem được**. Chặn ở cửa là lỗi thiết kế: trộn "xem được" với "sửa kiểu dáng được".
+Chủ dự án mở một dự án React + Vite viết JSX, dùng **154 file `.css` thường**, không có Tailwind. KumiCraft từ chối mở (`noTailwind`, `noTailwindCss`). Trình duyệt hiển thị mọi loại CSS như nhau, nên Canvas cũng phải **xem được**. Chặn ở cửa là lỗi thiết kế: trộn "xem được" với "sửa kiểu dáng được".
 
 Mô hình mới, ba mức khả năng:
 

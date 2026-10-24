@@ -86,7 +86,7 @@ export const StudioDesignFilePayloadSchema = z.strictObject({
    Tách phần dựng nguồn import của `components-list.ts` thành hàm dùng chung nhận thêm file gốc, không chép code. Dùng `applyTextEdits` trên code gốc; parse lại kết quả (hỏng: E024, không ghi).
 
 6. **Ghi:** khóa cả hai file như `page-add.ts`; ghi file mới rồi file nguồn; lỗi ghi file nguồn thì xóa file mới. `recordInternalWrite` cả hai. **Một** mục lịch sử `{ key: 'history:extract', params: { name } }` gồm file mới (`after` only) và file nguồn (`before`/`after`). Khóa i18n `history:extract` = "Tạo component {{name}}" / "Create component {{name}}".
-7. **`components.json`:** file mới **không** nằm trong `designDirs.components` hoặc `designDirs.layouts` → thêm đường dẫn vào `.reactcraft/components.json` (`{ "files": [...] }`, tạo nếu chưa có, không trùng). Không đưa vào lịch sử; danh sách đã bỏ qua file không còn tồn tại (lượt 8).
+7. **`components.json`:** file mới **không** nằm trong `designDirs.components` hoặc `designDirs.layouts` → thêm đường dẫn vào `.kumicraft/components.json` (`{ "files": [...] }`, tạo nếu chưa có, không trùng). Không đưa vào lịch sử; danh sách đã bỏ qua file không còn tồn tại (lượt 8).
 8. Trả `{ changed: true, files: [sourceRel, newRel], locs: [loc của <Name /> trong file nguồn sau khi ghi] }`.
 
 Endpoint `POST /project/components/extract` trong `routes/project.ts`: parse `ExtractComponentSchema` (sai: E016 có `details`), chưa mở dự án: E021.
@@ -96,7 +96,7 @@ Endpoint `POST /project/components/extract` trong `routes/project.ts`: parse `Ex
 - `api/project-client.ts`: `extractComponent(input): Promise<StructureResult>` (parse kết quả bằng schema, **không** ép kiểu `as`, xem lỗi Undo vừa sửa).
 - `structure-actions.tsx`: nút `structure-extract` "Tạo component" / "Create component", bật khi chọn đúng một phần tử.
 - `features/components-panel/extract-dialog.tsx`: `extract-name`, `extract-dir` (dùng lại ô chọn thư mục của form thêm trang), `extract-file` (gợi ý theo tên như form thêm trang, sửa tay thì giữ), `extract-submit`, `extract-error` (hiện lỗi qua `errorText`; `usesLocalScope` hiện "Phần tử dùng {{name}} của file hiện tại, không tách ra được" / "The element uses {{name}} from the current file and cannot be extracted"). Thành công: đóng, chọn `res.locs[0]`, tải lại panel Component.
-- `use-project-components.ts`: thêm tải lại (gộp 500 ms) khi có `history.changed`, vì file do ReactCraft ghi không phát `project.filesChanged`. Đưa danh sách vào store dùng chung để chế độ component đọc được.
+- `use-project-components.ts`: thêm tải lại (gộp 500 ms) khi có `history.changed`, vì file do KumiCraft ghi không phát `project.filesChanged`. Đưa danh sách vào store dùng chung để chế độ component đọc được.
 
 ### 3.4. Studio — chế độ sửa component
 
@@ -125,7 +125,7 @@ Test server dùng dự án tạo từ template chép vào thư mục tạm; ki�
 | 5   | Tách phần tử dùng hằng khai báo ở đầu file (`const title = 'x'` ngoài component)                                                          | E023 `usesLocalScope`, `name: 'title'`                                                                                                                                                                                                    | R-CP-14          |
 | 6   | Tách gốc của callback `.map`                                                                                                              | E023 `loopRoot`                                                                                                                                                                                                                           | R-CP-14          |
 | 7   | `fileName` trùng file có sẵn; `name` trùng tên đã import (`Button`); `dir` = `../outside`                                                 | E016 `fileExists`; E016 `nameExists`; E012                                                                                                                                                                                                | R-CP-14          |
-| 8   | Tách vào `dir: 'src/features/promo'` (chưa có)                                                                                            | Thư mục được tạo; `.reactcraft/components.json` có `src/features/promo/PromoBox.tsx`; `GET /project/components` có `PromoBox`                                                                                                             | R-CP-14, R-CP-12 |
+| 8   | Tách vào `dir: 'src/features/promo'` (chưa có)                                                                                            | Thư mục được tạo; `.kumicraft/components.json` có `src/features/promo/PromoBox.tsx`; `GET /project/components` có `PromoBox`                                                                                                              | R-CP-14, R-CP-12 |
 | 9   | Dự án không alias, tách từ `src/pages/Home.tsx` vào `src/components`                                                                      | Import trong Home là `'../components/PromoBox'`                                                                                                                                                                                           | R-CP-14          |
 | 10  | File nguồn dùng CRLF                                                                                                                      | File mới và file nguồn đều CRLF                                                                                                                                                                                                           | R-CP-14          |
 | 11  | Studio `ExtractDialog`: gõ "Hộp khuyến mãi" → `extract-file` = `HopKhuyenMai.tsx`; server trả E023 `usesLocalScope` `{ name: 'product' }` | Gợi ý đúng; `extract-error` có chữ `product`                                                                                                                                                                                              | R-CP-14          |
@@ -157,12 +157,12 @@ Trên WorkTracker:
 - **Toạ độ gốc:** thay phần tử và chèn import tính trên code gốc bằng `applyTextEdits`, không sửa chuỗi hai lần.
 - **Nguồn import của file mới:** đổi đường dẫn tương đối theo **thư mục file mới**, không theo file nguồn.
 - **Không xóa import thừa** trong file nguồn sau khi tách (spec-log #24); `pnpm build` của template vẫn chạy vì `tsconfig` không bật `noUnusedLocals`.
-- **Panel Component không tự tải lại** sau khi ReactCraft ghi file (ghi nội bộ không phát `project.filesChanged`): dùng `history.changed`.
+- **Panel Component không tự tải lại** sau khi KumiCraft ghi file (ghi nội bộ không phát `project.filesChanged`): dùng `history.changed`.
 - **Bấm đúp hiện là sửa chữ:** chỉ đổi khi phần tử thuộc file khác **và** file đó là component trong danh sách; phần tử trong file đang thiết kế vẫn sửa chữ.
 - **Esc** đang là chọn cha; chỉ thoát chế độ khi không còn cha để chọn hoặc không chọn gì.
 - **Không ép kiểu `as`** dữ liệu từ server trong Studio; parse bằng schema.
 - **Giới hạn:** file ≤ 400 dòng, hàm ≤ 50 dòng.
-- Sửa `shared`/`bridge` thì chạy `pnpm --filter @reactcraft/bridge build` (commit cả file sinh ra).
+- Sửa `shared`/`bridge` thì chạy `pnpm --filter @kumicraft/bridge build` (commit cả file sinh ra).
 
 ## 7. Báo cáo và commit
 

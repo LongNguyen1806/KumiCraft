@@ -2,7 +2,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { PageTreeNode } from '@reactcraft/shared';
+import type { PageTreeNode } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { makeTempDir, nodeFs } from '../workspace/test-support.ts';

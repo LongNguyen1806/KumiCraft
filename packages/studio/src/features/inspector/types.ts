@@ -1,5 +1,5 @@
 // Types for Inspector (SPEC-04 section 9 M-IN).
-import type { ElementRef, ElementSource, InteractionState, Scope } from '@reactcraft/shared';
+import type { ElementRef, ElementSource, InteractionState, Scope } from '@kumicraft/shared';
 
 export type InspectorLockReason =
   'classExpression' | 'classDuplicate' | 'outsideSource' | 'tooLarge';

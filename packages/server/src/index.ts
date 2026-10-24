@@ -1,16 +1,17 @@
-// Public entry point of @reactcraft/server (QC-03): composition root of the Local Server.
+// Public entry point of @kumicraft/server (QC-03): composition root of the Local Server.
 import { existsSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { AgentId } from '@reactcraft/shared';
+import type { AgentId } from '@kumicraft/shared';
 import envPaths from 'env-paths';
 
 import { createNodeFileSystem } from './adapters/fs/node-file-system.ts';
 import type { LogLevel } from './adapters/http/create-http-app.ts';
 import { createServerLogger } from './adapters/log/create-logger.ts';
+import { type LegacyDirPair, moveLegacyUserDirs } from './adapters/system/legacy-user-dirs.ts';
 import { createNodeProcess } from './adapters/system/node-process.ts';
 import { createNodeSystem } from './adapters/system/node-system.ts';
 import { createChokidarWatcher } from './adapters/watcher/chokidar-watcher.ts';
@@ -58,7 +59,7 @@ export { LOCK_FILE, type LockInfo, parseLock } from './core/workspace/lock.ts';
 export const HOST = '127.0.0.1';
 
 export type StartServerOptions = {
-  /** Version of the published `reactcraft` package, shown by the Studio. */
+  /** Version of the published `kumicraft` package, shown by the Studio. */
   readonly version: string;
   /** Port chosen by the CLI (S-02). */
   readonly port: number;
@@ -67,7 +68,7 @@ export type StartServerOptions = {
   /** Absolute path of the built Studio. Omit to serve the API only (Studio dev server). */
   readonly studioDir?: string;
   readonly logLevel?: LogLevel;
-  /** Value of `REACTCRAFT_FEATURES`. */
+  /** Value of `KUMICRAFT_FEATURES`. */
   readonly featureOverride?: string;
   /** Origins trusted like the server's own: only the Vite dev server of `pnpm dev`. */
   readonly trustedOrigins?: readonly string[];
@@ -118,7 +119,7 @@ export type InitializedContext = CoreServices & {
 };
 
 /**
- * On a computer that never ran ReactCraft the config folder does not exist, and saving settings
+ * On a computer that never ran KumiCraft the config folder does not exist, and saving settings
  * would fail. A folder that cannot be made only costs saved settings.
  */
 async function ensureConfigDir(dir: string, logger: LoggerPort): Promise<void> {
@@ -150,11 +151,35 @@ async function ensureTurnsDir(dataDir: string, logger: LoggerPort): Promise<void
   }
 }
 
+/** Old-name folders move only into the real user folders, never into ones passed in (tests). */
+function legacyDirPairs(options: StartServerOptions): LegacyDirPair[] {
+  const old = envPaths('reactcraft');
+  const now = envPaths('kumicraft');
+  const given = options.deps;
+  return [
+    ...(given?.configDir === undefined ? [{ from: old.config, to: now.config }] : []),
+    ...(given?.dataDir === undefined ? [{ from: old.data, to: now.data }] : []),
+    ...(given?.cacheDir === undefined ? [{ from: old.cache, to: now.cache }] : []),
+  ];
+}
+
+/** Folders of the old name move first, then each folder the server writes to exists. */
+async function prepareUserDirs(
+  options: StartServerOptions,
+  dirs: { readonly configDir: string; readonly cacheDir: string; readonly dataDir: string },
+  logger: LoggerPort,
+): Promise<void> {
+  await moveLegacyUserDirs(legacyDirPairs(options), logger);
+  await ensureConfigDir(dirs.configDir, logger);
+  await ensureMirrorsDir(dirs.cacheDir, logger);
+  await ensureTurnsDir(dirs.dataDir, logger);
+}
+
 function resolveServerPaths(options: StartServerOptions) {
   return {
-    configDir: options.deps?.configDir ?? envPaths('reactcraft').config,
-    cacheDir: options.deps?.cacheDir ?? envPaths('reactcraft').cache,
-    dataDir: options.deps?.dataDir ?? envPaths('reactcraft').data,
+    configDir: options.deps?.configDir ?? envPaths('kumicraft').config,
+    cacheDir: options.deps?.cacheDir ?? envPaths('kumicraft').cache,
+    dataDir: options.deps?.dataDir ?? envPaths('kumicraft').data,
     homeDir: options.deps?.homeDir ?? homedir(),
     templateDir: options.deps?.templateDir ?? resolveTemplateDir(),
   };
@@ -190,9 +215,7 @@ async function initServerContext(
   const { fs, logger, system, processPort, eventBus } = resolveCorePorts(options, platform);
   const { configDir, cacheDir, dataDir, homeDir, templateDir } = resolveServerPaths(options);
 
-  await ensureConfigDir(configDir, logger);
-  await ensureMirrorsDir(cacheDir, logger);
-  await ensureTurnsDir(dataDir, logger);
+  await prepareUserDirs(options, { configDir, cacheDir, dataDir }, logger);
   const configStore = await createConfigStore({ fs, dir: configDir, platform, logger });
 
   const runnerScript = resolveRunnerScript(options.deps?.runnerScriptPath);

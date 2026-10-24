@@ -4,7 +4,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { join } from 'node:path';
 
-import { newWorkspaceFile, serializeWorkspaceFile, WORKSPACE_FILE } from '@reactcraft/shared';
+import { newWorkspaceFile, serializeWorkspaceFile, WORKSPACE_FILE } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { makeTempDir, silentLogger, writeSupportedProject } from './core/workspace/test-support.ts';
@@ -52,7 +52,7 @@ async function call(server: RunningServer, method: string, path: string, body?: 
 
 async function writeProject() {
   await writeSupportedProject(workspace.dir);
-  await mkdir(join(workspace.dir, '.reactcraft'));
+  await mkdir(join(workspace.dir, '.kumicraft'));
   const file = newWorkspaceFile({
     id: 'shop000001',
     name: 'Shop',
@@ -102,8 +102,8 @@ describe('server restart', () => {
     });
   });
 
-  it('remembers settings across a restart on a computer that never ran ReactCraft', async () => {
-    const neverCreated = join(config.dir, 'reactcraft-nodejs', 'Config');
+  it('remembers settings across a restart on a computer that never ran KumiCraft', async () => {
+    const neverCreated = join(config.dir, 'kumicraft-nodejs', 'Config');
     const first = await start(neverCreated);
     if (!first.ok) throw new Error(first.error.code);
 

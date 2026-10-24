@@ -43,7 +43,7 @@ export type PromptInput = {
   readonly context: TurnContext;
   readonly mirrors: readonly { readonly label: string; readonly dir: string }[];
   readonly docs: readonly string[];
-  readonly guide?: string | undefined; // content of .reactcraft/agent-guide.md
+  readonly guide?: string | undefined; // content of .kumicraft/agent-guide.md
 };
 export function buildPrompt(input: PromptInput): Result<string>; // E016 { reason: 'promptTooLong', limit } over the cap
 ```
@@ -53,7 +53,7 @@ Văn bản trả về, đúng thứ tự, bỏ hẳn những dòng không có d�
 ```
 <request>
 
---- ReactCraft context ---
+--- KumiCraft context ---
 Selected element: <element.loc> (<element.tag>)
 Page: <route>
 Viewport: <frame.id>, <frame.width> px
@@ -62,7 +62,7 @@ Backend mirrors (read-only copies; never edit them):
 Documents the user pointed to:
 - <doc>
 
---- Project guide (.reactcraft/agent-guide.md) ---
+--- Project guide (.kumicraft/agent-guide.md) ---
 <guide, cắt ở GUIDE_MAX_CHARS>
 ```
 
@@ -133,7 +133,7 @@ export type TurnRunner = {
 
 1. `snapshots.capture(projectId, root, turnId)`. Lỗi (ví dụ E016 `projectTooLarge`) → `return err(...)`, **không** spawn.
 2. Với mỗi backend: `mirror.refresh(projectId, backend)`. `ready` → thêm `{ label, dir }`. `skipped`/`failed` → notice `backendSkipped`; `tooLarge` → notice `backendTooLarge` (R-MR-03, S-124).
-3. Đọc `.reactcraft/agent-guide.md` của dự án nếu có (`fs.readText`, lỗi thì bỏ qua). `buildPrompt(...)`; lỗi → `return err(...)`.
+3. Đọc `.kumicraft/agent-guide.md` của dự án nếu có (`fs.readText`, lỗi thì bỏ qua). `buildPrompt(...)`; lỗi → `return err(...)`.
 4. `conversation === 'continue'` và `store.conversation()` cùng `agent` → `conversationId` đó. `'new'` → `store.setConversation(projectId, undefined)`.
 5. Lưu `TurnSummary` ban đầu `state: 'running'`, `files: []`, `revertible: false`, `notices`.
 6. Spawn `command.command`, args `[...command.prefixArgs, ...adapter.buildArgs({ prompt, mirrorDirs, conversationId })]`, `{ cwd: root, timeoutMs }` (S-111, S-115). `ctx.signal` bị hủy → `handle.kill()`.
@@ -170,7 +170,7 @@ Lỗi đi qua `sendError` như các route khác. Nối qua `createHttpApp` (`age
 
 ## 4. Tình huống test
 
-Dùng **file thật** (dự án tạm có `src/App.tsx`, `src/main.tsx`), `dataDir` tạm, `createNodeProcess()` thật, agent = `fake-agent.mjs` qua `createAgentService({ commands: { agy: { command: process.execPath, prefixArgs: [fakeAgentPath] }, claude: <lệnh không tồn tại> }, adapters })`, mirror và snapshot **thật**, job service thật, event bus thật (thu sự kiện). `project()` trả một `ProjectInfo` dựng trong test. Kịch bản truyền qua `RC_FAKE_AGENT_SCRIPT` (đặt `process.env` trong test, xóa ở `afterEach`; S-53 giữ biến không có tiền tố `REACTCRAFT_`).
+Dùng **file thật** (dự án tạm có `src/App.tsx`, `src/main.tsx`), `dataDir` tạm, `createNodeProcess()` thật, agent = `fake-agent.mjs` qua `createAgentService({ commands: { agy: { command: process.execPath, prefixArgs: [fakeAgentPath] }, claude: <lệnh không tồn tại> }, adapters })`, mirror và snapshot **thật**, job service thật, event bus thật (thu sự kiện). `project()` trả một `ProjectInfo` dựng trong test. Kịch bản truyền qua `RC_FAKE_AGENT_SCRIPT` (đặt `process.env` trong test, xóa ở `afterEach`; S-53 giữ biến không có tiền tố `KUMICRAFT_`).
 
 Chờ job xong bằng cách nghe `job.completed` / `job.failed` / `job.cancelled` trên event bus, **không** dùng `setTimeout` cố định.
 
@@ -197,7 +197,7 @@ Studio chưa có ô chat; thử bằng Console của Studio (F12). Dùng **dự 
 
 ```js
 const H = {
-  authorization: 'Bearer ' + sessionStorage.getItem('reactcraft.sessionToken'),
+  authorization: 'Bearer ' + sessionStorage.getItem('kumicraft.sessionToken'),
   'content-type': 'application/json',
 };
 const send = (prompt, conversation = 'new') =>
@@ -214,7 +214,7 @@ const turns = () =>
     .then(console.log);
 ```
 
-1. Tin cậy dự án. `send('Đổi tiêu đề trang Home thành "Xin chào ReactCraft"')` → nhận `jobId`.
+1. Tin cậy dự án. `send('Đổi tiêu đề trang Home thành "Xin chào KumiCraft"')` → nhận `jobId`.
 2. Đợi khoảng 1 phút, `turns()` → lượt mới nhất `completed`, `files` có `src/pages/Home.tsx` (nếu agy hỏi xác nhận: `send('Đồng ý', 'continue')` rồi `turns()` lại).
 3. Canvas đổi tiêu đề.
 4. `fetch('/api/v1/agent/turns/<id>/revert', { method: 'POST', headers: H }).then(r => r.json()).then(console.log)` → tiêu đề về như cũ trên Canvas.
@@ -227,7 +227,7 @@ const turns = () =>
 2. Khi hủy, job service tự đánh dấu `cancelled`; `run` vẫn phải chờ tiến trình dừng, `finish` ảnh chụp và lưu `TurnSummary` trước khi trả.
 3. `onLine` trộn stdout và stderr; `parseLine` đã bỏ qua dòng lạ.
 4. `ProcessPort` báo quá hạn bằng mã 124, không phải lỗi ném ra.
-5. Đọc `agent-guide.md` bằng `readText` với gốc là thư mục dự án, đường dẫn `.reactcraft/agent-guide.md`.
+5. Đọc `agent-guide.md` bằng `readText` với gốc là thư mục dự án, đường dẫn `.kumicraft/agent-guide.md`.
 6. Test đặt `process.env.RC_FAKE_AGENT_SCRIPT` phải xóa ở `afterEach`; các test chạy agent dùng `describe.sequential` nếu chung một biến môi trường.
 7. Không lách luật lint bằng mẹo. Gặp luật cản thì đổi thiết kế hoặc dừng và báo.
 

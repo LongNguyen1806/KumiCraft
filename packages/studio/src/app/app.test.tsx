@@ -39,7 +39,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   await i18next.changeLanguage('en');
   sessionStorage.clear();
-  sessionStorage.setItem('reactcraft.sessionToken', 'tok');
+  sessionStorage.setItem('kumicraft.sessionToken', 'tok');
   localStorage.clear();
   socket = undefined;
 });
@@ -81,7 +81,7 @@ describe('App', () => {
       state: 'error',
       error: {
         code: 'E003',
-        params: { file: '.reactcraft/workspace.json', reason: 'unsupportedVersion' },
+        params: { file: '.kumicraft/workspace.json', reason: 'unsupportedVersion' },
         details: [{ message: 'schemaVersion 1 is not supported' }],
       },
     };
@@ -90,7 +90,7 @@ describe('App', () => {
     render(<App />);
 
     expect((await screen.findByTestId('project-error')).textContent).toContain('(E003)');
-    expect(screen.getByText(/older ReactCraft/)).toBeDefined();
+    expect(screen.getByText(/older KumiCraft/)).toBeDefined();
     expect(screen.getByText('schemaVersion 1 is not supported')).toBeDefined();
     expect(screen.queryByRole('button', { name: /restore|overwrite/i })).toBeNull();
   });
@@ -165,6 +165,6 @@ describe('App', () => {
       }),
     );
 
-    expect(screen.getByTestId('connection-lost').textContent).toContain('ReactCraft has stopped');
+    expect(screen.getByTestId('connection-lost').textContent).toContain('KumiCraft has stopped');
   });
 });

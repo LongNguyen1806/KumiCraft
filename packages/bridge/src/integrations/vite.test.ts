@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { BRIDGE_CLIENT_CODE } from '../client/bridge-client.generated.ts';
-import { createReactCraftBridgePlugin } from './vite.ts';
+import { createKumiCraftBridgePlugin } from './vite.ts';
 
 const options = {
   rootDir: 'D:/test-project',
@@ -11,10 +11,10 @@ const options = {
   studioOrigin: 'http://127.0.0.1:4173',
 };
 
-describe('createReactCraftBridgePlugin', () => {
+describe('createKumiCraftBridgePlugin', () => {
   it('configures plugin metadata for dev server only [R-BR-04, S-103]', () => {
-    const plugin = createReactCraftBridgePlugin(options);
-    expect(plugin.name).toBe('reactcraft:bridge');
+    const plugin = createKumiCraftBridgePlugin(options);
+    expect(plugin.name).toBe('kumicraft:bridge');
     expect(plugin.apply).toBe('serve');
     expect(plugin.enforce).toBe('pre');
     // Before transforms of other plugins such as React Fast Refresh (R-BR-02, VG-15).
@@ -22,7 +22,7 @@ describe('createReactCraftBridgePlugin', () => {
   });
 
   it('transforms JSX files in sourceDir [R-BR-02]', () => {
-    const plugin = createReactCraftBridgePlugin(options);
+    const plugin = createKumiCraftBridgePlugin(options);
     const code = 'export function App() { return <div>Hello</div>; }';
     const result = plugin.transform.handler(code, 'D:/test-project/src/App.tsx');
     expect(result).toBeDefined();
@@ -30,16 +30,16 @@ describe('createReactCraftBridgePlugin', () => {
   });
 
   it('skips transformation for files outside sourceDir [R-BR-01]', () => {
-    const plugin = createReactCraftBridgePlugin(options);
+    const plugin = createKumiCraftBridgePlugin(options);
     const code = 'export function App() { return <div>Hello</div>; }';
     const result = plugin.transform.handler(code, 'D:/test-project/scripts/run.ts');
     expect(result).toBeUndefined();
   });
 
-  it('serves the client as a module at /@reactcraft/bridge-client.js, so Vite adds import.meta.hot [R-BR-05, R-BR-17]', () => {
-    const plugin = createReactCraftBridgePlugin(options);
+  it('serves the client as a module at /@kumicraft/bridge-client.js, so Vite adds import.meta.hot [R-BR-05, R-BR-17]', () => {
+    const plugin = createKumiCraftBridgePlugin(options);
 
-    const id = plugin.resolveId('/@reactcraft/bridge-client.js');
+    const id = plugin.resolveId('/@kumicraft/bridge-client.js');
 
     expect(id).toMatch(/^\0/);
     expect(id === undefined ? undefined : plugin.load(id)).toBe(BRIDGE_CLIENT_CODE);
@@ -49,7 +49,7 @@ describe('createReactCraftBridgePlugin', () => {
   });
 
   it('injects config JSON script and module script into head [R-BR-05]', () => {
-    const plugin = createReactCraftBridgePlugin(options);
+    const plugin = createKumiCraftBridgePlugin(options);
     const tags = plugin.transformIndexHtml();
     expect(tags).toHaveLength(2);
 
@@ -69,7 +69,7 @@ describe('createReactCraftBridgePlugin', () => {
     const clientTag = tags[1];
     expect(clientTag?.tag).toBe('script');
     expect(clientTag?.attrs?.['type']).toBe('module');
-    expect(clientTag?.attrs?.['src']).toBe('/@reactcraft/bridge-client.js');
+    expect(clientTag?.attrs?.['src']).toBe('/@kumicraft/bridge-client.js');
     expect(clientTag?.injectTo).toBe('head-prepend');
   });
 });

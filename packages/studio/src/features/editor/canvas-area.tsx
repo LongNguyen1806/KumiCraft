@@ -3,7 +3,7 @@ import {
   type ProjectInfo,
   type RunnerStatus,
   tailwindMajorOf,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 

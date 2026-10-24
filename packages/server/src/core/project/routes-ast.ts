@@ -1,5 +1,5 @@
 // AST manipulation helpers for routes.tsx (R-PG-11 to R-PG-14).
-import { err, ok, type Result } from '@reactcraft/shared';
+import { err, ok, type Result } from '@kumicraft/shared';
 
 import { asAstNode, type AstNode } from '../source-editor/ast-helpers.ts';
 import type { TextEdit } from '../source-editor/structure/text-edits.ts';

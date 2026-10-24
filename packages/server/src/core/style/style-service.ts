@@ -11,7 +11,7 @@ import {
   type StyleSource,
   type StyleSystemId,
   type StylingReport,
-} from '@reactcraft/shared';
+} from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { locateRule, locateRuleByIndex } from './css-locate.ts';

@@ -1,5 +1,5 @@
 // Manages agent install confirmation, job execution, and log follower (R-AG-21).
-import { type AgentStatus, MAX_JOB_LINES } from '@reactcraft/shared';
+import { type AgentStatus, MAX_JOB_LINES } from '@kumicraft/shared';
 import { useRef, useState } from 'react';
 
 import { installAgent } from '../../api/agent-client.ts';

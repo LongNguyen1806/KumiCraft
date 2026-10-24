@@ -324,7 +324,7 @@ async function runScenario7(baseDir) {
   const dir = join(baseDir, 's7');
 
   const vnPath = join(dir, 'tiếng-việt', 'giao-diện.tsx');
-  const vnContent = '// Giao diện ReactCraft Local — Tiếng Việt UTF-8';
+  const vnContent = '// Giao diện KumiCraft Local — Tiếng Việt UTF-8';
   const vnOk =
     (await atomicWrite(vnPath, vnContent)).ok && readFileSync(vnPath, 'utf8') === vnContent;
 
@@ -356,7 +356,7 @@ async function runScenario7(baseDir) {
 // ---------------------------------------------------------
 
 async function main() {
-  const root = mkdtempSync(join(tmpdir(), 'reactcraft-vg-01-'));
+  const root = mkdtempSync(join(tmpdir(), 'kumicraft-vg-01-'));
   console.log('=== Spike VG-01: Windows NTFS Atomic Write & Transaction Verification ===');
   console.log(`Test dir: ${root}`);
 

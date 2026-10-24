@@ -53,8 +53,8 @@ describe('WebSocket /api/v1/events', () => {
 
   it('rejects connection with wrong token with 4401 [S-07]', async () => {
     const ws = new WebSocket(`ws://${HOST}/api/v1/events`, [
-      'reactcraft.token.wrong-token',
-      'reactcraft.v1',
+      'kumicraft.token.wrong-token',
+      'kumicraft.v1',
     ]);
 
     const closeCode = await new Promise<number>((resolve) => {
@@ -71,8 +71,8 @@ describe('WebSocket /api/v1/events', () => {
 
   it('accepts connection with valid token and receives broadcast events [S-07, 11.2]', async () => {
     const ws = new WebSocket(`ws://${HOST}/api/v1/events`, [
-      `reactcraft.token.${TOKEN}`,
-      'reactcraft.v1',
+      `kumicraft.token.${TOKEN}`,
+      'kumicraft.v1',
     ]);
 
     await new Promise<void>((resolve, reject) => {
@@ -82,7 +82,7 @@ describe('WebSocket /api/v1/events', () => {
       ws.addEventListener('error', reject);
     });
 
-    expect(ws.protocol).toBe('reactcraft.v1');
+    expect(ws.protocol).toBe('kumicraft.v1');
 
     const receivedPromise = new Promise<string>((resolve) => {
       ws.addEventListener('message', (event: { data: unknown }) => {

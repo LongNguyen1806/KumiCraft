@@ -1,5 +1,5 @@
 // Element text extraction and used component tag collection (SPEC-04 R-SE-30, section 4.1).
-import { err, ok, type Result } from '@reactcraft/shared';
+import { err, ok, type Result } from '@kumicraft/shared';
 
 import { asAstNode, type AstNode } from '../ast-helpers.ts';
 import { findNodeAt } from '../source-editor-lookup.ts';

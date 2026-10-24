@@ -174,7 +174,7 @@ export async function createHttpApp(options: HttpAppOptions): Promise<FastifyIns
 
   await app.register(fastifyWebsocket, {
     options: {
-      handleProtocols: (protocols) => (protocols.has('reactcraft.v1') ? 'reactcraft.v1' : false),
+      handleProtocols: (protocols) => (protocols.has('kumicraft.v1') ? 'kumicraft.v1' : false),
     },
   });
 

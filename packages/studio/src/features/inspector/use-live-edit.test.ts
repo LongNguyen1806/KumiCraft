@@ -1,6 +1,6 @@
 // Unit tests for useLiveEdit hook (SPEC-04 R-IN-13, R-IN-14, R-IN-20, Scenarios 3 & 4).
-import type { ClassContext, EditResult, ElementSource } from '@reactcraft/shared';
-import { BREAKPOINT_WIDTHS } from '@reactcraft/shared';
+import type { ClassContext, EditResult, ElementSource } from '@kumicraft/shared';
+import { BREAKPOINT_WIDTHS } from '@kumicraft/shared';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 

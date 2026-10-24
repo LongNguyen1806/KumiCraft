@@ -1,5 +1,5 @@
 // Component tests for Agent login flows, auto-polling, timeout, and resend (R-AG-21).
-import type { AgentStatus, ProjectInfo } from '@reactcraft/shared';
+import type { AgentStatus, ProjectInfo } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { StrictMode } from 'react';
@@ -54,7 +54,7 @@ describe('Agent Login Flow [R-AG-21]', () => {
   });
 
   beforeEach(async () => {
-    sessionStorage.setItem('reactcraft.sessionToken', 'token-test');
+    sessionStorage.setItem('kumicraft.sessionToken', 'token-test');
     await i18next.changeLanguage('vi');
     useAgentsStore.getState().reset();
     useChatStore.getState().reset();

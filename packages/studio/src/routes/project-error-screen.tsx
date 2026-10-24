@@ -10,8 +10,8 @@ type ProjectErrorScreenProps = {
 };
 
 /**
- * State `error`: `.reactcraft/workspace.json` is broken or from another version (V-105).
- * ReactCraft never rewrites it, so the user fixes it and starts ReactCraft again.
+ * State `error`: `.kumicraft/workspace.json` is broken or from another version (V-105).
+ * KumiCraft never rewrites it, so the user fixes it and starts KumiCraft again.
  */
 export function ProjectErrorScreen({ version, error }: ProjectErrorScreenProps) {
   const { t } = useTranslation();

@@ -1,5 +1,5 @@
 // Canvas Direct Text Editing controller (SPEC-04 section 10 M-TX, R-TX-01..08).
-import type { ElementRef } from '@reactcraft/shared';
+import type { ElementRef } from '@kumicraft/shared';
 
 export type TextEditCallbacks = {
   readonly onCommit: (ref: ElementRef, text: string) => void;

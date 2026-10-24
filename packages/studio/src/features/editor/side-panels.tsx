@@ -70,7 +70,7 @@ function Tab({ selected, disabled = false, testId, onClick, children }: TabProps
   );
 }
 
-const LEFT_PANEL_KEY = 'reactcraft.leftPanelTab';
+const LEFT_PANEL_KEY = 'kumicraft.leftPanelTab';
 
 export type LeftPanelTab = 'layers' | 'library' | 'components';
 
@@ -159,7 +159,7 @@ export function LeftPanel() {
   );
 }
 
-const RIGHT_PANEL_KEY = 'reactcraft.rightPanelTab';
+const RIGHT_PANEL_KEY = 'kumicraft.rightPanelTab';
 
 export type RightPanelTab = 'properties' | 'brand' | 'chat';
 

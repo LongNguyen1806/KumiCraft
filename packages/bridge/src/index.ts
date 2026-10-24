@@ -1,9 +1,9 @@
-// Public entry point of @reactcraft/bridge (QC-03).
+// Public entry point of @kumicraft/bridge (QC-03).
 export { BRIDGE_CLIENT_CODE } from './client/bridge-client.generated.ts';
 export {
   BRIDGE_CLIENT_URL,
   type BridgePluginOptions,
-  createReactCraftBridgePlugin,
+  createKumiCraftBridgePlugin,
   type HtmlTagDescriptor,
 } from './integrations/vite.ts';
 export {

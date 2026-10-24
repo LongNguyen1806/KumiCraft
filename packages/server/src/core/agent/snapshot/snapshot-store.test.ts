@@ -41,7 +41,7 @@ async function writeInitialFiles(): Promise<{
   await mkdir(join(projectRoot, 'node_modules'), { recursive: true });
   await mkdir(join(projectRoot, '.git'), { recursive: true });
   await mkdir(join(projectRoot, 'dist'), { recursive: true });
-  await mkdir(join(projectRoot, '.reactcraft'), { recursive: true });
+  await mkdir(join(projectRoot, '.kumicraft'), { recursive: true });
   await mkdir(join(projectRoot, 'tmp'), { recursive: true });
 
   const appContent = Array.from({ length: 10 }, (_, i) => 'line' + String(i + 1)).join('\n') + '\n';
@@ -55,7 +55,7 @@ async function writeInitialFiles(): Promise<{
   await writeFile(join(projectRoot, 'node_modules/x.js'), 'module');
   await writeFile(join(projectRoot, '.git/HEAD'), 'ref: refs/heads/main');
   await writeFile(join(projectRoot, 'dist/a.js'), 'bundle');
-  await writeFile(join(projectRoot, '.reactcraft/workspace.json'), '{}');
+  await writeFile(join(projectRoot, '.kumicraft/workspace.json'), '{}');
   await writeFile(join(projectRoot, '.env'), 'SECRET=key');
   await writeFile(join(projectRoot, '.gitignore'), 'tmp/\n');
   await writeFile(join(projectRoot, 'tmp/t.txt'), 'temp');

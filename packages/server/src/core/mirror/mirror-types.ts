@@ -1,5 +1,5 @@
 // Mirror types and limits (ADR-BE-34, R-MR-01 to R-MR-04, S-120 to S-125).
-import type { BackendInfo } from '@reactcraft/shared';
+import type { BackendInfo } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { LoggerPort } from '../ports/logger-port.ts';
