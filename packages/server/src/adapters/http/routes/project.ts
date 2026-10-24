@@ -26,14 +26,17 @@ import { listProjectComponents } from '../../../core/project/components-list.ts'
 import { listPublicImages } from '../../../core/project/images.ts';
 import type { ProjectService } from '../../../core/project/project-service.ts';
 import type { SessionInfo } from '../../../core/shared/session.ts';
+import type { ConfigStore } from '../../../core/shared/user-config.ts';
 import type { UsageCounter } from '../../../core/source-editor/component-usages.ts';
 import { sendError } from '../send-error.ts';
+import { registerRecentProjectRoutes } from './project-recent.ts';
 
 export type ProjectRoutesDeps = {
   readonly projectService: ProjectService;
   readonly getSessionInfo: () => SessionInfo;
   readonly fs?: FileSystemPort | undefined;
   readonly usageCounter?: UsageCounter | undefined;
+  readonly recents?: Pick<ConfigStore, 'recentProjects'> | undefined;
 };
 
 const OpenSchema = z.strictObject({ path: z.string().min(1) });
@@ -343,6 +346,7 @@ function registerThemeRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): voi
 
 export function registerProjectRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
   registerOpenCreateRoutes(api, deps);
+  registerRecentProjectRoutes(api, deps);
   registerStateRoutes(api, deps);
   registerOpsRoutes(api, deps);
   registerCodeInfoRoutes(api, deps);

@@ -21,7 +21,8 @@
   "noProject": {
     "title": "No project is open",
     "body": "ReactCraft opens the project in the folder where you started it. This folder has no ReactCraft project yet (.reactcraft/workspace.json).",
-    "folder": "Folder"
+    "folder": "Folder",
+    "recent": "Open a recent project"
   },
   "projectError": {
     "title": "Cannot open the project",

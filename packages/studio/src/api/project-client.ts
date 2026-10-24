@@ -25,6 +25,8 @@ import {
   type ProjectProbe,
   ProjectProbeSchema,
   type PromoteDraft,
+  type RecentProject,
+  RecentProjectsSchema,
   type RenameDraft,
   type RenamePage,
   type SessionInfo,
@@ -51,6 +53,11 @@ export async function probeProject(path: string): Promise<ProjectProbe> {
     ProjectProbeSchema,
     await apiGet(`project/probe?path=${encodeURIComponent(path)}`),
   );
+}
+
+/** R-PJ-25: projects opened before that still exist, newest first. */
+export async function fetchRecentProjects(): Promise<readonly RecentProject[]> {
+  return parseResponse(RecentProjectsSchema, await apiGet('project/recent'));
 }
 
 export async function openProject(path: string): Promise<ProjectInfo> {

@@ -1,7 +1,9 @@
 // User configuration (ADR-BE-24, SPEC-03 section 5.2): `config.json` in the user's config folder.
 // Holds the interface language, the editor and package manager the user prefers, the agent choice
-// and the trusted projects (S-82: never stored in the project, so a project cannot trust itself).
+// the trusted projects (S-82: never stored in the project, so a project cannot trust itself) and
+// the projects opened recently (R-PJ-25).
 // No API key, ever (V-108).
+import { type RecentProject, RecentProjectsSchema } from '@reactcraft/shared';
 import { z } from 'zod';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
@@ -38,6 +40,7 @@ const UserConfigSchema = z.object({
   packageManager: PackageManagerSchema.optional(),
   agent: z.object({ preferred: AgentChoiceSchema.default('auto') }).default({ preferred: 'auto' }),
   trustedProjects: z.array(TrustedProjectSchema).default([]),
+  recentProjects: RecentProjectsSchema.default([]),
 });
 type UserConfig = z.infer<typeof UserConfigSchema>;
 
@@ -71,7 +74,12 @@ export type ConfigStore = {
   updateSettings(patch: SettingsPatch): Promise<Result<Settings>>;
   isTrusted(key: TrustKey): boolean;
   setTrusted(key: TrustKey, trusted: boolean): Promise<Result<void>>;
+  /** R-PJ-25: projects opened before, newest first. */
+  recentProjects(): readonly RecentProject[];
+  rememberProject(path: string, name: string): Promise<Result<void>>;
 };
+
+export const MAX_RECENT_PROJECTS = 8;
 
 const defaults = (): UserConfig => UserConfigSchema.parse({});
 
@@ -137,6 +145,12 @@ export async function createConfigStore(deps: ConfigStoreDeps): Promise<ConfigSt
       const others = config.trustedProjects.filter((entry) => !isSameProject(entry, key));
       const entry = { id: key.id, path: key.path, links: key.links };
       return save({ ...config, trustedProjects: trusted ? [...others, entry] : others });
+    },
+    recentProjects: () => config.recentProjects,
+    async rememberProject(path, name) {
+      const others = config.recentProjects.filter((entry) => !samePath(entry.path, path));
+      const entry = { path, name, openedAt: new Date().toISOString() };
+      return save({ ...config, recentProjects: [entry, ...others].slice(0, MAX_RECENT_PROJECTS) });
     },
   };
 }

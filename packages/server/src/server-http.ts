@@ -63,6 +63,7 @@ function buildRouteConfigs(
       getSessionInfo,
       fs: ctx.fs,
       usageCounter: ctx.usageCounter,
+      recents: ctx.configStore,
     },
     runnerRoutes: { runnerService: ctx.runnerService },
     fsRoutes: { fs: ctx.fs, platform: ctx.platform, homeDir: ctx.homeDir },

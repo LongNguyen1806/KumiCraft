@@ -21,7 +21,8 @@
   "noProject": {
     "title": "Chưa mở dự án nào",
     "body": "ReactCraft mở dự án trong thư mục bạn chạy lệnh. Thư mục này chưa có dự án ReactCraft (.reactcraft/workspace.json).",
-    "folder": "Thư mục"
+    "folder": "Thư mục",
+    "recent": "Mở lại dự án gần đây"
   },
   "projectError": {
     "title": "Không mở được dự án",

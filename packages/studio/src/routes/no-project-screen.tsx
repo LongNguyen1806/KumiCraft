@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ProjectDialog } from '../features/project/project-dialog.tsx';
+import { RecentProjects } from '../features/project/recent-projects.tsx';
 import { TopBar } from '../features/shell/top-bar.tsx';
 
 type NoProjectScreenProps = {
@@ -47,6 +48,7 @@ export function NoProjectScreen({ version, suggestedPath, onProjectOpened }: NoP
         >
           {t('project.button')}
         </button>
+        <RecentProjects onOpened={() => onProjectOpened?.()} />
       </main>
 
       <ProjectDialog

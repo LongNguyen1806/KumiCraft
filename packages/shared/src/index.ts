@@ -255,6 +255,7 @@ export {
   type UnsupportedReason,
   UnsupportedReasonSchema,
 } from './project.ts';
+export * from './recent-project.ts';
 export { type RelPath, relPathProblem, RelPathSchema } from './rel-path.ts';
 export {
   bandOf,

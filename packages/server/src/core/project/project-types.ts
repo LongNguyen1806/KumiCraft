@@ -53,6 +53,8 @@ export type ProjectServiceDeps = {
   readonly system: SystemPort;
   readonly process: ProcessPort;
   readonly config: Pick<ConfigStore, 'isTrusted' | 'setTrusted' | 'settings'>;
+  /** R-PJ-25: every opened project goes to the user's recent list. */
+  readonly recents?: Pick<ConfigStore, 'rememberProject'> | undefined;
   readonly logger: LoggerPort;
   readonly eventBus?: EventBusPort | undefined;
   readonly port: number;

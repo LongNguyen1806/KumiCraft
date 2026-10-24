@@ -129,6 +129,10 @@ class ProjectServiceImpl implements ProjectService {
       return fileRes;
     }
     const info = await this.finishOpen(root, fileRes.value, support);
+    const remembered = await this.deps.recents?.rememberProject(root, info.name);
+    if (remembered?.ok === false) {
+      this.deps.logger.warn({ code: remembered.error.code }, 'cannot remember the recent project');
+    }
     return ok(info);
   }
 

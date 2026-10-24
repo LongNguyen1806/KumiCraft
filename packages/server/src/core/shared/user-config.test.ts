@@ -119,3 +119,20 @@ describe('createConfigStore', () => {
     expect(text).not.toContain('trustedWorkspaces');
   });
 });
+
+describe('recent projects [R-PJ-25]', () => {
+  it('puts the last opened project first, without duplicates, at most 8, and keeps them across runs', async () => {
+    const config = await store();
+    for (let i = 0; i < 9; i++) {
+      expect((await config.rememberProject(join(dir, `p${String(i)}`), `P${String(i)}`)).ok).toBe(
+        true,
+      );
+    }
+    await config.rememberProject(join(dir, 'p5'), 'P5 again');
+
+    const again = await store();
+    const list = again.recentProjects();
+    expect(list.map((r) => r.name)).toEqual(['P5 again', 'P8', 'P7', 'P6', 'P4', 'P3', 'P2', 'P1']);
+    expect(list[0]?.path).toBe(join(dir, 'p5'));
+  });
+});

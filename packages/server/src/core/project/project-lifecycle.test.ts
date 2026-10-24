@@ -130,6 +130,37 @@ describe('opening a project', () => {
     expect(await readFile(join(dir, '.reactcraft', '.gitignore'), 'utf8')).toBe('lock\ncache/\n');
   });
 
+  it('puts every opened project in the recent list with its name [R-PJ-25]', async () => {
+    await writeSupportedProject(dir);
+    await writeWorkspace();
+    const remembered: string[] = [];
+    const project = createProjectService({
+      fs: nodeFs,
+      system: fakeSystem(1, new Set([1])),
+      process: {
+        spawn: () => ({
+          onLine: () => undefined,
+          wait: () => new Promise(() => undefined),
+          kill: () => Promise.resolve(),
+        }),
+      },
+      config,
+      recents: {
+        rememberProject: (path, name) => {
+          remembered.push(`${name}|${path}`);
+          return Promise.resolve(ok(undefined));
+        },
+      },
+      logger: silentLogger,
+      port: 5490,
+      platform,
+      templateDir: dir,
+    });
+
+    expect((await project.open(dir)).ok).toBe(true);
+    expect(remembered).toEqual([`Shop|${dir}`]);
+  });
+
   it('opens untrusted at first, locks the project and runs nothing [S-80, S-81, R-PJ-15]', async () => {
     await writeSupportedProject(dir);
     await writeWorkspace();

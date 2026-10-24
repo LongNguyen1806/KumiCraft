@@ -170,6 +170,11 @@ function resolveCorePorts(options: StartServerOptions, platform: Platform) {
   };
 }
 
+/** The user config serves the settings, the trusted projects and the recent list (R-PJ-25). */
+function configDeps(configStore: ConfigStore) {
+  return { config: configStore, recents: configStore };
+}
+
 /** Service options the CLI does not pass: test agent commands and the Prettier child (M-FM). */
 function childScriptDeps(options: StartServerOptions) {
   return {
@@ -196,7 +201,7 @@ async function initServerContext(
       fs,
       system,
       process: processPort,
-      config: configStore,
+      ...configDeps(configStore),
       logger,
       eventBus,
       port: options.port,
