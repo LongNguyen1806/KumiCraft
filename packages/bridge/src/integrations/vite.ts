@@ -60,6 +60,12 @@ export function createKumiCraftBridgePlugin(options: BridgePluginOptions) {
     apply: 'serve' as const,
     enforce: 'pre' as const,
 
+    // R-ST-04: CSS source maps let the server map a rule the browser applies back to the exact
+    // line of the `.scss`/`.less`/`.css` file (partials and nesting included), not a guess.
+    config() {
+      return { css: { devSourcemap: true } };
+    },
+
     // R-BR-02, VG-15: run before every other transform. With Vite 7, @vitejs/plugin-react (also
     // `enforce: 'pre'`, listed first by the project's config) prepends the Fast Refresh preamble;
     // reading that code would put every `data-rc-loc` some 19 lines off the file on disk.

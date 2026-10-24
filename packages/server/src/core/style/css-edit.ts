@@ -10,6 +10,7 @@ import {
   parseStylesheet,
   type RuleKey,
 } from './css-locate.ts';
+import { containerAt } from './source-map.ts';
 
 export type CssDeclaration = { readonly property: string; readonly value: string };
 
@@ -144,6 +145,24 @@ export function setRuleDeclaration(
   const rule = findRule(root.value, key);
   if (rule === undefined) return err({ code: 'E016', params: { reason: 'ruleNotFound' } });
   return applyDeclarationToRule(css, rule, property, value, file);
+}
+
+/**
+ * R-ST-06 `target: 'rule'` through a source map: sets (or removes) `property` in the block that
+ * holds the declaration (or starts) at `at`, a nested `@media` of a Sass rule included.
+ */
+export function setDeclarationAtAnchor(
+  css: string,
+  at: { readonly line: number; readonly column: number },
+  property: string,
+  value: string | undefined,
+  file?: string,
+): Result<string> {
+  const root = parse(css, file);
+  if (!root.ok) return root;
+  const block = containerAt(root.value, at);
+  if (block === undefined) return err({ code: 'E016', params: { reason: 'ruleNotFound' } });
+  return applyDeclarationToRule(css, block, property, value, file);
 }
 
 /**

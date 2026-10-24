@@ -7,6 +7,7 @@ import {
 import type { FastifyInstance } from 'fastify';
 
 import type { HistoryService } from '../../../core/history/history-service.ts';
+import type { CompiledCssPort } from '../../../core/ports/compiled-css-port.ts';
 import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
 import type { ProjectService } from '../../../core/project/project-service.ts';
 import type { SourceEditorService } from '../../../core/source-editor/source-editor-service.ts';
@@ -20,6 +21,8 @@ export type StyleRoutesDeps = {
   readonly fs: FileSystemPort;
   readonly sourceEditorService: Pick<SourceEditorService, 'getElement' | 'applyEdit'>;
   readonly historyService: Pick<HistoryService, 'push' | 'recordInternalWrite'>;
+  /** The dev server's compiled stylesheets, for exact source-map lookups (R-ST-04). */
+  readonly compiledCss?: CompiledCssPort | undefined;
 };
 
 export function registerStyleRoutes(api: FastifyInstance, deps: StyleRoutesDeps): void {
@@ -51,6 +54,7 @@ export function registerStyleRoutes(api: FastifyInstance, deps: StyleRoutesDeps)
         fs: deps.fs,
         sourceEditor: deps.sourceEditorService,
         styling: project.value.support.styling,
+        compiledCss: deps.compiledCss,
       },
       project.value.root,
       parsed.data,

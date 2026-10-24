@@ -2,7 +2,7 @@
 import { splitSelectorList } from '@kumicraft/shared';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { answerStyleProbe, selectorSpecificity } from './style-probe.ts';
+import { answerStyleProbe, compareLayers, selectorSpecificity } from './style-probe.ts';
 
 describe('style-probe [R-ST-04]', () => {
   afterEach(() => {
@@ -87,6 +87,16 @@ describe('style-probe [R-ST-04]', () => {
       inline: [],
       computed: {},
     });
+  });
+
+  it('ranks cascade layers: unlayered over layered, later layer over earlier, nested by level [R-ST-04]', () => {
+    expect(compareLayers([], [0])).toBeGreaterThan(0);
+    expect(compareLayers([1], [0])).toBeGreaterThan(0);
+    expect(compareLayers([0, 2], [0, 1])).toBeGreaterThan(0);
+    // A layer's own rules win over its sub-layers.
+    expect(compareLayers([0], [0, 1])).toBeGreaterThan(0);
+    expect(compareLayers([0, 1], [0, 1])).toBe(0);
+    // happy-dom drops @layer blocks, so the real cascade is checked in e2e/style-layer.e2e.ts.
   });
 
   it('orders :hover rule first and sets computed.color to red when state is hover [R-ST-09]', () => {

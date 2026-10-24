@@ -21,6 +21,11 @@ describe('createKumiCraftBridgePlugin', () => {
     expect(plugin.transform.order).toBe('pre');
   });
 
+  it('turns on CSS dev source maps so rules map back to their source line [R-ST-04]', () => {
+    const plugin = createKumiCraftBridgePlugin(options);
+    expect(plugin.config()).toEqual({ css: { devSourcemap: true } });
+  });
+
   it('transforms JSX files in sourceDir [R-BR-02]', () => {
     const plugin = createKumiCraftBridgePlugin(options);
     const code = 'export function App() { return <div>Hello</div>; }';

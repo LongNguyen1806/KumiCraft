@@ -70,6 +70,20 @@ function isKeyframes(name: string): boolean {
 }
 
 /**
+ * Whether `node` is (or sits in) a Sass mixin, function, loop or condition, or a Less mixin
+ * definition: one edit there changes every place that uses it, so it is never edited in place.
+ */
+export function isInsideGenerator(node: Container): boolean {
+  let curr: Container['parent'] | Container = node;
+  while (curr !== undefined && curr.type !== 'root' && curr.type !== 'document') {
+    if (isAtRule(curr) && FORBIDDEN_ATRULES.has(curr.name.toLowerCase())) return true;
+    if (isRule(curr) && isForbiddenSelector(curr.selector)) return true;
+    curr = curr.parent;
+  }
+  return false;
+}
+
+/**
  * Resolves nested selectors for SCSS/Less rules, cross-multiplying parent & child selector lists.
  * Returns undefined if inside mixins, loops, or has interpolations #{} / @{}.
  */

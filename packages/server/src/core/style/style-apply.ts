@@ -14,6 +14,7 @@ import {
 } from '@kumicraft/shared';
 import { customAlphabet } from 'nanoid';
 
+import type { CompiledCssPort } from '../ports/compiled-css-port.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { parseJsxAst } from '../source-editor/ast-helpers.ts';
 import { computeSha256 } from '../source-editor/source-editor-lookup.ts';
@@ -21,11 +22,13 @@ import type { SourceEditorService, WrittenFile } from '../source-editor/source-e
 import { findImportInsertPosition } from '../source-editor/structure/imports.ts';
 import {
   hasStateInSelector,
+  setDeclarationAtAnchor,
   setRuleDeclaration,
   upsertRuleDeclaration,
   withStateSelector,
 } from './css-edit.ts';
 import { findRuleSource } from './css-locate.ts';
+import { locateBySourceMap } from './mapped-source.ts';
 import { tryApplyBootstrapChange } from './style-apply-bootstrap.ts';
 import { applyModulesChange, isModulesApplicable } from './style-apply-modules.ts';
 import { primarySystem, projectFileOf, winnerFor } from './style-service.ts';
@@ -39,6 +42,7 @@ export type StyleApplyDeps = {
   readonly sourceEditor: Pick<SourceEditorService, 'getElement' | 'applyEdit'>;
   readonly newId?: (() => string) | undefined;
   readonly styling?: StylingReport | undefined;
+  readonly compiledCss?: CompiledCssPort | undefined;
 };
 
 export type StyleApplied = {
@@ -46,7 +50,12 @@ export type StyleApplied = {
   readonly className?: string | undefined;
 };
 
-type ProjectRule = { readonly rule: MatchedRule; readonly file: string };
+type ProjectRule = {
+  readonly rule: MatchedRule;
+  readonly file: string;
+  /** Where the source map puts the rule's declaration in `file`; absent without a map. */
+  readonly anchor?: { readonly line: number; readonly column: number } | undefined;
+};
 
 function projectRule(root: string, rule: MatchedRule | undefined): ProjectRule | undefined {
   if (rule?.sheet.kind !== 'module' || /\.module\.\w+$/.test(rule.sheet.id.split('?')[0] ?? '')) {
@@ -56,18 +65,29 @@ function projectRule(root: string, rule: MatchedRule | undefined): ProjectRule |
   return file === undefined ? undefined : { rule, file };
 }
 
+/**
+ * The project file and place of the winning rule: through the dev server's source map when there
+ * is one (exact, partials and nesting included), else by selector. `generated` when the rule comes
+ * from a mixin, function or loop, which one edit cannot change for this rule alone.
+ */
 async function resolveProjectRule(
-  fs: FileSystemPort,
+  deps: StyleApplyDeps,
   root: string,
   rule: MatchedRule | undefined,
-): Promise<ProjectRule | undefined> {
+  longhand: string,
+): Promise<ProjectRule | 'generated' | undefined> {
   const base = projectRule(root, rule);
   if (base === undefined) return undefined;
+  const mapped = await locateBySourceMap(deps, root, base.rule, longhand);
+  if (mapped?.kind === 'external') return undefined;
+  if (mapped?.kind === 'project') {
+    return mapped.editable
+      ? { rule: base.rule, file: mapped.file, anchor: mapped.anchor }
+      : 'generated';
+  }
   if (/\.(scss|sass|less)$/.test(base.file)) {
-    const src = await findRuleSource(fs, root, base.file, base.rule);
-    if (src !== undefined) {
-      return { rule: base.rule, file: src.file };
-    }
+    const src = await findRuleSource(deps.fs, root, base.file, base.rule);
+    if (src !== undefined) return { rule: base.rule, file: src.file };
   }
   return base;
 }
@@ -118,7 +138,9 @@ async function applyToRule(
   const targetSelector =
     state === undefined ? target.rule.selector : withStateSelector(target.rule.selector, state);
   const next = inPlace
-    ? setRuleDeclaration(css.value, target.rule, longhand, value, target.file)
+    ? target.anchor === undefined
+      ? setRuleDeclaration(css.value, target.rule, longhand, value, target.file)
+      : setDeclarationAtAnchor(css.value, target.anchor, longhand, value, target.file)
     : upsertRuleDeclaration(
         css.value,
         targetSelector,
@@ -316,8 +338,14 @@ export async function applyStyleChange(
   if (await isModulesApplicable(deps, root, request, winnerRule)) {
     return applyModulesChange(deps, root, request, longhand, winnerRule);
   }
-  const target =
-    winner.kind === 'rule' ? await resolveProjectRule(deps.fs, root, winner.rule) : undefined;
+  const resolved =
+    winner.kind === 'rule'
+      ? await resolveProjectRule(deps, root, winner.rule, longhand)
+      : undefined;
+  if (resolved === 'generated' && request.change.target === 'rule') {
+    return err({ code: 'E016', params: { reason: 'expression' } });
+  }
+  const target = resolved === 'generated' ? undefined : resolved;
   const toProjectRule = request.change.target === 'rule' && target !== undefined;
   // "All N elements" of a rule the project owns stays a CSS edit; a utility class only changes
   // this one element (R-ST-07, R-ST-10).

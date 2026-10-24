@@ -17,6 +17,8 @@ type Specificity = readonly [number, number, number];
 
 type Candidate = {
   readonly rule: Omit<MatchedRule, 'affects'>;
+  /** Cascade layer of the rule, outermost first, as the order index of each layer (CSS Cascade 5). */
+  readonly layer: readonly number[];
   readonly specificity: Specificity;
   /** Document order of the rule across all sheets: a later rule wins a tie. */
   readonly position: number;
@@ -133,12 +135,19 @@ type WalkState = {
   /** Rules seen so far per `selector|media`, matched or not, so `occurrence` counts as in the file. */
   readonly seen: Map<string, number>;
   readonly out: Candidate[];
+  /** Order of every layer name met so far in the document, first declaration first. */
+  readonly layers: Map<string, number>;
   position: number;
   /** 0-based index of CSSStyleRule within its stylesheet (R-ST-08). */
   ruleIndex: number;
 };
 
-function visitStyleRule(state: WalkState, rule: CSSStyleRule, media: readonly string[]): void {
+function visitStyleRule(
+  state: WalkState,
+  rule: CSSStyleRule,
+  media: readonly string[],
+  layer: readonly string[],
+): void {
   const key = `${rule.selectorText}|${media.join('|')}`;
   const occurrence = state.seen.get(key) ?? 0;
   state.seen.set(key, occurrence + 1);
@@ -158,6 +167,7 @@ function visitStyleRule(state: WalkState, rule: CSSStyleRule, media: readonly st
       ruleIndex,
       declarations,
     },
+    layer: layer.map((name) => state.layers.get(name) ?? 0),
     specificity,
     position: state.position,
   });
@@ -171,25 +181,74 @@ function countUnmatched(state: WalkState, selector: string, media: readonly stri
   state.position++;
 }
 
+/** Registers a layer by its full dotted name (`a.b` also registers `a`) and returns that name. */
+function registerLayer(state: WalkState, parent: readonly string[], name: string): string {
+  let full = parent.at(-1) ?? '';
+  for (const part of name.split('.')) {
+    full = full === '' ? part : `${full}.${part}`;
+    if (!state.layers.has(full)) state.layers.set(full, state.layers.size);
+  }
+  return full;
+}
+
+/** `@layer a, b;` and `@layer x { }`; anonymous blocks get a name of their own. */
+function layerOf(
+  rule: CSSRule,
+): { readonly names: readonly string[]; readonly block: boolean } | undefined {
+  if (!rule.cssText.trimStart().startsWith('@layer')) return undefined;
+  if ('nameList' in rule && Array.isArray(rule.nameList)) {
+    return { names: rule.nameList.map(String), block: false };
+  }
+  const name = 'name' in rule && typeof rule.name === 'string' ? rule.name : '';
+  return { names: [name], block: true };
+}
+
 function walkRules(
   state: WalkState,
   rules: CSSRuleList,
   media: readonly string[],
   applies: boolean,
+  layer: readonly string[] = [],
 ): void {
   for (const rule of Array.from(rules)) {
+    const declared = layerOf(rule);
     if (rule instanceof CSSStyleRule) {
-      if (applies) visitStyleRule(state, rule, media);
+      if (applies) visitStyleRule(state, rule, media, layer);
       else countUnmatched(state, rule.selectorText, media);
     } else if (rule instanceof CSSMediaRule) {
       const condition = rule.media.mediaText;
       const matches = applies && state.view.matchMedia(condition).matches;
-      walkRules(state, rule.cssRules, [...media, condition], matches);
+      walkRules(state, rule.cssRules, [...media, condition], matches, layer);
+    } else if (declared !== undefined && !declared.block) {
+      for (const name of declared.names) registerLayer(state, layer, name);
+    } else if (declared !== undefined && rule instanceof CSSGroupingRule) {
+      const name = declared.names[0] || ` anonymous-${String(state.layers.size)}`;
+      walkRules(state, rule.cssRules, media, applies, [
+        ...layer,
+        registerLayer(state, layer, name),
+      ]);
     } else if (rule instanceof CSSGroupingRule) {
-      // @supports, @layer, @container: their rules count as in the parent block.
-      walkRules(state, rule.cssRules, media, applies);
+      // @supports, @container: their rules count as in the parent block.
+      walkRules(state, rule.cssRules, media, applies, layer);
     }
   }
+}
+
+/**
+ * CSS Cascade 5 for normal declarations: at the first level where two rules differ, a rule
+ * outside any layer wins over a layered one, and a later layer wins over an earlier one.
+ * (Layered `!important` reverses this; the server picks important winners on its own.)
+ */
+export function compareLayers(x: readonly number[], y: readonly number[]): number {
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    const a = x[i];
+    const b = y[i];
+    if (a === b) continue;
+    if (a === undefined) return 1;
+    if (b === undefined) return -1;
+    return a - b;
+  }
+  return 0;
 }
 
 function countMatches(doc: Document, selector: string, state?: StyleState): number {
@@ -224,6 +283,15 @@ function computedForProperty(
   return computed.getPropertyValue(property).trim();
 }
 
+/** Cascade order, winner first: layer, then specificity, then the later rule. */
+function winnerFirst(x: Candidate, y: Candidate): number {
+  return (
+    compareLayers(y.layer, x.layer) ||
+    compare(y.specificity, x.specificity) ||
+    y.position - x.position
+  );
+}
+
 /** R-ST-04: every page rule that declares one of `properties` for `el`, the cascade winner first. */
 export function probeStyles(
   el: Element,
@@ -233,6 +301,7 @@ export function probeStyles(
   const doc = el.ownerDocument;
   const view = doc.defaultView ?? window;
   const out: Candidate[] = [];
+  const layers = new Map<string, number>();
   let position = 0;
   for (const sheet of Array.from(doc.styleSheets)) {
     let rules: CSSRuleList;
@@ -249,13 +318,14 @@ export function probeStyles(
       targetState,
       seen: new Map(),
       out,
+      layers,
       position,
       ruleIndex: 0,
     };
     walkRules(state, rules, [], true);
     position = state.position;
   }
-  out.sort((x, y) => compare(y.specificity, x.specificity) || y.position - x.position);
+  out.sort(winnerFirst);
   const computed = view.getComputedStyle(el);
   const style =
     el instanceof view.HTMLElement || el instanceof view.SVGElement ? el.style : undefined;

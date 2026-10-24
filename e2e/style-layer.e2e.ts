@@ -113,6 +113,55 @@ test('plain CSS: the Inspector shows the winning file:line and the shared rule, 
   await expect(padding).toContainText('src/components/Card.css:2');
 });
 
+test('source maps: a rule of a file pulled in by @import shows and edits that file [R-ST-04, R-ST-06]', async ({
+  page,
+}) => {
+  // Vite inlines `@import` into index.css; only the source map knows the rule is in extra.css.
+  const indexCss = join(folder.path, 'src', 'index.css');
+  const extraCss = join(folder.path, 'src', 'extra.css');
+  const extra = '.lead {\n  font-weight: 600;\n}\n';
+  await writeFile(extraCss, extra);
+  await writeFile(indexCss, `@import './extra.css';\n${await readFile(indexCss, 'utf8')}`);
+  await openProject(page);
+
+  await page
+    .getByRole('treeitem', { name: /^p lead/ })
+    .first()
+    .click();
+  await expect(page.getByTestId('style-source-fontWeight')).toContainText('src/extra.css:2');
+  const fontWeight = page.getByTestId('style-input-fontWeight');
+  await fontWeight.fill('700');
+  await fontWeight.press('Enter');
+  await expect
+    .poll(() => readFile(extraCss, 'utf8'))
+    .toBe(extra.replace('font-weight: 600;', 'font-weight: 700;'));
+});
+
+test('cascade layers: an unlayered rule wins over a more specific layered one [VG-19, R-ST-04]', async ({
+  page,
+}) => {
+  // `main p.lead` is more specific than `.lead`, but a rule outside every layer still wins.
+  const indexCss = join(folder.path, 'src', 'index.css');
+  await writeFile(
+    indexCss,
+    `${await readFile(indexCss, 'utf8')}
+@layer theme {
+  main p.lead {
+    font-size: 40px;
+  }
+}
+`,
+  );
+  await openProject(page);
+
+  await page
+    .getByRole('treeitem', { name: /^p lead/ })
+    .first()
+    .click();
+  await expect(page.getByTestId('style-input-fontSize')).toHaveValue('18px');
+  await expect(page.getByTestId('style-source-fontSize')).toContainText('src/index.css:18');
+});
+
 test('plain CSS: "all 3" changes the shared rule, "only this element" gets its own class, one Undo each [R-ST-06, R-ST-07, R-ST-15]', async ({
   page,
 }) => {

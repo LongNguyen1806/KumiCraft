@@ -2,6 +2,7 @@
 import { resolveEnabledFeatures } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 
+import { createCompiledCssReader } from './adapters/dev-server/compiled-css-reader.ts';
 import { createHttpApp } from './adapters/http/create-http-app.ts';
 import type { FileSystemPort } from './core/ports/file-system-port.ts';
 import type { ProjectService } from './core/project/project-service.ts';
@@ -51,6 +52,22 @@ function agentRouteConfigs(ctx: InitializedContext) {
   };
 }
 
+function styleRouteDeps(ctx: InitializedContext) {
+  // The Canvas dev server serves compiled stylesheets with their source maps (R-ST-04).
+  const compiledCss = createCompiledCssReader(() => {
+    const status = ctx.runnerService.getStatus();
+    return status.state === 'ready' ? status.origin : undefined;
+  });
+  return {
+    styleService: createStyleService({ fs: ctx.fs, compiledCss }),
+    projectService: ctx.projectService,
+    fs: ctx.fs,
+    sourceEditorService: ctx.sourceEditorService,
+    historyService: ctx.historyService,
+    compiledCss,
+  };
+}
+
 function buildRouteConfigs(
   ctx: InitializedContext,
   getSessionInfo: () => SessionInfo,
@@ -75,13 +92,7 @@ function buildRouteConfigs(
       getProjectRoot,
       fs: ctx.fs,
     },
-    styleRoutes: {
-      styleService: createStyleService({ fs: ctx.fs }),
-      projectService: ctx.projectService,
-      fs: ctx.fs,
-      sourceEditorService: ctx.sourceEditorService,
-      historyService: ctx.historyService,
-    },
+    styleRoutes: styleRouteDeps(ctx),
     jobRoutes: { jobService: ctx.jobService },
     ...agentRouteConfigs(ctx),
     historyRoutes: {

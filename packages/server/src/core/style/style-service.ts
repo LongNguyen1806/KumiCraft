@@ -1,11 +1,8 @@
 // Style layer service: where each style property of an element comes from (SPEC-04 M-ST, R-ST-02 to R-ST-05).
-import { isAbsolute, relative, resolve } from 'node:path';
-
 import {
   type BridgeStyleProbePayload,
   CSS_LONGHAND_OF,
   type MatchedRule,
-  relPathProblem,
   type StyleProperty,
   type StyleReading,
   type StyleSource,
@@ -13,9 +10,14 @@ import {
   type StylingReport,
 } from '@kumicraft/shared';
 
+import type { CompiledCssPort } from '../ports/compiled-css-port.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { parseUtility } from './bootstrap-utilities.ts';
 import { findRuleSource, locateRule, locateRuleByIndex } from './css-locate.ts';
+import { type CompiledCache, locateBySourceMap } from './mapped-source.ts';
+import { projectFileOf } from './project-file.ts';
+
+export { projectFileOf };
 
 const MAX_CSS_BYTES = 2 * 1024 * 1024;
 
@@ -49,15 +51,6 @@ function systemOfFile(file: string): StyleSystemId {
   if (/\.(scss|sass)$/.test(file)) return 'sass';
   if (file.endsWith('.less')) return 'less';
   return 'css';
-}
-
-/** A Vite module id (`D:/app/src/Card.css?used`) as a path of the project, or undefined outside it. */
-export function projectFileOf(root: string, id: string): string | undefined {
-  const path = id.split('?')[0] ?? id;
-  if (!isAbsolute(path)) return undefined;
-  const rel = relative(resolve(root), resolve(path)).replaceAll('\\', '/');
-  if (relPathProblem(rel) !== undefined || rel.startsWith('node_modules/')) return undefined;
-  return rel;
 }
 
 type Winner =
@@ -154,14 +147,49 @@ async function resolvePartialRule(
 }
 
 /** Where a winning rule lives: a line of a project file, or a sheet the project does not own. */
-async function ruleSource(
-  fs: FileSystemPort,
-  root: string,
+type ReadContext = {
+  readonly fs: FileSystemPort;
+  readonly compiledCss?: CompiledCssPort | undefined;
+  readonly root: string;
+  readonly primary: StyleSystemId | undefined;
+  /** Source files read so far in this reading. */
+  readonly cache: Map<string, string | undefined>;
+  readonly compiled: CompiledCache;
+};
+
+type RuleSource = { source: StyleSource; editable: boolean; reason?: StyleProperty['reason'] };
+
+/** The rule's source through the dev server's source map; undefined when there is no map. */
+async function mappedRuleSource(
+  ctx: ReadContext,
   rule: MatchedRule,
   longhand: string,
-  cache: Map<string, string | undefined>,
-  primary: StyleSystemId | undefined,
-): Promise<{ source: StyleSource; editable: boolean; reason?: StyleProperty['reason'] }> {
+): Promise<RuleSource | undefined> {
+  const mapped = await locateBySourceMap(ctx, ctx.root, rule, longhand, ctx.compiled);
+  if (mapped === undefined) return undefined;
+  if (mapped.kind === 'external') {
+    return { source: { kind: 'external', href: mapped.href }, editable: false, reason: 'external' };
+  }
+  const source: StyleSource = {
+    kind: 'rule',
+    system: systemOfFile(mapped.file),
+    file: mapped.file,
+    line: mapped.anchor.line,
+    selector: rule.selector,
+    affects: rule.affects,
+    ...(rule.media.length === 0 ? {} : { media: rule.media.join(' and ') }),
+  };
+  return mapped.editable
+    ? { source, editable: true }
+    : { source, editable: false, reason: 'expression' };
+}
+
+async function ruleSource(
+  ctx: ReadContext,
+  rule: MatchedRule,
+  longhand: string,
+): Promise<RuleSource> {
+  const { fs, root, cache, primary } = ctx;
   if (rule.sheet.kind !== 'module') {
     const href = rule.sheet.kind === 'link' ? rule.sheet.href : '';
     return externalRuleSource(rule, href, primary);
@@ -170,6 +198,8 @@ async function ruleSource(
   if (file === undefined) {
     return externalRuleSource(rule, rule.sheet.id, primary);
   }
+  const mapped = await mappedRuleSource(ctx, rule, longhand);
+  if (mapped !== undefined) return mapped;
   if (!cache.has(file)) {
     const read = await fs.readText(root, file, { maxBytes: MAX_CSS_BYTES });
     cache.set(file, read.ok ? read.value : undefined);
@@ -203,11 +233,21 @@ async function ruleSource(
   return { source, editable: true };
 }
 
-export function createStyleService(deps: { readonly fs: FileSystemPort }): StyleService {
+export function createStyleService(deps: {
+  readonly fs: FileSystemPort;
+  readonly compiledCss?: CompiledCssPort | undefined;
+}): StyleService {
   return {
     async read(project, probe) {
       const primary = primarySystem(project.styling);
-      const cache = new Map<string, string | undefined>();
+      const ctx: ReadContext = {
+        fs: deps.fs,
+        compiledCss: deps.compiledCss,
+        root: project.root,
+        primary,
+        cache: new Map(),
+        compiled: new Map(),
+      };
       const properties: StyleProperty[] = [];
       for (const [id, longhand] of Object.entries(CSS_LONGHAND_OF)) {
         const css = probe.computed[longhand];
@@ -228,7 +268,7 @@ export function createStyleService(deps: { readonly fs: FileSystemPort }): Style
           properties.push({
             id,
             value,
-            ...(await ruleSource(deps.fs, project.root, winner.rule, longhand, cache, primary)),
+            ...(await ruleSource(ctx, winner.rule, longhand)),
           });
         }
       }
