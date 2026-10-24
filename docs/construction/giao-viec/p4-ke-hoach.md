@@ -112,8 +112,8 @@ Tốn: **rất cao** (khối lớn nhất của phase; chia khoảng 6 đến 8 
 | Lượt           | Nội dung                                                                                                                      | Ai                   | Trạng thái |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------- | ---------- |
 | K2a, K2b       | Đọc + sửa CSS thường, VG-19                                                                                                   | Claude               | Xong       |
-| K2c            | CSS Modules (`p4-luot-k2c-css-modules.md`)                                                                                    | Gemini               | Đang làm   |
-| K2d            | Bootstrap 5 + `:hover`/`:focus`/`:disabled` + xem trước khi kéo (R-ST-13)                                                     | Gemini               | —          |
+| K2c            | CSS Modules (`p4-luot-k2c-css-modules.md`)                                                                                    | Gemini               | Xong       |
+| K2d            | Bootstrap 5 + `:hover`/`:focus`/`:disabled` + xem trước khi kéo (R-ST-13), `p4-luot-k2d-bootstrap-trang-thai.md`              | Gemini               | Xong       |
 | K2e            | Token/Brand mọi hệ + khối Library theo hệ chính + Tailwind 3, Sass, Less; Claude đưa Tailwind 4 vào interface chung ở lượt QA | Gemini + Claude      | —          |
 | K3             | Bộ tìm route, mẫu trang, Cài router                                                                                           | Gemini               | —          |
 | K4/K5 (2 lượt) | Tách adapter framework · React webpack/CRA, JS thuần, monorepo                                                                | Gemini               | —          |
