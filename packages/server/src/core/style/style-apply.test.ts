@@ -249,4 +249,126 @@ describe('applyStyleChange [R-ST-06, R-ST-09]', () => {
       `${CARD_CSS}\n.card.card-ab10:focus {\n  padding-top: 32px;\n}\n`,
     );
   });
+
+  it('.scss "tất cả" sửa khai báo trong rule lồng; comment // và phần còn lại giữ từng byte [R-ST-06]', async () => {
+    const scssCode = `// Header comment
+.card {
+  padding: 16px; // inner comment
+  .title {
+    font-size: 18px;
+  }
+}
+`;
+    await fs.writeFile(path.join(root, 'src/Card.scss'), scssCode);
+    const nestedRule: MatchedRule = {
+      sheet: { kind: 'module', id: path.join(root, 'src/Card.scss').replaceAll('\\', '/') },
+      selector: '.card .title',
+      media: [],
+      occurrence: 0,
+      ruleIndex: 0,
+      declarations: [{ property: 'font-size', value: '18px', important: false }],
+      affects: 3,
+    };
+
+    const res = await apply([nestedRule], {
+      property: 'fontSize',
+      value: '20px',
+      target: 'rule',
+    });
+
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+
+    const after = await read('src/Card.scss');
+    expect(after).toContain('font-size: 20px;');
+    expect(after).toContain('// Header comment');
+    expect(after).toContain('// inner comment');
+    expect(after).toContain('padding: 16px; // inner comment');
+  });
+
+  it('.less "chỉ phần tử này" → rule phẳng .card .title.title-xxxx { … } cuối card.less, JSX có class mới [R-ST-06]', async () => {
+    const lessCode = `.card {
+  padding: 16px;
+  .title {
+    color: #333;
+  }
+}
+`;
+    const lessTsx = `import './card.less';
+
+export function Card() {
+  return (
+    <article className="card">
+      <h3 className="title">Title</h3>
+    </article>
+  );
+}
+`;
+    await fs.writeFile(path.join(root, 'src/card.less'), lessCode);
+    await fs.writeFile(path.join(root, 'src/Card.tsx'), lessTsx);
+
+    const lessRule: MatchedRule = {
+      sheet: { kind: 'module', id: path.join(root, 'src/card.less').replaceAll('\\', '/') },
+      selector: '.card .title',
+      media: [],
+      occurrence: 0,
+      ruleIndex: 0,
+      declarations: [{ property: 'color', value: '#333', important: false }],
+      affects: 3,
+    };
+
+    const res = await apply(
+      [lessRule],
+      { property: 'textColor', value: 'red', target: 'element' },
+      'src/Card.tsx:6:7',
+    );
+
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+
+    expect(res.value.className).toBe('title-ab10');
+    const afterTsx = await read('src/Card.tsx');
+    expect(afterTsx).toContain('className="title title-ab10"');
+    const afterLess = await read('src/card.less');
+    expect(afterLess).toContain('.card .title.title-ab10 {\n  color: red;\n}');
+  });
+
+  it('.scss "tất cả" ở khung có media, rule thắng là @media lồng → khai báo trong khối @media lồng đổi, phần còn lại giữ từng byte [R-ST-09]', async () => {
+    const scssCode = [
+      '// Top comment',
+      '.card {',
+      '  font-size: 16px;',
+      '  @media (max-width: 640px) {',
+      '    font-size: 14px; // mobile comment',
+      '  }',
+      '}',
+      '',
+    ].join('\n');
+    await fs.writeFile(path.join(root, 'src/Card.scss'), scssCode);
+
+    const nestedMediaRule: MatchedRule = {
+      sheet: { kind: 'module', id: path.join(root, 'src/Card.scss').replaceAll('\\', '/') },
+      selector: '.card',
+      media: ['(max-width: 640px)'],
+      occurrence: 0,
+      ruleIndex: 0,
+      declarations: [{ property: 'font-size', value: '14px', important: false }],
+      affects: 1,
+    };
+
+    const res = await apply([nestedMediaRule], {
+      property: 'fontSize',
+      value: '20px',
+      target: 'rule',
+      media: '(max-width: 640px)',
+    });
+
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+
+    // Only the declaration inside the nested @media changes; every other byte stays.
+    expect(await read('src/Card.scss')).toBe(
+      scssCode.replace('font-size: 14px; // mobile', 'font-size: 20px; // mobile'),
+    );
+  });
 });

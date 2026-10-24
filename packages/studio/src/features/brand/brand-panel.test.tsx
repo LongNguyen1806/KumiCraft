@@ -151,4 +151,33 @@ describe('BrandPanel (Scenarios #13, #14, #15) [R-TH-10, R-TH-11, R-TH-12, R-TH-
       expect(editSpy).toHaveBeenCalledWith({ op: 'remove', kind: 'color', name: 'brand' });
     });
   });
+
+  it('system: "bootstrap5", token primary inherited → có nhãn mặc định, không có nút xóa, hiện variable [R-ST-11]', () => {
+    const bootstrapTheme: ThemeInfo = {
+      file: 'src/index.css',
+      system: 'bootstrap5',
+      colors: [
+        {
+          name: 'primary',
+          value: '#0d6efd',
+          variable: '--bs-primary',
+          inherited: true,
+        },
+      ],
+      fonts: [],
+      fontSizes: [],
+      radii: [],
+      shadows: [],
+      breakpoints: [],
+    };
+    useThemeStore.setState({ theme: bootstrapTheme });
+
+    render(<BrandPanel />);
+
+    expect(screen.getByTestId('brand-system-name').textContent).toContain('Bootstrap 5');
+    expect(screen.getByTestId('brand-file-path').textContent).toContain('src/index.css');
+    expect(screen.getByTestId('brand-token-variable').textContent).toBe('--bs-primary');
+    expect(screen.getByTestId('brand-inherited')).toBeDefined();
+    expect(screen.queryByTestId('brand-remove')).toBeNull();
+  });
 });

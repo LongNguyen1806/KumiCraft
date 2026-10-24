@@ -43,8 +43,8 @@ const CORE_PROPERTIES = [
   'backgroundColor',
   'borderRadius',
 ];
-/** Systems whose changes the style layer writes so far (K2b: plain CSS; K2c: CSS Modules; K2d: Bootstrap 5). */
-const WRITABLE: readonly StyleSystemId[] = ['css', 'cssModules', 'bootstrap5'];
+/** Systems whose changes the style layer writes so far (plain CSS, CSS Modules, Bootstrap 5, Sass, Less). */
+const WRITABLE: readonly StyleSystemId[] = ['css', 'cssModules', 'bootstrap5', 'sass', 'less'];
 
 function SourceText({ property }: { readonly property: StyleProperty }) {
   const { t } = useTranslation();

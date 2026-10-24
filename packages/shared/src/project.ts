@@ -5,6 +5,7 @@ import { FeatureIdSchema } from './features.ts';
 import { RelPathSchema } from './rel-path.ts';
 import { ResponsiveModeSchema } from './responsive.ts';
 import { AppErrorSchema } from './result.ts';
+import { StyleSystemIdSchema } from './style.ts';
 import {
   BackendLinkSchema,
   DesignDirsSchema,
@@ -134,11 +135,14 @@ export type ProjectInfo = z.infer<typeof ProjectInfoSchema>;
 export const ThemeTokenSchema = z.strictObject({
   name: z.string(),
   value: z.string(),
+  variable: z.string().max(100).optional(),
+  inherited: z.boolean().optional(),
 });
 export type ThemeToken = z.infer<typeof ThemeTokenSchema>;
 
 export const ThemeInfoSchema = z.strictObject({
   file: RelPathSchema.optional(),
+  system: StyleSystemIdSchema.optional(),
   colors: z.array(ThemeTokenSchema).readonly(),
   fontSizes: z.array(ThemeTokenSchema).readonly(),
   radii: z.array(ThemeTokenSchema).readonly(),

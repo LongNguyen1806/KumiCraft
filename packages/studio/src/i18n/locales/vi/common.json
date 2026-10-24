@@ -586,7 +586,16 @@
     "confirmDelete": "Xóa",
     "emptyGroup": "Chưa có token nào",
     "noThemeFile": "Dự án chưa có file CSS Tailwind",
-    "invalidName": "Tên gồm chữ thường, số, gạch ngang; bắt đầu bằng chữ (tối đa 40 ký tự)"
+    "invalidName": "Tên gồm chữ thường, số, gạch ngang; bắt đầu bằng chữ (tối đa 40 ký tự)",
+    "inherited": "Mặc định Bootstrap",
+    "system": {
+      "tailwind4": "Tailwind CSS v4",
+      "tailwind3": "Tailwind CSS v3",
+      "css": "CSS thường",
+      "sass": "Sass",
+      "less": "Less",
+      "bootstrap5": "Bootstrap 5"
+    }
   },
   "styling": {
     "css": "CSS thường",

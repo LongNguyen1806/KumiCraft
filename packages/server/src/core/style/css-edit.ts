@@ -1,13 +1,23 @@
-// Minimal text edits of a CSS file (SPEC-04 M-ST, R-ST-06, R-ST-09, QC-98): one declaration or one
+// Minimal text edits of a CSS/SCSS/Less file (SPEC-04 M-ST, R-ST-06, R-ST-09, QC-98): one declaration or one
 // new rule changes; every other byte of the file stays as it was.
 import { err, ok, type Result, splitSelectorList, type StyleState } from '@kumicraft/shared';
-import postcss, { type AtRule, type Declaration, type Root, type Rule } from 'postcss';
+import type { AtRule, Container, Declaration, Root } from 'postcss';
 
-import { findRule, findRuleByIndex, normalizeMedia, type RuleKey } from './css-locate.ts';
+import {
+  findRule,
+  findRuleByIndex,
+  normalizeMedia,
+  parseStylesheet,
+  type RuleKey,
+} from './css-locate.ts';
 
 export type CssDeclaration = { readonly property: string; readonly value: string };
 
-export function findRuleBySelector(root: Root, selector: string, media?: string): Rule | undefined {
+export function findRuleBySelector(
+  root: Root,
+  selector: string,
+  media?: string,
+): Container | undefined {
   return findRule(root, {
     selector,
     media: media === undefined ? [] : [media],
@@ -26,9 +36,9 @@ export function withStateSelector(selector: string, state: StyleState): string {
     .join(', ');
 }
 
-function parse(css: string): Result<Root> {
+function parse(css: string, file?: string): Result<Root> {
   try {
-    return ok(postcss.parse(css));
+    return ok(parseStylesheet(css, file));
   } catch {
     return err({ code: 'E024', params: { reason: 'cssParse' } });
   }
@@ -43,14 +53,14 @@ function eolOf(css: string): '\r\n' | '\n' {
 }
 
 /** Re-parses the result (PR-03): a write never leaves a CSS file that does not parse. */
-function checked(css: string): Result<string> {
-  const parsed = parse(css);
+function checked(css: string, file?: string): Result<string> {
+  const parsed = parse(css, file);
   return parsed.ok ? ok(css) : parsed;
 }
 
-function lastDeclaration(rule: Rule, property: string): Declaration | undefined {
+function lastDeclaration(container: Container, property: string): Declaration | undefined {
   let found: Declaration | undefined;
-  rule.each((child) => {
+  container.each((child) => {
     if (child.type === 'decl' && child.prop.toLowerCase() === property) found = child;
   });
   return found;
@@ -76,14 +86,19 @@ function removeDeclaration(css: string, decl: Declaration): string {
   return splice(css, start - before.length, end, '');
 }
 
-/** A new declaration after the rule's last child, laid out like it; `{}` gets an indented line. */
-function addDeclaration(css: string, rule: Rule, property: string, value: string): string {
-  const last = rule.last;
+/** A new declaration after the container's last child, laid out like it; `{}` gets an indented line. */
+function addDeclaration(
+  css: string,
+  container: Container,
+  property: string,
+  value: string,
+): string {
+  const last = container.last;
   if (last === undefined) {
-    const open = css.indexOf('{', rule.source?.start?.offset ?? 0);
+    const open = css.indexOf('{', container.source?.start?.offset ?? 0);
     const eol = eolOf(css);
-    const indent = /[ \t]*$/.exec(css.slice(0, rule.source?.start?.offset ?? 0))?.[0] ?? '';
-    const close = (rule.source?.end?.offset ?? open + 2) - 1;
+    const indent = /[ \t]*$/.exec(css.slice(0, container.source?.start?.offset ?? 0))?.[0] ?? '';
+    const close = (container.source?.end?.offset ?? open + 2) - 1;
     return splice(css, open + 1, close, `${eol}${indent}  ${property}: ${value};${eol}${indent}`);
   }
   const end = last.source?.end?.offset ?? 0;
@@ -93,20 +108,22 @@ function addDeclaration(css: string, rule: Rule, property: string, value: string
   return splice(css, end, end, `${needsSemicolon ? ';' : ''}${before}${property}: ${value};`);
 }
 
-function applyDeclarationToRule(
+export function applyDeclarationToRule(
   css: string,
-  rule: Rule,
+  container: Container,
   property: string,
   value: string | undefined,
+  file?: string,
 ): Result<string> {
-  const decl = lastDeclaration(rule, property);
+  const decl = lastDeclaration(container, property);
   if (value === undefined) {
-    return decl === undefined ? ok(css) : checked(removeDeclaration(css, decl));
+    return decl === undefined ? ok(css) : checked(removeDeclaration(css, decl), file);
   }
   return checked(
     decl === undefined
-      ? addDeclaration(css, rule, property, value)
+      ? addDeclaration(css, container, property, value)
       : replaceDeclaration(css, decl, value),
+    file,
   );
 }
 
@@ -120,12 +137,13 @@ export function setRuleDeclaration(
   key: RuleKey,
   property: string,
   value: string | undefined,
+  file?: string,
 ): Result<string> {
-  const root = parse(css);
+  const root = parse(css, file);
   if (!root.ok) return root;
   const rule = findRule(root.value, key);
   if (rule === undefined) return err({ code: 'E016', params: { reason: 'ruleNotFound' } });
-  return applyDeclarationToRule(css, rule, property, value);
+  return applyDeclarationToRule(css, rule, property, value, file);
 }
 
 /**
@@ -137,12 +155,13 @@ export function setDeclarationAt(
   ruleIndex: number,
   property: string,
   value: string | undefined,
+  file?: string,
 ): Result<string> {
-  const root = parse(css);
+  const root = parse(css, file);
   if (!root.ok) return root;
   const rule = findRuleByIndex(root.value, ruleIndex);
   if (rule === undefined) return err({ code: 'E016', params: { reason: 'ruleNotFound' } });
-  return applyDeclarationToRule(css, rule, property, value);
+  return applyDeclarationToRule(css, rule, property, value, file);
 }
 
 function topLevelMedia(root: Root, condition: string): AtRule | undefined {
@@ -174,8 +193,9 @@ export function appendRule(
   selector: string,
   declarations: readonly CssDeclaration[],
   media?: string,
+  file?: string,
 ): Result<string> {
-  const root = parse(css);
+  const root = parse(css, file);
   if (!root.ok) return root;
   const eol = eolOf(css);
   const block = media === undefined ? undefined : topLevelMedia(root.value, media);
@@ -184,6 +204,7 @@ export function appendRule(
     const head = css.slice(0, close).trimEnd();
     return checked(
       `${head}${eol}${eol}${ruleText(selector, declarations, '  ', eol)}${eol}${css.slice(close)}`,
+      file,
     );
   }
   const text =
@@ -191,7 +212,7 @@ export function appendRule(
       ? ruleText(selector, declarations, '', eol)
       : `@media ${media} {${eol}${ruleText(selector, declarations, '  ', eol)}${eol}}`;
   const head = css.trimEnd();
-  return checked(`${head}${head === '' ? '' : `${eol}${eol}`}${text}${eol}`);
+  return checked(`${head}${head === '' ? '' : `${eol}${eol}`}${text}${eol}`, file);
 }
 
 export function upsertRuleDeclaration(
@@ -200,13 +221,14 @@ export function upsertRuleDeclaration(
   property: string,
   value: string | undefined,
   media?: string,
+  file?: string,
 ): Result<string> {
-  const root = parse(css);
+  const root = parse(css, file);
   if (!root.ok) return root;
   const rule = findRuleBySelector(root.value, selector, media);
   if (rule !== undefined) {
-    return applyDeclarationToRule(css, rule, property, value);
+    return applyDeclarationToRule(css, rule, property, value, file);
   }
   if (value === undefined) return ok(css);
-  return appendRule(css, selector, [{ property, value }], media);
+  return appendRule(css, selector, [{ property, value }], media, file);
 }

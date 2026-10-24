@@ -228,6 +228,28 @@ function useBrandActions(t: TFunction, tErrors: TFunction<'errors'>) {
   };
 }
 
+type BrandHeaderProps = {
+  readonly system: string;
+  readonly file: string;
+};
+
+function BrandHeader({ system, file }: BrandHeaderProps) {
+  const { t } = useTranslation();
+  return (
+    <div
+      data-testid="brand-header"
+      className="flex flex-col gap-0.5 border-b border-border pb-2 text-xs"
+    >
+      <span className="font-semibold text-ink" data-testid="brand-system-name">
+        {t(`brand.system.${system}`, { defaultValue: system })}
+      </span>
+      <span className="font-mono text-ink-faint" data-testid="brand-file-path">
+        {file}
+      </span>
+    </div>
+  );
+}
+
 export function BrandPanel() {
   const { t } = useTranslation();
   const { t: tErrors } = useTranslation('errors');
@@ -244,6 +266,7 @@ export function BrandPanel() {
 
   return (
     <div className="flex flex-col gap-4 pb-2" data-testid="brand-panel">
+      {theme.system !== undefined && <BrandHeader system={theme.system} file={theme.file} />}
       {actions.errorMsg !== undefined && (
         <div
           data-testid="brand-error"

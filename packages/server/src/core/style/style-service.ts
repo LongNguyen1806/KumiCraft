@@ -15,7 +15,7 @@ import {
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { parseUtility } from './bootstrap-utilities.ts';
-import { locateRule, locateRuleByIndex } from './css-locate.ts';
+import { findRuleSource, locateRule, locateRuleByIndex } from './css-locate.ts';
 
 const MAX_CSS_BYTES = 2 * 1024 * 1024;
 
@@ -83,13 +83,14 @@ function locateInFile(
   system: StyleSystemId,
   rule: MatchedRule,
   longhand: string,
+  file?: string,
 ): { line: number; selector: string } | undefined {
   if (system === 'cssModules') {
-    const loc = locateRuleByIndex(css, rule.ruleIndex, [longhand]);
+    const loc = locateRuleByIndex(css, rule.ruleIndex, [longhand], file);
     if (loc === undefined) return undefined;
     return { line: loc.declarations[longhand] ?? loc.line, selector: loc.selector };
   }
-  const loc = locateRule(css, rule, [longhand]);
+  const loc = locateRule(css, rule, [longhand], file);
   if (loc === undefined) return undefined;
   return { line: loc.declarations[longhand] ?? loc.line, selector: rule.selector };
 }
@@ -122,6 +123,36 @@ function externalRuleSource(
   return { source: { kind: 'external', href }, editable: false, reason: 'external' };
 }
 
+async function resolvePartialRule(
+  fs: FileSystemPort,
+  root: string,
+  file: string,
+  rule: MatchedRule,
+  longhand: string,
+  cache: Map<string, string | undefined>,
+): Promise<
+  { file: string; system: StyleSystemId; loc: { line: number; selector: string } } | undefined
+> {
+  const src = await findRuleSource(fs, root, file, rule);
+  if (src === undefined) return undefined;
+  const targetFile = src.file;
+  const system = systemOfFile(src.file);
+  if (!cache.has(targetFile)) {
+    const read = await fs.readText(root, targetFile, { maxBytes: MAX_CSS_BYTES });
+    cache.set(targetFile, read.ok ? read.value : undefined);
+  }
+  const partialCss = cache.get(targetFile);
+  const partialLoc =
+    partialCss === undefined
+      ? undefined
+      : locateInFile(partialCss, system, rule, longhand, targetFile);
+  return {
+    file: targetFile,
+    system,
+    loc: partialLoc ?? { line: src.line, selector: src.selector },
+  };
+}
+
 /** Where a winning rule lives: a line of a project file, or a sheet the project does not own. */
 async function ruleSource(
   fs: FileSystemPort,
@@ -144,15 +175,26 @@ async function ruleSource(
     cache.set(file, read.ok ? read.value : undefined);
   }
   const css = cache.get(file);
-  const system = systemOfFile(file);
-  const loc = css === undefined ? undefined : locateInFile(css, system, rule, longhand);
+  let system = systemOfFile(file);
+  let targetFile = file;
+  let loc = css === undefined ? undefined : locateInFile(css, system, rule, longhand, file);
+
+  if (loc === undefined && (system === 'sass' || system === 'less')) {
+    const partial = await resolvePartialRule(fs, root, file, rule, longhand, cache);
+    if (partial !== undefined) {
+      targetFile = partial.file;
+      system = partial.system;
+      loc = partial.loc;
+    }
+  }
+
   if (loc === undefined) {
     return { source: { kind: 'external', href: file }, editable: false, reason: 'notFound' };
   }
   const source: StyleSource = {
     kind: 'rule',
     system,
-    file,
+    file: targetFile,
     line: loc.line,
     selector: loc.selector,
     affects: rule.affects,

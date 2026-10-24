@@ -200,4 +200,56 @@ describe('StyleSourcesSection [R-ST-04, R-ST-05]', () => {
     const stateSelect = screen.getByTestId<HTMLSelectElement>('style-state');
     expect(stateSelect.value).toBe('');
   });
+
+  it('primary: "sass" → ô nhập bật, không có banner chưa hỗ trợ [R-ST-02]', () => {
+    vi.mocked(useStyleState).mockReturnValue({
+      state: {
+        probe: {
+          ref: { loc: 'src/Home.tsx:8:5', index: 0 },
+          found: true,
+          rules: [],
+          inline: [],
+          computed: {},
+        },
+        reading: {
+          primary: 'sass',
+          properties: [
+            {
+              id: 'paddingTop',
+              value: { css: '16px' },
+              source: {
+                kind: 'rule',
+                system: 'sass',
+                file: 'src/styles/main.scss',
+                line: 2,
+                selector: '.card',
+                affects: 1,
+              },
+              editable: true,
+            },
+          ],
+        },
+      },
+      refresh: vi.fn(),
+    });
+
+    render(
+      <CssStyleEditor
+        target={{
+          kind: 'element',
+          ref: { loc: 'src/Home.tsx:8:5', index: 0 },
+          loading: false,
+          warnings: [],
+          currentScope: { breakpoint: 'base' },
+          writePrefix: '',
+          setInteractionState: vi.fn(),
+          refresh: vi.fn(),
+        }}
+      />,
+    );
+
+    expect(screen.queryByTestId('inspector-style-unsupported')).toBeNull();
+    const input = screen.getByTestId<HTMLInputElement>('style-input-paddingTop');
+    expect(input.disabled).toBe(false);
+  });
 });

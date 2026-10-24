@@ -1,26 +1,33 @@
-import {
-  type BackendInfo,
-  type CreateDraft,
-  type DraftFile,
-  type DraftsInfo,
-  type ExtractComponent,
-  type PackageManager,
-  type PagesInfo,
-  type ProjectInfo,
-  type ProjectProbe,
-  type PromoteDraft,
-  type RenameDraft,
-  type StructureResult,
-  type SupportReport,
-  type ThemeEdit,
-  type ThemeInfo,
-  type ThemeTokenKind,
-  type ThemeUsage,
-  type WorkspaceFile,
+import type {
+  BackendInfo,
+  CreateDraft,
+  DraftFile,
+  DraftsInfo,
+  ExtractComponent,
+  PackageManager,
+  PagesInfo,
+  ProjectInfo,
+  ProjectProbe,
+  PromoteDraft,
+  RenameDraft,
+  StructureResult,
+  SupportReport,
+  ThemeEdit,
+  ThemeInfo,
+  ThemeTokenKind,
+  ThemeUsage,
+  WorkspaceFile,
 } from '@kumicraft/shared';
 
 import { createJobService, type JobService } from '../jobs/job-service.ts';
 import { err, ok, type Result } from '../shared/result.ts';
+import { primarySystem } from '../style/style-service.ts';
+import {
+  countUsage,
+  editTokens,
+  readTokens,
+  type TokenFiles,
+} from '../style/tokens/token-service.ts';
 import { acquireLock, type LockInfo, releaseLock } from '../workspace/lock.ts';
 import { rememberPort } from '../workspace/studio-port.ts';
 import { trustKeyOf } from '../workspace/trust.ts';
@@ -50,7 +57,6 @@ import {
   type PatchWorkspaceUpdates,
   reloadOpenWorkspace,
 } from './project-workspace-file.ts';
-import { countProjectThemeUsage, editProjectTheme, readThemeTokens } from './theme.ts';
 export type { ProjectService, ProjectServiceDeps, WorkspaceState };
 
 class ProjectServiceImpl implements ProjectService {
@@ -319,15 +325,9 @@ class ProjectServiceImpl implements ProjectService {
   }
 
   async dirs(): Promise<Result<readonly string[]>> {
-    if (this.current.status !== 'open') {
+    if (this.current.status !== 'open')
       return err({ code: 'E021', params: { missing: 'project' } });
-    }
-    const dirs = await listProjectDirs(
-      this.deps.fs,
-      this.current.root,
-      this.current.file.sourceDir,
-    );
-    return ok(dirs);
+    return ok(await listProjectDirs(this.deps.fs, this.current.root, this.current.file.sourceDir));
   }
 
   async listDrafts(): Promise<Result<DraftsInfo>> {
@@ -360,23 +360,36 @@ class ProjectServiceImpl implements ProjectService {
     return deps.ok ? promoteDraft(deps.value, input) : deps;
   }
 
+  private tokenFiles(): TokenFiles | undefined {
+    if (this.current.status !== 'open') return undefined;
+    const cur = this.current;
+    return {
+      root: cur.root,
+      styling: cur.support.styling,
+      tailwindCss: cur.support.tailwindCss,
+      sourceDir: cur.file.sourceDir,
+    };
+  }
+
   async theme(): Promise<Result<ThemeInfo>> {
-    if (this.current.status !== 'open') {
-      return err({ code: 'E021', params: { missing: 'project' } });
-    }
-    const css = this.current.support.tailwindCss;
-    if (!css) {
-      return ok({ colors: [], fontSizes: [], radii: [], fonts: [], shadows: [], breakpoints: [] });
-    }
-    return readThemeTokens(this.deps.fs, this.current.root, css);
+    const f = this.tokenFiles();
+    return f
+      ? readTokens(this.deps, f, primarySystem(f.styling))
+      : err({ code: 'E021', params: { missing: 'project' } });
   }
 
   editTheme(edit: ThemeEdit): Promise<Result<ThemeInfo>> {
-    return editProjectTheme(this.current, this.deps, edit);
+    const f = this.tokenFiles();
+    return f
+      ? editTokens(this.deps, f, primarySystem(f.styling), edit)
+      : Promise.resolve(err({ code: 'E021', params: { missing: 'project' } }));
   }
 
   themeUsage(kind: ThemeTokenKind, name: string): Promise<Result<ThemeUsage>> {
-    return countProjectThemeUsage(this.current, this.deps, kind, name);
+    const f = this.tokenFiles();
+    return f
+      ? countUsage(this.deps, f, primarySystem(f.styling), kind, name)
+      : Promise.resolve(err({ code: 'E021', params: { missing: 'project' } }));
   }
 
   async addBackend(backendPath: string, customLabel?: string): Promise<Result<BackendInfo>> {

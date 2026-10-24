@@ -154,6 +154,12 @@ importers:
       postcss:
         specifier: 8.5.29
         version: 8.5.29
+      postcss-less:
+        specifier: 6.0.0
+        version: 6.0.0(postcss@8.5.29)
+      postcss-scss:
+        specifier: 4.0.9
+        version: 4.0.9(postcss@8.5.29)
       write-file-atomic:
         specifier: 7.0.1
         version: 7.0.1
@@ -224,6 +230,12 @@ importers:
       postcss:
         specifier: 8.5.29
         version: 8.5.29
+      postcss-less:
+        specifier: 6.0.0
+        version: 6.0.0(postcss@8.5.29)
+      postcss-scss:
+        specifier: 4.0.9
+        version: 4.0.9(postcss@8.5.29)
       write-file-atomic:
         specifier: 7.0.1
         version: 7.0.1
@@ -237,6 +249,9 @@ importers:
       '@types/node':
         specifier: 22.20.5
         version: 22.20.5
+      '@types/postcss-less':
+        specifier: 4.0.7
+        version: 4.0.7
       '@types/write-file-atomic':
         specifier: 4.0.3
         version: 4.0.3
@@ -1551,6 +1566,9 @@ packages:
 
   '@types/node@22.20.5':
     resolution: {integrity: sha512-U2+DNr+wSjpsTS/wZGYHq7GcwfuSmKiKvoPvK22zwTlRhU91yOniN4qRR5KhIjvif7ysw/dz/hKmfDH0Ris4aA==}
+
+  '@types/postcss-less@4.0.7':
+    resolution: {integrity: sha512-trNnU5PNmvMGysyge5Tc7W4CpaU+HHVu9XcGFX9eBlIGcg+NJP6lLJcUna6jjh8/TMjAe0k5mY0+jNRkZLYoaQ==}
 
   '@types/react-dom@19.3.0':
     resolution: {integrity: sha512-ZI7bU42mZXXKHn/qNLEw2IrbiINU7X5+vfgdixBHkCNpYWXjKgfQ/P+uyGb5CjOLB9UcnTeg3rylQtV2hym44Q==}
@@ -3449,6 +3467,18 @@ packages:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
     engines: {node: '>= 0.4'}
 
+  postcss-less@6.0.0:
+    resolution: {integrity: sha512-FPX16mQLyEjLzEuuJtxA8X3ejDLNGGEG503d2YGZR5Ask1SpDN8KmZUMpzCvyalWRywAn1n1VOA5dcqfCLo5rg==}
+    engines: {node: '>=12'}
+    peerDependencies:
+      postcss: ^8.3.5
+
+  postcss-scss@4.0.9:
+    resolution: {integrity: sha512-AjKOeiwAitL/MXxQW2DliT28EKukvvbEWx3LBmJIRN8KfBGZbRTxNYW0kSqi1COiTZ57nZ9NW06S6ux//N1c9A==}
+    engines: {node: '>=12.0'}
+    peerDependencies:
+      postcss: ^8.4.29
+
   postcss@8.5.29:
     resolution: {integrity: sha512-49cGhUbXj8Qenv0iTMxA1cFBzxXoctpC9Ujd77t1WcbJIr6nF/eI7g/8MgxrYldFRuAXvja7xQRwavoW7kgrxQ==}
     engines: {node: ^10 || ^12 || >=14}
@@ -5322,6 +5352,10 @@ snapshots:
   '@types/node@22.20.5':
     dependencies:
       undici-types: 6.21.0
+
+  '@types/postcss-less@4.0.7':
+    dependencies:
+      postcss: 8.5.29
 
   '@types/react-dom@19.3.0(@types/react@19.3.0)':
     dependencies:
@@ -7407,6 +7441,14 @@ snapshots:
       playwright-core: 1.64.0
 
   possible-typed-array-names@1.1.0: {}
+
+  postcss-less@6.0.0(postcss@8.5.29):
+    dependencies:
+      postcss: 8.5.29
+
+  postcss-scss@4.0.9(postcss@8.5.29):
+    dependencies:
+      postcss: 8.5.29
 
   postcss@8.5.29:
     dependencies:

@@ -586,7 +586,16 @@
     "confirmDelete": "Remove",
     "emptyGroup": "No tokens yet",
     "noThemeFile": "Project has no Tailwind CSS file",
-    "invalidName": "Lowercase letters, digits, hyphens; must start with a letter (max 40 chars)"
+    "invalidName": "Lowercase letters, digits, hyphens; must start with a letter (max 40 chars)",
+    "inherited": "Bootstrap default",
+    "system": {
+      "tailwind4": "Tailwind CSS v4",
+      "tailwind3": "Tailwind CSS v3",
+      "css": "Plain CSS",
+      "sass": "Sass",
+      "less": "Less",
+      "bootstrap5": "Bootstrap 5"
+    }
   },
   "styling": {
     "css": "plain CSS",

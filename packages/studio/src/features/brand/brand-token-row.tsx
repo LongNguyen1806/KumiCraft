@@ -124,8 +124,65 @@ interface TokenMainRowProps {
   readonly onRemoveClick: () => void;
 }
 
-function TokenMainRow({ kind, token, onCommitValue, onRemoveClick }: TokenMainRowProps) {
+type TokenNameColProps = {
+  readonly kind: ThemeTokenKind;
+  readonly token: ThemeToken;
+};
+
+function TokenNameCol({ kind, token }: TokenNameColProps) {
+  return (
+    <div className="flex w-24 shrink-0 flex-col">
+      <span
+        className="truncate text-xs font-medium text-ink"
+        title={token.variable ?? `${THEME_VAR_PREFIX[kind]}${token.name}`}
+      >
+        {token.name}
+      </span>
+      {token.variable !== undefined && (
+        <span
+          data-testid="brand-token-variable"
+          className="truncate font-mono text-[10px] text-ink-faint"
+          title={token.variable}
+        >
+          {token.variable}
+        </span>
+      )}
+    </div>
+  );
+}
+
+type TokenActionBadgeProps = {
+  readonly inherited?: boolean | undefined;
+  readonly onRemoveClick: () => void;
+};
+
+function TokenActionBadge({ inherited, onRemoveClick }: TokenActionBadgeProps) {
   const { t } = useTranslation();
+  if (inherited === true) {
+    return (
+      <span
+        data-testid="brand-inherited"
+        className="shrink-0 rounded bg-field px-1.5 py-0.5 text-[10px] text-ink-soft"
+      >
+        {t('brand.inherited')}
+      </span>
+    );
+  }
+  return (
+    <button
+      type="button"
+      data-testid="brand-remove"
+      aria-label={t('brand.remove')}
+      title={t('brand.remove')}
+      onClick={onRemoveClick}
+      className="flex size-6 shrink-0 items-center justify-center rounded text-ink-soft hover:bg-field hover:text-ink cursor-pointer"
+    >
+      {REMOVE_ICON}
+    </button>
+  );
+}
+
+function TokenMainRow({ kind, token, onCommitValue, onRemoveClick }: TokenMainRowProps) {
   const [editingDraft, setEditingDraft] = useState<string | undefined>(undefined);
 
   const commit = async (raw: string) => {
@@ -144,12 +201,7 @@ function TokenMainRow({ kind, token, onCommitValue, onRemoveClick }: TokenMainRo
           void commit(hex);
         }}
       />
-      <span
-        className="w-20 shrink-0 truncate text-xs font-medium text-ink"
-        title={`${THEME_VAR_PREFIX[kind]}${token.name}`}
-      >
-        {token.name}
-      </span>
+      <TokenNameCol kind={kind} token={token} />
       <TokenValueInput
         draft={editingDraft ?? token.value}
         onChange={setEditingDraft}
@@ -160,16 +212,7 @@ function TokenMainRow({ kind, token, onCommitValue, onRemoveClick }: TokenMainRo
           void commit(val);
         }}
       />
-      <button
-        type="button"
-        data-testid="brand-remove"
-        aria-label={t('brand.remove')}
-        title={t('brand.remove')}
-        onClick={onRemoveClick}
-        className="flex size-6 shrink-0 items-center justify-center rounded text-ink-soft hover:bg-field hover:text-ink cursor-pointer"
-      >
-        {REMOVE_ICON}
-      </button>
+      <TokenActionBadge inherited={token.inherited} onRemoveClick={onRemoveClick} />
     </div>
   );
 }

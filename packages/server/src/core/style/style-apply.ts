@@ -25,6 +25,7 @@ import {
   upsertRuleDeclaration,
   withStateSelector,
 } from './css-edit.ts';
+import { findRuleSource } from './css-locate.ts';
 import { tryApplyBootstrapChange } from './style-apply-bootstrap.ts';
 import { applyModulesChange, isModulesApplicable } from './style-apply-modules.ts';
 import { primarySystem, projectFileOf, winnerFor } from './style-service.ts';
@@ -53,6 +54,22 @@ function projectRule(root: string, rule: MatchedRule | undefined): ProjectRule |
   }
   const file = projectFileOf(root, rule.sheet.id);
   return file === undefined ? undefined : { rule, file };
+}
+
+async function resolveProjectRule(
+  fs: FileSystemPort,
+  root: string,
+  rule: MatchedRule | undefined,
+): Promise<ProjectRule | undefined> {
+  const base = projectRule(root, rule);
+  if (base === undefined) return undefined;
+  if (/\.(scss|sass|less)$/.test(base.file)) {
+    const src = await findRuleSource(fs, root, base.file, base.rule);
+    if (src !== undefined) {
+      return { rule: base.rule, file: src.file };
+    }
+  }
+  return base;
 }
 
 export async function readFile(
@@ -101,17 +118,26 @@ async function applyToRule(
   const targetSelector =
     state === undefined ? target.rule.selector : withStateSelector(target.rule.selector, state);
   const next = inPlace
-    ? setRuleDeclaration(css.value, target.rule, longhand, value)
-    : upsertRuleDeclaration(css.value, targetSelector, longhand, value, effectiveMedia);
+    ? setRuleDeclaration(css.value, target.rule, longhand, value, target.file)
+    : upsertRuleDeclaration(
+        css.value,
+        targetSelector,
+        longhand,
+        value,
+        effectiveMedia,
+        target.file,
+      );
   if (!next.ok) return next;
   if (next.value === css.value) return ok({ files: [] });
   const written = await writeFile(deps.fs, root, target.file, css.value, next.value);
   return written.ok ? ok({ files: [written.value] }) : written;
 }
 
-/** The plain `.css` file the element's own file imports, if any. */
+/** The plain `.css`, `.scss`, or `.less` file the element's own file imports, if any. */
 function importedCss(code: string, jsxFile: string): string | undefined {
-  const match = /import\s+['"](\.{1,2}\/[^'"]+(?<!\.module)\.css)['"]/.exec(code);
+  const match = /import\s+['"](\.{1,2}\/[^'"]+(?<!\.module)\.(?:css|scss|sass|less))['"]/.exec(
+    code,
+  );
   return match?.[1] === undefined
     ? undefined
     : posix.normalize(posix.join(posix.dirname(jsxFile), match[1]));
@@ -268,6 +294,7 @@ async function applyToElement(
     longhand,
     change.value,
     change.media,
+    cssFile.value,
   );
   if (!next.ok) return next;
   const written = await writeFile(deps.fs, root, cssFile.value, cssBefore, next.value);
@@ -289,7 +316,8 @@ export async function applyStyleChange(
   if (await isModulesApplicable(deps, root, request, winnerRule)) {
     return applyModulesChange(deps, root, request, longhand, winnerRule);
   }
-  const target = winner.kind === 'rule' ? projectRule(root, winner.rule) : undefined;
+  const target =
+    winner.kind === 'rule' ? await resolveProjectRule(deps.fs, root, winner.rule) : undefined;
   const toProjectRule = request.change.target === 'rule' && target !== undefined;
   // "All N elements" of a rule the project owns stays a CSS edit; a utility class only changes
   // this one element (R-ST-07, R-ST-10).

@@ -298,4 +298,49 @@ describe('createStyleService().read [R-ST-04, R-ST-05]', () => {
       editable: true,
     });
   });
+
+  it('Probe rule .card .title sheet main.scss (rule nằm ở _card.scss) → source.file src/styles/_card.scss, line đúng, system: "sass" [R-ST-04]', async () => {
+    await fs.mkdir(path.join(root, 'src/styles'), { recursive: true });
+    await fs.writeFile(path.join(root, 'src/styles/main.scss'), "@use './card';\n");
+    await fs.writeFile(
+      path.join(root, 'src/styles/_card.scss'),
+      '.card {\n  padding: 16px;\n  .title {\n    font-size: 18px;\n  }\n}\n',
+    );
+
+    const service = createStyleService({ fs: nodeFs });
+    const reading = await service.read(
+      {
+        root,
+        styling: { systems: [{ id: 'sass' }], editable: true, globalCss: ['src/styles/main.scss'] },
+      },
+      probe({
+        rules: [
+          rule({
+            sheet: {
+              kind: 'module',
+              id: path.join(root, 'src/styles/main.scss').replaceAll('\\', '/'),
+            },
+            selector: '.card .title',
+            declarations: [{ property: 'font-size', value: '18px', important: false }],
+          }),
+        ],
+        computed: { 'font-size': '18px' },
+      }),
+    );
+
+    const byId = Object.fromEntries(reading.properties.map((p) => [p.id, p]));
+    expect(byId['fontSize']).toEqual({
+      id: 'fontSize',
+      value: { css: '18px' },
+      source: {
+        kind: 'rule',
+        system: 'sass',
+        file: 'src/styles/_card.scss',
+        line: 4,
+        selector: '.card .title',
+        affects: 3,
+      },
+      editable: true,
+    });
+  });
 });
