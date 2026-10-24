@@ -41,6 +41,7 @@ export const SHORTCUT_ACTIONS = [
   'toolFrame',
   'toolText',
   'toolImage',
+  'toolPan',
 ] as const;
 
 export type ShortcutAction = (typeof SHORTCUT_ACTIONS)[number];
@@ -120,6 +121,7 @@ function matchNoModKey(k: string, press: KeyPress): ShortcutAction | undefined {
   if (k === 'f') return 'toolFrame';
   if (k === 't') return 'toolText';
   if (k === 'i') return 'toolImage';
+  if (k === 'h') return 'toolPan';
   if (k >= '1' && k <= '8') {
     return `frame${k}` as ShortcutAction;
   }
@@ -188,6 +190,7 @@ const LABELS_APPLE: Record<ShortcutAction, string> = {
   toolFrame: 'F',
   toolText: 'T',
   toolImage: 'I',
+  toolPan: 'H',
 };
 
 const LABELS_OTHER: Record<ShortcutAction, string> = {
@@ -231,6 +234,7 @@ const LABELS_OTHER: Record<ShortcutAction, string> = {
   toolFrame: 'F',
   toolText: 'T',
   toolImage: 'I',
+  toolPan: 'H',
 };
 
 /** Label of the keys for the help dialog: `⌘⇧Z` on macOS, `Ctrl+Shift+Z` elsewhere. */

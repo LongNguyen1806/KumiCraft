@@ -434,7 +434,8 @@
       "toolSelect": "Công cụ Chọn",
       "toolFrame": "Công cụ Khung",
       "toolText": "Công cụ Chữ",
-      "toolImage": "Công cụ Ảnh"
+      "toolImage": "Công cụ Ảnh",
+      "toolPan": "Công cụ Kéo khung nhìn"
     }
   },
   "pages": {
@@ -564,7 +565,8 @@
     "select": "Chọn",
     "frame": "Khung",
     "text": "Chữ",
-    "image": "Ảnh"
+    "image": "Ảnh",
+    "pan": "Kéo"
   },
   "brand": {
     "tab": "Brand",

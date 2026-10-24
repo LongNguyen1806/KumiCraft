@@ -17,6 +17,7 @@ import { registerFreeFrameCommands } from '../free-frame/free-frame-commands.ts'
 import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
 import { type TextEditWarning, useCanvasTextEdit } from '../text-edit/use-canvas-text-edit.ts';
 import { IframeFrame } from './canvas-frame.tsx';
+import { CanvasPanSurface, PannedContent } from './canvas-pan.tsx';
 import {
   ErrorView,
   NeedsInstallPrompt,
@@ -131,18 +132,23 @@ function CanvasViewport(props: Omit<CanvasContentProps, 'zoom'> & { readonly zoo
   }, [zoom, setDisplayedZoom]);
 
   return (
-    <div
-      ref={(el) => {
-        viewport.current = el ?? undefined;
-      }}
-      // `safe`: a frame wider than the Canvas scrolls from its left edge instead of being cut.
-      // Stable gutter: "Fit" reads clientWidth, so a scrollbar that comes and goes would change the
-      // zoom, the height, and the scrollbar again, and the Canvas would flicker without end.
-      className="relative grid min-h-0 min-w-0 flex-1 place-items-center-safe overflow-auto p-4 [scrollbar-gutter:stable]"
-      data-testid="canvas-placeholder"
-    >
-      <CanvasContent {...props} zoom={zoom} />
-      <RuntimeErrorList />
+    <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+      <div
+        ref={(el) => {
+          viewport.current = el ?? undefined;
+        }}
+        // `safe`: a frame wider than the Canvas scrolls from its left edge instead of being cut.
+        // Stable gutter: "Fit" reads clientWidth, so a scrollbar that comes and goes would change the
+        // zoom, the height, and the scrollbar again, and the Canvas would flicker without end.
+        className="relative grid min-h-0 min-w-0 flex-1 place-items-center-safe overflow-auto p-4 [scrollbar-gutter:stable]"
+        data-testid="canvas-placeholder"
+      >
+        <PannedContent>
+          <CanvasContent {...props} zoom={zoom} />
+        </PannedContent>
+        <RuntimeErrorList />
+      </div>
+      <CanvasPanSurface />
     </div>
   );
 }

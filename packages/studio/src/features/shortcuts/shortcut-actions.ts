@@ -149,7 +149,8 @@ function runDrawToolShortcut(action: ShortcutAction): boolean {
   if (canvas.mode !== 'design') return false;
   const project = useProjectStore.getState().project;
   const editable = isStyleEditable(project);
-  if (!editable && action !== 'toolSelect') return false;
+  // Moving the view changes no file, so it works in every project.
+  if (!editable && action !== 'toolSelect' && action !== 'toolPan') return false;
   switch (action) {
     case 'toolSelect':
       canvas.setTool('select');
@@ -162,6 +163,9 @@ function runDrawToolShortcut(action: ShortcutAction): boolean {
       return true;
     case 'toolImage':
       canvas.setTool('image');
+      return true;
+    case 'toolPan':
+      canvas.setPanning(true);
       return true;
     default:
       return false;

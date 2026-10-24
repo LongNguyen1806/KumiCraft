@@ -1,4 +1,4 @@
-// Canvas drawing tools toolbar and shared image picker mount (WP-2.09b, R-DT-10..R-DT-15, Round S1).
+// Canvas drawing tools toolbar and shared image picker mount (WP-2.09b, R-DT-10..R-DT-16, Round S1).
 import type { DrawTool } from '@reactcraft/shared';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,11 +28,14 @@ const ICON_PATHS: Record<DrawTool, string> = {
   image: 'M2 2.5H12V11.5H2ZM2.5 10.5L5.8 7.5L8.2 9.5L10 8L11.5 9.5',
 };
 
-function ToolIcon({ tool }: { readonly tool: DrawTool }) {
+const PAN_ICON_PATH =
+  'M7 1.5V12.5M1.5 7H12.5M5.2 3.3L7 1.5L8.8 3.3M5.2 10.7L7 12.5L8.8 10.7M3.3 5.2L1.5 7L3.3 8.8M10.7 5.2L12.5 7L10.7 8.8';
+
+function ToolIcon({ tool }: { readonly tool: DrawTool | 'pan' }) {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
       <path
-        d={ICON_PATHS[tool]}
+        d={tool === 'pan' ? PAN_ICON_PATH : ICON_PATHS[tool]}
         stroke="currentColor"
         strokeWidth="1.3"
         strokeLinecap="round"
@@ -43,11 +46,43 @@ function ToolIcon({ tool }: { readonly tool: DrawTool }) {
   );
 }
 
+type ToolButtonProps = {
+  readonly id: DrawTool | 'pan';
+  readonly label: string;
+  readonly shortcut: string;
+  readonly active: boolean;
+  readonly onClick: () => void;
+};
+
+function ToolButton({ id, label, shortcut, active, onClick }: ToolButtonProps) {
+  const titleText = `${label} (${shortcut})`;
+  return (
+    <button
+      type="button"
+      data-testid={`draw-tool-${id}`}
+      aria-pressed={active}
+      aria-label={titleText}
+      title={titleText}
+      onClick={onClick}
+      className={`flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition ${
+        active
+          ? 'bg-primary text-white shadow-xs'
+          : 'text-ink-soft hover:bg-field-hover hover:text-ink'
+      }`}
+    >
+      <ToolIcon tool={id} />
+      <span>{label}</span>
+    </button>
+  );
+}
+
 export function DrawToolbar() {
   const { t } = useTranslation();
   const mode = useCanvasViewStore((s) => s.mode);
   const tool = useCanvasViewStore((s) => s.tool);
   const setTool = useCanvasViewStore((s) => s.setTool);
+  const panning = useCanvasViewStore((s) => s.panning);
+  const setPanning = useCanvasViewStore((s) => s.setPanning);
   const editable = useStyleEditable();
 
   useEffect(() => {
@@ -67,32 +102,27 @@ export function DrawToolbar() {
       data-testid="draw-toolbar"
       className="flex items-center gap-0.5 rounded-md border border-border bg-field p-0.5"
     >
-      {visibleTools.map((item) => {
-        const active = tool === item.id;
-        const label = t(item.labelKey);
-        const titleText = `${label} (${item.shortcut})`;
-        return (
-          <button
-            key={item.id}
-            type="button"
-            data-testid={`draw-tool-${item.id}`}
-            aria-pressed={active}
-            aria-label={titleText}
-            title={titleText}
-            onClick={() => {
-              setTool(item.id);
-            }}
-            className={`flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition ${
-              active
-                ? 'bg-primary text-white shadow-xs'
-                : 'text-ink-soft hover:bg-field-hover hover:text-ink'
-            }`}
-          >
-            <ToolIcon tool={item.id} />
-            <span>{label}</span>
-          </button>
-        );
-      })}
+      {visibleTools.map((item) => (
+        <ToolButton
+          key={item.id}
+          id={item.id}
+          label={t(item.labelKey)}
+          shortcut={item.shortcut}
+          active={!panning && tool === item.id}
+          onClick={() => {
+            setTool(item.id);
+          }}
+        />
+      ))}
+      <ToolButton
+        id="pan"
+        label={t('draw.pan')}
+        shortcut="H"
+        active={panning}
+        onClick={() => {
+          setPanning(!panning);
+        }}
+      />
     </div>
   );
 }

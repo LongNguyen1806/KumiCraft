@@ -18,6 +18,12 @@ export type CanvasViewState = {
   readonly mode: CanvasMode;
   readonly tool: DrawTool;
   readonly setTool: (tool: DrawTool) => void;
+  /** Pan tool: dragging the Canvas moves the view instead of reaching the page. */
+  readonly panning: boolean;
+  readonly setPanning: (panning: boolean) => void;
+  /** How far the frame is moved from its place, in screen pixels. */
+  readonly pan: { readonly x: number; readonly y: number };
+  readonly panBy: (dx: number, dy: number) => void;
   readonly zoom: Zoom;
   readonly displayedZoom: number;
   readonly activeFrameId: string;
@@ -108,6 +114,25 @@ function updateFrames(frames: readonly Frame[], activeId: string) {
   return { frames, activeFrameId: exists ? activeId : (frames[0]?.id ?? 'desktop') };
 }
 
+const NO_PAN = { x: 0, y: 0 };
+
+function createPanActions(
+  set: (
+    updater: Partial<CanvasViewState> | ((s: CanvasViewState) => Partial<CanvasViewState>),
+  ) => void,
+) {
+  return {
+    panning: false,
+    setPanning: (panning: boolean) => {
+      set({ panning });
+    },
+    pan: NO_PAN,
+    panBy: (dx: number, dy: number) => {
+      set((s) => ({ pan: { x: s.pan.x + dx, y: s.pan.y + dy } }));
+    },
+  };
+}
+
 function createZoomActions(
   set: (
     updater: Partial<CanvasViewState> | ((s: CanvasViewState) => Partial<CanvasViewState>),
@@ -123,10 +148,10 @@ function createZoomActions(
       }));
     },
     zoomReset: () => {
-      set({ zoom: 1 });
+      set({ zoom: 1, pan: NO_PAN });
     },
     zoomFit: () => {
-      set({ zoom: 'fit' });
+      set({ zoom: 'fit', pan: NO_PAN });
     },
   };
 }
@@ -175,17 +200,17 @@ function createModeAndToolActions(
     mode: 'design' as const,
     tool: 'select' as const,
     setTool: (tool: DrawTool) => {
-      set({ tool });
+      set({ tool, panning: false });
       studioBridgeChannel.setTool(tool);
     },
     setMode: (mode: CanvasMode | ((prev: CanvasMode) => CanvasMode)) => {
       const next = typeof mode === 'function' ? mode(get().mode) : mode;
-      set(next === 'preview' ? { mode: next, tool: 'select' } : { mode: next });
+      set(next === 'preview' ? { mode: next, tool: 'select', panning: false } : { mode: next });
       if (next === 'preview') studioBridgeChannel.setTool('select');
     },
     toggleMode: () => {
       const next = get().mode === 'design' ? 'preview' : 'design';
-      set(next === 'preview' ? { mode: next, tool: 'select' } : { mode: next });
+      set(next === 'preview' ? { mode: next, tool: 'select', panning: false } : { mode: next });
       if (next === 'preview') studioBridgeChannel.setTool('select');
     },
   };
@@ -210,6 +235,7 @@ export const useCanvasViewStore = create<CanvasViewState>((set, get) => ({
     set({ displayedZoom });
   },
   ...createZoomActions(set),
+  ...createPanActions(set),
   setActiveFrameId: (activeFrameId) => {
     set({ activeFrameId });
   },

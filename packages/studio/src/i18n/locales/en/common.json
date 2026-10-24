@@ -434,7 +434,8 @@
       "toolSelect": "Select tool",
       "toolFrame": "Frame tool",
       "toolText": "Text tool",
-      "toolImage": "Image tool"
+      "toolImage": "Image tool",
+      "toolPan": "Pan tool"
     }
   },
   "pages": {
@@ -564,7 +565,8 @@
     "select": "Select",
     "frame": "Frame",
     "text": "Text",
-    "image": "Image"
+    "image": "Image",
+    "pan": "Pan"
   },
   "brand": {
     "tab": "Brand",
