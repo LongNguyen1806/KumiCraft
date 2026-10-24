@@ -25,6 +25,7 @@ import { registerRunnerRoutes, type RunnerRoutesDeps } from './routes/runner.ts'
 import { registerSessionRoutes } from './routes/session.ts';
 import { registerSettingsRoutes, type SettingsRoutesDeps } from './routes/settings.ts';
 import { registerSourceRoutes, type SourceRoutesDeps } from './routes/source.ts';
+import { registerStyleRoutes, type StyleRoutesDeps } from './routes/style.ts';
 import { registerToolGapRoutes, type ToolGapRoutesDeps } from './routes/tool-gaps.ts';
 import { registerSecurity, type SecurityOptions } from './security.ts';
 import { sendError } from './send-error.ts';
@@ -41,6 +42,7 @@ export type HttpAppOptions = {
   readonly eventRoutes?: EventRoutesDeps;
   readonly settingsRoutes?: SettingsRoutesDeps;
   readonly sourceRoutes?: SourceRoutesDeps;
+  readonly styleRoutes?: StyleRoutesDeps;
   readonly historyRoutes?: HistoryRoutesDeps;
   readonly editorRoutes?: EditorRoutesDeps;
   readonly jobRoutes?: JobRoutesDeps;
@@ -122,6 +124,9 @@ async function registerApiRoutes(app: FastifyInstance, options: HttpAppOptions):
       }
       if (options.sourceRoutes !== undefined) {
         registerSourceRoutes(api, options.sourceRoutes);
+      }
+      if (options.styleRoutes !== undefined) {
+        registerStyleRoutes(api, options.styleRoutes);
       }
       if (options.historyRoutes !== undefined) {
         registerHistoryRoutes(api, options.historyRoutes);

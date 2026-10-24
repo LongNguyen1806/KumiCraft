@@ -20,6 +20,8 @@ import {
   BridgeSelectionInfoPayloadSchema,
   BridgeSelectPayloadSchema,
   BridgeShortcutPayloadSchema,
+  type BridgeStyleProbePayload,
+  BridgeStyleProbePayloadSchema,
   type BridgeTextCancelPayload,
   BridgeTextCancelPayloadSchema,
   type BridgeTextCommitPayload,
@@ -201,6 +203,7 @@ export class BridgeChannel {
   private readonly listener: (e: MessageEvent) => void;
   private readonly textEditListeners = new Set<BridgeTextEditListener>();
   private readonly freeFrameListeners = new Set<BridgeFreeFrameListener>();
+  private readonly styleProbeListeners = new Set<(payload: BridgeStyleProbePayload) => void>();
 
   constructor() {
     this.listener = (e: MessageEvent) => {
@@ -241,6 +244,18 @@ export class BridgeChannel {
     return () => {
       this.freeFrameListeners.delete(listener);
     };
+  }
+
+  /** `style-probe-result` answers of the Bridge (R-ST-04). */
+  registerStyleProbeListener(listener: (payload: BridgeStyleProbePayload) => void): () => void {
+    this.styleProbeListeners.add(listener);
+    return () => {
+      this.styleProbeListeners.delete(listener);
+    };
+  }
+
+  styleProbe(ref: ElementRef, properties: readonly string[]): void {
+    this.sendMessage('style-probe', { ref, properties });
   }
 
   setGrid(size: 1 | 4 | 8 | 16): void {
@@ -319,6 +334,10 @@ export class BridgeChannel {
     }
     this.handleTextEditMessage(envelopeRes.data.type, envelopeRes.data.payload);
     this.handleFreeFrameMessage(envelopeRes.data.type, envelopeRes.data.payload);
+    if (envelopeRes.data.type === 'style-probe-result') {
+      const res = BridgeStyleProbePayloadSchema.safeParse(envelopeRes.data.payload);
+      if (res.success) for (const l of this.styleProbeListeners) l(res.data);
+    }
   }
 
   private handleTextEditMessage(type: string, payload: unknown): void {

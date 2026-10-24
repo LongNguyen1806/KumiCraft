@@ -370,6 +370,7 @@ export {
   type WrapEdit,
   WrapEditSchema,
 } from './source.ts';
+export * from './style.ts';
 export * from './tailwind/index.ts';
 export { TAILWIND_COLORS } from './tailwind/palette.generated.ts';
 export {

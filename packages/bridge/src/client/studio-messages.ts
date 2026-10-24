@@ -17,6 +17,8 @@ import {
   StudioSetGridPayloadSchema,
   StudioSetModePayloadSchema,
   StudioSetToolPayloadSchema,
+  type StudioStyleProbePayload,
+  StudioStyleProbePayloadSchema,
   type StudioTextEditStartPayload,
   StudioTextEditStartPayloadSchema,
 } from '@reactcraft/shared';
@@ -34,6 +36,7 @@ export type StudioMessageHandlers = {
   handleSetGrid: (size: StudioSetGridPayload['size']) => void;
   handleMeasureFree: (ref: ElementRef) => void;
   handleSetTool?: ((tool: DrawTool) => void) | undefined;
+  handleStyleProbe?: ((data: StudioStyleProbePayload) => void) | undefined;
 };
 
 /** Free frame and drawing tool messages (R-FF-10, R-FF-11, R-DT-10). */
@@ -116,6 +119,11 @@ export function dispatchStudioMessage(
     case 'navigate': {
       const parsed = StudioNavigatePayloadSchema.safeParse(payload);
       if (parsed.success) handlers.handleNavigate(parsed.data.route);
+      break;
+    }
+    case 'style-probe': {
+      const parsed = StudioStyleProbePayloadSchema.safeParse(payload);
+      if (parsed.success) handlers.handleStyleProbe?.(parsed.data);
       break;
     }
     case 'design-file': {

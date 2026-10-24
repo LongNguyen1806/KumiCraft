@@ -115,7 +115,8 @@
     "themeRemove": "xóa token {{name}}",
     "batch": "sửa {{count}} phần tử",
     "dismissError": "Đóng thông báo",
-    "errorFileChanged": "File {{file}} đã bị sửa từ nơi khác, không hoàn tác được bước này"
+    "errorFileChanged": "File {{file}} đã bị sửa từ nơi khác, không hoàn tác được bước này",
+    "setStyle": "đổi kiểu dáng <{{tag}}>"
   },
   "settings": {
     "open": "Cài đặt",
@@ -359,6 +360,17 @@
       "label": "Đường dẫn phần tử",
       "more": "Hiện mọi bậc",
       "hint": "Esc: chọn cha"
+    },
+    "styleSources": {
+      "title": "Nguồn kiểu dáng",
+      "affects": "Ảnh hưởng {{count}} phần tử",
+      "inline": "thuộc tính style",
+      "external": "ngoài dự án",
+      "target": {
+        "label": "Sửa:",
+        "rule": "tất cả {{count}} phần tử",
+        "element": "chỉ phần tử này"
+      }
     }
   },
   "textEdit": {

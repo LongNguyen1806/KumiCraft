@@ -1,0 +1,15 @@
+.card {
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius);
+}
+
+.home .card {
+  background-color: #ffffff;
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 8px;
+  }
+}

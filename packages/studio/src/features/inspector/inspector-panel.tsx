@@ -23,9 +23,9 @@ import { useStyleEditable } from '../project/use-style-edit.ts';
 import { ColorField } from './components/color-field.tsx';
 import { ElementPath } from './components/element-path.tsx';
 import { InspectorHeader } from './components/inspector-header.tsx';
-import { InspectorStyleUnsupportedBanner } from './components/inspector-style-unsupported-banner.tsx';
 import { OtherClassesSection } from './components/other-classes-section.tsx';
 import { PropertyField } from './components/property-field.tsx';
+import { CssStyleEditor } from './components/style-sources-section.tsx';
 import { TagAttributesSection } from './components/tag-attributes-section.tsx';
 import { MultiInspectorView } from './multi-inspector-view.tsx';
 import { PROPERTY_GROUPS } from './property-groups-config.ts';
@@ -312,7 +312,7 @@ function InspectorSingleTargetView({
     <div className="flex flex-col gap-2" data-testid="inspector-panel">
       <ElementPath />
       <InspectorHeader target={target} />
-      {!editable && <InspectorStyleUnsupportedBanner styling={project?.support.styling} />}
+      {!editable && <CssStyleEditor project={project} target={target} />}
       <InspectorStatusFeedback
         loading={target.loading && target.source === undefined}
         error={displayedError}

@@ -115,7 +115,8 @@
     "themeRemove": "remove token {{name}}",
     "batch": "edit {{count}} elements",
     "dismissError": "Dismiss",
-    "errorFileChanged": "File {{file}} was modified externally, cannot undo this step"
+    "errorFileChanged": "File {{file}} was modified externally, cannot undo this step",
+    "setStyle": "change style of <{{tag}}>"
   },
   "settings": {
     "open": "Settings",
@@ -359,6 +360,17 @@
       "label": "Element path",
       "more": "Show all levels",
       "hint": "Esc: select parent"
+    },
+    "styleSources": {
+      "title": "Style sources",
+      "affects": "Affects {{count}} elements",
+      "inline": "style attribute",
+      "external": "outside the project",
+      "target": {
+        "label": "Change:",
+        "rule": "all {{count}} elements",
+        "element": "only this element"
+      }
     }
   },
   "textEdit": {

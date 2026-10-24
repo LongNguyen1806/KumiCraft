@@ -11,6 +11,7 @@ import {
   type SessionInfo,
   toSupportedPlatform,
 } from './core/shared/session.ts';
+import { createStyleService } from './core/style/style-service.ts';
 import { createProjectReader } from './core/workspace/project-reader.ts';
 import type { InitializedContext, StartServerOptions } from './index.ts';
 
@@ -40,6 +41,16 @@ export async function autoOpenProject(
   return ok(undefined);
 }
 
+/** The AI chat and MCP endpoints (Phase 3). */
+function agentRouteConfigs(ctx: InitializedContext) {
+  const getProjectInfo = () => ctx.projectService.getProjectInfo();
+  return {
+    agentRoutes: { agentService: ctx.agentService, setupService: ctx.agentSetupService },
+    agentTurnRoutes: { turnRunner: ctx.turnRunner, chatImages: ctx.chatImages, getProjectInfo },
+    toolGapRoutes: { store: ctx.toolGapStore, getProjectInfo },
+  };
+}
+
 function buildRouteConfigs(
   ctx: InitializedContext,
   getSessionInfo: () => SessionInfo,
@@ -63,17 +74,15 @@ function buildRouteConfigs(
       getProjectRoot,
       fs: ctx.fs,
     },
+    styleRoutes: {
+      styleService: createStyleService({ fs: ctx.fs }),
+      projectService: ctx.projectService,
+      fs: ctx.fs,
+      sourceEditorService: ctx.sourceEditorService,
+      historyService: ctx.historyService,
+    },
     jobRoutes: { jobService: ctx.jobService },
-    agentRoutes: { agentService: ctx.agentService, setupService: ctx.agentSetupService },
-    agentTurnRoutes: {
-      turnRunner: ctx.turnRunner,
-      chatImages: ctx.chatImages,
-      getProjectInfo: () => ctx.projectService.getProjectInfo(),
-    },
-    toolGapRoutes: {
-      store: ctx.toolGapStore,
-      getProjectInfo: () => ctx.projectService.getProjectInfo(),
-    },
+    ...agentRouteConfigs(ctx),
     historyRoutes: {
       historyService: ctx.historyService,
       getProjectRoot,

@@ -151,6 +151,9 @@ importers:
       pino:
         specifier: 10.4.0
         version: 10.4.0
+      postcss:
+        specifier: 8.5.29
+        version: 8.5.29
       write-file-atomic:
         specifier: 7.0.1
         version: 7.0.1
@@ -218,6 +221,9 @@ importers:
       pino:
         specifier: 10.4.0
         version: 10.4.0
+      postcss:
+        specifier: 8.5.29
+        version: 8.5.29
       write-file-atomic:
         specifier: 7.0.1
         version: 7.0.1
