@@ -54,6 +54,28 @@ describe('style-probe [R-ST-04]', () => {
     ]);
   });
 
+  it('counts rules in non-matching @media so subsequent rules have accurate ruleIndex: Sheet có rule A, @media không áp dụng chứa rule B, rule C → C có ruleIndex: 2 [R-ST-04]', () => {
+    const style = document.createElement('style');
+    style.textContent =
+      '.card { color: red; } @media (min-width: 9999px) { .card { color: blue; } } .card { color: green; }';
+    document.head.append(style);
+    document.body.innerHTML = '<div data-rc-loc="src/App.tsx:1:1" class="card"></div>';
+
+    const answer = answerStyleProbe(
+      {
+        ref: { loc: 'src/App.tsx:1:1', index: 0 },
+        properties: ['color'],
+      },
+      document,
+    );
+
+    expect(answer.found).toBe(true);
+    const ruleGreen = answer.rules.find((r) => r.declarations.some((d) => d.value === 'green'));
+    const ruleRed = answer.rules.find((r) => r.declarations.some((d) => d.value === 'red'));
+    expect(ruleGreen?.ruleIndex).toBe(2);
+    expect(ruleRed?.ruleIndex).toBe(0);
+  });
+
   it('answers found: false for an element that is not on the page', () => {
     expect(
       answerStyleProbe({ ref: { loc: 'src/X.tsx:1:1', index: 0 }, properties: [] }, document),

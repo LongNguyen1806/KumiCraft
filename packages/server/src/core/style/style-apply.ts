@@ -19,6 +19,7 @@ import { computeSha256 } from '../source-editor/source-editor-lookup.ts';
 import type { SourceEditorService, WrittenFile } from '../source-editor/source-editor-service.ts';
 import { findImportInsertPosition } from '../source-editor/structure/imports.ts';
 import { appendRule, setRuleDeclaration } from './css-edit.ts';
+import { applyModulesChange, isModulesApplicable } from './style-apply-modules.ts';
 import { projectFileOf, winnerFor } from './style-service.ts';
 
 const MAX_CSS_BYTES = 2 * 1024 * 1024;
@@ -46,11 +47,15 @@ function projectRule(root: string, rule: MatchedRule | undefined): ProjectRule |
   return file === undefined ? undefined : { rule, file };
 }
 
-async function readFile(fs: FileSystemPort, root: string, file: string): Promise<Result<string>> {
+export async function readFile(
+  fs: FileSystemPort,
+  root: string,
+  file: string,
+): Promise<Result<string>> {
   return fs.readText(root, file, { maxBytes: MAX_CSS_BYTES });
 }
 
-async function writeFile(
+export async function writeFile(
   fs: FileSystemPort,
   root: string,
   file: string,
@@ -111,7 +116,7 @@ function addCssImport(code: string, cssName: string): string {
   return `${code.slice(0, at)}import './${cssName}';${eol}${code.slice(at)}`;
 }
 
-function mergeWrites(files: readonly WrittenFile[]): WrittenFile[] {
+export function mergeWrites(files: readonly WrittenFile[]): WrittenFile[] {
   const byPath = new Map<string, WrittenFile>();
   for (const f of files) {
     const first = byPath.get(f.path);
@@ -257,6 +262,10 @@ export async function applyStyleChange(
   const longhand = CSS_LONGHAND_OF[request.change.property];
   if (longhand === undefined) return err({ code: 'E016', params: { reason: 'unknownProperty' } });
   const winner = winnerFor(request.probe, longhand);
+  const winnerRule = winner.kind === 'rule' ? winner.rule : undefined;
+  if (await isModulesApplicable(deps, root, request, winnerRule)) {
+    return applyModulesChange(deps, root, request, longhand, winnerRule);
+  }
   const target = winner.kind === 'rule' ? projectRule(root, winner.rule) : undefined;
   if (request.change.target === 'rule' && target !== undefined) {
     return applyToRule(deps, root, target, longhand, request.change.value, request.change.media);

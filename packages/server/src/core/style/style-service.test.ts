@@ -7,7 +7,7 @@ import type { BridgeStyleProbePayload, MatchedRule, StylingSystemId } from '@rea
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { nodeFs } from '../workspace/test-support.ts';
-import { locateRule } from './css-locate.ts';
+import { locateRule, locateRuleByIndex } from './css-locate.ts';
 import { createStyleService, primarySystem, projectFileOf } from './style-service.ts';
 
 const CARD_CSS = `.card {
@@ -61,6 +61,30 @@ describe('locateRule [R-ST-04]', () => {
   });
 });
 
+describe('locateRuleByIndex [R-ST-04]', () => {
+  it('locates a rule by index within stylesheet, including rules inside @media: index 1 is rule in @media [R-ST-04]', () => {
+    const css = `.card { color: red; }
+@media (min-width: 640px) {
+  .card { color: blue; }
+}
+.other { color: green; }`;
+    const located0 = locateRuleByIndex(css, 0, ['color']);
+    expect(located0?.selector).toBe('.card');
+    expect(located0?.line).toBe(1);
+
+    const located1 = locateRuleByIndex(css, 1, ['color']);
+    expect(located1?.selector).toBe('.card');
+    expect(located1?.line).toBe(3);
+    expect(located1?.declarations['color']).toBe(3);
+
+    const located2 = locateRuleByIndex(css, 2, ['color']);
+    expect(located2?.selector).toBe('.other');
+    expect(located2?.line).toBe(5);
+
+    expect(locateRuleByIndex(css, 3, ['color'])).toBeUndefined();
+  });
+});
+
 describe('primarySystem and projectFileOf [R-ST-03]', () => {
   it('prefers Tailwind, then Bootstrap, CSS Modules, Sass, Less, plain CSS', () => {
     const report = (ids: StylingSystemId[]) => ({
@@ -105,6 +129,7 @@ describe('createStyleService().read [R-ST-04, R-ST-05]', () => {
     selector: '.card',
     media: [],
     occurrence: 0,
+    ruleIndex: 0,
     declarations: [],
     affects: 3,
     ...over,
@@ -189,5 +214,53 @@ describe('createStyleService().read [R-ST-04, R-ST-05]', () => {
       reason: 'external',
     });
     expect(reading.primary).toBeUndefined();
+  });
+
+  it('probes a rule from Card.module.css with hashed selector ._card_x1_1, ruleIndex: 0 -> source.file Card.module.css, selector .card, system cssModules [R-ST-04, R-ST-08]', async () => {
+    const moduleCss = `.card {
+  padding-top: 24px;
+}
+.header {
+  color: blue;
+}
+`;
+    await fs.writeFile(path.join(root, 'src/Card.module.css'), moduleCss);
+    const service = createStyleService({ fs: nodeFs });
+    const reading = await service.read(
+      { root, styling: { systems: [{ id: 'cssModules' }], editable: true, globalCss: [] } },
+      probe({
+        rules: [
+          rule({
+            sheet: {
+              kind: 'module',
+              id: path.join(root, 'src/Card.module.css').replaceAll('\\', '/'),
+            },
+            selector: '._card_x1_1',
+            ruleIndex: 0,
+            declarations: [{ property: 'padding-top', value: '24px', important: false }],
+          }),
+        ],
+        computed: {
+          'padding-top': '24px',
+          color: 'rgb(0, 0, 0)',
+          'background-color': 'rgb(255, 255, 255)',
+        },
+      }),
+    );
+
+    const byId = Object.fromEntries(reading.properties.map((p) => [p.id, p]));
+    expect(byId['paddingTop']).toEqual({
+      id: 'paddingTop',
+      value: { css: '24px' },
+      source: {
+        kind: 'rule',
+        system: 'cssModules',
+        file: 'src/Card.module.css',
+        line: 2,
+        selector: '.card',
+        affects: 3,
+      },
+      editable: true,
+    });
   });
 });

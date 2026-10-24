@@ -3,7 +3,12 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { initI18n } from '../../../i18n/i18n.ts';
-import { StyleSourcesSection } from './style-sources-section.tsx';
+import { useStyleState } from '../../style/style-reading.ts';
+import { CssStyleEditor, StyleSourcesSection } from './style-sources-section.tsx';
+
+vi.mock('../../style/style-reading.ts', () => ({
+  useStyleState: vi.fn(),
+}));
 
 describe('StyleSourcesSection [R-ST-04, R-ST-05]', () => {
   beforeAll(async () => {
@@ -90,5 +95,57 @@ describe('StyleSourcesSection [R-ST-04, R-ST-05]', () => {
     fireEvent.change(input, { target: { value: '24px' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(onCommit).toHaveBeenCalledWith('paddingTop', '24px');
+  });
+
+  it('enables inputs and hides unsupported banner when primary: "cssModules" [R-ST-02]', () => {
+    vi.mocked(useStyleState).mockReturnValue({
+      state: {
+        probe: {
+          ref: { loc: 'src/Card.tsx:4:5', index: 0 },
+          found: true,
+          rules: [],
+          inline: [],
+          computed: {},
+        },
+        reading: {
+          primary: 'cssModules',
+          properties: [
+            {
+              id: 'paddingTop',
+              value: { css: '16px' },
+              source: {
+                kind: 'rule',
+                system: 'cssModules',
+                file: 'src/components/Card.module.css',
+                line: 2,
+                selector: '.card',
+                affects: 1,
+              },
+              editable: true,
+            },
+          ],
+        },
+      },
+      refresh: vi.fn(),
+    });
+
+    render(
+      <CssStyleEditor
+        target={{
+          kind: 'element',
+          ref: { loc: 'src/Card.tsx:4:5', index: 0 },
+          loading: false,
+          warnings: [],
+          currentScope: { breakpoint: 'base' },
+          writePrefix: '',
+          setInteractionState: vi.fn(),
+          refresh: vi.fn(),
+        }}
+      />,
+    );
+
+    expect(screen.queryByTestId('inspector-style-unsupported')).toBeNull();
+    const input = screen.getByTestId<HTMLInputElement>('style-input-paddingTop');
+    expect(input.disabled).toBe(false);
   });
 });

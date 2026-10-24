@@ -26,8 +26,11 @@ export function normalizeMedia(media: string): string {
   return media.replace(/\s+/g, '').toLowerCase();
 }
 
-/** Every rule of `container` with the `@media` conditions around it, outermost first. */
-function walkRulesWithMedia(
+/**
+ * Every rule of `container` with the `@media` conditions around it, outermost first. `@keyframes`
+ * steps are not style rules (the browser's `ruleIndex` skips them too).
+ */
+export function walkRulesWithMedia(
   container: Container,
   media: readonly string[],
   visit: (rule: Rule, media: readonly string[]) => boolean,
@@ -36,7 +39,7 @@ function walkRulesWithMedia(
   container.each((child) => {
     if (stopped) return false;
     if (child.type === 'rule') stopped = visit(child, media);
-    else if (child.type === 'atrule' && child.nodes !== undefined) {
+    else if (child.type === 'atrule' && child.nodes !== undefined && !isKeyframes(child.name)) {
       const inner =
         child.name.toLowerCase() === 'media' ? [...media, normalizeMedia(child.params)] : media;
       stopped = walkRulesWithMedia(child, inner, visit);
@@ -44,6 +47,10 @@ function walkRulesWithMedia(
     return stopped ? false : undefined;
   });
   return stopped;
+}
+
+function isKeyframes(name: string): boolean {
+  return /keyframes$/i.test(name);
 }
 
 function declarationLines(rule: Rule, longhands: readonly string[]): Record<string, number> {
@@ -61,7 +68,25 @@ function declarationLines(rule: Rule, longhands: readonly string[]): Record<stri
   return lines;
 }
 
-/** The `occurrence`-th rule of a parsed sheet with this selector under this `@media` chain. */
+/** The `targetIndex`-th rule of a parsed sheet (0-based), traversing nested at-rules. */
+export function findRuleByIndex(root: Container, targetIndex: number): Rule | undefined {
+  if (targetIndex < 0) return undefined;
+  let current = 0;
+  let found: Rule | undefined;
+  walkRulesWithMedia(root, [], (rule) => {
+    if (current === targetIndex) {
+      found = rule;
+      return true;
+    }
+    current++;
+    return false;
+  });
+  return found;
+}
+
+/**
+ * Finds the `occurrence`-th rule of a parsed sheet with this selector under this `@media` chain.
+ */
 export function findRule(root: Container, key: RuleKey): Rule | undefined {
   const selector = normalizeSelector(key.selector);
   const media = key.media.map(normalizeMedia).join('|');
@@ -74,6 +99,30 @@ export function findRule(root: Container, key: RuleKey): Rule | undefined {
     return true;
   });
   return found;
+}
+
+/**
+ * Finds the `index`-th rule of `css` (0-based) and returns its line, declaration lines,
+ * and source selector.
+ */
+export function locateRuleByIndex(
+  css: string,
+  index: number,
+  longhands: readonly string[],
+): (LocatedRule & { readonly selector: string }) | undefined {
+  let root;
+  try {
+    root = postcss.parse(css);
+  } catch {
+    return undefined;
+  }
+  const rule = findRuleByIndex(root, index);
+  if (rule === undefined) return undefined;
+  return {
+    line: rule.source?.start?.line ?? 1,
+    declarations: declarationLines(rule, longhands),
+    selector: rule.selector,
+  };
 }
 
 /**

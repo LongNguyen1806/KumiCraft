@@ -57,6 +57,7 @@ describe('applyStyleChange [R-ST-06, R-ST-09]', () => {
     selector: '.card',
     media: [],
     occurrence: 0,
+    ruleIndex: 0,
     declarations: [{ property: 'padding-top', value: '16px', important: false }],
     affects: 3,
     ...over,

@@ -14,7 +14,7 @@ import {
 } from '@reactcraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
-import { locateRule } from './css-locate.ts';
+import { locateRule, locateRuleByIndex } from './css-locate.ts';
 
 const MAX_CSS_BYTES = 2 * 1024 * 1024;
 
@@ -77,6 +77,22 @@ export function winnerFor(probe: BridgeStyleProbePayload, longhand: string): Win
   return rule === undefined ? { kind: 'none' } : { kind: 'rule', rule };
 }
 
+function locateInFile(
+  css: string,
+  system: StyleSystemId,
+  rule: MatchedRule,
+  longhand: string,
+): { line: number; selector: string } | undefined {
+  if (system === 'cssModules') {
+    const loc = locateRuleByIndex(css, rule.ruleIndex, [longhand]);
+    if (loc === undefined) return undefined;
+    return { line: loc.declarations[longhand] ?? loc.line, selector: loc.selector };
+  }
+  const loc = locateRule(css, rule, [longhand]);
+  if (loc === undefined) return undefined;
+  return { line: loc.declarations[longhand] ?? loc.line, selector: rule.selector };
+}
+
 /** Where a winning rule lives: a line of a project file, or a sheet the project does not own. */
 async function ruleSource(
   fs: FileSystemPort,
@@ -102,16 +118,17 @@ async function ruleSource(
     cache.set(file, read.ok ? read.value : undefined);
   }
   const css = cache.get(file);
-  const located = css === undefined ? undefined : locateRule(css, rule, [longhand]);
-  if (located === undefined) {
+  const system = systemOfFile(file);
+  const loc = css === undefined ? undefined : locateInFile(css, system, rule, longhand);
+  if (loc === undefined) {
     return { source: { kind: 'external', href: file }, editable: false, reason: 'notFound' };
   }
   const source: StyleSource = {
     kind: 'rule',
-    system: systemOfFile(file),
+    system,
     file,
-    line: located.declarations[longhand] ?? located.line,
-    selector: rule.selector,
+    line: loc.line,
+    selector: loc.selector,
     affects: rule.affects,
     ...(rule.media.length === 0 ? {} : { media: rule.media.join(' and ') }),
   };

@@ -1,7 +1,7 @@
 // Minimal CSS edits of the style layer (SPEC-04 M-ST, R-ST-06, R-ST-09).
 import { describe, expect, it } from 'vitest';
 
-import { appendRule, setRuleDeclaration } from './css-edit.ts';
+import { appendRule, setDeclarationAt, setRuleDeclaration } from './css-edit.ts';
 
 const CSS = `.card {
   padding: 16px;
@@ -47,6 +47,29 @@ describe('setRuleDeclaration [R-ST-06]', () => {
       'red',
     );
     expect(empty.ok && empty.value).toBe('.x {\r\n  color: red;\r\n}\r\n');
+  });
+});
+
+describe('setDeclarationAt [R-ST-06]', () => {
+  it('changes an existing declaration in place or adds at end, and rejects non-existent index: setDeclarationAt đổi đúng chỗ / thêm cuối; index không tồn tại → E016 ruleNotFound [R-ST-06]', () => {
+    const changed = setDeclarationAt(CSS, 0, 'padding', '24px');
+    expect(changed.ok && changed.value).toBe(CSS.replace('padding: 16px;', 'padding: 24px;'));
+
+    const added = setDeclarationAt(CSS, 0, 'padding-top', '24px');
+    expect(added.ok && added.value).toBe(
+      CSS.replace('solid #e2e8f0\n}', 'solid #e2e8f0;\n  padding-top: 24px;\n}'),
+    );
+
+    const mediaChanged = setDeclarationAt(CSS, 1, 'padding', '4px');
+    expect(mediaChanged.ok && mediaChanged.value).toBe(
+      CSS.replace('padding: 8px;', 'padding: 4px;'),
+    );
+
+    const notFound = setDeclarationAt(CSS, 99, 'color', 'red');
+    expect(notFound.ok).toBe(false);
+    if (!notFound.ok) {
+      expect(notFound.error).toEqual({ code: 'E016', params: { reason: 'ruleNotFound' } });
+    }
   });
 });
 

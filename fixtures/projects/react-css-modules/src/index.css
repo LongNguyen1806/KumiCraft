@@ -1,0 +1,15 @@
+:root {
+  --brand: #2563eb;
+  --radius: 8px;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  color: #0f172a;
+}
+
+.title {
+  font-size: 32px;
+  color: var(--brand);
+}

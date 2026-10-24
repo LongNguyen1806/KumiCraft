@@ -3,7 +3,7 @@
 import { err, ok, type Result } from '@reactcraft/shared';
 import postcss, { type AtRule, type Declaration, type Root, type Rule } from 'postcss';
 
-import { findRule, normalizeMedia, type RuleKey } from './css-locate.ts';
+import { findRule, findRuleByIndex, normalizeMedia, type RuleKey } from './css-locate.ts';
 
 export type CssDeclaration = { readonly property: string; readonly value: string };
 
@@ -74,6 +74,23 @@ function addDeclaration(css: string, rule: Rule, property: string, value: string
   return splice(css, end, end, `${needsSemicolon ? ';' : ''}${before}${property}: ${value};`);
 }
 
+function applyDeclarationToRule(
+  css: string,
+  rule: Rule,
+  property: string,
+  value: string | undefined,
+): Result<string> {
+  const decl = lastDeclaration(rule, property);
+  if (value === undefined) {
+    return decl === undefined ? ok(css) : checked(removeDeclaration(css, decl));
+  }
+  return checked(
+    decl === undefined
+      ? addDeclaration(css, rule, property, value)
+      : replaceDeclaration(css, decl, value),
+  );
+}
+
 /**
  * R-ST-06 `target: 'rule'`: sets (or with `value` undefined removes) `property` in the rule the
  * browser reported. An existing declaration of the same property changes in place; otherwise a
@@ -89,15 +106,24 @@ export function setRuleDeclaration(
   if (!root.ok) return root;
   const rule = findRule(root.value, key);
   if (rule === undefined) return err({ code: 'E016', params: { reason: 'ruleNotFound' } });
-  const decl = lastDeclaration(rule, property);
-  if (value === undefined) {
-    return decl === undefined ? ok(css) : checked(removeDeclaration(css, decl));
-  }
-  return checked(
-    decl === undefined
-      ? addDeclaration(css, rule, property, value)
-      : replaceDeclaration(css, decl, value),
-  );
+  return applyDeclarationToRule(css, rule, property, value);
+}
+
+/**
+ * R-ST-06 `target: 'rule'`: sets (or removes) `property` in the rule at 0-based `ruleIndex`
+ * within the parsed stylesheet, preserving formatting.
+ */
+export function setDeclarationAt(
+  css: string,
+  ruleIndex: number,
+  property: string,
+  value: string | undefined,
+): Result<string> {
+  const root = parse(css);
+  if (!root.ok) return root;
+  const rule = findRuleByIndex(root.value, ruleIndex);
+  if (rule === undefined) return err({ code: 'E016', params: { reason: 'ruleNotFound' } });
+  return applyDeclarationToRule(css, rule, property, value);
 }
 
 function topLevelMedia(root: Root, condition: string): AtRule | undefined {

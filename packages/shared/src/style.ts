@@ -127,6 +127,8 @@ export const MatchedRuleSchema = z.strictObject({
   media: z.array(z.string().max(1000)).max(10), // enclosing @media conditions, outermost first
   /** How many earlier rules of the same sheet have this selector and media (0 for the first). */
   occurrence: z.number().int().min(0),
+  /** Order (0-based) of this rule among all CSSStyleRules in its sheet (R-ST-08). */
+  ruleIndex: z.number().int().min(0),
   declarations: z.array(StyleDeclarationSchema).max(200), // only the probed longhands
   affects: z.number().int().min(0), // elements of the page the selector matches (R-ST-05)
 });

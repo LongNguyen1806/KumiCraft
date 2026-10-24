@@ -117,12 +117,16 @@ type WalkState = {
   readonly seen: Map<string, number>;
   readonly out: Candidate[];
   position: number;
+  /** 0-based index of CSSStyleRule within its stylesheet (R-ST-08). */
+  ruleIndex: number;
 };
 
 function visitStyleRule(state: WalkState, rule: CSSStyleRule, media: readonly string[]): void {
   const key = `${rule.selectorText}|${media.join('|')}`;
   const occurrence = state.seen.get(key) ?? 0;
   state.seen.set(key, occurrence + 1);
+  const ruleIndex = state.ruleIndex;
+  state.ruleIndex++;
   state.position++;
   const specificity = matchingSpecificity(state.el, rule.selectorText);
   if (specificity === undefined) return;
@@ -134,6 +138,7 @@ function visitStyleRule(state: WalkState, rule: CSSStyleRule, media: readonly st
       selector: rule.selectorText,
       media: [...media],
       occurrence,
+      ruleIndex,
       declarations,
     },
     specificity,
@@ -145,6 +150,7 @@ function visitStyleRule(state: WalkState, rule: CSSStyleRule, media: readonly st
 function countUnmatched(state: WalkState, selector: string, media: readonly string[]): void {
   const key = `${selector}|${media.join('|')}`;
   state.seen.set(key, (state.seen.get(key) ?? 0) + 1);
+  state.ruleIndex++;
   state.position++;
 }
 
@@ -201,6 +207,7 @@ export function probeStyles(
       seen: new Map(),
       out,
       position,
+      ruleIndex: 0,
     };
     walkRules(state, rules, [], true);
     position = state.position;

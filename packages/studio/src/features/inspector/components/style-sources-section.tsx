@@ -37,8 +37,8 @@ const CORE_PROPERTIES = [
   'backgroundColor',
   'borderRadius',
 ];
-/** Systems whose changes the style layer writes so far (K2b: plain CSS). */
-const WRITABLE: readonly StyleSystemId[] = ['css'];
+/** Systems whose changes the style layer writes so far (K2b: plain CSS; K2c: CSS Modules). */
+const WRITABLE: readonly StyleSystemId[] = ['css', 'cssModules'];
 
 function SourceText({ property }: { readonly property: StyleProperty }) {
   const { t } = useTranslation();
