@@ -5,6 +5,7 @@
   },
   "activity": {
     "bar": "Thanh hoạt động",
+    "files": "Thư mục",
     "layers": "Lớp",
     "library": "Thư viện",
     "components": "Component",
@@ -121,6 +122,9 @@
     "draftDelete": "xóa bản nháp {{name}}",
     "draftPromote": "chuyển đổi bản nháp {{name}}",
     "insertImage": "chèn ảnh {{name}}",
+    "fileCreate": "tạo file {{name}}",
+    "fileRename": "đổi tên file {{name}}",
+    "fileDelete": "xóa file {{name}}",
     "themeSet": "sửa token {{name}}",
     "themeAdd": "thêm token {{name}}",
     "themeRemove": "xóa token {{name}}",
@@ -611,5 +615,31 @@
   "styling": {
     "css": "CSS thường",
     "none": "Không rõ"
+  },
+  "files": {
+    "title": "Thư mục",
+    "empty": "Không có file nào",
+    "newFile": "File mới…",
+    "newFolder": "Thư mục mới…",
+    "rename": "Đổi tên…",
+    "delete": "Xóa…",
+    "openInEditor": "Mở trong editor",
+    "copyPath": "Sao chép đường dẫn",
+    "namePlaceholder": "Tên file hoặc thư mục…",
+    "invalidName": "Tên không hợp lệ hoặc chứa ký tự cấm (/ \\ : * ? \" < > |)",
+    "deleteTitle": "Xóa {{name}}",
+    "deleteConfirm": "Bạn có chắc muốn xóa {{name}}?",
+    "deleteWarningImporters": "Các file đang import {{name}}:",
+    "deleteWarningAndMore": "và {{count}} file khác",
+    "deleteFolderRouterPages": "Thư mục có {{count}} trang trong router; route sẽ lỗi.",
+    "deleteButton": "Xóa",
+    "cancel": "Hủy",
+    "loading": "Đang tải…",
+    "maxDocsError": "Tối đa 10 tài liệu đính kèm",
+    "buildError": "Lỗi build",
+    "aiModified": "AI vừa sửa",
+    "collapse": "Thu gọn",
+    "expand": "Mở rộng",
+    "more": "Thêm"
   }
 }

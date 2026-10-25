@@ -276,6 +276,14 @@ async function realRoot(path: string): Promise<string> {
   }
 }
 
+async function nodeFsMkdir(platform: Platform, root: string, path: string): Promise<Result<void>> {
+  const resolved = await resolveForWrite(platform, root, path);
+  if (!resolved.ok) return resolved;
+  return withRetry(path, 'mkdir', async () => {
+    await mkdir(resolved.value, { recursive: true });
+  });
+}
+
 export function createNodeFileSystem(platform: Platform): FileSystemPort {
   return {
     readText: (root, path, options) => readText(platform, root, path, options),
@@ -294,6 +302,7 @@ export function createNodeFileSystem(platform: Platform): FileSystemPort {
     writeBytesAtomic: (root, path, bytes, options) =>
       writeBytesAtomic(platform, root, path, bytes, options),
     createExclusive: (root, path, content) => createExclusive(platform, root, path, content),
+    mkdir: (root, path) => nodeFsMkdir(platform, root, path),
     readDir: (root, path) => readDir(platform, root, path),
     exists: (root, path) => exists(platform, root, path),
     async remove(root, path) {

@@ -98,7 +98,9 @@
       "tokenNotFound": "Token not found in @theme.",
       "invalidValue": "Invalid CSS value.",
       "noThemeFile": "Tailwind CSS file not found.",
-      "invalidResponse": "The server returned an unexpected response."
+      "invalidResponse": "The server returned an unexpected response.",
+      "entryExists": "A file or folder with this name already exists.",
+      "folderTooLarge": "The folder is too large to undo (over 500 files or 20 MB); do this in your code editor."
     }
   },
   "E017": {

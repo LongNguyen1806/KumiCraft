@@ -221,6 +221,7 @@ type ChatInputFieldProps = {
   readonly onDraftChange: (text: string) => void;
   readonly onSend: () => void;
   readonly onAddFiles: (files: FileList | readonly File[]) => Promise<void>;
+  readonly onDropPath: (path: string) => void;
 };
 
 function onPasteImages(
@@ -234,6 +235,22 @@ function onPasteImages(
   }
 }
 
+function handleInputDrop(
+  e: DragEvent<HTMLDivElement>,
+  onDropPath: (path: string) => void,
+  onAddFiles: (files: FileList | readonly File[]) => Promise<void>,
+) {
+  e.preventDefault();
+  const customPath = e.dataTransfer.getData('application/x-kumicraft-path');
+  if (customPath) {
+    onDropPath(customPath);
+    return;
+  }
+  if (e.dataTransfer.files.length > 0) {
+    void onAddFiles(e.dataTransfer.files);
+  }
+}
+
 function ChatInputField({
   disabled,
   draft,
@@ -241,6 +258,7 @@ function ChatInputField({
   onDraftChange,
   onSend,
   onAddFiles,
+  onDropPath,
 }: ChatInputFieldProps) {
   const { t } = useTranslation('chat');
 
@@ -251,19 +269,14 @@ function ChatInputField({
     }
   };
 
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    if (e.dataTransfer.files.length > 0) {
-      void onAddFiles(e.dataTransfer.files);
-    }
-  };
-
   return (
     <div
       onDragOver={(e) => {
         e.preventDefault();
       }}
-      onDrop={handleDrop}
+      onDrop={(e) => {
+        handleInputDrop(e, onDropPath, onAddFiles);
+      }}
       className="relative rounded-xl border border-border bg-card p-2 shadow-xs focus-within:border-ink-soft focus-within:ring-1 focus-within:ring-line"
     >
       <textarea
@@ -287,10 +300,12 @@ function ChatInputField({
 }
 
 export function ChatInput({ disabled = false }: ChatInputProps) {
+  const { t: tCommon } = useTranslation();
   const draft = useChatStore((s) => s.draft);
   const setDraft = useChatStore((s) => s.setDraft);
   const { isUploading, addFiles } = useChatImages();
   const { sendError, send } = useSendTurn();
+  const [docError, setDocError] = useState<string | undefined>();
   useAutoResend(send);
 
   const trimmed = draft.trim();
@@ -300,11 +315,26 @@ export function ChatInput({ disabled = false }: ChatInputProps) {
     if (!disabled) sendFromStore(send);
   };
 
+  const handleDropPath = (path: string) => {
+    const docs = useChatStore.getState().docs;
+    if (docs.length >= 10) {
+      setDocError(tCommon('files.maxDocsError'));
+      return;
+    }
+    setDocError(undefined);
+    useChatStore.getState().addDoc(path);
+  };
+
   return (
     <div className="flex flex-col gap-2 pt-2 border-t border-border/50">
       {sendError !== undefined && (
         <p data-testid="chat-send-error" className="text-xs text-rose-600">
           {sendError}
+        </p>
+      )}
+      {docError !== undefined && (
+        <p data-testid="chat-doc-error" className="text-xs text-rose-600">
+          {docError}
         </p>
       )}
       <ChatInputField
@@ -314,6 +344,7 @@ export function ChatInput({ disabled = false }: ChatInputProps) {
         onDraftChange={setDraft}
         onSend={handleSend}
         onAddFiles={addFiles}
+        onDropPath={handleDropPath}
       />
     </div>
   );

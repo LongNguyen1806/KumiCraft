@@ -138,6 +138,7 @@ export {
   RELEASED_PHASE,
   resolveEnabledFeatures,
 } from './features.ts';
+export * from './files.ts';
 export {
   type DirectoryListing,
   type DirectoryListingEntry,

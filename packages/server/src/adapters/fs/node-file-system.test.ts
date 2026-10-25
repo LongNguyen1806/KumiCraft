@@ -151,4 +151,14 @@ describe('NodeFileSystem', () => {
     expect(outsideRes.ok).toBe(false);
     if (!outsideRes.ok) expect(outsideRes.error.code).toBe('E012');
   });
+
+  it('mkdir creates nested directories and rejects path outside root (E012) [S-20..S-24, WP-4.00]', async () => {
+    const created = await fs.mkdir(root, 'src/nested/deep');
+    expect(created.ok).toBe(true);
+    expect(await fs.exists(root, 'src/nested/deep')).toBe(true);
+
+    const outsideRes = await fs.mkdir(root, '../outside/illegal');
+    expect(outsideRes.ok).toBe(false);
+    if (!outsideRes.ok) expect(outsideRes.error.code).toBe('E012');
+  });
 });

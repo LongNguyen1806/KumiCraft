@@ -2,6 +2,7 @@ import {
   Component,
   FileEdit,
   FileText,
+  FolderTree,
   Layers,
   Library,
   type LucideIcon,
@@ -9,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
 import { useDrafts } from '../drafts/use-drafts.ts';
 import { usePanelLayoutStore } from '../editor/use-panel-layout.ts';
 import { useStyleLayerSupported } from '../project/use-style-edit.ts';
@@ -18,6 +20,7 @@ import { activate, type ActivityId, useShownActivity } from './activity-store.ts
 export type ActivityContext = {
   readonly brandSupported: boolean;
   readonly draftCount: number;
+  readonly hasBuildError: boolean;
 };
 
 export type ActivityLabelKey = `activity.${ActivityId}`;
@@ -31,6 +34,12 @@ export type ActivityItemConfig = {
 };
 
 export const ACTIVITY_ITEMS: readonly ActivityItemConfig[] = [
+  {
+    id: 'files',
+    icon: FolderTree,
+    labelKey: 'activity.files',
+    badge: (ctx) => (ctx.hasBuildError ? 1 : undefined),
+  },
   { id: 'layers', icon: Layers, labelKey: 'activity.layers' },
   { id: 'library', icon: Library, labelKey: 'activity.library' },
   { id: 'components', icon: Component, labelKey: 'activity.components' },
@@ -81,7 +90,9 @@ function ActivityBarButton({ item, isPressed, badgeValue, onActivate }: Activity
       {badgeValue !== undefined && (
         <span
           data-testid={`activity-badge-${item.id}`}
-          className="absolute top-1 right-1 flex min-w-4 h-4 items-center justify-center rounded-full bg-charcoal px-1 text-[10px] font-semibold text-on-charcoal leading-none"
+          className={`absolute top-1 right-1 flex min-w-4 h-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-none ${
+            item.id === 'files' ? 'bg-rose-600 text-white' : 'bg-charcoal text-on-charcoal'
+          }`}
         >
           {badgeValue}
         </span>
@@ -101,10 +112,12 @@ export function ActivityBar({ context }: ActivityBarProps = {}) {
 
   const styleLayerSupported = useStyleLayerSupported();
   const { drafts } = useDrafts();
+  const buildError = useCanvasErrorStore((s) => s.buildError);
 
   const ctx: ActivityContext = {
     brandSupported: context?.brandSupported ?? styleLayerSupported,
     draftCount: context?.draftCount ?? drafts.length,
+    hasBuildError: context?.hasBuildError ?? buildError !== undefined,
   };
 
   return (

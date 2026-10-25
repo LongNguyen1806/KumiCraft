@@ -6,6 +6,7 @@ import { BrandPanel } from '../brand/brand-panel.tsx';
 import { ChatPanel } from '../chat/chat-panel.tsx';
 import { ComponentsPanel } from '../components-panel/components-panel.tsx';
 import { DraftsPanel } from '../drafts/drafts-panel.tsx';
+import { FilesPanel } from '../files/files-panel.tsx';
 import { InspectorPanel } from '../inspector/inspector-panel.tsx';
 import { useProjectTheme } from '../inspector/use-project-theme.ts';
 import { LayerTree } from '../layers/layer-tree.tsx';
@@ -77,6 +78,8 @@ function Tab({ selected, disabled = false, testId, onClick, children }: TabProps
 
 function resolveLeftPanelTitle(active: string, t: TFunction): string {
   switch (active) {
+    case 'files':
+      return t('activity.files');
     case 'layers':
       return t('editor.layers');
     case 'library':
@@ -94,7 +97,7 @@ function resolveLeftPanelTitle(active: string, t: TFunction): string {
   }
 }
 
-/** Left panel content: LayerTree, Library, Components, Pages, Drafts, or Brand. */
+/** Left panel content: Files, LayerTree, Library, Components, Pages, Drafts, or Brand. */
 export function LeftPanel() {
   const { t } = useTranslation();
   const active = useShownActivity();
@@ -102,6 +105,7 @@ export function LeftPanel() {
 
   return (
     <Panel label={title} title={title}>
+      {active === 'files' && <FilesPanel />}
       {active === 'layers' && <LayerTree />}
       {active === 'library' && <LibraryPanel />}
       {active === 'components' && <ComponentsPanel />}

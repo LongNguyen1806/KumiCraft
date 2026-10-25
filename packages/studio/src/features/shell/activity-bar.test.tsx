@@ -42,6 +42,7 @@ describe('ActivityBar [WP-4.00]', () => {
     const testIds = buttons.map((b) => b.getAttribute('data-testid'));
 
     expect(testIds).toEqual([
+      'activity-files',
       'activity-layers',
       'activity-library',
       'activity-components',

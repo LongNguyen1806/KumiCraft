@@ -81,6 +81,7 @@ function buildRouteConfigs(
       fs: ctx.fs,
       usageCounter: ctx.usageCounter,
       recents: ctx.configStore,
+      historyService: ctx.historyService,
     },
     runnerRoutes: { runnerService: ctx.runnerService },
     fsRoutes: { fs: ctx.fs, platform: ctx.platform, homeDir: ctx.homeDir },

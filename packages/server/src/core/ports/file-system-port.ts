@@ -43,6 +43,8 @@ export interface FileSystemPort {
     path: string,
     content: string,
   ): Promise<Result<'created' | 'exists'>>;
+  /** Creates a directory recursively, checking path syntax and symlinks (S-20 to S-24). */
+  mkdir(root: string, path: string): Promise<Result<void>>;
   /** Lists a folder without following symlinks. Missing folder: an empty list. */
   readDir(root: string, path: string): Promise<Result<readonly DirectoryEntry[]>>;
   exists(root: string, path: string): Promise<boolean>;

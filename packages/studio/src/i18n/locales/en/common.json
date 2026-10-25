@@ -5,6 +5,7 @@
   },
   "activity": {
     "bar": "Activity Bar",
+    "files": "Files",
     "layers": "Layers",
     "library": "Library",
     "components": "Components",
@@ -121,6 +122,9 @@
     "draftDelete": "delete draft {{name}}",
     "draftPromote": "promote draft {{name}}",
     "insertImage": "insert image {{name}}",
+    "fileCreate": "create file {{name}}",
+    "fileRename": "rename file {{name}}",
+    "fileDelete": "delete file {{name}}",
     "themeSet": "update token {{name}}",
     "themeAdd": "add token {{name}}",
     "themeRemove": "remove token {{name}}",
@@ -611,5 +615,31 @@
   "styling": {
     "css": "plain CSS",
     "none": "Unknown"
+  },
+  "files": {
+    "title": "Files",
+    "empty": "No files found",
+    "newFile": "New file…",
+    "newFolder": "New folder…",
+    "rename": "Rename…",
+    "delete": "Delete…",
+    "openInEditor": "Open in editor",
+    "copyPath": "Copy path",
+    "namePlaceholder": "File or folder name…",
+    "invalidName": "Invalid name or contains forbidden characters (/ \\ : * ? \" < > |)",
+    "deleteTitle": "Delete {{name}}",
+    "deleteConfirm": "Are you sure you want to delete {{name}}?",
+    "deleteWarningImporters": "Files importing {{name}}:",
+    "deleteWarningAndMore": "and {{count}} other files",
+    "deleteFolderRouterPages": "Directory contains {{count}} router pages; routes will fail.",
+    "deleteButton": "Delete",
+    "cancel": "Cancel",
+    "loading": "Loading…",
+    "maxDocsError": "Maximum 10 attached documents",
+    "buildError": "Build error",
+    "aiModified": "AI modified",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "more": "More"
   }
 }

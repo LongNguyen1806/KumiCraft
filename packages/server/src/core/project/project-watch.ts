@@ -1,7 +1,7 @@
 // Reacts to files of the open project changing on disk (R-HI-05, V-70, S-84).
 import { WORKSPACE_FILE } from '@kumicraft/shared';
 
-import { computeSha256, type HistoryService } from '../history/history-service.ts';
+import { computeBytesSha256, type HistoryService } from '../history/history-service.ts';
 import type { EventBusPort } from '../ports/event-bus-port.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { LoggerPort } from '../ports/logger-port.ts';
@@ -26,10 +26,13 @@ export type ProjectWatch = {
   stop(): Promise<void>;
 };
 
-/** Hash of the file now, '' when it is gone or cannot be read. */
+/**
+ * Hash of the file's bytes now, '' when it is gone or cannot be read. History records the hash of
+ * exactly what it wrote, so bytes match text files (BOM included) and binary files alike.
+ */
 async function currentHash(fs: FileSystemPort, root: string, file: string): Promise<string> {
-  const read = await fs.readText(root, file);
-  return read.ok ? computeSha256(read.value) : '';
+  const read = await fs.readBytes(root, file);
+  return read.ok ? computeBytesSha256(read.value) : '';
 }
 
 /** Files edited outside KumiCraft (R-HI-05); KumiCraft's own data under .kumicraft/ is not. */

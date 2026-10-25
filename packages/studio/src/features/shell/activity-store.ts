@@ -5,6 +5,7 @@ import { usePanelLayoutStore } from '../editor/use-panel-layout.ts';
 import { useStyleLayerSupported } from '../project/use-style-edit.ts';
 
 export const ACTIVITY_IDS = [
+  'files',
   'layers',
   'library',
   'components',

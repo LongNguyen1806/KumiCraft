@@ -5,7 +5,11 @@ import { join } from 'node:path';
 import { WORKSPACE_FILE } from '@kumicraft/shared';
 import { describe, expect, it, vi } from 'vitest';
 
-import { computeSha256, createHistoryService } from '../history/history-service.ts';
+import {
+  computeBytesSha256,
+  computeSha256,
+  createHistoryService,
+} from '../history/history-service.ts';
 import { createEventBus, type ServerEvent } from '../ports/event-bus-port.ts';
 import type { WatcherPort } from '../ports/watcher-port.ts';
 import { makeTempDir, nodeFs, silentLogger } from '../workspace/test-support.ts';
@@ -91,6 +95,46 @@ describe('project watch', () => {
       t.watch.start(t.dir);
 
       t.watcher.emit(['src/A.tsx', 'src/B.tsx']);
+      await vi.waitFor(() => {
+        expect(t.filesChanged()).toHaveLength(1);
+      });
+
+      expect(t.filesChanged()[0]?.payload).toEqual({ files: ['src/B.tsx'] });
+      expect(t.history.getState().undoCount).toBe(1);
+    } finally {
+      await t.cleanup();
+    }
+  });
+
+  it('keeps the step of an image and of a BOM file KumiCraft wrote [R-HI-05, R-HI-11]', async () => {
+    const t = await setup();
+    try {
+      const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0xff, 0xfe]);
+      const bomText = '\uFEFFmine';
+      await writeFile(join(t.dir, 'src/logo.png'), png);
+      await writeFile(join(t.dir, 'src/Bom.tsx'), bomText);
+      await writeFile(join(t.dir, 'src/B.tsx'), 'from VS Code');
+      t.history.push({
+        label: { key: 'history:fileCreate' },
+        files: [
+          {
+            path: 'src/logo.png',
+            before: undefined,
+            after: png.toString('base64'),
+            afterHash: computeBytesSha256(png),
+            encoding: 'base64',
+          },
+          {
+            path: 'src/Bom.tsx',
+            before: undefined,
+            after: bomText,
+            afterHash: computeSha256(bomText),
+          },
+        ],
+      });
+      t.watch.start(t.dir);
+
+      t.watcher.emit(['src/logo.png', 'src/Bom.tsx', 'src/B.tsx']);
       await vi.waitFor(() => {
         expect(t.filesChanged()).toHaveLength(1);
       });
