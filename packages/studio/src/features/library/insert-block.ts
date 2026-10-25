@@ -5,11 +5,14 @@ import {
   isContainerTag,
   type LibraryBlock,
   type Placement,
+  primarySystem,
+  renderBlock,
 } from '@kumicraft/shared';
 
 import { applyStructureEdit } from '../../api/source-client.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';
 import { selectionAnchor } from '../design/selection-anchor.ts';
+import { useProjectStore } from '../project/project-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
 
@@ -32,8 +35,14 @@ export type InsertBlockResult =
   | { readonly ok: true; readonly locs: readonly string[] }
   | { readonly ok: false; readonly error?: ErrorInfo | undefined; readonly skipped?: boolean };
 
+export function localizedBlockLang(lang: string): 'vi' | 'en' {
+  return lang.toLowerCase().startsWith('vi') ? 'vi' : 'en';
+}
+
 export function localizedBlockJsx(block: LibraryBlock, lang: string): string {
-  return lang.toLowerCase().startsWith('vi') ? block.jsx.vi : block.jsx.en;
+  const styling = useProjectStore.getState().project?.support.styling;
+  const system = styling !== undefined ? primarySystem(styling) : 'tailwind4';
+  return renderBlock(block, system, localizedBlockLang(lang)).jsx;
 }
 
 export async function insertBlockAt(
@@ -43,9 +52,18 @@ export async function insertBlockAt(
   placement?: Placement,
   tailwindMajor?: 3 | 4,
 ): Promise<InsertBlockResult> {
-  const jsx = localizedBlockJsx(block, lang);
+  const styling = useProjectStore.getState().project?.support.styling;
+  const system = styling !== undefined ? primarySystem(styling) : 'tailwind4';
+  const rendered = renderBlock(block, system, localizedBlockLang(lang));
   try {
-    const res = await applyStructureEdit({ kind: 'insert', target, jsx, placement, tailwindMajor });
+    const res = await applyStructureEdit({
+      kind: 'insert',
+      target,
+      jsx: rendered.jsx,
+      placement,
+      tailwindMajor,
+      ...(rendered.rules.length > 0 ? { css: { rules: rendered.rules } } : {}),
+    });
     const newLoc = res.locs[0];
     if (newLoc) {
       useSelectionStore.getState().setSelectedRefs([{ loc: newLoc, index: 0 }]);

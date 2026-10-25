@@ -153,7 +153,7 @@ export {
   HistoryStepSchema,
 } from './history.ts';
 export * from './job.ts';
-export { LIBRARY_BLOCKS, type LibraryBlock, type LibraryBlockCategory } from './library/blocks.ts';
+export * from './library/blocks.ts';
 export { type LibraryBlockLabelsResolver, normalizeText, searchBlocks } from './library/search.ts';
 export { pageNames, type PageNamesResult, toComponentName, toRoutePath } from './page-names.ts';
 export * from './page-tree.ts';
@@ -305,72 +305,7 @@ export {
   shortcutLabel,
   WORKS_WHILE_TYPING,
 } from './shortcuts.ts';
-export {
-  type AnyEdit,
-  AnyEditSchema,
-  type AttributeLevelEdit,
-  AttributeLevelEditSchema,
-  type BatchEditRequest,
-  BatchEditRequestSchema,
-  type BatchEditResult,
-  BatchEditResultSchema,
-  type DuplicateEdit,
-  DuplicateEditSchema,
-  EDITABLE_ATTRS,
-  type EditableAttr,
-  EditableAttrSchema,
-  type EditRequest,
-  EditRequestSchema,
-  type EditResult,
-  EditResultSchema,
-  type ElementAttributes,
-  ElementAttributesSchema,
-  type ElementClassName,
-  ElementClassNameSchema,
-  type ElementGuard,
-  ElementGuardSchema,
-  type ElementSource,
-  ElementSourceSchema,
-  type ElementSourceText,
-  ElementSourceTextSchema,
-  type ElementText,
-  ElementTextSchema,
-  type ImageSource,
-  ImageSourceSchema,
-  INSERT_JSX_MAX_BYTES,
-  type InsertEdit,
-  InsertEditSchema,
-  type InsertImageEdit,
-  InsertImageEditSchema,
-  type InsertTarget,
-  InsertTargetSchema,
-  type MoveEdit,
-  MoveEditSchema,
-  parseLocString,
-  type RemoveEdit,
-  RemoveEditSchema,
-  type SetAttributeEdit,
-  SetAttributeEditSchema,
-  type SetClassNameEdit,
-  SetClassNameEditSchema,
-  type SetFlagEdit,
-  SetFlagEditSchema,
-  type SetTextEdit,
-  SetTextEditSchema,
-  type SourceEdit,
-  SourceEditSchema,
-  type SourceLoc,
-  type StaticOrString,
-  StaticOrStringSchema,
-  type StructureEdit,
-  StructureEditSchema,
-  type StructureResult,
-  StructureResultSchema,
-  type UnwrapEdit,
-  UnwrapEditSchema,
-  type WrapEdit,
-  WrapEditSchema,
-} from './source.ts';
+export * from './source.ts';
 export * from './style.ts';
 export * from './tailwind/index.ts';
 export { TAILWIND_COLORS } from './tailwind/palette.generated.ts';

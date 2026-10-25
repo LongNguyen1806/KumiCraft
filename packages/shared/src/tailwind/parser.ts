@@ -40,7 +40,7 @@ export function parseClasses(input: string, ctx: ClassContext): ClassToken[] {
       };
     }
 
-    const matched = matchProperty(rawTok.utility, ctx.theme);
+    const matched = matchProperty(rawTok.utility, ctx.theme, ctx.major ?? 4);
     if (matched === undefined) {
       return {
         ...rawTok,

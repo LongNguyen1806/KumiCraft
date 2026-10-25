@@ -156,7 +156,7 @@ async function applyToRule(
 }
 
 /** The plain `.css`, `.scss`, or `.less` file the element's own file imports, if any. */
-function importedCss(code: string, jsxFile: string): string | undefined {
+export function importedCss(code: string, jsxFile: string): string | undefined {
   const match = /import\s+['"](\.{1,2}\/[^'"]+(?<!\.module)\.(?:css|scss|sass|less))['"]/.exec(
     code,
   );
@@ -165,7 +165,7 @@ function importedCss(code: string, jsxFile: string): string | undefined {
     : posix.normalize(posix.join(posix.dirname(jsxFile), match[1]));
 }
 
-function addCssImport(code: string, cssName: string): string {
+export function addCssImport(code: string, cssName: string): string {
   const eol = code.includes('\r\n') ? '\r\n' : '\n';
   const at = findImportInsertPosition(parseJsxAst(code), code);
   return `${code.slice(0, at)}import './${cssName}';${eol}${code.slice(at)}`;
@@ -211,27 +211,54 @@ export async function elementContext(
   });
 }
 
+export type CssFilePlan = {
+  readonly file: string;
+  /** Set when `file` is new: the name the JSX file must import once the file exists. */
+  readonly importAs?: string | undefined;
+};
+
 /**
- * Where the element's new rule goes: the winning rule's file, the CSS its file imports, or a new
- * `<File>.css` beside it that the file then imports (the import is recorded in `writes`).
+ * Where an element's new rule goes: the winning rule's file, the CSS its file imports, or a new
+ * `<File>.css` beside it. Nothing is written: the import of a new file is added only after the
+ * file exists, since Vite fails on an import of a missing file (and misses the HMR).
  */
-async function cssFileFor(
-  deps: StyleApplyDeps,
+export async function planCssFile(
+  deps: { readonly fs: FileSystemPort },
   root: string,
   jsxFile: string,
-  winner: ProjectRule | undefined,
-  writes: WrittenFile[],
-): Promise<Result<string>> {
-  if (winner !== undefined) return ok(winner.file);
+  winner: { readonly file: string } | undefined,
+): Promise<Result<CssFilePlan>> {
+  if (winner !== undefined) return ok({ file: winner.file });
   const jsx = await readFile(deps.fs, root, jsxFile);
   if (!jsx.ok) return jsx;
   const imported = importedCss(jsx.value, jsxFile);
-  if (imported !== undefined) return ok(imported);
+  if (imported !== undefined) return ok({ file: imported });
   const name = `${posix.basename(jsxFile).replace(/\.[jt]sx?$/, '')}.css`;
-  const added = await writeFile(deps.fs, root, jsxFile, jsx.value, addCssImport(jsx.value, name));
+  return ok({ file: posix.join(posix.dirname(jsxFile), name), importAs: name });
+}
+
+/** Adds the import a `planCssFile` plan asks for; call it after the CSS file is written. */
+export async function addPlannedImport(
+  deps: { readonly fs: FileSystemPort },
+  root: string,
+  jsxFile: string,
+  plan: CssFilePlan,
+  writes: WrittenFile[],
+): Promise<Result<WrittenFile | undefined>> {
+  if (plan.importAs === undefined) return ok(undefined);
+  const jsx = await readFile(deps.fs, root, jsxFile);
+  if (!jsx.ok) return jsx;
+  if (importedCss(jsx.value, jsxFile) === plan.file) return ok(undefined);
+  const added = await writeFile(
+    deps.fs,
+    root,
+    jsxFile,
+    jsx.value,
+    addCssImport(jsx.value, plan.importAs),
+  );
   if (!added.ok) return added;
   writes.push(added.value);
-  return ok(posix.join(posix.dirname(jsxFile), name));
+  return ok(added.value);
 }
 
 function newClassName(ctx: ElementContext, newId: (() => string) | undefined): string {
@@ -299,16 +326,10 @@ async function applyToElement(
   const newClass = own ?? newClassName(ctx.value, deps.newId);
   const selector = elementSelector(winner, newClass, change.state);
 
-  const writes: WrittenFile[] = [];
-  if (own === undefined) {
-    const nextClasses = [...ctx.value.classes, newClass];
-    const classEdit = await addClass(deps, root, request, ctx.value, nextClasses, writes);
-    if (!classEdit.ok) return classEdit;
-  }
-
-  const cssFile = await cssFileFor(deps, root, ctx.value.jsxFile, winner, writes);
-  if (!cssFile.ok) return cssFile;
-  const css = await readFile(deps.fs, root, cssFile.value);
+  // Every check happens before the first write, so a refused change leaves no file touched.
+  const plan = await planCssFile(deps, root, ctx.value.jsxFile, winner);
+  if (!plan.ok) return plan;
+  const css = await readFile(deps.fs, root, plan.value.file);
   const cssBefore = css.ok ? css.value : undefined;
   const next = upsertRuleDeclaration(
     cssBefore ?? '',
@@ -316,12 +337,21 @@ async function applyToElement(
     longhand,
     change.value,
     change.media,
-    cssFile.value,
+    plan.value.file,
   );
   if (!next.ok) return next;
-  const written = await writeFile(deps.fs, root, cssFile.value, cssBefore, next.value);
+
+  const writes: WrittenFile[] = [];
+  if (own === undefined) {
+    const nextClasses = [...ctx.value.classes, newClass];
+    const classEdit = await addClass(deps, root, request, ctx.value, nextClasses, writes);
+    if (!classEdit.ok) return classEdit;
+  }
+  const written = await writeFile(deps.fs, root, plan.value.file, cssBefore, next.value);
   if (!written.ok) return written;
   writes.push(written.value);
+  const imported = await addPlannedImport(deps, root, ctx.value.jsxFile, plan.value, writes);
+  if (!imported.ok) return imported;
   return ok({ files: mergeWrites(writes), className: newClass });
 }
 

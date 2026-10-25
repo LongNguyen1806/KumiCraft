@@ -8,7 +8,7 @@ import { InspectorPanel } from '../inspector/inspector-panel.tsx';
 import { useProjectTheme } from '../inspector/use-project-theme.ts';
 import { LayerTree } from '../layers/layer-tree.tsx';
 import { LibraryPanel } from '../library/library-panel.tsx';
-import { useStyleEditable } from '../project/use-style-edit.ts';
+import { useStyleLayerSupported } from '../project/use-style-edit.ts';
 import { PanelHeaderContext } from './panel-header-context.ts';
 
 type PanelProps = {
@@ -188,7 +188,7 @@ type RightPanelTabsProps = {
 
 function RightPanelTabs({ tab, onSelectTab }: RightPanelTabsProps) {
   const { t } = useTranslation();
-  const editable = useStyleEditable();
+  const brandAvailable = useStyleLayerSupported();
   return (
     <>
       <Tab
@@ -199,7 +199,7 @@ function RightPanelTabs({ tab, onSelectTab }: RightPanelTabsProps) {
       >
         {t('editor.properties')}
       </Tab>
-      {editable && (
+      {brandAvailable && (
         <Tab
           selected={tab === 'brand'}
           testId="right-tab-brand"
@@ -231,11 +231,11 @@ export type RightPanelProps = {
 export function RightPanel({ trusted = false }: RightPanelProps) {
   const { t } = useTranslation();
   const theme = useProjectTheme();
-  const editable = useStyleEditable();
+  const brandAvailable = useStyleLayerSupported();
   const [tab, setTab] = useState<RightPanelTab>(readRightPanelTab);
   const [headerSlot, setHeaderSlot] = useState<HTMLDivElement | undefined>(undefined);
 
-  const activeTab: RightPanelTab = !editable && tab === 'brand' ? 'properties' : tab;
+  const activeTab: RightPanelTab = !brandAvailable && tab === 'brand' ? 'properties' : tab;
 
   const handleSetTab = (nextTab: RightPanelTab) => {
     setTab(nextTab);

@@ -1,5 +1,5 @@
 // Hook to determine if visual style editing is available (SPEC-04 Round S1, R-PJ-02).
-import type { ProjectInfo } from '@kumicraft/shared';
+import { primarySystem, type ProjectInfo } from '@kumicraft/shared';
 
 import { useProjectStore } from './project-store.ts';
 
@@ -15,4 +15,18 @@ export function isStyleEditable(project?: ProjectInfo): boolean {
 export function useStyleEditable(): boolean {
   const project = useProjectStore((s) => s.project);
   return isStyleEditable(project);
+}
+
+/**
+ * Whether the style layer works for the project (Brand, Library, style Inspector): any styling
+ * system with an adapter (R-ST-02), not only the Tailwind editor of `isStyleEditable`.
+ */
+export function isStyleLayerSupported(project?: ProjectInfo): boolean {
+  const styling = project?.support.styling;
+  return styling === undefined || primarySystem(styling) !== undefined;
+}
+
+export function useStyleLayerSupported(): boolean {
+  const project = useProjectStore((s) => s.project);
+  return isStyleLayerSupported(project);
 }

@@ -33,6 +33,7 @@ import {
 } from './source-editor-lookup.ts';
 import { listSourceFiles, type SourceFiles } from './source-files.ts';
 import { getElementTextFromAst } from './structure/element-text.ts';
+import type { StylingProvider } from './structure/insert-css.ts';
 import { executeStructureEdit } from './structure/structure-runner.ts';
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB (R-SE-01)
@@ -42,6 +43,7 @@ export type SourceEditorDeps = {
   readonly usageCounter?: UsageCounter | undefined;
   /** Lays out inserted JSX (M-FM); absent: the built-in layout without the project's Prettier. */
   readonly formatSnippet?: SnippetFormatter | undefined;
+  readonly styling?: StylingProvider;
 };
 
 export type SourceEditorConfig = {
@@ -282,6 +284,26 @@ async function withUsages(
   return { ...element, component: { name, usages } };
 }
 
+async function executeApplyEdit(
+  deps: SourceEditorDeps,
+  usageCounter: UsageCounter,
+  sourceDir: string,
+  sourceExtensions: readonly string[],
+  projectRoot: string,
+  edit: SourceEdit,
+  onWritten?: (file: WrittenFile) => void,
+): Promise<Result<EditResult>> {
+  const valRes = validateLocAndExt(edit.loc, sourceDir, sourceExtensions);
+  if (!valRes.ok) return valRes;
+  const { rel, line, column } = valRes.value;
+  const edited = await queueFileTask(fileQueueKey(projectRoot, rel), () =>
+    performEditOnFile(deps, projectRoot, rel, { line, column }, edit, onWritten),
+  );
+  if (!edited.ok) return edited;
+  const element = await withUsages(usageCounter, sourceDir, projectRoot, edited.value.element);
+  return ok({ ...edited.value, element });
+}
+
 export function createSourceEditorService(
   deps: SourceEditorDeps,
   config: SourceEditorConfig = {},
@@ -290,47 +312,32 @@ export function createSourceEditorService(
   const sourceExtensions = config.sourceExtensions ?? ['.jsx', '.tsx'];
   const usageCounter = deps.usageCounter ?? createUsageCounter(deps.fs);
   const formatSnippet = deps.formatSnippet ?? createSnippetFormatter({ fs: deps.fs });
-
   return {
     async getElement(projectRoot, loc) {
       const found = await executeGetElement(deps, projectRoot, loc, sourceDir, sourceExtensions);
-      if (!found.ok) return found;
-      return ok(await withUsages(usageCounter, sourceDir, projectRoot, found.value));
+      return found.ok
+        ? ok(await withUsages(usageCounter, sourceDir, projectRoot, found.value))
+        : found;
     },
-    getElementText(projectRoot, loc) {
-      return executeGetElementText(deps, projectRoot, loc, sourceDir, sourceExtensions);
-    },
-    getPageTree(projectRoot, file, maxDepth) {
-      return readPageTree(deps.fs, projectRoot, file, { sourceDir, sourceExtensions, maxDepth });
-    },
-    listFiles(projectRoot) {
-      return listSourceFiles(deps.fs, projectRoot, sourceDir);
-    },
-    async applyEdit(projectRoot, edit, onWritten) {
-      const valRes = validateLocAndExt(edit.loc, sourceDir, sourceExtensions);
-      if (!valRes.ok) return valRes;
-
-      const { rel, line, column } = valRes.value;
-      const edited = await queueFileTask(fileQueueKey(projectRoot, rel), () =>
-        performEditOnFile(deps, projectRoot, rel, { line, column }, edit, onWritten),
-      );
-      if (!edited.ok) return edited;
-      const element = await withUsages(usageCounter, sourceDir, projectRoot, edited.value.element);
-      return ok({ ...edited.value, element });
-    },
-    applyStructureEdit(projectRoot, edit, onWritten) {
-      return executeStructureEdit(
+    getElementText: (root, loc) =>
+      executeGetElementText(deps, root, loc, sourceDir, sourceExtensions),
+    getPageTree: (root, file, maxDepth) =>
+      readPageTree(deps.fs, root, file, { sourceDir, sourceExtensions, maxDepth }),
+    listFiles: (root) => listSourceFiles(deps.fs, root, sourceDir),
+    applyEdit: (root, edit, cb) =>
+      executeApplyEdit(deps, usageCounter, sourceDir, sourceExtensions, root, edit, cb),
+    applyStructureEdit: (root, edit, cb) =>
+      executeStructureEdit(
         deps.fs,
-        projectRoot,
+        root,
         sourceDir,
         sourceExtensions,
         edit,
-        onWritten,
+        cb,
         formatSnippet,
-      );
-    },
-    applyEditBatch(projectRoot, edits, onWritten) {
-      return executeEditBatch(deps.fs, projectRoot, sourceDir, sourceExtensions, edits, onWritten);
-    },
+        deps.styling,
+      ),
+    applyEditBatch: (root, edits, cb) =>
+      executeEditBatch(deps.fs, root, sourceDir, sourceExtensions, edits, cb),
   };
 }

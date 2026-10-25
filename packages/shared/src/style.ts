@@ -2,6 +2,7 @@
 import { z } from 'zod';
 
 import { ElementRefSchema } from './bridge.ts';
+import type { StylingReport } from './project.ts';
 import { RelPathSchema } from './rel-path.ts';
 import {
   type Breakpoint,
@@ -285,4 +286,19 @@ export function mediaForBreakpoint(
   return mode === 'desktop-first'
     ? `(max-width: ${String(widths[bp] - 1)}px)`
     : `(min-width: ${String(widths[bp])}px)`;
+}
+
+/** R-ST-03: the system new declarations go to, from what the project uses. */
+export function primarySystem(styling: StylingReport | undefined): StyleSystemId | undefined {
+  const ids = new Set(styling?.systems.map((s) => s.id) ?? []);
+  if (ids.has('tailwind')) {
+    const version = styling?.systems.find((s) => s.id === 'tailwind')?.version ?? '4';
+    return version.startsWith('3') ? 'tailwind3' : 'tailwind4';
+  }
+  if (ids.has('bootstrap')) return 'bootstrap5';
+  if (ids.has('cssModules')) return 'cssModules';
+  if (ids.has('sass')) return 'sass';
+  if (ids.has('less')) return 'less';
+  if (ids.has('css')) return 'css';
+  return undefined;
 }

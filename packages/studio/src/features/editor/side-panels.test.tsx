@@ -40,6 +40,19 @@ const CSS_PROJECT: ProjectInfo = {
   trusted: true,
 };
 
+const STYLED_COMPONENTS_PROJECT: ProjectInfo = {
+  ...CSS_PROJECT,
+  support: {
+    ...CSS_PROJECT.support,
+    styling: {
+      systems: [{ id: 'styledComponents' }],
+      primary: 'styledComponents',
+      editable: false,
+      globalCss: [],
+    },
+  },
+};
+
 describe('SidePanels - Situation #14 [R-PJ-02]', () => {
   beforeEach(async () => {
     await initI18n();
@@ -52,13 +65,13 @@ describe('SidePanels - Situation #14 [R-PJ-02]', () => {
     useProjectStore.getState().setProject(undefined);
   });
 
-  it('Situation #14: saved tab is brand, opening CSS project switches panel to Properties [R-PJ-02]', () => {
+  it('Situation #14: saved tab is brand, opening a project with no style adapter switches panel to Properties [R-PJ-02, R-ST-02]', () => {
     localStorage.setItem('kumicraft.rightPanelTab', 'brand');
-    useProjectStore.getState().setProject(CSS_PROJECT);
+    useProjectStore.getState().setProject(STYLED_COMPONENTS_PROJECT);
 
     render(<RightPanel />);
 
-    // Brand tab should be hidden
+    // styled-components has no adapter yet, so there is no Brand (R-ST-02)
     expect(screen.queryByTestId('right-tab-brand')).toBeNull();
 
     // Title and selected tab should be Properties
@@ -66,5 +79,15 @@ describe('SidePanels - Situation #14 [R-PJ-02]', () => {
     expect(
       screen.getByRole('tab', { name: i18next.t('editor.properties'), selected: true }),
     ).toBeDefined();
+  });
+
+  it('keeps the Brand tab for a plain CSS project, whose :root variables are its tokens [R-ST-11]', () => {
+    localStorage.setItem('kumicraft.rightPanelTab', 'brand');
+    useProjectStore.getState().setProject(CSS_PROJECT);
+
+    render(<RightPanel />);
+
+    expect(screen.getByTestId('right-tab-brand')).toBeDefined();
+    expect(screen.getByRole('tab', { name: i18next.t('brand.tab'), selected: true })).toBeDefined();
   });
 });

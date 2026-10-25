@@ -151,9 +151,9 @@ describe('Studio styling UI - Situations #11 & #12 [R-PJ-02]', () => {
     expect(screen.queryByTestId('draw-tool-image')).toBeNull();
     unmountDraw();
 
-    // 3. RightPanel has no Brand tab
+    // 3. RightPanel keeps Brand: the style layer reads a CSS project's :root tokens (R-ST-11)
     const { unmount: unmountRight } = render(<RightPanel />);
-    expect(screen.queryByTestId('right-tab-brand')).toBeNull();
+    expect(screen.getByTestId('right-tab-brand')).toBeDefined();
     unmountRight();
 
     // 4. Inspector has inspector-style-unsupported, no color/spacing groups, but has element path

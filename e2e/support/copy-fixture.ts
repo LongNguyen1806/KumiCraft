@@ -8,6 +8,8 @@ export const REPO_ROOT = resolve(import.meta.dirname, '..', '..');
 export const FIXTURES_DIR = join(REPO_ROOT, 'fixtures');
 /** The fixture projects have no install of their own; the Studio has Vite, React and Tailwind. */
 const STUDIO_NODE_MODULES = join(REPO_ROOT, 'packages', 'studio', 'node_modules');
+/** Styling packages only some fixtures use, installed at the repo root for the E2E (R-ST-02). */
+const STYLE_PACKAGES = ['bootstrap', 'sass', 'less'] as const;
 
 export type TempDir = {
   readonly path: string;
@@ -54,5 +56,10 @@ export async function copyFixture(name: string): Promise<TempDir> {
   const fixtureModules = join(FIXTURES_DIR, name, 'node_modules');
   const sourceModules = existsSync(fixtureModules) ? fixtureModules : STUDIO_NODE_MODULES;
   if (existsSync(sourceModules)) await linkPackages(sourceModules, target.path);
+  for (const pkg of STYLE_PACKAGES) {
+    const source = join(REPO_ROOT, 'node_modules', pkg);
+    const link = join(target.path, 'node_modules', pkg);
+    if (existsSync(source) && !existsSync(link)) await symlink(source, link, 'junction');
+  }
   return target;
 }

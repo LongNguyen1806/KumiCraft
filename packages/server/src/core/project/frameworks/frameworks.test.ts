@@ -149,7 +149,7 @@ describe('M-FW: Framework detection', () => {
     expect(r2.report.packageManager).toBe('yarn');
   });
 
-  it('Situation #5: dep tailwindcss 3.4 + @tailwind base is supported but not editable [R-PJ-02]', async () => {
+  it('Situation #5: dep tailwindcss 3.4 + @tailwind base is supported and editable [R-PJ-02, R-ST-02]', async () => {
     const pkg = {
       dependencies: { react: '^19.0.0' },
       devDependencies: { vite: '^8.0.0', tailwindcss: '^3.4.0' },
@@ -163,6 +163,6 @@ describe('M-FW: Framework detection', () => {
 
     expect(result.report.supported).toBe(true);
     expect(result.report.reasons).toEqual([]);
-    expect(result.report.styling?.editable).toBe(false);
+    expect(result.report.styling?.editable).toBe(true);
   });
 });

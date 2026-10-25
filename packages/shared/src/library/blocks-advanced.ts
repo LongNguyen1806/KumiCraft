@@ -1,4 +1,5 @@
 // Advanced library blocks: form, data, and composite (R-LB-10, R-LB-11, R-LB-12).
+import { NEUTRAL_BLOCKS } from './blocks-neutral.ts';
 import type { LibraryBlock } from './types.ts';
 
 export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
@@ -20,6 +21,7 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
   Click here
 </button>`,
     },
+    neutral: NEUTRAL_BLOCKS['form.button'],
   },
 
   // 10. Form: Input
@@ -46,6 +48,7 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
   <input type="text" placeholder="Enter text..." className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
 </div>`,
     },
+    neutral: NEUTRAL_BLOCKS['form.input'],
   },
 
   // 11. Form: Form
@@ -82,6 +85,7 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
   </button>
 </form>`,
     },
+    neutral: NEUTRAL_BLOCKS['form.form'],
   },
 
   // 12. Data: Table
@@ -128,6 +132,7 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
   </table>
 </div>`,
     },
+    neutral: NEUTRAL_BLOCKS['data.table'],
   },
 
   // 13. Composite: Card
@@ -164,6 +169,7 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
   </button>
 </div>`,
     },
+    neutral: NEUTRAL_BLOCKS['composite.card'],
   },
 
   // 14. Composite: Navbar
@@ -198,6 +204,7 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
   </div>
 </nav>`,
     },
+    neutral: NEUTRAL_BLOCKS['composite.navbar'],
   },
 
   // 15. Composite: Footer
@@ -222,6 +229,7 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
   </p>
 </footer>`,
     },
+    neutral: NEUTRAL_BLOCKS['composite.footer'],
   },
 
   // 16. Composite: Hero
@@ -262,5 +270,6 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
   </div>
 </section>`,
     },
+    neutral: NEUTRAL_BLOCKS['composite.hero'],
   },
 ];

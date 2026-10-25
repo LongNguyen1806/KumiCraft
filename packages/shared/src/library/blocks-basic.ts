@@ -1,4 +1,5 @@
 // Basic library blocks: layout and content (R-LB-10, R-LB-11, R-LB-12).
+import { NEUTRAL_BLOCKS } from './blocks-neutral.ts';
 import type { LibraryBlock } from './types.ts';
 
 const SVG_PLACEHOLDER =
@@ -33,6 +34,7 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
   </div>
 </div>`,
     },
+    neutral: NEUTRAL_BLOCKS['layout.row'],
   },
 
   // 2. Layout: Column
@@ -63,6 +65,7 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
   </div>
 </div>`,
     },
+    neutral: NEUTRAL_BLOCKS['layout.column'],
   },
 
   // 3. Layout: Grid
@@ -93,6 +96,7 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
   </div>
 </div>`,
     },
+    neutral: NEUTRAL_BLOCKS['layout.grid'],
   },
 
   // 4. Layout: Section
@@ -119,6 +123,7 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
   </div>
 </section>`,
     },
+    neutral: NEUTRAL_BLOCKS['layout.section'],
   },
 
   // 5. Content: Heading
@@ -139,6 +144,7 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
   Article Heading
 </h2>`,
     },
+    neutral: NEUTRAL_BLOCKS['content.heading'],
   },
 
   // 6. Content: Paragraph
@@ -159,6 +165,7 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
   This is sample paragraph text to help you preview the visual layout.
 </p>`,
     },
+    neutral: NEUTRAL_BLOCKS['content.paragraph'],
   },
 
   // 7. Content: Image
@@ -175,6 +182,7 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
       vi: `<img src="${SVG_PLACEHOLDER}" alt="Hình ảnh mẫu" className="w-full h-auto rounded-lg object-cover" />`,
       en: `<img src="${SVG_PLACEHOLDER}" alt="Sample image" className="w-full h-auto rounded-lg object-cover" />`,
     },
+    neutral: NEUTRAL_BLOCKS['content.image'],
   },
 
   // 8. Content: Link
@@ -195,5 +203,6 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
   Learn more details
 </a>`,
     },
+    neutral: NEUTRAL_BLOCKS['content.link'],
   },
 ];

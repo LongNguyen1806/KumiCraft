@@ -175,6 +175,10 @@ function createAuxiliaryServices(
     fs,
     usageCounter,
     formatSnippet: createProjectSnippetFormatter(deps, processPort, fs, projectService),
+    styling: () => {
+      const info = projectService.getProjectInfo();
+      return info.ok ? info.value.support.styling : undefined;
+    },
   });
   const agentService = createAgentService({
     process: processPort,

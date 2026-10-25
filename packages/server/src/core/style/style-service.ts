@@ -3,6 +3,7 @@ import {
   type BridgeStyleProbePayload,
   CSS_LONGHAND_OF,
   type MatchedRule,
+  primarySystem,
   type StyleProperty,
   type StyleReading,
   type StyleSource,
@@ -17,7 +18,7 @@ import { findRuleSource, locateRule, locateRuleByIndex } from './css-locate.ts';
 import { type CompiledCache, locateBySourceMap } from './mapped-source.ts';
 import { projectFileOf } from './project-file.ts';
 
-export { projectFileOf };
+export { primarySystem, projectFileOf };
 
 const MAX_CSS_BYTES = 2 * 1024 * 1024;
 
@@ -29,21 +30,6 @@ export type StyleProject = {
 export interface StyleService {
   /** R-ST-04: the probe of one element (from the Bridge) as properties with their sources. */
   read(project: StyleProject, probe: BridgeStyleProbePayload): Promise<StyleReading>;
-}
-
-/** R-ST-03: the system new declarations go to, from what the project uses. */
-export function primarySystem(styling: StylingReport | undefined): StyleSystemId | undefined {
-  const ids = new Set(styling?.systems.map((s) => s.id) ?? []);
-  if (ids.has('tailwind')) {
-    const version = styling?.systems.find((s) => s.id === 'tailwind')?.version ?? '4';
-    return version.startsWith('3') ? 'tailwind3' : 'tailwind4';
-  }
-  if (ids.has('bootstrap')) return 'bootstrap5';
-  if (ids.has('cssModules')) return 'cssModules';
-  if (ids.has('sass')) return 'sass';
-  if (ids.has('less')) return 'less';
-  if (ids.has('css')) return 'css';
-  return undefined;
 }
 
 function systemOfFile(file: string): StyleSystemId {

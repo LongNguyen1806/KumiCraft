@@ -9,7 +9,7 @@ import type {
   Scope,
   ThemeInfo,
 } from '@kumicraft/shared';
-import { BREAKPOINT_WIDTHS, parseClasses } from '@kumicraft/shared';
+import { BREAKPOINT_WIDTHS, parseClasses, primarySystem } from '@kumicraft/shared';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -353,14 +353,17 @@ export function InspectorPanel({
 }: InspectorPanelProps) {
   const { t } = useTranslation();
   const target = useInspectorTarget(options);
+  const project = useProjectInfo();
+  const major: 3 | 4 = primarySystem(project?.support.styling) === 'tailwind3' ? 3 : 4;
 
   const ctx: ClassContext = useMemo(
     () => ({
       theme,
       mode: options.responsiveMode ?? 'desktop-first',
       breakpoints: BREAKPOINT_WIDTHS,
+      major,
     }),
-    [theme, options.responsiveMode],
+    [theme, options.responsiveMode, major],
   );
 
   const frameWidth = options.frame?.width ?? 1440;

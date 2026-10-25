@@ -32,4 +32,5 @@ export type ClassContext = {
   readonly theme: ThemeInfo;
   readonly mode: ResponsiveMode;
   readonly breakpoints: Readonly<Record<ResponsiveKey, number>>;
+  readonly major?: 3 | 4 | undefined;
 };

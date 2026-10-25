@@ -19,6 +19,11 @@ import {
   collectMatchingImportStatements,
   extractElementText,
 } from './element-text.ts';
+import {
+  finalizeWithCssIfNeeded,
+  type StylingProvider,
+  validateInsertedCss,
+} from './insert-css.ts';
 import { executeInsertImage } from './insert-image.ts';
 import { type ResolvedElement, validateInsertedJsx } from './structure-ops.ts';
 import {
@@ -233,16 +238,22 @@ async function loadAllContexts(
   return ok(contexts);
 }
 
+type LockedEditInput = {
+  readonly fs: FileSystemPort;
+  readonly projectRoot: string;
+  readonly sortedFiles: readonly string[];
+  readonly byFile: ReadonlyMap<string, GuardWithPosition[]>;
+  readonly edit: StructureEdit;
+  readonly targetGuard: GuardWithPosition | undefined;
+  readonly validatedGuards: readonly GuardWithPosition[];
+  readonly onWritten?: ((files: readonly WrittenFile[]) => void) | undefined;
+};
+
 async function performLockedStructureEdit(
-  fs: FileSystemPort,
-  projectRoot: string,
-  sortedFiles: readonly string[],
-  byFile: ReadonlyMap<string, GuardWithPosition[]>,
-  edit: StructureEdit,
-  targetGuard: GuardWithPosition | undefined,
-  validatedGuards: readonly GuardWithPosition[],
-  onWritten?: (files: readonly WrittenFile[]) => void,
+  input: LockedEditInput,
 ): Promise<Result<StructureResult>> {
+  const { fs, projectRoot, sortedFiles, byFile, edit, targetGuard, validatedGuards, onWritten } =
+    input;
   const ctxsRes = await loadAllContexts(fs, projectRoot, sortedFiles, byFile);
   if (!ctxsRes.ok) return ctxsRes;
   const contexts = ctxsRes.value;
@@ -307,6 +318,62 @@ function groupGuardsByFile(guards: readonly GuardWithPosition[]): {
   return { byFile, sortedFiles };
 }
 
+function validateEditInputs(edit: StructureEdit): Result<void> {
+  if (edit.kind !== 'insert') return ok(undefined);
+  const jsxCheck = validateInsertedJsx(edit.jsx);
+  if (!jsxCheck.ok) return jsxCheck;
+  return validateInsertedCss(edit.css?.rules);
+}
+
+async function executeStandardEdit(
+  fs: FileSystemPort,
+  projectRoot: string,
+  sourceDir: string,
+  sourceExtensions: readonly string[],
+  edit: StructureEdit,
+  onWritten?: (files: readonly WrittenFile[]) => void,
+  formatSnippet?: SnippetFormatter,
+  styling?: StylingProvider,
+): Promise<Result<StructureResult>> {
+  const inputCheck = validateEditInputs(edit);
+  if (!inputCheck.ok) return inputCheck;
+  const valGuardsRes = validateGuards(collectGuardsForEdit(edit), sourceDir, sourceExtensions);
+  if (!valGuardsRes.ok) return valGuardsRes;
+  const validatedGuards = valGuardsRes.value;
+  const targetGuard =
+    edit.kind === 'insert' || edit.kind === 'move'
+      ? validatedGuards[validatedGuards.length - 1]
+      : undefined;
+  const { byFile, sortedFiles } = groupGuardsByFile(validatedGuards);
+  const planned =
+    edit.kind === 'insert' && formatSnippet !== undefined && targetGuard !== undefined
+      ? { ...edit, jsx: await formatSnippet({ projectRoot, file: targetGuard.rel, jsx: edit.jsx }) }
+      : edit;
+  const cssCtx = {
+    fs,
+    projectRoot,
+    sourceDir,
+    edit,
+    targetRel: targetGuard?.rel,
+    onWritten,
+    styling,
+  };
+  return finalizeWithCssIfNeeded(cssCtx, (onWrittenCb) =>
+    withFileLocks(projectRoot, sortedFiles, () =>
+      performLockedStructureEdit({
+        fs,
+        projectRoot,
+        sortedFiles,
+        byFile,
+        edit: planned,
+        targetGuard,
+        validatedGuards,
+        onWritten: onWrittenCb,
+      }),
+    ),
+  );
+}
+
 export async function executeStructureEdit(
   fs: FileSystemPort,
   projectRoot: string,
@@ -315,45 +382,30 @@ export async function executeStructureEdit(
   edit: StructureEdit,
   onWritten?: (files: readonly WrittenFile[]) => void,
   formatSnippet?: SnippetFormatter,
+  styling?: StylingProvider,
 ): Promise<Result<StructureResult>> {
   if (edit.kind === 'insertImage') {
-    const runner = (iEdit: InsertEdit, cb?: (f: readonly WrittenFile[]) => void) =>
-      executeStructureEdit(fs, projectRoot, sourceDir, sourceExtensions, iEdit, cb, formatSnippet);
-    return executeInsertImage(fs, projectRoot, edit, runner, onWritten);
+    const run = (iEdit: InsertEdit, cb?: (f: readonly WrittenFile[]) => void) =>
+      executeStandardEdit(
+        fs,
+        projectRoot,
+        sourceDir,
+        sourceExtensions,
+        iEdit,
+        cb,
+        formatSnippet,
+        styling,
+      );
+    return executeInsertImage(fs, projectRoot, edit, run, onWritten);
   }
-
-  if (edit.kind === 'insert') {
-    const jsxCheck = validateInsertedJsx(edit.jsx);
-    if (!jsxCheck.ok) return jsxCheck;
-  }
-
-  const rawGuards = collectGuardsForEdit(edit);
-  const valGuardsRes = validateGuards(rawGuards, sourceDir, sourceExtensions);
-  if (!valGuardsRes.ok) return valGuardsRes;
-
-  const validatedGuards = valGuardsRes.value;
-  const targetGuard =
-    edit.kind === 'insert' || edit.kind === 'move'
-      ? validatedGuards[validatedGuards.length - 1]
-      : undefined;
-
-  const { byFile, sortedFiles } = groupGuardsByFile(validatedGuards);
-  // R-FM-01: an inserted snippet is laid out before it is planned, so the plan re-indents it.
-  const planned =
-    edit.kind === 'insert' && formatSnippet !== undefined && targetGuard !== undefined
-      ? { ...edit, jsx: await formatSnippet({ projectRoot, file: targetGuard.rel, jsx: edit.jsx }) }
-      : edit;
-
-  return withFileLocks(projectRoot, sortedFiles, () =>
-    performLockedStructureEdit(
-      fs,
-      projectRoot,
-      sortedFiles,
-      byFile,
-      planned,
-      targetGuard,
-      validatedGuards,
-      onWritten,
-    ),
+  return executeStandardEdit(
+    fs,
+    projectRoot,
+    sourceDir,
+    sourceExtensions,
+    edit,
+    onWritten,
+    formatSnippet,
+    styling,
   );
 }

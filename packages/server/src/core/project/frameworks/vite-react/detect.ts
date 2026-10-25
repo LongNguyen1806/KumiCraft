@@ -70,7 +70,7 @@ export async function resolvePackageVersion(
 }
 
 function hasTailwindImport(cssContent: string): boolean {
-  return /@import\s+['"]tailwindcss['"]/.test(cssContent);
+  return /@import\s+['"]tailwindcss['"]|@tailwind\s+(?:base|components|utilities)/.test(cssContent);
 }
 
 async function detectTailwindCss(

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { BREAKPOINT_WIDTHS } from '../responsive.ts';
 import { parseClasses } from './parser.ts';
-import { pxToSpacing } from './properties.ts';
+import { formatClassValue, pxToSpacing } from './properties.ts';
 import { readValue } from './reader.ts';
 import type { ClassContext } from './types.ts';
 import { writeValue } from './writer.ts';
@@ -402,5 +402,33 @@ describe('M-TW Table 8.2 properties & scenarios [SPEC-04 section 8]', () => {
         expect(roundtripped).toBe(classStr);
       }
     }
+  });
+
+  it('7. [R-ST-02] major: 3 writes small shadow as shadow and major: 4 writes shadow-sm without changing existing behavior', () => {
+    const v3Context: ClassContext = { ...defaultContext, major: 3 };
+    const v4Context: ClassContext = { ...defaultContext, major: 4 };
+    const smallShadow = { kind: 'scale', token: 'sm' } as const;
+    const base = { breakpoint: 'base' } as const;
+
+    expect(formatClassValue('boxShadow', smallShadow, 3)).toBe('shadow');
+    expect(formatClassValue('boxShadow', smallShadow, 4)).toBe('shadow-sm');
+    expect(formatClassValue('boxShadow', smallShadow)).toBe('shadow-sm');
+    expect(writeValue('p-4', 'boxShadow', base, smallShadow, v3Context)).toBe('p-4 shadow');
+    expect(writeValue('p-4', 'boxShadow', base, smallShadow, v4Context)).toBe('p-4 shadow-sm');
+    expect(writeValue('p-4', 'boxShadow', base, smallShadow, defaultContext)).toBe('p-4 shadow-sm');
+  });
+
+  it('8. [R-ST-02] major: 3 reads shadow as small shadow and outline-none as hidden outline', () => {
+    const v3Context: ClassContext = { ...defaultContext, major: 3 };
+    const tokens = parseClasses('shadow outline-none', v3Context);
+
+    expect(readValue(tokens, 'boxShadow', { width: 1024 }, v3Context).value).toEqual({
+      kind: 'scale',
+      token: 'sm',
+    });
+    expect(readValue(tokens, 'outline', { width: 1024 }, v3Context).value).toEqual({
+      kind: 'keyword',
+      name: 'hidden',
+    });
   });
 });

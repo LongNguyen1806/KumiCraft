@@ -16,7 +16,7 @@ import { SelectInFileHint } from '../design/select-in-file-hint.tsx';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { ImagePickerDialog } from '../draw/image-picker-dialog.tsx';
 import { insertImageFromSelection } from '../draw/insert-image.ts';
-import { useStyleEditable } from '../project/use-style-edit.ts';
+import { useStyleLayerSupported } from '../project/use-style-edit.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { insertBlock } from './insert-block.ts';
@@ -309,7 +309,7 @@ export function LibraryPanel() {
   const selectedRefs = useSelectionStore((s) => s.selectedRefs);
   const [query, setQuery] = useState('');
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
-  const editable = useStyleEditable();
+  const editable = useStyleLayerSupported();
 
   const hasSelection = selectedRefs.length === 1;
   const filteredBlocks = useFilteredLibraryBlocks(query);

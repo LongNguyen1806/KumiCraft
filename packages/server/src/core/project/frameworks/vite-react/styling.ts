@@ -189,8 +189,8 @@ export async function detectStyling(input: DetectStylingInput): Promise<StylingR
   const { fs, root, sourceDir, allDeps, tailwindCss, tailwindVersion } = input;
   const detected = new Map<StylingSystemId, StylingSystem>();
 
-  // The dependency names the system (Tailwind 3 has no `@import "tailwindcss"` file); editing
-  // needs the Tailwind 4 CSS entry as well (see `editable` below).
+  // The dependency names the system; editing needs the Tailwind 3 (`@tailwind`) or Tailwind 4
+  // (`@import "tailwindcss"`) CSS entry as well (see `editable` below).
   if (allDeps['tailwindcss'] !== undefined) {
     detected.set('tailwind', { id: 'tailwind', version: tailwindVersion });
   }
@@ -213,7 +213,10 @@ export async function detectStyling(input: DetectStylingInput): Promise<StylingR
     primary === 'tailwind' && tailwindVersion !== undefined
       ? parseMajorVersion(tailwindVersion)
       : undefined;
-  const editable = primary === 'tailwind' && primaryMajor === 4 && tailwindCss !== undefined;
+  const editable =
+    primary === 'tailwind' &&
+    (primaryMajor === 3 || primaryMajor === 4) &&
+    tailwindCss !== undefined;
 
   const entryFile = await findEntryFile(fs, root, sourceDir);
   const globalCss = await extractGlobalCss(fs, root, entryFile, tailwindCss);

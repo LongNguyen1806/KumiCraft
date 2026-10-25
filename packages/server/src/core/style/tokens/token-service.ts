@@ -21,6 +21,7 @@ import { bootstrapAdapter } from './tokens-bootstrap.ts';
 import { cssAdapter } from './tokens-css.ts';
 import { lessAdapter } from './tokens-less.ts';
 import { sassAdapter } from './tokens-sass.ts';
+import { tailwind3Adapter } from './tokens-tailwind3.ts';
 import { tailwind4Adapter } from './tokens-tailwind4.ts';
 
 export type TokenFiles = {
@@ -43,6 +44,7 @@ export interface TokenAdapter {
 
 const ADAPTERS: Readonly<Record<string, TokenAdapter>> = {
   tailwind4: tailwind4Adapter,
+  tailwind3: tailwind3Adapter,
   css: cssAdapter,
   sass: sassAdapter,
   less: lessAdapter,

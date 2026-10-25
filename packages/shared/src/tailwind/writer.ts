@@ -47,8 +47,9 @@ function buildTokenString(
   value: ClassValue,
   variants: readonly string[],
   important: boolean,
+  major: 3 | 4 = 4,
 ): string {
-  const util = formatClassValue(property, value);
+  const util = formatClassValue(property, value, major);
   const imp = important ? '!' : '';
   const prefix = variants.length > 0 ? `${variants.join(':')}:` : '';
   return `${prefix}${imp}${util}`;
@@ -61,6 +62,7 @@ export function writeValue(
   value: ClassValue | undefined,
   ctx: ClassContext,
 ): string {
+  const major = ctx.major ?? 4;
   const targetVariants = getTargetVariants(scope, ctx);
   const tokens = parseClasses(input, ctx);
   const familyMembers = ALL_TO_MEMBERS[property] ?? [];
@@ -79,17 +81,25 @@ export function writeValue(
 
   const exactToken = matched.find((t) => t.property === property);
   if (exactToken !== undefined) {
-    return replaceExactToken(input, exactToken, property, value, matched);
+    return replaceExactToken(input, exactToken, property, value, matched, major);
   }
 
   if (matched.length > 0) {
     const firstOther = matched[0];
     if (firstOther !== undefined) {
-      return replaceFirstOtherToken(input, firstOther, property, value, targetVariants, matched);
+      return replaceFirstOtherToken(
+        input,
+        firstOther,
+        property,
+        value,
+        targetVariants,
+        matched,
+        major,
+      );
     }
   }
 
-  return appendNewToken(input, property, value, targetVariants);
+  return appendNewToken(input, property, value, targetVariants, major);
 }
 
 function removeMatchedTokens(input: string, matched: readonly ClassToken[]): string {
@@ -107,8 +117,15 @@ function replaceExactToken(
   property: PropertyId,
   value: ClassValue,
   allMatched: readonly ClassToken[],
+  major: 3 | 4,
 ): string {
-  const newStr = buildTokenString(property, value, exactToken.variants, exactToken.important);
+  const newStr = buildTokenString(
+    property,
+    value,
+    exactToken.variants,
+    exactToken.important,
+    major,
+  );
   let result = input.slice(0, exactToken.start) + newStr + input.slice(exactToken.end);
   const others = allMatched.filter((t) => t !== exactToken);
   if (others.length === 0) return result;
@@ -129,8 +146,9 @@ function replaceFirstOtherToken(
   value: ClassValue,
   targetVariants: readonly string[],
   allMatched: readonly ClassToken[],
+  major: 3 | 4,
 ): string {
-  const newStr = buildTokenString(property, value, targetVariants, false);
+  const newStr = buildTokenString(property, value, targetVariants, false, major);
   let result = input.slice(0, firstOther.start) + newStr + input.slice(firstOther.end);
   const remaining = allMatched.slice(1);
   if (remaining.length === 0) return result;
@@ -149,8 +167,9 @@ function appendNewToken(
   property: PropertyId,
   value: ClassValue,
   targetVariants: readonly string[],
+  major: 3 | 4,
 ): string {
-  const newStr = buildTokenString(property, value, targetVariants, false);
+  const newStr = buildTokenString(property, value, targetVariants, false, major);
   if (input.trim().length === 0) {
     return newStr;
   }

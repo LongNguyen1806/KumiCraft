@@ -194,6 +194,18 @@ export type InsertImageEdit = z.infer<typeof InsertImageEditSchema>;
 /** Largest JSX one insert takes: a Library block or a KumiCraft clipboard paste (S-17). */
 export const INSERT_JSX_MAX_BYTES = 1024 * 1024;
 
+const InsertedCssValueSchema = z
+  .string()
+  .min(1)
+  .max(500)
+  .refine((v) => !/[;{}]/.test(v) && !v.includes('/*'), { message: 'invalidValue' });
+
+export const InsertedCssRuleSchema = z.strictObject({
+  selector: z.string().regex(/^\.kc-[a-z0-9-]+$/),
+  declarations: z.record(z.string().min(1).max(100), InsertedCssValueSchema),
+});
+export type InsertedCssRule = z.infer<typeof InsertedCssRuleSchema>;
+
 export const InsertEditSchema = z.strictObject({
   kind: z.literal('insert'),
   target: InsertTargetSchema,
@@ -202,6 +214,11 @@ export const InsertEditSchema = z.strictObject({
     .strictObject({
       file: RelPathSchema,
       imports: z.array(z.string().max(2000)).max(50),
+    })
+    .optional(),
+  css: z
+    .strictObject({
+      rules: z.array(InsertedCssRuleSchema).max(100).readonly(),
     })
     .optional(),
   placement: PlacementSchema.optional(),

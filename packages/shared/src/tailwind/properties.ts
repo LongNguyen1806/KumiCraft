@@ -1,6 +1,7 @@
 // Table 8.2 property definitions, matching, and formatting (SPEC-04 section 8).
 import type { ThemeInfo } from '../project.ts';
 import type { ClassValue, PropertyId } from './types.ts';
+import { v3ToV4Utility, v4ToV3Utility } from './v3-names.ts';
 
 export const SPACING_FAMILIES: Readonly<
   Record<string, { readonly axis?: string | undefined; readonly all: string }>
@@ -175,11 +176,19 @@ const STATIC_STANDALONE: Readonly<
   sticky: { property: 'position', value: { kind: 'keyword', name: 'sticky' } },
   grow: { property: 'grow', value: { kind: 'scale', token: '1' } },
   'grow-0': { property: 'grow', value: { kind: 'scale', token: '0' } },
+  'flex-grow': { property: 'grow', value: { kind: 'scale', token: '1' } },
+  'flex-grow-0': { property: 'grow', value: { kind: 'scale', token: '0' } },
   shrink: { property: 'shrink', value: { kind: 'scale', token: '1' } },
   'shrink-0': { property: 'shrink', value: { kind: 'scale', token: '0' } },
+  'flex-shrink': { property: 'shrink', value: { kind: 'scale', token: '1' } },
+  'flex-shrink-0': { property: 'shrink', value: { kind: 'scale', token: '0' } },
   border: { property: 'borderWidth', value: { kind: 'scale', token: '1' } },
   rounded: { property: 'borderRadius', value: { kind: 'scale', token: 'DEFAULT' } },
   shadow: { property: 'boxShadow', value: { kind: 'scale', token: 'DEFAULT' } },
+  blur: { property: 'blur', value: { kind: 'scale', token: 'DEFAULT' } },
+  ring: { property: 'ringWidth', value: { kind: 'scale', token: 'DEFAULT' } },
+  'outline-hidden': { property: 'outline', value: { kind: 'keyword', name: 'hidden' } },
+  'outline-none': { property: 'outline', value: { kind: 'keyword', name: 'hidden' } },
   uppercase: { property: 'textTransform', value: { kind: 'keyword', name: 'uppercase' } },
   lowercase: { property: 'textTransform', value: { kind: 'keyword', name: 'lowercase' } },
   capitalize: { property: 'textTransform', value: { kind: 'keyword', name: 'capitalize' } },
@@ -236,6 +245,9 @@ const PREFIX_PROPERTIES: readonly [string, PropertyId][] = [
   ['bg-', 'backgroundColor'],
   ['rounded-', 'borderRadius'],
   ['shadow-', 'boxShadow'],
+  ['blur-', 'blur'],
+  ['ring-', 'ringWidth'],
+  ['outline-', 'outline'],
   ['opacity-', 'opacity'],
   ['overflow-', 'overflow'],
   ['object-', 'objectFit'],
@@ -243,9 +255,11 @@ const PREFIX_PROPERTIES: readonly [string, PropertyId][] = [
 ];
 
 export function matchProperty(
-  utility: string,
+  rawUtility: string,
   theme?: ThemeInfo,
+  major: 3 | 4 = 4,
 ): { readonly property: PropertyId; readonly value: ClassValue } | undefined {
+  const utility = major === 3 ? v3ToV4Utility(rawUtility) : rawUtility;
   const standalone = STATIC_STANDALONE[utility];
   if (standalone !== undefined) return standalone;
   if (utility === 'border') return matchBorder('', true, theme);
@@ -355,18 +369,16 @@ const PREFIX_MAP: Readonly<Record<string, string>> = {
   backgroundColor: 'bg-',
   borderColor: 'border-',
   borderStyle: 'border-',
+  blur: 'blur-',
+  ringWidth: 'ring-',
+  outline: 'outline-',
   opacity: 'opacity-',
   overflow: 'overflow-',
   objectFit: 'object-',
   flex: 'flex-',
 };
 
-function formatPrefixed(property: PropertyId, valStr: string): string {
-  const prefix = PREFIX_MAP[property];
-  return prefix !== undefined ? `${prefix}${valStr}` : `${property}-${valStr}`;
-}
-
-export function formatClassValue(property: PropertyId, value: ClassValue): string {
+function formatV4Utility(property: PropertyId, value: ClassValue): string {
   const valStr =
     value.kind === 'arbitrary'
       ? `[${encodeArbitrary(value.css)}]`
@@ -388,5 +400,17 @@ export function formatClassValue(property: PropertyId, value: ClassValue): strin
     return valStr === '1' || valStr === 'DEFAULT' ? 'border' : `border-${valStr}`;
   if (property === 'borderRadius') return valStr === 'DEFAULT' ? 'rounded' : `rounded-${valStr}`;
   if (property === 'boxShadow') return valStr === 'DEFAULT' ? 'shadow' : `shadow-${valStr}`;
-  return formatPrefixed(property, valStr);
+  if (property === 'blur') return valStr === 'DEFAULT' ? 'blur' : `blur-${valStr}`;
+  if (property === 'ringWidth') return valStr === 'DEFAULT' ? 'ring' : `ring-${valStr}`;
+  const prefix = PREFIX_MAP[property];
+  return prefix !== undefined ? `${prefix}${valStr}` : `${property}-${valStr}`;
+}
+
+export function formatClassValue(
+  property: PropertyId,
+  value: ClassValue,
+  major: 3 | 4 = 4,
+): string {
+  const v4 = formatV4Utility(property, value);
+  return major === 3 ? v4ToV3Utility(v4) : v4;
 }

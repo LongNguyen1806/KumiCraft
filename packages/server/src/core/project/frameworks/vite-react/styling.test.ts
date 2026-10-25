@@ -116,7 +116,7 @@ describe('detectStyling [R-PJ-02]', () => {
     expect(styling.systems).toBeDefined();
   }, 20_000);
 
-  it('names a Tailwind 3 project Tailwind 3, opens it, and keeps style tools off [R-PJ-02]', async () => {
+  it('17. [R-ST-02] Tailwind 3.4 project with @tailwind is editable with tailwindCss set, and Tailwind 3 without CSS file is not editable [R-PJ-02]', async () => {
     const pkg = {
       dependencies: { react: '^19.0.0' },
       devDependencies: { vite: '^8.0.0', tailwindcss: '^3.4.0' },
@@ -129,18 +129,26 @@ describe('detectStyling [R-PJ-02]', () => {
       JSON.stringify({ name: 'tailwindcss', version: '3.4.17' }),
     );
     await mkdir(join(dir, 'src'), { recursive: true });
+    await writeFile(join(dir, 'src', 'main.jsx'), "import './index.css';\n");
+
+    const withoutCss = await detectViteReact({ root: dir, fs: nodeFs, packageJson: pkg });
+    expect(withoutCss.supported).toBe(true);
+    expect(withoutCss.tailwindCss).toBeUndefined();
+    expect(withoutCss.styling?.primary).toBe('tailwind');
+    expect(withoutCss.styling?.editable).toBe(false);
+
     await writeFile(
       join(dir, 'src', 'index.css'),
       '@tailwind base;\n@tailwind components;\n@tailwind utilities;\n',
     );
-    await writeFile(join(dir, 'src', 'main.jsx'), "import './index.css';\n");
 
     const report = await detectViteReact({ root: dir, fs: nodeFs, packageJson: pkg });
 
     expect(report.supported).toBe(true);
+    expect(report.tailwindCss).toBe('src/index.css');
     expect(report.styling?.primary).toBe('tailwind');
     expect(report.styling?.systems[0]).toEqual({ id: 'tailwind', version: '3.4.17' });
-    expect(report.styling?.editable).toBe(false);
+    expect(report.styling?.editable).toBe(true);
     expect(report.styling?.globalCss).toEqual(['src/index.css']);
   });
 });
