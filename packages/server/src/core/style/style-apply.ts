@@ -43,6 +43,7 @@ export type StyleApplyDeps = {
   readonly newId?: (() => string) | undefined;
   readonly styling?: StylingReport | undefined;
   readonly compiledCss?: CompiledCssPort | undefined;
+  readonly newCssDir?: string | undefined;
 };
 
 export type StyleApplied = {
@@ -165,10 +166,11 @@ export function importedCss(code: string, jsxFile: string): string | undefined {
     : posix.normalize(posix.join(posix.dirname(jsxFile), match[1]));
 }
 
-export function addCssImport(code: string, cssName: string): string {
+/** Adds `import '<specifier>';`; the specifier is relative to the JSX file (`./Card.css`). */
+export function addCssImport(code: string, specifier: string): string {
   const eol = code.includes('\r\n') ? '\r\n' : '\n';
   const at = findImportInsertPosition(parseJsxAst(code), code);
-  return `${code.slice(0, at)}import './${cssName}';${eol}${code.slice(at)}`;
+  return `${code.slice(0, at)}import '${specifier}';${eol}${code.slice(at)}`;
 }
 
 export function mergeWrites(files: readonly WrittenFile[]): WrittenFile[] {
@@ -227,14 +229,30 @@ export async function planCssFile(
   root: string,
   jsxFile: string,
   winner: { readonly file: string } | undefined,
+  newCssDir?: string,
 ): Promise<Result<CssFilePlan>> {
   if (winner !== undefined) return ok({ file: winner.file });
   const jsx = await readFile(deps.fs, root, jsxFile);
   if (!jsx.ok) return jsx;
   const imported = importedCss(jsx.value, jsxFile);
   if (imported !== undefined) return ok({ file: imported });
-  const name = `${posix.basename(jsxFile).replace(/\.[jt]sx?$/, '')}.css`;
-  return ok({ file: posix.join(posix.dirname(jsxFile), name), importAs: name });
+
+  const baseName = posix.basename(jsxFile).replace(/\.[jt]sx?$/, '');
+  if (newCssDir) {
+    let candidateFile = posix.join(newCssDir, `${baseName}.css`);
+    let counter = 2;
+    while (await deps.fs.exists(root, candidateFile)) {
+      candidateFile = posix.join(newCssDir, `${baseName}-${String(counter)}.css`);
+      counter += 1;
+    }
+    const jsxDir = posix.dirname(jsxFile);
+    let rel = posix.relative(jsxDir, candidateFile);
+    if (!rel.startsWith('./') && !rel.startsWith('../')) rel = `./${rel}`;
+    return ok({ file: candidateFile, importAs: rel });
+  }
+
+  const name = `${baseName}.css`;
+  return ok({ file: posix.join(posix.dirname(jsxFile), name), importAs: `./${name}` });
 }
 
 /** Adds the import a `planCssFile` plan asks for; call it after the CSS file is written. */
@@ -327,7 +345,7 @@ async function applyToElement(
   const selector = elementSelector(winner, newClass, change.state);
 
   // Every check happens before the first write, so a refused change leaves no file touched.
-  const plan = await planCssFile(deps, root, ctx.value.jsxFile, winner);
+  const plan = await planCssFile(deps, root, ctx.value.jsxFile, winner, deps.newCssDir);
   if (!plan.ok) return plan;
   const css = await readFile(deps.fs, root, plan.value.file);
   const cssBefore = css.ok ? css.value : undefined;

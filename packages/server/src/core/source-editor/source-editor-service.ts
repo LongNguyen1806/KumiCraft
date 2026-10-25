@@ -33,7 +33,7 @@ import {
 } from './source-editor-lookup.ts';
 import { listSourceFiles, type SourceFiles } from './source-files.ts';
 import { getElementTextFromAst } from './structure/element-text.ts';
-import type { StylingProvider } from './structure/insert-css.ts';
+import type { NewCssDirProvider, StylingProvider } from './structure/insert-css.ts';
 import { executeStructureEdit } from './structure/structure-runner.ts';
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB (R-SE-01)
@@ -44,6 +44,7 @@ export type SourceEditorDeps = {
   /** Lays out inserted JSX (M-FM); absent: the built-in layout without the project's Prettier. */
   readonly formatSnippet?: SnippetFormatter | undefined;
   readonly styling?: StylingProvider;
+  readonly newCssDir?: NewCssDirProvider;
 };
 
 export type SourceEditorConfig = {
@@ -336,6 +337,7 @@ export function createSourceEditorService(
         cb,
         formatSnippet,
         deps.styling,
+        deps.newCssDir,
       ),
     applyEditBatch: (root, edits, cb) =>
       executeEditBatch(deps.fs, root, sourceDir, sourceExtensions, edits, cb),

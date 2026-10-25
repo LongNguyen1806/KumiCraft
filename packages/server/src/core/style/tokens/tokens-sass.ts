@@ -24,6 +24,9 @@ import type { TokenAdapter, TokenFiles } from './token-service.ts';
 import { insertVariable, listVariables, removeVariable, setVariable } from './variable-edit.ts';
 
 function targetSassFiles(files: TokenFiles): readonly string[] {
+  if (files.tokenFile && /\.(scss|sass)$/i.test(files.tokenFile)) {
+    return [files.tokenFile];
+  }
   const globalSass = (files.styling?.globalCss ?? []).filter((f) => /\.(scss|sass)$/.test(f));
   if (globalSass.length > 0) return globalSass;
   return ['src/styles/main.scss'];

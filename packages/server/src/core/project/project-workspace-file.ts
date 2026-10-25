@@ -1,7 +1,14 @@
 // Workspace file loading, creation and reload helpers (M-PJ, S-84).
-import type { DesignDirs, Frame, ResponsiveMode } from '@kumicraft/shared';
+import type {
+  DesignDirs,
+  Frame,
+  ResponsiveMode,
+  StyleFiles,
+  StyleSystemId,
+} from '@kumicraft/shared';
 import {
   newWorkspaceFile,
+  normalizeDesignDirs,
   serializeWorkspaceFile,
   type SupportReport,
   WORKSPACE_FILE,
@@ -18,7 +25,7 @@ import type { ConfigStore } from '../shared/user-config.ts';
 import { readWorkspaceFile } from '../workspace/read-workspace.ts';
 import { trustKeyOf } from '../workspace/trust.ts';
 import { detectResponsiveMode } from './detect-responsive.ts';
-import { validateDesignDirs } from './page-common.ts';
+import { validateDesignDirs, validateStyleFiles } from './page-common.ts';
 import { computeBackendInfos } from './project-backends.ts';
 import type { WorkspaceState } from './project-service.ts';
 
@@ -29,7 +36,42 @@ export type PatchWorkspaceUpdates = {
   readonly primaryFrameId?: string | undefined;
   readonly devPort?: number | 'auto' | undefined;
   readonly designDirs?: DesignDirs | undefined;
+  readonly styleFiles?: StyleFiles | undefined;
 };
+
+function buildPatchedWorkspaceFile(
+  currentFile: WorkspaceFile,
+  updates: PatchWorkspaceUpdates,
+): WorkspaceFile {
+  const { devPort: savedPort, ...file } = currentFile;
+  const devPort = updates.devPort === 'auto' ? undefined : (updates.devPort ?? savedPort);
+
+  let savedDesignDirs = file.designDirs;
+  if (updates.designDirs !== undefined) {
+    const normalized = normalizeDesignDirs(updates.designDirs);
+    savedDesignDirs = {
+      pages: [...normalized.pages],
+      layouts: [...normalized.layouts],
+      components: [...normalized.components],
+      ...(updates.designDirs.drafts !== undefined ? { drafts: updates.designDirs.drafts } : {}),
+    };
+  }
+
+  return {
+    ...file,
+    name: updates.name ?? file.name,
+    responsiveMode: updates.responsiveMode ?? file.responsiveMode,
+    frames: updates.frames ? [...updates.frames] : file.frames,
+    primaryFrameId: updates.primaryFrameId ?? file.primaryFrameId,
+    ...(devPort === undefined ? {} : { devPort }),
+    ...(savedDesignDirs !== undefined ? { designDirs: savedDesignDirs } : {}),
+    ...(updates.styleFiles !== undefined
+      ? { styleFiles: updates.styleFiles }
+      : file.styleFiles
+        ? { styleFiles: file.styleFiles }
+        : {}),
+  };
+}
 
 export async function executePatchWorkspaceFile(
   fs: FileSystemPort,
@@ -38,6 +80,7 @@ export async function executePatchWorkspaceFile(
   sourceDir: string,
   platform: Platform,
   updates: PatchWorkspaceUpdates,
+  primarySystem?: StyleSystemId,
 ): Promise<Result<WorkspaceFile>> {
   if (updates.designDirs !== undefined) {
     if (!validateDesignDirs(updates.designDirs, sourceDir, platform)) {
@@ -45,18 +88,19 @@ export async function executePatchWorkspaceFile(
     }
   }
 
-  const { devPort: savedPort, ...file } = currentFile;
-  const devPort = updates.devPort === 'auto' ? undefined : (updates.devPort ?? savedPort);
-  const updatedFile: WorkspaceFile = {
-    ...file,
-    name: updates.name ?? file.name,
-    responsiveMode: updates.responsiveMode ?? file.responsiveMode,
-    frames: updates.frames ? [...updates.frames] : file.frames,
-    primaryFrameId: updates.primaryFrameId ?? file.primaryFrameId,
-    ...(devPort === undefined ? {} : { devPort }),
-    ...(updates.designDirs !== undefined ? { designDirs: updates.designDirs } : {}),
-  };
+  if (updates.styleFiles !== undefined) {
+    const validStyle = await validateStyleFiles(
+      fs,
+      root,
+      updates.styleFiles,
+      sourceDir,
+      primarySystem,
+      platform,
+    );
+    if (!validStyle.ok) return validStyle;
+  }
 
+  const updatedFile = buildPatchedWorkspaceFile(currentFile, updates);
   const write = await fs.writeTextAtomic(root, WORKSPACE_FILE, serializeWorkspaceFile(updatedFile));
   if (!write.ok) return write;
   return ok(updatedFile);

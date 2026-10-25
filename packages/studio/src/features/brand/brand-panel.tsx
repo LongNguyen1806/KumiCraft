@@ -1,17 +1,21 @@
 import {
+  type StyleSystemId,
   THEME_TOKEN_NAME,
   type ThemeInfo,
   type ThemeToken,
   type ThemeTokenKind,
+  tokenFileExtensions,
 } from '@kumicraft/shared';
 import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { editTheme, fetchThemeUsage } from '../../api/project-client.ts';
+import { editTheme, fetchThemeUsage, patchProject } from '../../api/project-client.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
+import { FolderPicker } from '../files/folder-picker.tsx';
 import { useHistoryStore } from '../history/history-store.ts';
 import { useProjectTheme, useThemeStore } from '../inspector/use-project-theme.ts';
+import { useProjectInfo, useProjectStore } from '../project/project-store.ts';
 import { BrandTokenRow } from './brand-token-row.tsx';
 
 function formatBrandError(err: unknown, tErrors: TFunction<'errors'>): string {
@@ -228,21 +232,106 @@ function useBrandActions(t: TFunction, tErrors: TFunction<'errors'>) {
   };
 }
 
+async function updateTokenFile(
+  project: ReturnType<typeof useProjectInfo>,
+  tokenFile: string | undefined,
+) {
+  try {
+    const info = await patchProject({
+      styleFiles: { ...project?.styleFiles, tokenFile },
+    });
+    useProjectStore.getState().setProject(info);
+    void useThemeStore.getState().load();
+  } catch {
+    // Ignore errors
+  }
+}
+
+function BrandAutoButton({ project }: { readonly project: ReturnType<typeof useProjectInfo> }) {
+  const { t } = useTranslation();
+  return (
+    <button
+      type="button"
+      data-testid="brand-auto-file"
+      onClick={() => {
+        void updateTokenFile(project, undefined);
+      }}
+      className="cursor-pointer rounded border border-border px-1.5 py-0.5 text-[11px] text-ink-soft hover:bg-hover hover:text-ink"
+    >
+      {t('brand.autoTokenFile')}
+    </button>
+  );
+}
+
+function BrandFileSelector({
+  system,
+  file,
+  project,
+}: {
+  readonly system: StyleSystemId;
+  readonly file: string;
+  readonly project: ReturnType<typeof useProjectInfo>;
+}) {
+  const { t } = useTranslation();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const hasCustom = Boolean(project?.styleFiles?.tokenFile);
+  const extensions = tokenFileExtensions(system);
+
+  return (
+    <>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          data-testid="brand-change-file"
+          onClick={() => {
+            setPickerOpen(true);
+          }}
+          className="cursor-pointer rounded border border-border px-1.5 py-0.5 text-[11px] text-ink hover:bg-hover"
+        >
+          {t('brand.changeTokenFile')}
+        </button>
+        {hasCustom && <BrandAutoButton project={project} />}
+      </div>
+      {pickerOpen && (
+        <FolderPicker
+          open={pickerOpen}
+          mode="file"
+          extensions={extensions}
+          initial={file}
+          onPick={(p) => {
+            void updateTokenFile(project, p);
+          }}
+          onClose={() => {
+            setPickerOpen(false);
+          }}
+        />
+      )}
+    </>
+  );
+}
+
 type BrandHeaderProps = {
-  readonly system: string;
+  readonly system: StyleSystemId;
   readonly file: string;
 };
 
 function BrandHeader({ system, file }: BrandHeaderProps) {
   const { t } = useTranslation();
+  const project = useProjectInfo();
+
   return (
     <div
       data-testid="brand-header"
-      className="flex flex-col gap-0.5 border-b border-border pb-2 text-xs"
+      className="flex flex-col gap-1 border-b border-border pb-2 text-xs"
     >
-      <span className="font-semibold text-ink" data-testid="brand-system-name">
-        {t(`brand.system.${system}`, { defaultValue: system })}
-      </span>
+      <div className="flex items-center justify-between">
+        <span className="font-semibold text-ink" data-testid="brand-system-name">
+          {t(`brand.system.${system}`, { defaultValue: system })}
+        </span>
+        {system !== 'tailwind3' && (
+          <BrandFileSelector system={system} file={file} project={project} />
+        )}
+      </div>
       <span className="font-mono text-ink-faint" data-testid="brand-file-path">
         {file}
       </span>

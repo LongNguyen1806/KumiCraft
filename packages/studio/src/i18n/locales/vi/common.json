@@ -252,6 +252,10 @@
       "pages": "Trang",
       "layouts": "Bố cục",
       "components": "Component",
+      "newCssDir": "Thư mục chứa file CSS mới",
+      "addDir": "+ Thêm thư mục",
+      "moveUp": "Đưa lên đầu",
+      "remove": "Xóa",
       "save": "Lưu thư mục",
       "saved": "Đã lưu thư mục"
     }
@@ -603,6 +607,9 @@
     "noThemeFile": "Dự án chưa có file CSS Tailwind",
     "invalidName": "Tên gồm chữ thường, số, gạch ngang; bắt đầu bằng chữ (tối đa 40 ký tự)",
     "inherited": "Mặc định Bootstrap",
+    "tokenFile": "File token",
+    "changeTokenFile": "Đổi file…",
+    "autoTokenFile": "Tự động",
     "system": {
       "tailwind4": "Tailwind CSS v4",
       "tailwind3": "Tailwind CSS v3",
@@ -634,12 +641,26 @@
     "deleteFolderRouterPages": "Thư mục có {{count}} trang trong router; route sẽ lỗi.",
     "deleteButton": "Xóa",
     "cancel": "Hủy",
+    "close": "Đóng",
     "loading": "Đang tải…",
     "maxDocsError": "Tối đa 10 tài liệu đính kèm",
     "buildError": "Lỗi build",
     "aiModified": "AI vừa sửa",
     "collapse": "Thu gọn",
     "expand": "Mở rộng",
-    "more": "Thêm"
+    "more": "Thêm",
+    "pickFolder": "Chọn thư mục",
+    "pickFile": "Chọn file",
+    "select": "Chọn",
+    "addPageHere": "Thêm trang ở đây",
+    "useAsPageDir": "Dùng làm thư mục trang",
+    "useAsLayoutDir": "Dùng làm thư mục layout",
+    "useAsComponentDir": "Dùng làm thư mục component",
+    "removeFromPageDir": "Bỏ khỏi thư mục trang",
+    "removeFromLayoutDir": "Bỏ khỏi thư mục layout",
+    "removeFromComponentDir": "Bỏ khỏi thư mục component",
+    "setNewCssDir": "Đặt file CSS mới vào đây",
+    "useAsTokenFile": "Dùng làm file token Brand",
+    "dismissError": "Đóng thông báo"
   }
 }

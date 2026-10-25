@@ -50,7 +50,12 @@ describe('project files routes [WP-4.00]', () => {
     primaryFrameId: 'desktop',
     backends: [],
     trusted: true,
-    designDirs: { pages: 'src/pages', layouts: 'src/layouts', components: 'src/components' },
+    designDirs: {
+      pages: ['src/pages'],
+      layouts: ['src/layouts'],
+      components: ['src/components'],
+      drafts: 'src/drafts',
+    },
   };
 
   const mockProjectService: ProjectService = {

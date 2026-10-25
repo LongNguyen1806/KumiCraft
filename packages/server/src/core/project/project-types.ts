@@ -14,6 +14,7 @@ import type {
   RenameDraft,
   ResponsiveMode,
   StructureResult,
+  StyleFiles,
   SupportReport,
   ThemeEdit,
   ThemeInfo,
@@ -83,6 +84,7 @@ export type ProjectService = {
     readonly primaryFrameId?: string | undefined;
     readonly devPort?: number | 'auto' | undefined;
     readonly designDirs?: DesignDirs | undefined;
+    readonly styleFiles?: StyleFiles | undefined;
   }): Promise<Result<ProjectInfo>>;
   setTrusted(trusted: boolean): Promise<Result<ProjectInfo>>;
   install(command: readonly string[]): Promise<Result<{ readonly jobId: string }>>;

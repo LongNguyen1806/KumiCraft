@@ -24,6 +24,9 @@ import type { TokenAdapter, TokenFiles } from './token-service.ts';
 import { insertVariable, listVariables, removeVariable, setVariable } from './variable-edit.ts';
 
 function targetLessFiles(files: TokenFiles): readonly string[] {
+  if (files.tokenFile && files.tokenFile.endsWith('.less')) {
+    return [files.tokenFile];
+  }
   const globalLess = (files.styling?.globalCss ?? []).filter((f) => f.endsWith('.less'));
   if (globalLess.length > 0) return globalLess;
   return ['src/styles/main.less'];

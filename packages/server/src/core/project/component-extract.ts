@@ -45,7 +45,7 @@ async function validateExtractInput(
 ): Promise<Result<ValidatedInput>> {
   const names = pageNames(input.name, deps.language);
   const name = names.component;
-  const targetDir = input.dir ?? deps.designDirs.components;
+  const targetDir = input.dir ?? deps.designDirs.components[0] ?? 'src/components';
   const dirCheck = validateDirectory(targetDir, deps.sourceDir, deps.platform);
   if (!dirCheck.ok) return dirCheck;
 
@@ -184,10 +184,8 @@ export async function updateConfigComponents(
   deps: PageEditDeps,
   newFileRel: string,
 ): Promise<void> {
-  const inComponents = newFileRel.startsWith(`${deps.designDirs.components}/`);
-  const inLayouts = Boolean(
-    deps.designDirs.layouts && newFileRel.startsWith(`${deps.designDirs.layouts}/`),
-  );
+  const inComponents = deps.designDirs.components.some((d) => newFileRel.startsWith(`${d}/`));
+  const inLayouts = deps.designDirs.layouts.some((d) => newFileRel.startsWith(`${d}/`));
   if (inComponents || inLayouts) return;
 
   const configPath = '.kumicraft/components.json';

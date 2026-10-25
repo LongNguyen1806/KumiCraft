@@ -15,6 +15,7 @@ import { useProjectInfo } from '../project/project-store.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { FilesDialogsSection } from './files-delete-dialog.tsx';
+import { FilesActionError } from './files-design-menu.tsx';
 import { flattenDirectory, useFilesStore } from './files-store.ts';
 import { FilesTreeList, PanelTopActions } from './files-tree-list.tsx';
 
@@ -278,6 +279,7 @@ export function FilesPanel() {
           s.setInlineAction({ kind: 'newFolder', dir: '' });
         }}
       />
+      <FilesActionError />
       <FilesTreeList
         items={flatItems}
         loadingRoot={s.loadingDirs.has('')}

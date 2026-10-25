@@ -332,4 +332,33 @@ describe('component extraction (R-CP-14)', { timeout: 30_000 }, () => {
     expect(updatedHome).toContain('\r\n');
     expect(updatedHome).not.toMatch(/[^\r]\n/);
   });
+
+  it('Test 7 [WP-4.00]: target file in second component directory is recognized as component', async () => {
+    const { target, service } = await setupProject();
+    await service.patchProject({
+      designDirs: {
+        pages: ['src/pages'],
+        layouts: ['src/layouts'],
+        components: ['src/components', 'src/shared-components'],
+      },
+    });
+
+    const res = await service.extractComponent({
+      loc: 'src/pages/Home.tsx:8:7',
+      tag: 'section',
+      name: 'Shared Card',
+      dir: 'src/shared-components',
+    });
+    expect(res.ok).toBe(true);
+
+    const exists = await directWriteFs.exists(target, 'src/shared-components/SharedCard.tsx');
+    expect(exists).toBe(true);
+
+    // It is in second component dir, so it should NOT be written to components.json as a standalone custom file
+    const configExists = await directWriteFs.exists(target, '.kumicraft/components.json');
+    if (configExists) {
+      const configRaw = await readFile(join(target, '.kumicraft/components.json'), 'utf8');
+      expect(configRaw).not.toContain('src/shared-components/SharedCard.tsx');
+    }
+  });
 });

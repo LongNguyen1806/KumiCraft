@@ -141,6 +141,19 @@ type BootstrapMode =
   | { readonly kind: 'css'; readonly file: string };
 
 async function detectBootstrapMode(fs: FileSystemPort, files: TokenFiles): Promise<BootstrapMode> {
+  if (files.tokenFile) {
+    if (/\.(scss|sass)$/i.test(files.tokenFile)) {
+      const read = await fs.readText(files.root, files.tokenFile, { maxBytes: 1024 * 1024 });
+      const importOffset = read.ok
+        ? (BOOTSTRAP_IMPORT_RE.exec(read.value)?.index ?? read.value.length)
+        : 0;
+      return { kind: 'sass', file: files.tokenFile, importOffset };
+    }
+    if (files.tokenFile.endsWith('.css')) {
+      return { kind: 'css', file: files.tokenFile };
+    }
+  }
+
   const scssFiles = (files.styling?.globalCss ?? []).filter((f) => /\.(scss|sass)$/.test(f));
   for (const f of scssFiles) {
     const read = await fs.readText(files.root, f, { maxBytes: 1024 * 1024 });

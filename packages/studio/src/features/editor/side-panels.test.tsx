@@ -52,7 +52,12 @@ const STYLED_COMPONENTS_PROJECT: ProjectInfo = {
   frames: [{ id: 'desktop', label: 'Desktop', width: 1440, height: 900 }],
   primaryFrameId: 'desktop',
   backends: [],
-  designDirs: { pages: 'src/pages', layouts: 'src/layouts', components: 'src/components' },
+  designDirs: {
+    pages: ['src/pages'],
+    layouts: ['src/layouts'],
+    components: ['src/components'],
+    drafts: 'src/drafts',
+  },
   trusted: true,
 };
 

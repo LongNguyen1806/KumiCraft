@@ -1,6 +1,6 @@
 // ProjectInfo of the open project as the API returns it (SPEC-03 section 5.3).
 import {
-  DEFAULT_DESIGN_DIRS,
+  normalizeDesignDirs,
   type PackageManager,
   type ProjectInfo,
   type SupportReport,
@@ -25,7 +25,8 @@ export function projectInfoOf(state: OpenWorkspace): ProjectInfo {
     backends: state.backends,
     trusted: state.trusted,
     ...(state.file.devPort === undefined ? {} : { devPort: state.file.devPort }),
-    designDirs: state.file.designDirs ?? DEFAULT_DESIGN_DIRS,
+    designDirs: normalizeDesignDirs(state.file.designDirs),
+    ...(state.file.styleFiles !== undefined ? { styleFiles: state.file.styleFiles } : {}),
   };
 }
 

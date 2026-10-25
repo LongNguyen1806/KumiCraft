@@ -182,4 +182,79 @@ describe('token-service [R-ST-15, R-TH-10, R-TH-11, R-TH-14]', () => {
     const brand = res.value.colors.find((c) => c.name === 'brand');
     expect(brand?.value).toBe('#e11d48');
   });
+
+  it('[WP-4.00] test 12: token-service với tokenFile: CSS project có 2 file global; tokenFile = file thứ 2 → đọc và thêm token vào file thứ 2, file 1 không đổi; Tailwind 3 bỏ qua tokenFile', async () => {
+    await mkdir(join(dir, 'src'), { recursive: true });
+    const firstPath = join(dir, 'src', 'first.css');
+    const secondPath = join(dir, 'src', 'second.css');
+    const initialFirst = ':root {\n  --color-primary: #111111;\n}\n';
+    const initialSecond = ':root {\n  --color-secondary: #222222;\n}\n';
+    await writeFile(firstPath, initialFirst, 'utf-8');
+    await writeFile(secondPath, initialSecond, 'utf-8');
+
+    const { deps } = makeDeps(dir);
+    const cssFiles: TokenFiles = {
+      root: dir,
+      styling: {
+        systems: [{ id: 'css' }],
+        editable: true,
+        primary: 'css',
+        globalCss: ['src/first.css', 'src/second.css'],
+      },
+      tailwindCss: undefined,
+      sourceDir: 'src',
+      tokenFile: 'src/second.css',
+    };
+
+    const readRes = await readTokens(deps, cssFiles, 'css');
+    expect(readRes.ok).toBe(true);
+    if (!readRes.ok) return;
+    expect(readRes.value.file).toBe('src/second.css');
+    expect(readRes.value.colors.map((c) => c.name)).toEqual(['secondary']);
+
+    const editRes = await editTokens(deps, cssFiles, 'css', {
+      kind: 'color',
+      op: 'add',
+      name: 'accent',
+      value: '#ff0000',
+    });
+    expect(editRes.ok).toBe(true);
+
+    const firstContentAfter = await readFile(firstPath, 'utf-8');
+    const secondContentAfter = await readFile(secondPath, 'utf-8');
+    expect(firstContentAfter).toBe(initialFirst);
+    expect(secondContentAfter).toContain('--color-accent: #ff0000;');
+
+    // Tailwind 3 ignores tokenFile
+    const tw3Config = `module.exports = {
+  content: ['./src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        custom: '#123456',
+      },
+    },
+  },
+};`;
+    await writeFile(join(dir, 'tailwind.config.js'), tw3Config, 'utf-8');
+    const tw3Files: TokenFiles = {
+      root: dir,
+      styling: {
+        systems: [{ id: 'tailwind', version: '3.4.1' }],
+        editable: true,
+        primary: 'tailwind',
+        globalCss: ['src/first.css'],
+      },
+      tailwindCss: 'src/first.css',
+      sourceDir: 'src',
+      tokenFile: 'src/second.css',
+    };
+
+    const tw3Res = await readTokens(deps, tw3Files, 'tailwind3');
+    expect(tw3Res.ok).toBe(true);
+    if (!tw3Res.ok) return;
+    expect(tw3Res.value.system).toBe('tailwind3');
+    expect(tw3Res.value.file).toBe('tailwind.config.js');
+    expect(tw3Res.value.colors.some((c) => c.name === 'custom')).toBe(true);
+  });
 });

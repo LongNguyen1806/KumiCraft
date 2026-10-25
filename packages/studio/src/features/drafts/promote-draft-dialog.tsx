@@ -1,5 +1,5 @@
 import { type DraftInfo, pageNames, type StructureResult } from '@kumicraft/shared';
-import { type SyntheticEvent, useState } from 'react';
+import { type SyntheticEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { promoteDraft } from '../../api/project-client.ts';
@@ -11,6 +11,7 @@ import {
   PageNameAndPathFields,
   useDirSuggestions,
 } from '../pages/add-page-form.tsx';
+import { useProjectInfo } from '../project/project-store.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 
 export type PromoteDraftDialogProps = {
@@ -135,11 +136,11 @@ async function executePromote({
   }
 }
 
-function usePromoteFormFields(initialName: string) {
+function usePromoteFormFields(initialName: string, defaultDir: string) {
   const initialNames = pageNames(initialName, 'ts');
   const [name, setName] = useState(initialName);
   const [path, setPath] = useState(initialNames.path);
-  const [dir, setDir] = useState('src/pages');
+  const [dir, setDir] = useState(defaultDir);
   const [fileName, setFileName] = useState(initialNames.fileName);
   const [isPathManual, setIsPathManual] = useState(false);
   const [isFileManual, setIsFileManual] = useState(false);
@@ -211,10 +212,21 @@ function usePromoteDraftState(
   onClose: () => void,
   onPromoted?: (res: StructureResult) => void,
 ) {
+  const project = useProjectInfo();
+  const defaultPageDir = project?.designDirs.pages[0] ?? 'src/pages';
+  const defaultComponentDir = project?.designDirs.components[0] ?? 'src/components';
+
   const [target, setTarget] = useState<'page' | 'component'>('page');
-  const fields = usePromoteFormFields(draft?.name ?? '');
+  const fields = usePromoteFormFields(draft?.name ?? '', defaultPageDir);
   const [keepDraft, setKeepDraft] = useState(true);
   const { busy, errorMsg, runSubmit } = usePromoteSubmit(draft, projectId, onClose, onPromoted);
+
+  const { setDir } = fields;
+  useEffect(() => {
+    if (target === 'page') {
+      setDir(defaultPageDir);
+    }
+  }, [defaultPageDir, target, setDir]);
 
   const handleNameChange = (val: string) => {
     fields.setName(val);
@@ -231,7 +243,7 @@ function usePromoteDraftState(
     errorMsg,
     handleTargetChange: (newTarget: 'page' | 'component') => {
       setTarget(newTarget);
-      fields.setDir(newTarget === 'page' ? 'src/pages' : 'src/components');
+      fields.setDir(newTarget === 'page' ? defaultPageDir : defaultComponentDir);
     },
     handleNameChange,
     setKeepDraft,

@@ -64,9 +64,9 @@ describe('Studio Drafts [R-DR-10 .. R-DR-15]', () => {
       backends: [],
       trusted: true,
       designDirs: {
-        pages: 'src/pages',
-        layouts: 'src/layouts',
-        components: 'src/components',
+        pages: ['src/pages'],
+        layouts: ['src/layouts'],
+        components: ['src/components'],
         drafts: 'src/drafts',
       },
     });

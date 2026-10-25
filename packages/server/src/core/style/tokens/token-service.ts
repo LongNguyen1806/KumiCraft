@@ -29,6 +29,7 @@ export type TokenFiles = {
   readonly styling: StylingReport | undefined;
   readonly tailwindCss: RelPath | undefined;
   readonly sourceDir: string;
+  readonly tokenFile?: RelPath | undefined;
 };
 
 export interface TokenAdapter {

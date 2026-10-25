@@ -3,7 +3,6 @@ import * as path from 'node:path';
 
 import {
   type CreateDraft,
-  DEFAULT_DESIGN_DIRS,
   type DraftFile,
   type DraftInfo,
   type DraftsInfo,
@@ -26,7 +25,7 @@ import {
 import { type PageEditDeps, withFileLocks } from './page-common.ts';
 
 export function getDraftsDir(deps: PageEditDeps): string {
-  return deps.designDirs.drafts ?? DEFAULT_DESIGN_DIRS.drafts;
+  return deps.designDirs.drafts;
 }
 
 export async function listDrafts(deps: PageEditDeps): Promise<Result<DraftsInfo>> {

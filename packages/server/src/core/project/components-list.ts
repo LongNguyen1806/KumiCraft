@@ -88,6 +88,18 @@ type ComponentScanTarget = {
   readonly kind: 'component' | 'layout';
 };
 
+type DirRule = {
+  readonly dir: string;
+  readonly kind: 'layout' | 'component';
+};
+
+function buildSortedDirRules(info: ProjectInfo): DirRule[] {
+  const rules: DirRule[] = [];
+  for (const d of info.designDirs.layouts) rules.push({ dir: d, kind: 'layout' });
+  for (const d of info.designDirs.components) rules.push({ dir: d, kind: 'component' });
+  return rules.sort((a, b) => b.dir.length - a.dir.length);
+}
+
 async function collectAllTargets(
   fs: FileSystemPort,
   root: string,
@@ -95,26 +107,17 @@ async function collectAllTargets(
 ): Promise<ComponentScanTarget[]> {
   const targets: ComponentScanTarget[] = [];
   const seenFiles = new Set<string>();
+  const rules = buildSortedDirRules(info);
 
-  const layoutFiles: string[] = [];
-  if (info.designDirs.layouts) {
-    await collectFiles(fs, root, info.designDirs.layouts, layoutFiles);
-  }
-  for (const f of layoutFiles) {
-    if (!seenFiles.has(f)) {
+  for (const rule of rules) {
+    const files: string[] = [];
+    await collectFiles(fs, root, rule.dir, files);
+    for (const f of files) {
+      if (seenFiles.has(f)) continue;
       seenFiles.add(f);
-      targets.push({ file: f, kind: 'layout' });
-    }
-  }
-
-  const componentFiles: string[] = [];
-  if (info.designDirs.components) {
-    await collectFiles(fs, root, info.designDirs.components, componentFiles);
-  }
-  for (const f of componentFiles) {
-    if (!seenFiles.has(f)) {
-      seenFiles.add(f);
-      targets.push({ file: f, kind: 'component' });
+      // Longest matching rule determines kind
+      const matched = rules.find((r) => f.startsWith(`${r.dir}/`));
+      targets.push({ file: f, kind: matched?.kind ?? rule.kind });
     }
   }
 

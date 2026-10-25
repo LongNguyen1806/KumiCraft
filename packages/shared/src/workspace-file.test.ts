@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { relPathProblem } from './rel-path.ts';
 import {
   defaultFrames,
+  DesignDirsSchema,
   newWorkspaceFile,
+  normalizeDesignDirs,
   parseWorkspaceFile,
   serializeWorkspaceFile,
 } from './workspace-file.ts';
@@ -129,5 +131,76 @@ describe('parseWorkspaceFile', () => {
 
     expect(parseWorkspaceFile(tooMany).ok).toBe(false);
     expect(parseWorkspaceFile(tooSmall).ok).toBe(false);
+  });
+
+  it('Test 1 [WP-4.00]: workspace.json with string designDirs parses; normalizeDesignDirs returns arrays; absent designDirs -> default', () => {
+    const rawLegacy = {
+      schemaVersion: 2,
+      id: 'abcdefghij',
+      name: 'Shop',
+      createdAt: '2026-10-14T08:00:00.000Z',
+      framework: 'vite-react',
+      sourceDir: 'src',
+      backends: [],
+      responsiveMode: 'desktop-first',
+      frames: [
+        { id: 'desktop', label: 'Desktop', width: 1440, height: 900 },
+        { id: 'tablet', label: 'Tablet', width: 768, height: 1024 },
+        { id: 'mobile', label: 'Mobile', width: 375, height: 812 },
+      ],
+      primaryFrameId: 'desktop',
+      designDirs: {
+        pages: 'src/views',
+        layouts: 'src/layouts',
+        components: 'src/ui',
+        drafts: 'src/drafts',
+      },
+    };
+    const parsed = parseWorkspaceFile(rawLegacy);
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) {
+      expect(parsed.value.designDirs?.pages).toBe('src/views');
+      const normalized = normalizeDesignDirs(parsed.value.designDirs);
+      expect(normalized.pages).toEqual(['src/views']);
+      expect(normalized.layouts).toEqual(['src/layouts']);
+      expect(normalized.components).toEqual(['src/ui']);
+      expect(normalized.drafts).toBe('src/drafts');
+    }
+
+    const defaultNorm = normalizeDesignDirs(undefined);
+    expect(defaultNorm.pages).toEqual(['src/pages']);
+    expect(defaultNorm.layouts).toEqual(['src/layouts']);
+    expect(defaultNorm.components).toEqual(['src/components']);
+    expect(defaultNorm.drafts).toBe('src/drafts');
+  });
+
+  it('Test 2 [WP-4.00]: empty array, > 10 directories, absolute paths are invalid', () => {
+    // Empty array
+    expect(
+      DesignDirsSchema.safeParse({
+        pages: [],
+        layouts: ['src/layouts'],
+        components: ['src/components'],
+      }).success,
+    ).toBe(false);
+
+    // > 10 directories
+    const elevenDirs = Array.from({ length: 11 }, (_, i) => `src/components${String(i)}`);
+    expect(
+      DesignDirsSchema.safeParse({
+        pages: ['src/pages'],
+        layouts: ['src/layouts'],
+        components: elevenDirs,
+      }).success,
+    ).toBe(false);
+
+    // Absolute path
+    expect(
+      DesignDirsSchema.safeParse({
+        pages: ['/absolute/pages'],
+        layouts: ['src/layouts'],
+        components: ['src/components'],
+      }).success,
+    ).toBe(false);
   });
 });

@@ -68,9 +68,9 @@ function stubApi() {
                 backends: [],
                 trusted: true,
                 designDirs: {
-                  pages: 'src/pages',
-                  components: 'src/components',
-                  layouts: 'src/layouts',
+                  pages: ['src/pages'],
+                  components: ['src/components'],
+                  layouts: ['src/layouts'],
                   drafts: 'src/drafts',
                 },
               },

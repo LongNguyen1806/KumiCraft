@@ -13,7 +13,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createSourceEditorService } from '../source-editor/source-editor-service.ts';
 import { nodeFs } from '../workspace/test-support.ts';
-import { applyStyleChange } from './style-apply.ts';
+import { applyStyleChange, planCssFile } from './style-apply.ts';
 
 const CARD_CSS = `.card {
   padding: 16px;
@@ -370,5 +370,81 @@ export function Card() {
     expect(await read('src/Card.scss')).toBe(
       scssCode.replace('font-size: 14px; // mobile', 'font-size: 20px; // mobile'),
     );
+  });
+
+  it('Test 10 [WP-4.00]: planCssFile with newCssDir targets src/styles/Home.css and imports ../styles/Home.css; without newCssDir behaves as before', async () => {
+    await fs.mkdir(path.join(root, 'src/pages'), { recursive: true });
+    await fs.writeFile(
+      path.join(root, 'src/pages/Home.tsx'),
+      'export function Home() { return <main>Home</main>; }\n',
+    );
+
+    // With newCssDir
+    const planWithDir = await planCssFile(
+      { fs: nodeFs },
+      root,
+      'src/pages/Home.tsx',
+      undefined,
+      'src/styles',
+    );
+    expect(planWithDir.ok).toBe(true);
+    if (!planWithDir.ok) return;
+    expect(planWithDir.value.file).toBe('src/styles/Home.css');
+    expect(planWithDir.value.importAs).toBe('../styles/Home.css');
+
+    // Without newCssDir
+    const planDefault = await planCssFile(
+      { fs: nodeFs },
+      root,
+      'src/pages/Home.tsx',
+      undefined,
+      undefined,
+    );
+    expect(planDefault.ok).toBe(true);
+    if (!planDefault.ok) return;
+    expect(planDefault.value.file).toBe('src/pages/Home.css');
+    expect(planDefault.value.importAs).toBe('./Home.css');
+  });
+
+  it('Test 11 [WP-4.00]: two Home.tsx in different folders with newCssDir -> second file becomes Home-2.css, first unchanged', async () => {
+    await fs.mkdir(path.join(root, 'src/pages/shop'), { recursive: true });
+    await fs.mkdir(path.join(root, 'src/styles'), { recursive: true });
+    await fs.writeFile(
+      path.join(root, 'src/pages/Home.tsx'),
+      'export function Home() { return <main>Home</main>; }\n',
+    );
+    await fs.writeFile(
+      path.join(root, 'src/pages/shop/Home.tsx'),
+      'export function ShopHome() { return <main>Shop</main>; }\n',
+    );
+
+    // First file planned and created
+    const firstPlan = await planCssFile(
+      { fs: nodeFs },
+      root,
+      'src/pages/Home.tsx',
+      undefined,
+      'src/styles',
+    );
+    expect(firstPlan.ok).toBe(true);
+    if (!firstPlan.ok) return;
+    expect(firstPlan.value.file).toBe('src/styles/Home.css');
+    await fs.writeFile(path.join(root, firstPlan.value.file), '/* first */\n');
+
+    // Second file planned -> avoids collision with existing Home.css
+    const secondPlan = await planCssFile(
+      { fs: nodeFs },
+      root,
+      'src/pages/shop/Home.tsx',
+      undefined,
+      'src/styles',
+    );
+    expect(secondPlan.ok).toBe(true);
+    if (!secondPlan.ok) return;
+    expect(secondPlan.value.file).toBe('src/styles/Home-2.css');
+    expect(secondPlan.value.importAs).toBe('../../styles/Home-2.css');
+
+    // Verify first file untouched
+    expect(await fs.readFile(path.join(root, 'src/styles/Home.css'), 'utf8')).toBe('/* first */\n');
   });
 });

@@ -90,10 +90,18 @@ export async function readThemeTokens(
   });
 }
 
+function targetTailwind4File(files: TokenFiles): RelPath | undefined {
+  if (files.tokenFile && files.tokenFile.endsWith('.css')) {
+    return files.tokenFile;
+  }
+  return files.tailwindCss;
+}
+
 export const tailwind4Adapter: TokenAdapter = {
   system: 'tailwind4',
   async read(fs: FileSystemPort, files: TokenFiles): Promise<Result<ThemeInfo>> {
-    if (!files.tailwindCss) {
+    const cssPath = targetTailwind4File(files);
+    if (!cssPath) {
       return ok({
         system: 'tailwind4',
         colors: [],
@@ -104,7 +112,7 @@ export const tailwind4Adapter: TokenAdapter = {
         breakpoints: [],
       });
     }
-    const res = await readThemeTokens(fs, files.root, files.tailwindCss);
+    const res = await readThemeTokens(fs, files.root, cssPath);
     if (!res.ok) return res;
     return ok({ ...res.value, system: 'tailwind4' });
   },
@@ -114,7 +122,7 @@ export const tailwind4Adapter: TokenAdapter = {
     files: TokenFiles,
     edit: ThemeEdit,
   ): Promise<Result<{ readonly file: RelPath; readonly before: string; readonly after: string }>> {
-    const cssPath = files.tailwindCss;
+    const cssPath = targetTailwind4File(files);
     if (!cssPath) {
       return err({ code: 'E021', params: { missing: 'styleAdapter' } });
     }

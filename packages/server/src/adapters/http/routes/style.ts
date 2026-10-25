@@ -55,6 +55,7 @@ export function registerStyleRoutes(api: FastifyInstance, deps: StyleRoutesDeps)
         sourceEditor: deps.sourceEditorService,
         styling: project.value.support.styling,
         compiledCss: deps.compiledCss,
+        newCssDir: project.value.styleFiles?.newCssDir,
       },
       project.value.root,
       parsed.data,

@@ -306,4 +306,44 @@ describe('listProjectComponents', { timeout: 30_000 }, () => {
     expect(afterInsert).toContain("import { Header } from '../components/Header';");
     expect(afterInsert).toContain('<Header />');
   });
+
+  it('Test 9 [WP-4.00]: two component dirs + nested layout dir -> each file appears once; nested file is layout', async () => {
+    const { target, info } = await setupProject();
+    await directWriteFs.mkdir(target, 'src/widgets');
+    await directWriteFs.writeTextAtomic(
+      target,
+      'src/widgets/Sidebar.tsx',
+      'export function Sidebar() { return <aside>Sidebar</aside>; }\n',
+    );
+    await directWriteFs.mkdir(target, 'src/components/layouts');
+    await directWriteFs.writeTextAtomic(
+      target,
+      'src/components/layouts/DashboardLayout.tsx',
+      'export function DashboardLayout() { return <div>Layout</div>; }\n',
+    );
+
+    const customInfo = {
+      ...info,
+      designDirs: {
+        pages: ['src/pages'],
+        layouts: ['src/components/layouts'],
+        components: ['src/components', 'src/widgets'],
+        drafts: 'src/drafts',
+      },
+    };
+
+    const components = await listProjectComponents({ fs: directWriteFs }, target, customInfo);
+
+    const sidebar = components.find((c) => c.name === 'Sidebar');
+    expect(sidebar).toBeDefined();
+    expect(sidebar?.kind).toBe('component');
+
+    const layout = components.find((c) => c.name === 'DashboardLayout');
+    expect(layout).toBeDefined();
+    expect(layout?.kind).toBe('layout');
+
+    // Only appears once
+    const allLayoutOccurrences = components.filter((c) => c.name === 'DashboardLayout');
+    expect(allLayoutOccurrences.length).toBe(1);
+  });
 });

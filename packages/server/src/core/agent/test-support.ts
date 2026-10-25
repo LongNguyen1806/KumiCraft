@@ -79,9 +79,9 @@ export function makeTestProjectInfo(
     frames: [{ id: 'desktop', label: 'Desktop', width: 1200, height: 800 }],
     primaryFrameId: 'desktop',
     designDirs: {
-      pages: 'src/pages',
-      layouts: 'src/layouts',
-      components: 'src/components',
+      pages: ['src/pages'],
+      layouts: ['src/layouts'],
+      components: ['src/components'],
       drafts: 'src/drafts',
     },
     backends: [],

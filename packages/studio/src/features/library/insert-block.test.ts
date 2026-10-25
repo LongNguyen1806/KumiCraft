@@ -35,9 +35,9 @@ function makeProject(
     primaryFrameId: 'desktop',
     backends: [],
     designDirs: {
-      pages: 'src/pages',
-      layouts: 'src/layouts',
-      components: 'src/components',
+      pages: ['src/pages'],
+      layouts: ['src/layouts'],
+      components: ['src/components'],
       drafts: 'src/drafts',
     },
     trusted: true,

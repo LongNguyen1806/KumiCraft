@@ -1,13 +1,15 @@
 // Extract component modal dialog (SPEC-04 R-CP-14, spec-log #24).
 import { pageNames, type StructureResult, toComponentName } from '@kumicraft/shared';
 import type { TFunction } from 'i18next';
-import { type SyntheticEvent, useEffect, useId, useState } from 'react';
+import { type SyntheticEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { extractComponent, fetchProjectDirs } from '../../api/project-client.ts';
+import { extractComponent } from '../../api/project-client.ts';
 import { Dialog } from '../../components/ui/dialog.tsx';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
+import { DirInputWithPicker } from '../files/dir-input-with-picker.tsx';
 import type { InspectorTarget } from '../inspector/types.ts';
+import { useProjectInfo } from '../project/project-store.ts';
 import { useComponentsStore } from './use-project-components.ts';
 
 export type ExtractDialogProps = {
@@ -16,26 +18,6 @@ export type ExtractDialogProps = {
   readonly onClose: () => void;
   readonly onExtracted?: ((res: StructureResult) => void) | undefined;
 };
-
-function useDirSuggestions(): readonly string[] {
-  const [dirs, setDirs] = useState<readonly string[]>([]);
-  useEffect(() => {
-    let active = true;
-    const load = async () => {
-      try {
-        const list = await fetchProjectDirs();
-        if (active) setDirs(list);
-      } catch {
-        // Ignore directory fetch errors.
-      }
-    };
-    void load();
-    return () => {
-      active = false;
-    };
-  }, []);
-  return dirs;
-}
 
 function normalizeFilePath(dir: string, fileName: string): string {
   const cleanDir = dir.trim().replace(/^[/\\]+|[/\\]+$/g, '');
@@ -99,19 +81,44 @@ async function submitExtract(
   return res;
 }
 
-function useExtractForm(
+function useExtractSubmit(
   target: Extract<InspectorTarget, { readonly kind: 'element' }>,
   onClose: () => void,
   onExtracted?: (res: StructureResult) => void,
 ) {
   const { t: tError } = useTranslation('errors');
-  const components = useComponentsStore((s) => s.components);
-  const [name, setName] = useState('');
-  const [dir, setDir] = useState('src/components');
-  const [fileName, setFileName] = useState('');
-  const [isFileManual, setIsFileManual] = useState(false);
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | undefined>();
+
+  const runSubmit = async (name: string, dir: string, fileName: string) => {
+    setBusy(true);
+    setErrorMsg(undefined);
+    try {
+      await submitExtract(target, name, dir, fileName, onExtracted);
+      onClose();
+    } catch (err) {
+      setErrorMsg(resolveExtractError(err, tError));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return { busy, errorMsg, runSubmit };
+}
+
+function useExtractForm(
+  target: Extract<InspectorTarget, { readonly kind: 'element' }>,
+  onClose: () => void,
+  onExtracted?: (res: StructureResult) => void,
+) {
+  const project = useProjectInfo();
+  const defaultDir = project?.designDirs.components[0] ?? 'src/components';
+  const components = useComponentsStore((s) => s.components);
+  const [name, setName] = useState('');
+  const [dir, setDir] = useState(defaultDir);
+  const [fileName, setFileName] = useState('');
+  const [isFileManual, setIsFileManual] = useState(false);
+  const { busy, errorMsg, runSubmit } = useExtractSubmit(target, onClose, onExtracted);
   const validation = validateForm(name, dir, fileName, components);
 
   const handleNameChange = (val: string) => {
@@ -126,16 +133,8 @@ function useExtractForm(
 
   const handleSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
-    if (!validation.canSubmit || busy) return;
-    setBusy(true);
-    setErrorMsg(undefined);
-    try {
-      await submitExtract(target, name, dir, fileName, onExtracted);
-      onClose();
-    } catch (err) {
-      setErrorMsg(resolveExtractError(err, tError));
-    } finally {
-      setBusy(false);
+    if (validation.canSubmit && !busy) {
+      await runSubmit(name, dir, fileName);
     }
   };
 
@@ -179,36 +178,18 @@ function ExtractNameField({ form }: { readonly form: ReturnType<typeof useExtrac
   );
 }
 
-function ExtractFileField({
-  form,
-  dirs,
-  dirListId,
-}: {
-  readonly form: ReturnType<typeof useExtractForm>;
-  readonly dirs: readonly string[];
-  readonly dirListId: string;
-}) {
+function ExtractFileField({ form }: { readonly form: ReturnType<typeof useExtractForm> }) {
   const { t } = useTranslation();
   return (
     <>
       <label className="flex flex-col gap-1 text-xs text-ink-soft">
         {t('components.extract.dir')}
-        <input
-          data-testid="extract-dir"
-          list={dirListId}
-          type="text"
+        <DirInputWithPicker
+          dataTestId="extract-dir"
           disabled={form.busy}
           value={form.dir}
-          onChange={(e) => {
-            form.setDir(e.target.value);
-          }}
-          className="rounded border border-border bg-field px-2.5 py-1.5 text-xs text-ink disabled:opacity-50"
+          onChange={form.setDir}
         />
-        <datalist id={dirListId}>
-          {dirs.map((d) => (
-            <option key={d} value={d} />
-          ))}
-        </datalist>
       </label>
 
       <label className="flex flex-col gap-1 text-xs text-ink-soft">
@@ -233,8 +214,6 @@ function ExtractFileField({
 
 export function ExtractDialog({ open, target, onClose, onExtracted }: ExtractDialogProps) {
   const { t } = useTranslation();
-  const dirs = useDirSuggestions();
-  const dirListId = useId();
   const form = useExtractForm(target, onClose, onExtracted);
 
   return (
@@ -251,7 +230,7 @@ export function ExtractDialog({ open, target, onClose, onExtracted }: ExtractDia
         className="flex flex-col gap-3"
       >
         <ExtractNameField form={form} />
-        <ExtractFileField form={form} dirs={dirs} dirListId={dirListId} />
+        <ExtractFileField form={form} />
         {form.errorMsg !== undefined && (
           <div role="alert" data-testid="extract-error" className="text-xs text-danger">
             {form.errorMsg}

@@ -179,6 +179,10 @@ function createAuxiliaryServices(
       const info = projectService.getProjectInfo();
       return info.ok ? info.value.support.styling : undefined;
     },
+    newCssDir: () => {
+      const info = projectService.getProjectInfo();
+      return info.ok ? info.value.styleFiles?.newCssDir : undefined;
+    },
   });
   const agentService = createAgentService({
     process: processPort,

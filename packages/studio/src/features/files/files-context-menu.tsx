@@ -3,6 +3,9 @@ import { Copy, Edit3, FilePlus, FolderPlus, Laptop, Trash2 } from 'lucide-react'
 import { type ReactNode, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useProjectInfo } from '../project/project-store.ts';
+import { FileTokenAction, FolderDesignActions } from './files-design-menu.tsx';
+
 export type FilesContextMenuProps = {
   readonly open: boolean;
   readonly x: number;
@@ -17,24 +20,29 @@ export type FilesContextMenuProps = {
   readonly onCopyPath: (path: string) => void;
 };
 
-type MenuItemProps = {
+export type MenuItemProps = {
   readonly icon: ReactNode;
   readonly label: string;
   readonly testId: string;
   readonly onClick: () => void;
-  readonly danger?: boolean | undefined;
+  readonly danger?: boolean;
+  readonly disabled?: boolean;
 };
 
-function MenuItem({ icon, label, testId, onClick, danger = false }: MenuItemProps) {
+export function MenuItem({ icon, label, testId, onClick, danger, disabled }: MenuItemProps) {
+  const cls = disabled
+    ? 'cursor-not-allowed text-ink-soft opacity-40'
+    : danger
+      ? 'cursor-pointer text-rose-600 hover:bg-field-hover dark:text-rose-400'
+      : 'cursor-pointer text-ink hover:bg-field-hover';
   return (
     <button
       type="button"
       role="menuitem"
       data-testid={testId}
-      onClick={onClick}
-      className={`flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-field-hover cursor-pointer ${
-        danger ? 'text-rose-600 dark:text-rose-400' : 'text-ink'
-      }`}
+      disabled={disabled}
+      onClick={disabled ? undefined : onClick}
+      className={`flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs transition-colors ${cls}`}
     >
       <span className="size-4 shrink-0">{icon}</span>
       <span className="truncate">{label}</span>
@@ -50,8 +58,7 @@ function useMenuDismiss(
   useEffect(() => {
     if (!open) return;
     const handleDown = (e: MouseEvent) => {
-      const target = e.target;
-      if (menuRef.current && target instanceof Node && !menuRef.current.contains(target)) {
+      if (menuRef.current && e.target instanceof Node && !menuRef.current.contains(e.target)) {
         onClose();
       }
     };
@@ -90,35 +97,38 @@ function EntrySpecificMenuItems({
   onCopyPath,
 }: EntrySpecificMenuItemsProps) {
   const { t } = useTranslation();
+  const handleRename = () => {
+    onClose();
+    onRename(entry.path, entry.name);
+  };
+  const handleDelete = () => {
+    onClose();
+    onDelete(entry);
+  };
+  const handleCopy = () => {
+    onClose();
+    onCopyPath(entry.path);
+  };
   return (
     <>
       <MenuItem
         icon={<Edit3 className="size-3.5" />}
         label={t('files.rename')}
         testId="files-menu-rename"
-        onClick={() => {
-          onClose();
-          onRename(entry.path, entry.name);
-        }}
+        onClick={handleRename}
       />
       <MenuItem
         icon={<Trash2 className="size-3.5" />}
         label={t('files.delete')}
         testId="files-menu-delete"
         danger
-        onClick={() => {
-          onClose();
-          onDelete(entry);
-        }}
+        onClick={handleDelete}
       />
       <MenuItem
         icon={<Copy className="size-3.5" />}
         label={t('files.copyPath')}
         testId="files-menu-copy-path"
-        onClick={() => {
-          onClose();
-          onCopyPath(entry.path);
-        }}
+        onClick={handleCopy}
       />
     </>
   );
@@ -160,27 +170,22 @@ function NewItemButtons({
   );
 }
 
-export function FilesContextMenu(props: FilesContextMenuProps) {
-  const { open, x, y, entry, onClose, onOpenInEditor, onNewFile, onNewFolder } = props;
-  const { onRename, onDelete, onCopyPath } = props;
+function ContextMenuBody({
+  entry,
+  project,
+  targetDir,
+  props,
+}: {
+  readonly entry: FileTreeEntry | undefined;
+  readonly project: ReturnType<typeof useProjectInfo>;
+  readonly targetDir: string;
+  readonly props: FilesContextMenuProps;
+}) {
   const { t } = useTranslation();
-  const menuRef = useRef<HTMLDivElement | undefined>(undefined);
-  useMenuDismiss(open, menuRef, onClose);
-
-  if (!open) return undefined;
-
-  const targetDir = resolveTargetDir(entry);
+  const { onClose, onOpenInEditor, onNewFile, onNewFolder, onRename, onDelete, onCopyPath } = props;
 
   return (
-    <div
-      ref={(el) => {
-        menuRef.current = el ?? undefined;
-      }}
-      role="menu"
-      data-testid="files-context-menu"
-      style={{ left: `${String(x)}px`, top: `${String(y)}px` }}
-      className="fixed z-50 min-w-44 rounded-lg border border-border bg-card-solid p-1 shadow-lg backdrop-blur-md"
-    >
+    <>
       {entry !== undefined && (
         <MenuItem
           icon={<Laptop className="size-3.5" />}
@@ -199,14 +204,45 @@ export function FilesContextMenu(props: FilesContextMenuProps) {
         onNewFolder={onNewFolder}
       />
       {entry !== undefined && (
-        <EntrySpecificMenuItems
-          entry={entry}
-          onClose={onClose}
-          onRename={onRename}
-          onDelete={onDelete}
-          onCopyPath={onCopyPath}
-        />
+        <>
+          <FolderDesignActions entry={entry} project={project} onClose={onClose} />
+          <FileTokenAction entry={entry} project={project} onClose={onClose} />
+          <EntrySpecificMenuItems
+            entry={entry}
+            onClose={onClose}
+            onRename={onRename}
+            onDelete={onDelete}
+            onCopyPath={onCopyPath}
+          />
+        </>
       )}
+    </>
+  );
+}
+
+export function FilesContextMenu(props: FilesContextMenuProps) {
+  const { open, x, y, entry, onClose } = props;
+  const project = useProjectInfo();
+  const menuRef = useRef<HTMLDivElement | undefined>(undefined);
+  useMenuDismiss(open, menuRef, onClose);
+
+  if (!open) return undefined;
+  return (
+    <div
+      ref={(el) => {
+        menuRef.current = el ?? undefined;
+      }}
+      role="menu"
+      data-testid="files-context-menu"
+      style={{ left: `${String(x)}px`, top: `${String(y)}px` }}
+      className="fixed z-50 min-w-44 rounded-lg border border-border bg-card-solid p-1 shadow-lg backdrop-blur-md"
+    >
+      <ContextMenuBody
+        entry={entry}
+        project={project}
+        targetDir={resolveTargetDir(entry)}
+        props={props}
+      />
     </div>
   );
 }

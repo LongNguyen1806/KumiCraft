@@ -57,9 +57,10 @@ describe('GET /project/assets [R-DT-13]', () => {
       backends: [],
       trusted: true,
       designDirs: {
-        pages: 'src/pages',
-        layouts: 'src/layouts',
-        components: 'src/components',
+        pages: ['src/pages'],
+        layouts: ['src/layouts'],
+        components: ['src/components'],
+        drafts: 'src/drafts',
       },
     };
 

@@ -33,6 +33,7 @@ import {
   SessionInfoSchema,
   type StructureResult,
   StructureResultSchema,
+  type StyleFiles,
   type ThemeEdit,
   type ThemeInfo,
   ThemeInfoSchema,
@@ -124,8 +125,22 @@ export async function fetchDirectories(path?: string): Promise<DirectoryListing>
   return parseResponse(DirectoryListingSchema, await apiGet(url));
 }
 
-export async function saveDesignDirs(designDirs: DesignDirs): Promise<ProjectInfo> {
-  return parseResponse(ProjectInfoSchema, await apiPatch('project', { designDirs }));
+export async function saveDesignDirs(
+  designDirs: DesignDirs,
+  styleFiles?: StyleFiles,
+): Promise<ProjectInfo> {
+  const payload: { designDirs: DesignDirs; styleFiles?: StyleFiles } = { designDirs };
+  if (styleFiles !== undefined) {
+    payload.styleFiles = styleFiles;
+  }
+  return parseResponse(ProjectInfoSchema, await apiPatch('project', payload));
+}
+
+export async function patchProject(payload: {
+  readonly designDirs?: DesignDirs | undefined;
+  readonly styleFiles?: StyleFiles | undefined;
+}): Promise<ProjectInfo> {
+  return parseResponse(ProjectInfoSchema, await apiPatch('project', payload));
 }
 
 export async function fetchProjectDirs(): Promise<string[]> {

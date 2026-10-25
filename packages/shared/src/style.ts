@@ -302,3 +302,18 @@ export function primarySystem(styling: StylingReport | undefined): StyleSystemId
   if (ids.has('css')) return 'css';
   return undefined;
 }
+
+/** File endings that can hold Brand tokens of a style system; Tailwind 3 keeps them in its config. */
+export function tokenFileExtensions(system: StyleSystemId | undefined): readonly string[] {
+  if (system === 'tailwind3') return [];
+  if (system === 'sass') return ['.scss', '.sass'];
+  if (system === 'less') return ['.less'];
+  if (system === 'bootstrap5') return ['.scss', '.sass', '.css'];
+  return ['.css'];
+}
+
+/** Whether a file can hold Brand tokens of a style system (`styleFiles.tokenFile`, spec-log #73). */
+export function isTokenFileFor(file: string, system: StyleSystemId | undefined): boolean {
+  const lower = file.toLowerCase();
+  return tokenFileExtensions(system).some((ext) => lower.endsWith(ext));
+}

@@ -68,7 +68,7 @@ export async function validateAddPage(
     return err({ code: 'E016', params: { reason: 'pathExists' } });
   }
 
-  const targetDir = input.dir ?? deps.designDirs.pages;
+  const targetDir = input.dir ?? deps.designDirs.pages[0] ?? 'src/pages';
   const dirCheck = validateDirectory(targetDir, deps.sourceDir, deps.platform);
   if (!dirCheck.ok) return dirCheck;
 

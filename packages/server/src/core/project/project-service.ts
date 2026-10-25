@@ -214,6 +214,7 @@ class ProjectServiceImpl implements ProjectService {
       return err({ code: 'E021', params: { missing: 'project' } });
     }
 
+    const primarySystemId = primarySystem(this.current.support.styling);
     const write = await executePatchWorkspaceFile(
       this.deps.fs,
       this.current.root,
@@ -221,6 +222,7 @@ class ProjectServiceImpl implements ProjectService {
       this.current.file.sourceDir,
       this.deps.platform,
       updates,
+      primarySystemId,
     );
     if (!write.ok) return write;
 
@@ -368,6 +370,7 @@ class ProjectServiceImpl implements ProjectService {
       styling: cur.support.styling,
       tailwindCss: cur.support.tailwindCss,
       sourceDir: cur.file.sourceDir,
+      tokenFile: cur.file.styleFiles?.tokenFile,
     };
   }
 

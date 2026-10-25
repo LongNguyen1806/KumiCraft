@@ -14,6 +14,7 @@ import {
   RenameDraftSchema,
   RenamePageSchema,
   ResponsiveModeSchema,
+  StyleFilesSchema,
   THEME_TOKEN_NAME,
   ThemeEditSchema,
   ThemeTokenKindSchema,
@@ -56,6 +57,7 @@ const PatchSchema = z.strictObject({
   // R-RN-27: 'auto' removes the saved port so the runner reads it from the project again.
   devPort: z.union([DevPortSchema, z.literal('auto')]).optional(),
   designDirs: DesignDirsSchema.optional(),
+  styleFiles: StyleFilesSchema.optional(),
 });
 const TrustSchema = z.strictObject({ trusted: z.boolean() });
 const InstallSchema = z.strictObject({ command: z.array(z.string()).min(1) });

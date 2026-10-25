@@ -24,6 +24,9 @@ import type { TokenAdapter, TokenFiles } from './token-service.ts';
 import { insertVariable, listVariables, removeVariable, setVariable } from './variable-edit.ts';
 
 function targetCssFiles(files: TokenFiles): readonly string[] {
+  if (files.tokenFile && files.tokenFile.endsWith('.css')) {
+    return [files.tokenFile];
+  }
   const list = (files.styling?.globalCss ?? []).filter((f) => f.endsWith('.css'));
   return list.length > 0 ? list : ['src/index.css'];
 }

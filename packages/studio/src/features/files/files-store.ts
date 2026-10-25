@@ -2,6 +2,7 @@ import type { FileTreeEntry } from '@kumicraft/shared';
 import { create } from 'zustand';
 
 import { fetchFileTree } from '../../api/files-client.ts';
+import type { ErrorInfo } from '../../routes/error-text.ts';
 
 export type InlineAction =
   | { readonly kind: 'newFile' | 'newFolder'; readonly dir: string }
@@ -14,6 +15,8 @@ export type FilesState = {
   readonly selectedPath?: string | undefined;
   readonly inlineAction?: InlineAction | undefined;
   readonly projectId?: string | undefined;
+  /** Why the last tree action that changed project settings failed. */
+  readonly actionError?: ErrorInfo | undefined;
 
   readonly setProjectId: (id?: string) => void;
   readonly loadDir: (dir: string, force?: boolean) => Promise<void>;
@@ -22,6 +25,7 @@ export type FilesState = {
   readonly refreshAffected: (paths: readonly string[]) => Promise<void>;
   readonly setSelectedPath: (path?: string) => void;
   readonly setInlineAction: (action?: InlineAction) => void;
+  readonly setActionError: (error?: ErrorInfo) => void;
   readonly reset: () => void;
 };
 
@@ -207,8 +211,13 @@ export const useFilesStore = create<FilesState>((set, get) => ({
     set({ inlineAction });
   },
 
+  setActionError: (actionError) => {
+    set({ actionError });
+  },
+
   reset: () => {
     set({
+      actionError: undefined,
       treeData: {},
       expandedDirs: new Set(),
       loadingDirs: new Set(),

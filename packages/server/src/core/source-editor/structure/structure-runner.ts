@@ -21,6 +21,7 @@ import {
 } from './element-text.ts';
 import {
   finalizeWithCssIfNeeded,
+  type NewCssDirProvider,
   type StylingProvider,
   validateInsertedCss,
 } from './insert-css.ts';
@@ -334,6 +335,7 @@ async function executeStandardEdit(
   onWritten?: (files: readonly WrittenFile[]) => void,
   formatSnippet?: SnippetFormatter,
   styling?: StylingProvider,
+  newCssDir?: NewCssDirProvider,
 ): Promise<Result<StructureResult>> {
   const inputCheck = validateEditInputs(edit);
   if (!inputCheck.ok) return inputCheck;
@@ -357,6 +359,7 @@ async function executeStandardEdit(
     targetRel: targetGuard?.rel,
     onWritten,
     styling,
+    newCssDir,
   };
   return finalizeWithCssIfNeeded(cssCtx, (onWrittenCb) =>
     withFileLocks(projectRoot, sortedFiles, () =>
@@ -383,6 +386,7 @@ export async function executeStructureEdit(
   onWritten?: (files: readonly WrittenFile[]) => void,
   formatSnippet?: SnippetFormatter,
   styling?: StylingProvider,
+  newCssDir?: NewCssDirProvider,
 ): Promise<Result<StructureResult>> {
   if (edit.kind === 'insertImage') {
     const run = (iEdit: InsertEdit, cb?: (f: readonly WrittenFile[]) => void) =>
@@ -395,6 +399,7 @@ export async function executeStructureEdit(
         cb,
         formatSnippet,
         styling,
+        newCssDir,
       );
     return executeInsertImage(fs, projectRoot, edit, run, onWritten);
   }
@@ -407,5 +412,6 @@ export async function executeStructureEdit(
     onWritten,
     formatSnippet,
     styling,
+    newCssDir,
   );
 }

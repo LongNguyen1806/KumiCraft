@@ -347,4 +347,37 @@ describe('Drafts lifecycle (#1 - #14)', () => {
     expect(routesContent).not.toContain('draft');
     expect(routesContent).not.toContain('BanNhap');
   });
+
+  it('Test 8 [WP-4.00]: draft-promote without dir defaults to first directory of target kind', async () => {
+    await service.patchProject({
+      designDirs: {
+        pages: ['src/views', 'src/pages'],
+        layouts: ['src/layouts'],
+        components: ['src/widgets', 'src/components'],
+        drafts: 'src/drafts',
+      },
+    });
+
+    // Promote to page without dir -> goes to src/views
+    await service.createDraft({ name: 'PageDraft', free: false });
+    const promPage = await service.promoteDraft({
+      file: 'src/drafts/PageDraft.tsx',
+      as: 'page',
+      name: 'PageDraft',
+      keepDraft: true,
+    });
+    expect(promPage.ok).toBe(true);
+    expect(await directWriteFs.exists(tempDir, 'src/views/PageDraft.tsx')).toBe(true);
+
+    // Promote to component without dir -> goes to src/widgets
+    await service.createDraft({ name: 'WidgetDraft', free: false });
+    const promComp = await service.promoteDraft({
+      file: 'src/drafts/WidgetDraft.tsx',
+      as: 'component',
+      name: 'WidgetDraft',
+      keepDraft: true,
+    });
+    expect(promComp.ok).toBe(true);
+    expect(await directWriteFs.exists(tempDir, 'src/widgets/WidgetDraft.tsx')).toBe(true);
+  });
 });

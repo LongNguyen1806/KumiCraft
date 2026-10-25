@@ -174,6 +174,29 @@ describe('core/source-editor/structure/insert-css [R-ST-12, R-ST-15]', () => {
     expect(await fs.readFile(path.join(tmpDir, 'src/App.tsx'), 'utf8')).toBe(PAGE_WITHOUT_CSS);
   });
 
+  it('[WP-4.00] a block in a page without CSS goes to the project folder for new CSS files (styleFiles.newCssDir)', async () => {
+    await fs.writeFile(path.join(tmpDir, 'src/App.tsx'), PAGE_WITHOUT_CSS, 'utf8');
+    const service = createSourceEditorService({ fs: directWriteFs, newCssDir: () => 'src/styles' });
+    const rowBlock = LIBRARY_BLOCKS.find((b) => b.id === 'layout.row');
+    if (rowBlock === undefined) throw new Error('layout.row block missing');
+    const rendered = renderBlock(rowBlock, 'css', 'vi');
+
+    const res = await service.applyStructureEdit(tmpDir, {
+      kind: 'insert',
+      target: { kind: 'child', parent: { loc: 'src/App.tsx:3:5', tag: 'section' }, where: 'end' },
+      jsx: rendered.jsx,
+      css: { rules: rendered.rules },
+    });
+
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.files).toEqual(['src/App.tsx', 'src/styles/App.css']);
+    expect(await fs.readFile(path.join(tmpDir, 'src/App.tsx'), 'utf8')).toContain(
+      "import './styles/App.css';",
+    );
+    expect(await nodeFs.exists(tmpDir, 'src/App.css')).toBe(false);
+  });
+
   it('12. [R-ST-12] cssModules primary system appends rules to first globalCss file instead of .module.css', async () => {
     const modulePage = `import styles from './App.module.css';\n\n${PAGE_WITHOUT_CSS}`;
     const moduleCss = `.title {\n  color: blue;\n}\n`;

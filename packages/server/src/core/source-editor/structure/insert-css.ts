@@ -31,6 +31,9 @@ const CSS_PROP_NAME_RE = /^[a-zA-Z-]+$/;
 export type StylingProvider =
   StylingReport | ((projectRoot: string) => StylingReport | undefined) | undefined;
 
+/** Folder for a CSS file Library blocks create (`styleFiles.newCssDir`); undefined = next to the JSX. */
+export type NewCssDirProvider = ((projectRoot: string) => string | undefined) | undefined;
+
 export function validateInsertedCss(rules: readonly InsertedCssRule[] | undefined): Result<void> {
   if (rules === undefined || rules.length === 0) return ok(undefined);
   for (const rule of rules) {
@@ -101,6 +104,7 @@ export async function applyInsertedCssRules(
   rules: readonly InsertedCssRule[],
   initialWrites: readonly WrittenFile[],
   stylingProvider?: StylingProvider,
+  newCssDir?: NewCssDirProvider,
 ): Promise<Result<WrittenFile[]>> {
   const styling = resolveStyling(projectRoot, stylingProvider);
   const globalCssFile =
@@ -110,7 +114,7 @@ export async function applyInsertedCssRules(
   const winner = globalCssFile === undefined ? undefined : { file: globalCssFile };
 
   // Plan and compute everything first: nothing is written when the CSS cannot be read.
-  const plan = await planCssFile({ fs }, projectRoot, jsxFile, winner);
+  const plan = await planCssFile({ fs }, projectRoot, jsxFile, winner, newCssDir?.(projectRoot));
   if (!plan.ok) return plan;
   const cssRead = await readFile(fs, projectRoot, plan.value.file);
   const cssBefore = cssRead.ok ? cssRead.value : undefined;
@@ -161,13 +165,14 @@ export type FinalizeCssInput = {
   readonly targetRel: string | undefined;
   readonly onWritten?: ((files: readonly WrittenFile[]) => void) | undefined;
   readonly styling?: StylingProvider;
+  readonly newCssDir?: NewCssDirProvider;
 };
 
 export async function finalizeWithCssIfNeeded(
   input: FinalizeCssInput,
   runLocked: (capture: (files: readonly WrittenFile[]) => void) => Promise<Result<StructureResult>>,
 ): Promise<Result<StructureResult>> {
-  const { fs, projectRoot, edit, targetRel, onWritten, styling } = input;
+  const { fs, projectRoot, edit, targetRel, onWritten, styling, newCssDir } = input;
   let writtenFiles: readonly WrittenFile[] = [];
   const res = await runLocked((files) => {
     writtenFiles = files;
@@ -186,6 +191,7 @@ export async function finalizeWithCssIfNeeded(
       edit.css.rules,
       writtenFiles,
       styling,
+      newCssDir,
     );
     if (!cssRes.ok) {
       await restoreWrites(fs, projectRoot, writtenFiles);

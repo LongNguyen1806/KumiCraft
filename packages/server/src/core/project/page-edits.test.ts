@@ -307,4 +307,23 @@ describe('page-edits [WP-2.05]', () => {
     expect(routesContent).toContain("import { GioiThieu } from './pages/GioiThieu.tsx';");
     expect(routesContent).toContain("{ path: '/gioi-thieu', element: <GioiThieu /> },");
   });
+
+  it('Test 6 [WP-4.00]: page-add without dir creates page in first pages directory', async () => {
+    const { target, service } = await setupProject();
+    await service.patchProject({
+      designDirs: {
+        pages: ['src/views', 'src/secondary-pages'],
+        layouts: ['src/layouts'],
+        components: ['src/components'],
+      },
+    });
+
+    const res = await service.addPage({ name: 'Contact' });
+    expect(res.ok).toBe(true);
+
+    const existsInFirst = await directWriteFs.exists(target, 'src/views/Contact.tsx');
+    expect(existsInFirst).toBe(true);
+    const existsInSecond = await directWriteFs.exists(target, 'src/secondary-pages/Contact.tsx');
+    expect(existsInSecond).toBe(false);
+  });
 });

@@ -3,34 +3,19 @@ import type { TFunction } from 'i18next';
 import { type SyntheticEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { addProjectPage, fetchProjectDirs } from '../../api/project-client.ts';
+import { addProjectPage } from '../../api/project-client.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
+import { DirInputWithPicker } from '../files/dir-input-with-picker.tsx';
+import { useDirSuggestions } from '../files/use-dir-suggestions.ts';
+import { useAddPageIntent } from './add-page-intent.ts';
+
+export { useDirSuggestions };
 
 export type AddPageFormProps = {
   readonly convention: boolean;
   readonly defaultDir?: string | undefined;
   readonly onAdded?: ((res: StructureResult) => void) | undefined;
 };
-
-export function useDirSuggestions(): readonly string[] {
-  const [dirs, setDirs] = useState<readonly string[]>([]);
-  useEffect(() => {
-    let active = true;
-    const load = async () => {
-      try {
-        const list = await fetchProjectDirs();
-        if (active) setDirs(list);
-      } catch {
-        // Ignore directory fetch errors.
-      }
-    };
-    void load();
-    return () => {
-      active = false;
-    };
-  }, []);
-  return dirs;
-}
 
 type AddPageFormValues = {
   readonly name: string;
@@ -73,23 +58,17 @@ function resetAddPageFields(
   setIsFileManual(false);
 }
 
-function useAddPageState(defaultDir: string, onAdded?: (res: StructureResult) => void) {
-  const { t: tError } = useTranslation('errors');
-  const [name, setName] = useState('');
-  const [path, setPath] = useState('');
-  const [dir, setDir] = useState(defaultDir);
-  const [fileName, setFileName] = useState('');
-  const [isPathManual, setIsPathManual] = useState(false);
-  const [isFileManual, setIsFileManual] = useState(false);
+function useAddPageSubmit(
+  name: string,
+  path: string,
+  dir: string,
+  fileName: string,
+  tError: ReturnType<typeof useTranslation<'errors'>>['t'],
+  onAdded?: (res: StructureResult) => void,
+  onSuccess?: () => void,
+) {
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | undefined>();
-
-  const handleNameChange = (val: string) => {
-    setName(val);
-    const names = pageNames(val, 'ts');
-    if (!isPathManual) setPath(names.path);
-    if (!isFileManual) setFileName(names.fileName);
-  };
 
   const submit = async (e: SyntheticEvent) => {
     e.preventDefault();
@@ -99,11 +78,64 @@ function useAddPageState(defaultDir: string, onAdded?: (res: StructureResult) =>
     try {
       const err = await executeAddPage({ name, path, dir, fileName }, tError, onAdded);
       if (err !== undefined) setErrorMsg(err);
-      else resetAddPageFields(setName, setPath, setFileName, setIsPathManual, setIsFileManual);
+      else onSuccess?.();
     } finally {
       setBusy(false);
     }
   };
+
+  return { busy, errorMsg, submit };
+}
+
+function useInitialAndIntentDir(defaultDir: string) {
+  const [dir, setDir] = useState(() => {
+    const init = useAddPageIntent.getState().targetDir;
+    if (init) {
+      useAddPageIntent.getState().setTargetDir(undefined);
+      return init;
+    }
+    return defaultDir;
+  });
+
+  useEffect(() => {
+    return useAddPageIntent.subscribe((state) => {
+      if (state.targetDir) {
+        setDir(state.targetDir);
+        useAddPageIntent.getState().setTargetDir(undefined);
+      }
+    });
+  }, []);
+
+  return [dir, setDir] as const;
+}
+
+function useAddPageState(defaultDir: string, onAdded?: (res: StructureResult) => void) {
+  const { t: tError } = useTranslation('errors');
+  const [name, setName] = useState('');
+  const [path, setPath] = useState('');
+  const [dir, setDir] = useInitialAndIntentDir(defaultDir);
+  const [fileName, setFileName] = useState('');
+  const [isPathManual, setIsPathManual] = useState(false);
+  const [isFileManual, setIsFileManual] = useState(false);
+
+  const handleNameChange = (val: string) => {
+    setName(val);
+    const names = pageNames(val, 'ts');
+    if (!isPathManual) setPath(names.path);
+    if (!isFileManual) setFileName(names.fileName);
+  };
+
+  const { busy, errorMsg, submit } = useAddPageSubmit(
+    name,
+    path,
+    dir,
+    fileName,
+    tError,
+    onAdded,
+    () => {
+      resetAddPageFields(setName, setPath, setFileName, setIsPathManual, setIsFileManual);
+    },
+  );
 
   return {
     name,
@@ -190,7 +222,6 @@ export type PageDirAndFileFieldsProps = {
 export function PageDirAndFileFields({
   dir,
   fileName,
-  dirs,
   disabled = false,
   dirTestId = 'page-dir',
   fileTestId = 'page-file',
@@ -202,22 +233,12 @@ export function PageDirAndFileFields({
     <>
       <label className="flex flex-col gap-1 text-ink-soft">
         {t('pages.dir')}
-        <input
-          data-testid={dirTestId}
-          list="page-dir-list"
-          type="text"
+        <DirInputWithPicker
+          dataTestId={dirTestId}
           disabled={disabled}
           value={dir}
-          onChange={(e) => {
-            onDirChange(e.target.value);
-          }}
-          className="rounded border border-border bg-field px-2 py-1 text-ink disabled:opacity-50"
+          onChange={onDirChange}
         />
-        <datalist id="page-dir-list">
-          {dirs.map((d) => (
-            <option key={d} value={d} />
-          ))}
-        </datalist>
       </label>
       <label className="flex flex-col gap-1 text-ink-soft">
         {t('pages.file')}

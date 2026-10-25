@@ -97,6 +97,7 @@
       "tokenExists": "Token already exists in @theme.",
       "tokenNotFound": "Token not found in @theme.",
       "invalidValue": "Invalid CSS value.",
+      "styleFileInvalid": "Invalid or non-existent style file.",
       "noThemeFile": "Tailwind CSS file not found.",
       "invalidResponse": "The server returned an unexpected response.",
       "entryExists": "A file or folder with this name already exists.",

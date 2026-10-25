@@ -8,10 +8,11 @@ import { AppErrorSchema } from './result.ts';
 import { StyleSystemIdSchema } from './style.ts';
 import {
   BackendLinkSchema,
-  DesignDirsSchema,
   DevPortSchema,
   FrameSchema,
   FRAMEWORK_IDS,
+  ResolvedDesignDirsSchema,
+  StyleFilesSchema,
 } from './workspace-file.ts';
 
 export const UNSUPPORTED_REASONS = [
@@ -128,7 +129,8 @@ export const ProjectInfoSchema = z.strictObject({
   /** The port saved in workspace.json; absent: read from the project (R-RN-04). */
   devPort: DevPortSchema.optional(),
   /** Default design directories (R-CP-16). */
-  designDirs: DesignDirsSchema,
+  designDirs: ResolvedDesignDirsSchema,
+  styleFiles: StyleFilesSchema.optional(),
 });
 export type ProjectInfo = z.infer<typeof ProjectInfoSchema>;
 

@@ -60,20 +60,54 @@ export function frameRuleProblems(value: FrameRules): { rule: string; message: s
   return problems;
 }
 
+const DirListSchema = z.union([RelPathSchema, z.array(RelPathSchema).min(1).max(10).readonly()]);
+
 export const DesignDirsSchema = z.strictObject({
-  pages: RelPathSchema,
-  layouts: RelPathSchema,
-  components: RelPathSchema,
+  pages: DirListSchema,
+  layouts: DirListSchema,
+  components: DirListSchema,
   drafts: RelPathSchema.optional(),
 });
 export type DesignDirs = z.infer<typeof DesignDirsSchema>;
 
-export const DEFAULT_DESIGN_DIRS = {
-  pages: 'src/pages',
-  layouts: 'src/layouts',
-  components: 'src/components',
+export const ResolvedDesignDirsSchema = z.strictObject({
+  pages: z.array(RelPathSchema).min(1).max(10).readonly(),
+  layouts: z.array(RelPathSchema).min(1).max(10).readonly(),
+  components: z.array(RelPathSchema).min(1).max(10).readonly(),
+  drafts: RelPathSchema,
+});
+export type ResolvedDesignDirs = z.infer<typeof ResolvedDesignDirsSchema>;
+
+export const StyleFilesSchema = z.strictObject({
+  newCssDir: RelPathSchema.optional(),
+  tokenFile: RelPathSchema.optional(),
+});
+export type StyleFiles = z.infer<typeof StyleFilesSchema>;
+
+export const DEFAULT_DESIGN_DIRS: ResolvedDesignDirs = {
+  pages: ['src/pages'],
+  layouts: ['src/layouts'],
+  components: ['src/components'],
   drafts: 'src/drafts',
-} as const;
+};
+
+export function normalizeDesignDirs(d: DesignDirs | undefined): ResolvedDesignDirs {
+  if (!d) return DEFAULT_DESIGN_DIRS;
+  const toArr = (
+    v: string | readonly string[] | undefined,
+    def: readonly string[],
+  ): readonly string[] => {
+    if (v === undefined) return def;
+    if (typeof v === 'string') return [v];
+    return v;
+  };
+  return {
+    pages: toArr(d.pages, DEFAULT_DESIGN_DIRS.pages),
+    layouts: toArr(d.layouts, DEFAULT_DESIGN_DIRS.layouts),
+    components: toArr(d.components, DEFAULT_DESIGN_DIRS.components),
+    drafts: d.drafts ?? DEFAULT_DESIGN_DIRS.drafts,
+  };
+}
 
 export const WorkspaceFileSchema = z
   .strictObject({
@@ -89,6 +123,7 @@ export const WorkspaceFileSchema = z
     primaryFrameId: z.string(),
     devPort: DevPortSchema.optional(),
     designDirs: DesignDirsSchema.optional(),
+    styleFiles: StyleFilesSchema.optional(),
   })
   .superRefine((value, ctx) => {
     for (const problem of frameRuleProblems(value)) {

@@ -4,10 +4,12 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as eventsClientModule from '../../api/events-client.ts';
+import * as filesClient from '../../api/files-client.ts';
 import * as projectClient from '../../api/project-client.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { useHistoryStore } from '../history/history-store.ts';
 import { useThemeStore } from '../inspector/use-project-theme.ts';
+import { useProjectStore } from '../project/project-store.ts';
 import { BrandPanel } from './brand-panel.tsx';
 
 const MOCK_THEME: ThemeInfo = {
@@ -179,5 +181,130 @@ describe('BrandPanel (Scenarios #13, #14, #15) [R-TH-10, R-TH-11, R-TH-12, R-TH-
     expect(screen.getByTestId('brand-token-variable').textContent).toBe('--bs-primary');
     expect(screen.getByTestId('brand-inherited')).toBeDefined();
     expect(screen.queryByTestId('brand-remove')).toBeNull();
+  });
+
+  it('[WP-4.00] test 20: studio Brand test: Brand hiện tên file token; "Đổi file…" chọn file → PATCH /project styleFiles.tokenFile; "Tự động" → bỏ tokenFile', async () => {
+    HTMLDialogElement.prototype.showModal = function showModal() {
+      this.open = true;
+    };
+    HTMLDialogElement.prototype.close = function close() {
+      this.open = false;
+    };
+
+    const initialTheme: ThemeInfo = {
+      ...MOCK_THEME,
+      system: 'css',
+      file: 'src/theme.css',
+    };
+    vi.spyOn(projectClient, 'fetchProjectTheme').mockResolvedValue(initialTheme);
+    useThemeStore.setState({ theme: initialTheme });
+
+    useProjectStore.getState().setProject({
+      id: 'test-proj',
+      name: 'Test Project',
+      root: 'D:/test',
+      sourceDir: 'src',
+      support: {
+        supported: true,
+        reasons: [],
+        language: 'ts',
+        versions: {},
+        styling: {
+          systems: [{ id: 'css' }],
+          editable: true,
+          primary: 'css',
+          globalCss: ['src/theme.css'],
+        },
+      },
+      needsInstall: false,
+      responsiveMode: 'desktop-first',
+      frames: [],
+      primaryFrameId: 'main',
+      backends: [],
+      trusted: true,
+      designDirs: {
+        pages: ['src/pages'],
+        layouts: ['src/layouts'],
+        components: ['src/components'],
+        drafts: 'src/drafts',
+      },
+    });
+
+    vi.spyOn(filesClient, 'fetchFileTree').mockResolvedValue({
+      dir: '',
+      entries: [
+        { name: 'src', path: 'src', kind: 'directory', hidden: false },
+        { name: 'other.css', path: 'src/other.css', kind: 'file', hidden: false },
+      ],
+      truncated: false,
+    });
+
+    const patchSpy = vi.spyOn(projectClient, 'patchProject').mockResolvedValue({
+      id: 'test-proj',
+      name: 'Test Project',
+      root: 'D:/test',
+      sourceDir: 'src',
+      support: {
+        supported: true,
+        reasons: [],
+        language: 'ts',
+        versions: {},
+        styling: { systems: [{ id: 'css' }], editable: true, primary: 'css', globalCss: [] },
+      },
+      needsInstall: false,
+      responsiveMode: 'desktop-first',
+      frames: [],
+      primaryFrameId: 'main',
+      backends: [],
+      trusted: true,
+      designDirs: {
+        pages: ['src/pages'],
+        layouts: ['src/layouts'],
+        components: ['src/components'],
+        drafts: 'src/drafts',
+      },
+      styleFiles: { tokenFile: 'src/other.css' },
+    });
+
+    const { rerender } = render(<BrandPanel />);
+
+    // Brand shows current file
+    expect(screen.getByTestId('brand-file-path').textContent).toContain('src/theme.css');
+
+    // Click "Đổi file…"
+    fireEvent.click(screen.getByTestId('brand-change-file'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('picker-item-src/other.css')).toBeDefined();
+    });
+    fireEvent.click(screen.getByTestId('picker-item-src/other.css'));
+    fireEvent.click(screen.getByTestId('folder-picker-confirm'));
+
+    await waitFor(() => {
+      expect(patchSpy).toHaveBeenCalled();
+    });
+    const firstCall = patchSpy.mock.calls[0]?.[0];
+    expect(firstCall?.styleFiles?.tokenFile).toBe('src/other.css');
+
+    // Update store to simulate server response with custom tokenFile
+    const curProj = useProjectStore.getState().project;
+    if (curProj) {
+      useProjectStore.getState().setProject({
+        ...curProj,
+        styleFiles: { tokenFile: 'src/other.css' },
+      });
+    }
+    rerender(<BrandPanel />);
+
+    // "Tự động" button should now be visible
+    const autoBtn = screen.getByTestId('brand-auto-file');
+    expect(autoBtn).toBeDefined();
+
+    fireEvent.click(autoBtn);
+    await waitFor(() => {
+      expect(patchSpy).toHaveBeenCalledTimes(2);
+    });
+    const secondCall = patchSpy.mock.calls[1]?.[0];
+    expect(secondCall?.styleFiles?.tokenFile).toBeUndefined();
   });
 });

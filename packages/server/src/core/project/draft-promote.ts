@@ -227,7 +227,7 @@ async function prepareComponentPromotion(
   draftContent: string,
 ): Promise<Result<PreparedComponentPromotion>> {
   const names = pageNames(input.name, deps.language);
-  const targetDir = input.dir ?? deps.designDirs.components;
+  const targetDir = input.dir ?? deps.designDirs.components[0] ?? 'src/components';
   const dirCheck = validateDirectory(targetDir, deps.sourceDir, deps.platform);
   if (!dirCheck.ok) return dirCheck;
 

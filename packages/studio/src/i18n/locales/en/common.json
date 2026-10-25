@@ -252,6 +252,10 @@
       "pages": "Pages",
       "layouts": "Layouts",
       "components": "Components",
+      "newCssDir": "New CSS files directory",
+      "addDir": "+ Add directory",
+      "moveUp": "Move to top",
+      "remove": "Remove",
       "save": "Save directories",
       "saved": "Directories saved"
     }
@@ -603,6 +607,9 @@
     "noThemeFile": "Project has no Tailwind CSS file",
     "invalidName": "Lowercase letters, digits, hyphens; must start with a letter (max 40 chars)",
     "inherited": "Bootstrap default",
+    "tokenFile": "Token file",
+    "changeTokenFile": "Change file…",
+    "autoTokenFile": "Auto",
     "system": {
       "tailwind4": "Tailwind CSS v4",
       "tailwind3": "Tailwind CSS v3",
@@ -634,12 +641,26 @@
     "deleteFolderRouterPages": "Directory contains {{count}} router pages; routes will fail.",
     "deleteButton": "Delete",
     "cancel": "Cancel",
+    "close": "Close",
     "loading": "Loading…",
     "maxDocsError": "Maximum 10 attached documents",
     "buildError": "Build error",
     "aiModified": "AI modified",
     "collapse": "Collapse",
     "expand": "Expand",
-    "more": "More"
+    "more": "More",
+    "pickFolder": "Select folder",
+    "pickFile": "Select file",
+    "select": "Select",
+    "addPageHere": "Add page here",
+    "useAsPageDir": "Use as pages directory",
+    "useAsLayoutDir": "Use as layouts directory",
+    "useAsComponentDir": "Use as components directory",
+    "removeFromPageDir": "Remove from pages directories",
+    "removeFromLayoutDir": "Remove from layouts directories",
+    "removeFromComponentDir": "Remove from components directories",
+    "setNewCssDir": "Place new CSS files here",
+    "useAsTokenFile": "Use as Brand token file",
+    "dismissError": "Dismiss"
   }
 }

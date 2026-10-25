@@ -20,6 +20,7 @@ function toTokenFiles(state: WorkspaceState & { status: 'open' }): TokenFiles {
     styling: state.support.styling,
     tailwindCss: state.support.tailwindCss,
     sourceDir: state.file.sourceDir,
+    tokenFile: state.file.styleFiles?.tokenFile,
   };
 }
 

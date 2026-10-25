@@ -9,10 +9,12 @@ import * as projectClient from '../../api/project-client.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
 import { useDesignStore } from '../design/design-store.ts';
+import { PagesPanel } from '../pages/pages-panel.tsx';
 import { useProjectStore } from '../project/project-store.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { ActivityBar } from '../shell/activity-bar.tsx';
+import { useActivityStore } from '../shell/activity-store.ts';
 import { FilesPanel } from './files-panel.tsx';
 import { useFilesStore } from './files-store.ts';
 
@@ -63,7 +65,12 @@ function setupMocks() {
     primaryFrameId: 'main',
     backends: [],
     trusted: true,
-    designDirs: { pages: 'src/pages', layouts: 'src/layouts', components: 'src/components' },
+    designDirs: {
+      pages: ['src/pages'],
+      layouts: ['src/layouts'],
+      components: ['src/components'],
+      drafts: 'src/drafts',
+    },
   });
 
   vi.spyOn(filesClient, 'fetchFileTree').mockImplementation((dir) => {
@@ -148,7 +155,12 @@ describe('FilesPanel [WP-4.00]', () => {
       primaryFrameId: 'main',
       backends: [],
       trusted: true,
-      designDirs: { pages: 'src/pages', layouts: 'src/layouts', components: 'src/components' },
+      designDirs: {
+        pages: ['src/pages'],
+        layouts: ['src/layouts'],
+        components: ['src/components'],
+        drafts: 'src/drafts',
+      },
     });
     setupMocks();
   });
@@ -158,7 +170,7 @@ describe('FilesPanel [WP-4.00]', () => {
     vi.restoreAllMocks();
   });
 
-  it('[WP-4.00] test 12: renders root level, loads children on directory click, saves expanded to localStorage', async () => {
+  it('[K3b] test 12: renders root level, loads children on directory click, saves expanded to localStorage', async () => {
     render(<FilesPanel />);
 
     expect(await screen.findByTestId('file-row-src')).toBeDefined();
@@ -173,7 +185,7 @@ describe('FilesPanel [WP-4.00]', () => {
     expect(stored).toContain('src');
   });
 
-  it('[WP-4.00] test 13: clicking router page navigates, clicking other tsx enters component mode, clicking css opens in editor', async () => {
+  it('[K3b] test 13: clicking router page navigates, clicking other tsx enters component mode, clicking css opens in editor', async () => {
     const navSpy = vi.spyOn(studioBridgeChannel, 'navigate').mockImplementation(() => undefined);
     const editorSpy = vi.spyOn(editorClient, 'openInEditor').mockResolvedValue(undefined);
     const enterCompSpy = vi.spyOn(useDesignStore.getState(), 'enterComponentMode');
@@ -195,7 +207,7 @@ describe('FilesPanel [WP-4.00]', () => {
     expect(editorSpy).toHaveBeenCalledWith('src/index.css:1:1');
   });
 
-  it('[WP-4.00] test 14: deleting file with 2 importers lists both files in dialog, cancel aborts without API call', async () => {
+  it('[K3b] test 14: deleting file with 2 importers lists both files in dialog, cancel aborts without API call', async () => {
     vi.spyOn(filesClient, 'fetchFileImporters').mockResolvedValue({
       importers: ['src/App.tsx', 'src/Layout.tsx'],
       truncated: false,
@@ -215,7 +227,7 @@ describe('FilesPanel [WP-4.00]', () => {
     expect(deleteSpy).not.toHaveBeenCalled();
   });
 
-  it('[WP-4.00] test 15: deleting router page file invokes page deletion flow without DELETE /project/files', async () => {
+  it('[K3b] test 15: deleting router page file invokes page deletion flow without DELETE /project/files', async () => {
     const pageDeleteSpy = vi
       .spyOn(projectClient, 'deleteProjectPage')
       .mockResolvedValue({} as never);
@@ -236,7 +248,7 @@ describe('FilesPanel [WP-4.00]', () => {
     expect(fileDeleteSpy).not.toHaveBeenCalled();
   });
 
-  it('[WP-4.00] test 16: inline rename calls rename API on Enter, cancels on Esc, rejects colon inline', async () => {
+  it('[K3b] test 16: inline rename calls rename API on Enter, cancels on Esc, rejects colon inline', async () => {
     const renameSpy = vi.spyOn(filesClient, 'renameProjectFile').mockResolvedValue(undefined);
 
     render(<FilesPanel />);
@@ -269,7 +281,7 @@ describe('FilesPanel [WP-4.00]', () => {
     });
   });
 
-  it('[WP-4.00] test 16b: server refusals show their reason in the rename input and the delete dialog', async () => {
+  it('[K3b] test 16b: server refusals show their reason in the rename input and the delete dialog', async () => {
     vi.spyOn(filesClient, 'renameProjectFile').mockRejectedValue(
       new ApiError(400, 'E016', { reason: 'entryExists' }),
     );
@@ -299,7 +311,7 @@ describe('FilesPanel [WP-4.00]', () => {
     expect((await screen.findByTestId('files-delete-error')).textContent).toContain('(E016)');
   });
 
-  it('[WP-4.00] test 17: build error at src/App.tsx shows red dot on row, dot on src folder, and badge on activity bar', async () => {
+  it('[K3b] test 17: build error at src/App.tsx shows red dot on row, dot on src folder, and badge on activity bar', async () => {
     useCanvasErrorStore.getState().setBuildError({
       message: 'Failed to compile',
       file: 'src/App.tsx',
@@ -321,7 +333,7 @@ describe('FilesPanel [WP-4.00]', () => {
     expect(await screen.findByTestId('build-error-dot')).toBeDefined();
   });
 
-  it('[WP-4.00] test 18: element selection with loc src/components/Header.tsx:3:5 expands parent dirs and highlights file', async () => {
+  it('[K3b] test 18: element selection with loc src/components/Header.tsx:3:5 expands parent dirs and highlights file', async () => {
     render(<FilesPanel />);
     await screen.findByTestId('file-row-src');
 
@@ -337,7 +349,7 @@ describe('FilesPanel [WP-4.00]', () => {
     expect(row.className).toContain('font-semibold');
   });
 
-  it('[WP-4.00] test 19: project.filesChanged event for file in open directory reloads that directory', async () => {
+  it('[K3b] test 19: project.filesChanged event for file in open directory reloads that directory', async () => {
     render(<FilesPanel />);
     fireEvent.click(await screen.findByTestId('file-row-src'));
     await screen.findByTestId('file-row-src/App.tsx');
@@ -347,5 +359,98 @@ describe('FilesPanel [WP-4.00]', () => {
     await useFilesStore.getState().refreshAffected(['src/App.tsx']);
 
     expect(treeSpy).toHaveBeenCalledWith('src');
+  });
+
+  it('[WP-4.00] test 18: studio files-panel test: Chuột phải thư mục → "Thêm trang ở đây" → panel Trang mở form với thư mục đó', async () => {
+    const { unmount } = render(<FilesPanel />);
+    fireEvent.click(await screen.findByTestId('file-row-src'));
+    await screen.findByTestId('file-row-src/pages');
+
+    fireEvent.click(screen.getByTestId('file-menu-btn-src/pages'));
+    const addPageItem = await screen.findByTestId('files-menu-add-page');
+    fireEvent.click(addPageItem);
+
+    expect(useActivityStore.getState().active).toBe('pages');
+    unmount();
+
+    render(<PagesPanel />);
+    const pageDirInput = await screen.findByTestId<HTMLInputElement>('page-dir');
+    expect(pageDirInput.value).toBe('src/pages');
+  });
+
+  it('[WP-4.00] test 19: studio files-panel test: Chuột phải thư mục → "Dùng làm thư mục component" → PATCH /project thêm vào cuối; thư mục đã có → Bỏ khỏi, không bỏ được thư mục cuối', async () => {
+    const patchSpy = vi.spyOn(projectClient, 'patchProject').mockResolvedValue({
+      id: 'test-proj01',
+      name: 'Test Project',
+      root: 'D:/test',
+      sourceDir: 'src',
+      support: {
+        supported: true,
+        reasons: [],
+        language: 'ts',
+        versions: {},
+        styling: { systems: [{ id: 'tailwind', version: '4.0.0' }], editable: true, globalCss: [] },
+      },
+      needsInstall: false,
+      responsiveMode: 'desktop-first',
+      frames: [],
+      primaryFrameId: 'main',
+      backends: [],
+      trusted: true,
+      designDirs: {
+        pages: ['src/pages'],
+        layouts: ['src/layouts'],
+        components: ['src/components', 'src/pages'],
+        drafts: 'src/drafts',
+      },
+    });
+
+    render(<FilesPanel />);
+    fireEvent.click(await screen.findByTestId('file-row-src'));
+    await screen.findByTestId('file-row-src/pages');
+
+    // Right-click src/pages: item is enabled
+    fireEvent.click(screen.getByTestId('file-menu-btn-src/pages'));
+    const useCompItem = await screen.findByTestId<HTMLButtonElement>(
+      'files-menu-use-components-dir',
+    );
+    expect(useCompItem.disabled).toBe(false);
+
+    fireEvent.click(useCompItem);
+    await waitFor(() => {
+      expect(patchSpy).toHaveBeenCalled();
+    });
+    const patchCall = patchSpy.mock.calls[0]?.[0];
+    expect(patchCall?.designDirs?.components).toEqual(['src/components', 'src/pages']);
+
+    // src/components is already a component folder: the item removes it instead.
+    fireEvent.click(await screen.findByTestId('file-menu-btn-src/components'));
+    expect(screen.queryByTestId('files-menu-use-components-dir') ?? undefined).toBeUndefined();
+    fireEvent.click(
+      await screen.findByTestId<HTMLButtonElement>('files-menu-remove-components-dir'),
+    );
+    await waitFor(() => {
+      expect(patchSpy).toHaveBeenCalledTimes(2);
+    });
+    expect(patchSpy.mock.calls[1]?.[0].designDirs?.components).toEqual(['src/pages']);
+
+    // The only page folder cannot be removed.
+    fireEvent.click(await screen.findByTestId('file-menu-btn-src/pages'));
+    const removePages = await screen.findByTestId<HTMLButtonElement>('files-menu-remove-pages-dir');
+    expect(removePages.disabled).toBe(true);
+  });
+
+  it('[WP-4.00] a refused design folder change shows its reason in the Files panel', async () => {
+    vi.spyOn(projectClient, 'patchProject').mockRejectedValue(
+      new ApiError(400, 'E016', { reason: 'designDirs' }),
+    );
+    render(<FilesPanel />);
+    fireEvent.click(await screen.findByTestId('file-row-src'));
+    await screen.findByTestId('file-row-src/pages');
+
+    fireEvent.click(screen.getByTestId('file-menu-btn-src/pages'));
+    fireEvent.click(await screen.findByTestId('files-menu-use-layouts-dir'));
+
+    expect((await screen.findByTestId('files-action-error')).textContent).toContain('(E016)');
   });
 });
