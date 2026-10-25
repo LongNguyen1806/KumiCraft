@@ -119,7 +119,21 @@ describe('GET /project/assets [R-DT-13]', () => {
       addBackend: () => Promise.resolve(err({ code: 'E021', params: { missing: 'project' } })),
       removeBackend: () => Promise.resolve(ok(undefined)),
       reloadWorkspaceFile: () => Promise.resolve(),
-      pages: () => Promise.resolve(ok({ convention: true, pages: [] })),
+      pages: () =>
+        Promise.resolve(
+          ok({
+            convention: true,
+            routesFile: 'src/routes.tsx',
+            router: {
+              status: 'found',
+              file: 'src/routes.tsx',
+              line: 1,
+              kind: 'dataRouter',
+              chosen: false,
+            },
+            pages: [],
+          }),
+        ),
       addPage: () => Promise.resolve(ok({ changed: true, files: [], locs: [] })),
       renamePage: () => Promise.resolve(ok({ changed: true, files: [], locs: [] })),
       deletePage: () => Promise.resolve(ok({ changed: true, files: [], locs: [] })),

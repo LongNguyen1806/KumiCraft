@@ -1,5 +1,6 @@
 // Common types and validation for page operations (R-PG-11 to R-PG-14).
 import {
+  type AppError,
   type DesignDirs,
   err,
   isTokenFileFor,
@@ -7,15 +8,19 @@ import {
   ok,
   type ResolvedDesignDirs,
   type Result,
+  type RouterStatus,
   type StyleFiles,
   type StyleSystemId,
+  type StylingReport,
 } from '@kumicraft/shared';
 
 import type { HistoryService } from '../history/history-service.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { checkPathSyntax, isInside } from '../shared/paths.ts';
 import type { Platform } from '../shared/session.ts';
+import { asAstNode, type AstNode, parseJsxAst } from '../source-editor/ast-helpers.ts';
 import { fileQueueKey, queueFileTask } from '../source-editor/file-queue.ts';
+import { applyTextEdits, type TextEdit } from '../source-editor/structure/text-edits.ts';
 
 export type PageEditDeps = {
   readonly fs: FileSystemPort;
@@ -25,7 +30,18 @@ export type PageEditDeps = {
   readonly platform: Platform;
   readonly language: 'ts' | 'js';
   readonly designDirs: ResolvedDesignDirs;
+  readonly styling?: StylingReport | undefined;
 };
+
+export function routerNotSupportedError(router: RouterStatus): AppError {
+  if (router.status === 'ambiguous') {
+    return { code: 'E016', params: { reason: 'routerAmbiguous' } };
+  }
+  if (router.status === 'unsupported') {
+    return { code: 'E016', params: { reason: 'routerUnsupported' } };
+  }
+  return { code: 'E016', params: { reason: 'routerMissing' } };
+}
 
 function isHistoryService(h: unknown): h is HistoryService {
   return !!h && typeof h === 'object' && 'push' in h;
@@ -37,7 +53,8 @@ export function buildPageEditDeps(
     readonly root?: string | undefined;
     readonly file?:
       { readonly sourceDir: string; readonly designDirs?: DesignDirs | undefined } | undefined;
-    readonly support?: { readonly language: 'ts' | 'js' } | undefined;
+    readonly support?:
+      { readonly language: 'ts' | 'js'; readonly styling?: StylingReport | undefined } | undefined;
   },
   deps: {
     readonly fs: FileSystemPort;
@@ -59,6 +76,7 @@ export function buildPageEditDeps(
     platform: deps.platform,
     language: current.support.language,
     designDirs: normalizeDesignDirs(current.file.designDirs),
+    styling: current.support.styling,
   });
 }
 
@@ -89,6 +107,60 @@ export function withFileLocks<T>(
   return queueFileTask(fileQueueKey(projectRoot, first), () =>
     withFileLocks(projectRoot, rest, task),
   );
+}
+
+function findComponentIdNode(ast: AstNode, oldName: string): AstNode | undefined {
+  const program = asAstNode(ast['program']);
+  const body = Array.isArray(program?.['body']) ? program['body'] : [];
+  for (const item of body) {
+    const stmt = asAstNode(item);
+    if (stmt?.type === 'ExportNamedDeclaration') {
+      const decl = asAstNode(stmt['declaration']);
+      if (decl?.type === 'FunctionDeclaration') {
+        const id = asAstNode(decl['id']);
+        if (id?.['name'] === oldName) return id;
+      } else if (decl?.type === 'VariableDeclaration') {
+        const decls = Array.isArray(decl['declarations']) ? decl['declarations'] : [];
+        for (const d of decls) {
+          const varId = asAstNode(asAstNode(d)?.['id']);
+          if (varId?.['name'] === oldName) return varId;
+        }
+      }
+    } else if (stmt?.type === 'ExportDefaultDeclaration') {
+      const decl = asAstNode(stmt['declaration']);
+      if (decl?.type === 'FunctionDeclaration') {
+        const id = asAstNode(decl['id']);
+        if (id?.['name'] === oldName) return id;
+      }
+    }
+  }
+  return undefined;
+}
+
+export function renameComponentInPageCode(
+  code: string,
+  oldName: string,
+  newName: string,
+): Result<string> {
+  let ast: AstNode;
+  try {
+    ast = parseJsxAst(code);
+  } catch {
+    return err({ code: 'E023', params: { reason: 'componentNotFound' } });
+  }
+  const targetIdNode = findComponentIdNode(ast, oldName);
+  if (
+    !targetIdNode ||
+    typeof targetIdNode.start !== 'number' ||
+    typeof targetIdNode.end !== 'number'
+  ) {
+    return err({ code: 'E023', params: { reason: 'componentNotFound' } });
+  }
+
+  const edits: TextEdit[] = [{ start: targetIdNode.start, end: targetIdNode.end, text: newName }];
+  const applied = applyTextEdits(code, edits);
+  if (!applied.ok) return applied;
+  return ok(applied.value.code);
 }
 
 export function escapeJsxText(text: string): string {

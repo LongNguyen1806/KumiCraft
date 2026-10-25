@@ -12,6 +12,7 @@ import { useProjectTheme } from '../inspector/use-project-theme.ts';
 import { LayerTree } from '../layers/layer-tree.tsx';
 import { LibraryPanel } from '../library/library-panel.tsx';
 import { PagesPanel } from '../pages/pages-panel.tsx';
+import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useShownActivity } from '../shell/activity-store.ts';
 import { PanelHeaderContext } from './panel-header-context.ts';
 
@@ -109,7 +110,13 @@ export function LeftPanel() {
       {active === 'layers' && <LayerTree />}
       {active === 'library' && <LibraryPanel />}
       {active === 'components' && <ComponentsPanel />}
-      {active === 'pages' && <PagesPanel />}
+      {active === 'pages' && (
+        <PagesPanel
+          onPageAdded={(pagePath) => {
+            studioBridgeChannel.navigate(pagePath);
+          }}
+        />
+      )}
       {active === 'drafts' && <DraftsPanel />}
       {active === 'brand' && <BrandPanel />}
     </Panel>

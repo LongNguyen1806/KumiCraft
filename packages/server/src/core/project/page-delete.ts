@@ -4,7 +4,12 @@ import { err, ok, type Result, type StructureResult } from '@kumicraft/shared';
 import { computeSha256 } from '../history/history-service.ts';
 import { type AstNode, parseJsxAst } from '../source-editor/ast-helpers.ts';
 import { applyTextEdits } from '../source-editor/structure/text-edits.ts';
-import { type DeletePageInput, type PageEditDeps, withFileLocks } from './page-common.ts';
+import {
+  type DeletePageInput,
+  type PageEditDeps,
+  routerNotSupportedError,
+  withFileLocks,
+} from './page-common.ts';
 import { readPages } from './pages.ts';
 import { findRouteNodes, findRouterArray, planDeleteRouteEdits } from './routes-ast.ts';
 
@@ -113,8 +118,8 @@ export async function deletePage(
   input: DeletePageInput,
 ): Promise<Result<StructureResult>> {
   const pagesInfo = await readPages(deps.fs, deps.projectRoot, deps.sourceDir);
-  if (!pagesInfo.convention || !pagesInfo.routesFile) {
-    return err({ code: 'E016', params: { reason: 'notConvention' } });
+  if (pagesInfo.router.status !== 'found' || !pagesInfo.routesFile) {
+    return err(routerNotSupportedError(pagesInfo.router));
   }
   const routesRel = pagesInfo.routesFile;
 

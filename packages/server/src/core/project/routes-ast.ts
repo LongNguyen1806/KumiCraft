@@ -4,6 +4,12 @@ import { err, ok, type Result } from '@kumicraft/shared';
 import { asAstNode, type AstNode } from '../source-editor/ast-helpers.ts';
 import type { TextEdit } from '../source-editor/structure/text-edits.ts';
 import { joinRoutePath } from './pages.ts';
+import {
+  findJsxRouteNodes,
+  findJsxRoutesElement,
+  planAddJsxRouteEdits,
+  planDeleteJsxRouteEdits,
+} from './routes-jsx.ts';
 
 const ROUTER_CALLS = new Set([
   'createBrowserRouter',
@@ -12,10 +18,10 @@ const ROUTER_CALLS = new Set([
   'useRoutes',
 ]);
 
-const stringOf = (node: AstNode | undefined): string | undefined =>
+export const stringOf = (node: AstNode | undefined): string | undefined =>
   node?.type === 'StringLiteral' && typeof node['value'] === 'string' ? node['value'] : undefined;
 
-function objectProps(obj: AstNode): Map<string, AstNode> {
+export function objectProps(obj: AstNode): Map<string, AstNode> {
   const props = new Map<string, AstNode>();
   const list: unknown[] = Array.isArray(obj['properties']) ? obj['properties'] : [];
   for (const raw of list) {
@@ -40,12 +46,20 @@ export type FoundRouteNode = {
   readonly parentArray: AstNode;
 };
 
-/** Finds all route ObjectExpressions with their full paths in the router array. */
+/** Finds all route ObjectExpressions or JSX Route elements with their full paths. */
 export function findRouteNodes(
-  arrayNode: AstNode,
+  node: AstNode,
   parentPath = '',
   out: FoundRouteNode[] = [],
 ): FoundRouteNode[] {
+  if (node.type !== 'ArrayExpression') {
+    const jsxRoutes = findJsxRoutesElement(node);
+    if (jsxRoutes) {
+      return findJsxRouteNodes(jsxRoutes, parentPath, out);
+    }
+    return out;
+  }
+  const arrayNode = node;
   const elements: unknown[] = Array.isArray(arrayNode['elements']) ? arrayNode['elements'] : [];
   for (const raw of elements) {
     const obj = asAstNode(raw);
@@ -166,12 +180,37 @@ function getLineIndentation(code: string, offset: number): string {
   return match ? match[0] : '    ';
 }
 
+export function detectFileQuote(ast: AstNode, code: string): { quote: "'" | '"' } {
+  let singleCount = 0;
+  let doubleCount = 0;
+
+  function search(node: unknown): void {
+    if (!node || typeof node !== 'object') return;
+    const n = node as AstNode;
+    if (n.type === 'StringLiteral') {
+      const start = typeof n.start === 'number' ? n.start : undefined;
+      const raw = start !== undefined ? code[start] : undefined;
+      if (raw === "'") singleCount++;
+      else if (raw === '"') doubleCount++;
+    }
+    for (const [k, v] of Object.entries(n)) {
+      if (k !== 'loc' && k !== 'leadingComments' && k !== 'trailingComments') {
+        search(v);
+      }
+    }
+  }
+
+  search(ast);
+  return { quote: singleCount >= doubleCount ? "'" : '"' };
+}
+
 function planChildrenRouteInsert(
   childrenArray: AstNode,
   code: string,
   nl: string,
   cleanPath: string,
   component: string,
+  quote: string,
 ): TextEdit | undefined {
   const childElements: unknown[] = Array.isArray(childrenArray['elements'])
     ? childrenArray['elements']
@@ -187,13 +226,64 @@ function planChildrenRouteInsert(
     let lineStart = starNode.start;
     while (lineStart > 0 && code[lineStart - 1] !== '\n') lineStart--;
     const indent = getLineIndentation(code, starNode.start);
-    const text = `${indent}{ path: '${cleanPath}', element: <${component} /> },${nl}`;
+    const text = `${indent}{ path: ${quote}${cleanPath}${quote}, element: <${component} /> },${nl}`;
     return { start: lineStart, end: lineStart, text };
   }
   if (typeof childrenArray.end === 'number') {
     const closeBracketPos = childrenArray.end - 1;
     const indent = `${getLineIndentation(code, closeBracketPos)}  `;
-    const text = `${indent}{ path: '${cleanPath}', element: <${component} /> },${nl}`;
+    const text = `${indent}{ path: ${quote}${cleanPath}${quote}, element: <${component} /> },${nl}`;
+    return { start: closeBracketPos, end: closeBracketPos, text };
+  }
+  return undefined;
+}
+
+function createImportEdit(
+  ast: AstNode,
+  code: string,
+  nl: string,
+  component: string,
+  importPath: string,
+  quote: string,
+  isDefaultExport?: boolean,
+): TextEdit {
+  const importPos = findLastImportEnd(ast, code);
+  const text = isDefaultExport
+    ? `import ${component} from ${quote}${importPath}${quote};${nl}`
+    : `import { ${component} } from ${quote}${importPath}${quote};${nl}`;
+  return { start: importPos, end: importPos, text };
+}
+
+function planArrayRouteInsert(
+  routerArray: AstNode,
+  code: string,
+  nl: string,
+  routePath: string,
+  component: string,
+  quote: string,
+): TextEdit | undefined {
+  const elements: unknown[] = Array.isArray(routerArray['elements']) ? routerArray['elements'] : [];
+  const rootObj = asAstNode(elements[0]);
+  const rootProps = rootObj ? objectProps(rootObj) : undefined;
+  const childrenArray =
+    elements.length === 1 && rootObj?.type === 'ObjectExpression'
+      ? rootProps?.get('children')
+      : undefined;
+
+  if (childrenArray?.type === 'ArrayExpression') {
+    return planChildrenRouteInsert(
+      childrenArray,
+      code,
+      nl,
+      routePath.replace(/^\//, ''),
+      component,
+      quote,
+    );
+  }
+  if (typeof routerArray.end === 'number') {
+    const closeBracketPos = routerArray.end - 1;
+    const indent = `${getLineIndentation(code, closeBracketPos)}  `;
+    const text = `${indent}{ path: ${quote}${routePath}${quote}, element: <${component} /> },${nl}`;
     return { start: closeBracketPos, end: closeBracketPos, text };
   }
   return undefined;
@@ -208,35 +298,40 @@ export function planAddRouteEdits(
     readonly component: string;
     readonly importPath: string;
     readonly routePath: string;
+    readonly isDefaultExport?: boolean;
   },
 ): Result<readonly TextEdit[]> {
   const routerArray = findRouterArray(ast);
-  if (!routerArray) return err({ code: 'E016', params: { reason: 'notConvention' } });
-
-  const elements: unknown[] = Array.isArray(routerArray['elements']) ? routerArray['elements'] : [];
-  const edits: TextEdit[] = [];
-
-  const importPos = findLastImportEnd(ast, code);
-  const importText = `import { ${params.component} } from '${params.importPath}';${nl}`;
-  edits.push({ start: importPos, end: importPos, text: importText });
-
-  const rootObj = asAstNode(elements[0]);
-  const rootProps = rootObj ? objectProps(rootObj) : undefined;
-  const childrenArray =
-    elements.length === 1 && rootObj?.type === 'ObjectExpression'
-      ? rootProps?.get('children')
-      : undefined;
-
-  if (childrenArray?.type === 'ArrayExpression') {
-    const cleanPath = params.routePath.replace(/^\//, '');
-    const edit = planChildrenRouteInsert(childrenArray, code, nl, cleanPath, params.component);
-    if (edit) edits.push(edit);
-  } else if (typeof routerArray.end === 'number') {
-    const closeBracketPos = routerArray.end - 1;
-    const indent = `${getLineIndentation(code, closeBracketPos)}  `;
-    const text = `${indent}{ path: '${params.routePath}', element: <${params.component} /> },${nl}`;
-    edits.push({ start: closeBracketPos, end: closeBracketPos, text });
+  if (!routerArray) {
+    const jsxRoutes = findJsxRoutesElement(ast);
+    if (jsxRoutes) {
+      return planAddJsxRouteEdits(ast, code, nl, params);
+    }
+    return err({ code: 'E016', params: { reason: 'routerMissing' } });
   }
+
+  const { quote } = detectFileQuote(ast, code);
+  const edits: TextEdit[] = [
+    createImportEdit(
+      ast,
+      code,
+      nl,
+      params.component,
+      params.importPath,
+      quote,
+      params.isDefaultExport,
+    ),
+  ];
+
+  const routeEdit = planArrayRouteInsert(
+    routerArray,
+    code,
+    nl,
+    params.routePath,
+    params.component,
+    quote,
+  );
+  if (routeEdit) edits.push(routeEdit);
 
   return ok(edits);
 }
@@ -248,6 +343,9 @@ export function planDeleteRouteEdits(
   routeNode: AstNode,
   componentName?: string,
 ): Result<readonly TextEdit[]> {
+  if (routeNode.type === 'JSXElement') {
+    return planDeleteJsxRouteEdits(ast, code, routeNode, componentName);
+  }
   const edits: TextEdit[] = [];
   if (typeof routeNode.start !== 'number' || typeof routeNode.end !== 'number') {
     return err({ code: 'E016', params: { reason: 'invalidRoute' } });
@@ -276,7 +374,7 @@ export function planDeleteRouteEdits(
   return ok(edits);
 }
 
-function findImportRemovalEdit(
+export function findImportRemovalEdit(
   ast: AstNode,
   code: string,
   componentName: string,

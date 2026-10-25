@@ -49,13 +49,11 @@ function resetAddPageFields(
   setPath: (v: string) => void,
   setFileName: (v: string) => void,
   setIsPathManual: (v: boolean) => void,
-  setIsFileManual: (v: boolean) => void,
 ) {
   setName('');
   setPath('');
   setFileName('');
   setIsPathManual(false);
-  setIsFileManual(false);
 }
 
 function useAddPageSubmit(
@@ -116,13 +114,11 @@ function useAddPageState(defaultDir: string, onAdded?: (res: StructureResult) =>
   const [dir, setDir] = useInitialAndIntentDir(defaultDir);
   const [fileName, setFileName] = useState('');
   const [isPathManual, setIsPathManual] = useState(false);
-  const [isFileManual, setIsFileManual] = useState(false);
 
   const handleNameChange = (val: string) => {
     setName(val);
     const names = pageNames(val, 'ts');
     if (!isPathManual) setPath(names.path);
-    if (!isFileManual) setFileName(names.fileName);
   };
 
   const { busy, errorMsg, submit } = useAddPageSubmit(
@@ -133,7 +129,7 @@ function useAddPageState(defaultDir: string, onAdded?: (res: StructureResult) =>
     tError,
     onAdded,
     () => {
-      resetAddPageFields(setName, setPath, setFileName, setIsPathManual, setIsFileManual);
+      resetAddPageFields(setName, setPath, setFileName, setIsPathManual);
     },
   );
 
@@ -150,10 +146,9 @@ function useAddPageState(defaultDir: string, onAdded?: (res: StructureResult) =>
       setPath(val);
     },
     setDir,
-    setFileName: (val: string) => {
-      setIsFileManual(true);
-      setFileName(val);
-    },
+    // Left empty, the server names the file and picks the extension of the folder's pages (K3d).
+    setFileName,
+    autoFileName: name.trim() ? pageNames(name, 'ts').component : '',
     submit,
   };
 }
@@ -215,6 +210,7 @@ export type PageDirAndFileFieldsProps = {
   readonly disabled?: boolean;
   readonly dirTestId?: string;
   readonly fileTestId?: string;
+  readonly filePlaceholder?: string | undefined;
   readonly onDirChange: (val: string) => void;
   readonly onFileChange: (val: string) => void;
 };
@@ -225,6 +221,7 @@ export function PageDirAndFileFields({
   disabled = false,
   dirTestId = 'page-dir',
   fileTestId = 'page-file',
+  filePlaceholder,
   onDirChange,
   onFileChange,
 }: PageDirAndFileFieldsProps) {
@@ -250,7 +247,7 @@ export function PageDirAndFileFields({
           onChange={(e) => {
             onFileChange(e.target.value);
           }}
-          placeholder={t('pages.filePlaceholder')}
+          placeholder={filePlaceholder ?? t('pages.filePlaceholder')}
           className="rounded border border-border bg-field px-2 py-1 text-ink disabled:opacity-50"
         />
       </label>
@@ -282,6 +279,9 @@ export function AddPageForm({ convention, defaultDir = 'src/pages', onAdded }: A
         <PageDirAndFileFields
           dir={state.dir}
           fileName={state.fileName}
+          filePlaceholder={
+            state.autoFileName ? t('pages.fileAuto', { name: state.autoFileName }) : undefined
+          }
           dirs={dirs}
           disabled={!convention || state.busy}
           onDirChange={state.setDir}

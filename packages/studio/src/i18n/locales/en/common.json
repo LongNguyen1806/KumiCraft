@@ -477,7 +477,8 @@
     "cancel": "Cancel",
     "save": "Save",
     "newPath": "New URL path",
-    "newName": "New component name"
+    "newName": "New component name",
+    "fileAuto": "Automatic: {{name}} (extension of the pages in the folder)"
   },
   "design": {
     "kind": {

@@ -15,7 +15,12 @@ import { updateConfigComponents } from './component-extract.ts';
 import { renameComponentInCode, validateDraftFileLocation } from './draft-helpers.ts';
 import { getDraftsDir } from './drafts.ts';
 import { planNewPageRoutes, validateAddPage, type ValidatedAddPage } from './page-add.ts';
-import { type PageEditDeps, validateDirectory, withFileLocks } from './page-common.ts';
+import {
+  type PageEditDeps,
+  routerNotSupportedError,
+  validateDirectory,
+  withFileLocks,
+} from './page-common.ts';
 import { readPages } from './pages.ts';
 
 export function remapAllImportsInCode(code: string, fromFile: string, toFile: string): string {
@@ -61,6 +66,17 @@ export function remapAllImportsInCode(code: string, fromFile: string, toFile: st
   return res;
 }
 
+function hasDefaultExport(code: string): boolean {
+  try {
+    const ast = parseJsxAst(code);
+    const prog = asAstNode(ast['program']);
+    const body = Array.isArray(prog?.['body']) ? prog['body'] : [];
+    return body.some((item) => asAstNode(item)?.type === 'ExportDefaultDeclaration');
+  } catch {
+    return false;
+  }
+}
+
 type PreparedPagePromotion = {
   readonly names: PageNamesResult;
   readonly validated: ValidatedAddPage;
@@ -70,47 +86,54 @@ type PreparedPagePromotion = {
   readonly newPageCode: string;
 };
 
+function preparePromotedPageCode(
+  draftContent: string,
+  componentName: string,
+  inputFile: string,
+  newFileRel: string,
+): Result<string> {
+  const renameRes = renameComponentInCode(draftContent, componentName);
+  if (!renameRes.ok) return renameRes;
+  return ok(remapAllImportsInCode(renameRes.value, inputFile, newFileRel));
+}
+
 async function preparePagePromotion(
   deps: PageEditDeps,
   input: PromoteDraft,
   draftContent: string,
 ): Promise<Result<PreparedPagePromotion>> {
   const pagesInfo = await readPages(deps.fs, deps.projectRoot, deps.sourceDir);
-  const routesRel = pagesInfo.routesFile;
-  if (!routesRel) {
-    return err({ code: 'E016', params: { reason: 'notConvention' } });
+  if (pagesInfo.router.status !== 'found' || !pagesInfo.routesFile) {
+    return err(routerNotSupportedError(pagesInfo.router));
   }
-
+  const routesRel = pagesInfo.routesFile;
   const names = pageNames(input.name, deps.language);
   const validated = await validateAddPage(
     deps,
-    {
-      name: input.name,
-      dir: input.dir,
-      fileName: input.fileName,
-      path: input.path,
-    },
+    { name: input.name, dir: input.dir, fileName: input.fileName, path: input.path },
     pagesInfo,
     names,
   );
   if (!validated.ok) return validated;
 
+  const isDefault = hasDefaultExport(draftContent);
   const planned = await planNewPageRoutes(
     deps,
     routesRel,
     names,
     validated.value.routePath,
     validated.value.newFileRel,
+    isDefault,
   );
   if (!planned.ok) return planned;
 
-  const renameRes = renameComponentInCode(draftContent, names.component);
-  if (!renameRes.ok) return renameRes;
-  const newPageCode = remapAllImportsInCode(
-    renameRes.value,
+  const codeRes = preparePromotedPageCode(
+    draftContent,
+    names.component,
     input.file,
     validated.value.newFileRel,
   );
+  if (!codeRes.ok) return codeRes;
 
   return ok({
     names,
@@ -118,7 +141,7 @@ async function preparePagePromotion(
     routesRel,
     routesCode: planned.value.routesCode,
     newRoutesCode: planned.value.newRoutesCode,
-    newPageCode,
+    newPageCode: codeRes.value,
   });
 }
 
@@ -158,6 +181,40 @@ function recordPromotePageHistory(
   });
 }
 
+async function writePromotedFiles(
+  deps: PageEditDeps,
+  input: PromoteDraft,
+  prep: PreparedPagePromotion,
+  routesCode: string,
+): Promise<Result<void>> {
+  const writePage = await deps.fs.writeTextAtomic(
+    deps.projectRoot,
+    prep.validated.newFileRel,
+    prep.newPageCode,
+  );
+  if (!writePage.ok) return writePage;
+
+  const writeRoutes = await deps.fs.writeTextAtomic(
+    deps.projectRoot,
+    prep.routesRel,
+    prep.newRoutesCode,
+  );
+  if (!writeRoutes.ok) {
+    await deps.fs.remove(deps.projectRoot, prep.validated.newFileRel);
+    return writeRoutes;
+  }
+
+  if (!input.keepDraft) {
+    const rmDraft = await deps.fs.remove(deps.projectRoot, input.file);
+    if (!rmDraft.ok) {
+      await deps.fs.remove(deps.projectRoot, prep.validated.newFileRel);
+      await deps.fs.writeTextAtomic(deps.projectRoot, prep.routesRel, routesCode);
+      return rmDraft;
+    }
+  }
+  return ok(undefined);
+}
+
 async function commitPromoteToPage(
   deps: PageEditDeps,
   input: PromoteDraft,
@@ -174,27 +231,8 @@ async function commitPromoteToPage(
   const lockPaths = input.keepDraft ? [newFileRel, routesRel] : [input.file, newFileRel, routesRel];
 
   return withFileLocks(deps.projectRoot, lockPaths, async () => {
-    const writePage = await deps.fs.writeTextAtomic(deps.projectRoot, newFileRel, newPageCode);
-    if (!writePage.ok) return writePage;
-
-    const writeRoutes = await deps.fs.writeTextAtomic(
-      deps.projectRoot,
-      routesRel,
-      prep.newRoutesCode,
-    );
-    if (!writeRoutes.ok) {
-      await deps.fs.remove(deps.projectRoot, newFileRel);
-      return writeRoutes;
-    }
-
-    if (!input.keepDraft) {
-      const rmDraft = await deps.fs.remove(deps.projectRoot, input.file);
-      if (!rmDraft.ok) {
-        await deps.fs.remove(deps.projectRoot, newFileRel);
-        await deps.fs.writeTextAtomic(deps.projectRoot, routesRel, routesCode);
-        return rmDraft;
-      }
-    }
+    const written = await writePromotedFiles(deps, input, prep, routesCode);
+    if (!written.ok) return written;
 
     recordPromotePageHistory(deps, input, prep, draftContent, {
       oldDraftHash,

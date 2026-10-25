@@ -37,6 +37,14 @@ function setupMocks() {
   vi.spyOn(projectClient, 'fetchPages').mockResolvedValue({
     pages: [...MOCK_PAGES],
     convention: true,
+    routesFile: 'src/routes.tsx',
+    router: {
+      status: 'found',
+      file: 'src/routes.tsx',
+      line: 1,
+      kind: 'dataRouter',
+      chosen: false,
+    },
   });
   vi.spyOn(projectClient, 'fetchDrafts').mockResolvedValue({
     drafts: [],

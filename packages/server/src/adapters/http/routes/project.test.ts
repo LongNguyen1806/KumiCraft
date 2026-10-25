@@ -58,6 +58,28 @@ const mockWorkspaceFile: WorkspaceFile = {
   primaryFrameId: 'desktop',
 };
 
+const emptyTheme = {
+  colors: [{ name: 'brand', value: '#3b82f6' }],
+  fontSizes: [],
+  radii: [],
+  fonts: [],
+  shadows: [],
+  breakpoints: [],
+};
+
+const defaultPages = {
+  convention: true,
+  routesFile: 'src/routes.tsx',
+  router: {
+    status: 'found' as const,
+    file: 'src/routes.tsx',
+    line: 1,
+    kind: 'dataRouter' as const,
+    chosen: false,
+  },
+  pages: [{ path: '/', component: 'Home', dynamic: false }],
+};
+
 const mockProjectService: ProjectService = {
   state: () =>
     isOpen
@@ -99,28 +121,8 @@ const mockProjectService: ProjectService = {
     return Promise.resolve(ok({ ...projectInfo, trusted: val }));
   },
   install: () => Promise.resolve(ok({ jobId: 'job000000001' })),
-  theme: () =>
-    Promise.resolve(
-      ok({
-        colors: [{ name: 'brand', value: '#3b82f6' }],
-        fontSizes: [],
-        radii: [],
-        fonts: [],
-        shadows: [],
-        breakpoints: [],
-      }),
-    ),
-  editTheme: () =>
-    Promise.resolve(
-      ok({
-        colors: [{ name: 'brand', value: '#3b82f6' }],
-        fontSizes: [],
-        radii: [],
-        fonts: [],
-        shadows: [],
-        breakpoints: [],
-      }),
-    ),
+  theme: () => Promise.resolve(ok(emptyTheme)),
+  editTheme: () => Promise.resolve(ok(emptyTheme)),
   themeUsage: () => Promise.resolve(ok({ count: 0 })),
   addBackend: (path, label) =>
     Promise.resolve(
@@ -135,10 +137,7 @@ const mockProjectService: ProjectService = {
     ),
   removeBackend: () => Promise.resolve(ok(undefined)),
   reloadWorkspaceFile: () => Promise.resolve(),
-  pages: () =>
-    Promise.resolve(
-      ok({ convention: true, pages: [{ path: '/', component: 'Home', dynamic: false }] }),
-    ),
+  pages: () => Promise.resolve(ok(defaultPages)),
   addPage: () =>
     Promise.resolve(
       ok({ changed: true, files: ['src/routes.tsx', 'src/pages/About.tsx'], locs: [] }),

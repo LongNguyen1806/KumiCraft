@@ -3,6 +3,7 @@ import type {
   DesignDirs,
   Frame,
   ResponsiveMode,
+  Routing,
   StyleFiles,
   StyleSystemId,
 } from '@kumicraft/shared';
@@ -37,13 +38,14 @@ export type PatchWorkspaceUpdates = {
   readonly devPort?: number | 'auto' | undefined;
   readonly designDirs?: DesignDirs | undefined;
   readonly styleFiles?: StyleFiles | undefined;
+  readonly routing?: Routing | undefined;
 };
 
 function buildPatchedWorkspaceFile(
   currentFile: WorkspaceFile,
   updates: PatchWorkspaceUpdates,
 ): WorkspaceFile {
-  const { devPort: savedPort, ...file } = currentFile;
+  const { devPort: savedPort, routing: savedRouting, ...file } = currentFile;
   const devPort = updates.devPort === 'auto' ? undefined : (updates.devPort ?? savedPort);
 
   let savedDesignDirs = file.designDirs;
@@ -55,6 +57,11 @@ function buildPatchedWorkspaceFile(
       components: [...normalized.components],
       ...(updates.designDirs.drafts !== undefined ? { drafts: updates.designDirs.drafts } : {}),
     };
+  }
+
+  let routing = savedRouting;
+  if (updates.routing !== undefined) {
+    routing = updates.routing.file !== undefined ? { file: updates.routing.file } : undefined;
   }
 
   return {
@@ -70,6 +77,7 @@ function buildPatchedWorkspaceFile(
       : file.styleFiles
         ? { styleFiles: file.styleFiles }
         : {}),
+    ...(routing !== undefined ? { routing } : {}),
   };
 }
 

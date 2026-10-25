@@ -31,6 +31,7 @@ describe('Studio Drafts [R-DR-10 .. R-DR-15]', () => {
     });
     vi.spyOn(projectClient, 'fetchPages').mockResolvedValue({
       convention: false,
+      router: { status: 'none', hasRouterPackage: false },
       pages: [{ path: '/', component: 'Home', dynamic: false }],
     });
     vi.spyOn(projectClient, 'fetchDrafts').mockResolvedValue({

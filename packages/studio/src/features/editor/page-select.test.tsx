@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { StudioServerEvent } from '../../api/events-client.ts';
 import * as eventsClient from '../../api/events-client.ts';
 import * as projectClient from '../../api/project-client.ts';
 import { initI18n } from '../../i18n/i18n.ts';
@@ -28,6 +29,7 @@ describe('PageSelect [R-PG-15]', () => {
     });
     vi.spyOn(projectClient, 'fetchPages').mockResolvedValue({
       convention: false,
+      router: { status: 'none', hasRouterPackage: false },
       pages: [
         { path: '/', component: 'Dashboard', dynamic: false },
         { path: '/login', component: 'Login', dynamic: false },
@@ -85,6 +87,28 @@ describe('PageSelect [R-PG-15]', () => {
 
     expect(navigate).toHaveBeenCalledWith('/product/42');
     expect(screen.queryByTestId('canvas-page-param')).toBeNull();
+  });
+
+  it('reads the pages again after a Studio edit, which only the history reports [K3d]', async () => {
+    const handlers: ((event: StudioServerEvent) => void)[] = [];
+    vi.spyOn(eventsClient, 'createEventsClient').mockImplementation((options) => {
+      if (options?.onEvent) handlers.push(options.onEvent);
+      return { close: vi.fn(), isConnected: () => true };
+    });
+    const fetchSpy = vi.spyOn(projectClient, 'fetchPages');
+    render(<PageSelect />);
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalled();
+    });
+    const before = fetchSpy.mock.calls.length;
+
+    for (const handler of handlers) {
+      handler({ v: 1, type: 'history.changed', at: new Date().toISOString(), payload: {} });
+    }
+
+    await waitFor(() => {
+      expect(fetchSpy.mock.calls.length).toBeGreaterThan(before);
+    });
   });
 
   it('Test 10: clicking pages-manage sets active=pages, opens left panel without dialog; similar for drafts-manage [WP-4.00, R-PG-15]', () => {

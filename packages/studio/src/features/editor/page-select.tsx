@@ -30,7 +30,10 @@ export function usePagesData(): PagesData {
     const load = async () => {
       try {
         const info = await fetchPages();
-        if (active) setData({ pages: info.pages, convention: info.convention });
+        if (!active) return;
+        const next = { pages: info.pages, convention: info.convention };
+        // Same list again (most history changes): keep the old object so the design target stays.
+        setData((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
       } catch {
         // No project or no router yet: the list stays empty.
       }
@@ -38,7 +41,8 @@ export function usePagesData(): PagesData {
     void load();
     const client = createEventsClient({
       onEvent: (event) => {
-        if (event.type === 'project.changed') void load();
+        // Studio's own page edits (add, rename, delete, Undo) reach only the history, not the watcher.
+        if (event.type === 'project.changed' || event.type === 'history.changed') void load();
         if (event.type !== 'project.filesChanged') return;
         const files = isRecord(event.payload) ? event.payload['files'] : undefined;
         if (Array.isArray(files) && files.some((f) => typeof f === 'string' && CODE_FILE.test(f))) {

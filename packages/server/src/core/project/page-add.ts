@@ -1,5 +1,5 @@
 // Adding a page to the project router and filesystem (R-PG-11, R-PG-12, R-PG-13).
-import * as path from 'node:path';
+import { posix } from 'node:path';
 
 import {
   err,
@@ -17,31 +17,20 @@ import { getTopLevelIdentifiers } from '../source-editor/structure/imports.ts';
 import { applyTextEdits } from '../source-editor/structure/text-edits.ts';
 import {
   type AddPageInput,
-  escapeJsxText,
   normalizeRoute,
   type PageEditDeps,
+  routerNotSupportedError,
   validateDirectory,
   validateRouteSyntax,
   withFileLocks,
 } from './page-common.ts';
+import { buildPageSource, resolvePageTemplateExtension } from './page-template.ts';
 import { readPages } from './pages.ts';
 import { planAddRouteEdits, routesUseExtension } from './routes-ast.ts';
 
-function buildNewPageSource(component: string, name: string): string {
-  return [
-    `export function ${component}() {`,
-    '  return (',
-    '    <main className="mx-auto max-w-5xl p-8">',
-    `      <h1 className="text-3xl font-bold">${escapeJsxText(name)}</h1>`,
-    '    </main>',
-    '  );',
-    '}\n',
-  ].join('\n');
-}
-
 function computeRouteImport(routesRel: string, newFileRel: string, routesAst: AstNode): string {
-  const routesDir = path.posix.dirname(routesRel);
-  let relImport = path.posix.relative(routesDir, newFileRel);
+  const routesDir = posix.dirname(routesRel);
+  let relImport = posix.relative(routesDir, newFileRel);
   if (!relImport.startsWith('.')) relImport = `./${relImport}`;
   if (!routesUseExtension(routesAst)) {
     relImport = relImport.replace(/\.(tsx|jsx)$/, '');
@@ -94,6 +83,7 @@ export async function planNewPageRoutes(
   names: PageNamesResult,
   routePath: string,
   newFileRel: string,
+  isDefaultExport = false,
 ): Promise<Result<PlannedRoutes>> {
   const readRoutes = await deps.fs.readText(deps.projectRoot, routesRel, { keepBom: true });
   if (!readRoutes.ok) return readRoutes;
@@ -115,6 +105,7 @@ export async function planNewPageRoutes(
     component: names.component,
     importPath: relImport,
     routePath,
+    isDefaultExport,
   });
   if (!planRes.ok) return planRes;
 
@@ -190,22 +181,59 @@ async function commitAddPage(args: CommitAddPageArgs): Promise<Result<StructureR
   });
 }
 
+async function resolveAddPageInput(
+  deps: PageEditDeps,
+  input: AddPageInput,
+  targetDir: string,
+  component: string,
+): Promise<AddPageInput> {
+  if (input.fileName) return input;
+  const ext = await resolvePageTemplateExtension({
+    fs: deps.fs,
+    root: deps.projectRoot,
+    dir: targetDir,
+    language: deps.language,
+    firstPagesDir: deps.designDirs.pages[0],
+  });
+  return { ...input, fileName: `${component}.${ext}` };
+}
+
 export async function addPage(
   deps: PageEditDeps,
   input: AddPageInput,
 ): Promise<Result<StructureResult>> {
   const pagesInfo = await readPages(deps.fs, deps.projectRoot, deps.sourceDir);
-  if (!pagesInfo.convention || !pagesInfo.routesFile) {
-    return err({ code: 'E016', params: { reason: 'notConvention' } });
+  if (pagesInfo.router.status !== 'found' || !pagesInfo.routesFile) {
+    return err(routerNotSupportedError(pagesInfo.router));
   }
   const routesRel = pagesInfo.routesFile;
   const names = pageNames(input.name, deps.language);
+  const targetDir = input.dir ?? deps.designDirs.pages[0] ?? 'src/pages';
+  const adjustedInput = await resolveAddPageInput(deps, input, targetDir, names.component);
 
-  const validated = await validateAddPage(deps, input, pagesInfo, names);
+  const validated = await validateAddPage(deps, adjustedInput, pagesInfo, names);
   if (!validated.ok) return validated;
   const { routePath, newFileRel } = validated.value;
 
-  const planned = await planNewPageRoutes(deps, routesRel, names, routePath, newFileRel);
+  const newFileContent = await buildPageSource({
+    fs: deps.fs,
+    root: deps.projectRoot,
+    dir: targetDir,
+    component: names.component,
+    name: input.name,
+    language: deps.language,
+    styling: deps.styling,
+    firstPagesDir: deps.designDirs.pages[0],
+  });
+
+  const planned = await planNewPageRoutes(
+    deps,
+    routesRel,
+    names,
+    routePath,
+    newFileRel,
+    newFileContent.isDefaultExport,
+  );
   if (!planned.ok) return planned;
 
   return commitAddPage({
@@ -216,6 +244,6 @@ export async function addPage(
     newFileRel,
     routesCode: planned.value.routesCode,
     newRoutesCode: planned.value.newRoutesCode,
-    newFileContent: buildNewPageSource(names.component, input.name),
+    newFileContent: newFileContent.code,
   });
 }

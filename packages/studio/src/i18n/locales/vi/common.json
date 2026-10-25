@@ -477,7 +477,8 @@
     "cancel": "Hủy",
     "save": "Lưu",
     "newPath": "Đường dẫn URL mới",
-    "newName": "Tên component mới"
+    "newName": "Tên component mới",
+    "fileAuto": "Tự động: {{name}} (đuôi theo các trang cùng thư mục)"
   },
   "design": {
     "kind": {

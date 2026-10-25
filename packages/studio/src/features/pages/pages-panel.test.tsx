@@ -27,14 +27,16 @@ describe('PagesPanel & AddPageForm [WP-2.05]', () => {
 
     fireEvent.change(nameInput, { target: { value: 'Giới thiệu' } });
     expect(pathInput).toHaveProperty('value', '/gioi-thieu');
-    expect(fileInput).toHaveProperty('value', 'GioiThieu.tsx');
+    // The file name is left to the server, which follows the folder's pages (K3d).
+    expect(fileInput).toHaveProperty('value', '');
+    expect(fileInput.getAttribute('placeholder')).toContain('GioiThieu');
 
     fireEvent.change(pathInput, { target: { value: '/gioi-thieu-chung' } });
     expect(pathInput).toHaveProperty('value', '/gioi-thieu-chung');
 
     fireEvent.change(nameInput, { target: { value: 'Giới thiệu công ty' } });
     expect(pathInput).toHaveProperty('value', '/gioi-thieu-chung');
-    expect(fileInput).toHaveProperty('value', 'GioiThieuCongTy.tsx');
+    expect(fileInput.getAttribute('placeholder')).toContain('GioiThieuCongTy');
   });
 
   it('scenario 18: locks add/rename/delete when convention is false and displays note [R-PG-10]', () => {

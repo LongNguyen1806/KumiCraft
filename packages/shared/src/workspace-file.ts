@@ -84,6 +84,11 @@ export const StyleFilesSchema = z.strictObject({
 });
 export type StyleFiles = z.infer<typeof StyleFilesSchema>;
 
+export const RoutingSchema = z.strictObject({
+  file: RelPathSchema.optional(),
+});
+export type Routing = z.infer<typeof RoutingSchema>;
+
 export const DEFAULT_DESIGN_DIRS: ResolvedDesignDirs = {
   pages: ['src/pages'],
   layouts: ['src/layouts'],
@@ -124,6 +129,7 @@ export const WorkspaceFileSchema = z
     devPort: DevPortSchema.optional(),
     designDirs: DesignDirsSchema.optional(),
     styleFiles: StyleFilesSchema.optional(),
+    routing: RoutingSchema.optional(),
   })
   .superRefine((value, ctx) => {
     for (const problem of frameRuleProblems(value)) {

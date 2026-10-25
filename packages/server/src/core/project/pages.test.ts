@@ -38,6 +38,13 @@ describe('readPages', () => {
       expect(await readPages(nodeFs, t.dir, 'src')).toEqual({
         convention: true,
         routesFile: 'src/routes.tsx',
+        router: {
+          status: 'found',
+          file: 'src/routes.tsx',
+          line: 6,
+          kind: 'dataRouter',
+          chosen: false,
+        },
         pages: [
           { path: '/', component: 'Home', dynamic: false },
           { path: '/about', component: 'About', dynamic: false },
@@ -70,6 +77,10 @@ describe('readPages', () => {
     try {
       expect(await readPages(nodeFs, t.dir, 'src')).toEqual({
         convention: false,
+        router: {
+          status: 'none',
+          hasRouterPackage: false,
+        },
         pages: [
           { path: '/', component: 'Dashboard', dynamic: false },
           { path: '/login', component: 'Login', dynamic: false },

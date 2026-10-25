@@ -1,9 +1,11 @@
-import * as path from 'node:path';
+import { posix } from 'node:path';
 
-import type { PageInfo, PagesInfo } from '@kumicraft/shared';
+import type { PageInfo, PagesInfo, RouterStatus } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { asAstNode, type AstNode, isAstNode, parseJsxAst } from '../source-editor/ast-helpers.ts';
+import { findRouter } from './route-finder.ts';
+import { findEntryPoint } from './route-resolve.ts';
 
 const MAX_FILES = 500;
 const MAX_BYTES = 1024 * 1024;
@@ -13,12 +15,14 @@ const ROUTER_CALLS = new Set([
   'createMemoryRouter',
   'useRoutes',
 ]);
-const HINT = /createBrowserRouter|createHashRouter|createMemoryRouter|useRoutes|<Route\b/;
+const HINT =
+  /createBrowserRouter|createHashRouter|createMemoryRouter|useRoutes|<Route\b|export\s+const\s+routes|lazy\(/;
 
 type Found = {
   readonly path: string;
   readonly component?: string | undefined;
   readonly file: string;
+  readonly directImportPath?: string | undefined;
 };
 
 /** Joins a child route path to its parent the way react-router does. */
@@ -62,6 +66,30 @@ function objectProps(obj: AstNode): Map<string, AstNode> {
   return props;
 }
 
+function findDynamicImportSpecifier(node: AstNode): string | undefined {
+  let specifier: string | undefined;
+  function search(n: unknown): void {
+    if (specifier || !n || typeof n !== 'object') return;
+    const obj = n as AstNode;
+    if (obj.type === 'CallExpression') {
+      const callee = asAstNode(obj['callee']);
+      if (callee?.type === 'Import') {
+        const args: unknown[] = Array.isArray(obj['arguments']) ? obj['arguments'] : [];
+        const first = asAstNode(args[0]);
+        if (first?.type === 'StringLiteral' && typeof first['value'] === 'string') {
+          specifier = first['value'];
+          return;
+        }
+      }
+    }
+    for (const [k, v] of Object.entries(obj)) {
+      if (k !== 'loc' && k !== 'leadingComments' && k !== 'trailingComments') search(v);
+    }
+  }
+  search(node);
+  return specifier;
+}
+
 /** `[{ path, element, children }]` given to createBrowserRouter or useRoutes. */
 function fromRouteArray(array: AstNode, parent: string, file: string, out: Found[]): void {
   const elements: unknown[] = Array.isArray(array['elements']) ? array['elements'] : [];
@@ -71,10 +99,19 @@ function fromRouteArray(array: AstNode, parent: string, file: string, out: Found
     const props = objectProps(obj);
     const path = joinRoutePath(parent, stringOf(props.get('path')));
     const component = componentOf(props.get('element') ?? props.get('Component'));
+    const lazyProp = props.get('lazy');
+    const lazySpec = lazyProp ? findDynamicImportSpecifier(lazyProp) : undefined;
+    const directImportPath = lazySpec
+      ? posix.normalize(posix.join(posix.dirname(file), lazySpec))
+      : undefined;
+
     const children = props.get('children');
     if (children?.type === 'ArrayExpression') fromRouteArray(children, path, file, out);
-    if (component !== undefined && (props.has('path') || props.has('index'))) {
-      out.push({ path, component, file });
+    if (
+      (component !== undefined || directImportPath !== undefined) &&
+      (props.has('path') || props.has('index'))
+    ) {
+      out.push({ path, component, file, directImportPath });
     }
   }
 }
@@ -98,7 +135,6 @@ function fromRouteJsx(element: AstNode, parent: string, file: string, out: Found
   const attrs = jsxAttrs(element);
   const path = joinRoutePath(parent, stringOf(attrs.get('path')));
   const component = componentOf(attrs.get('element') ?? attrs.get('Component'));
-  // Children first: an index route is the page at this path, not the layout around it.
   const children: unknown[] = Array.isArray(element['children']) ? element['children'] : [];
   for (const raw of children) {
     const child = asAstNode(raw);
@@ -149,49 +185,53 @@ export async function listCodeFiles(fs: FileSystemPort, root: string, sourceDir:
     const entries = await fs.readDir(root, dir);
     if (!entries.ok) continue;
     for (const entry of entries.value) {
-      const path = `${dir}/${entry.name}`;
+      const p = `${dir}/${entry.name}`;
       if (
         entry.kind === 'directory' &&
         entry.name !== 'node_modules' &&
         !entry.name.startsWith('.')
       ) {
-        pending.push(path);
+        pending.push(p);
       } else if (entry.kind === 'file' && /\.(tsx|jsx|ts|js)$/.test(entry.name)) {
-        files.push(path);
+        files.push(p);
       }
     }
   }
   return files;
 }
 
-/** R-PG-10: the convention is `src/routes.tsx` (or `.jsx`) built with createBrowserRouter. */
-function isConventionFile(file: string, sourceDir: string, text: string): boolean {
-  return (
-    /^(routes)\.(tsx|jsx)$/.test(file.slice(sourceDir.length + 1)) &&
-    text.includes('createBrowserRouter')
-  );
-}
-
 function extractImportedFiles(ast: AstNode, file: string): Map<string, string> {
   const map = new Map<string, string>();
   const program = asAstNode(ast['program']);
-  const body = Array.isArray(program?.['body']) ? program['body'] : [];
-  const fileDir = path.posix.dirname(file);
+  const body: unknown[] = Array.isArray(program?.['body']) ? program['body'] : [];
+  const fileDir = posix.dirname(file);
 
   for (const item of body) {
     const stmt = asAstNode(item);
-    if (stmt?.type !== 'ImportDeclaration') continue;
-    const sourceNode = asAstNode(stmt['source']);
-    const source = typeof sourceNode?.['value'] === 'string' ? sourceNode['value'] : '';
-    if (!source.startsWith('.')) continue;
+    if (stmt?.type === 'ImportDeclaration') {
+      const sourceNode = asAstNode(stmt['source']);
+      const source = typeof sourceNode?.['value'] === 'string' ? sourceNode['value'] : '';
+      if (!source.startsWith('.')) continue;
 
-    const resolved = path.posix.normalize(path.posix.join(fileDir, source));
-    const specifiers = Array.isArray(stmt['specifiers']) ? stmt['specifiers'] : [];
-    for (const raw of specifiers) {
-      const spec = asAstNode(raw);
-      const local = asAstNode(spec?.['local']);
-      if (typeof local?.['name'] === 'string') {
-        map.set(local['name'], resolved);
+      const resolved = posix.normalize(posix.join(fileDir, source));
+      const specifiers: unknown[] = Array.isArray(stmt['specifiers']) ? stmt['specifiers'] : [];
+      for (const raw of specifiers) {
+        const spec = asAstNode(raw);
+        const local = asAstNode(spec?.['local']);
+        if (typeof local?.['name'] === 'string') map.set(local['name'], resolved);
+      }
+    } else if (stmt?.type === 'VariableDeclaration') {
+      const decls: unknown[] = Array.isArray(stmt['declarations']) ? stmt['declarations'] : [];
+      for (const raw of decls) {
+        const decl = asAstNode(raw);
+        const id = asAstNode(decl?.['id']);
+        const init = asAstNode(decl?.['init']);
+        if (typeof id?.['name'] === 'string' && init) {
+          const spec = findDynamicImportSpecifier(init);
+          if (spec && spec.startsWith('.')) {
+            map.set(id['name'], posix.normalize(posix.join(fileDir, spec)));
+          }
+        }
       }
     }
   }
@@ -213,31 +253,46 @@ async function resolvePageFile(
   return undefined;
 }
 
-export async function readPages(
+function checkStandaloneArrayFile(ast: AstNode, file: string, out: Found[]): void {
+  const program = asAstNode(ast['program']);
+  const body: unknown[] = Array.isArray(program?.['body']) ? program['body'] : [];
+  for (const item of body) {
+    const stmt = asAstNode(item);
+    if (stmt?.type === 'ExportNamedDeclaration') {
+      const decl = asAstNode(stmt['declaration']);
+      if (decl?.type === 'VariableDeclaration') {
+        const decls: unknown[] = Array.isArray(decl['declarations']) ? decl['declarations'] : [];
+        for (const raw of decls) {
+          const d = asAstNode(raw);
+          const init = asAstNode(d?.['init']);
+          if (init?.type === 'ArrayExpression') fromRouteArray(init, '', file, out);
+        }
+      }
+    }
+  }
+}
+
+async function readConfiguredRoutingFile(
   fs: FileSystemPort,
   root: string,
-  sourceDir: string,
-): Promise<PagesInfo> {
-  const found: Found[] = [];
-  const importsByFile = new Map<string, Map<string, string>>();
-  let routesFile: string | undefined;
-
-  for (const file of await listCodeFiles(fs, root, sourceDir)) {
-    const read = await fs.readText(root, file, { maxBytes: MAX_BYTES });
-    if (!read.ok || !HINT.test(read.value)) continue;
-    let ast: AstNode;
-    try {
-      ast = parseJsxAst(read.value);
-    } catch {
-      continue; // a file that does not parse lists no pages; the dev server reports it
-    }
-    if (routesFile === undefined && isConventionFile(file, sourceDir, read.value)) {
-      routesFile = file;
-    }
-    importsByFile.set(file, extractImportedFiles(ast, file));
-    walk(ast, file, found);
+): Promise<string | undefined> {
+  const read = await fs.readText(root, '.kumicraft/workspace.json');
+  if (!read.ok) return undefined;
+  try {
+    const json = JSON.parse(read.value) as Record<string, unknown>;
+    const routing = json['routing'] as Record<string, string> | undefined;
+    return typeof routing?.['file'] === 'string' ? routing['file'] : undefined;
+  } catch {
+    return undefined;
   }
+}
 
+async function buildPageInfos(
+  fs: FileSystemPort,
+  root: string,
+  found: readonly Found[],
+  importsByFile: Map<string, Map<string, string>>,
+): Promise<PageInfo[]> {
   const seen = new Set<string>();
   const pages: PageInfo[] = [];
   for (const page of found) {
@@ -245,7 +300,9 @@ export async function readPages(
     seen.add(page.path);
 
     const fileMap = importsByFile.get(page.file);
-    const rawImport = page.component !== undefined ? fileMap?.get(page.component) : undefined;
+    const rawImport =
+      page.directImportPath ??
+      (page.component !== undefined ? fileMap?.get(page.component) : undefined);
     const resolvedFile = await resolvePageFile(fs, root, rawImport);
 
     pages.push({
@@ -255,9 +312,50 @@ export async function readPages(
       dynamic: page.path.includes(':'),
     });
   }
+  return pages;
+}
+
+export async function readPages(
+  fs: FileSystemPort,
+  root: string,
+  sourceDir: string,
+  routingFile?: string,
+): Promise<PagesInfo> {
+  const effectiveRoutingFile = routingFile ?? (await readConfiguredRoutingFile(fs, root));
+  const router: RouterStatus = await findRouter(fs, root, sourceDir, effectiveRoutingFile);
+  const found: Found[] = [];
+  const importsByFile = new Map<string, Map<string, string>>();
+
+  let codeFiles: string[];
+  if (router.status === 'found') {
+    codeFiles = [router.file];
+  } else {
+    const entry = await findEntryPoint(fs, root, sourceDir);
+    codeFiles = entry ? [] : await listCodeFiles(fs, root, sourceDir);
+  }
+
+  for (const file of codeFiles) {
+    const read = await fs.readText(root, file, { maxBytes: MAX_BYTES });
+    if (!read.ok || !HINT.test(read.value)) continue;
+    let ast: AstNode;
+    try {
+      ast = parseJsxAst(read.value);
+    } catch {
+      continue;
+    }
+    importsByFile.set(file, extractImportedFiles(ast, file));
+    const beforeCount = found.length;
+    walk(ast, file, found);
+    if (router.status === 'found' && router.file === file && found.length === beforeCount) {
+      checkStandaloneArrayFile(ast, file, found);
+    }
+  }
+
+  const pages = await buildPageInfos(fs, root, found, importsByFile);
   return {
-    convention: routesFile !== undefined,
-    ...(routesFile === undefined ? {} : { routesFile }),
+    convention: router.status === 'found',
+    ...(router.status === 'found' ? { routesFile: router.file } : {}),
+    router,
     pages,
   };
 }

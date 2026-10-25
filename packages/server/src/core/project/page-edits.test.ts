@@ -102,9 +102,9 @@ describe('page-edits [WP-2.05]', () => {
     expect(fileContent).toBe(
       'export function GioiThieu() {\n' +
         '  return (\n' +
-        '    <main className="mx-auto max-w-5xl p-8">\n' +
-        '      <h1 className="text-3xl font-bold">Giới thiệu</h1>\n' +
-        '    </main>\n' +
+        '    <div>\n' +
+        '      <h1>Giới thiệu</h1>\n' +
+        '    </div>\n' +
         '  );\n' +
         '}\n',
     );
@@ -265,28 +265,26 @@ describe('page-edits [WP-2.05]', () => {
   it('scenario 12: rejects operations on non-convention router [R-PG-10]', async () => {
     const { target, service } = await setupProject();
     const nonConventionCode =
-      'import { Routes, Route } from "react-router-dom";\n' +
-      'export function App() {\n' +
-      '  return <Routes><Route path="/" element={<div>Home</div>} /></Routes>;\n' +
-      '}\n';
+      'import { createBrowserRouter } from "react-router";\n' +
+      'export const router = createBrowserRouter(buildRoutes());\n';
     await directWriteFs.writeTextAtomic(target, 'src/routes.tsx', nonConventionCode);
 
     const addRes = await service.addPage({ name: 'Page' });
     expect(addRes).toMatchObject({
       ok: false,
-      error: { code: 'E016', params: { reason: 'notConvention' } },
+      error: { code: 'E016', params: { reason: 'routerUnsupported' } },
     });
 
     const renameRes = await service.renamePage({ path: '/', newPath: '/x' });
     expect(renameRes).toMatchObject({
       ok: false,
-      error: { code: 'E016', params: { reason: 'notConvention' } },
+      error: { code: 'E016', params: { reason: 'routerUnsupported' } },
     });
 
     const deleteRes = await service.deletePage({ path: '/' });
     expect(deleteRes).toMatchObject({
       ok: false,
-      error: { code: 'E016', params: { reason: 'notConvention' } },
+      error: { code: 'E016', params: { reason: 'routerUnsupported' } },
     });
   });
 

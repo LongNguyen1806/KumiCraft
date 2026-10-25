@@ -16,99 +16,57 @@ import { applyTextEdits, type TextEdit } from '../source-editor/structure/text-e
 import {
   normalizeRoute,
   type PageEditDeps,
+  renameComponentInPageCode,
   type RenamePageInput,
+  routerNotSupportedError,
   validateRouteSyntax,
   withFileLocks,
 } from './page-common.ts';
 import { readPages } from './pages.ts';
-import { findRouteNodes, findRouterArray, type FoundRouteNode } from './routes-ast.ts';
-
-function stringOf(node: AstNode | undefined): string | undefined {
-  return node?.type === 'StringLiteral' && typeof node['value'] === 'string'
-    ? node['value']
-    : undefined;
-}
-
-function objectProps(obj: AstNode): Map<string, AstNode> {
-  const props = new Map<string, AstNode>();
-  const list: unknown[] = Array.isArray(obj['properties']) ? obj['properties'] : [];
-  for (const raw of list) {
-    const prop = asAstNode(raw);
-    const key = asAstNode(prop?.['key']);
-    const value = asAstNode(prop?.['value']);
-    const name = key?.type === 'Identifier' ? key['name'] : stringOf(key);
-    if (typeof name === 'string' && value !== undefined) props.set(name, value);
-  }
-  return props;
-}
-
-function findComponentIdNode(ast: AstNode, oldName: string): AstNode | undefined {
-  const program = asAstNode(ast['program']);
-  const body = Array.isArray(program?.['body']) ? program['body'] : [];
-  for (const item of body) {
-    const stmt = asAstNode(item);
-    if (stmt?.type === 'ExportNamedDeclaration') {
-      const decl = asAstNode(stmt['declaration']);
-      if (decl?.type === 'FunctionDeclaration') {
-        const id = asAstNode(decl['id']);
-        if (id?.['name'] === oldName) return id;
-      } else if (decl?.type === 'VariableDeclaration') {
-        const decls = Array.isArray(decl['declarations']) ? decl['declarations'] : [];
-        for (const d of decls) {
-          const varId = asAstNode(asAstNode(d)?.['id']);
-          if (varId?.['name'] === oldName) return varId;
-        }
-      }
-    } else if (stmt?.type === 'ExportDefaultDeclaration') {
-      const decl = asAstNode(stmt['declaration']);
-      if (decl?.type === 'FunctionDeclaration') {
-        const id = asAstNode(decl['id']);
-        if (id?.['name'] === oldName) return id;
-      }
-    }
-  }
-  return undefined;
-}
-
-function renameComponentInPageCode(code: string, oldName: string, newName: string): Result<string> {
-  let ast: AstNode;
-  try {
-    ast = parseJsxAst(code);
-  } catch {
-    return err({ code: 'E023', params: { reason: 'componentNotFound' } });
-  }
-  const targetIdNode = findComponentIdNode(ast, oldName);
-  if (
-    !targetIdNode ||
-    typeof targetIdNode.start !== 'number' ||
-    typeof targetIdNode.end !== 'number'
-  ) {
-    return err({ code: 'E023', params: { reason: 'componentNotFound' } });
-  }
-
-  const edits: TextEdit[] = [{ start: targetIdNode.start, end: targetIdNode.end, text: newName }];
-  const applied = applyTextEdits(code, edits);
-  if (!applied.ok) return applied;
-  return ok(applied.value.code);
-}
+import {
+  findRouteNodes,
+  findRouterArray,
+  type FoundRouteNode,
+  objectProps,
+  stringOf,
+} from './routes-ast.ts';
+import { getJsxAttr, getJsxStringAttr } from './routes-jsx.ts';
 
 function collectPathEdits(
+  routesCode: string,
   routeNode: AstNode,
   oldPath: string,
   newPath: string | undefined,
 ): TextEdit[] {
   if (newPath === undefined || newPath === oldPath) return [];
+  if (routeNode.type === 'JSXElement') {
+    const pathAttr = getJsxAttr(routeNode, 'path');
+    if (!pathAttr || typeof pathAttr.start !== 'number' || typeof pathAttr.end !== 'number') {
+      return [];
+    }
+    const origRaw = getJsxStringAttr(routeNode, 'path');
+    const isRel = origRaw !== undefined && !origRaw.startsWith('/');
+    const replacement = isRel ? newPath.replace(/^\//, '') : newPath;
+    const rawQuote = routesCode[pathAttr.start] === "'" ? "'" : '"';
+    return [
+      { start: pathAttr.start, end: pathAttr.end, text: `${rawQuote}${replacement}${rawQuote}` },
+    ];
+  }
   const pathProp = objectProps(routeNode).get('path');
   if (!pathProp || typeof pathProp.start !== 'number' || typeof pathProp.end !== 'number') {
     return [];
   }
   const origRaw = stringOf(pathProp);
   const isRel = origRaw !== undefined && !origRaw.startsWith('/');
-  const replacementStr = isRel ? `'${newPath.replace(/^\//, '')}'` : `'${newPath}'`;
-  return [{ start: pathProp.start, end: pathProp.end, text: replacementStr }];
+  const rawQuote = routesCode[pathProp.start] === '"' ? '"' : "'";
+  const rep = isRel
+    ? `${rawQuote}${newPath.replace(/^\//, '')}${rawQuote}`
+    : `${rawQuote}${newPath}${rawQuote}`;
+  return [{ start: pathProp.start, end: pathProp.end, text: rep }];
 }
 
 function collectImportRenameEdits(
+  routesCode: string,
   routesAst: AstNode,
   oldComp: string,
   newComp: string,
@@ -125,26 +83,28 @@ function collectImportRenameEdits(
       const spec = asAstNode(raw);
       const local = asAstNode(spec?.['local']);
       if (
-        local?.['name'] === oldComp &&
-        typeof local.start === 'number' &&
-        typeof local.end === 'number'
+        local?.['name'] !== oldComp ||
+        typeof local.start !== 'number' ||
+        typeof local.end !== 'number'
       ) {
-        edits.push({ start: local.start, end: local.end, text: newComp });
-        const sourceNode = asAstNode(stmt['source']);
-        if (sourceNode !== undefined) {
-          const srcVal = stringOf(sourceNode);
-          if (
-            srcVal &&
-            typeof sourceNode.start === 'number' &&
-            typeof sourceNode.end === 'number'
-          ) {
-            const newSrc = srcVal.replace(
-              new RegExp(`/${oldComp}(\\.[a-z0-9]+)?$`),
-              `/${newComp}$1`,
-            );
-            edits.push({ start: sourceNode.start, end: sourceNode.end, text: `'${newSrc}'` });
-          }
-        }
+        continue;
+      }
+      edits.push({ start: local.start, end: local.end, text: newComp });
+      const sourceNode = asAstNode(stmt['source']);
+      const srcVal = stringOf(sourceNode);
+      if (
+        sourceNode &&
+        srcVal &&
+        typeof sourceNode.start === 'number' &&
+        typeof sourceNode.end === 'number'
+      ) {
+        const rawQuote = routesCode[sourceNode.start] === '"' ? '"' : "'";
+        const newSrc = srcVal.replace(new RegExp(`/${oldComp}(\\.[a-z0-9]+)?$`), `/${newComp}$1`);
+        edits.push({
+          start: sourceNode.start,
+          end: sourceNode.end,
+          text: `${rawQuote}${newSrc}${rawQuote}`,
+        });
       }
     }
   }
@@ -180,9 +140,9 @@ function updateRoutesForRename(
   oldComp?: string,
   newComp?: string,
 ): Result<string> {
-  const edits: TextEdit[] = collectPathEdits(routeNode, oldPath, newPath);
+  const edits: TextEdit[] = collectPathEdits(routesCode, routeNode, oldPath, newPath);
   if (oldComp !== undefined && newComp !== undefined && oldComp !== newComp) {
-    edits.push(...collectImportRenameEdits(routesAst, oldComp, newComp));
+    edits.push(...collectImportRenameEdits(routesCode, routesAst, oldComp, newComp));
     edits.push(...collectJsxRenameEdits(routeNode, oldComp, newComp));
   }
   const applied = applyTextEdits(routesCode, edits);
@@ -319,7 +279,7 @@ function validateRenamePath(
   foundNode: FoundRouteNode,
   oldPath: string,
   newPath: string | undefined,
-  existingPages: readonly PageInfo[],
+  existingPages: readonly { readonly path: string }[],
 ): Result<string | undefined> {
   if (newPath === undefined || newPath === oldPath) return ok(undefined);
   if (foundNode.isIndex) return err({ code: 'E016', params: { reason: 'indexPage' } });
@@ -362,13 +322,40 @@ async function loadRouteContext(
   return ok({ routesCode, routesAst, foundNode });
 }
 
+function planRenameRoutesCode(
+  routesCode: string,
+  routesAst: AstNode,
+  routeNode: AstNode,
+  oldPath: string,
+  validatedNewPath: string | undefined,
+  oldComp: string | undefined,
+  newComp: string | undefined,
+): Result<string> {
+  const updatedRoutes = updateRoutesForRename(
+    routesCode,
+    routesAst,
+    routeNode,
+    oldPath,
+    validatedNewPath,
+    oldComp,
+    newComp,
+  );
+  if (!updatedRoutes.ok) return updatedRoutes;
+  try {
+    parseJsxAst(updatedRoutes.value);
+  } catch {
+    return err({ code: 'E024', params: { line: 1 } });
+  }
+  return updatedRoutes;
+}
+
 export async function renamePage(
   deps: PageEditDeps,
   input: RenamePageInput,
 ): Promise<Result<StructureResult>> {
   const pagesInfo = await readPages(deps.fs, deps.projectRoot, deps.sourceDir);
-  if (!pagesInfo.convention || !pagesInfo.routesFile) {
-    return err({ code: 'E016', params: { reason: 'notConvention' } });
+  if (pagesInfo.router.status !== 'found' || !pagesInfo.routesFile) {
+    return err(routerNotSupportedError(pagesInfo.router));
   }
   const routesRel = pagesInfo.routesFile;
   const targetPage = pagesInfo.pages.find((p) => p.path === input.path);
@@ -385,7 +372,7 @@ export async function renamePage(
   const fileRes = await prepareRenameComponentFile(deps, targetPage, input.newName);
   if (!fileRes.ok) return fileRes;
 
-  const updatedRoutes = updateRoutesForRename(
+  const planRes = planRenameRoutesCode(
     routesCode,
     routesAst,
     foundNode.routeNode,
@@ -394,20 +381,13 @@ export async function renamePage(
     targetPage.component,
     fileRes.value.newCompName,
   );
-  if (!updatedRoutes.ok) return updatedRoutes;
-  const newRoutesCode = updatedRoutes.value;
-
-  try {
-    parseJsxAst(newRoutesCode);
-  } catch {
-    return err({ code: 'E024', params: { line: 1 } });
-  }
+  if (!planRes.ok) return planRes;
 
   return commitRenamePage({
     deps,
     routesRel,
     routesCode,
-    newRoutesCode,
+    newRoutesCode: planRes.value,
     fileInfo: fileRes.value,
     labelName: input.newName ?? input.path,
     validatedNewPath,

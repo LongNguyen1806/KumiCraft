@@ -13,6 +13,7 @@ import type {
   PromoteDraft,
   RenameDraft,
   ResponsiveMode,
+  Routing,
   StructureResult,
   StyleFiles,
   SupportReport,
@@ -85,6 +86,7 @@ export type ProjectService = {
     readonly devPort?: number | 'auto' | undefined;
     readonly designDirs?: DesignDirs | undefined;
     readonly styleFiles?: StyleFiles | undefined;
+    readonly routing?: Routing | undefined;
   }): Promise<Result<ProjectInfo>>;
   setTrusted(trusted: boolean): Promise<Result<ProjectInfo>>;
   install(command: readonly string[]): Promise<Result<{ readonly jobId: string }>>;

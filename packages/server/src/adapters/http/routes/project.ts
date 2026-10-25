@@ -14,6 +14,7 @@ import {
   RenameDraftSchema,
   RenamePageSchema,
   ResponsiveModeSchema,
+  RoutingSchema,
   StyleFilesSchema,
   THEME_TOKEN_NAME,
   ThemeEditSchema,
@@ -58,6 +59,7 @@ const PatchSchema = z.strictObject({
   devPort: z.union([DevPortSchema, z.literal('auto')]).optional(),
   designDirs: DesignDirsSchema.optional(),
   styleFiles: StyleFilesSchema.optional(),
+  routing: RoutingSchema.optional(),
 });
 const TrustSchema = z.strictObject({ trusted: z.boolean() });
 const InstallSchema = z.strictObject({ command: z.array(z.string()).min(1) });

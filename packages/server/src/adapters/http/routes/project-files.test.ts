@@ -69,7 +69,14 @@ describe('project files routes [WP-4.00]', () => {
     patchProject: () => Promise.resolve(ok(mockProjectInfo)),
     setTrusted: () => Promise.resolve(ok(mockProjectInfo)),
     install: () => Promise.resolve(ok({ jobId: 'j1' })),
-    pages: () => Promise.resolve(ok({ pages: [], convention: false })),
+    pages: () =>
+      Promise.resolve(
+        ok({
+          pages: [],
+          convention: false,
+          router: { status: 'none', hasRouterPackage: false },
+        }),
+      ),
     theme: () =>
       Promise.resolve(
         ok({
