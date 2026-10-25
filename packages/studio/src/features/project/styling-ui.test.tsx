@@ -9,10 +9,10 @@ import * as sourceClient from '../../api/source-client.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { DrawToolbar } from '../draw/draw-toolbar.tsx';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { RightPanel } from '../editor/side-panels.tsx';
 import { StatusBar } from '../editor/status-bar.tsx';
 import { InspectorPanel } from '../inspector/inspector-panel.tsx';
 import { useSelectionStore } from '../selection/selection-store.ts';
+import { ActivityBar } from '../shell/activity-bar.tsx';
 import { useProjectStore } from './project-store.ts';
 
 const CSS_PROJECT: ProjectInfo = {
@@ -151,10 +151,10 @@ describe('Studio styling UI - Situations #11 & #12 [R-PJ-02]', () => {
     expect(screen.queryByTestId('draw-tool-image')).toBeNull();
     unmountDraw();
 
-    // 3. RightPanel keeps Brand: the style layer reads a CSS project's :root tokens (R-ST-11)
-    const { unmount: unmountRight } = render(<RightPanel />);
-    expect(screen.getByTestId('right-tab-brand')).toBeDefined();
-    unmountRight();
+    // 3. ActivityBar keeps Brand: the style layer reads a CSS project's :root tokens (R-ST-11)
+    const { unmount: unmountActivity } = render(<ActivityBar />);
+    expect(screen.getByTestId('activity-brand')).toBeDefined();
+    unmountActivity();
 
     // 4. Inspector has inspector-style-unsupported, no color/spacing groups, but has element path
     render(<InspectorPanel />);
@@ -202,10 +202,10 @@ describe('Studio styling UI - Situations #11 & #12 [R-PJ-02]', () => {
     expect(screen.getByTestId('draw-tool-image')).toBeDefined();
     unmountDraw();
 
-    // 3. RightPanel has Brand tab
-    const { unmount: unmountRight } = render(<RightPanel />);
-    expect(screen.getByTestId('right-tab-brand')).toBeDefined();
-    unmountRight();
+    // 3. ActivityBar has Brand icon
+    const { unmount: unmountActivity } = render(<ActivityBar />);
+    expect(screen.getByTestId('activity-brand')).toBeDefined();
+    unmountActivity();
 
     // 4. Inspector does NOT show unsupported notice, shows style groups
     render(<InspectorPanel />);

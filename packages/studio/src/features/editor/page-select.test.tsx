@@ -7,7 +7,9 @@ import * as projectClient from '../../api/project-client.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
+import { useActivityStore } from '../shell/activity-store.ts';
 import { PageSelect } from './page-select.tsx';
+import { usePanelLayoutStore } from './use-panel-layout.ts';
 
 /** Options of pages: direct children of the select, so the Drafts group (R-DR-13) is left out. */
 const pageOptions = (select: HTMLElement) =>
@@ -83,5 +85,34 @@ describe('PageSelect [R-PG-15]', () => {
 
     expect(navigate).toHaveBeenCalledWith('/product/42');
     expect(screen.queryByTestId('canvas-page-param')).toBeNull();
+  });
+
+  it('Test 10: clicking pages-manage sets active=pages, opens left panel without dialog; similar for drafts-manage [WP-4.00, R-PG-15]', () => {
+    useActivityStore.getState().setActive('layers');
+    usePanelLayoutStore.getState().toggle('left');
+    expect(usePanelLayoutStore.getState().layout.visible.left).toBe(false);
+
+    render(<PageSelect />);
+
+    // Click pages-manage
+    fireEvent.click(screen.getByTestId('pages-manage'));
+    expect(useActivityStore.getState().active).toBe('pages');
+    expect(usePanelLayoutStore.getState().layout.visible.left).toBe(true);
+    expect(screen.queryByRole('dialog') ?? undefined).toBeUndefined();
+
+    // Collapse left panel and click drafts-manage
+    usePanelLayoutStore.getState().toggle('left');
+    expect(usePanelLayoutStore.getState().layout.visible.left).toBe(false);
+
+    fireEvent.click(screen.getByTestId('drafts-manage'));
+    expect(useActivityStore.getState().active).toBe('drafts');
+    expect(usePanelLayoutStore.getState().layout.visible.left).toBe(true);
+    expect(screen.queryByRole('dialog') ?? undefined).toBeUndefined();
+
+    // Clicking pages-manage while already open keeps it open (does not collapse)
+    fireEvent.click(screen.getByTestId('pages-manage'));
+    expect(useActivityStore.getState().active).toBe('pages');
+    expect(usePanelLayoutStore.getState().layout.visible.left).toBe(true);
+    expect(screen.queryByRole('dialog') ?? undefined).toBeUndefined();
   });
 });

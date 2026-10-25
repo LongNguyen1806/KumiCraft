@@ -7,12 +7,11 @@ import { useTranslation } from 'react-i18next';
 import { createEventsClient } from '../../api/events-client.ts';
 import { isRecord } from '../../api/http.ts';
 import { fetchPages } from '../../api/project-client.ts';
-import { DraftsDialog } from '../drafts/drafts-dialog.tsx';
 import { NewDraftDialog } from '../drafts/new-draft-dialog.tsx';
 import { useDrafts } from '../drafts/use-drafts.ts';
-import { PagesDialog } from '../pages/pages-dialog.tsx';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
+import { activate } from '../shell/activity-store.ts';
 import { useCanvasViewStore } from './canvas-view-store.ts';
 
 const CODE_FILE = /\.(tsx|jsx|ts|js)$/;
@@ -200,57 +199,20 @@ function PageSelectControl({
 }
 
 type PageSelectDialogsProps = {
-  readonly pages: readonly PageInfo[];
-  readonly convention: boolean;
-  readonly drafts: readonly DraftInfo[];
-  readonly ignored: boolean;
   readonly projectId: string | undefined;
   readonly reload: () => void;
-  readonly pagesDialogOpen: boolean;
-  readonly draftsDialogOpen: boolean;
   readonly newDraftOpen: boolean;
-  readonly onPagesClose: () => void;
-  readonly onDraftsClose: () => void;
   readonly onNewDraftClose: () => void;
 };
 
 function PageSelectDialogs({
-  pages,
-  convention,
-  drafts,
-  ignored,
   projectId,
   reload,
-  pagesDialogOpen,
-  draftsDialogOpen,
   newDraftOpen,
-  onPagesClose,
-  onDraftsClose,
   onNewDraftClose,
 }: PageSelectDialogsProps) {
   return (
     <>
-      {pagesDialogOpen && (
-        <PagesDialog
-          open={pagesDialogOpen}
-          pages={pages}
-          convention={convention}
-          onClose={onPagesClose}
-          onPageAdded={(pagePath) => {
-            go(pagePath);
-          }}
-        />
-      )}
-      {draftsDialogOpen && (
-        <DraftsDialog
-          open={draftsDialogOpen}
-          drafts={drafts}
-          ignored={ignored}
-          projectId={projectId}
-          onClose={onDraftsClose}
-          onReload={reload}
-        />
-      )}
       {newDraftOpen && (
         <NewDraftDialog
           open={newDraftOpen}
@@ -296,52 +258,25 @@ function PageManageButtons({ onOpenPages, onOpenDrafts }: PageManageButtonsProps
   );
 }
 
-function usePageSelectDialogs() {
-  const [pagesDialogOpen, setPagesDialogOpen] = useState(false);
-  const [draftsDialogOpen, setDraftsDialogOpen] = useState(false);
-  const [newDraftOpen, setNewDraftOpen] = useState(false);
-
-  return {
-    pagesDialogOpen,
-    draftsDialogOpen,
-    newDraftOpen,
-    openPages: () => {
-      setPagesDialogOpen(true);
-    },
-    closePages: () => {
-      setPagesDialogOpen(false);
-    },
-    openDrafts: () => {
-      setDraftsDialogOpen(true);
-    },
-    closeDrafts: () => {
-      setDraftsDialogOpen(false);
-    },
-    openNewDraft: () => {
-      setNewDraftOpen(true);
-    },
-    closeNewDraft: () => {
-      setNewDraftOpen(false);
-    },
-  };
+function computeCurrentRoute(
+  draftFile: string | undefined,
+  pages: readonly PageInfo[],
+  route: string,
+): string {
+  if (draftFile !== undefined) return `draft:${draftFile}`;
+  return pages.some((p) => p.path === route) ? route : '';
 }
 
 export function PageSelect() {
-  const { pages, convention } = usePagesData();
-  const { drafts, ignored, projectId, reload } = useDrafts();
+  const { pages } = usePagesData();
+  const { drafts, projectId, reload } = useDrafts();
   const route = useSelectionStore((s) => s.currentRoute);
   const draftFile = useCanvasViewStore((s) => s.draftFile);
   const openDraft = useCanvasViewStore((s) => s.openDraft);
   const closeDraft = useCanvasViewStore((s) => s.closeDraft);
   const [paramDraft, setParamDraft] = useState<string>();
-  const dialogs = usePageSelectDialogs();
-
-  const current =
-    draftFile !== undefined
-      ? `draft:${draftFile}`
-      : pages.some((p) => p.path === route)
-        ? route
-        : '';
+  const [newDraftOpen, setNewDraftOpen] = useState(false);
+  const current = computeCurrentRoute(draftFile, pages, route);
 
   return (
     <div className="flex items-center gap-2">
@@ -358,22 +293,25 @@ export function PageSelect() {
         onCloseDraft={() => {
           closeDraft(projectId);
         }}
-        onNewDraft={dialogs.openNewDraft}
+        onNewDraft={() => {
+          setNewDraftOpen(true);
+        }}
       />
-      <PageManageButtons onOpenPages={dialogs.openPages} onOpenDrafts={dialogs.openDrafts} />
+      <PageManageButtons
+        onOpenPages={() => {
+          activate('pages', { keepOpen: true });
+        }}
+        onOpenDrafts={() => {
+          activate('drafts', { keepOpen: true });
+        }}
+      />
       <PageSelectDialogs
-        pages={pages}
-        convention={convention}
-        drafts={drafts}
-        ignored={ignored}
         projectId={projectId}
         reload={reload}
-        pagesDialogOpen={dialogs.pagesDialogOpen}
-        draftsDialogOpen={dialogs.draftsDialogOpen}
-        newDraftOpen={dialogs.newDraftOpen}
-        onPagesClose={dialogs.closePages}
-        onDraftsClose={dialogs.closeDrafts}
-        onNewDraftClose={dialogs.closeNewDraft}
+        newDraftOpen={newDraftOpen}
+        onNewDraftClose={() => {
+          setNewDraftOpen(false);
+        }}
       />
     </div>
   );

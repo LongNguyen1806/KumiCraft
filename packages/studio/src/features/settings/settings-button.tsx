@@ -4,20 +4,31 @@ import { useTranslation } from 'react-i18next';
 import { SettingsIcon } from '../../components/ui/icons.tsx';
 import { SettingsDialog } from './settings-dialog.tsx';
 
+export type SettingsButtonProps = {
+  readonly variant?: 'round' | 'activity';
+  readonly testId?: string | undefined;
+};
+
 /** The round gear button of the top bars; it opens the Settings dialog. */
-export function SettingsButton() {
+export function SettingsButton({ variant = 'round', testId }: SettingsButtonProps = {}) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const isActivity = variant === 'activity';
   return (
     <>
       <button
         type="button"
+        data-testid={testId ?? (isActivity ? 'activity-settings' : undefined)}
         aria-label={t('settings.open')}
         title={t('settings.open')}
         onClick={() => {
           setOpen(true);
         }}
-        className="grid size-10 place-items-center rounded-full bg-card text-ink shadow-soft backdrop-blur-md transition-transform hover:-translate-y-px"
+        className={
+          isActivity
+            ? 'relative flex size-10 items-center justify-center rounded-lg text-ink-soft hover:bg-field hover:text-ink transition-colors cursor-pointer'
+            : 'grid size-10 place-items-center rounded-full bg-card text-ink shadow-soft backdrop-blur-md transition-transform hover:-translate-y-px'
+        }
       >
         <SettingsIcon />
       </button>

@@ -3,19 +3,10 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { deleteDraft, duplicateDraft, renameDraft } from '../../api/project-client.ts';
-import { Dialog } from '../../components/ui/dialog.tsx';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { PromoteDraftDialog } from './promote-draft-dialog.tsx';
-
-export type DraftsDialogProps = {
-  readonly open: boolean;
-  readonly drafts: readonly DraftInfo[];
-  readonly ignored: boolean;
-  readonly projectId?: string | undefined;
-  readonly onClose: () => void;
-  readonly onReload?: () => void;
-};
+import { useDrafts } from './use-drafts.ts';
 
 type DraftRowActionsProps = {
   readonly draft: DraftInfo;
@@ -174,7 +165,12 @@ type DraftActionsHookParams = {
   readonly tError: ReturnType<typeof useTranslation<'errors'>>['t'];
 };
 
-function useDraftItemActions({ projectId, onReload, setErrorMsg, tError }: DraftActionsHookParams) {
+export function useDraftItemActions({
+  projectId,
+  onReload,
+  setErrorMsg,
+  tError,
+}: DraftActionsHookParams) {
   const currentDraftFile = useCanvasViewStore((s) => s.draftFile);
   const openDraft = useCanvasViewStore((s) => s.openDraft);
   const closeDraft = useCanvasViewStore((s) => s.closeDraft);
@@ -227,7 +223,7 @@ type DraftsListProps = {
   readonly onPromote: (draft: DraftInfo) => void;
 };
 
-function DraftsList({
+export function DraftsList({
   drafts,
   renamingFile,
   onStartRename,
@@ -266,7 +262,7 @@ function DraftsList({
   );
 }
 
-type DraftsDialogContentProps = {
+export type DraftsContentProps = {
   readonly drafts: readonly DraftInfo[];
   readonly ignored: boolean;
   readonly errorMsg: string | undefined;
@@ -274,13 +270,13 @@ type DraftsDialogContentProps = {
   readonly onPromote: (d: DraftInfo) => void;
 };
 
-function DraftsDialogContent({
+export function DraftsContent({
   drafts,
   ignored,
   errorMsg,
   actions,
   onPromote,
-}: DraftsDialogContentProps) {
+}: DraftsContentProps) {
   const { t } = useTranslation();
   const [renamingFile, setRenamingFile] = useState<string>();
 
@@ -322,36 +318,39 @@ function DraftsDialogContent({
   );
 }
 
-export function DraftsDialog({
-  open,
-  drafts,
-  ignored,
-  projectId,
-  onClose,
-  onReload,
-}: DraftsDialogProps) {
-  const { t } = useTranslation();
+export type DraftsPanelProps = {
+  readonly drafts?: readonly DraftInfo[] | undefined;
+  readonly ignored?: boolean | undefined;
+  readonly projectId?: string | undefined;
+  readonly onReload?: (() => void) | undefined;
+};
+
+export function DraftsPanel({
+  drafts: propDrafts,
+  ignored: propIgnored,
+  projectId: propProjectId,
+  onReload: propReload,
+}: DraftsPanelProps = {}) {
+  const storeData = useDrafts();
+  const drafts = propDrafts ?? storeData.drafts;
+  const ignored = propIgnored ?? storeData.ignored;
+  const projectId = propProjectId ?? storeData.projectId;
+  const onReload = propReload ?? storeData.reload;
+
   const { t: tError } = useTranslation('errors');
   const [promotingDraft, setPromotingDraft] = useState<DraftInfo>();
   const [errorMsg, setErrorMsg] = useState<string | undefined>();
   const actions = useDraftItemActions({ projectId, onReload, setErrorMsg, tError });
 
   return (
-    <>
-      <Dialog
-        open={open}
-        title={t('drafts.title')}
-        closeLabel={t('settings.close')}
-        onClose={onClose}
-      >
-        <DraftsDialogContent
-          drafts={drafts}
-          ignored={ignored}
-          errorMsg={errorMsg}
-          actions={actions}
-          onPromote={setPromotingDraft}
-        />
-      </Dialog>
+    <div data-testid="drafts-panel" className="flex flex-col gap-3">
+      <DraftsContent
+        drafts={drafts}
+        ignored={ignored}
+        errorMsg={errorMsg}
+        actions={actions}
+        onPromote={setPromotingDraft}
+      />
       {promotingDraft !== undefined && (
         <PromoteDraftDialog
           open={true}
@@ -361,10 +360,10 @@ export function DraftsDialog({
             setPromotingDraft(undefined);
           }}
           onPromoted={() => {
-            onReload?.();
+            onReload();
           }}
         />
       )}
-    </>
+    </div>
   );
 }

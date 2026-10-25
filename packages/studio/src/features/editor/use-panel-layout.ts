@@ -48,6 +48,7 @@ function saveLayout(layout: PanelLayout): void {
 export type PanelStore = {
   readonly layout: PanelLayout;
   readonly toggle: (side: Side) => void;
+  readonly show: (side: Side) => void;
   readonly toggleBoth: () => void;
   readonly resize: (side: Side, width: number) => void;
 };
@@ -59,6 +60,17 @@ export const usePanelLayoutStore = create<PanelStore>((set) => ({
       const next: PanelLayout = {
         ...state.layout,
         visible: { ...state.layout.visible, [side]: !state.layout.visible[side] },
+      };
+      saveLayout(next);
+      return { layout: next };
+    });
+  },
+  show: (side) => {
+    set((state) => {
+      if (state.layout.visible[side]) return state;
+      const next: PanelLayout = {
+        ...state.layout,
+        visible: { ...state.layout.visible, [side]: true },
       };
       saveLayout(next);
       return { layout: next };
@@ -90,7 +102,8 @@ export const usePanelLayoutStore = create<PanelStore>((set) => ({
 export function usePanelLayout() {
   const layout = usePanelLayoutStore((s) => s.layout);
   const toggle = usePanelLayoutStore((s) => s.toggle);
+  const show = usePanelLayoutStore((s) => s.show);
   const toggleBoth = usePanelLayoutStore((s) => s.toggleBoth);
   const resize = usePanelLayoutStore((s) => s.resize);
-  return { layout, toggle, toggleBoth, resize };
+  return { layout, toggle, show, toggleBoth, resize };
 }

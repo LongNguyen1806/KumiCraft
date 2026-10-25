@@ -7,7 +7,7 @@ import { isApplePlatform, shortcutLabel } from '../../app/platform.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { EditorScreen } from '../../routes/editor-screen.tsx';
 import { useHistoryStore } from '../history/history-store.ts';
-import { clampWidth, readLayout } from './use-panel-layout.ts';
+import { clampWidth, readLayout, usePanelLayoutStore } from './use-panel-layout.ts';
 
 vi.mock('./use-runner-status.ts', () => ({
   useRunnerStatus: () => ({
@@ -132,6 +132,25 @@ describe('Editor frame', () => {
     window.dispatchEvent(event);
     expect(event.defaultPrevented).toBe(true);
     expect(undoSpy).toHaveBeenCalled();
+  });
+
+  it('Test 12: collapses left panel while activity bar remains visible and first grid column is 48px [WP-4.00]', () => {
+    usePanelLayoutStore.getState().show('left');
+    openEditor();
+
+    expect(screen.getByTestId('activity-layers')).toBeDefined();
+    expect(screen.getByRole('complementary', { name: 'Layers' })).toBeDefined();
+
+    // Collapse left panel
+    fireEvent.click(screen.getByRole('button', { name: /Show or hide the left panel/ }));
+    expect(screen.queryByRole('complementary', { name: 'Layers' })).toBeNull();
+
+    // Activity bar remains visible
+    expect(screen.getByTestId('activity-layers')).toBeDefined();
+
+    // Grid starts with 48px
+    const grid = screen.getByTestId('activity-layers').closest('.grid');
+    expect(grid?.getAttribute('style')).toContain('grid-template-columns: 48px');
   });
 });
 

@@ -5,9 +5,9 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import * as projectClient from '../../api/project-client.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { AddPageForm } from './add-page-form.tsx';
-import { PagesDialog } from './pages-dialog.tsx';
+import { PagesPanel } from './pages-panel.tsx';
 
-describe('PagesDialog & AddPageForm [WP-2.05]', () => {
+describe('PagesPanel & AddPageForm [WP-2.05]', () => {
   beforeAll(async () => {
     await initI18n();
   });
@@ -44,9 +44,9 @@ describe('PagesDialog & AddPageForm [WP-2.05]', () => {
       { path: '/about', component: 'About', dynamic: false },
     ];
 
-    render(<PagesDialog open={true} pages={mockPages} convention={false} onClose={() => {}} />);
+    render(<PagesPanel pages={mockPages} convention={false} />);
 
-    expect(screen.getByTestId('pages-dialog')).toBeDefined();
+    expect(screen.getByTestId('pages-panel')).toBeDefined();
     expect(screen.getByTestId('pages-not-convention')).toBeDefined();
 
     const addButton = screen.getByTestId('page-add');

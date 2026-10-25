@@ -8,7 +8,6 @@ import { shortcutLabel } from '../../app/platform.ts';
 import { PanelLeftIcon, PanelRightIcon, RedoIcon, UndoIcon } from '../../components/ui/icons.tsx';
 import { HistoryErrorNotice } from '../history/history-error-notice.tsx';
 import { useHistoryStore } from '../history/history-store.ts';
-import { SettingsButton } from '../settings/settings-button.tsx';
 import { RunnerStatusBadge } from './runner-status-badge.tsx';
 import type { Side } from './use-panel-layout.ts';
 
@@ -166,7 +165,6 @@ export function EditorToolbar(props: EditorToolbarProps) {
       <HistoryErrorNotice />
       <HistoryButtons />
       <LanguageSwitcher />
-      <SettingsButton />
       <PanelToggle side="right" {...props} />
     </header>
   );

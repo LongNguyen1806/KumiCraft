@@ -3,6 +3,16 @@
     "name": "KumiCraft",
     "version": "Phiên bản {{version}}"
   },
+  "activity": {
+    "bar": "Thanh hoạt động",
+    "layers": "Lớp",
+    "library": "Thư viện",
+    "components": "Component",
+    "pages": "Trang",
+    "drafts": "Bản nháp",
+    "brand": "Brand",
+    "settings": "Cài đặt"
+  },
   "session": {
     "connecting": "Đang kết nối tới KumiCraft…",
     "lost": {
@@ -479,6 +489,7 @@
     "title": "Bản nháp",
     "new": "Bản nháp mới…",
     "manage": "Quản lý bản nháp",
+    "empty": "Chưa có bản nháp nào",
     "blank": "Trắng",
     "free": "Khung tự do",
     "create": "Tạo",

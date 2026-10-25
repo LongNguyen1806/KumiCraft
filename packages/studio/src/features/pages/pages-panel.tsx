@@ -3,19 +3,10 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { deleteProjectPage } from '../../api/project-client.ts';
-import { Dialog } from '../../components/ui/dialog.tsx';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
+import { usePagesData } from '../editor/page-select.tsx';
 import { AddPageForm } from './add-page-form.tsx';
 import { RenamePageForm } from './rename-page-form.tsx';
-
-export type PagesDialogProps = {
-  readonly open: boolean;
-  readonly pages: readonly PageInfo[];
-  readonly convention: boolean;
-  readonly defaultDir?: string | undefined;
-  readonly onClose: () => void;
-  readonly onPageAdded?: ((pagePath: string) => void) | undefined;
-};
 
 type PageRowActionsProps = {
   readonly path: string;
@@ -110,7 +101,7 @@ type PagesListProps = {
   readonly onRenamed: () => void;
 };
 
-function PagesList({
+export function PagesList({
   pages,
   convention,
   renamingPath,
@@ -147,7 +138,7 @@ function PagesList({
   );
 }
 
-function usePageDeletion() {
+export function usePageDeletion() {
   const { t } = useTranslation();
   const { t: tError } = useTranslation('errors');
   const [deleteError, setDeleteError] = useState<string | undefined>();
@@ -166,19 +157,19 @@ function usePageDeletion() {
   return { deleteError, handleDelete };
 }
 
-type PagesDialogHeaderProps = {
+type PagesHeaderProps = {
   readonly convention: boolean;
   readonly defaultDir?: string | undefined;
   readonly onPageAdded?: ((pagePath: string) => void) | undefined;
   readonly deleteError?: string | undefined;
 };
 
-function PagesDialogHeader({
+export function PagesHeader({
   convention,
   defaultDir,
   onPageAdded,
   deleteError,
-}: PagesDialogHeaderProps) {
+}: PagesHeaderProps) {
   const { t } = useTranslation();
   return (
     <>
@@ -207,48 +198,50 @@ function PagesDialogHeader({
   );
 }
 
-export function PagesDialog({
-  open,
-  pages,
-  convention,
+export type PagesPanelProps = {
+  readonly pages?: readonly PageInfo[] | undefined;
+  readonly convention?: boolean | undefined;
+  readonly defaultDir?: string | undefined;
+  readonly onPageAdded?: ((pagePath: string) => void) | undefined;
+};
+
+export function PagesPanel({
+  pages: propPages,
+  convention: propConvention,
   defaultDir,
-  onClose,
   onPageAdded,
-}: PagesDialogProps) {
-  const { t } = useTranslation();
+}: PagesPanelProps = {}) {
+  const storeData = usePagesData();
+  const pages = propPages ?? storeData.pages;
+  const convention = propConvention ?? storeData.convention;
   const [renamingPath, setRenamingPath] = useState<string | undefined>();
   const { deleteError, handleDelete } = usePageDeletion();
 
   return (
-    <Dialog open={open} title={t('pages.title')} closeLabel="✕" onClose={onClose}>
-      <div
-        data-testid="pages-dialog"
-        className="flex flex-col gap-3 text-xs text-ink max-h-[80vh] overflow-y-auto"
-      >
-        <PagesDialogHeader
-          convention={convention}
-          defaultDir={defaultDir}
-          onPageAdded={onPageAdded}
-          deleteError={deleteError}
-        />
-        <PagesList
-          pages={pages}
-          convention={convention}
-          renamingPath={renamingPath}
-          onStartRename={(path) => {
-            setRenamingPath(path);
-          }}
-          onCancelRename={() => {
-            setRenamingPath(undefined);
-          }}
-          onDelete={(path) => {
-            void handleDelete(path);
-          }}
-          onRenamed={() => {
-            setRenamingPath(undefined);
-          }}
-        />
-      </div>
-    </Dialog>
+    <div data-testid="pages-panel" className="flex flex-col gap-3 text-xs text-ink">
+      <PagesHeader
+        convention={convention}
+        defaultDir={defaultDir}
+        onPageAdded={onPageAdded}
+        deleteError={deleteError}
+      />
+      <PagesList
+        pages={pages}
+        convention={convention}
+        renamingPath={renamingPath}
+        onStartRename={(path) => {
+          setRenamingPath(path);
+        }}
+        onCancelRename={() => {
+          setRenamingPath(undefined);
+        }}
+        onDelete={(path) => {
+          void handleDelete(path);
+        }}
+        onRenamed={() => {
+          setRenamingPath(undefined);
+        }}
+      />
+    </div>
   );
 }

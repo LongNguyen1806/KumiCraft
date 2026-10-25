@@ -1,16 +1,37 @@
-// Tests for side panels and tab switching based on styling editable state (SPEC-04 Round S1, R-PJ-02).
+// Tests for side panels and tab switching [WP-4.00, R-PG-15, R-PJ-02].
 import type { ProjectInfo } from '@kumicraft/shared';
 import { cleanup, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { initI18n } from '../../i18n/i18n.ts';
 import { useProjectStore } from '../project/project-store.ts';
-import { RightPanel } from './side-panels.tsx';
+import { useActivityStore } from '../shell/activity-store.ts';
+import { LeftPanel, RightPanel } from './side-panels.tsx';
 
-const CSS_PROJECT: ProjectInfo = {
-  id: 'proj000001',
-  name: 'CSS Project',
+vi.mock('../../api/project-client.ts', () => ({
+  fetchPages: vi.fn().mockResolvedValue({ pages: [], convention: true }),
+  fetchProjectTheme: vi.fn().mockResolvedValue({
+    file: 'src/theme.css',
+    system: 'css',
+    colors: [],
+    fontSizes: [],
+    radii: [],
+    fonts: [],
+    shadows: [],
+    breakpoints: [],
+  }),
+  fetchProjectDirs: vi.fn().mockResolvedValue(['src/pages']),
+}));
+
+vi.mock('../drafts/use-drafts.ts', () => ({
+  useDrafts: () => ({ drafts: [], reload: vi.fn() }),
+}));
+
+/** styled-components has no style adapter yet: no Brand (R-ST-02). */
+const STYLED_COMPONENTS_PROJECT: ProjectInfo = {
+  id: 'proj000003',
+  name: 'Styled Components Project',
   root: '/test',
   sourceDir: 'src',
   support: {
@@ -20,10 +41,10 @@ const CSS_PROJECT: ProjectInfo = {
     versions: {},
     language: 'ts',
     styling: {
-      systems: [{ id: 'css' }],
-      primary: 'css',
+      systems: [{ id: 'styledComponents' }],
+      primary: 'styledComponents',
       editable: false,
-      globalCss: ['src/index.css'],
+      globalCss: [],
     },
   },
   needsInstall: false,
@@ -31,32 +52,15 @@ const CSS_PROJECT: ProjectInfo = {
   frames: [{ id: 'desktop', label: 'Desktop', width: 1440, height: 900 }],
   primaryFrameId: 'desktop',
   backends: [],
-  designDirs: {
-    pages: 'src/pages',
-    layouts: 'src/layouts',
-    components: 'src/components',
-    drafts: 'src/drafts',
-  },
+  designDirs: { pages: 'src/pages', layouts: 'src/layouts', components: 'src/components' },
   trusted: true,
 };
 
-const STYLED_COMPONENTS_PROJECT: ProjectInfo = {
-  ...CSS_PROJECT,
-  support: {
-    ...CSS_PROJECT.support,
-    styling: {
-      systems: [{ id: 'styledComponents' }],
-      primary: 'styledComponents',
-      editable: false,
-      globalCss: [],
-    },
-  },
-};
-
-describe('SidePanels - Situation #14 [R-PJ-02]', () => {
+describe('SidePanels [WP-4.00]', () => {
   beforeEach(async () => {
     await initI18n();
     localStorage.clear();
+    useActivityStore.getState().initFromStorage();
   });
 
   afterEach(() => {
@@ -65,29 +69,45 @@ describe('SidePanels - Situation #14 [R-PJ-02]', () => {
     useProjectStore.getState().setProject(undefined);
   });
 
-  it('Situation #14: saved tab is brand, opening a project with no style adapter switches panel to Properties [R-PJ-02, R-ST-02]', () => {
-    localStorage.setItem('kumicraft.rightPanelTab', 'brand');
-    useProjectStore.getState().setProject(STYLED_COMPONENTS_PROJECT);
+  it('Test 8: active=pages renders PagesPanel (with add page button), active=brand renders BrandPanel, no left tab bar [WP-4.00, R-PG-15]', () => {
+    useActivityStore.getState().setActive('pages');
+    const { unmount } = render(<LeftPanel />);
 
-    render(<RightPanel />);
+    // Renders PagesPanel with add page button
+    expect(screen.getByTestId('pages-panel')).toBeDefined();
+    expect(screen.getByTestId('page-add')).toBeDefined();
+    // No tab bar on the left panel
+    expect(screen.queryByRole('tablist') ?? undefined).toBeUndefined();
+    unmount();
 
-    // styled-components has no adapter yet, so there is no Brand (R-ST-02)
-    expect(screen.queryByTestId('right-tab-brand')).toBeNull();
+    // Switch to brand
+    useActivityStore.getState().setActive('brand');
+    render(<LeftPanel />);
 
-    // Title and selected tab should be Properties
-    expect(screen.getByRole('heading', { name: i18next.t('editor.properties') })).toBeDefined();
-    expect(
-      screen.getByRole('tab', { name: i18next.t('editor.properties'), selected: true }),
-    ).toBeDefined();
+    // BrandPanel is rendered (either brand-panel or brand-empty)
+    const brandElement = screen.queryByTestId('brand-panel') ?? screen.queryByTestId('brand-empty');
+    expect(brandElement ?? undefined).toBeDefined();
+    // Still no tab bar on the left panel
+    expect(screen.queryByRole('tablist') ?? undefined).toBeUndefined();
   });
 
-  it('keeps the Brand tab for a plain CSS project, whose :root variables are its tokens [R-ST-11]', () => {
-    localStorage.setItem('kumicraft.rightPanelTab', 'brand');
-    useProjectStore.getState().setProject(CSS_PROJECT);
-
+  it('Test 9: RightPanel only has Properties and Chat tabs, without right-tab-brand [WP-4.00]', () => {
     render(<RightPanel />);
 
-    expect(screen.getByTestId('right-tab-brand')).toBeDefined();
-    expect(screen.getByRole('tab', { name: i18next.t('brand.tab'), selected: true })).toBeDefined();
+    expect(screen.getByRole('tab', { name: i18next.t('editor.properties') })).toBeDefined();
+    expect(screen.getByRole('tab', { name: i18next.t('editor.ai') })).toBeDefined();
+    expect(screen.queryByTestId('right-tab-brand') ?? undefined).toBeUndefined();
+
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs.length).toBe(2);
+  });
+
+  it('shows Layers, not Brand, when Brand was open and the project has no style adapter [WP-4.00, R-ST-02]', () => {
+    useActivityStore.getState().setActive('brand');
+    useProjectStore.getState().setProject(STYLED_COMPONENTS_PROJECT);
+    render(<LeftPanel />);
+
+    expect(screen.getByRole('complementary', { name: i18next.t('editor.layers') })).toBeDefined();
+    expect(screen.queryByTestId('brand-panel') ?? undefined).toBeUndefined();
   });
 });

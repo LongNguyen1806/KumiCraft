@@ -7,6 +7,7 @@ import { useHistorySync } from '../history/history-store.ts';
 import { InstallDialog } from '../project/install-dialog.tsx';
 import { ProjectDialog } from '../project/project-dialog.tsx';
 import { useProjectStore } from '../project/project-store.ts';
+import { ActivityBar } from '../shell/activity-bar.tsx';
 import { ShortcutHelp } from '../shortcuts/shortcut-help.tsx';
 import { useShortcuts } from '../shortcuts/use-shortcuts.ts';
 import { TrustPrompt } from '../trust/trust-prompt.tsx';
@@ -18,7 +19,7 @@ import { StatusBar } from './status-bar.tsx';
 import { type PanelLayout, type Side, usePanelLayout } from './use-panel-layout.ts';
 
 const columns = ({ width, visible }: PanelLayout): string =>
-  `${visible.left ? `${String(width.left)}px 10px` : '0 0'} minmax(0,1fr) ${
+  `48px ${visible.left ? `${String(width.left)}px 10px` : '0 0'} minmax(0,1fr) ${
     visible.right ? `10px ${String(width.right)}px` : '0 0'
   }`;
 
@@ -58,6 +59,7 @@ function WorkGrid({
   const { layout, resize } = panels;
   return (
     <div className="grid min-h-0 flex-1" style={{ gridTemplateColumns: columns(layout) }}>
+      <ActivityBar />
       {layout.visible.left ? <LeftPanel /> : <div />}
       <SideHandle side="left" layout={layout} resize={resize} />
       <CanvasArea

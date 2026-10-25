@@ -13,7 +13,7 @@ import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { PageSelect } from '../editor/page-select.tsx';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
-import { DraftsDialog } from './drafts-dialog.tsx';
+import { DraftsPanel } from './drafts-panel.tsx';
 import { PromoteDraftDialog } from './promote-draft-dialog.tsx';
 
 describe('Studio Drafts [R-DR-10 .. R-DR-15]', () => {
@@ -153,13 +153,13 @@ describe('Studio Drafts [R-DR-10 .. R-DR-15]', () => {
     localStorage.clear();
   });
 
-  it('scenario 17: DraftsDialog disables delete for inUse draft, shows draft-in-use and ignored warning', () => {
+  it('scenario 17: DraftsPanel disables delete for inUse draft, shows draft-in-use and ignored warning', () => {
     const sampleDrafts: readonly DraftInfo[] = [
       { name: 'Mockup', file: 'src/drafts/Mockup.tsx', free: false, inUse: true },
       { name: 'Draft2', file: 'src/drafts/Draft2.tsx', free: false, inUse: false },
     ];
 
-    render(<DraftsDialog open={true} drafts={sampleDrafts} ignored={true} onClose={() => {}} />);
+    render(<DraftsPanel drafts={sampleDrafts} ignored={true} />);
 
     expect(screen.getByTestId('drafts-ignored-warning')).toBeDefined();
     expect(screen.getByTestId('draft-in-use')).toBeDefined();

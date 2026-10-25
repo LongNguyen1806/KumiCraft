@@ -1,25 +1,28 @@
+import type { TFunction } from 'i18next';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { BrandPanel } from '../brand/brand-panel.tsx';
 import { ChatPanel } from '../chat/chat-panel.tsx';
 import { ComponentsPanel } from '../components-panel/components-panel.tsx';
+import { DraftsPanel } from '../drafts/drafts-panel.tsx';
 import { InspectorPanel } from '../inspector/inspector-panel.tsx';
 import { useProjectTheme } from '../inspector/use-project-theme.ts';
 import { LayerTree } from '../layers/layer-tree.tsx';
 import { LibraryPanel } from '../library/library-panel.tsx';
-import { useStyleLayerSupported } from '../project/use-style-edit.ts';
+import { PagesPanel } from '../pages/pages-panel.tsx';
+import { useShownActivity } from '../shell/activity-store.ts';
 import { PanelHeaderContext } from './panel-header-context.ts';
 
 type PanelProps = {
   readonly label: string;
   readonly title: string;
-  readonly tabs: ReactNode;
+  readonly tabs?: ReactNode | undefined;
   readonly onHeaderSlotRef?: ((el: HTMLDivElement | undefined) => void) | undefined;
   readonly children: ReactNode;
 };
 
-/** A frosted panel: thin title and pill tabs (approved mockup). */
+/** A frosted panel: thin title and optional pill tabs (approved mockup). */
 function Panel({ label, title, tabs, onHeaderSlotRef, children }: PanelProps) {
   return (
     <aside
@@ -38,9 +41,11 @@ function Panel({ label, title, tabs, onHeaderSlotRef, children }: PanelProps) {
           />
         )}
       </div>
-      <div role="tablist" className="mx-3 flex gap-0.5 rounded-full bg-field p-[3px]">
-        {tabs}
-      </div>
+      {tabs !== undefined && (
+        <div role="tablist" className="mx-3 flex gap-0.5 rounded-full bg-field p-[3px]">
+          {tabs}
+        </div>
+      )}
       <div className="min-h-0 flex-1 overflow-auto px-3 pt-2.5 pb-3.5">{children}</div>
     </aside>
   );
@@ -70,103 +75,51 @@ function Tab({ selected, disabled = false, testId, onClick, children }: TabProps
   );
 }
 
-const LEFT_PANEL_KEY = 'kumicraft.leftPanelTab';
-
-export type LeftPanelTab = 'layers' | 'library' | 'components';
-
-function readLeftPanelTab(): LeftPanelTab {
-  try {
-    const saved = localStorage.getItem(LEFT_PANEL_KEY);
-    if (saved === 'library' || saved === 'components') return saved;
-    return 'layers';
-  } catch {
-    return 'layers';
+function resolveLeftPanelTitle(active: string, t: TFunction): string {
+  switch (active) {
+    case 'layers':
+      return t('editor.layers');
+    case 'library':
+      return t('editor.library');
+    case 'components':
+      return t('editor.components');
+    case 'pages':
+      return t('pages.title');
+    case 'drafts':
+      return t('drafts.title');
+    case 'brand':
+      return t('brand.tab');
+    default:
+      return t('editor.layers');
   }
 }
 
-function saveLeftPanelTab(tab: LeftPanelTab): void {
-  try {
-    localStorage.setItem(LEFT_PANEL_KEY, tab);
-  } catch {
-    // Private windows may refuse storage: the layout then lasts for this visit only.
-  }
-}
-
-type LeftPanelTabsProps = {
-  readonly tab: LeftPanelTab;
-  readonly onSelectTab: (tab: LeftPanelTab) => void;
-};
-
-function LeftPanelTabs({ tab, onSelectTab }: LeftPanelTabsProps) {
-  const { t } = useTranslation();
-  return (
-    <>
-      <Tab
-        selected={tab === 'layers'}
-        onClick={() => {
-          onSelectTab('layers');
-        }}
-      >
-        {t('editor.layers')}
-      </Tab>
-      <Tab
-        selected={tab === 'library'}
-        onClick={() => {
-          onSelectTab('library');
-        }}
-      >
-        {t('editor.library')}
-      </Tab>
-      <Tab
-        selected={tab === 'components'}
-        onClick={() => {
-          onSelectTab('components');
-        }}
-      >
-        {t('editor.components')}
-      </Tab>
-    </>
-  );
-}
-
-/** Layer Tree, Library, or Components of the running page (M-SL, M-LB, WP-1.05, WP-2.03, WP-2.08a). */
+/** Left panel content: LayerTree, Library, Components, Pages, Drafts, or Brand. */
 export function LeftPanel() {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<LeftPanelTab>(readLeftPanelTab);
-
-  const handleSetTab = (nextTab: LeftPanelTab) => {
-    setTab(nextTab);
-    saveLeftPanelTab(nextTab);
-  };
-
-  const title =
-    tab === 'layers'
-      ? t('editor.layers')
-      : tab === 'library'
-        ? t('editor.library')
-        : t('editor.components');
+  const active = useShownActivity();
+  const title = resolveLeftPanelTitle(active, t);
 
   return (
-    <Panel
-      label={t('editor.leftPanel')}
-      title={title}
-      tabs={<LeftPanelTabs tab={tab} onSelectTab={handleSetTab} />}
-    >
-      {tab === 'layers' && <LayerTree />}
-      {tab === 'library' && <LibraryPanel />}
-      {tab === 'components' && <ComponentsPanel />}
+    <Panel label={title} title={title}>
+      {active === 'layers' && <LayerTree />}
+      {active === 'library' && <LibraryPanel />}
+      {active === 'components' && <ComponentsPanel />}
+      {active === 'pages' && <PagesPanel />}
+      {active === 'drafts' && <DraftsPanel />}
+      {active === 'brand' && <BrandPanel />}
     </Panel>
   );
 }
 
 const RIGHT_PANEL_KEY = 'kumicraft.rightPanelTab';
 
-export type RightPanelTab = 'properties' | 'brand' | 'chat';
+export type RightPanelTab = 'properties' | 'chat';
 
 function readRightPanelTab(): RightPanelTab {
   try {
-    const saved = localStorage.getItem(RIGHT_PANEL_KEY);
-    if (saved === 'brand' || saved === 'chat') return saved;
+    const saved = localStorage.getItem(RIGHT_PANEL_KEY) ?? undefined;
+    if (saved === 'chat') return 'chat';
     return 'properties';
   } catch {
     return 'properties';
@@ -188,7 +141,6 @@ type RightPanelTabsProps = {
 
 function RightPanelTabs({ tab, onSelectTab }: RightPanelTabsProps) {
   const { t } = useTranslation();
-  const brandAvailable = useStyleLayerSupported();
   return (
     <>
       <Tab
@@ -199,17 +151,6 @@ function RightPanelTabs({ tab, onSelectTab }: RightPanelTabsProps) {
       >
         {t('editor.properties')}
       </Tab>
-      {brandAvailable && (
-        <Tab
-          selected={tab === 'brand'}
-          testId="right-tab-brand"
-          onClick={() => {
-            onSelectTab('brand');
-          }}
-        >
-          {t('brand.tab')}
-        </Tab>
-      )}
       <Tab
         selected={tab === 'chat'}
         testId="right-tab-chat"
@@ -227,39 +168,30 @@ export type RightPanelProps = {
   readonly trusted?: boolean;
 };
 
-/** Inspector of the selected element, Brand @theme editor, or AI chat (M-IN, WP-1.07, WP-2.10, WP-3.05a). */
+/** Inspector of the selected element, or AI chat (M-IN, WP-1.07, WP-2.10, WP-3.05a). */
 export function RightPanel({ trusted = false }: RightPanelProps) {
   const { t } = useTranslation();
   const theme = useProjectTheme();
-  const brandAvailable = useStyleLayerSupported();
   const [tab, setTab] = useState<RightPanelTab>(readRightPanelTab);
   const [headerSlot, setHeaderSlot] = useState<HTMLDivElement | undefined>(undefined);
-
-  const activeTab: RightPanelTab = !brandAvailable && tab === 'brand' ? 'properties' : tab;
 
   const handleSetTab = (nextTab: RightPanelTab) => {
     setTab(nextTab);
     saveRightPanelTab(nextTab);
   };
 
-  const title =
-    activeTab === 'brand'
-      ? t('brand.tab')
-      : activeTab === 'chat'
-        ? t('editor.ai')
-        : t('editor.properties');
+  const title = tab === 'chat' ? t('editor.ai') : t('editor.properties');
 
   return (
-    <PanelHeaderContext.Provider value={activeTab === 'chat' ? headerSlot : undefined}>
+    <PanelHeaderContext.Provider value={tab === 'chat' ? headerSlot : undefined}>
       <Panel
         label={t('editor.rightPanel')}
         title={title}
-        tabs={<RightPanelTabs tab={activeTab} onSelectTab={handleSetTab} />}
+        tabs={<RightPanelTabs tab={tab} onSelectTab={handleSetTab} />}
         onHeaderSlotRef={setHeaderSlot}
       >
-        {activeTab === 'properties' && <InspectorPanel theme={theme} />}
-        {activeTab === 'brand' && <BrandPanel />}
-        {activeTab === 'chat' && <ChatPanel trusted={trusted} />}
+        {tab === 'properties' && <InspectorPanel theme={theme} />}
+        {tab === 'chat' && <ChatPanel trusted={trusted} />}
       </Panel>
     </PanelHeaderContext.Provider>
   );

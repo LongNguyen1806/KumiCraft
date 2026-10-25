@@ -9,7 +9,6 @@ import { expect, type Page, test } from '@playwright/test';
 import { type CliSession, startCli } from './support/cli-session.ts';
 import { copyFixture, makeTempDir, type TempDir } from './support/copy-fixture.ts';
 import { getCanvasFrame, trustIfAsked } from './support/trust.ts';
-import { ui } from './support/ui-text.ts';
 
 let folder: TempDir | undefined;
 let config: TempDir;
@@ -56,7 +55,7 @@ test('Bootstrap: a utility class is the source, a scale value becomes a utility,
     .toContain('<div className="card p-3 mb-3 pt-4">Bàn phím</div>');
 
   // The card is still selected: the block goes into it.
-  await page.getByRole('tab', { name: ui('editor.library') }).click();
+  await page.getByTestId('activity-library').click();
   await page.getByTestId('library-add-composite.card').click();
   await expect.poll(() => readFile(home, 'utf8')).toContain('card-body');
   // Bootstrap's own classes style the block: no CSS file is made for it.
@@ -88,7 +87,7 @@ for (const [system, fixture, cardFile, variable] of [
       .poll(() => readFile(card, 'utf8'))
       .toBe(before.replace('font-size: 18px;', 'font-size: 20px;'));
 
-    await page.getByTestId('right-tab-brand').click();
+    await page.getByTestId('activity-brand').click();
     await expect(
       page.getByTestId('brand-token-variable').filter({ hasText: variable }),
     ).toBeVisible();

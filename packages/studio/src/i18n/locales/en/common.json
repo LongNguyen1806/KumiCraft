@@ -3,6 +3,16 @@
     "name": "KumiCraft",
     "version": "Version {{version}}"
   },
+  "activity": {
+    "bar": "Activity Bar",
+    "layers": "Layers",
+    "library": "Library",
+    "components": "Components",
+    "pages": "Pages",
+    "drafts": "Drafts",
+    "brand": "Brand",
+    "settings": "Settings"
+  },
   "session": {
     "connecting": "Connecting to KumiCraft…",
     "lost": {
@@ -479,6 +489,7 @@
     "title": "Drafts",
     "new": "New draft…",
     "manage": "Manage drafts",
+    "empty": "No drafts yet",
     "blank": "Blank",
     "free": "Freeform canvas",
     "create": "Create",
