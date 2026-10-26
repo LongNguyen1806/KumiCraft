@@ -5,7 +5,6 @@ import type { PageInfo, PagesInfo, RouterStatus } from '@kumicraft/shared';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { asAstNode, type AstNode, isAstNode, parseJsxAst } from '../source-editor/ast-helpers.ts';
 import { findRouter } from './route-finder.ts';
-import { findEntryPoint } from './route-resolve.ts';
 
 const MAX_FILES = 500;
 const MAX_BYTES = 1024 * 1024;
@@ -16,7 +15,7 @@ const ROUTER_CALLS = new Set([
   'useRoutes',
 ]);
 const HINT =
-  /createBrowserRouter|createHashRouter|createMemoryRouter|useRoutes|<Route\b|export\s+const\s+routes|lazy\(/;
+  /createBrowserRouter|createHashRouter|createMemoryRouter|useRoutes|<Route\b|export\s+const\s+\w+\s*=\s*\[|lazy\(/;
 
 type Found = {
   readonly path: string;
@@ -97,6 +96,8 @@ function fromRouteArray(array: AstNode, parent: string, file: string, out: Found
     const obj = asAstNode(raw);
     if (obj?.type !== 'ObjectExpression') continue;
     const props = objectProps(obj);
+    // A path from code (`ROUTES.HOME`) is unknown: skip the route rather than guess `/`.
+    if (props.has('path') && stringOf(props.get('path')) === undefined) continue;
     const path = joinRoutePath(parent, stringOf(props.get('path')));
     const component = componentOf(props.get('element') ?? props.get('Component'));
     const lazyProp = props.get('lazy');
@@ -147,6 +148,25 @@ function fromRouteJsx(element: AstNode, parent: string, file: string, out: Found
   }
 }
 
+const ROUTE_KEYS = ['path', 'index', 'children', 'lazy', 'element', 'Component'];
+
+/** `export const publicRoutes = [{ path, … }]`: a route module spread into the router. */
+function exportedRouteArrays(node: AstNode): AstNode[] {
+  const decl = asAstNode(node['declaration']);
+  if (decl?.type !== 'VariableDeclaration') return [];
+  const list: unknown[] = Array.isArray(decl['declarations']) ? decl['declarations'] : [];
+  return list
+    .map((raw) => asAstNode(asAstNode(raw)?.['init']))
+    .filter((init): init is AstNode => init?.type === 'ArrayExpression')
+    .filter((array) => {
+      const elements: unknown[] = Array.isArray(array['elements']) ? array['elements'] : [];
+      return elements.some((raw) => {
+        const obj = asAstNode(raw);
+        return obj?.type === 'ObjectExpression' && ROUTE_KEYS.some((k) => objectProps(obj).has(k));
+      });
+    });
+}
+
 function walk(node: unknown, file: string, out: Found[]): void {
   if (Array.isArray(node)) {
     for (const item of node) walk(item, file, out);
@@ -169,6 +189,13 @@ function walk(node: unknown, file: string, out: Found[]): void {
   if (node.type === 'JSXElement' && jsxName(node) === 'Route') {
     fromRouteJsx(node, '', file, out);
     return;
+  }
+  if (node.type === 'ExportNamedDeclaration') {
+    const arrays = exportedRouteArrays(node);
+    if (arrays.length > 0) {
+      for (const array of arrays) fromRouteArray(array, '', file, out);
+      return;
+    }
   }
   for (const [key, value] of Object.entries(node)) {
     if (key !== 'loc' && key !== 'leadingComments' && key !== 'trailingComments') {
@@ -326,13 +353,8 @@ export async function readPages(
   const found: Found[] = [];
   const importsByFile = new Map<string, Map<string, string>>();
 
-  let codeFiles: string[];
-  if (router.status === 'found') {
-    codeFiles = [router.file];
-  } else {
-    const entry = await findEntryPoint(fs, root, sourceDir);
-    codeFiles = entry ? [] : await listCodeFiles(fs, root, sourceDir);
-  }
+  // Pages come from every code file, as before K3d; the router only says which file edits go to.
+  const codeFiles = await listCodeFiles(fs, root, sourceDir);
 
   for (const file of codeFiles) {
     const read = await fs.readText(root, file, { maxBytes: MAX_BYTES });

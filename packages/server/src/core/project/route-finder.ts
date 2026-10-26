@@ -24,6 +24,8 @@ type DiscoveredRouter = {
   readonly file: string;
   readonly line: number;
   readonly kind: RouterKind;
+  /** Only exports a route array: a module of a real router unless no router call exists. */
+  readonly moduleOnly?: boolean;
 };
 
 type DiscoveredUnsupported = {
@@ -271,7 +273,7 @@ export async function inspectFileForRouter(
     if (check.ok) {
       const line =
         typeof exportedArray.loc?.start?.line === 'number' ? exportedArray.loc.start.line : 1;
-      return { router: { file, line, kind: 'dataRouter' } };
+      return { router: { file, line, kind: 'dataRouter', moduleOnly: true } };
     }
     return { unsupported: { file, reason: check.reason ?? 'generated' } };
   }
@@ -370,7 +372,12 @@ export async function findRouter(
     return { status: 'none', hasRouterPackage };
   }
 
-  const { routers, unsupported } = await traverseProjectFiles(fs, root, entryPoint, sourceDir);
+  const traversed = await traverseProjectFiles(fs, root, entryPoint, sourceDir);
+  const { unsupported } = traversed;
+  // Route modules spread into a createBrowserRouter/<Routes> file belong to that router.
+  const real = [...traversed.routers.values()].filter((r) => r.moduleOnly !== true);
+  const routers =
+    real.length > 0 ? new Map(real.map((r) => [r.file, r] as const)) : traversed.routers;
   if (routers.size === 1) {
     const [r] = Array.from(routers.values());
     if (r) return { status: 'found', file: r.file, line: r.line, kind: r.kind, chosen: false };

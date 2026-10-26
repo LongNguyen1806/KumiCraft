@@ -182,7 +182,8 @@ describe('K3d Stage A — Route Finder [WP-4.00]', () => {
       const res = await readPages(nodeFs, t.dir, 'src');
       expect(res.router.status).toBe('none');
       expect(res.convention).toBe(false);
-      expect(res.pages).toEqual([]);
+      // The page list still reads every file, as before K3d; only edits need a reachable router.
+      expect(res.pages.map((p) => p.path)).toEqual(['/secret']);
     } finally {
       await t.cleanup();
     }
@@ -209,6 +210,59 @@ describe('K3d Stage A — Route Finder [WP-4.00]', () => {
       expect(res.pages).toEqual([
         { path: '/about', component: 'About', file: 'src/pages/About.tsx', dynamic: false },
         { path: '/contact', file: 'src/pages/Contact.tsx', dynamic: false },
+      ]);
+    } finally {
+      await t.cleanup();
+    }
+  });
+  it('route modules spread into createBrowserRouter: one router, their pages listed, code paths skipped [WP-4.00]', async () => {
+    // MarketLink: AppRouter.jsx spreads arrays exported by router/routes/*.routes.jsx.
+    const t = await createProject({
+      'index.html': '<script type="module" src="/src/main.jsx"></script>',
+      'src/main.jsx': "import { router } from './router/AppRouter';\nconsole.log(router);",
+      'src/constants/routes.js': "export const ROUTES = Object.freeze({ FORBIDDEN: '/403' });",
+      'src/router/AppRouter.jsx': [
+        "import { createBrowserRouter } from 'react-router-dom';",
+        "import { ROUTES } from '../constants/routes';",
+        "import { publicRoutes } from './routes/public.routes';",
+        "import { adminRoutes } from './routes/admin.routes';",
+        'const page = (load) => async () => ({ Component: (await load()).default });',
+        'export const router = createBrowserRouter([',
+        '  {',
+        '    children: [',
+        '      ...publicRoutes,',
+        '      ...adminRoutes,',
+        "      { path: ROUTES.FORBIDDEN, lazy: page(() => import('../pages/ForbiddenPage')) },",
+        '    ],',
+        '  },',
+        ']);',
+      ].join('\n'),
+      'src/router/routes/public.routes.jsx': [
+        'const page = (load) => async () => ({ Component: (await load()).default });',
+        'export const publicRoutes = [',
+        "  { path: '/', lazy: page(() => import('../../pages/HomePage')) },",
+        "  { path: '/products', lazy: page(() => import('../../pages/ProductsPage')) },",
+        '];',
+      ].join('\n'),
+      'src/router/routes/admin.routes.jsx': [
+        'const page = (load) => async () => ({ Component: (await load()).default });',
+        "export const adminRoutes = [{ path: '/admin', lazy: page(() => import('../../pages/AdminPage')) }];",
+      ].join('\n'),
+      'src/pages/HomePage.jsx': 'export default function HomePage() { return <h1>Home</h1>; }',
+      'src/pages/ProductsPage.jsx': 'export default function ProductsPage() { return <h1>P</h1>; }',
+      'src/pages/AdminPage.jsx': 'export default function AdminPage() { return <h1>A</h1>; }',
+      'src/pages/ForbiddenPage.jsx':
+        'export default function ForbiddenPage() { return <h1>F</h1>; }',
+    });
+
+    try {
+      const res = await readPages(nodeFs, t.dir, 'src');
+      expect(res.router).toMatchObject({ status: 'found', file: 'src/router/AppRouter.jsx' });
+      const pages = res.pages.map((p) => [p.path, p.file]).sort();
+      expect(pages).toEqual([
+        ['/', 'src/pages/HomePage.jsx'],
+        ['/admin', 'src/pages/AdminPage.jsx'],
+        ['/products', 'src/pages/ProductsPage.jsx'],
       ]);
     } finally {
       await t.cleanup();
