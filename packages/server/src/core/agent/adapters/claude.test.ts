@@ -15,6 +15,16 @@ const FORBIDDEN_FLAGS = [
 ];
 
 describe('claudeAdapter', () => {
+  it('[VG-17] reads the login state from `claude auth status` without spending a turn', () => {
+    const probe = claudeAdapter.loginProbe;
+    expect(probe?.args).toEqual(['auth', 'status']);
+    const out = (stdout: string, exitCode = 0) => ({ exitCode, stdout, stderr: '', lines: [] });
+    expect(probe?.classify(out('{"loggedIn": true, "authMethod": "claude.ai"}'))).toBe('loggedIn');
+    expect(probe?.classify(out('{"loggedIn": false}', 1))).toBe('loggedOut');
+    // An older Claude Code without the command prints help or an error: stay unknown.
+    expect(probe?.classify(out('error: unknown command auth', 1))).toBe('unknown');
+  });
+
   it('[S-112] buildArgs produces expected arguments without widening permissions and parses sample lines', () => {
     const withoutConv = claudeAdapter.buildArgs({
       prompt: 'Refactor code',

@@ -152,6 +152,12 @@ describe('TurnRunner core lifecycle [WP-3.03b]', () => {
     }
     expect(events.length).toBeGreaterThan(0);
     expect(turnIds.every((id) => id === startRes.value.turnId)).toBe(true);
+    // The answer is saved with the turn, so history shows it after a reload.
+    if (summaryParse?.success) {
+      expect(summaryParse.data.reply).toMatch(
+        /^I will update the components\. Writing changes now\./,
+      );
+    }
   });
 
   it('[S-111, S-112] 4. passes mirror dir to agent and omits real backend path and forbidden flags', async () => {

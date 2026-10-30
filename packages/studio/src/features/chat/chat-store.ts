@@ -161,7 +161,10 @@ function toHistoryTurn(summary: TurnSummary): ChatTurnView {
     jobId: '',
     turnId: summary.id,
     state: summary.state,
-    items: [{ kind: 'user', text: summary.prompt }],
+    items: [
+      { kind: 'user', text: summary.prompt },
+      ...(summary.reply === undefined ? [] : [{ kind: 'message' as const, text: summary.reply }]),
+    ],
     summary,
     history: true,
   };

@@ -232,29 +232,34 @@ describe('AgentService', () => {
     expect(statuses[0]?.login).toBe('unknown');
   });
 
-  it('[R-AG-21] keeps claude login as unknown and does not spawn any login probe for claude', async () => {
-    const spawnedArgs: Array<readonly string[]> = [];
-    const fakeProc = createMockProcessPort((cmd, args) => {
-      spawnedArgs.push(args);
-      if (cmd === 'claude' && args[0] === '--version') {
-        return { exitCode: 0, stdout: '2.0.0\n', stderr: '' };
-      }
-      return { exitCode: 127, stdout: '', stderr: '' };
-    });
+  it('[R-AG-21, VG-17] reads claude login from `auth status`; an older claude without it stays unknown', async () => {
+    const run = async (authStatus: { exitCode: number; stdout: string }) => {
+      const spawnedArgs: Array<readonly string[]> = [];
+      const fakeProc = createMockProcessPort((cmd, args) => {
+        spawnedArgs.push(args);
+        if (cmd === 'claude' && args[0] === '--version') {
+          return { exitCode: 0, stdout: '2.1.0\n', stderr: '' };
+        }
+        if (cmd === 'claude' && args[0] === 'auth') return { ...authStatus, stderr: '' };
+        return { exitCode: 127, stdout: '', stderr: '' };
+      });
+      const service = createAgentService({
+        process: fakeProc,
+        settings: makeSettings('claude'),
+        adapters: { agy: agyAdapter, claude: claudeAdapter },
+      });
+      const claudeStatus = (await service.statuses()).find((s) => s.id === 'claude');
+      return { claudeStatus, spawnedArgs };
+    };
 
-    const service = createAgentService({
-      process: fakeProc,
-      settings: makeSettings('claude'),
-      adapters: { agy: agyAdapter, claude: claudeAdapter },
-    });
+    const signedIn = await run({ exitCode: 0, stdout: '{"loggedIn": true}' });
+    expect(signedIn.claudeStatus?.login).toBe('loggedIn');
+    // The probe is the read-only status command, never a turn.
+    expect(signedIn.spawnedArgs).toContainEqual(['auth', 'status']);
 
-    const statuses = await service.statuses();
-    const claudeStatus = statuses.find((s) => s.id === 'claude');
-    expect(claudeStatus?.installed).toBe(true);
-    expect(claudeStatus?.login).toBe('unknown');
-
-    const claudeCalls = spawnedArgs.filter((args) => args[0] !== '--version');
-    expect(claudeCalls).toHaveLength(0);
+    const older = await run({ exitCode: 1, stdout: 'error: unknown command' });
+    expect(older.claudeStatus?.installed).toBe(true);
+    expect(older.claudeStatus?.login).toBe('unknown');
   });
 
   it('[R-AG-21] rejects resolve() with E026 notLoggedIn when preferred agy is loggedOut', async () => {

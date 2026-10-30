@@ -1,6 +1,5 @@
 // End-to-end execution of agent turns (WP-3.03b, R-AG-11 to R-AG-17, S-32, S-110 to S-118).
 import type {
-  AgentEvent,
   AgentStatus,
   BackendInfo,
   ProjectInfo,
@@ -16,13 +15,13 @@ import type { EventBusPort } from '../ports/event-bus-port.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { LoggerPort } from '../ports/logger-port.ts';
 import type { ProcessPort } from '../ports/process-port.ts';
-import { redactSecrets } from '../shared/redact-secrets.ts';
 import { type AppError, err, ok, type Result } from '../shared/result.ts';
 import type { AgentService } from './agent-service.ts';
 import type { AgentAdapter, AgentCommand } from './agent-types.ts';
 import type { ChatImageStore } from './chat-images.ts';
 import { buildPrompt } from './prompt.ts';
 import type { TurnSnapshotStore } from './snapshot/snapshot-types.ts';
+import { type AgentRun, createReplyCollector, redactEventSecrets } from './turn-events.ts';
 import { settleInterruptedTurns } from './turn-interrupted.ts';
 import type { TurnStore } from './turn-store.ts';
 
@@ -61,18 +60,6 @@ export type TurnRunner = {
 };
 
 type MirrorDir = { readonly backendId: string; readonly label: string; readonly dir: string };
-
-function redactEventSecrets(event: AgentEvent): AgentEvent {
-  if (event.kind === 'message') return { ...event, text: redactSecrets(event.text) };
-  if (event.kind === 'error') return { ...event, message: redactSecrets(event.message) };
-  if (event.kind === 'tool') {
-    return {
-      ...event,
-      ...(event.target !== undefined ? { target: redactSecrets(event.target) } : {}),
-    };
-  }
-  return event;
-}
 
 async function prepareMirrors(
   mirrorService: Pick<MirrorService, 'refresh' | 'check'>,
@@ -152,11 +139,12 @@ async function executeAgentProcess(
   turnId: string,
   projectId: string,
   signal: AbortSignal,
-): Promise<{ exitCode: number; hasErrorEvent: boolean }> {
+): Promise<AgentRun> {
   let hasErrorEvent = false;
+  const reply = createReplyCollector();
   let conversationId: string | undefined;
   // Cancelled while the snapshot or mirrors were being prepared: never start the agent.
-  if (signal.aborted) return { exitCode: 1, hasErrorEvent };
+  if (signal.aborted) return { exitCode: 1, hasErrorEvent, reply: '' };
   const handle = deps.process.spawn(resolved.command.command, args, { cwd, timeoutMs });
 
   const onAbort = () => {
@@ -172,6 +160,7 @@ async function executeAgentProcess(
       if (redacted.kind === 'error') {
         hasErrorEvent = true;
       }
+      reply.add(redacted);
       deps.eventBus?.publish('agent.event', { turnId, event: redacted });
     }
   });
@@ -182,7 +171,7 @@ async function executeAgentProcess(
   if (conversationId !== undefined) {
     await deps.store.setConversation(projectId, { agent: resolved.status.id, id: conversationId });
   }
-  return { exitCode: out.exitCode, hasErrorEvent };
+  return { exitCode: out.exitCode, hasErrorEvent, reply: reply.text() };
 }
 
 type TurnPreparation = {
@@ -282,8 +271,7 @@ async function finalizeTurn(
   resolved: ResolvedAgent,
   turnId: string,
   prep: TurnPreparation,
-  exitCode: number,
-  hasErrorEvent: boolean,
+  run: AgentRun,
   timeoutMs: number,
   signal: AbortSignal,
 ): Promise<Result<TurnSummary>> {
@@ -297,7 +285,14 @@ async function finalizeTurn(
     prep.notices,
   );
 
-  const outcome = determineOutcome(signal, exitCode, hasErrorEvent, resolved.status.id, timeoutMs);
+  const { exitCode } = run;
+  const outcome = determineOutcome(
+    signal,
+    exitCode,
+    run.hasErrorEvent,
+    resolved.status.id,
+    timeoutMs,
+  );
 
   const finalSummary: TurnSummary = {
     ...prep.initialSummary,
@@ -306,6 +301,7 @@ async function finalizeTurn(
     files,
     revertible: files.length > 0,
     notices: prep.notices,
+    ...(run.reply === '' ? {} : { reply: run.reply }),
   };
   await deps.store.save(projectInfo.id, finalSummary);
 
@@ -333,7 +329,7 @@ async function runTurn(
   const prepRes = await prepareTurnRun(deps, projectInfo, resolved, turnId, request, imagePaths);
   if (!prepRes.ok) return err(prepRes.error);
 
-  const { exitCode, hasErrorEvent } = await executeAgentProcess(
+  const run = await executeAgentProcess(
     deps,
     resolved,
     prepRes.value.args,
@@ -350,8 +346,7 @@ async function runTurn(
     resolved,
     turnId,
     prepRes.value,
-    exitCode,
-    hasErrorEvent,
+    run,
     timeoutMs,
     ctx.signal,
   );

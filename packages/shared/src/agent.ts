@@ -65,6 +65,8 @@ export const TurnNoticeSchema = z.strictObject({
 });
 export type TurnNotice = z.infer<typeof TurnNoticeSchema>;
 
+export const TURN_REPLY_MAX = 20_000;
+
 export const TurnSummarySchema = z.strictObject({
   id: z.string().regex(/^[A-Za-z0-9_-]{10}$/),
   agent: AgentIdSchema,
@@ -75,6 +77,8 @@ export const TurnSummarySchema = z.strictObject({
   files: z.array(TurnFileSchema).max(5000),
   revertible: z.boolean(),
   notices: z.array(TurnNoticeSchema).max(20),
+  /** The agent's answer text, so a turn read back from history still shows it. */
+  reply: z.string().max(TURN_REPLY_MAX).optional(),
 });
 export type TurnSummary = z.infer<typeof TurnSummarySchema>;
 

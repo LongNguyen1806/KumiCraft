@@ -328,6 +328,20 @@ describe('Chat files, diff, revert, history, and new conversation [WP-3.05b]', (
     expect(prompts.length).toBe(1);
   });
 
+  it('[R-CH-05] a turn read back from history shows its answer, not only the question', async () => {
+    vi.spyOn(agentClient, 'fetchTurns').mockResolvedValue([
+      {
+        ...SUMMARY_3_FILES,
+        id: 'turn0000h1',
+        prompt: 'Vì sao khác nhau?',
+        reply: 'Hai nút gọi hai API khác.',
+      },
+    ]);
+    render(<ChatPanel trusted />);
+    expect(await screen.findByText('Vì sao khác nhau?')).toBeDefined();
+    expect(await screen.findByText('Hai nút gọi hai API khác.')).toBeDefined();
+  });
+
   it('Sit 11 [R-CH-05]: new conversation sends conversation: new and shows divider after turn 2', async () => {
     const startSpy = vi
       .spyOn(agentClient, 'startTurn')

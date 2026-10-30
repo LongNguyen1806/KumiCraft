@@ -1,7 +1,8 @@
 // claude adapter: builds args and parses stream-json output (WP-3.03a, S-111, S-112).
-import { type AgentEvent, AgentEventSchema } from '@kumicraft/shared';
+import { type AgentEvent, AgentEventSchema, type AgentLoginState } from '@kumicraft/shared';
 import { z } from 'zod';
 
+import type { ProcessOutput } from '../../ports/process-port.ts';
 import type { AgentAdapter, AgentCommand, AgentTurnArgs } from '../agent-types.ts';
 
 const CLAUDE_DEFAULT_COMMAND: AgentCommand = {
@@ -40,6 +41,19 @@ const ClaudeResultErrorSchema = z.looseObject({
   result: z.string().optional(),
   subtype: z.string().optional(),
 });
+
+const ClaudeAuthStatusSchema = z.looseObject({ loggedIn: z.boolean() });
+
+/** `claude auth status` prints JSON with `loggedIn` (Claude Code 2.1+, VG-17); older builds: unknown. */
+function classifyAuthStatus(output: ProcessOutput): AgentLoginState {
+  try {
+    const parsed = ClaudeAuthStatusSchema.safeParse(JSON.parse(output.stdout));
+    if (!parsed.success) return 'unknown';
+    return parsed.data.loggedIn ? 'loggedIn' : 'loggedOut';
+  } catch {
+    return 'unknown';
+  }
+}
 
 function parseAssistantMessage(content: readonly unknown[]): AgentEvent | undefined {
   for (const item of content) {
@@ -96,6 +110,7 @@ export const claudeAdapter: AgentAdapter = {
       ...(turn.conversationId !== undefined ? ['--resume', turn.conversationId] : []),
     ];
   },
+  loginProbe: { args: ['auth', 'status'], classify: classifyAuthStatus },
   parseLine(line: string): AgentEvent | undefined {
     if (line.trim() === '') return undefined;
     try {
