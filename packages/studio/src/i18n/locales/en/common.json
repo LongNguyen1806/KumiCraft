@@ -161,7 +161,9 @@
       "claude": "Claude Code"
     },
     "saving": "Saving…",
-    "saved": "Saved"
+    "saved": "Saved",
+    "loginSessions": "Several sign-in sessions on the Canvas",
+    "loginSessionsHelp": "Shows a \"Sign-in\" picker on the Canvas toolbar. Each session keeps its own sign-in, for apps where you need two roles at once (for example customer and farmer). Off: the Canvas uses one sign-in."
   },
   "trust": {
     "bar": "This project is not trusted: its dev server, dependency installs and AI agents do not run. You can still look around.",
@@ -688,7 +690,7 @@
     "dismissError": "Dismiss"
   },
   "sessions": {
-    "button": "Session: {{label}}",
+    "button": "Sign-in: {{label}}",
     "title": "Login sessions",
     "add": "+ Add session",
     "rename": "Rename",
@@ -697,6 +699,7 @@
     "cancel": "Cancel",
     "newPlaceholder": "Session name (e.g. Admin)",
     "defaultLabel": "Session {{id}}",
-    "localhostUnsupported": "This browser cannot open *.localhost addresses; use Chrome, Edge, or Firefox"
+    "localhostUnsupported": "This browser cannot open *.localhost addresses; use Chrome, Edge, or Firefox",
+    "explain": "Each session keeps its own sign-in in the Canvas (cookies and local storage). Use one per role, for example Customer and Farmer, and switch without signing in again."
   }
 }

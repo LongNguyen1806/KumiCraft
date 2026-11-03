@@ -45,7 +45,7 @@ test.afterEach(async () => {
   await config.remove();
 });
 
-test('session 2 is s2.localhost with its own storage, and selecting still works [K3d D]', async ({
+test('turned on in Settings, session 2 is s2.localhost with its own storage, and selecting still works [K3d D]', async ({
   page,
 }) => {
   const session = await startCli(folder.path, config.path);
@@ -56,6 +56,12 @@ test('session 2 is s2.localhost with its own storage, and selecting still works 
   await headingVisible(canvas);
   expect(await canvasUrl(page)).toContain('127.0.0.1');
   await setStorage(page, 'customer');
+
+  // Off by default (spec-log #77): no picker until the option is turned on in Settings.
+  await expect(page.getByTestId('session-select-trigger')).toHaveCount(0);
+  await page.getByTestId('activity-settings').click();
+  await page.getByTestId('settings-login-sessions').check();
+  await page.keyboard.press('Escape');
 
   await page.getByTestId('session-select-trigger').click();
   await page.getByTestId('session-add-input').fill('Farmer');

@@ -5,6 +5,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import * as projectClient from '../../api/project-client.ts';
 import { initI18n } from '../../i18n/i18n.ts';
+import { useSettingsStore } from '../../store/settings-store.ts';
 import { useProjectStore } from '../project/project-store.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
@@ -51,6 +52,13 @@ const mockProject: ProjectInfo = {
   designDirs: DEFAULT_DESIGN_DIRS,
 };
 
+/** Turns on the advanced login sessions option (spec-log #77) for one test. */
+function enableLoginSessions() {
+  useSettingsStore.setState({
+    settings: { editor: 'vscode', agent: { preferred: 'auto' }, loginSessions: true },
+  });
+}
+
 describe('CanvasArea', () => {
   beforeAll(async () => {
     await initI18n();
@@ -72,6 +80,7 @@ describe('CanvasArea', () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
+    useSettingsStore.setState({ settings: undefined });
   });
 
   it('renders untrusted prompt when trusted is false [R-RN-20]', () => {
@@ -190,7 +199,32 @@ describe('CanvasArea', () => {
     expect(restart).toHaveBeenCalledTimes(1);
   });
 
+  it('[WP-4.00] login sessions are off by default: no session picker, the Canvas uses session 1', () => {
+    mockRunnerState = {
+      status: { state: 'ready', origin: 'http://127.0.0.1:5173', nonce: 'n'.repeat(22) },
+      logTail: [],
+      start: vi.fn(),
+      restart: vi.fn(),
+    };
+    localStorage.setItem(`kumicraft.session.${mockProject.id}`, '2');
+    render(
+      <CanvasArea
+        projectInfo={{
+          ...mockProject,
+          sessions: [
+            { id: 1, label: '1' },
+            { id: 2, label: 'Farmer' },
+          ],
+        }}
+        trusted
+      />,
+    );
+    expect(screen.queryByTestId('session-select-trigger') ?? undefined).toBeUndefined();
+    expect(screen.getByTestId('canvas-iframe').getAttribute('src')).toContain('127.0.0.1:5173');
+  });
+
   it('D2: switching session 1 -> 2 updates iframe src to s2.localhost, calls bridgeChannel.attach with s2.localhost, and ignores messages from session 1 origin [WP-4.00]', async () => {
+    enableLoginSessions();
     const nonce = 'n'.repeat(22);
     mockRunnerState = {
       status: { state: 'ready', origin: 'http://127.0.0.1:5173', nonce },
@@ -248,6 +282,7 @@ describe('CanvasArea', () => {
   });
 
   it('D3: adding session Admin calls PATCH /project with sessions [1, 2]; session 1 has no delete button [WP-4.00]', async () => {
+    enableLoginSessions();
     mockRunnerState = {
       status: { state: 'ready', origin: 'http://127.0.0.1:5173' },
       logTail: [],
@@ -275,7 +310,7 @@ describe('CanvasArea', () => {
     await waitFor(() => {
       expect(patchSpy).toHaveBeenCalledWith({
         sessions: [
-          { id: 1, label: 'Phiên 1' },
+          { id: 1, label: '1' },
           { id: 2, label: 'Admin' },
         ],
       });
@@ -284,6 +319,7 @@ describe('CanvasArea', () => {
   });
 
   it('D4: when probing s2.localhost fails, keeps session 1 and shows browser *.localhost error message [WP-4.00]', async () => {
+    enableLoginSessions();
     mockRunnerState = {
       status: { state: 'ready', origin: 'http://127.0.0.1:5173', nonce: 'n'.repeat(22) },
       logTail: [],
@@ -308,7 +344,7 @@ describe('CanvasArea', () => {
     expect(errAlert.textContent).toBe(
       'Trình duyệt này không mở được địa chỉ *.localhost; dùng Chrome, Edge hoặc Firefox',
     );
-    expect(screen.getByTestId('session-select-trigger').textContent).toBe('Phiên: Phiên 1');
+    expect(screen.getByTestId('session-select-trigger').textContent).toBe('Đăng nhập: Phiên 1');
     expect(screen.getByTestId('canvas-iframe').getAttribute('src')).toBe('http://127.0.0.1:5173/');
   });
 });

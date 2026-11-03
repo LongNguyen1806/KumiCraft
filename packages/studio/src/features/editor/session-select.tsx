@@ -5,7 +5,8 @@ import {
   type ProjectInfo,
   sessionOrigin,
 } from '@kumicraft/shared';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -15,9 +16,11 @@ import {
   SESSION_PROBE_TIMEOUT_MS,
 } from '../../api/project-client.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
+import { useSettingsStore } from '../../store/settings-store.ts';
 import { useProjectStore } from '../project/project-store.ts';
+import { nextFreeSessionId, sessionLabel, SessionPopover } from './session-popover.tsx';
 
-export { probeSessionOrigin, resetSessionProbeCache, SESSION_PROBE_TIMEOUT_MS };
+export { nextFreeSessionId, probeSessionOrigin, resetSessionProbeCache, SESSION_PROBE_TIMEOUT_MS };
 
 export function readStoredSessionId(
   projectId: string | undefined,
@@ -45,14 +48,9 @@ export function writeStoredSessionId(projectId: string | undefined, sessionId: n
   }
 }
 
-export function nextFreeSessionId(sessions: readonly LoginSession[]): number | undefined {
-  for (let id = 2; id <= 8; id += 1) {
-    if (!sessions.some((s) => s.id === id)) return id;
-  }
-  return undefined;
-}
-
 export function useCanvasSession(projectInfo?: ProjectInfo, runnerOrigin?: string) {
+  // Off (the default): the Canvas always shows session 1, the plain runner origin.
+  const enabled = useSettingsStore((s) => s.settings?.loginSessions === true);
   const storeProject = useProjectStore((s) => s.project);
   const project = storeProject ?? projectInfo;
   const projectId = project?.id;
@@ -61,7 +59,7 @@ export function useCanvasSession(projectInfo?: ProjectInfo, runnerOrigin?: strin
 
   const [selectedId, setSelectedId] = useState<number | undefined>();
   const candidateId = selectedId ?? readStoredSessionId(projectId, sessions);
-  const effectiveActiveId = sessions.some((s) => s.id === candidateId) ? candidateId : 1;
+  const effectiveActiveId = enabled && sessions.some((s) => s.id === candidateId) ? candidateId : 1;
   const effectiveOrigin =
     runnerOrigin !== undefined ? sessionOrigin(runnerOrigin, effectiveActiveId) : undefined;
 
@@ -71,6 +69,7 @@ export function useCanvasSession(projectInfo?: ProjectInfo, runnerOrigin?: strin
   };
 
   return {
+    enabled,
     projectId,
     sessions,
     setLocalSessions,
@@ -78,231 +77,6 @@ export function useCanvasSession(projectInfo?: ProjectInfo, runnerOrigin?: strin
     effectiveOrigin,
     selectSession,
   };
-}
-
-type SessionRowProps = {
-  readonly session: LoginSession;
-  readonly isActive: boolean;
-  readonly busy: boolean;
-  readonly onSelect: (id: number) => void;
-  readonly onRename: (id: number, label: string) => void;
-  readonly onDelete: (id: number) => void;
-};
-
-function SessionRenameEditor({
-  sessionId,
-  initialLabel,
-  busy,
-  onSave,
-}: {
-  readonly sessionId: number;
-  readonly initialLabel: string;
-  readonly busy: boolean;
-  readonly onSave: (label: string) => void;
-}) {
-  const [draft, setDraft] = useState(initialLabel);
-  return (
-    <div className="flex items-center gap-1 py-0.5">
-      <input
-        type="text"
-        value={draft}
-        data-testid={`session-rename-input-${String(sessionId)}`}
-        onChange={(e) => {
-          setDraft(e.target.value);
-        }}
-        className="min-w-0 flex-1 rounded border border-border bg-field px-1.5 py-0.5 text-xs text-ink"
-      />
-      <button
-        type="button"
-        data-testid={`session-rename-save-${String(sessionId)}`}
-        disabled={busy || draft.trim().length === 0}
-        onClick={() => {
-          onSave(draft.trim());
-        }}
-        className="rounded bg-accent px-1.5 py-0.5 text-[11px] text-white"
-      >
-        OK
-      </button>
-    </div>
-  );
-}
-
-function SessionRowButtons({
-  sessionId,
-  busy,
-  onStartEdit,
-  onDelete,
-}: {
-  readonly sessionId: number;
-  readonly busy: boolean;
-  readonly onStartEdit: () => void;
-  readonly onDelete: (id: number) => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <div className="flex shrink-0 items-center gap-1">
-      <button
-        type="button"
-        data-testid={`session-rename-btn-${String(sessionId)}`}
-        disabled={busy}
-        onClick={onStartEdit}
-        className="rounded border border-border px-1.5 py-0.5 text-[10px] text-ink-soft hover:text-ink"
-      >
-        {t('sessions.rename')}
-      </button>
-      {sessionId !== 1 ? (
-        <button
-          type="button"
-          data-testid={`session-delete-btn-${String(sessionId)}`}
-          disabled={busy}
-          onClick={() => {
-            onDelete(sessionId);
-          }}
-          className="rounded border border-border px-1.5 py-0.5 text-[10px] text-rose-600 hover:bg-rose-50"
-        >
-          {t('sessions.delete')}
-        </button>
-      ) : undefined}
-    </div>
-  );
-}
-
-function SessionRow({ session, isActive, busy, onSelect, onRename, onDelete }: SessionRowProps) {
-  const [editing, setEditing] = useState(false);
-
-  if (editing) {
-    return (
-      <SessionRenameEditor
-        sessionId={session.id}
-        initialLabel={session.label}
-        busy={busy}
-        onSave={(label) => {
-          setEditing(false);
-          onRename(session.id, label);
-        }}
-      />
-    );
-  }
-
-  return (
-    <div className="flex items-center justify-between gap-1.5 rounded px-1.5 py-1 hover:bg-field-hover">
-      <button
-        type="button"
-        data-testid={`session-item-${String(session.id)}`}
-        disabled={busy}
-        onClick={() => {
-          onSelect(session.id);
-        }}
-        className={`min-w-0 flex-1 truncate text-left text-xs ${
-          isActive ? 'font-semibold text-accent' : 'text-ink'
-        }`}
-      >
-        {session.label}
-      </button>
-      <SessionRowButtons
-        sessionId={session.id}
-        busy={busy}
-        onStartEdit={() => {
-          setEditing(true);
-        }}
-        onDelete={onDelete}
-      />
-    </div>
-  );
-}
-
-type SessionAddRowProps = {
-  readonly nextId: number;
-  readonly busy: boolean;
-  readonly onAdd: (label: string) => void;
-};
-
-function SessionAddRow({ nextId, busy, onAdd }: SessionAddRowProps) {
-  const { t } = useTranslation();
-  const [label, setLabel] = useState('');
-  const defaultLabel = t('sessions.defaultLabel', { id: nextId });
-
-  return (
-    <div className="mt-1.5 flex items-center gap-1 border-t border-border pt-1.5">
-      <input
-        type="text"
-        value={label}
-        placeholder={defaultLabel}
-        data-testid="session-add-input"
-        onChange={(e) => {
-          setLabel(e.target.value);
-        }}
-        className="min-w-0 flex-1 rounded border border-border bg-field px-2 py-1 text-xs text-ink"
-      />
-      <button
-        type="button"
-        data-testid="session-add-btn"
-        disabled={busy}
-        onClick={() => {
-          const chosen = label.trim() || defaultLabel;
-          setLabel('');
-          onAdd(chosen);
-        }}
-        className="shrink-0 rounded border border-border bg-field px-2 py-1 text-xs font-medium text-ink hover:bg-field-hover disabled:opacity-40"
-      >
-        {t('sessions.add')}
-      </button>
-    </div>
-  );
-}
-
-type SessionPopoverProps = {
-  readonly sessions: readonly LoginSession[];
-  readonly activeSessionId: number;
-  readonly busy: boolean;
-  readonly onSelect: (id: number) => void;
-  readonly onSaveSessions: (next: readonly LoginSession[], fallbackToFirst?: boolean) => void;
-};
-
-function SessionPopover({
-  sessions,
-  activeSessionId,
-  busy,
-  onSelect,
-  onSaveSessions,
-}: SessionPopoverProps) {
-  const nextId = nextFreeSessionId(sessions);
-  return (
-    <div
-      data-testid="session-select-popover"
-      className="absolute top-full left-0 z-30 mt-1 w-64 rounded-lg border border-border bg-card-solid p-2 shadow-xl"
-    >
-      <div className="flex flex-col gap-0.5">
-        {sessions.map((session) => (
-          <SessionRow
-            key={session.id}
-            session={session}
-            isActive={session.id === activeSessionId}
-            busy={busy}
-            onSelect={onSelect}
-            onRename={(id, label) => {
-              onSaveSessions(sessions.map((s) => (s.id === id ? { ...s, label } : s)));
-            }}
-            onDelete={(id) => {
-              onSaveSessions(
-                sessions.filter((s) => s.id !== id),
-                id === activeSessionId,
-              );
-            }}
-          />
-        ))}
-      </div>
-      {nextId !== undefined ? (
-        <SessionAddRow
-          nextId={nextId}
-          busy={busy}
-          onAdd={(label) => {
-            onSaveSessions([...sessions, { id: nextId, label }]);
-          }}
-        />
-      ) : undefined}
-    </div>
-  );
 }
 
 export type SessionSelectProps = {
@@ -352,52 +126,154 @@ function useSessionActions(props: SessionSelectProps) {
     setOpen(false);
   };
 
-  return { open, setOpen, busy, errorMsg, saveSessions, handleSelect };
+  return {
+    open,
+    setOpen,
+    busy,
+    errorMsg,
+    select: (id: number) => {
+      void handleSelect(id);
+    },
+    save: (next: readonly LoginSession[], fallback?: boolean) => {
+      void saveSessions(next, fallback);
+    },
+  };
+}
+
+/**
+ * Closes the floating list on a click outside, on Escape, or when the Canvas frame takes the
+ * focus (a click inside an iframe never reaches this document).
+ */
+function useFloatingDismiss(open: boolean, onClose: () => void) {
+  const [floating, setFloating] = useState<HTMLElement>();
+  // The button toggles by itself: a mousedown on it must not close first and reopen on click.
+  const [trigger, setTrigger] = useState<HTMLElement>();
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!(e.target instanceof Node)) return;
+      if (floating?.contains(e.target) === true || trigger?.contains(e.target) === true) return;
+      onClose();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('mousedown', onDown);
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('blur', onClose);
+    return () => {
+      window.removeEventListener('mousedown', onDown);
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('blur', onClose);
+    };
+  }, [open, onClose, floating, trigger]);
+  return { setFloating, setTrigger };
+}
+
+type Anchor = { readonly left: number; readonly top: number };
+
+/** Drawn on document.body at a fixed place under the button, so no toolbar or Canvas clips it. */
+function Floating({
+  anchor,
+  children,
+}: {
+  readonly anchor: Anchor;
+  readonly children: React.ReactNode;
+}) {
+  return createPortal(
+    <div
+      className="fixed z-50"
+      style={{ left: `${String(anchor.left)}px`, top: `${String(anchor.top)}px` }}
+    >
+      {children}
+    </div>,
+    document.body,
+  );
+}
+
+function SessionTrigger({
+  label,
+  onToggle,
+}: {
+  readonly label: string;
+  readonly onToggle: (anchor: Anchor) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <button
+      type="button"
+      data-testid="session-select-trigger"
+      title={t('sessions.explain')}
+      onClick={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        onToggle({ left: rect.left, top: rect.bottom + 4 });
+      }}
+      className="rounded border border-border bg-field px-2.5 py-1 text-xs font-medium text-ink hover:bg-field-hover"
+    >
+      {t('sessions.button', { label })}
+    </button>
+  );
+}
+
+function SessionError({ anchor, message }: { readonly anchor: Anchor; readonly message: string }) {
+  return (
+    <Floating anchor={anchor}>
+      <div
+        role="alert"
+        data-testid="session-error"
+        className="w-72 rounded border border-amber-500/40 bg-card-solid p-2 text-xs text-amber-600 shadow-lg dark:text-amber-300"
+      >
+        {message}
+      </div>
+    </Floating>
+  );
 }
 
 export function SessionSelect(props: SessionSelectProps) {
   const { t } = useTranslation();
   const { sessions, activeSessionId } = props;
   const actions = useSessionActions(props);
+  const [anchor, setAnchor] = useState<Anchor>({ left: 0, top: 0 });
+  const { setOpen } = actions;
+  const close = useCallback(() => {
+    setOpen(false);
+  }, [setOpen]);
+  const dismiss = useFloatingDismiss(actions.open, close);
   const activeSession = sessions.find((s) => s.id === activeSessionId) ??
-    sessions[0] ?? {
-      id: 1,
-      label: 'Phiên 1',
-    };
+    sessions[0] ?? { id: 1, label: '1' };
 
   return (
-    <div className="relative">
-      <button
-        type="button"
-        data-testid="session-select-trigger"
-        onClick={() => {
+    <div
+      ref={(el) => {
+        dismiss.setTrigger(el ?? undefined);
+      }}
+    >
+      <SessionTrigger
+        label={sessionLabel(t, activeSession)}
+        onToggle={(next) => {
+          setAnchor(next);
           actions.setOpen((v) => !v);
         }}
-        className="rounded border border-border bg-field px-2.5 py-1 text-xs font-medium text-ink hover:bg-field-hover"
-      >
-        {t('sessions.button', { label: activeSession.label })}
-      </button>
+      />
       {actions.errorMsg !== undefined ? (
-        <div
-          role="alert"
-          data-testid="session-error"
-          className="absolute top-full left-0 z-40 mt-1 w-72 rounded border border-amber-500/40 bg-card-solid p-2 text-xs text-amber-600 shadow-lg dark:text-amber-300"
-        >
-          {actions.errorMsg}
-        </div>
+        <SessionError anchor={anchor} message={actions.errorMsg} />
       ) : undefined}
       {actions.open ? (
-        <SessionPopover
-          sessions={sessions}
-          activeSessionId={activeSessionId}
-          busy={actions.busy}
-          onSelect={(id) => {
-            void actions.handleSelect(id);
-          }}
-          onSaveSessions={(next, fallback) => {
-            void actions.saveSessions(next, fallback);
-          }}
-        />
+        <Floating anchor={anchor}>
+          <div
+            ref={(el) => {
+              dismiss.setFloating(el ?? undefined);
+            }}
+          >
+            <SessionPopover
+              sessions={sessions}
+              activeSessionId={activeSessionId}
+              busy={actions.busy}
+              onSelect={actions.select}
+              onSaveSessions={actions.save}
+            />
+          </div>
+        </Floating>
       ) : undefined}
     </div>
   );

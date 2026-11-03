@@ -39,6 +39,7 @@ const UserConfigSchema = z.object({
   editor: EditorSchema.default('vscode'),
   packageManager: PackageManagerSchema.optional(),
   agent: z.object({ preferred: AgentChoiceSchema.default('auto') }).default({ preferred: 'auto' }),
+  loginSessions: z.boolean().optional(),
   trustedProjects: z.array(TrustedProjectSchema).default([]),
   recentProjects: RecentProjectsSchema.default([]),
 });
@@ -58,6 +59,7 @@ export const SettingsPatchSchema = z.strictObject({
   editor: EditorSchema.optional(),
   packageManager: PackageManagerSchema.optional(),
   agent: z.strictObject({ preferred: AgentChoiceSchema.optional() }).optional(),
+  loginSessions: z.boolean().optional(),
 });
 export type SettingsPatch = z.infer<typeof SettingsPatchSchema>;
 
@@ -90,6 +92,7 @@ function merge(config: UserConfig, patch: SettingsPatch): UserConfig {
     ...(patch.editor === undefined ? {} : { editor: patch.editor }),
     ...(patch.packageManager === undefined ? {} : { packageManager: patch.packageManager }),
     agent: { preferred: patch.agent?.preferred ?? config.agent.preferred },
+    ...(patch.loginSessions === undefined ? {} : { loginSessions: patch.loginSessions }),
   };
 }
 
@@ -98,6 +101,7 @@ const toSettings = (config: UserConfig): Settings => ({
   editor: config.editor,
   ...(config.packageManager === undefined ? {} : { packageManager: config.packageManager }),
   agent: { ...config.agent },
+  ...(config.loginSessions === undefined ? {} : { loginSessions: config.loginSessions }),
 });
 
 /** A missing or broken `config.json` falls back to defaults, with a warning. */

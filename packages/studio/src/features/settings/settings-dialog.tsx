@@ -44,6 +44,7 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
       <Section title={t('settings.tools')}>
         <EditorChoice />
         <PackageManagerChoice />
+        <LoginSessionsChoice />
       </Section>
       <Section title={t('settings.agent')}>
         <AgentSection />
@@ -56,6 +57,30 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
       )}
       <SaveStatus />
     </Dialog>
+  );
+}
+
+/** Login sessions on the Canvas (spec-log #77): an advanced option, off by default. */
+function LoginSessionsChoice() {
+  const { t } = useTranslation();
+  const settings = useSettingsStore((state) => state.settings);
+  const update = useSettingsStore((state) => state.update);
+  return (
+    <div className="grid gap-1 py-2.5">
+      <label className="flex cursor-pointer items-center gap-2">
+        <input
+          type="checkbox"
+          data-testid="settings-login-sessions"
+          disabled={settings === undefined}
+          checked={settings?.loginSessions === true}
+          onChange={(e) => {
+            void update({ loginSessions: e.target.checked });
+          }}
+        />
+        <span className="font-medium">{t('settings.loginSessions')}</span>
+      </label>
+      <span className="pl-6 text-xs text-ink-soft">{t('settings.loginSessionsHelp')}</span>
+    </div>
   );
 }
 

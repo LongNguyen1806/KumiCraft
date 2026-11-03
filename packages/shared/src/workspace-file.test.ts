@@ -228,7 +228,7 @@ describe('parseWorkspaceFile', () => {
     const parsedLegacy = parseWorkspaceFile(legacy);
     expect(parsedLegacy.ok).toBe(true);
     if (parsedLegacy.ok) {
-      expect(normalizeSessions(parsedLegacy.value.sessions)).toEqual([{ id: 1, label: 'Phiên 1' }]);
+      expect(normalizeSessions(parsedLegacy.value.sessions)).toEqual([{ id: 1, label: '1' }]);
       expect(normalizeWorkspaceAi(parsedLegacy.value.ai)).toEqual({ allowEdits: true });
     }
 
@@ -262,7 +262,7 @@ describe('parseWorkspaceFile', () => {
       trusted: true,
       designDirs: DEFAULT_DESIGN_DIRS,
     });
-    expect(parsedInfo.sessions).toEqual([{ id: 1, label: 'Phiên 1' }]);
+    expect(parsedInfo.sessions).toEqual([{ id: 1, label: '1' }]);
     expect(parsedInfo.ai).toEqual({ allowEdits: true });
   });
 });

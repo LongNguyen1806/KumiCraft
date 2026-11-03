@@ -89,6 +89,51 @@ afterEach(async () => {
 });
 
 describe('opening a project', () => {
+  it('stops the dev server of the open project before opening another one [R-PJ-08]', async () => {
+    const other = await makeTempDir();
+    try {
+      await writeSupportedProject(dir);
+      await writeSupportedProject(other.dir);
+      const calls: string[] = [];
+      const project = createProjectService({
+        fs: nodeFs,
+        system: fakeSystem(1, new Set([1, 2])),
+        process: {
+          spawn: () => ({
+            pid: 1,
+            onLine: () => undefined,
+            wait: () => Promise.resolve({ exitCode: 0, stdout: '', stderr: '', lines: [] }),
+            kill: () => Promise.resolve(),
+          }),
+        },
+        config: { ...config, isTrusted: () => true },
+        logger: silentLogger,
+        port: 5431,
+        platform,
+        templateDir: dir,
+        runnerService: {
+          start: () => {
+            calls.push('start');
+            return Promise.resolve();
+          },
+          stop: () => {
+            calls.push('stop');
+            return Promise.resolve();
+          },
+        },
+      });
+
+      expect((await project.open(dir)).ok).toBe(true);
+      // Opening the same project again keeps its dev server.
+      expect((await project.open(dir)).ok).toBe(true);
+      expect(calls).not.toContain('stop');
+      expect((await project.open(other.dir)).ok).toBe(true);
+      expect(calls.filter((c) => c === 'stop')).toHaveLength(1);
+    } finally {
+      await other.cleanup();
+    }
+  });
+
   it('refuses a folder with a workspace.json but no supported project, without locking it [R-PJ-07]', async () => {
     await writeWorkspace();
     const project = service();

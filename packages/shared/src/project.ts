@@ -370,6 +370,8 @@ export const SettingsSchema = z.strictObject({
   agent: z.strictObject({
     preferred: AgentChoiceSchema,
   }),
+  /** Login sessions on the Canvas toolbar (spec-log #77); off by default, hidden when off. */
+  loginSessions: z.boolean().optional(),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
 
@@ -382,5 +384,6 @@ export const SettingsPatchSchema = z.strictObject({
       preferred: AgentChoiceSchema.optional(),
     })
     .optional(),
+  loginSessions: z.boolean().optional(),
 });
 export type SettingsPatch = z.infer<typeof SettingsPatchSchema>;

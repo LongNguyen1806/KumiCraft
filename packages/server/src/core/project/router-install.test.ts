@@ -286,7 +286,7 @@ describe('POST /project/router/install [WP-4.00]', () => {
       const opened = await service.open(projectDir);
       expect(opened.ok).toBe(true);
       if (opened.ok) {
-        expect(opened.value.sessions).toEqual([{ id: 1, label: 'Phiên 1' }]);
+        expect(opened.value.sessions).toEqual([{ id: 1, label: '1' }]);
         expect(opened.value.ai).toEqual({ allowEdits: true });
       }
     } finally {

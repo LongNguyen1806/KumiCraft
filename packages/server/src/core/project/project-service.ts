@@ -129,6 +129,8 @@ class ProjectServiceImpl implements ProjectService {
     // R-HI-08: steps of another project must never be undone into this one.
     if (this.current.status === 'open' && this.current.root !== root) {
       this.deps.history?.clear();
+      // The dev server of the previous project keeps its port; the Canvas would show that app.
+      await this.deps.runnerService?.stop();
     }
     const lockTaken = await acquireLock(this.deps.fs, root, this.deps.system, this.deps.port);
     if (!lockTaken.ok) return lockTaken;

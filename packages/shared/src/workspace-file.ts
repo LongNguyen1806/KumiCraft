@@ -107,7 +107,8 @@ export const LoginSessionsSchema = z
     { message: 'Sessions need unique ids and must include session 1' },
   );
 
-export const DEFAULT_LOGIN_SESSIONS: readonly LoginSession[] = [{ id: 1, label: 'Phiên 1' }];
+/** Session 1 always exists; its label `1` is shown in the Studio language ("Session 1"). */
+export const DEFAULT_LOGIN_SESSIONS: readonly LoginSession[] = [{ id: 1, label: '1' }];
 
 export function normalizeSessions(
   sessions: readonly LoginSession[] | undefined,

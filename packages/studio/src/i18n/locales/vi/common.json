@@ -161,7 +161,9 @@
       "claude": "Claude Code"
     },
     "saving": "Đang lưu…",
-    "saved": "Đã lưu"
+    "saved": "Đã lưu",
+    "loginSessions": "Nhiều phiên đăng nhập trên Canvas",
+    "loginSessionsHelp": "Hiện ô \"Đăng nhập\" trên thanh Canvas. Mỗi phiên giữ đăng nhập riêng, dùng cho app cần hai vai trò cùng lúc (ví dụ customer và farmer). Tắt: Canvas dùng một đăng nhập."
   },
   "trust": {
     "bar": "Dự án chưa được tin cậy: dev server, cài dependency và agent AI không chạy. Bạn vẫn xem được.",
@@ -688,7 +690,7 @@
     "dismissError": "Đóng thông báo"
   },
   "sessions": {
-    "button": "Phiên: {{label}}",
+    "button": "Đăng nhập: {{label}}",
     "title": "Phiên đăng nhập",
     "add": "+ Thêm phiên",
     "rename": "Đổi tên",
@@ -697,6 +699,7 @@
     "cancel": "Hủy",
     "newPlaceholder": "Tên phiên (vd: Admin)",
     "defaultLabel": "Phiên {{id}}",
-    "localhostUnsupported": "Trình duyệt này không mở được địa chỉ *.localhost; dùng Chrome, Edge hoặc Firefox"
+    "localhostUnsupported": "Trình duyệt này không mở được địa chỉ *.localhost; dùng Chrome, Edge hoặc Firefox",
+    "explain": "Mỗi phiên giữ đăng nhập riêng trong Canvas (cookie và local storage). Dùng một phiên cho mỗi vai trò, ví dụ Customer và Farmer, rồi đổi qua lại mà không phải đăng nhập lại."
   }
 }

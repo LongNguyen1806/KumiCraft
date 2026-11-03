@@ -291,18 +291,22 @@ function CanvasToolbar({ mode, session, runnerOrigin, onToggleMode }: CanvasTool
   const { t } = useTranslation();
   const route = useSelectionStore((s) => s.currentRoute);
   return (
-    <header className="flex h-11 items-center justify-between border-b border-line bg-card/60 px-4 text-xs backdrop-blur-md">
-      <div className="flex min-w-0 items-center gap-3">
+    <header className="flex h-11 items-center justify-between gap-3 border-b border-line bg-card/60 px-4 text-xs backdrop-blur-md">
+      {/* Buttons keep their size; only the route text shrinks, and a narrow window scrolls the group
+          sideways instead of sliding it under the mode button. */}
+      <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto [&>*]:shrink-0">
         <PageSelect />
-        <SessionSelect
-          sessions={session.sessions}
-          activeSessionId={session.activeSessionId}
-          runnerOrigin={runnerOrigin}
-          onSelectSession={session.selectSession}
-          onSessionsUpdated={session.setLocalSessions}
-        />
+        {session.enabled && (
+          <SessionSelect
+            sessions={session.sessions}
+            activeSessionId={session.activeSessionId}
+            runnerOrigin={runnerOrigin}
+            onSelectSession={session.selectSession}
+            onSessionsUpdated={session.setLocalSessions}
+          />
+        )}
         <span
-          className="min-w-0 truncate font-mono text-ink-soft"
+          className="min-w-0 !shrink truncate font-mono text-ink-soft"
           title={route}
           data-testid="canvas-route"
         >
@@ -312,7 +316,7 @@ function CanvasToolbar({ mode, session, runnerOrigin, onToggleMode }: CanvasTool
       <button
         type="button"
         onClick={onToggleMode}
-        className="rounded border border-border bg-field px-3 py-1 font-medium text-ink hover:bg-field-hover"
+        className="shrink-0 rounded border border-border bg-field px-3 py-1 font-medium text-ink hover:bg-field-hover"
         data-testid="canvas-mode-toggle"
       >
         {mode === 'design' ? t('editor.modePreview') : t('editor.modeDesign')}

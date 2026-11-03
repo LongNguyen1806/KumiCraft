@@ -34,6 +34,7 @@ function merge(settings: Settings | undefined, patch: SettingsPatch): Settings |
     ...(patch.editor === undefined ? {} : { editor: patch.editor }),
     ...(patch.packageManager === undefined ? {} : { packageManager: patch.packageManager }),
     agent: { preferred: patch.agent?.preferred ?? settings.agent.preferred },
+    ...(patch.loginSessions === undefined ? {} : { loginSessions: patch.loginSessions }),
   };
 }
 

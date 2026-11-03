@@ -93,6 +93,22 @@ describe('Settings dialog', () => {
     expect(useSettingsStore.getState().settings?.editor).toBe('cursor');
   });
 
+  it('turns the advanced login sessions on and off; off is the default [spec-log #77]', async () => {
+    stubSettings();
+    await openSettings();
+
+    const box = screen.getByTestId<HTMLInputElement>('settings-login-sessions');
+    expect(box.checked).toBe(false);
+    fireEvent.click(box);
+    expect(box.checked).toBe(true);
+    expect(await screen.findByText('Saved')).toBeDefined();
+    expect(useSettingsStore.getState().settings?.loginSessions).toBe(true);
+
+    fireEvent.click(box);
+    expect(box.checked).toBe(false);
+    expect(patches()).toEqual([{ loginSessions: true }, { loginSessions: false }]);
+  });
+
   it('saves the package manager for new projects', async () => {
     stubSettings();
     await openSettings();
