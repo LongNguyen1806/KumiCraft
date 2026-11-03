@@ -261,8 +261,100 @@ describe('K3d Stage A — Route Finder [WP-4.00]', () => {
       const pages = res.pages.map((p) => [p.path, p.file]).sort();
       expect(pages).toEqual([
         ['/', 'src/pages/HomePage.jsx'],
+        ['/403', 'src/pages/ForbiddenPage.jsx'],
         ['/admin', 'src/pages/AdminPage.jsx'],
         ['/products', 'src/pages/ProductsPage.jsx'],
+      ]);
+    } finally {
+      await t.cleanup();
+    }
+  });
+
+  it('C1: exported ROUTES constant object imported into route files resolves path: ROUTES.FARMER.HOME and <Route path={ROUTES.HOME}> [WP-4.00]', async () => {
+    const t = await createProject({
+      'src/router/constants.ts': [
+        'export const ROUTES = Object.freeze({',
+        "  HOME: '/',",
+        '  FARMER: {',
+        "    HOME: '/farmer',",
+        "    PLOTS: '/farmer/plots',",
+        '  },',
+        '} as const);',
+      ].join('\n'),
+      'src/main.tsx': [
+        "import { createBrowserRouter } from 'react-router';",
+        "import { ROUTES } from './router/constants';",
+        "import { Home } from './pages/Home.tsx';",
+        "import { FarmerHome } from './pages/FarmerHome.tsx';",
+        "import { Plots } from '@/pages/Plots.tsx';",
+        'export const router = createBrowserRouter([',
+        '  { path: ROUTES.FARMER.HOME, element: <FarmerHome /> },',
+        '  { path: ROUTES.FARMER.PLOTS, Component: Plots },',
+        ']);',
+        'export function JsxApp() {',
+        '  return <Route path={ROUTES.HOME} element={<Home />} />;',
+        '}',
+      ].join('\n'),
+      'src/pages/Home.tsx': 'export function Home() { return <div>Home</div>; }',
+      'src/pages/FarmerHome.tsx': 'export function FarmerHome() { return <div>Farmer</div>; }',
+      'src/pages/Plots.tsx': 'export function Plots() { return <div>Plots</div>; }',
+    });
+
+    try {
+      const res = await readPages(nodeFs, t.dir, 'src');
+      expect(res.pages).toEqual([
+        {
+          path: '/farmer',
+          component: 'FarmerHome',
+          file: 'src/pages/FarmerHome.tsx',
+          dynamic: false,
+        },
+        { path: '/farmer/plots', component: 'Plots', file: 'src/pages/Plots.tsx', dynamic: false },
+        { path: '/', component: 'Home', file: 'src/pages/Home.tsx', dynamic: false },
+      ]);
+    } finally {
+      await t.cleanup();
+    }
+  });
+
+  it('C2: function call ROUTES.FARMER.PLOT_DETAIL(":id") or unresolvable local variable is skipped rather than defaulting to "/" [WP-4.00]', async () => {
+    const t = await createProject({
+      'src/router/constants.ts': [
+        'export const ROUTES = {',
+        '  FARMER: {',
+        "    HOME: '/farmer',",
+        '    PLOT_DETAIL: (id: string) => `/farmer/plots/${id}`,',
+        '  },',
+        '} as const;',
+      ].join('\n'),
+      'src/main.tsx': [
+        "import { createBrowserRouter } from 'react-router';",
+        "import { ROUTES } from '@/router/constants';",
+        "import { FarmerHome } from './pages/FarmerHome.tsx';",
+        "import { PlotDetail } from './pages/PlotDetail.tsx';",
+        'const LOCAL_ROUTES = { SECRET: "/secret" };',
+        'export const router = createBrowserRouter([',
+        '  { path: ROUTES.FARMER.HOME, element: <FarmerHome /> },',
+        "  { path: ROUTES.FARMER.PLOT_DETAIL(':id'), element: <PlotDetail /> },",
+        '  { path: LOCAL_ROUTES.SECRET, element: <PlotDetail /> },',
+        ']);',
+        'export function ExtraJsx() {',
+        '  return <Route path={LOCAL_ROUTES.SECRET} element={<PlotDetail />} />;',
+        '}',
+      ].join('\n'),
+      'src/pages/FarmerHome.tsx': 'export function FarmerHome() { return <div>Farmer</div>; }',
+      'src/pages/PlotDetail.tsx': 'export function PlotDetail() { return <div>Plot</div>; }',
+    });
+
+    try {
+      const res = await readPages(nodeFs, t.dir, 'src');
+      expect(res.pages).toEqual([
+        {
+          path: '/farmer',
+          component: 'FarmerHome',
+          file: 'src/pages/FarmerHome.tsx',
+          dynamic: false,
+        },
       ]);
     } finally {
       await t.cleanup();

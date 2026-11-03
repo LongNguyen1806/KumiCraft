@@ -3,6 +3,7 @@ import type { BackendInfo } from '@kumicraft/shared';
 import { useCallback, useEffect, useState } from 'react';
 
 import { fetchProject } from '../../api/project-client.ts';
+import { useProjectStore } from '../project/project-store.ts';
 
 export function useProjectBackends() {
   const [backends, setBackends] = useState<readonly BackendInfo[]>([]);
@@ -10,6 +11,7 @@ export function useProjectBackends() {
   const reload = useCallback(async () => {
     try {
       const project = await fetchProject();
+      useProjectStore.getState().setProject(project);
       setBackends(project.backends);
     } catch {
       // Handled silently
@@ -21,7 +23,10 @@ export function useProjectBackends() {
     const load = async () => {
       try {
         const project = await fetchProject();
-        if (active) setBackends(project.backends);
+        if (active) {
+          useProjectStore.getState().setProject(project);
+          setBackends(project.backends);
+        }
       } catch {
         // Handled silently
       }

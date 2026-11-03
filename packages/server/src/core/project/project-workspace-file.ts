@@ -2,12 +2,15 @@
 import type {
   DesignDirs,
   Frame,
+  LoginSession,
   ResponsiveMode,
   Routing,
   StyleFiles,
   StyleSystemId,
+  WorkspaceAi,
 } from '@kumicraft/shared';
 import {
+  LoginSessionsSchema,
   newWorkspaceFile,
   normalizeDesignDirs,
   serializeWorkspaceFile,
@@ -39,6 +42,8 @@ export type PatchWorkspaceUpdates = {
   readonly designDirs?: DesignDirs | undefined;
   readonly styleFiles?: StyleFiles | undefined;
   readonly routing?: Routing | undefined;
+  readonly sessions?: readonly LoginSession[] | undefined;
+  readonly ai?: WorkspaceAi | undefined;
 };
 
 function buildPatchedWorkspaceFile(
@@ -64,6 +69,9 @@ function buildPatchedWorkspaceFile(
     routing = updates.routing.file !== undefined ? { file: updates.routing.file } : undefined;
   }
 
+  const sessions = updates.sessions ? [...updates.sessions] : file.sessions;
+  const ai = updates.ai ?? file.ai;
+
   return {
     ...file,
     name: updates.name ?? file.name,
@@ -78,6 +86,8 @@ function buildPatchedWorkspaceFile(
         ? { styleFiles: file.styleFiles }
         : {}),
     ...(routing !== undefined ? { routing } : {}),
+    ...(sessions !== undefined ? { sessions } : {}),
+    ...(ai !== undefined ? { ai } : {}),
   };
 }
 
@@ -93,6 +103,12 @@ export async function executePatchWorkspaceFile(
   if (updates.designDirs !== undefined) {
     if (!validateDesignDirs(updates.designDirs, sourceDir, platform)) {
       return err({ code: 'E016', params: { reason: 'designDirs' } });
+    }
+  }
+
+  if (updates.sessions !== undefined) {
+    if (!LoginSessionsSchema.safeParse(updates.sessions).success) {
+      return err({ code: 'E016', params: { reason: 'sessions' } });
     }
   }
 

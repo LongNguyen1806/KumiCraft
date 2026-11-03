@@ -16,6 +16,7 @@ import { startTurn } from '../../api/agent-client.ts';
 import { type ErrorInfo, errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { type LoginFlow, useAgentsStore } from '../../store/agents-store.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { useProjectStore } from '../project/project-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
 import { type ChatImageAttachment, useChatStore } from './chat-store.ts';
@@ -300,7 +301,9 @@ function ChatInputField({
 }
 
 export function ChatInput({ disabled = false }: ChatInputProps) {
+  const { t } = useTranslation('chat');
   const { t: tCommon } = useTranslation();
+  const allowEdits = useProjectStore((s) => s.project?.ai?.allowEdits ?? true);
   const draft = useChatStore((s) => s.draft);
   const setDraft = useChatStore((s) => s.setDraft);
   const { isUploading, addFiles } = useChatImages();
@@ -308,16 +311,9 @@ export function ChatInput({ disabled = false }: ChatInputProps) {
   const [docError, setDocError] = useState<string | undefined>();
   useAutoResend(send);
 
-  const trimmed = draft.trim();
-  const canSend = !disabled && Boolean(trimmed) && !isUploading;
-
-  const handleSend = () => {
-    if (!disabled) sendFromStore(send);
-  };
-
+  const canSend = !disabled && Boolean(draft.trim()) && !isUploading;
   const handleDropPath = (path: string) => {
-    const docs = useChatStore.getState().docs;
-    if (docs.length >= 10) {
+    if (useChatStore.getState().docs.length >= 10) {
       setDocError(tCommon('files.maxDocsError'));
       return;
     }
@@ -342,10 +338,17 @@ export function ChatInput({ disabled = false }: ChatInputProps) {
         draft={draft}
         canSend={canSend}
         onDraftChange={setDraft}
-        onSend={handleSend}
+        onSend={() => {
+          if (!disabled) sendFromStore(send);
+        }}
         onAddFiles={addFiles}
         onDropPath={handleDropPath}
       />
+      {!allowEdits && (
+        <p data-testid="chat-readonly-notice" className="text-[11px] text-ink-soft">
+          {t('readOnlyNotice')}
+        </p>
+      )}
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   type ExtractComponent,
   type JobStarted,
   JobStartedSchema,
+  type LoginSession,
   type PackageManager,
   type PagesInfo,
   PagesInfoSchema,
@@ -29,6 +30,7 @@ import {
   RecentProjectsSchema,
   type RenameDraft,
   type RenamePage,
+  type Routing,
   type SessionInfo,
   SessionInfoSchema,
   type StructureResult,
@@ -40,6 +42,7 @@ import {
   type ThemeTokenKind,
   type ThemeUsage,
   ThemeUsageSchema,
+  type WorkspaceAi,
 } from '@kumicraft/shared';
 
 import { apiDelete, apiGet, apiPatch, apiPost, parseResponse } from './http.ts';
@@ -139,8 +142,15 @@ export async function saveDesignDirs(
 export async function patchProject(payload: {
   readonly designDirs?: DesignDirs | undefined;
   readonly styleFiles?: StyleFiles | undefined;
+  readonly routing?: Routing | undefined;
+  readonly sessions?: readonly LoginSession[] | undefined;
+  readonly ai?: WorkspaceAi | undefined;
 }): Promise<ProjectInfo> {
   return parseResponse(ProjectInfoSchema, await apiPatch('project', payload));
+}
+
+export async function installProjectRouter(): Promise<JobStarted> {
+  return parseResponse(JobStartedSchema, await apiPost('project/router/install', {}));
 }
 
 export async function fetchProjectDirs(): Promise<string[]> {
@@ -189,4 +199,29 @@ export async function deleteDraft(payload: DraftFile): Promise<StructureResult> 
 
 export async function promoteDraft(payload: PromoteDraft): Promise<StructureResult> {
   return parseResponse(StructureResultSchema, await apiPost('project/drafts/promote', payload));
+}
+
+export const SESSION_PROBE_TIMEOUT_MS = 3_000;
+
+const probedOrigins = new Set<string>();
+
+export function resetSessionProbeCache(): void {
+  probedOrigins.clear();
+}
+
+export async function probeSessionOrigin(targetOrigin: string): Promise<boolean> {
+  if (probedOrigins.has(targetOrigin)) return true;
+  const controller = new AbortController();
+  const timer = setTimeout(() => {
+    controller.abort();
+  }, SESSION_PROBE_TIMEOUT_MS);
+  try {
+    await fetch(targetOrigin, { mode: 'no-cors', signal: controller.signal });
+    probedOrigins.add(targetOrigin);
+    return true;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
 }

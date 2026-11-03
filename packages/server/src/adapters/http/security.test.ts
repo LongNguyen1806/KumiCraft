@@ -116,7 +116,10 @@ describe('security headers', () => {
     const response = await getSession(AUTH);
     const csp = String(response.headers['content-security-policy']);
 
-    expect(csp).toContain('frame-src http://127.0.0.1:*');
+    expect(csp).toContain('frame-src http://127.0.0.1:* http://*.localhost:*');
+    // Login sessions (spec-log #76): Studio probes and frames s<n>.localhost, still this machine only.
+    expect(csp).toContain('http://*.localhost:*');
+    expect(csp).not.toMatch(/frame-src[^;]*https?:\/\/\*[;: ]/);
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).not.toMatch(/img-src[^;]*https?:/);
     expect(response.headers['x-frame-options']).toBe('DENY');

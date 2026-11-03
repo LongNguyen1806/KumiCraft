@@ -181,35 +181,22 @@ type TurnPreparation = {
   readonly notices: TurnNotice[];
 };
 
-function createInitialTurnSummary(
-  turnId: string,
-  agent: AgentStatus['id'],
-  prompt: string,
-  startedAt: string,
-  notices: TurnNotice[],
-): TurnSummary {
-  return {
-    id: turnId,
-    agent,
-    startedAt,
-    prompt,
-    state: 'running',
-    files: [],
-    revertible: false,
-    notices,
-  };
-}
-
 function computeAdapterArgs(
   resolved: ResolvedAgent,
   prompt: string,
   mirrors: readonly { readonly dir: string }[],
+  allowEdits: boolean,
   conversationId?: string,
   imageDir?: string,
 ): readonly string[] {
   const mirrorDirs =
     imageDir !== undefined ? [...mirrors.map((m) => m.dir), imageDir] : mirrors.map((m) => m.dir);
-  const adapterArgs = resolved.adapter.buildArgs({ prompt, mirrorDirs, conversationId });
+  const adapterArgs = resolved.adapter.buildArgs({
+    prompt,
+    mirrorDirs,
+    allowEdits,
+    conversationId,
+  });
   return [...resolved.command.prefixArgs, ...adapterArgs];
 }
 
@@ -227,42 +214,40 @@ async function prepareTurnRun(
   const notices: TurnNotice[] = [];
   const mirrors = await prepareMirrors(deps.mirror, projectInfo.id, projectInfo.backends, notices);
   const guideRes = await deps.fs.readText(projectInfo.root, '.kumicraft/agent-guide.md');
-  const guide = guideRes.ok ? guideRes.value : undefined;
-
+  const allowEdits = projectInfo.ai?.allowEdits ?? true;
   const promptRes = buildPrompt({
     request: request.prompt,
     context: request.context,
     mirrors,
     docs: request.docs,
     images: imagePaths.length > 0 ? imagePaths : undefined,
-    guide,
+    guide: guideRes.ok ? guideRes.value : undefined,
     styling: projectInfo.support.styling,
+    allowEdits,
   });
   if (!promptRes.ok) return err(promptRes.error);
 
-  const conversationId = await resolveConversation(
+  const convId = await resolveConversation(
     deps.store,
     projectInfo.id,
     request.conversation,
     resolved.status.id,
   );
-  const initialSummary = createInitialTurnSummary(
-    turnId,
-    resolved.status.id,
-    request.prompt,
-    deps.now().toISOString(),
+  const initialSummary: TurnSummary = {
+    id: turnId,
+    agent: resolved.status.id,
+    startedAt: deps.now().toISOString(),
+    prompt: request.prompt,
+    state: 'running',
+    files: [],
+    revertible: false,
     notices,
-  );
+  };
   await deps.store.save(projectInfo.id, initialSummary);
 
-  const imageDir =
-    imagePaths.length > 0 && deps.chatImages !== undefined
-      ? deps.chatImages.dirOf(projectInfo.id)
-      : undefined;
-  const args = computeAdapterArgs(resolved, promptRes.value, mirrors, conversationId, imageDir);
-  const readyIds = new Set(mirrors.map((m) => m.backendId));
-
-  return ok({ initialSummary, args, readyIds, notices });
+  const imgDir = imagePaths.length > 0 ? deps.chatImages?.dirOf(projectInfo.id) : undefined;
+  const args = computeAdapterArgs(resolved, promptRes.value, mirrors, allowEdits, convId, imgDir);
+  return ok({ initialSummary, args, readyIds: new Set(mirrors.map((m) => m.backendId)), notices });
 }
 
 async function finalizeTurn(

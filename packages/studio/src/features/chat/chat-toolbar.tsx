@@ -2,13 +2,58 @@
 import type { AgentStatus } from '@kumicraft/shared';
 import { FolderPlus, ImagePlus, Plus } from 'lucide-react';
 import type React from 'react';
-import { useContext, useRef } from 'react';
+import { useContext, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import { patchProject } from '../../api/project-client.ts';
 import { AgentBadge } from '../agents/agent-badge.tsx';
 import { PanelHeaderContext } from '../editor/panel-header-context.ts';
+import { useProjectStore } from '../project/project-store.ts';
 import { useChatStore } from './chat-store.ts';
+
+function AllowEditsToggle({ disabled }: { readonly disabled: boolean }) {
+  const { t } = useTranslation('chat');
+  const allowEdits = useProjectStore((s) => s.project?.ai?.allowEdits ?? true);
+  const [busy, setBusy] = useState(false);
+
+  const toggle = async () => {
+    const next = !allowEdits;
+    setBusy(true);
+    try {
+      const info = await patchProject({ ai: { allowEdits: next } });
+      useProjectStore.getState().setProject({
+        ...info,
+        ai: info.ai ?? { allowEdits: next },
+      });
+    } catch {
+      // Keep previous state on failure.
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={allowEdits}
+      data-testid="chat-allow-edits"
+      disabled={disabled || busy}
+      onClick={() => {
+        void toggle();
+      }}
+      className={`flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs transition-colors cursor-pointer disabled:opacity-40 disabled:pointer-events-none ${
+        allowEdits
+          ? 'border-accent/40 bg-accent/10 text-ink'
+          : 'border-border bg-field text-ink-soft'
+      }`}
+    >
+      <span className={`size-2 rounded-full ${allowEdits ? 'bg-accent' : 'bg-ink-faint'}`} />
+      <span>{t('allowEdits')}</span>
+    </button>
+  );
+}
 
 function NewConversationButton({ disabled }: { readonly disabled: boolean }) {
   const { t } = useTranslation('chat');
@@ -122,6 +167,7 @@ export function ChatToolbar({
     >
       <div className="flex items-center gap-1">
         <NewConversationButton disabled={disabled} />
+        <AllowEditsToggle disabled={disabled} />
         <ToolbarActionButtons
           disabled={disabled}
           onOpenImport={onOpenImport}

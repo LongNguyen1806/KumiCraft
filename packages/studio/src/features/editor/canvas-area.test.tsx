@@ -1,10 +1,15 @@
 import { DEFAULT_DESIGN_DIRS, type ProjectInfo, type RunnerStatus } from '@kumicraft/shared';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import i18next from 'i18next';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import * as projectClient from '../../api/project-client.ts';
 import { initI18n } from '../../i18n/i18n.ts';
+import { useProjectStore } from '../project/project-store.ts';
+import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { CanvasArea } from './canvas-area.tsx';
+import { resetSessionProbeCache } from './session-select.tsx';
 
 let mockRunnerState: {
   status: RunnerStatus;
@@ -49,11 +54,24 @@ const mockProject: ProjectInfo = {
 describe('CanvasArea', () => {
   beforeAll(async () => {
     await initI18n();
+    await i18next.changeLanguage('vi');
+  });
+
+  beforeEach(() => {
+    localStorage.clear();
+    resetSessionProbeCache();
+    useProjectStore.getState().setProject(undefined);
+    useSelectionStore.getState().reset();
+    vi.spyOn(projectClient, 'fetchPages').mockResolvedValue({
+      pages: [],
+      convention: false,
+      router: { status: 'none', hasRouterPackage: false },
+    });
   });
 
   afterEach(() => {
     cleanup();
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('renders untrusted prompt when trusted is false [R-RN-20]', () => {
@@ -170,5 +188,127 @@ describe('CanvasArea', () => {
     const btn = screen.getByTestId('canvas-restart-btn');
     fireEvent.click(btn);
     expect(restart).toHaveBeenCalledTimes(1);
+  });
+
+  it('D2: switching session 1 -> 2 updates iframe src to s2.localhost, calls bridgeChannel.attach with s2.localhost, and ignores messages from session 1 origin [WP-4.00]', async () => {
+    const nonce = 'n'.repeat(22);
+    mockRunnerState = {
+      status: { state: 'ready', origin: 'http://127.0.0.1:5173', nonce },
+      logTail: [],
+      start: vi.fn(),
+      restart: vi.fn(),
+    };
+    useSelectionStore.getState().setRoute('/dashboard');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response());
+    const attachSpy = vi.spyOn(studioBridgeChannel, 'attach');
+
+    const projectWithTwoSessions: ProjectInfo = {
+      ...mockProject,
+      sessions: [
+        { id: 1, label: 'Phiên 1' },
+        { id: 2, label: 'Admin' },
+      ],
+    };
+    render(<CanvasArea projectInfo={projectWithTwoSessions} trusted />);
+
+    const iframe = screen.getByTestId<HTMLIFrameElement>('canvas-iframe');
+    expect(iframe.getAttribute('src')).toBe('http://127.0.0.1:5173/dashboard');
+
+    fireEvent.click(screen.getByTestId('session-select-trigger'));
+    fireEvent.click(screen.getByTestId('session-item-2'));
+
+    await waitFor(() => {
+      expect(iframe.getAttribute('src')).toBe('http://s2.localhost:5173/dashboard');
+    });
+    expect(attachSpy).toHaveBeenLastCalledWith(
+      iframe.contentWindow,
+      'http://s2.localhost:5173',
+      nonce,
+    );
+
+    // Message from session 1 origin after switching to session 2 must be ignored.
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        origin: 'http://127.0.0.1:5173',
+        source: iframe.contentWindow,
+        data: { rc: 1, nonce, type: 'route', payload: { route: '/from-session-1' } },
+      }),
+    );
+    expect(useSelectionStore.getState().currentRoute).toBe('/dashboard');
+
+    // Message from session 2 origin is accepted.
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        origin: 'http://s2.localhost:5173',
+        source: iframe.contentWindow,
+        data: { rc: 1, nonce, type: 'route', payload: { route: '/from-session-2' } },
+      }),
+    );
+    expect(useSelectionStore.getState().currentRoute).toBe('/from-session-2');
+  });
+
+  it('D3: adding session Admin calls PATCH /project with sessions [1, 2]; session 1 has no delete button [WP-4.00]', async () => {
+    mockRunnerState = {
+      status: { state: 'ready', origin: 'http://127.0.0.1:5173' },
+      logTail: [],
+      start: vi.fn(),
+      restart: vi.fn(),
+    };
+    const patchSpy = vi.spyOn(projectClient, 'patchProject').mockResolvedValue({
+      ...mockProject,
+      sessions: [
+        { id: 1, label: 'Phiên 1' },
+        { id: 2, label: 'Admin' },
+      ],
+    });
+
+    render(<CanvasArea projectInfo={mockProject} trusted />);
+    fireEvent.click(screen.getByTestId('session-select-trigger'));
+
+    expect(screen.queryByTestId('session-delete-btn-1')).toBeNull();
+
+    fireEvent.change(screen.getByTestId('session-add-input'), {
+      target: { value: 'Admin' },
+    });
+    fireEvent.click(screen.getByTestId('session-add-btn'));
+
+    await waitFor(() => {
+      expect(patchSpy).toHaveBeenCalledWith({
+        sessions: [
+          { id: 1, label: 'Phiên 1' },
+          { id: 2, label: 'Admin' },
+        ],
+      });
+    });
+    expect(screen.getByTestId('session-delete-btn-2')).toBeDefined();
+  });
+
+  it('D4: when probing s2.localhost fails, keeps session 1 and shows browser *.localhost error message [WP-4.00]', async () => {
+    mockRunnerState = {
+      status: { state: 'ready', origin: 'http://127.0.0.1:5173', nonce: 'n'.repeat(22) },
+      logTail: [],
+      start: vi.fn(),
+      restart: vi.fn(),
+    };
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+
+    const projectWithTwoSessions: ProjectInfo = {
+      ...mockProject,
+      sessions: [
+        { id: 1, label: 'Phiên 1' },
+        { id: 2, label: 'Admin' },
+      ],
+    };
+    render(<CanvasArea projectInfo={projectWithTwoSessions} trusted />);
+
+    fireEvent.click(screen.getByTestId('session-select-trigger'));
+    fireEvent.click(screen.getByTestId('session-item-2'));
+
+    const errAlert = await screen.findByTestId('session-error');
+    expect(errAlert.textContent).toBe(
+      'Trình duyệt này không mở được địa chỉ *.localhost; dùng Chrome, Edge hoặc Firefox',
+    );
+    expect(screen.getByTestId('session-select-trigger').textContent).toBe('Phiên: Phiên 1');
+    expect(screen.getByTestId('canvas-iframe').getAttribute('src')).toBe('http://127.0.0.1:5173/');
   });
 });

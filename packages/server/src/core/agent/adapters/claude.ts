@@ -106,6 +106,8 @@ export const claudeAdapter: AgentAdapter = {
       '--output-format',
       'stream-json',
       '--verbose',
+      '--permission-mode',
+      turn.allowEdits !== false ? 'acceptEdits' : 'plan',
       ...turn.mirrorDirs.flatMap((d) => ['--add-dir', d]),
       ...(turn.conversationId !== undefined ? ['--resume', turn.conversationId] : []),
     ];

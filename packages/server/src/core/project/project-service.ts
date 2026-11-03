@@ -57,6 +57,7 @@ import {
   type PatchWorkspaceUpdates,
   reloadOpenWorkspace,
 } from './project-workspace-file.ts';
+import { installProjectRouter } from './router-install.ts';
 export type { ProjectService, ProjectServiceDeps, WorkspaceState };
 
 class ProjectServiceImpl implements ProjectService {
@@ -255,6 +256,14 @@ class ProjectServiceImpl implements ProjectService {
 
   install(command: readonly string[]): Promise<Result<{ readonly jobId: string }>> {
     return Promise.resolve(this.startInstall(command));
+  }
+
+  installRouter(): Promise<Result<{ readonly jobId: string }>> {
+    return installProjectRouter(
+      this.current,
+      { fs: this.deps.fs, history: this.deps.history, jobs: this.jobs, process: this.deps.process },
+      (root) => this.afterInstall(root),
+    );
   }
 
   private startInstall(command: readonly string[]): Result<{ readonly jobId: string }> {

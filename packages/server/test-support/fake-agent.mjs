@@ -39,42 +39,45 @@ function parseArgs(args) {
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
+    const next = args[i + 1];
     if (arg === '-p') {
-      i++;
-      if (i >= args.length) {
-        return { ok: false, error: 'Missing value for -p' };
-      }
-      prompt = args[i];
+      if (++i >= args.length) return { ok: false, error: 'Missing value for -p' };
+      prompt = next;
     } else if (arg === '--output-format') {
-      i++;
-      if (i >= args.length || args[i].startsWith('-')) {
+      if (++i >= args.length || next.startsWith('-')) {
         return { ok: false, error: 'Missing value for --output-format' };
       }
-      outputFormat = args[i];
+      outputFormat = next;
     } else if (arg === '--add-dir') {
-      i++;
-      if (i >= args.length || args[i].startsWith('-')) {
+      if (++i >= args.length || next.startsWith('-')) {
         return { ok: false, error: 'Missing value for --add-dir' };
       }
-      addDirs.push(args[i]);
-    } else if (arg === '--conversation') {
-      i++;
-      if (i >= args.length || args[i].startsWith('-')) {
-        return { ok: false, error: 'Missing value for --conversation' };
+      addDirs.push(next);
+    } else if (arg === '--conversation' || arg === '--resume') {
+      if (++i >= args.length || next.startsWith('-')) {
+        return { ok: false, error: `Missing value for ${arg}` };
       }
-      conversationId = args[i];
-    } else {
+      conversationId = next;
+    } else if (arg === '--mode') {
+      if (++i >= args.length || next !== 'plan') {
+        return { ok: false, error: `Unknown flag or unexpected argument: --mode ${next ?? ''}` };
+      }
+    } else if (arg === '--permission-mode') {
+      if (++i >= args.length || (next !== 'acceptEdits' && next !== 'plan')) {
+        return {
+          ok: false,
+          error: `Unknown flag or unexpected argument: --permission-mode ${next ?? ''}`,
+        };
+      }
+    } else if (arg !== '--verbose') {
       return { ok: false, error: `Unknown flag or unexpected argument: ${arg}` };
     }
   }
 
-  if (prompt === undefined) {
-    return { ok: false, error: 'Missing required flag -p' };
-  }
+  if (prompt === undefined) return { ok: false, error: 'Missing required flag -p' };
   if (outputFormat !== 'stream-json') {
     return { ok: false, error: 'Missing or invalid --output-format (expected stream-json)' };
   }
-
   return { ok: true, prompt, outputFormat, addDirs, conversationId };
 }
 

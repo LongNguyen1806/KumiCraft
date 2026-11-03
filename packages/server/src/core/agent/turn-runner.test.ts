@@ -369,4 +369,29 @@ describe('TurnRunner core lifecycle [WP-3.03b]', () => {
     expect(fullArgv).not.toContain('Images the user attached');
     expect(fullArgv).not.toContain('chat-images');
   });
+
+  it('E3 [WP-4.00]: turnRunner reads ProjectInfo.ai.allowEdits and passes it to adapter.buildArgs and buildPrompt', async () => {
+    const readOnlyEnv = setupTurnRunnerTest(tempDir, {
+      projectInfo: makeTestProjectInfo(env.projectRoot, { ai: { allowEdits: false } }),
+    });
+    const recordFile = join(tempDir, 'rec-e3.json');
+    process.env['RC_FAKE_AGENT_RECORD'] = recordFile;
+    process.env['RC_FAKE_AGENT_SCRIPT'] = join(SCRIPTS_DIR, 'success-edit.json');
+
+    const startRes = await readOnlyEnv.turnRunner.start({
+      prompt: 'explain layout',
+      context: {},
+      conversation: 'new',
+      docs: [],
+    });
+    expect(startRes.ok).toBe(true);
+    if (!startRes.ok) return;
+
+    await waitForJobEnd(readOnlyEnv.eventBus, startRes.value.jobId);
+    const rec = readRecordJson(recordFile);
+    expect(rec.argv).toContain('--mode');
+    const modeIdx = rec.argv.indexOf('--mode');
+    expect(rec.argv[modeIdx + 1]).toBe('plan');
+    expect(rec.argv.join(' ')).toContain('AI được sửa file');
+  });
 });

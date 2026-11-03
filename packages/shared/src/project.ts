@@ -8,11 +8,15 @@ import { AppErrorSchema } from './result.ts';
 import { StyleSystemIdSchema } from './style.ts';
 import {
   BackendLinkSchema,
+  DEFAULT_LOGIN_SESSIONS,
+  DEFAULT_WORKSPACE_AI,
   DevPortSchema,
   FrameSchema,
   FRAMEWORK_IDS,
+  LoginSessionsSchema,
   ResolvedDesignDirsSchema,
   StyleFilesSchema,
+  WorkspaceAiSchema,
 } from './workspace-file.ts';
 
 export const UNSUPPORTED_REASONS = [
@@ -131,8 +135,10 @@ export const ProjectInfoSchema = z.strictObject({
   /** Default design directories (R-CP-16). */
   designDirs: ResolvedDesignDirsSchema,
   styleFiles: StyleFilesSchema.optional(),
+  sessions: LoginSessionsSchema.readonly().default(DEFAULT_LOGIN_SESSIONS),
+  ai: WorkspaceAiSchema.default(DEFAULT_WORKSPACE_AI),
 });
-export type ProjectInfo = z.infer<typeof ProjectInfoSchema>;
+export type ProjectInfo = z.input<typeof ProjectInfoSchema>;
 
 export const ThemeTokenSchema = z.strictObject({
   name: z.string(),

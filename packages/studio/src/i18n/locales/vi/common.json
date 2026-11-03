@@ -128,6 +128,7 @@
     "themeSet": "sửa token {{name}}",
     "themeAdd": "thêm token {{name}}",
     "themeRemove": "xóa token {{name}}",
+    "routerInstall": "cài đặt router",
     "batch": "sửa {{count}} phần tử",
     "dismissError": "Đóng thông báo",
     "errorFileChanged": "File {{file}} đã bị sửa từ nơi khác, không hoàn tác được bước này",
@@ -478,7 +479,28 @@
     "save": "Lưu",
     "newPath": "Đường dẫn URL mới",
     "newName": "Tên component mới",
-    "fileAuto": "Tự động: {{name}} (đuôi theo các trang cùng thư mục)"
+    "fileAuto": "Tự động: {{name}} (đuôi theo các trang cùng thư mục)",
+    "routerFile": "Router: {{file}}",
+    "changeRouterFile": "Đổi…",
+    "autoRouterFile": "Tự tìm",
+    "routerAmbiguous": "Dự án có nhiều file router. Chọn file dùng để thêm trang:",
+    "pickOnTree": "Chọn trên cây…",
+    "routerUnsupported": "Router trong {{file}} chưa hỗ trợ sửa tự động ({{reason}}).",
+    "routerUnsupportedReason": {
+      "generated": "route sinh bằng hàm hoặc biến động",
+      "noRoutes": "không tìm thấy danh sách route",
+      "parseError": "file có lỗi cú pháp"
+    },
+    "pickAnotherFile": "Chọn file khác…",
+    "routerNone": "Dự án chưa có React Router.",
+    "installRouter": "Cài router",
+    "installRouterTitle": "Cài đặt React Router",
+    "installRouterStep1": "Thêm \"react-router\" vào package.json và chạy cài gói",
+    "installRouterStep2": "Tạo src/routes với trang / trỏ tới component gốc hiện tại",
+    "installRouterStep3": "Sửa file khởi động dùng <RouterProvider>",
+    "installRouterUndoHint": "Hoàn tác (Undo) sẽ khôi phục các file mã nguồn về nguyên bản (gói đã cài trong node_modules giữ nguyên).",
+    "installRouterConfirm": "Cài đặt",
+    "installRouterRunning": "Đang cài router…"
   },
   "design": {
     "kind": {
@@ -662,6 +684,19 @@
     "removeFromComponentDir": "Bỏ khỏi thư mục component",
     "setNewCssDir": "Đặt file CSS mới vào đây",
     "useAsTokenFile": "Dùng làm file token Brand",
+    "useAsRouterFile": "Dùng làm file router",
     "dismissError": "Đóng thông báo"
+  },
+  "sessions": {
+    "button": "Phiên: {{label}}",
+    "title": "Phiên đăng nhập",
+    "add": "+ Thêm phiên",
+    "rename": "Đổi tên",
+    "delete": "Xóa",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "newPlaceholder": "Tên phiên (vd: Admin)",
+    "defaultLabel": "Phiên {{id}}",
+    "localhostUnsupported": "Trình duyệt này không mở được địa chỉ *.localhost; dùng Chrome, Edge hoặc Firefox"
   }
 }

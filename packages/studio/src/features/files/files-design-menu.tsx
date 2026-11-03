@@ -58,6 +58,12 @@ async function setTokenFile(project: ProjectInfo, file: string) {
   });
 }
 
+async function setRouterFile(file: string) {
+  await patchProjectStyleOrDesign({
+    routing: { file },
+  });
+}
+
 const DIR_KINDS = [
   {
     kind: 'components',
@@ -196,18 +202,35 @@ export function FileTokenAction({
   const { t } = useTranslation();
   if (!project || entry.kind !== 'file') return <></>;
 
-  if (!isTokenFileFor(entry.path, primarySystem(project.support.styling))) return <></>;
+  const isToken = isTokenFileFor(entry.path, primarySystem(project.support.styling));
+  const isCodeFile = /\.(jsx|tsx|js|ts)$/.test(entry.path);
+  if (!isToken && !isCodeFile) return <></>;
 
   return (
-    <MenuItem
-      icon={<FileCode className="size-3.5" />}
-      label={t('files.useAsTokenFile')}
-      testId="files-menu-use-token-file"
-      onClick={() => {
-        onClose();
-        void setTokenFile(project, entry.path);
-      }}
-    />
+    <>
+      {isToken ? (
+        <MenuItem
+          icon={<FileCode className="size-3.5" />}
+          label={t('files.useAsTokenFile')}
+          testId="files-menu-use-token-file"
+          onClick={() => {
+            onClose();
+            void setTokenFile(project, entry.path);
+          }}
+        />
+      ) : undefined}
+      {isCodeFile ? (
+        <MenuItem
+          icon={<FileCode className="size-3.5" />}
+          label={t('files.useAsRouterFile')}
+          testId="files-menu-use-router-file"
+          onClick={() => {
+            onClose();
+            void setRouterFile(entry.path);
+          }}
+        />
+      ) : undefined}
+    </>
   );
 }
 

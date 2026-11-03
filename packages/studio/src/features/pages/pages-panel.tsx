@@ -1,4 +1,4 @@
-import type { PageInfo, StructureResult } from '@kumicraft/shared';
+import type { PageInfo, RouterStatus, StructureResult } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -7,6 +7,7 @@ import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { usePagesData } from '../editor/page-select.tsx';
 import { AddPageForm } from './add-page-form.tsx';
 import { RenamePageForm } from './rename-page-form.tsx';
+import { RouterStatusBox } from './router-status-box.tsx';
 
 type PageRowActionsProps = {
   readonly path: string;
@@ -159,29 +160,24 @@ export function usePageDeletion() {
 
 type PagesHeaderProps = {
   readonly convention: boolean;
+  readonly router: RouterStatus;
   readonly defaultDir?: string | undefined;
   readonly onPageAdded?: ((pagePath: string) => void) | undefined;
+  readonly onRouterChanged?: (() => void) | undefined;
   readonly deleteError?: string | undefined;
 };
 
 export function PagesHeader({
   convention,
+  router,
   defaultDir,
   onPageAdded,
+  onRouterChanged,
   deleteError,
 }: PagesHeaderProps) {
-  const { t } = useTranslation();
   return (
     <>
-      {!convention && (
-        <div
-          data-testid="pages-not-convention"
-          role="note"
-          className="rounded border border-amber-500/40 bg-amber-500/10 p-2.5 text-amber-700 dark:text-amber-300"
-        >
-          {t('pages.notConvention')}
-        </div>
-      )}
+      <RouterStatusBox router={router} onRouterChanged={onRouterChanged} />
       <AddPageForm
         convention={convention}
         defaultDir={defaultDir}
@@ -201,6 +197,7 @@ export function PagesHeader({
 export type PagesPanelProps = {
   readonly pages?: readonly PageInfo[] | undefined;
   readonly convention?: boolean | undefined;
+  readonly router?: RouterStatus | undefined;
   readonly defaultDir?: string | undefined;
   readonly onPageAdded?: ((pagePath: string) => void) | undefined;
 };
@@ -208,12 +205,20 @@ export type PagesPanelProps = {
 export function PagesPanel({
   pages: propPages,
   convention: propConvention,
+  router: propRouter,
   defaultDir,
   onPageAdded,
 }: PagesPanelProps = {}) {
   const storeData = usePagesData();
   const pages = propPages ?? storeData.pages;
-  const convention = propConvention ?? storeData.convention;
+  const router: RouterStatus =
+    propRouter ??
+    (propConvention === true && storeData.router.status !== 'found'
+      ? { status: 'found', file: 'src/routes.tsx', line: 1, kind: 'dataRouter', chosen: false }
+      : propConvention === false && storeData.router.status === 'found'
+        ? { status: 'none', hasRouterPackage: false }
+        : storeData.router);
+  const convention = propConvention ?? router.status === 'found';
   const [renamingPath, setRenamingPath] = useState<string | undefined>();
   const { deleteError, handleDelete } = usePageDeletion();
 
@@ -221,8 +226,10 @@ export function PagesPanel({
     <div data-testid="pages-panel" className="flex flex-col gap-3 text-xs text-ink">
       <PagesHeader
         convention={convention}
+        router={router}
         defaultDir={defaultDir}
         onPageAdded={onPageAdded}
+        onRouterChanged={storeData.refresh}
         deleteError={deleteError}
       />
       <PagesList

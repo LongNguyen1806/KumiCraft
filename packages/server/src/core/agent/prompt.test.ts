@@ -124,4 +124,31 @@ describe('buildPrompt [R-AG-13, S-117]', () => {
       expect(legacyRes.value).not.toContain('Styling:');
     }
   });
+
+  it('E2 [WP-4.00]: buildPrompt includes read-only instruction when allowEdits is false and omits it when true', () => {
+    const readOnlyRes = buildPrompt({
+      request: 'Please update App.tsx',
+      context: {},
+      mirrors: [],
+      docs: [],
+      allowEdits: false,
+    });
+    expect(readOnlyRes.ok).toBe(true);
+    if (readOnlyRes.ok) {
+      expect(readOnlyRes.value).toContain('chế độ chỉ đọc');
+      expect(readOnlyRes.value).toContain('AI được sửa file');
+    }
+
+    const editableRes = buildPrompt({
+      request: 'Please update App.tsx',
+      context: {},
+      mirrors: [],
+      docs: [],
+      allowEdits: true,
+    });
+    expect(editableRes.ok).toBe(true);
+    if (editableRes.ok) {
+      expect(editableRes.value).not.toContain('chế độ chỉ đọc');
+    }
+  });
 });

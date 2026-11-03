@@ -9,7 +9,7 @@ import { claudeAdapter } from './claude.ts';
 
 const FORBIDDEN_FLAGS = [
   '--dangerously-skip-permissions',
-  '--permission-mode',
+  'bypassPermissions',
   '--allowedTools',
   '--continue',
 ];
@@ -29,6 +29,7 @@ describe('claudeAdapter', () => {
     const withoutConv = claudeAdapter.buildArgs({
       prompt: 'Refactor code',
       mirrorDirs: ['dir1'],
+      allowEdits: true,
     });
 
     expect(withoutConv).toEqual([
@@ -37,6 +38,8 @@ describe('claudeAdapter', () => {
       '--output-format',
       'stream-json',
       '--verbose',
+      '--permission-mode',
+      'acceptEdits',
       '--add-dir',
       'dir1',
     ]);
@@ -44,6 +47,7 @@ describe('claudeAdapter', () => {
     const withConv = claudeAdapter.buildArgs({
       prompt: 'Refactor code',
       mirrorDirs: ['dir1'],
+      allowEdits: true,
       conversationId: 'sess-abc',
     });
 
@@ -53,6 +57,8 @@ describe('claudeAdapter', () => {
       '--output-format',
       'stream-json',
       '--verbose',
+      '--permission-mode',
+      'acceptEdits',
       '--add-dir',
       'dir1',
       '--resume',
@@ -88,5 +94,42 @@ describe('claudeAdapter', () => {
       kind: 'error',
       message: 'claude: Reached max turns',
     });
+  });
+
+  it('E1 [WP-4.00]: claude buildArgs uses --permission-mode acceptEdits when allowEdits is true and plan when false, with no forbidden flags', () => {
+    const editArgs = claudeAdapter.buildArgs({
+      prompt: 'Edit file',
+      mirrorDirs: [],
+      allowEdits: true,
+    });
+    const planArgs = claudeAdapter.buildArgs({
+      prompt: 'Explain file',
+      mirrorDirs: [],
+      allowEdits: false,
+    });
+
+    expect(editArgs).toEqual([
+      '-p',
+      'Edit file',
+      '--output-format',
+      'stream-json',
+      '--verbose',
+      '--permission-mode',
+      'acceptEdits',
+    ]);
+    expect(planArgs).toEqual([
+      '-p',
+      'Explain file',
+      '--output-format',
+      'stream-json',
+      '--verbose',
+      '--permission-mode',
+      'plan',
+    ]);
+
+    for (const flag of FORBIDDEN_FLAGS) {
+      expect(editArgs).not.toContain(flag);
+      expect(planArgs).not.toContain(flag);
+    }
   });
 });

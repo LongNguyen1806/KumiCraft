@@ -10,6 +10,7 @@ import * as projectClient from '../../api/project-client.ts';
 import { useAgentsStore } from '../../store/agents-store.ts';
 import { RightPanel } from '../editor/side-panels.tsx';
 import { DEFAULT_THEME } from '../inspector/use-project-theme.ts';
+import { useProjectStore } from '../project/project-store.ts';
 import { ChatPanel } from './chat-panel.tsx';
 import { useChatStore } from './chat-store.ts';
 
@@ -73,6 +74,7 @@ describe('ChatPanel tabs and locks [R-CH-01, R-CH-06, R-CH-07]', () => {
     await i18next.changeLanguage('vi');
     useAgentsStore.getState().reset();
     useChatStore.getState().reset();
+    useProjectStore.getState().setProject(MOCK_PROJECT);
     vi.spyOn(projectClient, 'fetchProject').mockResolvedValue(MOCK_PROJECT);
     vi.spyOn(agentClient, 'fetchTurns').mockResolvedValue([]);
     vi.spyOn(projectClient, 'fetchProjectTheme').mockResolvedValue(DEFAULT_THEME);
@@ -164,5 +166,28 @@ describe('ChatPanel tabs and locks [R-CH-01, R-CH-06, R-CH-07]', () => {
 
     const errorEl = await screen.findByTestId('chat-import-error');
     expect(errorEl.textContent).toContain('E016');
+  });
+
+  it('E4: toggling off AI duoc sua file in Chat calls PATCH /project { ai: { allowEdits: false } } and shows Chi doc: AI khong sua file [WP-4.00]', async () => {
+    const patchSpy = vi.spyOn(projectClient, 'patchProject').mockResolvedValue({
+      ...MOCK_PROJECT,
+      ai: { allowEdits: false },
+    });
+
+    render(<ChatPanel trusted />);
+    const toggleBtn = await screen.findByTestId('chat-allow-edits');
+    expect(toggleBtn.textContent).toContain('AI được sửa file');
+    expect(toggleBtn.getAttribute('aria-checked')).toBe('true');
+    expect(screen.queryByTestId('chat-readonly-notice')).toBeNull();
+
+    fireEvent.click(toggleBtn);
+
+    await vi.waitFor(() => {
+      expect(patchSpy).toHaveBeenCalledWith({ ai: { allowEdits: false } });
+    });
+
+    const notice = await screen.findByTestId('chat-readonly-notice');
+    expect(notice.textContent).toBe('Chỉ đọc: AI không sửa file');
+    expect(screen.getByTestId('chat-allow-edits').getAttribute('aria-checked')).toBe('false');
   });
 });

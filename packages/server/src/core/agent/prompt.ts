@@ -14,6 +14,7 @@ export type PromptInput = {
   readonly images?: readonly string[] | undefined;
   readonly guide?: string | undefined;
   readonly styling?: StylingReport | undefined;
+  readonly allowEdits?: boolean | undefined;
 };
 
 function formatSystemName(sys: StylingSystem): string {
@@ -86,6 +87,11 @@ function buildContextLines(input: PromptInput): readonly string[] {
     for (const image of input.images) {
       lines.push(`- ${image}`);
     }
+  }
+  if (input.allowEdits === false) {
+    lines.push(
+      'Read-only mode (chế độ chỉ đọc): do not edit, create, or delete any files; if asked to edit files, reply that the user needs to turn on "AI được sửa file".',
+    );
   }
   return lines;
 }

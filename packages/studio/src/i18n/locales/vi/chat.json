@@ -26,6 +26,8 @@
   },
   "remove": "Gỡ",
   "newConversation": "Hội thoại mới",
+  "allowEdits": "AI được sửa file",
+  "readOnlyNotice": "Chỉ đọc: AI không sửa file",
   "openInEditor": "Mở trong editor",
   "diffLoading": "Đang tải diff…",
   "revertTurn": "Hoàn tác lượt này",

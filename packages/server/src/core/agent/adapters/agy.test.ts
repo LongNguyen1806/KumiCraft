@@ -9,7 +9,6 @@ import { agyAdapter } from './agy.ts';
 
 const FORBIDDEN_FLAGS = [
   '--dangerously-skip-permissions',
-  '--mode',
   '--sandbox',
   '--continue',
   '-c',
@@ -23,6 +22,7 @@ describe('agyAdapter', () => {
     const withoutConv = agyAdapter.buildArgs({
       prompt: 'Tạo trang',
       mirrorDirs: ['dir1', 'dir2'],
+      allowEdits: true,
     });
 
     expect(withoutConv).toEqual([
@@ -39,6 +39,7 @@ describe('agyAdapter', () => {
     const withConv = agyAdapter.buildArgs({
       prompt: 'Tạo trang',
       mirrorDirs: ['dir1', 'dir2'],
+      allowEdits: true,
       conversationId: 'c-1',
     });
 
@@ -55,9 +56,39 @@ describe('agyAdapter', () => {
       'c-1',
     ]);
 
-    for (const flag of FORBIDDEN_FLAGS) {
+    for (const flag of [...FORBIDDEN_FLAGS, '--mode']) {
       expect(withoutConv).not.toContain(flag);
       expect(withConv).not.toContain(flag);
+    }
+  });
+
+  it('E2 [WP-4.00]: agy buildArgs omits --mode when allowEdits is true and adds --mode plan when false, forbidding --mode auto', () => {
+    const allowArgs = agyAdapter.buildArgs({
+      prompt: 'Sửa nút',
+      mirrorDirs: ['dir1'],
+      allowEdits: true,
+    });
+    const planArgs = agyAdapter.buildArgs({
+      prompt: 'Giải thích nút',
+      mirrorDirs: ['dir1'],
+      allowEdits: false,
+    });
+
+    expect(allowArgs).not.toContain('--mode');
+    expect(planArgs).toEqual([
+      '-p',
+      'Giải thích nút',
+      '--output-format',
+      'stream-json',
+      '--mode',
+      'plan',
+      '--add-dir',
+      'dir1',
+    ]);
+    expect(planArgs).not.toContain('auto');
+    for (const flag of FORBIDDEN_FLAGS) {
+      expect(allowArgs).not.toContain(flag);
+      expect(planArgs).not.toContain(flag);
     }
   });
 

@@ -1,14 +1,20 @@
 // SPEC-03 section 3: the workspace file of a project.
 import { describe, expect, it } from 'vitest';
 
+import { ProjectInfoSchema } from './project.ts';
 import { relPathProblem } from './rel-path.ts';
 import {
+  DEFAULT_DESIGN_DIRS,
   defaultFrames,
   DesignDirsSchema,
+  LoginSessionsSchema,
   newWorkspaceFile,
   normalizeDesignDirs,
+  normalizeSessions,
+  normalizeWorkspaceAi,
   parseWorkspaceFile,
   serializeWorkspaceFile,
+  sessionOrigin,
 } from './workspace-file.ts';
 
 const base = () =>
@@ -202,5 +208,61 @@ describe('parseWorkspaceFile', () => {
         components: ['src/components'],
       }).success,
     ).toBe(false);
+  });
+
+  it('D1 [WP-4.00]: sessionOrigin maps session 1 to runnerOrigin, session 2..8 to s<n>.localhost, and throws on invalid input', () => {
+    expect(sessionOrigin('http://127.0.0.1:5173', 1)).toBe('http://127.0.0.1:5173');
+    expect(sessionOrigin('http://127.0.0.1:5173', 2)).toBe('http://s2.localhost:5173');
+    expect(sessionOrigin('http://127.0.0.1:4000', 8)).toBe('http://s8.localhost:4000');
+
+    expect(() => sessionOrigin('http://127.0.0.1:5173', 0)).toThrow(/sessionId/i);
+    expect(() => sessionOrigin('http://127.0.0.1:5173', 9)).toThrow(/sessionId/i);
+    expect(() => sessionOrigin('http://127.0.0.1:5173', 1.5)).toThrow(/sessionId/i);
+    expect(() => sessionOrigin('not-a-url', 1)).toThrow(/runnerOrigin/i);
+    expect(() => sessionOrigin('http://127.0.0.1', 2)).toThrow(/runnerOrigin/i);
+    expect(() => sessionOrigin('ftp://127.0.0.1:5173', 2)).toThrow(/runnerOrigin/i);
+  });
+
+  it('validates sessions and ai in workspace.json and normalizes defaults in ProjectInfoSchema [WP-4.00]', () => {
+    const legacy = base();
+    const parsedLegacy = parseWorkspaceFile(legacy);
+    expect(parsedLegacy.ok).toBe(true);
+    if (parsedLegacy.ok) {
+      expect(normalizeSessions(parsedLegacy.value.sessions)).toEqual([{ id: 1, label: 'Phiên 1' }]);
+      expect(normalizeWorkspaceAi(parsedLegacy.value.ai)).toEqual({ allowEdits: true });
+    }
+
+    // Duplicate session id or missing session 1 is rejected
+    expect(
+      LoginSessionsSchema.safeParse([
+        { id: 1, label: 'A' },
+        { id: 1, label: 'B' },
+      ]).success,
+    ).toBe(false);
+    expect(LoginSessionsSchema.safeParse([{ id: 2, label: 'Only 2' }]).success).toBe(false);
+
+    // ProjectInfoSchema fills in normalized defaults when absent
+    const parsedInfo = ProjectInfoSchema.parse({
+      id: 'proj123456',
+      name: 'My Project',
+      root: 'D:/projects/my-app',
+      sourceDir: 'src',
+      support: {
+        supported: true,
+        reasons: [],
+        framework: 'vite-react',
+        versions: {},
+        language: 'ts',
+      },
+      needsInstall: false,
+      responsiveMode: 'desktop-first',
+      frames: [{ id: 'desktop', label: 'Desktop', width: 1440, height: 900 }],
+      primaryFrameId: 'desktop',
+      backends: [],
+      trusted: true,
+      designDirs: DEFAULT_DESIGN_DIRS,
+    });
+    expect(parsedInfo.sessions).toEqual([{ id: 1, label: 'Phiên 1' }]);
+    expect(parsedInfo.ai).toEqual({ allowEdits: true });
   });
 });

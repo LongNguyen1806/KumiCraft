@@ -1,9 +1,17 @@
-import { posix } from 'node:path';
-
 import type { PageInfo, PagesInfo, RouterStatus } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { asAstNode, type AstNode, isAstNode, parseJsxAst } from '../source-editor/ast-helpers.ts';
+import {
+  collectProjectRouteConstants,
+  extractImportedFiles,
+  extractImportedSymbols,
+  findDynamicImportSpecifier,
+  resolvePageFile,
+  resolveRoutePathNode,
+  resolveSpecifierBase,
+  type RouteParseContext,
+} from './route-constants.ts';
 import { findRouter } from './route-finder.ts';
 
 const MAX_FILES = 500;
@@ -15,7 +23,7 @@ const ROUTER_CALLS = new Set([
   'useRoutes',
 ]);
 const HINT =
-  /createBrowserRouter|createHashRouter|createMemoryRouter|useRoutes|<Route\b|export\s+const\s+\w+\s*=\s*\[|lazy\(/;
+  /createBrowserRouter|createHashRouter|createMemoryRouter|useRoutes|<Route\b|export\s+const\s+\w+\s*(?::[^=]+)?=\s*\[|lazy\(/;
 
 type Found = {
   readonly path: string;
@@ -65,54 +73,35 @@ function objectProps(obj: AstNode): Map<string, AstNode> {
   return props;
 }
 
-function findDynamicImportSpecifier(node: AstNode): string | undefined {
-  let specifier: string | undefined;
-  function search(n: unknown): void {
-    if (specifier || !n || typeof n !== 'object') return;
-    const obj = n as AstNode;
-    if (obj.type === 'CallExpression') {
-      const callee = asAstNode(obj['callee']);
-      if (callee?.type === 'Import') {
-        const args: unknown[] = Array.isArray(obj['arguments']) ? obj['arguments'] : [];
-        const first = asAstNode(args[0]);
-        if (first?.type === 'StringLiteral' && typeof first['value'] === 'string') {
-          specifier = first['value'];
-          return;
-        }
-      }
-    }
-    for (const [k, v] of Object.entries(obj)) {
-      if (k !== 'loc' && k !== 'leadingComments' && k !== 'trailingComments') search(v);
-    }
-  }
-  search(node);
-  return specifier;
-}
-
 /** `[{ path, element, children }]` given to createBrowserRouter or useRoutes. */
-function fromRouteArray(array: AstNode, parent: string, file: string, out: Found[]): void {
+function fromRouteArray(
+  array: AstNode,
+  parent: string,
+  ctx: RouteParseContext,
+  out: Found[],
+): void {
   const elements: unknown[] = Array.isArray(array['elements']) ? array['elements'] : [];
   for (const raw of elements) {
     const obj = asAstNode(raw);
     if (obj?.type !== 'ObjectExpression') continue;
     const props = objectProps(obj);
-    // A path from code (`ROUTES.HOME`) is unknown: skip the route rather than guess `/`.
-    if (props.has('path') && stringOf(props.get('path')) === undefined) continue;
-    const path = joinRoutePath(parent, stringOf(props.get('path')));
+    const resolvedPath = resolveRoutePathNode(props.get('path'), ctx);
+    if (props.has('path') && resolvedPath === undefined) continue;
+    const path = joinRoutePath(parent, resolvedPath);
     const component = componentOf(props.get('element') ?? props.get('Component'));
     const lazyProp = props.get('lazy');
     const lazySpec = lazyProp ? findDynamicImportSpecifier(lazyProp) : undefined;
     const directImportPath = lazySpec
-      ? posix.normalize(posix.join(posix.dirname(file), lazySpec))
+      ? resolveSpecifierBase(ctx.file, ctx.sourceDir, lazySpec)
       : undefined;
 
     const children = props.get('children');
-    if (children?.type === 'ArrayExpression') fromRouteArray(children, path, file, out);
+    if (children?.type === 'ArrayExpression') fromRouteArray(children, path, ctx, out);
     if (
       (component !== undefined || directImportPath !== undefined) &&
       (props.has('path') || props.has('index'))
     ) {
-      out.push({ path, component, file, directImportPath });
+      out.push({ path, component, file: ctx.file, directImportPath });
     }
   }
 }
@@ -132,19 +121,26 @@ function jsxAttrs(element: AstNode): Map<string, AstNode | undefined> {
 }
 
 /** `<Route path="…" element={<Page />}>` with nested routes. */
-function fromRouteJsx(element: AstNode, parent: string, file: string, out: Found[]): void {
+function fromRouteJsx(
+  element: AstNode,
+  parent: string,
+  ctx: RouteParseContext,
+  out: Found[],
+): void {
   const attrs = jsxAttrs(element);
-  const path = joinRoutePath(parent, stringOf(attrs.get('path')));
+  const resolvedPath = resolveRoutePathNode(attrs.get('path'), ctx);
+  if (attrs.has('path') && resolvedPath === undefined) return;
+  const path = joinRoutePath(parent, resolvedPath);
   const component = componentOf(attrs.get('element') ?? attrs.get('Component'));
   const children: unknown[] = Array.isArray(element['children']) ? element['children'] : [];
   for (const raw of children) {
     const child = asAstNode(raw);
     if (child?.type === 'JSXElement' && jsxName(child) === 'Route') {
-      fromRouteJsx(child, path, file, out);
+      fromRouteJsx(child, path, ctx, out);
     }
   }
   if (component !== undefined && (attrs.has('path') || attrs.has('index'))) {
-    out.push({ path, component, file });
+    out.push({ path, component, file: ctx.file });
   }
 }
 
@@ -167,9 +163,9 @@ function exportedRouteArrays(node: AstNode): AstNode[] {
     });
 }
 
-function walk(node: unknown, file: string, out: Found[]): void {
+function walk(node: unknown, ctx: RouteParseContext, out: Found[]): void {
   if (Array.isArray(node)) {
-    for (const item of node) walk(item, file, out);
+    for (const item of node) walk(item, ctx, out);
     return;
   }
   if (!isAstNode(node)) return;
@@ -182,24 +178,24 @@ function walk(node: unknown, file: string, out: Found[]): void {
       ROUTER_CALLS.has(callee['name']) &&
       first?.type === 'ArrayExpression'
     ) {
-      fromRouteArray(first, '', file, out);
+      fromRouteArray(first, '', ctx, out);
       return;
     }
   }
   if (node.type === 'JSXElement' && jsxName(node) === 'Route') {
-    fromRouteJsx(node, '', file, out);
+    fromRouteJsx(node, '', ctx, out);
     return;
   }
   if (node.type === 'ExportNamedDeclaration') {
     const arrays = exportedRouteArrays(node);
     if (arrays.length > 0) {
-      for (const array of arrays) fromRouteArray(array, '', file, out);
+      for (const array of arrays) fromRouteArray(array, '', ctx, out);
       return;
     }
   }
   for (const [key, value] of Object.entries(node)) {
     if (key !== 'loc' && key !== 'leadingComments' && key !== 'trailingComments') {
-      walk(value, file, out);
+      walk(value, ctx, out);
     }
   }
 }
@@ -227,60 +223,7 @@ export async function listCodeFiles(fs: FileSystemPort, root: string, sourceDir:
   return files;
 }
 
-function extractImportedFiles(ast: AstNode, file: string): Map<string, string> {
-  const map = new Map<string, string>();
-  const program = asAstNode(ast['program']);
-  const body: unknown[] = Array.isArray(program?.['body']) ? program['body'] : [];
-  const fileDir = posix.dirname(file);
-
-  for (const item of body) {
-    const stmt = asAstNode(item);
-    if (stmt?.type === 'ImportDeclaration') {
-      const sourceNode = asAstNode(stmt['source']);
-      const source = typeof sourceNode?.['value'] === 'string' ? sourceNode['value'] : '';
-      if (!source.startsWith('.')) continue;
-
-      const resolved = posix.normalize(posix.join(fileDir, source));
-      const specifiers: unknown[] = Array.isArray(stmt['specifiers']) ? stmt['specifiers'] : [];
-      for (const raw of specifiers) {
-        const spec = asAstNode(raw);
-        const local = asAstNode(spec?.['local']);
-        if (typeof local?.['name'] === 'string') map.set(local['name'], resolved);
-      }
-    } else if (stmt?.type === 'VariableDeclaration') {
-      const decls: unknown[] = Array.isArray(stmt['declarations']) ? stmt['declarations'] : [];
-      for (const raw of decls) {
-        const decl = asAstNode(raw);
-        const id = asAstNode(decl?.['id']);
-        const init = asAstNode(decl?.['init']);
-        if (typeof id?.['name'] === 'string' && init) {
-          const spec = findDynamicImportSpecifier(init);
-          if (spec && spec.startsWith('.')) {
-            map.set(id['name'], posix.normalize(posix.join(fileDir, spec)));
-          }
-        }
-      }
-    }
-  }
-  return map;
-}
-
-const CANDIDATE_EXTS = ['', '.tsx', '.jsx', '.ts', '.js'] as const;
-
-async function resolvePageFile(
-  fs: FileSystemPort,
-  root: string,
-  importPath: string | undefined,
-): Promise<string | undefined> {
-  if (importPath === undefined) return undefined;
-  for (const ext of CANDIDATE_EXTS) {
-    const candidate = ext === '' ? importPath : `${importPath}${ext}`;
-    if (await fs.exists(root, candidate)) return candidate;
-  }
-  return undefined;
-}
-
-function checkStandaloneArrayFile(ast: AstNode, file: string, out: Found[]): void {
+function checkStandaloneArrayFile(ast: AstNode, ctx: RouteParseContext, out: Found[]): void {
   const program = asAstNode(ast['program']);
   const body: unknown[] = Array.isArray(program?.['body']) ? program['body'] : [];
   for (const item of body) {
@@ -292,7 +235,7 @@ function checkStandaloneArrayFile(ast: AstNode, file: string, out: Found[]): voi
         for (const raw of decls) {
           const d = asAstNode(raw);
           const init = asAstNode(d?.['init']);
-          if (init?.type === 'ArrayExpression') fromRouteArray(init, '', file, out);
+          if (init?.type === 'ArrayExpression') fromRouteArray(init, '', ctx, out);
         }
       }
     }
@@ -355,6 +298,7 @@ export async function readPages(
 
   // Pages come from every code file, as before K3d; the router only says which file edits go to.
   const codeFiles = await listCodeFiles(fs, root, sourceDir);
+  const constantsByFile = await collectProjectRouteConstants(fs, root, codeFiles);
 
   for (const file of codeFiles) {
     const read = await fs.readText(root, file, { maxBytes: MAX_BYTES });
@@ -365,11 +309,17 @@ export async function readPages(
     } catch {
       continue;
     }
-    importsByFile.set(file, extractImportedFiles(ast, file));
+    importsByFile.set(file, extractImportedFiles(ast, file, sourceDir));
+    const ctx: RouteParseContext = {
+      file,
+      sourceDir,
+      imports: extractImportedSymbols(ast, file, sourceDir),
+      constantsByFile,
+    };
     const beforeCount = found.length;
-    walk(ast, file, found);
+    walk(ast, ctx, found);
     if (router.status === 'found' && router.file === file && found.length === beforeCount) {
-      checkStandaloneArrayFile(ast, file, found);
+      checkStandaloneArrayFile(ast, ctx, found);
     }
   }
 

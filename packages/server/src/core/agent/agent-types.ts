@@ -9,6 +9,7 @@ export type AgentCommand = { readonly command: string; readonly prefixArgs: read
 export type AgentTurnArgs = {
   readonly prompt: string;
   readonly mirrorDirs: readonly string[];
+  readonly allowEdits?: boolean | undefined;
   readonly conversationId?: string | undefined;
 };
 

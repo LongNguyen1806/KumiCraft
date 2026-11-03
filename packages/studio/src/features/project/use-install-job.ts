@@ -11,57 +11,49 @@ export type InstallPhase = 'idle' | 'starting' | 'running' | 'cancelled';
 
 export type InstallFailure = JobFailure;
 
-export function useInstallJob(installCommand: readonly string[], onInstalled: () => void) {
+export function useInstallJob(
+  installCommand: readonly string[],
+  onInstalled: () => void,
+  startJob: () => Promise<{ readonly jobId: string }> = () => installProject(installCommand),
+) {
   const [phase, setPhase] = useState<InstallPhase>('idle');
   const [jobId, setJobId] = useState<string>();
   const [lines, setLines] = useState<readonly string[]>([]);
   const [failure, setFailure] = useState<InstallFailure>();
   const finishedRef = useRef(false);
-
-  const end = (next: InstallPhase) => {
+  const end = (next: InstallPhase, nextFailure?: InstallFailure) => {
+    if (finishedRef.current) return false;
     finishedRef.current = true;
     setJobId(undefined);
     setPhase(next);
+    if (nextFailure !== undefined) setFailure(nextFailure);
+    return true;
   };
-
   useJobFollower(jobId, {
     onLines: (next) => {
       if (next.length > 0) setLines(next.slice(-MAX_JOB_LINES));
     },
     onCompleted: () => {
-      if (finishedRef.current) return;
-      end('idle');
-      onInstalled();
+      if (end('idle')) onInstalled();
     },
-    onFailed: (error) => {
-      if (finishedRef.current) return;
-      end('idle');
-      setFailure(failureOf(error));
-    },
-    onCancelled: () => {
-      if (finishedRef.current) return;
-      end('cancelled');
-    },
+    onFailed: (error) => end('idle', failureOf(error)),
+    onCancelled: () => end('cancelled'),
   });
-
   const start = async () => {
     finishedRef.current = false;
     setPhase('starting');
     setLines([]);
     setFailure(undefined);
     try {
-      const started = await installProject(installCommand);
-      setJobId(started.jobId);
+      setJobId((await startJob()).jobId);
       setPhase('running');
     } catch (error) {
       setPhase('idle');
       setFailure({ ...toErrorInfo(error), details: [] });
     }
   };
-
   const cancel = () => {
     if (jobId !== undefined) void cancelJob(jobId);
   };
-
   return { phase, lines, failure, start, cancel };
 }

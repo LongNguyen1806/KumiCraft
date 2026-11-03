@@ -6,6 +6,7 @@ import type {
   DraftsInfo,
   ExtractComponent,
   Frame,
+  LoginSession,
   PackageManager,
   PagesInfo,
   ProjectInfo,
@@ -21,6 +22,7 @@ import type {
   ThemeInfo,
   ThemeTokenKind,
   ThemeUsage,
+  WorkspaceAi,
   WorkspaceFile,
 } from '@kumicraft/shared';
 
@@ -87,9 +89,12 @@ export type ProjectService = {
     readonly designDirs?: DesignDirs | undefined;
     readonly styleFiles?: StyleFiles | undefined;
     readonly routing?: Routing | undefined;
+    readonly sessions?: readonly LoginSession[] | undefined;
+    readonly ai?: WorkspaceAi | undefined;
   }): Promise<Result<ProjectInfo>>;
   setTrusted(trusted: boolean): Promise<Result<ProjectInfo>>;
   install(command: readonly string[]): Promise<Result<{ readonly jobId: string }>>;
+  installRouter?(): Promise<Result<{ readonly jobId: string }>>;
   pages(): Promise<Result<PagesInfo>>;
   theme(): Promise<Result<ThemeInfo>>;
   editTheme(edit: ThemeEdit): Promise<Result<ThemeInfo>>;

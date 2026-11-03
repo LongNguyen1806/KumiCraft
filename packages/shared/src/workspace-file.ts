@@ -89,6 +89,68 @@ export const RoutingSchema = z.strictObject({
 });
 export type Routing = z.infer<typeof RoutingSchema>;
 
+export const LoginSessionSchema = z.strictObject({
+  id: z.number().int().min(1).max(8),
+  label: z.string().trim().min(1).max(32),
+});
+export type LoginSession = z.infer<typeof LoginSessionSchema>;
+
+export const LoginSessionsSchema = z
+  .array(LoginSessionSchema)
+  .min(1)
+  .max(8)
+  .refine(
+    (sessions) => {
+      const ids = new Set(sessions.map((s) => s.id));
+      return ids.size === sessions.length && ids.has(1);
+    },
+    { message: 'Sessions need unique ids and must include session 1' },
+  );
+
+export const DEFAULT_LOGIN_SESSIONS: readonly LoginSession[] = [{ id: 1, label: 'Phiên 1' }];
+
+export function normalizeSessions(
+  sessions: readonly LoginSession[] | undefined,
+): readonly LoginSession[] {
+  if (!sessions || sessions.length === 0) return DEFAULT_LOGIN_SESSIONS;
+  return sessions;
+}
+
+const ORIGIN_RE = /^(https?):\/\/([^/?#:]+):(\d+)$/;
+
+/** Maps session 1 to runnerOrigin and session n (2..8) to `http://s<n>.localhost:<port>`. */
+export function sessionOrigin(runnerOrigin: string, sessionId: number): string {
+  if (!Number.isInteger(sessionId) || sessionId < 1 || sessionId > 8) {
+    throw new Error(`Invalid sessionId: ${String(sessionId)} (expected integer 1..8)`);
+  }
+  const match = ORIGIN_RE.exec(runnerOrigin);
+  const protocol = match?.[1];
+  const host = match?.[2];
+  const portStr = match?.[3];
+  if (!protocol || !host || !portStr) {
+    throw new Error(`Invalid runnerOrigin: "${runnerOrigin}"`);
+  }
+  const port = Number(portStr);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error(`Invalid runnerOrigin port: "${runnerOrigin}"`);
+  }
+  if (sessionId === 1) {
+    return `${protocol}://${host}:${portStr}`;
+  }
+  return `${protocol}://s${String(sessionId)}.localhost:${portStr}`;
+}
+
+export const WorkspaceAiSchema = z.strictObject({
+  allowEdits: z.boolean(),
+});
+export type WorkspaceAi = z.infer<typeof WorkspaceAiSchema>;
+
+export const DEFAULT_WORKSPACE_AI: WorkspaceAi = { allowEdits: true };
+
+export function normalizeWorkspaceAi(ai: WorkspaceAi | undefined): WorkspaceAi {
+  return ai ? { allowEdits: ai.allowEdits } : DEFAULT_WORKSPACE_AI;
+}
+
 export const DEFAULT_DESIGN_DIRS: ResolvedDesignDirs = {
   pages: ['src/pages'],
   layouts: ['src/layouts'],
@@ -130,6 +192,8 @@ export const WorkspaceFileSchema = z
     designDirs: DesignDirsSchema.optional(),
     styleFiles: StyleFilesSchema.optional(),
     routing: RoutingSchema.optional(),
+    sessions: LoginSessionsSchema.optional(),
+    ai: WorkspaceAiSchema.optional(),
   })
   .superRefine((value, ctx) => {
     for (const problem of frameRuleProblems(value)) {

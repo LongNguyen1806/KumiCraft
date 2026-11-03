@@ -128,6 +128,7 @@
     "themeSet": "update token {{name}}",
     "themeAdd": "add token {{name}}",
     "themeRemove": "remove token {{name}}",
+    "routerInstall": "install router",
     "batch": "edit {{count}} elements",
     "dismissError": "Dismiss",
     "errorFileChanged": "File {{file}} was modified externally, cannot undo this step",
@@ -478,7 +479,28 @@
     "save": "Save",
     "newPath": "New URL path",
     "newName": "New component name",
-    "fileAuto": "Automatic: {{name}} (extension of the pages in the folder)"
+    "fileAuto": "Automatic: {{name}} (extension of the pages in the folder)",
+    "routerFile": "Router: {{file}}",
+    "changeRouterFile": "Change…",
+    "autoRouterFile": "Auto-detect",
+    "routerAmbiguous": "Multiple router files found. Choose which file to use for adding pages:",
+    "pickOnTree": "Pick from tree…",
+    "routerUnsupported": "Router in {{file}} does not support automatic editing ({{reason}}).",
+    "routerUnsupportedReason": {
+      "generated": "routes are generated dynamically",
+      "noRoutes": "no routes list found",
+      "parseError": "file has syntax errors"
+    },
+    "pickAnotherFile": "Pick another file…",
+    "routerNone": "Project does not have React Router yet.",
+    "installRouter": "Install router",
+    "installRouterTitle": "Install React Router",
+    "installRouterStep1": "Add \"react-router\" to package.json and install packages",
+    "installRouterStep2": "Create src/routes with / pointing to the current root component",
+    "installRouterStep3": "Update the entry file to render <RouterProvider>",
+    "installRouterUndoHint": "Undo restores all modified source files (installed packages in node_modules remain).",
+    "installRouterConfirm": "Install",
+    "installRouterRunning": "Installing router…"
   },
   "design": {
     "kind": {
@@ -662,6 +684,19 @@
     "removeFromComponentDir": "Remove from components directories",
     "setNewCssDir": "Place new CSS files here",
     "useAsTokenFile": "Use as Brand token file",
+    "useAsRouterFile": "Use as router file",
     "dismissError": "Dismiss"
+  },
+  "sessions": {
+    "button": "Session: {{label}}",
+    "title": "Login sessions",
+    "add": "+ Add session",
+    "rename": "Rename",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "newPlaceholder": "Session name (e.g. Admin)",
+    "defaultLabel": "Session {{id}}",
+    "localhostUnsupported": "This browser cannot open *.localhost addresses; use Chrome, Edge, or Firefox"
   }
 }

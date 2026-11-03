@@ -173,7 +173,18 @@ export function IframeFrame({
   draftFile,
 }: IframeFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(undefined);
-  const [src] = useState(() => computeIframeSrc(origin, draftFile));
+  const [target, setTarget] = useState(() => ({
+    origin,
+    draftFile,
+    src: computeIframeSrc(origin, draftFile),
+  }));
+  if (target.origin !== origin || target.draftFile !== draftFile) {
+    setTarget({
+      origin,
+      draftFile,
+      src: computeIframeSrc(origin, draftFile),
+    });
+  }
   const [silent, setSilent] = useState(false);
   const bridgeReady = useSelectionStore((s) => s.bridgeReady);
   useIframeBridge(iframeRef, origin, nonce, mode, () => {
@@ -183,7 +194,7 @@ export function IframeFrame({
   return (
     <>
       {silent && !bridgeReady && <BridgeSilentBanner logTail={logTail} />}
-      <ZoomedIframeBox frame={frame} zoom={zoom} src={src} iframeRef={iframeRef} />
+      <ZoomedIframeBox frame={frame} zoom={zoom} src={target.src} iframeRef={iframeRef} />
     </>
   );
 }

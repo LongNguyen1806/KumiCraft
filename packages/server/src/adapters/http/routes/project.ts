@@ -9,6 +9,7 @@ import {
   ExtractComponentSchema,
   FrameSchema,
   issuesToDetails,
+  LoginSessionsSchema,
   PackageManagerSchema,
   PromoteDraftSchema,
   RenameDraftSchema,
@@ -19,6 +20,7 @@ import {
   THEME_TOKEN_NAME,
   ThemeEditSchema,
   ThemeTokenKindSchema,
+  WorkspaceAiSchema,
 } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
@@ -60,6 +62,8 @@ const PatchSchema = z.strictObject({
   designDirs: DesignDirsSchema.optional(),
   styleFiles: StyleFilesSchema.optional(),
   routing: RoutingSchema.optional(),
+  sessions: LoginSessionsSchema.optional(),
+  ai: WorkspaceAiSchema.optional(),
 });
 const TrustSchema = z.strictObject({ trusted: z.boolean() });
 const InstallSchema = z.strictObject({ command: z.array(z.string()).min(1) });
@@ -199,6 +203,16 @@ function registerOpsRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void 
       return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
     }
     const result = await deps.projectService.install(parsed.data.command);
+    if (!result.ok) return sendError(reply, result.error);
+    reply.status(202);
+    return { data: result.value };
+  });
+
+  api.post('/project/router/install', async (_request, reply) => {
+    if (!deps.projectService.installRouter) {
+      return sendError(reply, { code: 'E021', params: { missing: 'project' } });
+    }
+    const result = await deps.projectService.installRouter();
     if (!result.ok) return sendError(reply, result.error);
     reply.status(202);
     return { data: result.value };

@@ -94,6 +94,7 @@ export const agyAdapter: AgentAdapter = {
       turn.prompt,
       '--output-format',
       'stream-json',
+      ...(turn.allowEdits !== false ? [] : ['--mode', 'plan']),
       ...turn.mirrorDirs.flatMap((d) => ['--add-dir', d]),
       ...(turn.conversationId !== undefined ? ['--conversation', turn.conversationId] : []),
     ];

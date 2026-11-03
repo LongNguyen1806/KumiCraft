@@ -1,6 +1,6 @@
 // Page list on the Canvas toolbar (SPEC-04 M-PG R-PG-15): pick a page of the project to show it
 // in the Canvas; a page with `:param` asks for the value first.
-import type { DraftInfo, PageInfo } from '@kumicraft/shared';
+import type { DraftInfo, PageInfo, RouterStatus } from '@kumicraft/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -19,11 +19,20 @@ const CODE_FILE = /\.(tsx|jsx|ts|js)$/;
 export type PagesData = {
   readonly pages: readonly PageInfo[];
   readonly convention: boolean;
+  readonly router: RouterStatus;
+  readonly refresh: () => void;
 };
+
+const DEFAULT_ROUTER_STATUS: RouterStatus = { status: 'none', hasRouterPackage: false };
 
 /** Pages and router convention of the open project, read again when code changes. */
 export function usePagesData(): PagesData {
-  const [data, setData] = useState<PagesData>({ pages: [], convention: false });
+  const [data, setData] = useState<Omit<PagesData, 'refresh'>>({
+    pages: [],
+    convention: false,
+    router: DEFAULT_ROUTER_STATUS,
+  });
+  const [reloadTick, setReloadTick] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -31,7 +40,11 @@ export function usePagesData(): PagesData {
       try {
         const info = await fetchPages();
         if (!active) return;
-        const next = { pages: info.pages, convention: info.convention };
+        const next = {
+          pages: info.pages,
+          convention: info.convention,
+          router: info.router,
+        };
         // Same list again (most history changes): keep the old object so the design target stays.
         setData((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
       } catch {
@@ -54,9 +67,14 @@ export function usePagesData(): PagesData {
       active = false;
       client.close();
     };
-  }, []);
+  }, [reloadTick]);
 
-  return data;
+  return {
+    ...data,
+    refresh: () => {
+      setReloadTick((n) => n + 1);
+    },
+  };
 }
 
 /** Pages of the open project, read again when its code changes. */

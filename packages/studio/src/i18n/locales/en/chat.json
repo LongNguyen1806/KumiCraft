@@ -26,6 +26,8 @@
   },
   "remove": "Remove",
   "newConversation": "New conversation",
+  "allowEdits": "Allow AI to edit files",
+  "readOnlyNotice": "Read-only: AI will not edit files",
   "openInEditor": "Open in editor",
   "diffLoading": "Loading diff…",
   "revertTurn": "Revert this turn",

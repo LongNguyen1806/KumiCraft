@@ -29,6 +29,7 @@ import { useCanvasViewStore } from './canvas-view-store.ts';
 import { fitZoom, useElementWidth, type Zoom } from './canvas-zoom.tsx';
 import { PageSelect } from './page-select.tsx';
 import { PortBusyBanner } from './port-busy-banner.tsx';
+import { SessionSelect, useCanvasSession } from './session-select.tsx';
 import { useOpenInEditor } from './use-open-in-editor.ts';
 import { useRunnerStatus } from './use-runner-status.ts';
 
@@ -193,6 +194,7 @@ function useCanvasAreaState(projectInfo?: ProjectInfo) {
 
   const activeFrame = useMemo(() => getActiveFrame(frames, activeFrameId), [frames, activeFrameId]);
   const editor = useOpenInEditor();
+  const session = useCanvasSession(projectInfo, runner.status.origin);
   const textEdit = useCanvasTextEdit({
     mode,
     activeFrameId: activeFrame.id,
@@ -212,6 +214,7 @@ function useCanvasAreaState(projectInfo?: ProjectInfo) {
     setActiveFrameId,
     editor,
     textEdit,
+    session,
   };
 }
 
@@ -223,6 +226,8 @@ function CanvasToolbarSection({
   return (
     <CanvasToolbar
       mode={s.mode}
+      session={s.session}
+      runnerOrigin={s.runner.status.origin}
       onToggleMode={() => {
         s.setMode((m) => (m === 'design' ? 'preview' : 'design'));
       }}
@@ -258,6 +263,7 @@ export function CanvasArea(props: CanvasAreaProps) {
       )}
       <CanvasViewport
         status={s.runner.status}
+        effectiveOrigin={s.session.effectiveOrigin}
         trusted={trusted}
         needsInstall={projectInfo?.needsInstall ?? false}
         logTail={s.runner.logTail}
@@ -276,16 +282,25 @@ export function CanvasArea(props: CanvasAreaProps) {
 
 type CanvasToolbarProps = {
   readonly mode: CanvasMode;
+  readonly session: ReturnType<typeof useCanvasSession>;
+  readonly runnerOrigin?: string | undefined;
   readonly onToggleMode: () => void;
 };
 
-function CanvasToolbar({ mode, onToggleMode }: CanvasToolbarProps) {
+function CanvasToolbar({ mode, session, runnerOrigin, onToggleMode }: CanvasToolbarProps) {
   const { t } = useTranslation();
   const route = useSelectionStore((s) => s.currentRoute);
   return (
     <header className="flex h-11 items-center justify-between border-b border-line bg-card/60 px-4 text-xs backdrop-blur-md">
       <div className="flex min-w-0 items-center gap-3">
         <PageSelect />
+        <SessionSelect
+          sessions={session.sessions}
+          activeSessionId={session.activeSessionId}
+          runnerOrigin={runnerOrigin}
+          onSelectSession={session.selectSession}
+          onSessionsUpdated={session.setLocalSessions}
+        />
         <span
           className="min-w-0 truncate font-mono text-ink-soft"
           title={route}
@@ -308,6 +323,7 @@ function CanvasToolbar({ mode, onToggleMode }: CanvasToolbarProps) {
 
 type CanvasContentProps = {
   readonly status: RunnerStatus;
+  readonly effectiveOrigin?: string | undefined;
   readonly trusted: boolean;
   readonly needsInstall: boolean;
   readonly logTail: readonly string[];
@@ -342,7 +358,7 @@ function CanvasContent(props: CanvasContentProps) {
     return (
       <IframeFrame
         key={`${props.status.origin}|${props.status.nonce ?? ''}|${draftFile ?? ''}`}
-        origin={props.status.origin}
+        origin={props.effectiveOrigin ?? props.status.origin}
         nonce={props.status.nonce}
         mode={props.mode}
         frame={props.frame}

@@ -81,6 +81,9 @@ function resolveHistoryLabel(label: HistoryLabel | undefined, t: TFunction): str
   if (label.key === 'history:insertImage' || label.key === 'history.insertImage') {
     return t('history.insertImage', { name });
   }
+  if (label.key === 'history:routerInstall' || label.key === 'history.routerInstall') {
+    return t('history.routerInstall');
+  }
   return label.key;
 }
 
