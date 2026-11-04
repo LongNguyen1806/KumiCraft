@@ -1,0 +1,34 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  color: #1f2a1f;
+  background: #f7f8f2;
+}
+
+.site-nav {
+  display: flex;
+  gap: 16px;
+  padding: 12px 24px;
+  background: #e3ecd9;
+}
+
+.page {
+  padding: 24px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.site-footer {
+  padding: 12px 24px;
+  color: #5b6b5b;
+}

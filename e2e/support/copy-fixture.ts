@@ -9,7 +9,16 @@ export const FIXTURES_DIR = join(REPO_ROOT, 'fixtures');
 /** The fixture projects have no install of their own; the Studio has Vite, React and Tailwind. */
 const STUDIO_NODE_MODULES = join(REPO_ROOT, 'packages', 'studio', 'node_modules');
 /** Packages only some fixtures use (styling R-ST-02, router K3d), installed at the repo root. */
-const EXTRA_PACKAGES = ['bootstrap', 'sass', 'less', 'react-router'] as const;
+const EXTRA_PACKAGES = [
+  'bootstrap',
+  'sass',
+  'less',
+  'react-router',
+  'express',
+  'pug',
+  'compression',
+  'helmet',
+] as const;
 
 export type TempDir = {
   readonly path: string;

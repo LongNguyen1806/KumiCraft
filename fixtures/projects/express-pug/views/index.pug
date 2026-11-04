@@ -1,0 +1,9 @@
+extends layout
+include mixins
+
+block content
+  h1.hero-title Sản phẩm hôm nay
+  p.lead Rau củ tươi từ nhà vườn.
+  section.cards
+    each product in products
+      +card(product)

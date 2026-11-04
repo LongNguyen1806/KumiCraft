@@ -1,0 +1,14 @@
+{
+  "name": "express-pug-fixture",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "compression": "1.8.2",
+    "express": "5.3.0",
+    "helmet": "8.3.0",
+    "pug": "3.0.4"
+  }
+}
