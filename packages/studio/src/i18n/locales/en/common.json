@@ -690,7 +690,6 @@
     "dismissError": "Dismiss"
   },
   "sessions": {
-    "button": "Sign-in: {{label}}",
     "title": "Login sessions",
     "add": "+ Add session",
     "rename": "Rename",
@@ -700,9 +699,6 @@
     "newPlaceholder": "Session name (e.g. Admin)",
     "defaultLabel": "Session {{id}}",
     "localhostUnsupported": "This browser cannot open *.localhost addresses; use Chrome, Edge, or Firefox",
-    "explain": "Each session keeps its own sign-in in the Canvas (cookies and local storage). Use one per role, for example Customer and Farmer, and switch without signing in again.",
-    "pageTied": "chosen for this page",
-    "pageUnassigned": "This page has no session yet; it opens in {{label}}. Pick the session its role needs (KumiCraft remembers it):",
-    "addForPage": "+ Add a session for this page"
+    "explain": "Each session keeps its own sign-in in the Canvas (cookies and local storage). Use one per role, for example Customer and Farmer, and switch without signing in again."
   }
 }

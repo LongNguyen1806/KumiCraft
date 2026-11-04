@@ -92,7 +92,7 @@ async function turnSessionsOn(page: Page): Promise<void> {
   await page.keyboard.press('Escape');
 }
 
-test('a page opens in the session it was tied to; an untied page asks which one [K3d D, spec-log #78]', async ({
+test('only the user changes the session, and the page on screen stays [K3d D, spec-log #79]', async ({
   page,
 }) => {
   await folder.remove();
@@ -109,25 +109,21 @@ test('a page opens in the session it was tied to; an untied page asks which one 
   await page.getByTestId('session-select-trigger').click();
   await page.getByTestId('session-add-input').fill('Farmer');
   await page.getByTestId('session-add-btn').click();
+
+  // On /tasks, Farmer opens the same page with another login.
   await page.keyboard.press('Escape');
-
-  // Two sessions, "/" tied to none: the notice asks; picking Session 1 ties "/" to it.
-  await expect(page.getByTestId('session-page-notice')).toBeVisible();
-  await page.getByTestId('session-page-pick-1').click();
-  await expect(page.getByTestId('session-page-notice')).toHaveCount(0);
-
-  // "/tasks" is new: it opens in the current session and asks; tie it to Farmer.
   await page.getByTestId('canvas-page-select').selectOption('/tasks');
-  await expect(page.getByTestId('session-page-notice')).toBeVisible();
-  await page.getByTestId('session-page-pick-2').click();
-  await expect.poll(() => canvasUrl(page)).toContain('s2.localhost');
-
-  // From now on each page switches the session by itself.
-  await page.getByTestId('canvas-page-select').selectOption('/');
-  await expect.poll(() => canvasUrl(page)).toContain('127.0.0.1');
-  await expect(canvas.getByRole('heading', { name: 'Bảng điều khiển' })).toBeVisible();
-  await expect(page.getByTestId('session-page-tied')).toBeVisible();
-  await page.getByTestId('canvas-page-select').selectOption('/tasks');
-  await expect.poll(() => canvasUrl(page)).toContain('s2.localhost');
   await expect(canvas.getByRole('heading', { name: 'Danh sách việc' })).toBeVisible();
+  await page.getByTestId('session-select-trigger').click();
+  await page.getByTestId('session-item-2').click();
+  await expect.poll(() => canvasUrl(page)).toContain('s2.localhost');
+  await expect.poll(() => canvasUrl(page)).toContain('/tasks');
+  await expect(canvas.getByRole('heading', { name: 'Danh sách việc' })).toBeVisible();
+  await expect(page.getByTestId('session-select-label')).toHaveText('Farmer');
+
+  // Opening another page keeps Farmer: nothing switches by itself.
+  await page.getByTestId('canvas-page-select').selectOption('/');
+  await expect(canvas.getByRole('heading', { name: 'Bảng điều khiển' })).toBeVisible();
+  await expect.poll(() => canvasUrl(page)).toContain('s2.localhost');
+  await expect(page.getByTestId('session-select-label')).toHaveText('Farmer');
 });

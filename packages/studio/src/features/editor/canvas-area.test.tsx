@@ -10,7 +10,6 @@ import { useProjectStore } from '../project/project-store.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { CanvasArea } from './canvas-area.tsx';
-import { useSessionPickerStore } from './session-pages.ts';
 import { resetSessionProbeCache } from './session-select.tsx';
 
 let mockRunnerState: {
@@ -82,7 +81,6 @@ describe('CanvasArea', () => {
     cleanup();
     vi.restoreAllMocks();
     useSettingsStore.setState({ settings: undefined });
-    useSessionPickerStore.setState({ open: false });
   });
 
   it('renders untrusted prompt when trusted is false [R-RN-20]', () => {
@@ -154,7 +152,8 @@ describe('CanvasArea', () => {
     render(<CanvasArea projectInfo={mockProject} trusted />);
 
     expect(screen.getByTestId('canvas-route').textContent).toBe('/products/42');
-    expect(screen.getByTestId('pages-manage')).toBeDefined();
+    // Pages and drafts are managed from the left panel only (spec-log #79).
+    expect(screen.queryByTestId('pages-manage') ?? undefined).toBeUndefined();
     expect(screen.getByTestId('canvas-mode-toggle')).toBeDefined();
   });
 
@@ -283,6 +282,54 @@ describe('CanvasArea', () => {
     expect(useSelectionStore.getState().currentRoute).toBe('/from-session-2');
   });
 
+  it('[WP-4.00] only the user changes the session and the page stays; the app changing its route never switches (spec-log #79)', async () => {
+    enableLoginSessions();
+    const nonce = 'n'.repeat(22);
+    mockRunnerState = {
+      status: { state: 'ready', origin: 'http://127.0.0.1:5173', nonce },
+      logTail: [],
+      start: vi.fn(),
+      restart: vi.fn(),
+    };
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response());
+    useSelectionStore.getState().setRoute('/customer');
+    render(
+      <CanvasArea
+        projectInfo={{
+          ...mockProject,
+          sessions: [
+            { id: 1, label: 'Phiên 1' },
+            { id: 2, label: 'Farmer' },
+          ],
+        }}
+        trusted
+      />,
+    );
+    const iframe = screen.getByTestId<HTMLIFrameElement>('canvas-iframe');
+
+    // Picking Farmer keeps the page on screen.
+    fireEvent.click(screen.getByTestId('session-select-trigger'));
+    fireEvent.click(screen.getByTestId('session-item-2'));
+    await waitFor(() => {
+      expect(iframe.getAttribute('src')).toBe('http://s2.localhost:5173/customer');
+    });
+    expect(screen.getByTestId('session-select-label').textContent).toBe('Farmer');
+
+    // The app redirecting itself (say to /403) leaves the session alone.
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        origin: 'http://s2.localhost:5173',
+        source: iframe.contentWindow,
+        data: { rc: 1, nonce, type: 'route', payload: { route: '/403' } },
+      }),
+    );
+    await waitFor(() => {
+      expect(useSelectionStore.getState().currentRoute).toBe('/403');
+    });
+    expect(screen.getByTestId('session-select-label').textContent).toBe('Farmer');
+    expect(iframe.getAttribute('src')).toBe('http://s2.localhost:5173/customer');
+  });
+
   it('D3: adding session Admin calls PATCH /project with sessions [1, 2]; session 1 has no delete button [WP-4.00]', async () => {
     enableLoginSessions();
     mockRunnerState = {
@@ -346,7 +393,7 @@ describe('CanvasArea', () => {
     expect(errAlert.textContent).toBe(
       'Trình duyệt này không mở được địa chỉ *.localhost; dùng Chrome, Edge hoặc Firefox',
     );
-    expect(screen.getByTestId('session-select-trigger').textContent).toBe('Đăng nhập: Phiên 1');
+    expect(screen.getByTestId('session-select-label').textContent).toBe('Phiên 1');
     expect(screen.getByTestId('canvas-iframe').getAttribute('src')).toBe('http://127.0.0.1:5173/');
   });
 });

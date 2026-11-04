@@ -11,7 +11,6 @@ import { NewDraftDialog } from '../drafts/new-draft-dialog.tsx';
 import { useDrafts } from '../drafts/use-drafts.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
-import { activate } from '../shell/activity-store.ts';
 import { useCanvasViewStore } from './canvas-view-store.ts';
 
 const CODE_FILE = /\.(tsx|jsx|ts|js)$/;
@@ -183,8 +182,8 @@ function PageSelectControl({
 }: PageSelectControlProps) {
   const { t } = useTranslation();
   return (
-    <label className="flex items-center gap-1.5 text-ink-soft">
-      {t('editor.page')}
+    <label className="flex min-w-0 items-center gap-1.5 text-ink-soft">
+      <span className="sr-only">{t('editor.page')}</span>
       <select
         value={current}
         data-testid="canvas-page-select"
@@ -196,7 +195,7 @@ function PageSelectControl({
             onDraftChange,
           });
         }}
-        className="max-w-48 rounded border border-border bg-field px-2 py-1 text-ink"
+        className="w-48 min-w-0 rounded border border-border bg-field px-2 py-1 text-ink"
       >
         <option value="">
           {pages.length === 0 ? t('editor.noPages') : t('editor.pageChoose')}
@@ -249,37 +248,6 @@ function PageSelectDialogs({
   );
 }
 
-type PageManageButtonsProps = {
-  readonly onOpenPages: () => void;
-  readonly onOpenDrafts: () => void;
-};
-
-function PageManageButtons({ onOpenPages, onOpenDrafts }: PageManageButtonsProps) {
-  const { t } = useTranslation();
-  return (
-    <>
-      <button
-        type="button"
-        data-testid="pages-manage"
-        title={t('pages.manage')}
-        onClick={onOpenPages}
-        className="shrink-0 whitespace-nowrap rounded border border-border bg-field px-2 py-1 text-xs text-ink hover:bg-field-hover"
-      >
-        {t('pages.manage')}
-      </button>
-      <button
-        type="button"
-        data-testid="drafts-manage"
-        title={t('drafts.manage')}
-        onClick={onOpenDrafts}
-        className="shrink-0 whitespace-nowrap rounded border border-border bg-field px-2 py-1 text-xs text-ink hover:bg-field-hover"
-      >
-        {t('drafts.manage')}
-      </button>
-    </>
-  );
-}
-
 function computeCurrentRoute(
   draftFile: string | undefined,
   pages: readonly PageInfo[],
@@ -287,6 +255,19 @@ function computeCurrentRoute(
 ): string {
   if (draftFile !== undefined) return `draft:${draftFile}`;
   return pages.some((p) => p.path === route) ? route : '';
+}
+
+/** The concrete route (`/admin/markets/5`) when the list cannot name it as one page. */
+function RouteText({ route }: { readonly route: string }) {
+  return (
+    <span
+      className="min-w-0 truncate font-mono text-ink-soft"
+      title={route}
+      data-testid="canvas-route"
+    >
+      {route}
+    </span>
+  );
 }
 
 export function PageSelect() {
@@ -301,7 +282,7 @@ export function PageSelect() {
   const current = computeCurrentRoute(draftFile, pages, route);
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 items-center gap-2">
       <PageSelectControl
         pages={pages}
         drafts={drafts}
@@ -319,14 +300,7 @@ export function PageSelect() {
           setNewDraftOpen(true);
         }}
       />
-      <PageManageButtons
-        onOpenPages={() => {
-          activate('pages', { keepOpen: true });
-        }}
-        onOpenDrafts={() => {
-          activate('drafts', { keepOpen: true });
-        }}
-      />
+      {current === '' && draftFile === undefined && <RouteText route={route} />}
       <PageSelectDialogs
         projectId={projectId}
         reload={reload}

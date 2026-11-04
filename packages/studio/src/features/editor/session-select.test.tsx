@@ -40,13 +40,13 @@ describe('SessionSelect [WP-4.00]', () => {
     await i18next.changeLanguage('vi');
     renderSelect();
     const trigger = screen.getByTestId('session-select-trigger');
-    expect(trigger.textContent).toBe('Đăng nhập: Phiên 1');
+    expect(trigger.textContent).toBe('Phiên 1');
     expect(trigger.getAttribute('title')).toContain('đăng nhập riêng');
+    expect(trigger.getAttribute('title')).toContain('Customer và Farmer');
 
     fireEvent.click(trigger);
     const popover = screen.getByTestId('session-select-popover');
     expect(screen.getByTestId('toolbar').contains(popover)).toBe(false);
-    expect(popover.textContent).toContain('Customer và Farmer');
 
     // Escape closes it; the button opens it again in one click.
     fireEvent.keyDown(window, { key: 'Escape' });

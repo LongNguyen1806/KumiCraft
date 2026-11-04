@@ -14,7 +14,7 @@ import { DesignBar } from '../design/design-bar.tsx';
 import { DndErrorBanner } from '../dnd/dnd-error-banner.tsx';
 import { CanvasImagePicker } from '../draw/draw-toolbar.tsx';
 import { registerFreeFrameCommands } from '../free-frame/free-frame-commands.ts';
-import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
+import type { CanvasMode } from '../selection/selection-store.ts';
 import { type TextEditWarning, useCanvasTextEdit } from '../text-edit/use-canvas-text-edit.ts';
 import { IframeFrame } from './canvas-frame.tsx';
 import { CanvasPanSurface, PannedContent } from './canvas-pan.tsx';
@@ -29,7 +29,6 @@ import { useCanvasViewStore } from './canvas-view-store.ts';
 import { fitZoom, useElementWidth, type Zoom } from './canvas-zoom.tsx';
 import { PageSelect } from './page-select.tsx';
 import { PortBusyBanner } from './port-busy-banner.tsx';
-import { SessionPageNotice } from './session-page-notice.tsx';
 import { SessionSelect, useCanvasSession } from './session-select.tsx';
 import { useOpenInEditor } from './use-open-in-editor.ts';
 import { useRunnerStatus } from './use-runner-status.ts';
@@ -225,23 +224,14 @@ function CanvasToolbarSection({
   readonly state: ReturnType<typeof useCanvasAreaState>;
 }) {
   return (
-    <>
-      <CanvasToolbar
-        mode={s.mode}
-        session={s.session}
-        runnerOrigin={s.runner.status.origin}
-        onToggleMode={() => {
-          s.setMode((m) => (m === 'design' ? 'preview' : 'design'));
-        }}
-      />
-      {s.session.pageUnassigned && (
-        <SessionPageNotice
-          sessions={s.session.sessions}
-          activeSessionId={s.session.activeSessionId}
-          onPick={s.session.selectSession}
-        />
-      )}
-    </>
+    <CanvasToolbar
+      mode={s.mode}
+      session={s.session}
+      runnerOrigin={s.runner.status.origin}
+      onToggleMode={() => {
+        s.setMode((m) => (m === 'design' ? 'preview' : 'design'));
+      }}
+    />
   );
 }
 
@@ -299,12 +289,10 @@ type CanvasToolbarProps = {
 
 function CanvasToolbar({ mode, session, runnerOrigin, onToggleMode }: CanvasToolbarProps) {
   const { t } = useTranslation();
-  const route = useSelectionStore((s) => s.currentRoute);
   return (
     <header className="flex h-11 items-center justify-between gap-3 border-b border-line bg-card/60 px-4 text-xs backdrop-blur-md">
-      {/* Buttons keep their size; only the route text shrinks, and a narrow window scrolls the group
-          sideways instead of sliding it under the mode button. */}
-      <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto [&>*]:shrink-0">
+      {/* Short controls (a plain session name) so the bar fits; only the route text shrinks. */}
+      <div className="flex min-w-0 flex-1 items-center gap-2">
         <PageSelect />
         {session.enabled && (
           <SessionSelect
@@ -313,16 +301,8 @@ function CanvasToolbar({ mode, session, runnerOrigin, onToggleMode }: CanvasTool
             runnerOrigin={runnerOrigin}
             onSelectSession={session.selectSession}
             onSessionsUpdated={session.setLocalSessions}
-            pageTied={session.pageTied}
           />
         )}
-        <span
-          className="min-w-0 !shrink truncate font-mono text-ink-soft"
-          title={route}
-          data-testid="canvas-route"
-        >
-          {route}
-        </span>
       </div>
       <button
         type="button"

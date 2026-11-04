@@ -210,12 +210,9 @@ export function SessionPopover({
   return (
     <div
       data-testid="session-select-popover"
-      className="w-72 rounded-lg border border-border bg-card-solid p-2 shadow-xl"
+      className="w-80 rounded-lg border border-border bg-card-solid p-2.5 shadow-xl"
     >
-      <div className="px-1 pb-2">
-        <div className="text-xs font-semibold text-ink">{t('sessions.title')}</div>
-        <p className="mt-0.5 text-[11px] leading-snug text-ink-soft">{t('sessions.explain')}</p>
-      </div>
+      <div className="px-1 pb-1.5 text-xs font-semibold text-ink">{t('sessions.title')}</div>
       <div className="flex flex-col gap-0.5">
         {sessions.map((session) => (
           <SessionRow
