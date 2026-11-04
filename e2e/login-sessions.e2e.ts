@@ -85,3 +85,49 @@ test('turned on in Settings, session 2 is s2.localhost with its own storage, and
   await expect.poll(() => canvasUrl(page)).toContain('127.0.0.1');
   await expect.poll(() => storageOf(page)).toBe('customer');
 });
+
+async function turnSessionsOn(page: Page): Promise<void> {
+  await page.getByTestId('activity-settings').click();
+  await page.getByTestId('settings-login-sessions').check();
+  await page.keyboard.press('Escape');
+}
+
+test('a page opens in the session it was tied to; an untied page asks which one [K3d D, spec-log #78]', async ({
+  page,
+}) => {
+  await folder.remove();
+  folder = await copyFixture('projects/react-router-jsx');
+  const session = await startCli(folder.path, config.path);
+  sessions.push(session);
+  await page.goto(session.studioUrl);
+  await trustIfAsked(page);
+  const canvas = await getCanvasFrame(page);
+  await expect(canvas.getByRole('heading', { name: 'Bảng điều khiển' })).toBeVisible({
+    timeout: 20_000,
+  });
+  await turnSessionsOn(page);
+  await page.getByTestId('session-select-trigger').click();
+  await page.getByTestId('session-add-input').fill('Farmer');
+  await page.getByTestId('session-add-btn').click();
+  await page.keyboard.press('Escape');
+
+  // Two sessions, "/" tied to none: the notice asks; picking Session 1 ties "/" to it.
+  await expect(page.getByTestId('session-page-notice')).toBeVisible();
+  await page.getByTestId('session-page-pick-1').click();
+  await expect(page.getByTestId('session-page-notice')).toHaveCount(0);
+
+  // "/tasks" is new: it opens in the current session and asks; tie it to Farmer.
+  await page.getByTestId('canvas-page-select').selectOption('/tasks');
+  await expect(page.getByTestId('session-page-notice')).toBeVisible();
+  await page.getByTestId('session-page-pick-2').click();
+  await expect.poll(() => canvasUrl(page)).toContain('s2.localhost');
+
+  // From now on each page switches the session by itself.
+  await page.getByTestId('canvas-page-select').selectOption('/');
+  await expect.poll(() => canvasUrl(page)).toContain('127.0.0.1');
+  await expect(canvas.getByRole('heading', { name: 'Bảng điều khiển' })).toBeVisible();
+  await expect(page.getByTestId('session-page-tied')).toBeVisible();
+  await page.getByTestId('canvas-page-select').selectOption('/tasks');
+  await expect.poll(() => canvasUrl(page)).toContain('s2.localhost');
+  await expect(canvas.getByRole('heading', { name: 'Danh sách việc' })).toBeVisible();
+});

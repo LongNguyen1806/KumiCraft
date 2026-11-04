@@ -10,6 +10,7 @@ import { useProjectStore } from '../project/project-store.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { CanvasArea } from './canvas-area.tsx';
+import { useSessionPickerStore } from './session-pages.ts';
 import { resetSessionProbeCache } from './session-select.tsx';
 
 let mockRunnerState: {
@@ -81,6 +82,7 @@ describe('CanvasArea', () => {
     cleanup();
     vi.restoreAllMocks();
     useSettingsStore.setState({ settings: undefined });
+    useSessionPickerStore.setState({ open: false });
   });
 
   it('renders untrusted prompt when trusted is false [R-RN-20]', () => {

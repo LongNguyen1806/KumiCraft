@@ -29,6 +29,7 @@ import { useCanvasViewStore } from './canvas-view-store.ts';
 import { fitZoom, useElementWidth, type Zoom } from './canvas-zoom.tsx';
 import { PageSelect } from './page-select.tsx';
 import { PortBusyBanner } from './port-busy-banner.tsx';
+import { SessionPageNotice } from './session-page-notice.tsx';
 import { SessionSelect, useCanvasSession } from './session-select.tsx';
 import { useOpenInEditor } from './use-open-in-editor.ts';
 import { useRunnerStatus } from './use-runner-status.ts';
@@ -224,14 +225,23 @@ function CanvasToolbarSection({
   readonly state: ReturnType<typeof useCanvasAreaState>;
 }) {
   return (
-    <CanvasToolbar
-      mode={s.mode}
-      session={s.session}
-      runnerOrigin={s.runner.status.origin}
-      onToggleMode={() => {
-        s.setMode((m) => (m === 'design' ? 'preview' : 'design'));
-      }}
-    />
+    <>
+      <CanvasToolbar
+        mode={s.mode}
+        session={s.session}
+        runnerOrigin={s.runner.status.origin}
+        onToggleMode={() => {
+          s.setMode((m) => (m === 'design' ? 'preview' : 'design'));
+        }}
+      />
+      {s.session.pageUnassigned && (
+        <SessionPageNotice
+          sessions={s.session.sessions}
+          activeSessionId={s.session.activeSessionId}
+          onPick={s.session.selectSession}
+        />
+      )}
+    </>
   );
 }
 
@@ -303,6 +313,7 @@ function CanvasToolbar({ mode, session, runnerOrigin, onToggleMode }: CanvasTool
             runnerOrigin={runnerOrigin}
             onSelectSession={session.selectSession}
             onSessionsUpdated={session.setLocalSessions}
+            pageTied={session.pageTied}
           />
         )}
         <span

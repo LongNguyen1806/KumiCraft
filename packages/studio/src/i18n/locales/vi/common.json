@@ -700,6 +700,9 @@
     "newPlaceholder": "Tên phiên (vd: Admin)",
     "defaultLabel": "Phiên {{id}}",
     "localhostUnsupported": "Trình duyệt này không mở được địa chỉ *.localhost; dùng Chrome, Edge hoặc Firefox",
-    "explain": "Mỗi phiên giữ đăng nhập riêng trong Canvas (cookie và local storage). Dùng một phiên cho mỗi vai trò, ví dụ Customer và Farmer, rồi đổi qua lại mà không phải đăng nhập lại."
+    "explain": "Mỗi phiên giữ đăng nhập riêng trong Canvas (cookie và local storage). Dùng một phiên cho mỗi vai trò, ví dụ Customer và Farmer, rồi đổi qua lại mà không phải đăng nhập lại.",
+    "pageTied": "tự chọn cho trang này",
+    "pageUnassigned": "Trang này chưa gắn phiên; đang mở bằng {{label}}. Chọn phiên đúng vai trò cho trang (KumiCraft sẽ nhớ):",
+    "addForPage": "+ Thêm phiên cho trang này"
   }
 }
