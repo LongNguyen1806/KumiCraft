@@ -15,3 +15,9 @@ onlyBuiltDependencies: []
 # Git hooks are installed by the root "prepare" script (scripts/install-git-hooks.mjs).
 ignoredBuiltDependencies:
   - lefthook
+
+# Security fixes in transitive dependencies (pnpm audit, 2026-11-04).
+overrides:
+  'fast-uri@>=3.0.0 <3.1.9': 3.1.9
+  'fast-uri@>=4.0.0 <4.2.3': 4.2.3
+  'zod@>=4.0.0 <4.6.6': 4.6.7

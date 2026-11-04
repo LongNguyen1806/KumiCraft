@@ -75,7 +75,9 @@ describe('Studio messages [V-111]', () => {
   });
 
   it('ignores another source, another origin, another nonce or a payload that does not parse', () => {
+    // An inline page: happy-dom gives it a window without loading anything.
     const otherWindow = document.createElement('iframe');
+    otherWindow.srcdoc = '<!doctype html><title>other</title>';
     document.body.appendChild(otherWindow);
     const other = otherWindow.contentWindow ?? undefined;
 

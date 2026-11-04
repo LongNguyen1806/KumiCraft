@@ -24,6 +24,7 @@ export default defineConfig({
           root: 'packages/studio',
           include: ['src/**/*.test.{ts,tsx}'],
           environment: 'happy-dom',
+          setupFiles: ['./src/test-setup.ts'],
         },
       },
       {
@@ -42,6 +43,7 @@ export default defineConfig({
         '**/*.test.{ts,tsx}',
         '**/*.bench.ts',
         '**/test-support.ts',
+        'packages/studio/src/test-setup.ts',
         '**/*.d.ts',
         'packages/studio/src/main.tsx',
         'packages/cli/src/index.ts',
