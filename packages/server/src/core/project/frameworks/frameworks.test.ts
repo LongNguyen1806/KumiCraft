@@ -81,6 +81,8 @@ describe('M-FW: Framework detection', () => {
           language: 'ts',
         }),
       sourceExtensions: ['.tsx'],
+      markupExtensions: ['.tsx'],
+      editMode: 'full',
       runner: { entry: 'entry.ts', options: (ctx) => ({ ...ctx, host: '127.0.0.1' }) },
       template: 'mock-template',
     };

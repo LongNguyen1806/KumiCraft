@@ -96,11 +96,12 @@ function createFileServices(
 function createProjectRunner(
   deps: Pick<ProjectServiceDeps, 'system' | 'logger'>,
   runnerScript: string,
-  adapter: FrameworkAdapter,
   projectService: ProjectService,
   processPort: ProcessPort,
   eventBus: EventBusPort,
   studioOrigin: string,
+  adapter?: FrameworkAdapter,
+  resolveRunnerScript?: (entry: string) => string,
 ): RunnerService {
   return createRunnerService({
     getWorkspaceState: () => projectService.state(),
@@ -109,8 +110,10 @@ function createProjectRunner(
     logger: deps.logger,
     eventBus,
     studioOrigin,
-    adapter,
+    ...(adapter !== undefined ? { adapter } : {}),
+    getAdapter: () => projectService.getAdapter(),
     runnerScriptPath: runnerScript,
+    resolveRunnerScript,
   });
 }
 
@@ -182,6 +185,11 @@ function createAuxiliaryServices(
     newCssDir: () => {
       const info = projectService.getProjectInfo();
       return info.ok ? info.value.styleFiles?.newCssDir : undefined;
+    },
+    getAdapter: () => projectService.getAdapter(),
+    getProjectSourceDir: () => {
+      const info = projectService.getProjectInfo();
+      return info.ok ? info.value.sourceDir : undefined;
     },
   });
   const agentService = createAgentService({
@@ -263,18 +271,20 @@ function createRunnersAndAuxiliary(
   eventBus: EventBusPort,
   fs: FileSystemPort,
   runnerScript: string,
-  adapter: FrameworkAdapter,
+  adapter: FrameworkAdapter | undefined,
   projectService: ProjectService,
   runnerHolder: { current?: RunnerService | undefined },
+  resolveRunnerScript?: (entry: string) => string,
 ) {
   const runnerService = createProjectRunner(
     deps,
     runnerScript,
-    adapter,
     projectService,
     processPort,
     eventBus,
     studioOrigin,
+    adapter,
+    resolveRunnerScript,
   );
   runnerHolder.current = runnerService;
   const auxiliary = createAuxiliaryServices(deps, processPort, fs, projectService);
@@ -331,7 +341,8 @@ export function createServices(
   fs: FileSystemPort,
   watcher: WatcherPort,
   runnerScript: string,
-  adapter: FrameworkAdapter,
+  adapter?: FrameworkAdapter,
+  resolveRunnerScript?: (entry: string) => string,
 ): CoreServices {
   const runnerHolder: { current?: RunnerService | undefined } = {};
   const projectServices = initProjectServices(deps, eventBus, watcher, fs, runnerHolder);
@@ -346,6 +357,7 @@ export function createServices(
     adapter,
     projectServices.projectService,
     runnerHolder,
+    resolveRunnerScript,
   );
 
   const agentTurns = createAgentTurnServices(

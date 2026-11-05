@@ -21,20 +21,13 @@ import type {
 
 import { createJobService, type JobService } from '../jobs/job-service.ts';
 import { err, ok, type Result } from '../shared/result.ts';
-import { primarySystem } from '../style/style-service.ts';
-import {
-  countUsage,
-  editTokens,
-  readTokens,
-  type TokenFiles,
-} from '../style/tokens/token-service.ts';
 import { acquireLock, type LockInfo, releaseLock } from '../workspace/lock.ts';
 import { rememberPort } from '../workspace/studio-port.ts';
 import { trustKeyOf } from '../workspace/trust.ts';
 import { extractComponent } from './component-extract.ts';
 import { createProject } from './create.ts';
-import { promoteDraft } from './draft-promote.ts';
-import { createDraft, deleteDraft, duplicateDraft, listDrafts, renameDraft } from './drafts.ts';
+import { defaultAdapter } from './frameworks/index.ts';
+import type { FrameworkAdapter } from './frameworks/types.ts';
 import { moveLegacyWorkspace } from './legacy-workspace.ts';
 import {
   type AddPageInput,
@@ -48,11 +41,21 @@ import { addPage, deletePage, renamePage } from './page-edits.ts';
 import { readPages } from './pages.ts';
 import { probeProject, probeSupportedProject } from './probe.ts';
 import { applyAddBackend, applyRemoveBackend, computeBackendInfos } from './project-backends.ts';
+import {
+  handleCreateDraft,
+  handleDeleteDraft,
+  handleDuplicateDraft,
+  handleListDrafts,
+  handlePromoteDraft,
+  handleRenameDraft,
+} from './project-draft-ops.ts';
 import { normalizeRoot, projectInfoOf, resolveOpenSupport } from './project-info.ts';
-import { checkNeedsInstall, getInstallCommand, startInstallJob } from './project-install.ts';
+import { checkNeedsInstall, startProjectInstall } from './project-install.ts';
+import { editProjectTheme, queryThemeUsage, readProjectTheme } from './project-theme-ops.ts';
 import type { ProjectService, ProjectServiceDeps, WorkspaceState } from './project-types.ts';
 import {
-  executePatchWorkspaceFile,
+  applyPatchProject,
+  applySetTrusted,
   loadOrCreateWorkspaceFile,
   type PatchWorkspaceUpdates,
   reloadOpenWorkspace,
@@ -62,6 +65,7 @@ export type { ProjectService, ProjectServiceDeps, WorkspaceState };
 
 class ProjectServiceImpl implements ProjectService {
   private current: WorkspaceState;
+  private currentAdapter: FrameworkAdapter = defaultAdapter;
   private heldLock: { root: string; info: LockInfo } | undefined;
   private readonly createdPackageManagers = new Map<string, PackageManager>();
   private readonly deps: ProjectServiceDeps;
@@ -75,6 +79,10 @@ class ProjectServiceImpl implements ProjectService {
     this.current = deps.initialRoot
       ? { status: 'none', suggestedPath: deps.initialRoot }
       : { status: 'none' };
+  }
+
+  getAdapter(): FrameworkAdapter {
+    return this.currentAdapter;
   }
 
   state(): WorkspaceState {
@@ -99,9 +107,7 @@ class ProjectServiceImpl implements ProjectService {
   async open(targetPath?: string): Promise<Result<ProjectInfo>> {
     const given =
       targetPath ?? (this.current.status === 'open' ? this.current.root : this.deps.initialRoot);
-    if (!given) {
-      return err({ code: 'E021', params: { missing: 'project' } });
-    }
+    if (!given) return err({ code: 'E021', params: { missing: 'project' } });
     // Vite reports module ids by real path (macOS /var -> /private/var, Windows RUNNER~1), so the
     // root must match or the Bridge stamps no file of the project.
     const root = await this.deps.fs.realRoot(given);
@@ -115,16 +121,15 @@ class ProjectServiceImpl implements ProjectService {
     });
     if (!probed.ok) return probed;
 
+    this.currentAdapter = probed.value.adapter;
     const support = resolveOpenSupport(
       root,
-      probed.value,
+      probed.value.report,
       this.createdPackageManagers,
       this.deps.config.settings().packageManager,
       this.deps.platform,
     );
-    if (this.heldLock !== undefined) {
-      await this.releaseCurrentLock();
-    }
+    if (this.heldLock !== undefined) await this.releaseCurrentLock();
 
     // R-HI-08: steps of another project must never be undone into this one.
     if (this.current.status === 'open' && this.current.root !== root) {
@@ -171,9 +176,7 @@ class ProjectServiceImpl implements ProjectService {
     const info = projectInfoOf(this.current);
     this.deps.eventBus?.publish('session.changed', undefined);
     this.deps.eventBus?.publish('project.changed', info);
-    if (trusted && !needsInstall && support.supported) {
-      void this.deps.runnerService?.start();
-    }
+    if (trusted && !needsInstall && support.supported) void this.deps.runnerService?.start();
     return info;
   }
 
@@ -201,14 +204,14 @@ class ProjectServiceImpl implements ProjectService {
     this.deps.history?.clear();
     await this.deps.runnerService?.stop();
     await this.releaseCurrentLock();
+    this.currentAdapter = defaultAdapter;
     this.current = { status: 'none' };
     this.deps.eventBus?.publish('session.changed', undefined);
   }
 
   getProjectInfo(): Result<ProjectInfo> {
-    if (this.current.status !== 'open') {
+    if (this.current.status !== 'open')
       return err({ code: 'E021', params: { missing: 'project' } });
-    }
     return ok(projectInfoOf(this.current));
   }
 
@@ -216,20 +219,9 @@ class ProjectServiceImpl implements ProjectService {
     if (this.current.status !== 'open') {
       return err({ code: 'E021', params: { missing: 'project' } });
     }
-
-    const primarySystemId = primarySystem(this.current.support.styling);
-    const write = await executePatchWorkspaceFile(
-      this.deps.fs,
-      this.current.root,
-      this.current.file,
-      this.current.file.sourceDir,
-      this.deps.platform,
-      updates,
-      primarySystemId,
-    );
+    const write = await applyPatchProject(this.deps, this.current, updates);
     if (!write.ok) return write;
-
-    this.current = { ...this.current, file: write.value };
+    this.current = write.value;
     const info = projectInfoOf(this.current);
     this.deps.eventBus?.publish('project.changed', info);
     return ok(info);
@@ -239,14 +231,9 @@ class ProjectServiceImpl implements ProjectService {
     if (this.current.status !== 'open') {
       return err({ code: 'E021', params: { missing: 'project' } });
     }
-
-    const saved = await this.deps.config.setTrusted(
-      trustKeyOf(this.current.file, this.current.root),
-      trusted,
-    );
+    const saved = await applySetTrusted(this.deps, this.current, trusted);
     if (!saved.ok) return saved;
-
-    this.current = { ...this.current, trusted };
+    this.current = saved.value;
     const info = projectInfoOf(this.current);
     this.deps.eventBus?.publish('session.changed', undefined);
     this.deps.eventBus?.publish('project.changed', info);
@@ -257,7 +244,14 @@ class ProjectServiceImpl implements ProjectService {
   }
 
   install(command: readonly string[]): Promise<Result<{ readonly jobId: string }>> {
-    return Promise.resolve(this.startInstall(command));
+    return Promise.resolve(
+      startProjectInstall(
+        this.current,
+        { jobs: this.jobs, process: this.deps.process },
+        command,
+        (root) => this.afterInstall(root),
+      ),
+    );
   }
 
   installRouter(): Promise<Result<{ readonly jobId: string }>> {
@@ -265,28 +259,6 @@ class ProjectServiceImpl implements ProjectService {
       this.current,
       { fs: this.deps.fs, history: this.deps.history, jobs: this.jobs, process: this.deps.process },
       (root) => this.afterInstall(root),
-    );
-  }
-
-  private startInstall(command: readonly string[]): Result<{ readonly jobId: string }> {
-    if (this.current.status !== 'open') {
-      return err({ code: 'E021', params: { missing: 'project' } });
-    }
-    if (!this.current.trusted) {
-      return err({ code: 'E011', params: { path: this.current.root, reason: 'untrusted' } });
-    }
-    if (!this.current.support.packageManager) {
-      return err({ code: 'E021', params: { missing: 'packageManager' } });
-    }
-
-    const { root } = this.current;
-    const expectedCommand = getInstallCommand(this.current.support.packageManager);
-    return startInstallJob(
-      { jobs: this.jobs, process: this.deps.process },
-      root,
-      command,
-      expectedCommand,
-      () => this.afterInstall(root),
     );
   }
 
@@ -303,38 +275,48 @@ class ProjectServiceImpl implements ProjectService {
   }
 
   async pages(): Promise<Result<PagesInfo>> {
-    if (this.current.status !== 'open') {
+    if (this.current.status !== 'open')
       return err({ code: 'E021', params: { missing: 'project' } });
+    if (this.currentAdapter.pages !== undefined) {
+      return ok(
+        await this.currentAdapter.pages({
+          fs: this.deps.fs,
+          root: this.current.root,
+          support: this.current.support,
+          sourceDir: this.current.file.sourceDir,
+          serverEntry: this.current.support.serverEntry,
+          viewsDir: this.current.support.viewsDir,
+        }),
+      );
     }
     return ok(await readPages(this.deps.fs, this.current.root, this.current.file.sourceDir));
   }
 
   private getPageEditDeps(): Result<PageEditDeps> {
+    if (this.current.status === 'open' && this.current.support.editMode === 'viewOnly') {
+      return err({ code: 'E023', params: { reason: 'viewOnly' } });
+    }
     return buildPageEditDeps(this.current, this.deps);
   }
 
   async addPage(input: AddPageInput): Promise<Result<StructureResult>> {
     const deps = this.getPageEditDeps();
-    if (!deps.ok) return deps;
-    return addPage(deps.value, input);
+    return deps.ok ? addPage(deps.value, input) : deps;
   }
 
   async renamePage(input: RenamePageInput): Promise<Result<StructureResult>> {
     const deps = this.getPageEditDeps();
-    if (!deps.ok) return deps;
-    return renamePage(deps.value, input);
+    return deps.ok ? renamePage(deps.value, input) : deps;
   }
 
   async deletePage(input: DeletePageInput): Promise<Result<StructureResult>> {
     const deps = this.getPageEditDeps();
-    if (!deps.ok) return deps;
-    return deletePage(deps.value, input);
+    return deps.ok ? deletePage(deps.value, input) : deps;
   }
 
   async extractComponent(input: ExtractComponent): Promise<Result<StructureResult>> {
     const deps = this.getPageEditDeps();
-    if (!deps.ok) return deps;
-    return extractComponent(deps.value, input);
+    return deps.ok ? extractComponent(deps.value, input) : deps;
   }
 
   async dirs(): Promise<Result<readonly string[]>> {
@@ -344,66 +326,39 @@ class ProjectServiceImpl implements ProjectService {
   }
 
   async listDrafts(): Promise<Result<DraftsInfo>> {
-    const deps = this.getPageEditDeps();
-    return deps.ok ? listDrafts(deps.value) : deps;
+    return handleListDrafts(this.current, this.getPageEditDeps());
   }
 
   async createDraft(input: CreateDraft): Promise<Result<StructureResult>> {
-    const deps = this.getPageEditDeps();
-    return deps.ok ? createDraft(deps.value, input) : deps;
+    return handleCreateDraft(this.getPageEditDeps(), input);
   }
 
   async renameDraft(input: RenameDraft): Promise<Result<StructureResult>> {
-    const deps = this.getPageEditDeps();
-    return deps.ok ? renameDraft(deps.value, input) : deps;
+    return handleRenameDraft(this.getPageEditDeps(), input);
   }
 
   async duplicateDraft(input: DraftFile): Promise<Result<StructureResult>> {
-    const deps = this.getPageEditDeps();
-    return deps.ok ? duplicateDraft(deps.value, input) : deps;
+    return handleDuplicateDraft(this.getPageEditDeps(), input);
   }
 
   async deleteDraft(input: DraftFile): Promise<Result<StructureResult>> {
-    const deps = this.getPageEditDeps();
-    return deps.ok ? deleteDraft(deps.value, input) : deps;
+    return handleDeleteDraft(this.getPageEditDeps(), input);
   }
 
   async promoteDraft(input: PromoteDraft): Promise<Result<StructureResult>> {
-    const deps = this.getPageEditDeps();
-    return deps.ok ? promoteDraft(deps.value, input) : deps;
+    return handlePromoteDraft(this.getPageEditDeps(), input);
   }
 
-  private tokenFiles(): TokenFiles | undefined {
-    if (this.current.status !== 'open') return undefined;
-    const cur = this.current;
-    return {
-      root: cur.root,
-      styling: cur.support.styling,
-      tailwindCss: cur.support.tailwindCss,
-      sourceDir: cur.file.sourceDir,
-      tokenFile: cur.file.styleFiles?.tokenFile,
-    };
-  }
-
-  async theme(): Promise<Result<ThemeInfo>> {
-    const f = this.tokenFiles();
-    return f
-      ? readTokens(this.deps, f, primarySystem(f.styling))
-      : err({ code: 'E021', params: { missing: 'project' } });
+  theme(): Promise<Result<ThemeInfo>> {
+    return readProjectTheme(this.deps, this.current);
   }
 
   editTheme(edit: ThemeEdit): Promise<Result<ThemeInfo>> {
-    const f = this.tokenFiles();
-    return f
-      ? editTokens(this.deps, f, primarySystem(f.styling), edit)
-      : Promise.resolve(err({ code: 'E021', params: { missing: 'project' } }));
+    return editProjectTheme(this.deps, this.current, edit);
   }
 
   themeUsage(kind: ThemeTokenKind, name: string): Promise<Result<ThemeUsage>> {
-    const f = this.tokenFiles();
-    return f
-      ? countUsage(this.deps, f, primarySystem(f.styling), kind, name)
-      : Promise.resolve(err({ code: 'E021', params: { missing: 'project' } }));
+    return queryThemeUsage(this.deps, this.current, kind, name);
   }
 
   async addBackend(backendPath: string, customLabel?: string): Promise<Result<BackendInfo>> {

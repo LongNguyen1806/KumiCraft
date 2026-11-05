@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { RelPathSchema } from './rel-path.ts';
 
-export const RouterKindSchema = z.enum(['dataRouter', 'jsxRoutes']);
+export const RouterKindSchema = z.enum(['dataRouter', 'jsxRoutes', 'express']);
 export type RouterKind = z.infer<typeof RouterKindSchema>;
 
 export const RouterStatusSchema = z.discriminatedUnion('status', [

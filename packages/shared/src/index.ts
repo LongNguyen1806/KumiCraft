@@ -180,6 +180,8 @@ export {
   DraftInfoSchema,
   type DraftsInfo,
   DraftsInfoSchema,
+  EDIT_MODES,
+  type EditMode,
   type Editor,
   EDITORS,
   EditorSchema,

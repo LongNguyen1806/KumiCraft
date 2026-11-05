@@ -5,6 +5,7 @@ import type { JobContext, JobService } from '../jobs/job-service.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { ProcessPort } from '../ports/process-port.ts';
 import { err, ok, type Result } from '../shared/result.ts';
+import type { WorkspaceState } from './project-types.ts';
 
 export async function checkNeedsInstall(fs: FileSystemPort, root: string): Promise<boolean> {
   const hasVite = await fs.exists(root, 'node_modules/vite/package.json');
@@ -101,4 +102,25 @@ export function startInstallJob(
     await onInstalled();
     return ok(undefined);
   });
+}
+
+export function startProjectInstall(
+  current: WorkspaceState,
+  deps: { readonly jobs: JobService; readonly process: ProcessPort },
+  command: readonly string[],
+  afterInstall: (root: string) => Promise<void>,
+): Result<{ readonly jobId: string }> {
+  if (current.status !== 'open') {
+    return err({ code: 'E021', params: { missing: 'project' } });
+  }
+  if (!current.trusted) {
+    return err({ code: 'E011', params: { path: current.root, reason: 'untrusted' } });
+  }
+  if (!current.support.packageManager) {
+    return err({ code: 'E021', params: { missing: 'packageManager' } });
+  }
+
+  const { root } = current;
+  const expectedCommand = getInstallCommand(current.support.packageManager);
+  return startInstallJob(deps, root, command, expectedCommand, () => afterInstall(root));
 }

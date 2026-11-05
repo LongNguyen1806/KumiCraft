@@ -107,6 +107,39 @@ describe('navigation [R-BR-19]', () => {
 
     expect(window.location.pathname).toBe(before);
   });
+
+  it('[WP-4.00] A7: Bridge navigation: "document" calls location.assign; absent navigates via pushState', () => {
+    runtime.destroy();
+    const assignSpy = vi.fn();
+    window.location.assign = assignSpy;
+
+    const docRuntime = new BridgeClientRuntime({
+      nonce: NONCE,
+      studioOrigin: STUDIO,
+      rootDir: ROOT,
+      hot,
+      navigation: 'document',
+    });
+
+    fromStudio('navigate', { route: '/contact' });
+    expect(assignSpy).toHaveBeenCalledWith('/contact');
+
+    docRuntime.destroy();
+
+    // Default without navigation calls pushState instead
+    assignSpy.mockClear();
+    const defaultRuntime = new BridgeClientRuntime({
+      nonce: NONCE,
+      studioOrigin: STUDIO,
+      rootDir: ROOT,
+      hot,
+    });
+
+    fromStudio('navigate', { route: '/default-page' });
+    expect(assignSpy).not.toHaveBeenCalled();
+    expect(window.location.pathname).toBe('/default-page');
+    defaultRuntime.destroy();
+  });
 });
 
 describe('keyboard while text is edited [R-TX-03]', () => {

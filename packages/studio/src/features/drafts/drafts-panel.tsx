@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { deleteDraft, duplicateDraft, renameDraft } from '../../api/project-client.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { useEditMode } from '../project/use-edit-mode.ts';
 import { PromoteDraftDialog } from './promote-draft-dialog.tsx';
 import { useDrafts } from './use-drafts.ts';
 
@@ -24,6 +25,8 @@ function DraftRowActions({
   onPromote,
 }: DraftRowActionsProps) {
   const { t } = useTranslation();
+  const editMode = useEditMode();
+  if (editMode === 'viewOnly') return undefined;
   return (
     <div className="flex shrink-0 items-center gap-1.5">
       <button

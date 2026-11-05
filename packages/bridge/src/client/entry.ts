@@ -7,6 +7,7 @@ const ConfigSchema = z.object({
   nonce: z.string().min(1),
   studioOrigin: z.string().min(1),
   root: z.string().min(1),
+  navigation: z.enum(['history', 'document']).optional(),
 });
 
 function readConfig(): z.infer<typeof ConfigSchema> | undefined {
@@ -28,5 +29,6 @@ if (config !== undefined) {
     studioOrigin: config.studioOrigin,
     rootDir: config.root,
     hot: import.meta.hot,
+    navigation: config.navigation,
   });
 }

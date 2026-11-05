@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { deleteProjectPage } from '../../api/project-client.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { usePagesData } from '../editor/page-select.tsx';
+import { useEditMode } from '../project/use-edit-mode.ts';
 import { AddPageForm } from './add-page-form.tsx';
 import { RenamePageForm } from './rename-page-form.tsx';
 import { RouterStatusBox } from './router-status-box.tsx';
@@ -18,6 +19,8 @@ type PageRowActionsProps = {
 
 function PageRowActions({ path, convention, onStartRename, onDelete }: PageRowActionsProps) {
   const { t } = useTranslation();
+  const editMode = useEditMode();
+  if (editMode === 'viewOnly') return undefined;
   return (
     <div className="flex items-center gap-1.5 shrink-0">
       <button
@@ -175,16 +178,19 @@ export function PagesHeader({
   onRouterChanged,
   deleteError,
 }: PagesHeaderProps) {
+  const editMode = useEditMode();
   return (
     <>
       <RouterStatusBox router={router} onRouterChanged={onRouterChanged} />
-      <AddPageForm
-        convention={convention}
-        defaultDir={defaultDir}
-        onAdded={(res) => {
-          if (res.pagePath !== undefined) onPageAdded?.(res.pagePath);
-        }}
-      />
+      {editMode !== 'viewOnly' && (
+        <AddPageForm
+          convention={convention}
+          defaultDir={defaultDir}
+          onAdded={(res) => {
+            if (res.pagePath !== undefined) onPageAdded?.(res.pagePath);
+          }}
+        />
+      )}
       {deleteError !== undefined && (
         <div role="alert" className="text-xs text-rose-600">
           {deleteError}

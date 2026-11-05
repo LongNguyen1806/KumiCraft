@@ -37,6 +37,7 @@ import type { SystemPort } from '../ports/system-port.ts';
 import type { AppError, Result } from '../shared/result.ts';
 import type { Platform } from '../shared/session.ts';
 import type { ConfigStore } from '../shared/user-config.ts';
+import type { FrameworkAdapter } from './frameworks/types.ts';
 import type { AddPageInput, DeletePageInput, RenamePageInput } from './page-common.ts';
 
 export type WorkspaceState =
@@ -74,6 +75,7 @@ export type ProjectServiceDeps = {
 };
 
 export type ProjectService = {
+  getAdapter(): FrameworkAdapter;
   state(): WorkspaceState;
   probe(path: string): Promise<Result<ProjectProbe>>;
   open(path?: string): Promise<Result<ProjectInfo>>;

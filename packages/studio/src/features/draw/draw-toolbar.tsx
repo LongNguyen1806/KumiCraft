@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { useEditMode } from '../project/use-edit-mode.ts';
 import { useStyleEditable } from '../project/use-style-edit.ts';
 import { useImagePickerStore } from './draw-commands.ts';
 import { ImagePickerDialog } from './image-picker-dialog.tsx';
@@ -84,16 +85,18 @@ export function DrawToolbar() {
   const panning = useCanvasViewStore((s) => s.panning);
   const setPanning = useCanvasViewStore((s) => s.setPanning);
   const editable = useStyleEditable();
+  const editMode = useEditMode();
+  const canDraw = editable && editMode !== 'viewOnly';
 
   useEffect(() => {
-    if (!editable && tool !== 'select') {
+    if (!canDraw && tool !== 'select') {
       setTool('select');
     }
-  }, [editable, tool, setTool]);
+  }, [canDraw, tool, setTool]);
 
   if (mode !== 'design') return undefined;
 
-  const visibleTools = editable ? TOOLS : TOOLS.filter((item) => item.id === 'select');
+  const visibleTools = canDraw ? TOOLS : TOOLS.filter((item) => item.id === 'select');
 
   return (
     <div

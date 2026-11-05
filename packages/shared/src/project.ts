@@ -30,9 +30,15 @@ export const UNSUPPORTED_REASONS = [
   'tailwindVersion',
   'noViteConfig',
   'noTailwindCss',
+  'noExpress',
+  'noPug',
+  'noServerEntry',
 ] as const;
 export const UnsupportedReasonSchema = z.enum(UNSUPPORTED_REASONS);
 export type UnsupportedReason = z.infer<typeof UnsupportedReasonSchema>;
+
+export const EDIT_MODES = ['full', 'viewOnly'] as const;
+export type EditMode = (typeof EDIT_MODES)[number];
 
 export const STYLING_SYSTEMS = [
   'tailwind',
@@ -76,12 +82,17 @@ export const SupportReportSchema = z.strictObject({
     vite: z.string().optional(),
     react: z.string().optional(),
     tailwindcss: z.string().optional(),
+    express: z.string().optional(),
+    pug: z.string().optional(),
   }),
   language: z.enum(['ts', 'js']),
   packageManager: PackageManagerSchema.optional(),
   viteConfig: RelPathSchema.optional(),
   tailwindCss: RelPathSchema.optional(),
   styling: StylingReportSchema.optional(),
+  editMode: z.enum(EDIT_MODES).optional(),
+  serverEntry: RelPathSchema.optional(),
+  viewsDir: RelPathSchema.optional(),
 });
 export type SupportReport = z.infer<typeof SupportReportSchema>;
 

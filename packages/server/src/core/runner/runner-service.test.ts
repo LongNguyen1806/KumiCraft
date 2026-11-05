@@ -2,72 +2,12 @@ import type { RunnerToChildMessage } from '@kumicraft/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ServerEvent } from '../ports/event-bus-port.ts';
-import type { ChildProcessHandle, ProcessPort } from '../ports/process-port.ts';
+import type { ProcessPort } from '../ports/process-port.ts';
+import { expressPugAdapter } from '../project/frameworks/express-pug/index.ts';
 import { viteReactAdapter } from '../project/frameworks/vite-react/index.ts';
 import type { WorkspaceState } from '../project/project-service.ts';
 import { createRunnerService, type RunnerServiceDeps } from './runner-service.ts';
-
-type MockProcessHandle = ChildProcessHandle & {
-  triggerLine(line: string): void;
-  triggerMessage(msg: unknown): void;
-  triggerExit(code?: number): void;
-  sentMessages: unknown[];
-  killed: boolean;
-};
-
-function createMockHandle(): MockProcessHandle {
-  const lineListeners: ((line: string) => void)[] = [];
-  const messageListeners: ((msg: unknown) => void)[] = [];
-  let exitResolver: (val: {
-    exitCode: number;
-    stdout: string;
-    stderr: string;
-    lines: string[];
-  }) => void;
-  const exitPromise = new Promise<{
-    exitCode: number;
-    stdout: string;
-    stderr: string;
-    lines: string[];
-  }>((resolve) => {
-    exitResolver = resolve;
-  });
-
-  const handle: MockProcessHandle = {
-    pid: 12345,
-    sentMessages: [],
-    killed: false,
-    onLine(cb) {
-      lineListeners.push(cb);
-    },
-    onMessage(cb) {
-      messageListeners.push(cb);
-    },
-    send(msg) {
-      handle.sentMessages.push(msg);
-      return true;
-    },
-    wait() {
-      return exitPromise;
-    },
-    kill() {
-      handle.killed = true;
-      exitResolver({ exitCode: 1, stdout: '', stderr: '', lines: [] });
-      return Promise.resolve();
-    },
-    triggerLine(line: string) {
-      for (const cb of lineListeners) cb(line);
-    },
-    triggerMessage(msg: unknown) {
-      for (const cb of messageListeners) cb(msg);
-    },
-    triggerExit(code = 0) {
-      exitResolver({ exitCode: code, stdout: '', stderr: '', lines: [] });
-    },
-  };
-
-  return handle;
-}
+import { createMockHandle, type MockProcessHandle } from './test-support.ts';
 
 describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
   let mockHandle: MockProcessHandle;
@@ -145,6 +85,52 @@ describe('RunnerService [SPEC-04 M-RN, R-RN-01 to R-RN-09]', () => {
       ...overrides,
     };
   }
+
+  it('[WP-4.00] A4: starts the runner script of the open project’s adapter and passes its server entry', async () => {
+    workspaceState = {
+      ...openState,
+      file: { ...openState.file, framework: 'express-pug', sourceDir: 'views' },
+      support: {
+        ...openState.support,
+        framework: 'express-pug',
+        serverEntry: 'app.js',
+        viewsDir: 'views',
+        editMode: 'viewOnly',
+      },
+    };
+    let adapter = expressPugAdapter;
+    const runner = createRunnerService(
+      makeDeps({
+        adapter: undefined,
+        getAdapter: () => adapter,
+        resolveRunnerScript: (entry) => `/dist/${entry}.js`,
+      }),
+    );
+    void runner.start();
+    await vi.waitFor(() => {
+      expect(spawnedCalls).toHaveLength(1);
+    });
+    expect(spawnedCalls[0]?.args).toContain('/dist/runners/express-pug.js');
+    await vi.waitFor(() => {
+      expect(mockHandle.sentMessages).toHaveLength(1);
+    });
+    expect(mockHandle.sentMessages[0]).toMatchObject({
+      type: 'start',
+      options: { serverEntry: 'app.js', viewsDir: 'views', host: '127.0.0.1' },
+    });
+    await runner.stop();
+
+    // Another project opened later: its own adapter's script, not the one picked first.
+    adapter = viteReactAdapter;
+    workspaceState = openState;
+    mockHandle = createMockHandle();
+    void runner.start();
+    await vi.waitFor(() => {
+      expect(spawnedCalls).toHaveLength(2);
+    });
+    expect(spawnedCalls[1]?.args).toContain('/dist/runners/vite-react.js');
+    await runner.stop();
+  });
 
   it('rejects start if project is not open [E021]', async () => {
     workspaceState = { status: 'none' };

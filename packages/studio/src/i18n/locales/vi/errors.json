@@ -11,7 +11,10 @@
       "noTailwind": "Dự án chưa cài Tailwind CSS.",
       "tailwindVersion": "Phiên bản Tailwind CSS không được hỗ trợ.",
       "noViteConfig": "Không tìm thấy file cấu hình Vite.",
-      "noTailwindCss": "Không tìm thấy file CSS của Tailwind."
+      "noTailwindCss": "Không tìm thấy file CSS của Tailwind.",
+      "noExpress": "Dự án chưa cài Express.",
+      "noPug": "Dự án chưa cài Pug.",
+      "noServerEntry": "Không tìm thấy file khởi động server (app.js, bin/www, ...)."
     }
   },
   "E002": {
@@ -159,7 +162,8 @@
       "componentSlot": "Component nhận children qua prop, không chèn trực tiếp vào mẫu.",
       "componentTag": "Không thể bỏ bọc component viết hoa.",
       "componentNotFound": "Không tìm thấy khai báo component hoặc file của trang.",
-      "usesLocalScope": "Phần tử sử dụng biến trong phạm vi cục bộ: {{name}}."
+      "usesLocalScope": "Phần tử sử dụng biến trong phạm vi cục bộ: {{name}}.",
+      "viewOnly": "Dự án này KumiCraft chỉ xem được (Express + Pug); sửa trong editor hoặc nhờ AI."
     }
   },
   "E024": {
@@ -175,7 +179,9 @@
       "config": "Lỗi trong file cấu hình dev server.",
       "portInUse": "Cổng mạng của dev server đang bị ứng dụng khác sử dụng.",
       "timeout": "Dev server khởi động quá thời gian cho phép.",
-      "crashed": "Tiến trình dev server bị tắt đột ngột."
+      "crashed": "Tiến trình dev server bị tắt đột ngột.",
+      "entryNotFound": "Không tìm thấy file entry của server.",
+      "noListen": "Server không lắng nghe trên cổng mạng nào."
     }
   },
   "E026": {

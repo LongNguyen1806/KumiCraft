@@ -1,10 +1,16 @@
 // Hook for Canvas Direct Text Editing (SPEC-04 section 10 M-TX, R-TX-01..08).
-import { type ElementRef, type ElementSource, parseLocString } from '@kumicraft/shared';
+import {
+  type EditMode,
+  type ElementRef,
+  type ElementSource,
+  parseLocString,
+} from '@kumicraft/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { editSource, fetchElementSource } from '../../api/source-client.ts';
 import { useComponentsStore } from '../components-panel/use-project-components.ts';
 import { useDesignStore } from '../design/design-store.ts';
+import { useEditMode } from '../project/use-edit-mode.ts';
 import {
   type BridgeChannel,
   type BridgeTextEditListener,
@@ -231,7 +237,7 @@ function useTextEditState() {
 
 type TextEditState = ReturnType<typeof useTextEditState>;
 
-function useTextEditHandlers(channel: BridgeChannel, state: TextEditState) {
+function useTextEditHandlers(channel: BridgeChannel, state: TextEditState, editMode: EditMode) {
   const { activeSessionRef, resetEditing, setWarning, setLoopCount, setEditingRef } = state;
 
   const handleCommit = useCallback(
@@ -248,6 +254,7 @@ function useTextEditHandlers(channel: BridgeChannel, state: TextEditState) {
 
   const handleRequest = useCallback(
     async (ref: ElementRef) => {
+      if (editMode === 'viewOnly') return;
       await processTextEditRequest(ref, channel, {
         setWarning,
         setLoopCount,
@@ -257,7 +264,7 @@ function useTextEditHandlers(channel: BridgeChannel, state: TextEditState) {
         },
       });
     },
-    [channel, activeSessionRef, setEditingRef, setLoopCount, setWarning],
+    [channel, activeSessionRef, setEditingRef, setLoopCount, setWarning, editMode],
   );
 
   const getActiveRef = useCallback(() => activeSessionRef.current?.ref, [activeSessionRef]);
@@ -268,9 +275,14 @@ function useTextEditHandlers(channel: BridgeChannel, state: TextEditState) {
 export function useCanvasTextEdit(options: UseCanvasTextEditOptions = {}): UseCanvasTextEditReturn {
   const channel = options.channel ?? studioBridgeChannel;
   const onOpenEditor = options.onOpenEditor;
+  const editMode = useEditMode();
   const state = useTextEditState();
   const { warning, setWarning } = state;
-  const { handleCommit, handleRequest, getActiveRef } = useTextEditHandlers(channel, state);
+  const { handleCommit, handleRequest, getActiveRef } = useTextEditHandlers(
+    channel,
+    state,
+    editMode,
+  );
 
   useTextEditBridge(channel, handleRequest, handleCommit, state.resetEditing, getActiveRef);
 

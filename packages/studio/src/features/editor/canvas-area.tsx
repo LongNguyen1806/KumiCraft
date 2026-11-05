@@ -14,6 +14,7 @@ import { DesignBar } from '../design/design-bar.tsx';
 import { DndErrorBanner } from '../dnd/dnd-error-banner.tsx';
 import { CanvasImagePicker } from '../draw/draw-toolbar.tsx';
 import { registerFreeFrameCommands } from '../free-frame/free-frame-commands.ts';
+import { useEditMode } from '../project/use-edit-mode.ts';
 import type { CanvasMode } from '../selection/selection-store.ts';
 import { type TextEditWarning, useCanvasTextEdit } from '../text-edit/use-canvas-text-edit.ts';
 import { IframeFrame } from './canvas-frame.tsx';
@@ -289,11 +290,22 @@ type CanvasToolbarProps = {
 
 function CanvasToolbar({ mode, session, runnerOrigin, onToggleMode }: CanvasToolbarProps) {
   const { t } = useTranslation();
+  const { t: tErrors } = useTranslation('errors');
+  const editMode = useEditMode();
   return (
     <header className="flex h-11 items-center justify-between gap-3 border-b border-line bg-card/60 px-4 text-xs backdrop-blur-md">
       {/* Short controls (a plain session name) so the bar fits; only the route text shrinks. */}
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <PageSelect />
+        {editMode === 'viewOnly' && (
+          <span
+            data-testid="view-only-chip"
+            className="inline-flex shrink-0 items-center gap-1 rounded bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400 border border-amber-500/20"
+            title={tErrors('E023.reasons.viewOnly')}
+          >
+            {t('editor.viewOnly')}
+          </span>
+        )}
         {session.enabled && (
           <SessionSelect
             sessions={session.sessions}

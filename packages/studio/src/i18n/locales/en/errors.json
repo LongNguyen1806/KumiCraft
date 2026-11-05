@@ -11,7 +11,10 @@
       "noTailwind": "Tailwind CSS is not installed.",
       "tailwindVersion": "Tailwind CSS version is not supported.",
       "noViteConfig": "Vite configuration file not found.",
-      "noTailwindCss": "Tailwind CSS file not found."
+      "noTailwindCss": "Tailwind CSS file not found.",
+      "noExpress": "Express is not installed in the project.",
+      "noPug": "Pug is not installed in the project.",
+      "noServerEntry": "Server entry file could not be found (app.js, bin/www, ...)."
     }
   },
   "E002": {
@@ -159,7 +162,8 @@
       "componentSlot": "Component receives children via prop; cannot insert directly into its template.",
       "componentTag": "Cannot unwrap an uppercase component tag.",
       "componentNotFound": "Page component declaration or file could not be found.",
-      "usesLocalScope": "Element uses local scope variables: {{name}}."
+      "usesLocalScope": "Element uses local scope variables: {{name}}.",
+      "viewOnly": "This project is view-only in KumiCraft (Express + Pug); edit in your editor or ask an AI."
     }
   },
   "E024": {
@@ -175,7 +179,9 @@
       "config": "Error in dev server configuration.",
       "portInUse": "Dev server port is already in use.",
       "timeout": "Dev server timed out during startup.",
-      "crashed": "Dev server process terminated unexpectedly."
+      "crashed": "Dev server process terminated unexpectedly.",
+      "entryNotFound": "Server entry file was not found.",
+      "noListen": "Server did not listen on a port."
     }
   },
   "E026": {

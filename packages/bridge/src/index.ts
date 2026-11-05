@@ -1,5 +1,6 @@
 // Public entry point of @kumicraft/bridge (QC-03).
 export { BRIDGE_CLIENT_CODE } from './client/bridge-client.generated.ts';
+export { bridgeHeadHtml, type BridgeHeadHtmlOptions } from './integrations/head-html.ts';
 export {
   BRIDGE_CLIENT_URL,
   type BridgePluginOptions,

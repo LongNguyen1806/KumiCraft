@@ -7,6 +7,7 @@ import type { ProjectInfo } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { viteReactAdapter } from '../../../core/project/frameworks/vite-react/index.ts';
 import type { ProjectService } from '../../../core/project/project-service.ts';
 import { err, ok } from '../../../core/shared/result.ts';
 import { createSessionInfoProvider } from '../../../core/shared/session.ts';
@@ -65,6 +66,7 @@ describe('GET /project/assets [R-DT-13]', () => {
     };
 
     const mockProjectService: ProjectService = {
+      getAdapter: () => viteReactAdapter,
       state: () => ({
         status: 'open',
         root: tmpDir,

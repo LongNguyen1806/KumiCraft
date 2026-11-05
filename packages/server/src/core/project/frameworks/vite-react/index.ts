@@ -7,8 +7,10 @@ export const viteReactAdapter: FrameworkAdapter = {
   primaryDependency: 'vite',
   detect: detectViteReact,
   sourceExtensions: ['.jsx', '.tsx'],
+  markupExtensions: ['.jsx', '.tsx'],
+  editMode: 'full',
   runner: {
-    entry: 'runners/vite-react.ts',
+    entry: 'runners/vite-react',
     options: (ctx) => ({ ...ctx, host: '127.0.0.1' }),
   },
   template: 'vite-react-ts-tailwind4',

@@ -19,16 +19,20 @@ import { FreeFramePageWarning } from '../free-frame/free-frame-page-warning.tsx'
 import { FreeFrameSection } from '../free-frame/free-frame-section.tsx';
 import { FreeFrameToggle } from '../free-frame/free-frame-toggle.tsx';
 import { useProjectInfo } from '../project/project-store.ts';
+import { useEditMode } from '../project/use-edit-mode.ts';
 import { useStyleEditable } from '../project/use-style-edit.ts';
-import { ColorField } from './components/color-field.tsx';
 import { ElementPath } from './components/element-path.tsx';
 import { InspectorHeader } from './components/inspector-header.tsx';
+import {
+  InspectorPropertyGroups,
+  isColorProperty,
+  resolveFieldOptions,
+} from './components/inspector-property-groups.tsx';
 import { OtherClassesSection } from './components/other-classes-section.tsx';
-import { PropertyField } from './components/property-field.tsx';
 import { CssStyleEditor } from './components/style-sources-section.tsx';
 import { TagAttributesSection } from './components/tag-attributes-section.tsx';
+import { ViewOnlyInspector } from './components/view-only-inspector.tsx';
 import { MultiInspectorView } from './multi-inspector-view.tsx';
-import { PROPERTY_GROUPS } from './property-groups-config.ts';
 import type { InspectorTarget } from './types.ts';
 import { useAttributeEdit } from './use-attribute-edit.ts';
 import type { UseInspectorTargetOptions } from './use-inspector-target.ts';
@@ -36,128 +40,13 @@ import { useInspectorTarget } from './use-inspector-target.ts';
 import { useLiveEdit } from './use-live-edit.ts';
 import { DEFAULT_THEME } from './use-project-theme.ts';
 
+export { isColorProperty, resolveFieldOptions };
+
 type InspectorPanelProps = {
   readonly options?: UseInspectorTargetOptions | undefined;
   readonly theme?: ThemeInfo | undefined;
   readonly onClassStringChange?: (newString: string) => void;
 };
-
-function resolveThemeTokens(property: PropertyId, theme: ThemeInfo): readonly string[] | undefined {
-  switch (property) {
-    case 'fontSize':
-      return theme.fontSizes.map((t) => t.name);
-    case 'borderRadius':
-      return theme.radii.map((t) => t.name);
-    case 'boxShadow':
-      return theme.shadows.map((t) => t.name);
-    case 'fontFamily':
-      return theme.fonts.map((t) => t.name);
-    default:
-      return undefined;
-  }
-}
-
-export function resolveFieldOptions(
-  property: PropertyId,
-  baseOptions: readonly string[] | undefined,
-  theme: ThemeInfo,
-): readonly string[] | undefined {
-  const themeNames = resolveThemeTokens(property, theme);
-  if (themeNames === undefined) return baseOptions;
-  return Array.from(new Set([...themeNames, ...(baseOptions ?? [])]));
-}
-
-export function isColorProperty(p: PropertyId): boolean {
-  return p === 'textColor' || p === 'backgroundColor' || p === 'borderColor';
-}
-
-type GroupFieldRendererProps = {
-  readonly field: (typeof PROPERTY_GROUPS)[number]['fields'][number];
-  readonly tokens: readonly ClassToken[];
-  readonly currentScope: Scope;
-  readonly frameWidth: number;
-  readonly ctx: ClassContext;
-  readonly isLocked: boolean;
-  readonly onPropertyValueChange: (property: PropertyId, value: ClassValue | undefined) => void;
-};
-
-function GroupFieldRenderer(props: GroupFieldRendererProps) {
-  const { field, tokens, currentScope, frameWidth, ctx, isLocked, onPropertyValueChange } = props;
-  const { t } = useTranslation();
-
-  if (isColorProperty(field.property)) {
-    return (
-      <ColorField
-        property={field.property}
-        label={t(field.labelKey)}
-        tokens={tokens}
-        currentScope={currentScope}
-        frameWidth={frameWidth}
-        ctx={ctx}
-        onValueChange={onPropertyValueChange}
-        disabled={isLocked}
-      />
-    );
-  }
-
-  const options = resolveFieldOptions(field.property, field.options, ctx.theme);
-  return (
-    <PropertyField
-      property={field.property}
-      label={t(field.labelKey)}
-      tokens={tokens}
-      currentScope={currentScope}
-      frameWidth={frameWidth}
-      ctx={ctx}
-      onValueChange={onPropertyValueChange}
-      options={options}
-      disabled={isLocked}
-    />
-  );
-}
-
-function InspectorPropertyGroups({
-  tokens,
-  currentScope,
-  frameWidth,
-  ctx,
-  isLocked,
-  onPropertyValueChange,
-}: {
-  readonly tokens: readonly ClassToken[];
-  readonly currentScope: Scope;
-  readonly frameWidth: number;
-  readonly ctx: ClassContext;
-  readonly isLocked: boolean;
-  readonly onPropertyValueChange: (property: PropertyId, value: ClassValue | undefined) => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <>
-      {PROPERTY_GROUPS.map((group) => (
-        <div key={group.id} className="flex flex-col gap-1 py-1.5 border-t border-border/30">
-          <h3 className="text-xs font-semibold text-ink-strong tracking-tight">
-            {t(group.labelKey)}
-          </h3>
-          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
-            {group.fields.map((f) => (
-              <GroupFieldRenderer
-                key={f.property}
-                field={f}
-                tokens={tokens}
-                currentScope={currentScope}
-                frameWidth={frameWidth}
-                ctx={ctx}
-                isLocked={isLocked}
-                onPropertyValueChange={onPropertyValueChange}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
-    </>
-  );
-}
 
 type ElementSectionsProps = {
   readonly editable: boolean;
@@ -294,23 +183,30 @@ function FreeFrameGroup({ source }: { readonly source: ElementSource }) {
   );
 }
 
-function InspectorSingleTargetView({
+type SingleTargetEditableBodyProps = {
+  readonly target: Extract<InspectorTarget, { readonly kind: 'element' }>;
+  readonly ctx: ClassContext;
+  readonly frameWidth: number;
+  readonly onClassStringChange?: ((newString: string) => void) | undefined;
+  readonly editable: boolean;
+};
+
+function SingleTargetEditableBody({
   target,
   ctx,
   frameWidth,
   onClassStringChange,
-}: InspectorSingleTargetViewProps) {
+  editable,
+}: SingleTargetEditableBodyProps) {
   const liveEdit = useLiveEdit({ target, ctx });
   const tokens = parseClasses(liveEdit.classString, ctx);
   const attrEdit = useAttributeEdit(target);
   const { isLocked, isAttrLocked } = computeTargetLocks(target, attrEdit.isSaving);
   const displayedError = liveEdit.error ?? attrEdit.error ?? target.error;
-  const editable = useStyleEditable();
   const project = useProjectInfo();
 
   return (
-    <div className="flex flex-col gap-2" data-testid="inspector-panel">
-      <ElementPath />
+    <>
       <InspectorHeader target={target} />
       {!editable && <CssStyleEditor project={project} target={target} />}
       <InspectorStatusFeedback
@@ -341,6 +237,33 @@ function InspectorSingleTargetView({
             }}
           />
         </>
+      )}
+    </>
+  );
+}
+
+function InspectorSingleTargetView({
+  target,
+  ctx,
+  frameWidth,
+  onClassStringChange,
+}: InspectorSingleTargetViewProps) {
+  const editable = useStyleEditable();
+  const editMode = useEditMode();
+
+  return (
+    <div className="flex flex-col gap-2" data-testid="inspector-panel">
+      <ElementPath />
+      {editMode === 'viewOnly' ? (
+        <ViewOnlyInspector target={target} />
+      ) : (
+        <SingleTargetEditableBody
+          target={target}
+          ctx={ctx}
+          frameWidth={frameWidth}
+          onClassStringChange={onClassStringChange}
+          editable={editable}
+        />
       )}
     </div>
   );

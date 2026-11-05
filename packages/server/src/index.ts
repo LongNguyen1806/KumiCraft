@@ -243,6 +243,7 @@ async function initServerContext(
     options.deps?.watcher ?? createChokidarWatcher(),
     runnerScript,
     viteReactAdapter,
+    (entry: string) => resolveRunnerScript(undefined, entry),
   );
 
   const autoOpen = await autoOpenProject(fs, services.projectService, options.workspaceDir);
@@ -281,21 +282,22 @@ export function resolveTemplateDir(): string {
  */
 export function resolveRunnerScript(customPath?: string, name = 'vite-react'): string {
   if (customPath && existsSync(customPath)) return customPath;
+  const cleanName = name.replace(/^runners[/\\]/, '').replace(/\.[jt]s$/, '');
   const rels = [
-    `./runners/${name}.js`,
-    `./runners/${name}.ts`,
-    `../runners/${name}.js`,
-    `../runners/${name}.ts`,
-    `../../runners/${name}.js`,
-    `../../runners/${name}.ts`,
-    `../../../server/src/runners/${name}.ts`,
-    `../../../../packages/server/src/runners/${name}.ts`,
+    `./runners/${cleanName}.js`,
+    `./runners/${cleanName}.ts`,
+    `../runners/${cleanName}.js`,
+    `../runners/${cleanName}.ts`,
+    `../../runners/${cleanName}.js`,
+    `../../runners/${cleanName}.ts`,
+    `../../../server/src/runners/${cleanName}.ts`,
+    `../../../../packages/server/src/runners/${cleanName}.ts`,
   ];
   for (const rel of rels) {
     const p = fileURLToPath(new URL(rel, import.meta.url));
     if (existsSync(p)) return p;
   }
-  return fileURLToPath(new URL(`./runners/${name}.js`, import.meta.url));
+  return fileURLToPath(new URL(`./runners/${cleanName}.js`, import.meta.url));
 }
 
 /**

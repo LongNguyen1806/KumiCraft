@@ -1,13 +1,20 @@
 // Framework adapters registry and detection orchestrator (SPEC-04 R-FW-01, R-FW-02).
 import type { SupportReport } from '@kumicraft/shared';
 
+import { expressPugAdapter } from './express-pug/index.ts';
 import type { DetectInput, FrameworkAdapter } from './types.ts';
 import { viteReactAdapter } from './vite-react/index.ts';
 
+export { expressPugAdapter } from './express-pug/index.ts';
 export * from './types.ts';
 export { viteReactAdapter } from './vite-react/index.ts';
 
-export const FRAMEWORK_ADAPTERS: readonly FrameworkAdapter[] = [viteReactAdapter];
+export const defaultAdapter: FrameworkAdapter = viteReactAdapter;
+
+export const FRAMEWORK_ADAPTERS: readonly FrameworkAdapter[] = [
+  viteReactAdapter,
+  expressPugAdapter,
+];
 
 type PkgJson = {
   readonly dependencies?: Readonly<Record<string, string>>;

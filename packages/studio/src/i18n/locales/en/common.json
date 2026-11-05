@@ -62,6 +62,7 @@
     "showLog": "Show log",
     "modeDesign": "Design",
     "modePreview": "Preview",
+    "viewOnly": "View only",
     "undo": "Undo ({{shortcut}})",
     "undoWithLabel": "Undo {{label}} ({{shortcut}})",
     "redo": "Redo ({{shortcut}})",

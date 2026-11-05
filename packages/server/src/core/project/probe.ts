@@ -5,6 +5,7 @@ import { checkBlockedPath, checkPathSyntax, parentPath } from '../shared/paths.t
 import { err, ok, type Result } from '../shared/result.ts';
 import type { Platform } from '../shared/session.ts';
 import { detectFramework } from './frameworks/index.ts';
+import type { FrameworkAdapter } from './frameworks/types.ts';
 
 export const EMPTY_ALLOWED_NAMES = new Set([
   '.git',
@@ -74,7 +75,7 @@ export async function probeProject(path: string, deps: ProbeDeps): Promise<Resul
 export async function probeSupportedProject(
   root: string,
   deps: ProbeDeps,
-): Promise<Result<SupportReport>> {
+): Promise<Result<{ readonly report: SupportReport; readonly adapter: FrameworkAdapter }>> {
   const probed = await probeProject(root, deps);
   if (!probed.ok) return probed;
   if (probed.value.kind !== 'project') {
@@ -83,5 +84,15 @@ export async function probeSupportedProject(
   if (!probed.value.support.supported) {
     return err({ code: 'E001', params: { reasons: probed.value.support.reasons } });
   }
-  return ok(probed.value.support);
+  const read = await deps.fs.readText(root, 'package.json', { maxBytes: 1024 * 1024 });
+  let packageJson: unknown = {};
+  if (read.ok) {
+    try {
+      packageJson = JSON.parse(read.value);
+    } catch {
+      packageJson = {};
+    }
+  }
+  const { adapter } = await detectFramework({ root, fs: deps.fs, packageJson });
+  return ok({ report: probed.value.support, adapter });
 }

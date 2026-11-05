@@ -62,6 +62,7 @@
     "showLog": "Xem log",
     "modeDesign": "Thiết kế",
     "modePreview": "Xem thử",
+    "viewOnly": "Chỉ xem",
     "undo": "Hoàn tác ({{shortcut}})",
     "undoWithLabel": "Hoàn tác {{label}} ({{shortcut}})",
     "redo": "Làm lại ({{shortcut}})",

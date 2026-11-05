@@ -15,11 +15,12 @@ import { err, ok, parseLocString } from '@kumicraft/shared';
 import MagicString from 'magic-string';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
+import type { FrameworkAdapter } from '../project/frameworks/types.ts';
 import type { AstNode } from './ast-helpers.ts';
 import { asAstNode, detectFormat, getJsxTagName } from './ast-helpers.ts';
 import { createUsageCounter, type UsageCounter } from './component-usages.ts';
-import { executeEditBatch } from './edit-batch.ts';
 import { executeEditMutation, parseModifiedCode } from './edit-mutations.ts';
+import { createEditorMutations, resolveSourcePaths } from './editor-mutations.ts';
 import { fileQueueKey, queueFileTask } from './file-queue.ts';
 import { readPageTree } from './page-tree.ts';
 import { createSnippetFormatter, type SnippetFormatter } from './snippet-format.ts';
@@ -34,7 +35,6 @@ import {
 import { listSourceFiles, type SourceFiles } from './source-files.ts';
 import { getElementTextFromAst } from './structure/element-text.ts';
 import type { NewCssDirProvider, StylingProvider } from './structure/insert-css.ts';
-import { executeStructureEdit } from './structure/structure-runner.ts';
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB (R-SE-01)
 
@@ -45,6 +45,9 @@ export type SourceEditorDeps = {
   readonly formatSnippet?: SnippetFormatter | undefined;
   readonly styling?: StylingProvider;
   readonly newCssDir?: NewCssDirProvider;
+  readonly getAdapter?: () => FrameworkAdapter;
+  /** The open project's `sourceDir` (Express: its views folder, read from the app). */
+  readonly getProjectSourceDir?: () => string | undefined;
 };
 
 export type SourceEditorConfig = {
@@ -90,14 +93,33 @@ export interface SourceEditorService {
   ): Promise<Result<BatchEditResult>>;
 }
 
+function buildMarkupOnlyElement(loc: string, rawContent: string, line: number): ElementSource {
+  const fileHash = computeSha256(rawContent);
+  const lines = rawContent.split(/\r?\n/);
+  const lineText = lines[line - 1] ?? '';
+  const match = lineText.trim().match(/^([a-zA-Z0-9_-]+)/);
+  const tag = match && match[1] !== undefined ? match[1] : 'div';
+  return {
+    loc,
+    tag,
+    fileHash,
+    readonly: 'outsideSource',
+    className: { kind: 'none' },
+    text: { kind: 'none' },
+    attributes: {},
+    inLoop: false,
+  };
+}
+
 async function executeGetElement(
   deps: SourceEditorDeps,
   projectRoot: string,
   loc: string,
   sourceDir: string,
+  markupExtensions: readonly string[],
   sourceExtensions: readonly string[],
 ): Promise<Result<ElementSource>> {
-  const valRes = validateLocAndExt(loc, sourceDir, sourceExtensions);
+  const valRes = validateLocAndExt(loc, sourceDir, markupExtensions);
   if (!valRes.ok) return valRes;
 
   const { rel, line, column } = valRes.value;
@@ -122,6 +144,10 @@ async function executeGetElement(
   }
 
   const rawContent = readRes.value;
+  if (!sourceExtensions.some((ext) => rel.endsWith(ext))) {
+    return ok(buildMarkupOnlyElement(loc, rawContent, line));
+  }
+
   const { hasBom } = detectFormat(rawContent);
   const code = hasBom ? rawContent.slice(1) : rawContent;
   const fileHash = computeSha256(rawContent);
@@ -245,12 +271,17 @@ async function executeGetElementText(
   projectRoot: string,
   loc: string,
   sourceDir: string,
+  markupExtensions: readonly string[],
   sourceExtensions: readonly string[],
 ): Promise<Result<ElementText>> {
-  const valRes = validateLocAndExt(loc, sourceDir, sourceExtensions);
+  const valRes = validateLocAndExt(loc, sourceDir, markupExtensions);
   if (!valRes.ok) return valRes;
 
   const { rel, line, column } = valRes.value;
+  if (!sourceExtensions.some((ext) => rel.endsWith(ext))) {
+    return ok({ jsx: '', file: rel, imports: [] });
+  }
+
   const readRes = await deps.fs.readText(projectRoot, rel, {
     maxBytes: MAX_FILE_SIZE,
     keepBom: true,
@@ -309,37 +340,50 @@ export function createSourceEditorService(
   deps: SourceEditorDeps,
   config: SourceEditorConfig = {},
 ): SourceEditorService {
-  const sourceDir = config.sourceDir ?? 'src';
-  const sourceExtensions = config.sourceExtensions ?? ['.jsx', '.tsx'];
+  const paths = resolveSourcePaths(deps, config);
   const usageCounter = deps.usageCounter ?? createUsageCounter(deps.fs);
   const formatSnippet = deps.formatSnippet ?? createSnippetFormatter({ fs: deps.fs });
+  const mutations = createEditorMutations(deps, paths, formatSnippet, (root, edit, cb) =>
+    executeApplyEdit(
+      deps,
+      usageCounter,
+      paths.getSourceDir(),
+      paths.getSourceExtensions(),
+      root,
+      edit,
+      cb,
+    ),
+  );
+
   return {
     async getElement(projectRoot, loc) {
-      const found = await executeGetElement(deps, projectRoot, loc, sourceDir, sourceExtensions);
-      return found.ok
-        ? ok(await withUsages(usageCounter, sourceDir, projectRoot, found.value))
-        : found;
+      const sDir = paths.getSourceDir();
+      const found = await executeGetElement(
+        deps,
+        projectRoot,
+        loc,
+        sDir,
+        paths.getMarkupExtensions(),
+        paths.getSourceExtensions(),
+      );
+      return found.ok ? ok(await withUsages(usageCounter, sDir, projectRoot, found.value)) : found;
     },
     getElementText: (root, loc) =>
-      executeGetElementText(deps, root, loc, sourceDir, sourceExtensions),
-    getPageTree: (root, file, maxDepth) =>
-      readPageTree(deps.fs, root, file, { sourceDir, sourceExtensions, maxDepth }),
-    listFiles: (root) => listSourceFiles(deps.fs, root, sourceDir),
-    applyEdit: (root, edit, cb) =>
-      executeApplyEdit(deps, usageCounter, sourceDir, sourceExtensions, root, edit, cb),
-    applyStructureEdit: (root, edit, cb) =>
-      executeStructureEdit(
-        deps.fs,
+      executeGetElementText(
+        deps,
         root,
-        sourceDir,
-        sourceExtensions,
-        edit,
-        cb,
-        formatSnippet,
-        deps.styling,
-        deps.newCssDir,
+        loc,
+        paths.getSourceDir(),
+        paths.getMarkupExtensions(),
+        paths.getSourceExtensions(),
       ),
-    applyEditBatch: (root, edits, cb) =>
-      executeEditBatch(deps.fs, root, sourceDir, sourceExtensions, edits, cb),
+    getPageTree: (root, file, maxDepth) =>
+      readPageTree(deps.fs, root, file, {
+        sourceDir: paths.getSourceDir(),
+        sourceExtensions: paths.getSourceExtensions(),
+        maxDepth,
+      }),
+    listFiles: (root) => listSourceFiles(deps.fs, root, paths.getSourceDir()),
+    ...mutations,
   };
 }

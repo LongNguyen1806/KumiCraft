@@ -13,6 +13,7 @@ import {
   LoginSessionsSchema,
   newWorkspaceFile,
   normalizeDesignDirs,
+  primarySystem,
   serializeWorkspaceFile,
   type SupportReport,
   WORKSPACE_FILE,
@@ -153,6 +154,7 @@ export async function loadOrCreateWorkspaceFile(
     createdAt: deps.system.now().toISOString(),
     responsiveMode,
     framework: support.framework ?? 'vite-react',
+    sourceDir: support.viewsDir ?? 'src',
   });
 
   const write = await deps.fs.writeTextAtomic(root, WORKSPACE_FILE, serializeWorkspaceFile(file));
@@ -195,4 +197,33 @@ export async function reloadOpenWorkspace(
     deps.homeDir,
   );
   return { ...state, file, trusted, backends };
+}
+
+export async function applyPatchProject(
+  deps: Pick<ReloadWorkspaceDeps, 'fs' | 'platform'>,
+  current: OpenWorkspace,
+  updates: PatchWorkspaceUpdates,
+): Promise<Result<OpenWorkspace>> {
+  const primarySystemId = primarySystem(current.support.styling);
+  const write = await executePatchWorkspaceFile(
+    deps.fs,
+    current.root,
+    current.file,
+    current.file.sourceDir,
+    deps.platform,
+    updates,
+    primarySystemId,
+  );
+  if (!write.ok) return write;
+  return ok({ ...current, file: write.value });
+}
+
+export async function applySetTrusted(
+  deps: { readonly config: Pick<ConfigStore, 'setTrusted'> },
+  current: OpenWorkspace,
+  trusted: boolean,
+): Promise<Result<OpenWorkspace>> {
+  const saved = await deps.config.setTrusted(trustKeyOf(current.file, current.root), trusted);
+  if (!saved.ok) return saved;
+  return ok({ ...current, trusted });
 }

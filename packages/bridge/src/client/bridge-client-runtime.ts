@@ -39,6 +39,7 @@ export class BridgeClientRuntime {
   private studioOrigin: string;
   private readonly rootDir: string;
   private readonly hot: HotContext | undefined;
+  private readonly navigation: 'history' | 'document';
   private mode: 'design' | 'preview' = 'design';
   private overlay: BridgeOverlay;
   private drag: DragController;
@@ -62,6 +63,7 @@ export class BridgeClientRuntime {
     this.studioOrigin = config.studioOrigin;
     this.rootDir = config.rootDir;
     this.hot = config.hot;
+    this.navigation = config.navigation ?? 'history';
     this.overlay = new BridgeOverlay((x, y) => {
       if (this.mode !== 'design' || this.textEdit.isActive()) return;
       this.drag.beginCanvasDrag(resolveElementsByRefs(this.selectedRefs, document), x, y);
@@ -260,6 +262,10 @@ export class BridgeClientRuntime {
 
   private handleNavigateMessage = (route: string): void => {
     this.stylePreview.clearAll();
+    if (this.navigation === 'document') {
+      window.location.assign(route);
+      return;
+    }
     window.history.pushState(undefined, '', route);
     window.dispatchEvent(new PopStateEvent('popstate'));
   };

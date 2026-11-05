@@ -11,16 +11,17 @@ import { useTranslation } from 'react-i18next';
 
 import { InsertButton } from '../../components/ui/insert-button.tsx';
 import { resources } from '../../i18n/i18n.ts';
-import { type ErrorInfo, errorText } from '../../routes/error-text.ts';
-import { SelectInFileHint } from '../design/select-in-file-hint.tsx';
+import { type ErrorInfo } from '../../routes/error-text.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { ImagePickerDialog } from '../draw/image-picker-dialog.tsx';
 import { insertImageFromSelection } from '../draw/insert-image.ts';
+import { useEditMode } from '../project/use-edit-mode.ts';
 import { useStyleLayerSupported } from '../project/use-style-edit.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { insertBlock } from './insert-block.ts';
 import { getBlockIcon } from './library-icons.ts';
+import { LibrarySearchHeader } from './library-search-header.tsx';
 
 const CATEGORIES: readonly LibraryBlockCategory[] = [
   'layout',
@@ -42,8 +43,10 @@ function BlockIcon({ name, className }: { readonly name: string; readonly classN
 
 type BlockItemProps = {
   readonly block: LibraryBlock;
-  /** The + button is locked: nothing selected, or an insert is running. Dragging always works. */
+  /** The + button is locked: nothing selected, or an insert is running. */
   readonly disabled: boolean;
+  /** Drag is disabled (e.g. view-only mode). */
+  readonly dragDisabled?: boolean | undefined;
   readonly onSelect: (block: LibraryBlock) => void;
 };
 
@@ -51,7 +54,7 @@ type BlockItemProps = {
  * A block is dragged onto the Canvas; only its + button inserts at the selection (R-LB-14). A click
  * on the block itself does nothing, so picking a block never changes the page by accident.
  */
-function BlockItem({ block, disabled, onSelect }: BlockItemProps) {
+function BlockItem({ block, disabled, dragDisabled, onSelect }: BlockItemProps) {
   const { t } = useTranslation('library');
   const rawKey = block.labelKey.replace(/^library:blocks\./, '');
   const label = isBlockKey(rawKey) ? t(`blocks.${rawKey}`) : block.id;
@@ -59,8 +62,9 @@ function BlockItem({ block, disabled, onSelect }: BlockItemProps) {
   return (
     <div
       data-testid={`library-block-${block.id}`}
-      draggable
+      draggable={!dragDisabled}
       onDragStart={(e) => {
+        if (dragDisabled) return;
         e.dataTransfer.setData('text/plain', block.id);
         e.dataTransfer.effectAllowed = 'copy';
         useDndStore.getState().startDrag({ source: 'library', block });
@@ -91,10 +95,17 @@ type CategorySectionProps = {
   readonly category: LibraryBlockCategory;
   readonly blocks: readonly LibraryBlock[];
   readonly disabled: boolean;
+  readonly dragDisabled?: boolean | undefined;
   readonly onSelect: (block: LibraryBlock) => void;
 };
 
-function CategorySection({ category, blocks, disabled, onSelect }: CategorySectionProps) {
+function CategorySection({
+  category,
+  blocks,
+  disabled,
+  dragDisabled,
+  onSelect,
+}: CategorySectionProps) {
   const { t } = useTranslation('library');
   return (
     <div className="space-y-2">
@@ -103,97 +114,15 @@ function CategorySection({ category, blocks, disabled, onSelect }: CategorySecti
       </h3>
       <div className="grid grid-cols-2 gap-2">
         {blocks.map((block) => (
-          <BlockItem key={block.id} block={block} disabled={disabled} onSelect={onSelect} />
+          <BlockItem
+            key={block.id}
+            block={block}
+            disabled={disabled}
+            dragDisabled={dragDisabled}
+            onSelect={onSelect}
+          />
         ))}
       </div>
-    </div>
-  );
-}
-
-type LibraryStatusHintProps = {
-  readonly hasSelection: boolean;
-  readonly errorInfo?: ErrorInfo | undefined;
-};
-
-function LibraryStatusHint({ hasSelection, errorInfo }: LibraryStatusHintProps) {
-  const { t } = useTranslation('library');
-  const { t: tError } = useTranslation('errors');
-
-  if (!hasSelection) {
-    return (
-      <p
-        data-testid="library-hint"
-        className="rounded bg-amber-500/10 border border-amber-500/20 p-2 text-[11px] text-amber-900 dark:text-amber-200"
-      >
-        {t('hint')}
-      </p>
-    );
-  }
-
-  if (errorInfo !== undefined && errorInfo.code === 'design.selectInFile') {
-    return (
-      <p
-        data-testid="library-hint"
-        className="rounded bg-amber-500/10 border border-amber-500/20 p-2 text-[11px] text-amber-900 dark:text-amber-200"
-      >
-        <SelectInFileHint info={errorInfo} />
-      </p>
-    );
-  }
-
-  if (errorInfo !== undefined && errorInfo.code !== 'design.selectInFile') {
-    return (
-      <p role="alert" className="text-xs text-danger" data-testid="library-error">
-        {errorText(tError, errorInfo.code, errorInfo.params)}
-      </p>
-    );
-  }
-
-  return undefined;
-}
-
-type LibrarySearchHeaderProps = {
-  readonly query: string;
-  readonly onQueryChange: (q: string) => void;
-  readonly hasSelection: boolean;
-  readonly onOpenImagePicker: () => void;
-  readonly errorInfo?: ErrorInfo | undefined;
-};
-
-function LibrarySearchHeader({
-  query,
-  onQueryChange,
-  hasSelection,
-  onOpenImagePicker,
-  errorInfo,
-}: LibrarySearchHeaderProps) {
-  const { t } = useTranslation('library');
-
-  return (
-    <div className="p-3 border-b border-border/40 space-y-2">
-      <div className="flex items-center gap-2">
-        <input
-          type="search"
-          data-testid="library-search"
-          placeholder={t('search')}
-          value={query}
-          onChange={(e) => {
-            onQueryChange(e.target.value);
-          }}
-          className="flex-1 rounded-md border border-border bg-field px-3 py-1.5 text-xs text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-        />
-        <button
-          type="button"
-          data-testid="library-insert-image"
-          disabled={!hasSelection}
-          onClick={onOpenImagePicker}
-          className="rounded-md border border-border bg-field px-2.5 py-1.5 text-xs font-medium text-ink hover:bg-field-hover disabled:cursor-not-allowed disabled:opacity-40 whitespace-nowrap"
-        >
-          {t('insertImage', 'Ảnh…')}
-        </button>
-      </div>
-
-      <LibraryStatusHint hasSelection={hasSelection} errorInfo={errorInfo} />
     </div>
   );
 }
@@ -245,10 +174,17 @@ type LibraryCategoriesProps = {
   readonly categories: readonly LibraryBlockCategory[];
   readonly blocks: readonly LibraryBlock[];
   readonly disabled: boolean;
+  readonly dragDisabled?: boolean | undefined;
   readonly onSelect: (block: LibraryBlock) => void;
 };
 
-function LibraryCategories({ categories, blocks, disabled, onSelect }: LibraryCategoriesProps) {
+function LibraryCategories({
+  categories,
+  blocks,
+  disabled,
+  dragDisabled,
+  onSelect,
+}: LibraryCategoriesProps) {
   return (
     <div className="flex-1 overflow-y-auto p-3 space-y-5">
       {categories.map((cat) => (
@@ -257,6 +193,7 @@ function LibraryCategories({ categories, blocks, disabled, onSelect }: LibraryCa
           category={cat}
           blocks={blocks.filter((b) => b.category === cat)}
           disabled={disabled}
+          dragDisabled={dragDisabled}
           onSelect={onSelect}
         />
       ))}
@@ -284,6 +221,8 @@ function LibraryContent({
   visibleBlocks,
   hasSelection,
   inserting,
+  disabled,
+  dragDisabled,
   onSelect,
 }: {
   readonly editable: boolean;
@@ -291,6 +230,8 @@ function LibraryContent({
   readonly visibleBlocks: readonly LibraryBlock[];
   readonly hasSelection: boolean;
   readonly inserting: boolean;
+  readonly disabled?: boolean | undefined;
+  readonly dragDisabled?: boolean | undefined;
   readonly onSelect: (block: LibraryBlock) => void;
 }) {
   if (!editable) return <LibraryUnsupportedNotice />;
@@ -298,27 +239,44 @@ function LibraryContent({
     <LibraryCategories
       categories={activeCategories}
       blocks={visibleBlocks}
-      disabled={!hasSelection || inserting}
+      disabled={disabled ?? (!hasSelection || inserting)}
+      dragDisabled={dragDisabled}
       onSelect={onSelect}
     />
   );
 }
 
-export function LibraryPanel() {
-  const { t } = useTranslation('library');
-  const selectedRefs = useSelectionStore((s) => s.selectedRefs);
+function useLibraryPanelState() {
   const [query, setQuery] = useState('');
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const editable = useStyleLayerSupported();
-
+  const editMode = useEditMode();
+  const selectedRefs = useSelectionStore((s) => s.selectedRefs);
   const hasSelection = selectedRefs.length === 1;
   const filteredBlocks = useFilteredLibraryBlocks(query);
   const visibleBlocks = editable ? filteredBlocks : [];
-  const { inserting, errorInfo, handleInsert, handlePickImage } = useLibraryInsert(hasSelection);
-
+  const insert = useLibraryInsert(hasSelection);
   const activeCategories = CATEGORIES.filter((cat) =>
     visibleBlocks.some((b) => b.category === cat),
   );
+
+  return {
+    query,
+    setQuery,
+    imagePickerOpen,
+    setImagePickerOpen,
+    editable,
+    isViewOnly: editMode === 'viewOnly',
+    hasSelection,
+    visibleBlocks,
+    insert,
+    activeCategories,
+  };
+}
+
+export function LibraryPanel() {
+  const { t } = useTranslation('library');
+  const s = useLibraryPanelState();
 
   return (
     <aside
@@ -327,33 +285,35 @@ export function LibraryPanel() {
       className="flex h-full flex-col overflow-hidden bg-card-solid/60 text-xs"
     >
       <LibrarySearchHeader
-        query={query}
-        onQueryChange={setQuery}
-        hasSelection={hasSelection}
+        query={s.query}
+        onQueryChange={s.setQuery}
+        hasSelection={s.hasSelection && !s.isViewOnly}
         onOpenImagePicker={() => {
-          setImagePickerOpen(true);
+          s.setImagePickerOpen(true);
         }}
-        errorInfo={errorInfo}
+        errorInfo={s.insert.errorInfo}
       />
 
       <LibraryContent
-        editable={editable}
-        activeCategories={activeCategories}
-        visibleBlocks={visibleBlocks}
-        hasSelection={hasSelection}
-        inserting={inserting}
+        editable={s.editable}
+        activeCategories={s.activeCategories}
+        visibleBlocks={s.visibleBlocks}
+        hasSelection={s.hasSelection}
+        inserting={s.insert.inserting}
+        disabled={!s.hasSelection || s.insert.inserting || s.isViewOnly}
+        dragDisabled={s.isViewOnly}
         onSelect={(b) => {
-          void handleInsert(b);
+          void s.insert.handleInsert(b);
         }}
       />
 
       <ImagePickerDialog
-        open={imagePickerOpen}
+        open={s.imagePickerOpen}
         onClose={() => {
-          setImagePickerOpen(false);
+          s.setImagePickerOpen(false);
         }}
         onPick={(c) => {
-          void handlePickImage(c);
+          void s.insert.handlePickImage(c);
         }}
       />
     </aside>

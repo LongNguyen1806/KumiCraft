@@ -9,6 +9,7 @@ export type BridgeRuntimeConfig = {
   /** Absolute root of the project, to report build errors with project-relative paths. */
   readonly rootDir: string;
   readonly hot?: HotContext | undefined;
+  readonly navigation?: 'history' | 'document' | undefined;
 };
 
 export const INTERCEPTED_EVENTS = [

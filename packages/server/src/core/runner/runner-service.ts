@@ -21,6 +21,7 @@ import type { EventBusPort } from '../ports/event-bus-port.ts';
 import type { LoggerPort } from '../ports/logger-port.ts';
 import type { ChildProcessHandle, ProcessPort } from '../ports/process-port.ts';
 import type { SystemPort } from '../ports/system-port.ts';
+import { defaultAdapter } from '../project/frameworks/index.ts';
 import type { FrameworkAdapter } from '../project/frameworks/types.ts';
 import type { WorkspaceState } from '../project/project-service.ts';
 import { redactSecrets } from '../shared/redact-secrets.ts';
@@ -33,8 +34,10 @@ export type RunnerServiceDeps = {
   readonly logger: LoggerPort;
   readonly eventBus?: EventBusPort | undefined;
   readonly studioOrigin: string;
-  readonly adapter: FrameworkAdapter;
+  readonly adapter?: FrameworkAdapter | undefined;
+  readonly getAdapter?: (() => FrameworkAdapter) | undefined;
   readonly runnerScriptPath?: string | undefined;
+  readonly resolveRunnerScript?: ((entry: string) => string) | undefined;
   readonly startupTimeoutMs?: number | undefined;
   readonly stopGracePeriodMs?: number | undefined;
 };
@@ -265,10 +268,12 @@ class RunnerExecution {
     port: number,
     nonce: string,
   ): ChildProcessHandle {
-    const entryPath = this.deps.runnerScriptPath ?? '';
+    const adapter = this.deps.getAdapter?.() ?? this.deps.adapter ?? defaultAdapter;
+    const entryPath =
+      this.deps.resolveRunnerScript?.(adapter.runner.entry) ?? this.deps.runnerScriptPath ?? '';
     const { root } = project;
 
-    const runnerOptions: RunnerOptions = this.deps.adapter.runner.options({
+    const runnerOptions: RunnerOptions = adapter.runner.options({
       root,
       sourceDir: project.file.sourceDir,
       port,
@@ -277,8 +282,12 @@ class RunnerExecution {
       studioOrigin: this.deps.studioOrigin,
       // R-DR-12: the Bridge plugin serves drafts from this folder with the project's global CSS (Round S1).
       draftsDir: project.file.designDirs?.drafts ?? DEFAULT_DESIGN_DIRS.drafts,
+      ...(project.support.serverEntry !== undefined
+        ? { serverEntry: project.support.serverEntry }
+        : {}),
+      ...(project.support.viewsDir !== undefined ? { viewsDir: project.support.viewsDir } : {}),
       ...(project.support.styling !== undefined && project.support.styling.globalCss.length > 0
-        ? { globalCss: project.support.styling.globalCss }
+        ? { globalCss: [...project.support.styling.globalCss] }
         : project.support.tailwindCss !== undefined
           ? { globalCss: [project.support.tailwindCss] }
           : {}),

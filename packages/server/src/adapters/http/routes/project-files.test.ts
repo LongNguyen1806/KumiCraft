@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createNodeFileSystem } from '../../../adapters/fs/node-file-system.ts';
+import { viteReactAdapter } from '../../../core/project/frameworks/vite-react/index.ts';
 import type { ProjectService } from '../../../core/project/project-service.ts';
 import { err, ok } from '../../../core/shared/result.ts';
 import { createSessionInfoProvider } from '../../../core/shared/session.ts';
@@ -59,6 +60,7 @@ describe('project files routes [WP-4.00]', () => {
   };
 
   const mockProjectService: ProjectService = {
+    getAdapter: () => viteReactAdapter,
     state: () => (isOpen ? { status: 'none' } : { status: 'none' }),
     probe: () => Promise.resolve(ok({ kind: 'empty' })),
     open: () => Promise.resolve(ok(mockProjectInfo)),

@@ -14,6 +14,8 @@ export const RUNNER_ERROR_REASONS = [
   'portInUse',
   'timeout',
   'crashed',
+  'entryNotFound',
+  'noListen',
 ] as const;
 export const RunnerErrorReasonSchema = z.enum(RUNNER_ERROR_REASONS);
 export type RunnerErrorReason = z.infer<typeof RunnerErrorReasonSchema>;
@@ -43,6 +45,8 @@ export const RunnerOptionsSchema = z.strictObject({
   draftsDir: z.string().min(1).optional(),
   /** Global CSS entries loaded by the draft page (R-DR-12, Round S1). */
   globalCss: z.array(z.string().min(1)).optional(),
+  serverEntry: z.string().min(1).optional(),
+  viewsDir: z.string().min(1).optional(),
 });
 export type RunnerOptions = z.infer<typeof RunnerOptionsSchema>;
 
@@ -66,7 +70,7 @@ export const RunnerToParentMessageSchema = z.discriminatedUnion('type', [
   }),
   z.strictObject({
     type: z.literal('error'),
-    reason: z.enum(['viteNotFound', 'config']),
+    reason: z.enum(['viteNotFound', 'config', 'entryNotFound', 'noListen']),
     message: z.string().optional(),
     file: z.string().optional(),
     line: z.number().int().optional(),

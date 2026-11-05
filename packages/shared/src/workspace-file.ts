@@ -30,7 +30,7 @@ export type BackendLink = z.infer<typeof BackendLinkSchema>;
 /** A port the user picks for the project's dev server in the Canvas (SPEC-04 R-RN-04). */
 export const DevPortSchema = z.int().min(1024).max(65535);
 
-export const FRAMEWORK_IDS = ['vite-react'] as const;
+export const FRAMEWORK_IDS = ['vite-react', 'express-pug'] as const;
 export type FrameworkId = (typeof FRAMEWORK_IDS)[number];
 
 type FrameRules = {
@@ -227,6 +227,7 @@ export type NewWorkspaceInput = {
   readonly createdAt: string;
   readonly responsiveMode: ResponsiveMode;
   readonly framework?: FrameworkId;
+  readonly sourceDir?: string;
 };
 
 /** The content of a new `workspace.json` (R-PJ-08). */
@@ -238,7 +239,7 @@ export function newWorkspaceFile(input: NewWorkspaceInput): WorkspaceFile {
     name: input.name,
     createdAt: input.createdAt,
     framework: input.framework ?? 'vite-react',
-    sourceDir: 'src',
+    sourceDir: input.sourceDir ?? 'src',
     backends: [],
     responsiveMode: input.responsiveMode,
     frames: [...frames],
