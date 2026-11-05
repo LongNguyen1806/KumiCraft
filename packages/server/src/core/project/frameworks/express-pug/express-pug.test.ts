@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { makeTempDir, nodeFs } from '../../../workspace/test-support.ts';
 import { detectFramework } from '../index.ts';
+import { expressPugAdapter } from './index.ts';
 import { findExpressRoutes } from './routes.ts';
 
 const FIXTURE_ROOT = join(process.cwd(), 'fixtures/projects/express-pug');
@@ -189,5 +190,12 @@ describe('Express + Pug Framework Adapter [WP-4.00]', () => {
     const testPaths = testPages.pages.map((p) => p.path);
     expect(testPaths).not.toContain('/foo');
     expect(testPaths).toContain('/valid');
+  });
+
+  it('[WP-4.00] B6: restartOn: app.js, routes/products.js -> đúng; views/index.pug, public/style.css -> sai', () => {
+    expect(expressPugAdapter.restartOn?.('app.js')).toBe(true);
+    expect(expressPugAdapter.restartOn?.('routes/products.js')).toBe(true);
+    expect(expressPugAdapter.restartOn?.('views/index.pug')).toBe(false);
+    expect(expressPugAdapter.restartOn?.('public/style.css')).toBe(false);
   });
 });

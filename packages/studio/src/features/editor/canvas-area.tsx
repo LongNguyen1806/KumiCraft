@@ -14,6 +14,7 @@ import { DesignBar } from '../design/design-bar.tsx';
 import { DndErrorBanner } from '../dnd/dnd-error-banner.tsx';
 import { CanvasImagePicker } from '../draw/draw-toolbar.tsx';
 import { registerFreeFrameCommands } from '../free-frame/free-frame-commands.ts';
+import { useProjectInfo } from '../project/project-store.ts';
 import { useEditMode } from '../project/use-edit-mode.ts';
 import type { CanvasMode } from '../selection/selection-store.ts';
 import { type TextEditWarning, useCanvasTextEdit } from '../text-edit/use-canvas-text-edit.ts';
@@ -31,6 +32,7 @@ import { fitZoom, useElementWidth, type Zoom } from './canvas-zoom.tsx';
 import { PageSelect } from './page-select.tsx';
 import { PortBusyBanner } from './port-busy-banner.tsx';
 import { SessionSelect, useCanvasSession } from './session-select.tsx';
+import { useExpressPugReload } from './use-express-pug-reload.ts';
 import { useOpenInEditor } from './use-open-in-editor.ts';
 import { useRunnerStatus } from './use-runner-status.ts';
 
@@ -345,6 +347,8 @@ type CanvasContentProps = {
 
 function CanvasContent(props: CanvasContentProps) {
   const draftFile = useCanvasViewStore((s) => s.draftFile);
+  const project = useProjectInfo();
+  const reloadTick = useExpressPugReload(project);
 
   if (!props.trusted) {
     return <UntrustedPrompt onTrust={props.onTrustRequest} />;
@@ -364,7 +368,7 @@ function CanvasContent(props: CanvasContentProps) {
   if (props.status.origin) {
     return (
       <IframeFrame
-        key={`${props.status.origin}|${props.status.nonce ?? ''}|${draftFile ?? ''}`}
+        key={`${props.status.origin}|${props.status.nonce ?? ''}|${draftFile ?? ''}|${String(reloadTick)}`}
         origin={props.effectiveOrigin ?? props.status.origin}
         nonce={props.status.nonce}
         mode={props.mode}

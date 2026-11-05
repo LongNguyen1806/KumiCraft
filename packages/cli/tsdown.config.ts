@@ -7,6 +7,7 @@ export default defineConfig({
     index: 'src/index.ts',
     'runners/vite-react': '../server/src/runners/vite-react.ts',
     'runners/format-snippet': '../server/src/runners/format-snippet.ts',
+    'runners/express-pug': '../server/src/runners/express-pug.ts',
   },
   format: 'esm',
   platform: 'node',

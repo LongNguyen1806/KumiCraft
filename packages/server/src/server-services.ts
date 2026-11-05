@@ -36,6 +36,7 @@ import {
   type ProjectServiceDeps,
 } from './core/project/project-service.ts';
 import { createProjectWatch, type ProjectWatch } from './core/project/project-watch.ts';
+import { attachAutoRestart } from './core/runner/runner-restart.ts';
 import { createRunnerService, type RunnerService } from './core/runner/runner-service.ts';
 import { ok } from './core/shared/result.ts';
 import { createUsageCounter, type UsageCounter } from './core/source-editor/component-usages.ts';
@@ -372,6 +373,7 @@ export function createServices(
   );
 
   const agentSetupService = createAgentSetup(processPort, projectServices.jobService, auxiliary);
+  attachAutoRestart(eventBus, projectServices.projectService, runnerHolder);
 
   return {
     ...projectServices,
