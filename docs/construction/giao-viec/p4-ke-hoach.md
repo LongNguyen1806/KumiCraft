@@ -109,20 +109,21 @@ Tốn: **rất cao** (khối lớn nhất của phase; chia khoảng 6 đến 8 
 
 **Chia lượt (chủ dự án, 2026-10-24): mỗi khối 1–2 lượt, không có lượt cổng riêng.** E2E của khối Claude viết trong lượt QA; chủ dự án kiểm tay sau K3 và trước khi phát hành. Còn khoảng 13 lượt (2026-10-25: K3 thành 4 lượt K3a–K3d vì thêm thanh hoạt động và cây thư mục). **Phát hành (chủ dự án 2026-10-25): phương án A**, làm đủ mọi framework (K3 đến K9) rồi mới phát hành 1.0 ở K10; không phát hành bản React + Vite riêng trước.
 
-| Lượt           | Nội dung                                                                                                                                                    | Ai                   | Trạng thái                                                                                  |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------- |
-| K2a, K2b       | Đọc + sửa CSS thường, VG-19                                                                                                                                 | Claude               | Xong                                                                                        |
-| K2c            | CSS Modules (`p4-luot-k2c-css-modules.md`)                                                                                                                  | Gemini               | Xong                                                                                        |
-| K2d            | Bootstrap 5 + `:hover`/`:focus`/`:disabled` + xem trước khi kéo (R-ST-13), `p4-luot-k2d-bootstrap-trang-thai.md`                                            | Gemini               | Xong                                                                                        |
-| K2e            | Token/Brand mọi hệ (CSS, Sass, Less, Bootstrap) + sửa Sass/Less, `p4-luot-k2e-token-sass-less.md`                                                           | Gemini               | Xong                                                                                        |
-| K2f            | Khối Library theo hệ chính + Tailwind 3; Claude đưa Tailwind 4 vào interface chung ở lượt QA, E2E Bootstrap/Sass/Less; `p4-luot-k2f-thu-vien-tailwind3.md`  | Gemini + Claude      | Xong                                                                                        |
-| K3a–K3d        | Thanh hoạt động kiểu VS Code · cây thư mục (xem, mở, tạo, đổi tên, xóa) · bộ chọn thư mục, `designDirs` nhiều thư mục · bộ tìm route, mẫu trang, Cài router | Gemini               | K3a, K3b, K3c xong; K3d chặng A xong; chặng B đang làm (`p4-luot-k3d-b-router-phien-ai.md`) |
-| K4/K5 (2 lượt) | Tách adapter framework + **xem** dự án Express + Pug (proxy, đóng dấu, chọn phần tử → dòng `.pug`, chưa sửa) · React webpack/CRA, JS thuần, monorepo        | Gemini               | —                                                                                           |
-| K6 (2 lượt)    | Express + Pug: VG-20 + proxy + đóng dấu · sửa template + route                                                                                              | Claude (VG) + Gemini | Sau 1.0 (phần xem Pug chuyển vào K4)                                                        |
-| K7             | Vue                                                                                                                                                         | Gemini               | Sau 1.0                                                                                     |
-| K8 (2 lượt)    | Razor: VG-21 + `dotnet watch` + bộ đọc `.cshtml` · sửa + route                                                                                              | Claude (VG) + Gemini | Sau 1.0                                                                                     |
-| K9             | Nhiều khung, kiểm tra build, `cn()`, breakpoint, viền, hiệu năng                                                                                            | Gemini               | —                                                                                           |
-| K10            | Tài liệu, giấy phép, phát hành 1.0                                                                                                                          | Gemini + Claude      | —                                                                                           |
+| Lượt         | Nội dung                                                                                                                                                    | Ai                   | Trạng thái                                                   |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------ |
+| K2a, K2b     | Đọc + sửa CSS thường, VG-19                                                                                                                                 | Claude               | Xong                                                         |
+| K2c          | CSS Modules (`p4-luot-k2c-css-modules.md`)                                                                                                                  | Gemini               | Xong                                                         |
+| K2d          | Bootstrap 5 + `:hover`/`:focus`/`:disabled` + xem trước khi kéo (R-ST-13), `p4-luot-k2d-bootstrap-trang-thai.md`                                            | Gemini               | Xong                                                         |
+| K2e          | Token/Brand mọi hệ (CSS, Sass, Less, Bootstrap) + sửa Sass/Less, `p4-luot-k2e-token-sass-less.md`                                                           | Gemini               | Xong                                                         |
+| K2f          | Khối Library theo hệ chính + Tailwind 3; Claude đưa Tailwind 4 vào interface chung ở lượt QA, E2E Bootstrap/Sass/Less; `p4-luot-k2f-thu-vien-tailwind3.md`  | Gemini + Claude      | Xong                                                         |
+| K3a–K3d      | Thanh hoạt động kiểu VS Code · cây thư mục (xem, mở, tạo, đổi tên, xóa) · bộ chọn thư mục, `designDirs` nhiều thư mục · bộ tìm route, mẫu trang, Cài router | Gemini               | Xong (2026-11-04; thêm phiên đăng nhập, nút gạt AI sửa file) |
+| K4 (2 chặng) | Tách adapter framework + **xem** dự án Express + Pug (proxy, đóng dấu, chọn phần tử → dòng `.pug`, chưa sửa), `p4-luot-k4-express-pug.md`                   | Gemini + Claude (QA) | Xong (2026-11-05)                                            |
+| K5 (thu gọn) | Monorepo: mở từ gốc repo rồi chọn thư mục ứng dụng, `node_modules` ở gốc; CRA và Next.js báo rõ "chưa hỗ trợ" · nút "Nhờ AI sửa phần tử này"                | Gemini               | Tiếp theo                                                    |
+| K6           | Express + Pug: sửa template + route (VG-20 đã đạt ở K4)                                                                                                     | Gemini               | Sau 1.0, mục 9 (L-8)                                         |
+| K7           | Vue                                                                                                                                                         | Gemini               | Sau 1.0, mục 9 (L-5)                                         |
+| K8 (2 lượt)  | ASP.NET MVC / Razor Pages: VG-21 + `dotnet watch` + proxy (xem) · sửa giới hạn + "Nhờ AI sửa"                                                               | Claude (VG) + Gemini | Sau 1.0, mục 9 (L-3, L-4)                                    |
+| K9           | Nhiều khung, kiểm tra build, `cn()`, breakpoint, viền, hiệu năng                                                                                            | Gemini               | —                                                            |
+| K10          | Tài liệu, giấy phép, phát hành 1.0                                                                                                                          | Gemini + Claude      | —                                                            |
 
 ### K3. Cây thư mục dự án, bộ tìm route và mẫu trang (quyết định 2; chủ dự án 2026-10-25)
 
@@ -265,7 +266,15 @@ Tốn: **vừa đến cao**.
 
 Tốn: **vừa**.
 
-**Chốt phạm vi 1.0 (chủ dự án, 2026-10-25, spec-log #72):** 1.0 = K3c → K3d → K4 → K5 → K9 → K10. Bản 1.0 sửa được dự án React (Vite, webpack/CRA, JS thuần, monorepo) và **xem** được dự án Express + Pug (chạy server, Canvas, chọn phần tử → mở dòng `.pug`); sửa Pug (nửa sau K6), Vue (K7), Razor (K8) làm sau 1.0. CI phải xanh trên cả 3 hệ điều hành trước K10.
+**Phạm vi 1.0 (spec-log #72, sửa ở #81 ngày 2026-11-06):** 1.0 = K3 → K4 → K5 thu gọn → K9 → K10.
+
+- **Sửa đầy đủ:** React + Vite (TypeScript hoặc JavaScript), mọi hệ CSS của K2.
+- **Chỉ xem:** Express + Pug. Chạy server, Canvas hiện trang, bấm phần tử → mở dòng `.pug`, hoặc nhờ AI sửa.
+- **Monorepo:** repo có `frontend/` + `backend/` (MarketLink, WorkTracker, ASP.NET Core API + React).
+- **Báo rõ "chưa hỗ trợ":** Create React App, webpack tự cấu hình, Next.js.
+- **Điều kiện phát hành:** CI xanh trên cả 3 hệ điều hành trước K10.
+
+Phần còn lại của Phase 4 cũ và các framework mới chuyển sang lộ trình sau 1.0 (mục 9).
 
 ## 5. Thứ tự và các cổng con
 
@@ -276,13 +285,10 @@ Phase này rất lớn, nên đặt cổng con. Từ 2026-10-24 cổng con khôn
 | 1   | K0, K1  | —       | Hợp đồng chốt; JSX chèn vào gọn gàng                                             |
 | 2   | K2      | **G4a** | Dự án React dùng CSS thường, CSS Modules, Bootstrap chỉnh kiểu dáng như Tailwind |
 | 3   | K3      | **G4b** | Thêm trang chạy trên dự án React cũ, theo đúng kiểu của dự án                    |
-| 4   | K4, K5  | **G4c** | Mở được React chạy webpack/CRA, JavaScript thuần, monorepo                       |
-| 5   | K6      | **G4d** | Mở và sửa dự án Express + Pug                                                    |
-| 6   | K7      | **G4e** | Mở và sửa dự án Vue                                                              |
-| 7   | K8      | **G4f** | Mở và sửa dự án ASP.NET Core Razor                                               |
+| 4   | K4, K5  | **G4c** | Xem được Express + Pug; mở monorepo từ gốc repo (CRA chuyển sau 1.0)             |
 | 8   | K9, K10 | **G4**  | Nhiều khung, kiểm tra build, hiệu năng; phát hành 1.0                            |
 
-Đợt 4 (K4) phải xong trước K6, K7, K8. K2 và K3 dựa trên adapter React hiện có, nên làm được trước K4.
+Đợt 4 (K4) đã xong: K6, K7, K8 dùng lại adapter và proxy của nó ở lộ trình sau 1.0 (mục 9). K2 và K3 dựa trên adapter React hiện có, nên làm được trước K4.
 
 ## 6. Quy ước chung của Phase 4
 
@@ -311,7 +317,39 @@ Phase này rất lớn, nên đặt cổng con. Từ 2026-10-24 cổng con khôn
 
 - K2: sửa rule CSS dùng chung thì mặc định "sửa chung" hay "chỉ phần tử này"?
 - K2: Bootstrap 5 là đủ, hay cần cả Bootstrap 4?
-- K6: sau Pug, có cần EJS / Handlebars trong Phase 4 không?
+- K6: sau Pug, có cần EJS / Handlebars trong Phase 4 không? → sau 1.0, mục 9 (L-9).
 - K7: chỉ Vue 3 hay cả Vue 2?
-- K8: Razor Pages, MVC, hay cả hai? Phiên bản .NET mục tiêu (8 LTS)?
-- K5: Next.js chỉ nhận diện hay chạy được ở Phase 4?
+- K8: Razor Pages, MVC, hay cả hai? Phiên bản .NET mục tiêu (8 LTS)? → cả hai (cùng cú pháp Razor); máy chủ dự án có .NET 10, thử cả 8 LTS ở VG-21.
+- K5: Next.js chỉ nhận diện hay chạy được ở Phase 4? → 1.0 chỉ nhận diện và báo; chạy và sửa ở bản 1.1 (L-1).
+
+## 9. Lộ trình sau 1.0 (chủ dự án, 2026-11-06, spec-log #81)
+
+Thứ tự đề xuất theo "nhiều người dùng, ít chi phí trước". Chủ dự án đổi thứ tự được trước mỗi bản.
+
+| Bản | Mã   | Việc                                            | Người dùng thực tế                  | Ghi chú kỹ thuật                                                                                                                                                    | Chi phí      |
+| --- | ---- | ----------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| 1.1 | L-1  | **Next.js**, sửa đầy đủ                         | Rất nhiều                           | `next dev` sau proxy (như Express); đóng dấu qua loader Turbopack/webpack; sửa JSX dùng lại M-SE; App Router, Server Components                                     | Cao (2 lượt) |
+| 1.1 | L-2  | **React Router v7 chế độ framework** (Remix cũ) | Đang tăng                           | Chạy trên Vite, dùng lại runner hiện có; route theo file `app/routes`                                                                                               | Thấp–vừa     |
+| 1.2 | L-3  | **ASP.NET MVC / Razor Pages: xem**              | Nhiều (app công ty, trang quản trị) | `dotnet watch` + proxy; VG-21: đóng dấu qua trình biên dịch Razor, nạp bằng hosting startup, không sửa code người dùng                                              | Cao (2 lượt) |
+| 1.2 | L-4  | **ASP.NET MVC: sửa giới hạn**                   | Như L-3                             | Sửa class và chữ của thẻ HTML tĩnh, dùng lớp style Bootstrap/Tailwind của K2; thẻ có `@` C#, trong `@foreach`/`@if`, TagHelper, Telerik → khóa, có nút "Nhờ AI sửa" | Vừa          |
+| 1.3 | L-5  | **Vue 3 + Vite** (K7)                           | Nhiều, thứ hai sau React            | Đóng dấu qua trình biên dịch template Vue; sửa `<template>`; `<style scoped>` là nguồn của lớp style                                                                | Cao          |
+| 1.3 | L-6  | **Nuxt**                                        | Vừa                                 | Sau L-5, dùng lại gần hết                                                                                                                                           | Vừa          |
+| Sau | L-7  | **EJS, Handlebars** (Express): xem              | Vừa, nhiều ở dự án cũ               | Dùng lại proxy K4, chỉ thêm đóng dấu cho template                                                                                                                   | Thấp–vừa     |
+| Sau | L-8  | **Express + Pug: sửa** (K6)                     | Ít                                  | Giữ đúng thụt lề khi chèn, di chuyển; kiểm biên dịch lại sau mỗi thao tác                                                                                           | Cao          |
+| Sau | L-9  | **Django templates, Laravel Blade**: xem        | Vừa                                 | Dùng lại proxy                                                                                                                                                      | Vừa          |
+| Sau | L-10 | **Svelte / SvelteKit**                          | Vừa                                 | Chạy trên Vite                                                                                                                                                      | Vừa–cao      |
+| Sau | L-11 | **Astro**                                       | Đang tăng (web nội dung)            | Chạy trên Vite; file `.astro` chứa component React/Vue                                                                                                              | Vừa–cao      |
+| Sau | L-12 | **Angular**                                     | Nhiều ở doanh nghiệp lớn            | Template riêng, cấu trúc nặng                                                                                                                                       | Rất cao      |
+| Sau | L-13 | **Blazor**                                      | Đang tăng ở team .NET               | Component C#, một mảng riêng                                                                                                                                        | Rất cao      |
+| Sau | L-14 | **Create React App / webpack**                  | Ít, chỉ repo cũ                     | CRA đã bị React khai tử (2025-02)                                                                                                                                   | Vừa          |
+
+**Không làm:** Gatsby (đang tàn), jQuery (không có component để sửa trực quan), React Native (không chạy trong Canvas web).
+
+**Nguyên tắc chung cho mọi framework render ở server** (Pug, Razor, EJS, Django, Blade): dùng chung proxy chèn Bridge của K4. Chỗ nào không sửa trên Canvas được trọn vẹn thì khóa kèm lý do và có hai lối:
+
+- **"Nhờ AI sửa phần tử này":** mở chat với phần tử đã gắn sẵn (`file:dòng`, thẻ), vì chat đã gửi vị trí phần tử đang chọn cho AI;
+- **"Mở trong editor".**
+
+Không viết bộ đọc template đầy đủ chỉ để phủ những ca hiếm (chủ dự án, 2026-11-06).
+
+**Việc khác đã ghi nhận cho sau 1.0:** terminal nhúng và adapter Codex CLI (quyết định 5); xem trước trang hoặc component riêng lẻ với dữ liệu giả (ứng viên K9, chủ dự án quyết).

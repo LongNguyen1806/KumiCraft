@@ -1,0 +1,5 @@
+{
+  "name": "monorepo-apps-fixture",
+  "private": true,
+  "workspaces": ["frontend"]
+}
