@@ -46,6 +46,8 @@ export interface FrameworkAdapter {
   /** File extensions containing data-rc-loc elements (to open in editor, find tree). */
   readonly markupExtensions: readonly string[];
   readonly editMode: EditMode;
+  /** Packages that must sit in node_modules before the project runs (R-PJ-06). */
+  readonly requiredPackages: readonly string[];
   /** Runner script and options for child dev server process. */
   readonly runner: {
     readonly entry: string;

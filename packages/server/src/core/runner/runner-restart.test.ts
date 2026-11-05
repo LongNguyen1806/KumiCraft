@@ -32,6 +32,7 @@ describe('Auto Restart Runner [WP-4.00]', () => {
       sourceExtensions: [],
       markupExtensions: ['.pug'],
       editMode: 'viewOnly',
+      requiredPackages: ['express', 'pug'],
       runner: { entry: 'runners/express-pug', options: (c) => ({ ...c, host: '127.0.0.1' }) },
       restartOn: (rel) => rel.endsWith('.js'),
       pages: vi.fn(),

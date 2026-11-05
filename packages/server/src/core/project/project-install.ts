@@ -7,10 +7,16 @@ import type { ProcessPort } from '../ports/process-port.ts';
 import { err, ok, type Result } from '../shared/result.ts';
 import type { WorkspaceState } from './project-types.ts';
 
-export async function checkNeedsInstall(fs: FileSystemPort, root: string): Promise<boolean> {
-  const hasVite = await fs.exists(root, 'node_modules/vite/package.json');
-  const hasReact = await fs.exists(root, 'node_modules/react/package.json');
-  return !hasVite || !hasReact;
+/** R-PJ-06: the project needs an install while one of its framework's packages is missing. */
+export async function checkNeedsInstall(
+  fs: FileSystemPort,
+  root: string,
+  packages: readonly string[] = ['vite', 'react'],
+): Promise<boolean> {
+  for (const name of packages) {
+    if (!(await fs.exists(root, `node_modules/${name}/package.json`))) return true;
+  }
+  return false;
 }
 
 export function getInstallCommand(pm?: PackageManager): string[] | undefined {

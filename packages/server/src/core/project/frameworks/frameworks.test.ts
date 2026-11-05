@@ -83,6 +83,7 @@ describe('M-FW: Framework detection', () => {
       sourceExtensions: ['.tsx'],
       markupExtensions: ['.tsx'],
       editMode: 'full',
+      requiredPackages: ['vite', 'react'],
       runner: { entry: 'entry.ts', options: (ctx) => ({ ...ctx, host: '127.0.0.1' }) },
       template: 'mock-template',
     };

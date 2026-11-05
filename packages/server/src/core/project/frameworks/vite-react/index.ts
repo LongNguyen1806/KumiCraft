@@ -9,6 +9,7 @@ export const viteReactAdapter: FrameworkAdapter = {
   sourceExtensions: ['.jsx', '.tsx'],
   markupExtensions: ['.jsx', '.tsx'],
   editMode: 'full',
+  requiredPackages: ['vite', 'react'],
   runner: {
     entry: 'runners/vite-react',
     options: (ctx) => ({ ...ctx, host: '127.0.0.1' }),

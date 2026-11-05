@@ -32,4 +32,16 @@ describe('checkNeedsInstall [R-PJ-06]', () => {
     await writeFile(join(reactDir, 'package.json'), '{}');
     expect(await checkNeedsInstall(nodeFs, dir)).toBe(false);
   });
+
+  it('[WP-4.00] checks the packages of the project framework: an Express app needs no vite or react', async () => {
+    const express = ['express', 'pug'];
+    expect(await checkNeedsInstall(nodeFs, dir, express)).toBe(true);
+    for (const name of express) {
+      await mkdir(join(dir, 'node_modules', name), { recursive: true });
+      await writeFile(join(dir, 'node_modules', name, 'package.json'), '{}');
+    }
+    expect(await checkNeedsInstall(nodeFs, dir, express)).toBe(false);
+    // The same folder is not ready for a Vite + React project.
+    expect(await checkNeedsInstall(nodeFs, dir)).toBe(true);
+  });
 });

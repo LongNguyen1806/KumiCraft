@@ -162,7 +162,11 @@ class ProjectServiceImpl implements ProjectService {
     support: SupportReport,
   ): Promise<ProjectInfo> {
     const trusted = this.deps.config.isTrusted(trustKeyOf(file, root));
-    const needsInstall = await checkNeedsInstall(this.deps.fs, root);
+    const needsInstall = await checkNeedsInstall(
+      this.deps.fs,
+      root,
+      this.currentAdapter.requiredPackages,
+    );
     const backends = await computeBackendInfos(
       this.deps.fs,
       root,
@@ -264,7 +268,11 @@ class ProjectServiceImpl implements ProjectService {
 
   /** Install done: needsInstall again, project.changed, dev server (R-PJ-13). */
   private async afterInstall(root: string): Promise<void> {
-    const needsInstall = await checkNeedsInstall(this.deps.fs, root);
+    const needsInstall = await checkNeedsInstall(
+      this.deps.fs,
+      root,
+      this.currentAdapter.requiredPackages,
+    );
     if (this.current.status !== 'open' || this.current.root !== root) return;
     this.current = { ...this.current, needsInstall };
     const info = projectInfoOf(this.current);
