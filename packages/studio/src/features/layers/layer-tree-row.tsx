@@ -1,5 +1,6 @@
 // LayerTree row rendering component (SPEC-04 M-LT).
 import type { TreeNode } from '@kumicraft/shared';
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useDndStore } from '../dnd/dnd-store.ts';
@@ -125,7 +126,7 @@ function handleLayerDragEnd(): void {
   }
 }
 
-export function LayerTreeRow(props: LayerTreeRowProps) {
+function LayerTreeRowView(props: LayerTreeRowProps) {
   const { meta, isSelected, isHovered, isCollapsed, rowRef, onMouseLeave, onToggleCollapse } =
     props;
   const { node, depth, hasChildren, isBoundary, componentName } = meta;
@@ -173,3 +174,9 @@ export function LayerTreeRow(props: LayerTreeRowProps) {
     </div>
   );
 }
+
+/**
+ * R-SL-12: a hover or a selection changes two rows; the others keep their props (stable `meta`,
+ * callbacks and no ref) and are not rendered again, so a 5,000-node tree scrolls smoothly.
+ */
+export const LayerTreeRow = memo(LayerTreeRowView);

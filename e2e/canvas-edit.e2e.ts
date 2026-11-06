@@ -239,7 +239,7 @@ test('detects external file modification and warns on conflicting undo [AC-10]',
   expect(postUndo).toContain('Sản phẩm từ VS Code');
 });
 
-test('static first argument of className={cn(...)} is editable, the rest kept byte for byte [WP-4.00, AC-12]', async ({
+test('static first argument of className={cn(...)} is editable, the rest kept byte for byte [AC-12] [WP-4.00]', async ({
   page,
   browserName,
 }) => {

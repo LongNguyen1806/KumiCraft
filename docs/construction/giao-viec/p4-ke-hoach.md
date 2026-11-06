@@ -256,6 +256,8 @@ Tốn: **rất cao** (rủi ro cao nhất: không có bộ đọc Razor bằng J
 - Hiệu năng PB-01 đến PB-05 (R-IN-21, R-SL-12, S-86, R-SE-16).
 - M-TK, M-XC: rà và bổ sung phần còn thiếu so với FR-71, FR-72.
 
+**Trạng thái (2026-11-07):** chặng A, B, C xong (spec-log #83). Còn lại M-TK, M-XC chuyển vào K9.5.
+
 Tốn: **vừa đến cao**.
 
 ### K9.5. Chạy ổn định (chủ dự án, 2026-11-07, spec-log #82)

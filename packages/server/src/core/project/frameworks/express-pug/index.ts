@@ -21,6 +21,7 @@ export const expressPugAdapter: FrameworkAdapter = {
   sourceExtensions: [],
   markupExtensions: ['.pug'],
   editMode: 'viewOnly',
+  buildCheck: 'pug',
   requiredPackages: ['express', 'pug'],
   runner: {
     entry: 'runners/express-pug',

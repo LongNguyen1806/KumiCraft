@@ -3,7 +3,13 @@ import { z } from 'zod';
 
 import { AppErrorSchema } from './result.ts';
 
-export const JOB_KINDS = ['project.install', 'agent.turn', 'agent.install', 'agent.login'] as const;
+export const JOB_KINDS = [
+  'project.install',
+  'project.buildCheck',
+  'agent.turn',
+  'agent.install',
+  'agent.login',
+] as const;
 export const JobKindSchema = z.enum(JOB_KINDS);
 export type JobKind = z.infer<typeof JobKindSchema>;
 

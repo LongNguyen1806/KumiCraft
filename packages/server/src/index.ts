@@ -115,6 +115,8 @@ export type InitializedContext = CoreServices & {
   readonly platform: Platform;
   readonly homeDir: string;
   readonly configDir: string;
+  /** KumiCraft's cache folder (mirrors, build check output). */
+  readonly cacheDir: string;
   readonly logger: LoggerPort;
 };
 
@@ -258,6 +260,7 @@ async function initServerContext(
     platform,
     homeDir,
     configDir,
+    cacheDir,
     logger,
   });
 }

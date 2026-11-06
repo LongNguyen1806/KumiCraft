@@ -47,14 +47,14 @@ export function PanelTopActions({
 function useTreeItemFlags(
   entry: FileTreeEntry,
   designFile?: string,
-  buildErrorFile?: string,
+  buildErrorFiles?: ReadonlySet<string>,
   aiFiles?: ReadonlySet<string>,
 ) {
   const isDesignSelected = designFile === entry.path;
-  const hasBuildError = entry.kind === 'file' && buildErrorFile === entry.path;
+  const hasBuildError = entry.kind === 'file' && Boolean(buildErrorFiles?.has(entry.path));
   const hasParentBuildError =
     entry.kind === 'directory' &&
-    Boolean(buildErrorFile && buildErrorFile.startsWith(`${entry.path}/`));
+    [...(buildErrorFiles ?? [])].some((file) => file.startsWith(`${entry.path}/`));
   const isAiModified = Boolean(aiFiles?.has(entry.path));
   return { isDesignSelected, hasBuildError, hasParentBuildError, isAiModified };
 }
@@ -63,7 +63,8 @@ export type TreeItemRowProps = {
   readonly entry: FileTreeEntry;
   readonly level: number;
   readonly designFile?: string | undefined;
-  readonly buildErrorFile?: string | undefined;
+  /** Files with a build error: the Canvas build error and the build check (M-BC). */
+  readonly buildErrorFiles?: ReadonlySet<string> | undefined;
   readonly aiFiles: ReadonlySet<string>;
   readonly onFileClick: (entry: FileTreeEntry) => void;
   readonly onOpenMenu: (entry: FileTreeEntry, buttonEl: HTMLElement) => void;
@@ -98,7 +99,7 @@ export function TreeItemRow({
   entry,
   level,
   designFile,
-  buildErrorFile,
+  buildErrorFiles,
   aiFiles,
   onFileClick,
   onOpenMenu,
@@ -106,7 +107,7 @@ export function TreeItemRow({
   onCommitRename,
 }: TreeItemRowProps) {
   const { expandedDirs, loadingDirs, selectedPath, inlineAction } = useFilesStore();
-  const flags = useTreeItemFlags(entry, designFile, buildErrorFile, aiFiles);
+  const flags = useTreeItemFlags(entry, designFile, buildErrorFiles, aiFiles);
   const actions = useTreeItemActions(entry, onFileClick, onCommitRename);
 
   const isSelected = selectedPath === entry.path;
@@ -151,7 +152,8 @@ export type FilesTreeListProps = {
       }
     | undefined;
   readonly designFile?: string | undefined;
-  readonly buildErrorFile?: string | undefined;
+  /** Files with a build error: the Canvas build error and the build check (M-BC). */
+  readonly buildErrorFiles?: ReadonlySet<string> | undefined;
   readonly aiFiles: ReadonlySet<string>;
   readonly onFileClick: (entry: FileTreeEntry) => void;
   readonly onOpenMenu: (entry: FileTreeEntry, buttonEl: HTMLElement) => void;
@@ -176,7 +178,7 @@ function TreeListEntry(
         entry={entry}
         level={props.level}
         designFile={props.designFile}
-        buildErrorFile={props.buildErrorFile}
+        buildErrorFiles={props.buildErrorFiles}
         aiFiles={props.aiFiles}
         onFileClick={props.onFileClick}
         onOpenMenu={props.onOpenMenu}

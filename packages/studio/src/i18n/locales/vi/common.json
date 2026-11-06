@@ -740,5 +740,21 @@
     "defaultLabel": "Phiên {{id}}",
     "localhostUnsupported": "Trình duyệt này không mở được địa chỉ *.localhost; dùng Chrome, Edge hoặc Firefox",
     "explain": "Mỗi phiên giữ đăng nhập riêng trong Canvas (cookie và local storage). Dùng một phiên cho mỗi vai trò, ví dụ Customer và Farmer, rồi đổi qua lại mà không phải đăng nhập lại."
+  },
+  "buildCheck": {
+    "run": "Kiểm tra build",
+    "running": "Đang kiểm tra build…",
+    "cancel": "Dừng kiểm tra",
+    "ok": "Build ổn",
+    "problems_one": "{{count}} lỗi build",
+    "problems_other": "{{count}} lỗi build",
+    "more_one": "Còn {{count}} lỗi nữa, sửa các lỗi trên rồi kiểm tra lại.",
+    "more_other": "Còn {{count}} lỗi nữa, sửa các lỗi trên rồi kiểm tra lại.",
+    "title": "Kết quả kiểm tra build",
+    "again": "Kiểm tra lại",
+    "close": "Đóng",
+    "took": "Xong sau {{seconds}} giây",
+    "openHint": "Bấm để mở trong editor",
+    "failed": "Không chạy được kiểm tra build"
   }
 }

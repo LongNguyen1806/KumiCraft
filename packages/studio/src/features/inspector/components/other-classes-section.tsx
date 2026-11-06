@@ -21,6 +21,13 @@ function RawClassInput({
   readonly disabled: boolean;
 }) {
   const [draft, setDraft] = useState<string>(rawClassString);
+  // A change made elsewhere (a property field, Undo, a source refresh) shows here too, so Enter
+  // never writes back an older string.
+  const [shown, setShown] = useState(rawClassString);
+  if (shown !== rawClassString) {
+    setShown(rawClassString);
+    setDraft(rawClassString);
+  }
 
   return (
     <input

@@ -7,6 +7,7 @@ import { createEventsClient } from '../../api/events-client.ts';
 import { createProjectFile, deleteProjectFile, renameProjectFile } from '../../api/files-client.ts';
 import { isRecord } from '../../api/http.ts';
 import { deleteProjectPage } from '../../api/project-client.ts';
+import { useBuildCheckStore } from '../build-check/build-check-store.ts';
 import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
 import { type ChatTurnView, useChatStore } from '../chat/chat-store.ts';
 import { useDesignStore } from '../design/design-store.ts';
@@ -253,9 +254,19 @@ function FilesPanelDialogs({ s, pagesData }: PanelDialogsProps) {
   );
 }
 
+/** Files with a build error: the Canvas build error and the last build check (M-BC). */
+function useBuildErrorFiles(): ReadonlySet<string> {
+  const canvasFile = useCanvasErrorStore((s) => s.buildError?.file);
+  const problems = useBuildCheckStore((s) => s.result?.problems);
+  const files = new Set<string>();
+  if (canvasFile !== undefined) files.add(canvasFile);
+  for (const problem of problems ?? []) if (problem.file !== undefined) files.add(problem.file);
+  return files;
+}
+
 export function FilesPanel() {
   const pagesData = usePagesData();
-  const buildError = useCanvasErrorStore((s) => s.buildError);
+  const buildErrorFiles = useBuildErrorFiles();
   const turns = useChatStore((s) => s.turns);
   const aiFiles = useMemo(() => selectLatestAiFiles(turns), [turns]);
   const s = useFilesPanelState(pagesData);
@@ -285,7 +296,7 @@ export function FilesPanel() {
         loadingRoot={s.loadingDirs.has('')}
         inlineAction={s.inlineAction}
         designFile={designFile}
-        buildErrorFile={buildError?.file}
+        buildErrorFiles={buildErrorFiles}
         aiFiles={aiFiles}
         onFileClick={handleFileClick}
         onOpenMenu={(targetEntry, buttonEl) => {

@@ -17,24 +17,39 @@ type AstCacheEntry = {
   readonly code: string;
 };
 
+/** R-SE-16: parsed files by (file, hash), least recently used out past AST_CACHE_SIZE files. */
+export const AST_CACHE_SIZE = 50;
 const astCache = new Map<string, AstCacheEntry>();
+
+/** Puts `fileKey` last (most recent); the first key is then the least recently used. */
+function remember(fileKey: string, entry: AstCacheEntry): void {
+  astCache.delete(fileKey);
+  astCache.set(fileKey, entry);
+  while (astCache.size > AST_CACHE_SIZE) {
+    const oldest = astCache.keys().next().value;
+    if (oldest === undefined) break;
+    astCache.delete(oldest);
+  }
+}
 
 export function getCachedAst(fileKey: string, code: string, hash: string): AstNode {
   const cached = astCache.get(fileKey);
   if (cached && cached.hash === hash) {
+    remember(fileKey, cached);
     return cached.ast;
   }
   const ast = parseJsxAst(code);
-  if (astCache.size >= 50) {
-    const firstKey = astCache.keys().next().value;
-    if (firstKey !== undefined) astCache.delete(firstKey);
-  }
-  astCache.set(fileKey, { hash, ast, code });
+  remember(fileKey, { hash, ast, code });
   return ast;
 }
 
 export function cacheAst(fileKey: string, code: string, hash: string, ast: AstNode): void {
-  astCache.set(fileKey, { hash, ast, code });
+  remember(fileKey, { hash, ast, code });
+}
+
+/** Files in the cache, oldest first (tests). */
+export function cachedAstFiles(): readonly string[] {
+  return [...astCache.keys()];
 }
 
 export function computeSha256(content: string): string {

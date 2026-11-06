@@ -740,5 +740,21 @@
     "defaultLabel": "Session {{id}}",
     "localhostUnsupported": "This browser cannot open *.localhost addresses; use Chrome, Edge, or Firefox",
     "explain": "Each session keeps its own sign-in in the Canvas (cookies and local storage). Use one per role, for example Customer and Farmer, and switch without signing in again."
+  },
+  "buildCheck": {
+    "run": "Check build",
+    "running": "Checking the build…",
+    "cancel": "Stop the check",
+    "ok": "Build OK",
+    "problems_one": "{{count}} build error",
+    "problems_other": "{{count}} build errors",
+    "more_one": "{{count}} more error: fix the ones above and check again.",
+    "more_other": "{{count}} more errors: fix the ones above and check again.",
+    "title": "Build check",
+    "again": "Check again",
+    "close": "Close",
+    "took": "Done in {{seconds}} s",
+    "openHint": "Click to open in the editor",
+    "failed": "The build check could not run"
   }
 }

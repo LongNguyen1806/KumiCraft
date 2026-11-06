@@ -113,7 +113,8 @@
       "noThemeFile": "Tailwind CSS file not found.",
       "invalidResponse": "The server returned an unexpected response.",
       "entryExists": "A file or folder with this name already exists.",
-      "folderTooLarge": "The folder is too large to undo (over 500 files or 20 MB); do this in your code editor."
+      "folderTooLarge": "The folder is too large to undo (over 500 files or 20 MB); do this in your code editor.",
+      "buildCheckUnsupported": "This framework has no build check yet."
     }
   },
   "E017": {

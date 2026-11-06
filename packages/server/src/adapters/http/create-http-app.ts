@@ -15,6 +15,7 @@ import Fastify, {
 import type { SessionInfo } from '../../core/shared/session.ts';
 import { type AgentTurnRoutesDeps, registerAgentTurnRoutes } from './routes/agent-turns.ts';
 import { type AgentRoutesDeps, registerAgentRoutes } from './routes/agents.ts';
+import { type BuildCheckRoutesDeps, registerBuildCheckRoutes } from './routes/build-check.ts';
 import { type EditorRoutesDeps, registerEditorRoutes } from './routes/editor.ts';
 import { type EventRoutesDeps, registerEventRoutes } from './routes/events.ts';
 import { type FsRoutesDeps, registerFsRoutes } from './routes/fs.ts';
@@ -46,6 +47,7 @@ export type HttpAppOptions = {
   readonly historyRoutes?: HistoryRoutesDeps;
   readonly editorRoutes?: EditorRoutesDeps;
   readonly jobRoutes?: JobRoutesDeps;
+  readonly buildCheckRoutes?: BuildCheckRoutesDeps;
   readonly agentRoutes?: AgentRoutesDeps;
   readonly agentTurnRoutes?: AgentTurnRoutesDeps;
   readonly toolGapRoutes?: ToolGapRoutesDeps;
@@ -106,6 +108,14 @@ function registerNotFoundHandler(app: FastifyInstance, studioDir?: string): void
   });
 }
 
+/** Jobs and the build check that runs as one (M-BC). */
+function registerJobAndCheckRoutes(api: FastifyInstance, options: HttpAppOptions): void {
+  if (options.jobRoutes !== undefined) registerJobRoutes(api, options.jobRoutes);
+  if (options.buildCheckRoutes !== undefined) {
+    registerBuildCheckRoutes(api, options.buildCheckRoutes);
+  }
+}
+
 async function registerApiRoutes(app: FastifyInstance, options: HttpAppOptions): Promise<void> {
   await app.register(
     (api, _opts, done) => {
@@ -134,9 +144,7 @@ async function registerApiRoutes(app: FastifyInstance, options: HttpAppOptions):
       if (options.editorRoutes !== undefined) {
         registerEditorRoutes(api, options.editorRoutes);
       }
-      if (options.jobRoutes !== undefined) {
-        registerJobRoutes(api, options.jobRoutes);
-      }
+      registerJobAndCheckRoutes(api, options);
       if (options.agentRoutes !== undefined) {
         registerAgentRoutes(api, options.agentRoutes);
       }

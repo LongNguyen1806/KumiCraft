@@ -135,6 +135,7 @@ export {
   type TreeNode,
   TreeNodeSchema,
 } from './bridge.ts';
+export * from './build-check.ts';
 export {
   FEATURE_IDS,
   type FeatureId,

@@ -208,4 +208,64 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
     expect(editSpy).toHaveBeenCalledTimes(1);
     expect(editSpy.mock.calls[0]?.[0].edit.after).toBe('flex flex-col gap-2');
   });
+
+  it('an edit typed while the source refresh comes in is still saved, with the newest before [WP-4.00, R-IN-13]', async () => {
+    const editSpy = vi.spyOn(sourceClient, 'editSource').mockImplementation((req) => {
+      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, req.edit.after ?? ''));
+    });
+    let target = createMockTarget(mockSource, vi.fn());
+    const { result, rerender } = renderHook(() =>
+      useLiveEdit({ target, ctx: mockContext, throttleMs: 100 }),
+    );
+
+    act(() => {
+      result.current.mutateRawClass('p-4 a');
+      vi.advanceTimersByTime(100);
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    // Second edit waits in the throttle while the refreshed source (a new target) arrives.
+    act(() => {
+      result.current.mutateRawClass('p-4 a b');
+    });
+    target = createMockTarget(
+      { ...mockSource, className: { kind: 'static', value: 'p-4 a' } },
+      vi.fn(),
+    );
+    rerender();
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(editSpy).toHaveBeenCalledTimes(2);
+    expect(editSpy.mock.calls[1]?.[0].edit).toMatchObject({ before: 'p-4 a', after: 'p-4 a b' });
+  });
+
+  it('a stale source read while an edit waits does not reset before to the older class [WP-4.00]', async () => {
+    const editSpy = vi.spyOn(sourceClient, 'editSource').mockImplementation((req) => {
+      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, req.edit.after ?? ''));
+    });
+    let target = createMockTarget(mockSource, vi.fn());
+    const { result, rerender } = renderHook(() =>
+      useLiveEdit({ target, ctx: mockContext, throttleMs: 100 }),
+    );
+    act(() => {
+      result.current.mutateRawClass('p-4 a');
+      vi.advanceTimersByTime(100);
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    act(() => {
+      result.current.mutateRawClass('p-4 a b');
+    });
+    // A read from before the first write lands now.
+    target = createMockTarget(mockSource, vi.fn());
+    rerender();
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(editSpy.mock.calls[1]?.[0].edit).toMatchObject({ before: 'p-4 a', after: 'p-4 a b' });
+  });
 });

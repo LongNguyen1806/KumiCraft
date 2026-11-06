@@ -5,6 +5,7 @@ import type { FastifyInstance } from 'fastify';
 import { createCompiledCssReader } from './adapters/dev-server/compiled-css-reader.ts';
 import { createHttpApp } from './adapters/http/create-http-app.ts';
 import type { FileSystemPort } from './core/ports/file-system-port.ts';
+import { startBuildCheck } from './core/project/build-check/build-check.ts';
 import type { ProjectService } from './core/project/project-service.ts';
 import { ok, type Result } from './core/shared/result.ts';
 import {
@@ -14,7 +15,7 @@ import {
 } from './core/shared/session.ts';
 import { createStyleService } from './core/style/style-service.ts';
 import { createProjectReader } from './core/workspace/project-reader.ts';
-import type { InitializedContext, StartServerOptions } from './index.ts';
+import { type InitializedContext, resolveRunnerScript, type StartServerOptions } from './index.ts';
 
 export async function autoOpenProject(
   fs: FileSystemPort,
@@ -68,6 +69,23 @@ function styleRouteDeps(ctx: InitializedContext) {
   };
 }
 
+/** M-BC: the project's own tools, output in KumiCraft's cache. */
+function buildCheckRouteDeps(ctx: InitializedContext) {
+  const pugCheckScript = resolveRunnerScript(undefined, 'pug-check');
+  return {
+    start: () =>
+      startBuildCheck({
+        fs: ctx.fs,
+        process: ctx.processPort,
+        jobs: ctx.jobService,
+        cacheDir: ctx.cacheDir,
+        pugCheckScript,
+        state: () => ctx.projectService.state(),
+        adapter: () => ctx.projectService.getAdapter(),
+      }),
+  };
+}
+
 function buildRouteConfigs(
   ctx: InitializedContext,
   getSessionInfo: () => SessionInfo,
@@ -95,6 +113,7 @@ function buildRouteConfigs(
     },
     styleRoutes: styleRouteDeps(ctx),
     jobRoutes: { jobService: ctx.jobService },
+    buildCheckRoutes: buildCheckRouteDeps(ctx),
     ...agentRouteConfigs(ctx),
     historyRoutes: {
       historyService: ctx.historyService,

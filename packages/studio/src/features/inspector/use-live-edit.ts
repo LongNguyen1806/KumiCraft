@@ -45,7 +45,7 @@ export class LiveEditQueue {
   private readonly tag: string;
   private readonly prefix: string;
   private readonly throttleMs: number;
-  private readonly callbacks: QueueCallbacks;
+  private callbacks: QueueCallbacks;
 
   constructor(
     loc: string,
@@ -65,6 +65,21 @@ export class LiveEditQueue {
 
   getConfirmed(): string {
     return this.confirmed;
+  }
+
+  /** The latest callbacks of the Inspector (its target and setters change between renders). */
+  setCallbacks(callbacks: QueueCallbacks): void {
+    this.callbacks = callbacks;
+  }
+
+  /**
+   * The class the server read back after a write. Taken only while nothing is queued or saving:
+   * a read that lands between two quick edits must not reset `before` to an older value.
+   */
+  syncServer(value: string): void {
+    if (!this.inFlight && this.scheduled === undefined && this.pending === undefined) {
+      this.confirmed = value;
+    }
   }
 
   destroy(): void {
@@ -175,79 +190,80 @@ function handleEditError(
   }
 }
 
-function createLiveQueue(
-  loc: string,
-  tag: string,
-  prefix: string,
-  throttleMs: number,
-  serverClass: string,
-  target: Extract<InspectorTarget, { readonly kind: 'element' }>,
-  t: TFunction,
-  setOptimisticClass: (val: string) => void,
-  setError: (msg: string | undefined) => void,
-  setIsSaving: (saving: boolean) => void,
-): LiveEditQueue {
-  const holder: { queue: LiveEditQueue | undefined } = { queue: undefined };
-  const opts = {
+type QueueOwner = {
+  readonly target: Extract<InspectorTarget, { readonly kind: 'element' }>;
+  readonly t: TFunction;
+  readonly setOptimisticClass: (val: string) => void;
+  readonly setError: (msg: string | undefined) => void;
+  readonly setIsSaving: (saving: boolean) => void;
+};
+
+function queueCallbacks(queue: () => LiveEditQueue | undefined, owner: QueueOwner): QueueCallbacks {
+  return {
     onConfirmed: () => {
-      setError(undefined);
+      owner.setError(undefined);
     },
     onError: (err: unknown) => {
-      if (holder.queue !== undefined) {
-        handleEditError(err, holder.queue, target, t, setOptimisticClass, setError);
+      const current = queue();
+      if (current !== undefined) {
+        handleEditError(
+          err,
+          current,
+          owner.target,
+          owner.t,
+          owner.setOptimisticClass,
+          owner.setError,
+        );
       }
     },
-    onSavingChange: setIsSaving,
+    onSavingChange: owner.setIsSaving,
   };
-  const queue = new LiveEditQueue(loc, tag, prefix, throttleMs, opts, serverClass);
-  holder.queue = queue;
-  return queue;
 }
 
+/**
+ * One queue per element and scope. A source refresh after a write keeps the queue (it only
+ * updates the confirmed class while idle): replacing it dropped an edit typed while the refresh
+ * came in (found by PB-02, K9 C). Leaving the element still saves its last edit.
+ */
 function useLiveQueue(
-  loc: string,
-  tag: string,
-  prefix: string,
+  key: { readonly loc: string; readonly tag: string; readonly prefix: string },
   throttleMs: number,
   serverClass: string,
-  target: Extract<InspectorTarget, { readonly kind: 'element' }>,
-  t: TFunction,
-  setOptimisticClass: (val: string) => void,
-  setError: (msg: string | undefined) => void,
-  setIsSaving: (saving: boolean) => void,
+  owner: QueueOwner,
 ): React.RefObject<LiveEditQueue | undefined> {
   const queueRef = useRef<LiveEditQueue | undefined>(undefined);
+  const latest = useRef({ serverClass, owner });
+  const { loc, tag, prefix } = key;
+
+  // First, so the queue made below on mount reads this render's values.
+  useEffect(() => {
+    const changed = latest.current.serverClass !== serverClass;
+    latest.current = { serverClass, owner };
+    const queue = queueRef.current;
+    if (queue === undefined) return;
+    queue.setCallbacks(queueCallbacks(() => queue, owner));
+    // Only a new read from the server: the old one stays on screen until the refresh lands.
+    if (changed) queue.syncServer(serverClass);
+  });
 
   useEffect(() => {
-    const queue = createLiveQueue(
+    const holder: { queue?: LiveEditQueue } = {};
+    const callbacks = queueCallbacks(() => holder.queue, latest.current.owner);
+    const queue = new LiveEditQueue(
       loc,
       tag,
       prefix,
       throttleMs,
-      serverClass,
-      target,
-      t,
-      setOptimisticClass,
-      setError,
-      setIsSaving,
+      callbacks,
+      latest.current.serverClass,
     );
+    holder.queue = queue;
     queueRef.current = queue;
     return () => {
-      queue.destroy();
+      queue.flush();
       queueRef.current = undefined;
     };
-  }, [
-    loc,
-    tag,
-    prefix,
-    throttleMs,
-    serverClass,
-    target,
-    t,
-    setOptimisticClass,
-    setError,
-    setIsSaving,
-  ]);
+  }, [loc, tag, prefix, throttleMs]);
 
   return queueRef;
 }
@@ -281,18 +297,13 @@ export function useLiveEdit({ target, ctx, throttleMs = 100 }: UseLiveEditOption
 
   useSyncLocState(loc, serverClass, setOptimisticClass, setError);
 
-  const queueRef = useLiveQueue(
-    loc,
-    tag,
-    target.writePrefix,
-    throttleMs,
-    serverClass,
+  const queueRef = useLiveQueue({ loc, tag, prefix: target.writePrefix }, throttleMs, serverClass, {
     target,
     t,
     setOptimisticClass,
     setError,
     setIsSaving,
-  );
+  });
 
   return {
     classString: optimisticClass,

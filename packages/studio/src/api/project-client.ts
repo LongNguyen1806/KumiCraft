@@ -149,6 +149,11 @@ export async function patchProject(payload: {
   return parseResponse(ProjectInfoSchema, await apiPatch('project', payload));
 }
 
+/** M-BC: starts the build check job; its result comes with the job. */
+export async function startBuildCheck(): Promise<JobStarted> {
+  return parseResponse(JobStartedSchema, await apiPost('project/build-check', {}));
+}
+
 export async function installProjectRouter(): Promise<JobStarted> {
   return parseResponse(JobStartedSchema, await apiPost('project/router/install', {}));
 }

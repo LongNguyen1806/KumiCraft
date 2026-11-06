@@ -46,6 +46,11 @@ export interface FrameworkAdapter {
   /** File extensions containing data-rc-loc elements (to open in editor, find tree). */
   readonly markupExtensions: readonly string[];
   readonly editMode: EditMode;
+  /**
+   * How the build check runs (M-BC): `vite` = the project's `tsc` then `vite build` into a temp
+   * folder, `pug` = compile every view with the project's Pug. Absent: no build check.
+   */
+  readonly buildCheck?: 'vite' | 'pug' | undefined;
   /** Packages that must sit in node_modules before the project runs (R-PJ-06). */
   readonly requiredPackages: readonly string[];
   /** Runner script and options for child dev server process. */

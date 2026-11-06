@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import { BuildCheckButton } from '../build-check/build-check-button.tsx';
 import { DrawToolbar } from '../draw/draw-toolbar.tsx';
 import { useProjectInfo } from '../project/project-store.ts';
 import { stylingLabel } from '../project/styling-label.ts';
@@ -192,6 +193,7 @@ export function StatusBar({ trusted }: StatusBarProps) {
       <div className="flex items-center gap-3">
         <StatusTrustBadge trusted={trusted} />
         <StatusStylingBadge />
+        {trusted && <BuildCheckButton />}
         {trusted && <DrawToolbar />}
       </div>
       {trusted && <StatusCanvasControls />}

@@ -5,5 +5,8 @@
   },
   "agentInstall": {
     "running": "Đang cài trợ lý AI…"
+  },
+  "buildCheck": {
+    "running": "Đang kiểm tra build…"
   }
 }
