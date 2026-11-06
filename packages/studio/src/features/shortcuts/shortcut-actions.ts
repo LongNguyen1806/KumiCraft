@@ -5,6 +5,7 @@ import { openInEditor } from '../../api/editor-client.ts';
 import { copySelection, cutSelection, pasteClipboard } from '../clipboard/clipboard-actions.ts';
 import { useDesignStore } from '../design/design-store.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { exitFrameFocus, stepFrame, toggleFrameFocus } from '../editor/frame-focus-store.ts';
 import { usePanelLayoutStore } from '../editor/use-panel-layout.ts';
 import { nudgeDelta, nudgeSelection } from '../free-frame/free-nudge.ts';
 import { useHistoryStore } from '../history/history-store.ts';
@@ -191,7 +192,14 @@ export function runShortcut(action: ShortcutAction): boolean {
       return true;
     }
     case 'selectParent':
-      return selectParentNode();
+      // Nothing left to step out of: Esc leaves "one frame at a time".
+      return selectParentNode() || exitFrameFocus();
+    case 'toggleFrameFocus':
+      return toggleFrameFocus();
+    case 'frameNext':
+      return stepFrame(1);
+    case 'framePrev':
+      return stepFrame(-1);
     case 'togglePanels':
       usePanelLayoutStore.getState().toggleBoth();
       return true;

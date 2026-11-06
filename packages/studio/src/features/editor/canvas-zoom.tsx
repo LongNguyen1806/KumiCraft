@@ -51,19 +51,44 @@ export function fitZoom(viewportWidth: number, frameWidth: number): number {
 
 /** Width of an element, kept up to date while it resizes. */
 export function useElementWidth(ref: RefObject<HTMLElement | undefined>): number {
-  const [width, setWidth] = useState(0);
+  return useElementSize(ref).width;
+}
+
+/** Width and height of an element, kept up to date while it resizes. */
+export function useElementSize(ref: RefObject<HTMLElement | undefined>): {
+  readonly width: number;
+  readonly height: number;
+} {
+  const [size, setSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
     const element = ref.current;
     if (element === undefined || typeof ResizeObserver === 'undefined') return undefined;
     const observer = new ResizeObserver(() => {
-      setWidth(element.clientWidth);
+      setSize({ width: element.clientWidth, height: element.clientHeight });
     });
     observer.observe(element);
     return () => {
       observer.disconnect();
     };
   }, [ref]);
-  return width;
+  return size;
+}
+
+/**
+ * Room around a frame shown alone, top to bottom: the Canvas and row padding, the frame's title
+ * bar, and the pager under it, so the whole frame and the pager are in view.
+ */
+const FOCUS_VERTICAL_ROOM = 170;
+
+/** One frame at a time: the zoom that fits the frame in both width and height. */
+export function fitZoomForFocus(
+  viewport: { readonly width: number; readonly height: number },
+  frame: { readonly width: number; readonly height: number },
+): number {
+  const byWidth = fitZoomForFrames(viewport.width, [frame.width]);
+  const room = viewport.height - FOCUS_VERTICAL_ROOM;
+  if (viewport.height <= 0 || frame.height <= 0) return byWidth;
+  return Math.max(0.1, Math.min(byWidth, room / frame.height));
 }
 
 export type CanvasZoomSliderProps = {

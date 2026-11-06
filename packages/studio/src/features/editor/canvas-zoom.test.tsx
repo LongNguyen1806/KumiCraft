@@ -7,6 +7,7 @@ import { useCanvasViewStore } from './canvas-view-store.ts';
 import {
   CanvasZoomSlider,
   fitZoom,
+  fitZoomForFocus,
   fitZoomForFrames,
   FRAME_TILE_GAP,
   FRAME_TILE_MIN_WIDTH,
@@ -44,6 +45,17 @@ describe('Canvas zoom [R-RN-21]', () => {
     expect(fitZoomForFrames(1000, [1440])).toBe(fitZoom(1000, 1440));
     // Never below 10 %, even when the minimum widths alone overflow.
     expect(fitZoomForFrames(300, [1440, 375, 375, 375])).toBe(0.1);
+  });
+
+  it('[WP-4.00] one frame at a time fits the frame in height too, leaving room for the pager', () => {
+    // A tall Mobile frame in a wide Canvas: the height decides.
+    const zoom = fitZoomForFocus({ width: 1100, height: 800 }, { width: 375, height: 812 });
+    expect(812 * zoom).toBeLessThanOrEqual(800 - 170 + 0.5);
+    expect(zoom).toBeLessThan(fitZoomForFrames(1100, [375]));
+    // A wide Desktop frame in a narrow Canvas: the width decides.
+    expect(fitZoomForFocus({ width: 600, height: 900 }, { width: 1440, height: 900 })).toBe(
+      fitZoomForFrames(600, [1440]),
+    );
   });
 
   it('provides slider and step controls with fit and reset buttons', () => {

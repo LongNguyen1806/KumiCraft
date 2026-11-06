@@ -105,7 +105,17 @@
     "pageParamHint": "Replace :params with values, then press Enter",
     "dnd": {
       "dismiss": "Dismiss"
-    }
+    },
+    "frameLayoutLabel": "Frame view",
+    "frameLayoutRow": "Side by side",
+    "frameLayoutFocus": "One at a time",
+    "framePrev": "Previous frame",
+    "frameNext": "Next frame",
+    "frameFocusOn": "Show only this frame",
+    "frameFocusOff": "Back to side by side",
+    "frameJump": "Go to frame",
+    "frameAnnounce": "Frame {{n}} of {{total}}: {{name}}, {{session}}",
+    "frameOption": "{{n}} · {{name}} · {{session}}"
   },
   "history": {
     "setClassName": "class change",
@@ -469,7 +479,10 @@
       "toolFrame": "Frame tool",
       "toolText": "Text tool",
       "toolImage": "Image tool",
-      "toolPan": "Pan tool"
+      "toolPan": "Pan tool",
+      "toggleFrameFocus": "One frame at a time / side by side",
+      "frameNext": "Next frame",
+      "framePrev": "Previous frame"
     }
   },
   "pages": {

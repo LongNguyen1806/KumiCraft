@@ -105,7 +105,17 @@
     "pageParamHint": "Thay :tham số bằng giá trị rồi nhấn Enter",
     "dnd": {
       "dismiss": "Đóng"
-    }
+    },
+    "frameLayoutLabel": "Cách xem khung",
+    "frameLayoutRow": "Cạnh nhau",
+    "frameLayoutFocus": "Từng khung",
+    "framePrev": "Khung trước",
+    "frameNext": "Khung sau",
+    "frameFocusOn": "Xem riêng khung này",
+    "frameFocusOff": "Về xem cạnh nhau",
+    "frameJump": "Chuyển tới khung",
+    "frameAnnounce": "Khung {{n}} trên {{total}}: {{name}}, {{session}}",
+    "frameOption": "{{n}} · {{name}} · {{session}}"
   },
   "history": {
     "setClassName": "đổi class",
@@ -469,7 +479,10 @@
       "toolFrame": "Công cụ Khung",
       "toolText": "Công cụ Chữ",
       "toolImage": "Công cụ Ảnh",
-      "toolPan": "Công cụ Kéo khung nhìn"
+      "toolPan": "Công cụ Kéo khung nhìn",
+      "toggleFrameFocus": "Xem từng khung / cạnh nhau",
+      "frameNext": "Khung sau",
+      "framePrev": "Khung trước"
     }
   },
   "pages": {

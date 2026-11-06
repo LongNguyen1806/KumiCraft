@@ -42,6 +42,9 @@ export const SHORTCUT_ACTIONS = [
   'toolText',
   'toolImage',
   'toolPan',
+  'toggleFrameFocus',
+  'frameNext',
+  'framePrev',
 ] as const;
 
 export type ShortcutAction = (typeof SHORTCUT_ACTIONS)[number];
@@ -105,6 +108,9 @@ function matchNoModKey(k: string, press: KeyPress): ShortcutAction | undefined {
   if (press.shift) {
     if (k === '0' || k === ')') return 'zoomReset';
     if (k === '1' || k === '!') return 'zoomFit';
+    // Shift+2 shows one frame at a time (like Figma's zoom to selection), Shift+N the one before.
+    if (k === '2' || k === '@') return 'toggleFrameFocus';
+    if (k === 'n') return 'framePrev';
     if (k === 'arrowleft') return 'nudgeLeftFine';
     if (k === 'arrowright') return 'nudgeRightFine';
     if (k === 'arrowup') return 'nudgeUpFine';
@@ -122,6 +128,7 @@ function matchNoModKey(k: string, press: KeyPress): ShortcutAction | undefined {
   if (k === 't') return 'toolText';
   if (k === 'i') return 'toolImage';
   if (k === 'h') return 'toolPan';
+  if (k === 'n') return 'frameNext';
   if (k >= '1' && k <= '8') {
     return `frame${k}` as ShortcutAction;
   }
@@ -191,6 +198,9 @@ const LABELS_APPLE: Record<ShortcutAction, string> = {
   toolText: 'T',
   toolImage: 'I',
   toolPan: 'H',
+  toggleFrameFocus: 'Shift+2',
+  frameNext: 'N',
+  framePrev: 'Shift+N',
 };
 
 const LABELS_OTHER: Record<ShortcutAction, string> = {
@@ -235,6 +245,9 @@ const LABELS_OTHER: Record<ShortcutAction, string> = {
   toolText: 'T',
   toolImage: 'I',
   toolPan: 'H',
+  toggleFrameFocus: 'Shift+2',
+  frameNext: 'N',
+  framePrev: 'Shift+N',
 };
 
 /** Label of the keys for the help dialog: `⌘⇧Z` on macOS, `Ctrl+Shift+Z` elsewhere. */

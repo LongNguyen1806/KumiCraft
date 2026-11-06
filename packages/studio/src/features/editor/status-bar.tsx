@@ -11,6 +11,7 @@ import { FrameSelect } from './canvas-frame-select.tsx';
 import { GridSelect } from './canvas-grid-select.tsx';
 import { useCanvasViewStore } from './canvas-view-store.ts';
 import { CanvasZoomSlider } from './canvas-zoom.tsx';
+import { FrameLayoutSwitch } from './frame-focus-controls.tsx';
 import { MAX_OPEN_FRAMES } from './open-frames-storage.ts';
 
 type StatusBarProps = {
@@ -178,6 +179,7 @@ function AddFrameButton() {
 function StatusCanvasControls() {
   return (
     <div className="flex items-center gap-3" data-testid="status-canvas-controls">
+      <FrameLayoutSwitch />
       <AddFrameButton />
       <FrameSelect />
       <GridSelect />

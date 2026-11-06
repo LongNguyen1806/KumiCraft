@@ -3,6 +3,7 @@ import type { Frame, LoginSession } from '@kumicraft/shared';
 
 import type { CanvasMode } from '../selection/selection-store.ts';
 import { CanvasFrameTile } from './canvas-frame-tile.tsx';
+import { useFrameFocusActive } from './frame-focus-store.ts';
 import type { OpenFrame } from './open-frames-storage.ts';
 
 const FALLBACK_FRAME: Frame = { id: 'desktop', label: 'Desktop', width: 1280, height: 800 };
@@ -33,9 +34,13 @@ export type CanvasMultiFrameProps = {
 export function CanvasMultiFrame(props: CanvasMultiFrameProps) {
   const { openFrames, frames, activeOpenFrameId } = props;
   const isOnlyFrame = openFrames.length <= 1;
+  const focusMode = useFrameFocusActive();
 
   return (
-    <div data-testid="canvas-multi-frame" className="flex flex-row items-start gap-8 min-w-max p-8">
+    <div
+      data-testid="canvas-multi-frame"
+      className="relative flex flex-row items-start gap-8 min-w-max p-8"
+    >
       {openFrames.map((of) => {
         const preset = resolveFramePreset(frames, of.frameId);
         const isActive = of.id === activeOpenFrameId;
@@ -46,6 +51,7 @@ export function CanvasMultiFrame(props: CanvasMultiFrameProps) {
             preset={preset}
             isActive={isActive}
             isOnlyFrame={isOnlyFrame}
+            focusMode={focusMode}
             zoom={props.zoom}
             mode={props.mode}
             runnerOrigin={props.runnerOrigin}

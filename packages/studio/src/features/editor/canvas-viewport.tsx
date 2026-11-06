@@ -15,7 +15,11 @@ import {
   UntrustedPrompt,
 } from './canvas-prompts.tsx';
 import { useCanvasViewStore } from './canvas-view-store.ts';
-import { fitZoomForFrames, useElementWidth, type Zoom } from './canvas-zoom.tsx';
+import { fitZoomForFocus, fitZoomForFrames, useElementSize, type Zoom } from './canvas-zoom.tsx';
+
+const FALLBACK_FRAME = { id: 'desktop', label: 'Desktop', width: 1280, height: 800 };
+import { FrameFocusControls } from './frame-focus-controls.tsx';
+import { useFrameFocusActive, useFrameFocusStore } from './frame-focus-store.ts';
 import type { OpenFrame } from './open-frames-storage.ts';
 import { useExpressPugReload } from './use-express-pug-reload.ts';
 
@@ -78,18 +82,46 @@ export function CanvasContent(props: CanvasContentProps) {
   return <></>;
 }
 
+/** Widths of the frames on screen: all of them side by side, the working one alone in focus. */
+function useShownFrames(
+  openFrames: CanvasContentProps['openFrames'],
+  frames: CanvasContentProps['frames'],
+): {
+  readonly focusMode: boolean;
+  readonly shown: readonly CanvasContentProps['frames'][number][];
+} {
+  const focusMode = useFrameFocusActive();
+  const activeOpenFrameId = useCanvasViewStore((st) => st.activeOpenFrameId);
+  const projectId = useCanvasViewStore((st) => st.currentProjectId);
+  const loadFocus = useFrameFocusStore((st) => st.load);
+  useEffect(() => {
+    loadFocus(projectId);
+  }, [loadFocus, projectId]);
+  // One frame at a time fits the frame on screen, not the whole row.
+  const shown = useMemo(
+    () =>
+      openFrames
+        .filter((of) => !focusMode || of.id === activeOpenFrameId)
+        .map((of) => frames.find((f) => f.id === of.frameId) ?? frames[0] ?? FALLBACK_FRAME),
+    [openFrames, frames, focusMode, activeOpenFrameId],
+  );
+  return { focusMode, shown };
+}
+
 export function CanvasViewport(props: Omit<CanvasContentProps, 'zoom'> & { readonly zoom: Zoom }) {
   const viewport = useRef<HTMLDivElement>(undefined);
   const area = useRef<HTMLDivElement>(undefined);
-  const width = useElementWidth(viewport);
-  const frameWidths = useMemo(
-    () =>
-      props.openFrames.map(
-        (of) => (props.frames.find((f) => f.id === of.frameId) ?? props.frames[0])?.width ?? 1280,
-      ),
-    [props.openFrames, props.frames],
-  );
-  const zoom = props.zoom === 'fit' ? fitZoomForFrames(width, frameWidths) : props.zoom;
+  const size = useElementSize(viewport);
+  const { focusMode, shown } = useShownFrames(props.openFrames, props.frames);
+  const alone = shown[0];
+  const fit =
+    focusMode && alone !== undefined
+      ? fitZoomForFocus(size, alone)
+      : fitZoomForFrames(
+          size.width,
+          shown.map((f) => f.width),
+        );
+  const zoom = props.zoom === 'fit' ? fit : props.zoom;
   const setDisplayedZoom = useCanvasViewStore((st) => st.setDisplayedZoom);
 
   useEffect(() => {
@@ -117,6 +149,11 @@ export function CanvasViewport(props: Omit<CanvasContentProps, 'zoom'> & { reado
         <RuntimeErrorList />
       </div>
       <CanvasPanSurface />
+      <FrameFocusControls
+        frames={props.frames}
+        sessions={props.sessions}
+        sessionEnabled={props.sessionEnabled}
+      />
     </div>
   );
 }
