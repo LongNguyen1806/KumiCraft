@@ -3,11 +3,11 @@ import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { LanguageSwitcher } from '../../app/language-switcher.tsx';
 import { shortcutLabel } from '../../app/platform.ts';
 import { PanelLeftIcon, PanelRightIcon, RedoIcon, UndoIcon } from '../../components/ui/icons.tsx';
 import { HistoryErrorNotice } from '../history/history-error-notice.tsx';
 import { useHistoryStore } from '../history/history-store.ts';
+import { FramePager } from './frame-focus-controls.tsx';
 import { RunnerStatusBadge } from './runner-status-badge.tsx';
 import type { Side } from './use-panel-layout.ts';
 
@@ -141,34 +141,42 @@ export function EditorToolbar(props: EditorToolbarProps) {
   const { t } = useTranslation();
 
   return (
-    <header className="flex items-center gap-2.5 whitespace-nowrap [&>*]:shrink-0">
-      <div className="flex h-10 max-w-[24rem] min-w-[9rem] !shrink items-center gap-2 rounded-full border-[1.5px] border-charcoal px-[18px] text-[17px] tracking-tight">
-        {t('app.name')}
-        <span
-          className="min-w-0 truncate text-xs text-ink-faint"
-          title={props.projectName}
-          data-testid="project-name"
-        >
-          {props.projectName}
-        </span>
-        <RunnerStatusBadge />
+    // Three columns, the outer two equal: the pager sits in the very middle and never covers a
+    // button; when room runs out the project name on the left shrinks first.
+    <header className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2.5 whitespace-nowrap">
+      <div className="flex min-w-0 items-center gap-2.5 [&>*]:shrink-0">
+        <div className="flex h-10 max-w-[24rem] min-w-[9rem] !shrink items-center gap-2 rounded-full border-[1.5px] border-charcoal px-[18px] text-[17px] tracking-tight">
+          {t('app.name')}
+          <span
+            className="min-w-0 truncate text-xs text-ink-faint"
+            title={props.projectName}
+            data-testid="project-name"
+          >
+            {props.projectName}
+          </span>
+          <RunnerStatusBadge />
+        </div>
+        {props.onOpenProject !== undefined && (
+          <button
+            type="button"
+            onClick={props.onOpenProject}
+            className="h-10 rounded-full border border-border bg-field px-4 text-xs font-medium text-ink hover:bg-field-hover"
+            data-testid="project-btn"
+          >
+            {t('project.button')}
+          </button>
+        )}
+        <PanelToggle side="left" {...props} />
       </div>
-      {props.onOpenProject !== undefined && (
-        <button
-          type="button"
-          onClick={props.onOpenProject}
-          className="h-10 rounded-full border border-border bg-field px-4 text-xs font-medium text-ink hover:bg-field-hover"
-          data-testid="project-btn"
-        >
-          {t('project.button')}
-        </button>
-      )}
-      <PanelToggle side="left" {...props} />
-      <div className="flex-1" />
-      <HistoryErrorNotice />
-      <HistoryButtons />
-      <LanguageSwitcher />
-      <PanelToggle side="right" {...props} />
+      {/* Always there, so the right group keeps its column when no pager is shown. */}
+      <div className="flex justify-center">
+        <FramePager />
+      </div>
+      <div className="flex min-w-0 items-center justify-end gap-2.5 [&>*]:shrink-0">
+        <HistoryErrorNotice />
+        <HistoryButtons />
+        <PanelToggle side="right" {...props} />
+      </div>
     </header>
   );
 }

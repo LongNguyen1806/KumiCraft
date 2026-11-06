@@ -62,21 +62,25 @@ test('one frame at a time: show one, step with ‹ › and N, no reload, Esc bac
     timeout: 20_000,
   });
 
-  // One frame: no switch, no ⤢.
-  await expect(page.getByTestId('frame-layout-focus')).toHaveCount(0);
+  // One frame: no view button.
+  await expect(page.getByTestId('frame-layout-toggle')).toHaveCount(0);
   await page.getByTestId('add-frame-btn').click();
   await page.getByTestId('add-frame-item-mobile').click();
   await expect(tiles(page)).toHaveCount(2);
   await expect(page.locator('iframe[data-testid="canvas-iframe"]').nth(1)).toBeVisible();
   await expect.poll(async () => (await marks(page)).length, { timeout: 20_000 }).toBe(2);
   await markPages(page);
+  // Side by side: the pager is there, its stepping parts greyed out.
+  await expect(page.getByTestId('frame-focus-prev')).toBeDisabled();
+  await expect(page.getByTestId('frame-focus-next')).toBeDisabled();
+  await expect(page.getByTestId('frame-focus-jump')).toBeDisabled();
 
   // ⤢ on the first frame: it alone is shown, full size.
   await tiles(page).nth(0).getByTestId('frame-focus-btn').click();
   await expect.poll(() => shown(page)).toEqual([true, false]);
   await expect(page.getByTestId('frame-focus-position')).toHaveText('1 / 2');
   await expect(page.getByTestId('frame-focus-prev')).toBeDisabled();
-  await expect(page.getByTestId('frame-layout-focus')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('frame-layout-toggle')).toHaveAttribute('aria-pressed', 'true');
 
   // › steps to the second frame; it is the last, so › is disabled there.
   await page.getByTestId('frame-focus-next').click();
@@ -97,4 +101,11 @@ test('one frame at a time: show one, step with ‹ › and N, no reload, Esc bac
   await page.keyboard.press('Escape');
   await expect.poll(() => shown(page)).toEqual([true, true]);
   await expect(page.getByTestId('frame-focus-controls')).toHaveCount(0);
+  await expect(page.getByTestId('frame-layout-toggle')).toHaveAttribute('aria-pressed', 'false');
+  // Back side by side: still there, greyed out again.
+  await expect(page.getByTestId('frame-focus-jump')).toBeDisabled();
+
+  // The same button turns one frame at a time on again.
+  await page.getByTestId('frame-layout-toggle').click();
+  await expect.poll(() => shown(page)).toEqual([false, true]);
 });

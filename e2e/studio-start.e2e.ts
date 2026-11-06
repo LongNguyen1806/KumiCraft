@@ -23,7 +23,10 @@ test('switches between Vietnamese and English without reloading', async ({ page,
     (window as ReloadMarker).reloadMarker = true;
   });
 
-  await page.getByTestId('language-select').selectOption('en');
+  // The language is chosen in Settings (owner 2026-11-06: no language box in the top bar).
+  await page.getByRole('button', { name: ui('settings.open') }).click();
+  await page.getByRole('dialog').getByText('English', { exact: true }).click();
+  await page.keyboard.press('Escape');
 
   await expect(page.getByTestId('studio-version')).toHaveText(/^Version /);
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');

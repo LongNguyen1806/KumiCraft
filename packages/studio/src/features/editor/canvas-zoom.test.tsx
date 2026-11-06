@@ -47,10 +47,10 @@ describe('Canvas zoom [R-RN-21]', () => {
     expect(fitZoomForFrames(300, [1440, 375, 375, 375])).toBe(0.1);
   });
 
-  it('[WP-4.00] one frame at a time fits the frame in height too, leaving room for the pager', () => {
+  it('[WP-4.00] one frame at a time fits the frame in height too, title bar included', () => {
     // A tall Mobile frame in a wide Canvas: the height decides.
     const zoom = fitZoomForFocus({ width: 1100, height: 800 }, { width: 375, height: 812 });
-    expect(812 * zoom).toBeLessThanOrEqual(800 - 170 + 0.5);
+    expect(812 * zoom).toBeLessThanOrEqual(800 - 130 + 0.5);
     expect(zoom).toBeLessThan(fitZoomForFrames(1100, [375]));
     // A wide Desktop frame in a narrow Canvas: the width decides.
     expect(fitZoomForFocus({ width: 600, height: 900 }, { width: 1440, height: 900 })).toBe(

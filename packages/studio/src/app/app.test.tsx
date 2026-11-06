@@ -110,10 +110,14 @@ describe('App', () => {
     render(<App />);
     await screen.findByTestId('studio-version');
 
-    fireEvent.change(screen.getByTestId('language-select'), { target: { value: 'vi' } });
+    // The language is chosen in Settings (the top bar has no language box).
+    expect(screen.queryByTestId('language-select') ?? undefined).toBeUndefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    fireEvent.click(await screen.findByRole('radio', { name: 'Tiếng Việt' }));
 
     expect(await screen.findByText('Phiên bản 1.4.0')).toBeDefined();
-    expect(screen.getByRole('heading').textContent).toBe('Chưa mở dự án nào');
+    // The Settings dialog is still open on top: the screen's own heading changed too.
+    expect(screen.getByRole('heading', { name: 'Chưa mở dự án nào' })).toBeDefined();
     expect(document.documentElement.lang).toBe('vi');
   });
 

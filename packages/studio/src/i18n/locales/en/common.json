@@ -106,8 +106,6 @@
     "dnd": {
       "dismiss": "Dismiss"
     },
-    "frameLayoutLabel": "Frame view",
-    "frameLayoutRow": "Side by side",
     "frameLayoutFocus": "One at a time",
     "framePrev": "Previous frame",
     "frameNext": "Next frame",

@@ -75,10 +75,10 @@ export function useElementSize(ref: RefObject<HTMLElement | undefined>): {
 }
 
 /**
- * Room around a frame shown alone, top to bottom: the Canvas and row padding, the frame's title
- * bar, and the pager under it, so the whole frame and the pager are in view.
+ * Room around a frame shown alone, top to bottom: the Canvas and row padding and the frame's title
+ * bar, so the whole frame is in view.
  */
-const FOCUS_VERTICAL_ROOM = 170;
+const FOCUS_VERTICAL_ROOM = 130;
 
 /** One frame at a time: the zoom that fits the frame in both width and height. */
 export function fitZoomForFocus(
