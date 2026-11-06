@@ -258,21 +258,38 @@ Tốn: **rất cao** (rủi ro cao nhất: không có bộ đọc Razor bằng J
 
 Tốn: **vừa đến cao**.
 
+### K9.5. Chạy ổn định (chủ dự án, 2026-11-07, spec-log #82)
+
+Không thêm tính năng mới: làm cho phần đã có chạy chắc chắn trên dự án thật. Mục tiêu sản phẩm là người dùng thật (dân fullstack mạnh backend, yếu frontend), nên **mọi tiêu chí phải đạt từ 9/10**.
+
+| Tiêu chí                | Đạt khi                                                                                                                                                                                                              |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ổn định trên dự án thật | Kịch bản tự động chạy trên **bản sao** của MarketLink, WorkTracker, Test UI (mở, chuyển trang, chọn, sửa chữ/màu/khoảng cách, Undo, nhiều khung, nhờ AI sửa), kiểm cả file nguồn sau mỗi thao tác, không gặp lỗi nào |
+| Kiểm thử                | Mỗi lỗi tìm được có E2E chặn lại; E2E chạy trên bản thu nhỏ của 3 dự án thật; 10 lần chạy liền không test chập chờn                                                                                                  |
+| Hiệu năng               | PB-01 đến PB-05 đạt trên MarketLink (62 trang): mở dự án, bấm chọn, sửa xong thấy kết quả                                                                                                                            |
+| An toàn cục bộ          | Server chỉ nghe `127.0.0.1`, mọi API có token, kiểm `Origin`/`Host`; có test chứng minh trang web lạ không gọi vào được                                                                                              |
+| Kiến trúc và code       | Rà các file lớn nhất của studio và server, tách phần rối, bỏ code chết; Studio không phụ thuộc việc chạy trong tab riêng (để sau nhúng được vào VS Code)                                                             |
+| Hợp với người dùng      | Chủ dự án dùng 1–2 tuần không còn chỗ vướng                                                                                                                                                                          |
+
+Cách làm (chủ dự án, 2026-11-07): **Claude tự kiểm** trên máy, không cần GitHub Actions. Claude chạy KumiCraft thật, điều khiển trình duyệt bằng Playwright trên bản sao dự án do chủ dự án chép vào một thư mục "test project" riêng, nằm ngoài repo KumiCraft (không đụng dự án thật), chụp màn hình và so file nguồn, sửa tận gốc từng lỗi kèm E2E, rồi lặp tới khi bảng đều đạt. Chủ dự án chỉ chuẩn bị môi trường (bật Django, Memurai, đăng nhập Claude CLI) và xét cảm giác dùng ở bước cuối.
+
+Tốn: **vừa**, tùy số lỗi tìm được.
+
 ### K10. Phát hành 1.0 (M-RL)
 
-- Tài liệu người dùng `vi`/`en`, có danh sách framework và hệ CSS được hỗ trợ.
+- Tài liệu người dùng `vi`/`en`, có danh sách framework và hệ CSS được hỗ trợ. **Hoãn (chủ dự án, 2026-11-07):** chưa làm ở 1.0.
 - Kiểm tra giấy phép, SBOM, kiểm tra máy sạch, S-89a, S-90 đến S-96, S-130.
 - Phát hành gói `kumicraft` 1.0.
 
 Tốn: **vừa**.
 
-**Phạm vi 1.0 (spec-log #72, sửa ở #81 ngày 2026-11-06):** 1.0 = K3 → K4 → K5 thu gọn → K9 → K10.
+**Phạm vi 1.0 (spec-log #72, sửa ở #81 ngày 2026-11-06):** 1.0 = K3 → K4 → K5 thu gọn → K9 → K9.5 (chạy ổn định, spec-log #82) → K10.
 
 - **Sửa đầy đủ:** React + Vite (TypeScript hoặc JavaScript), mọi hệ CSS của K2.
 - **Chỉ xem:** Express + Pug. Chạy server, Canvas hiện trang, bấm phần tử → mở dòng `.pug`, hoặc nhờ AI sửa.
 - **Monorepo:** repo có `frontend/` + `backend/` (MarketLink, WorkTracker, ASP.NET Core API + React).
 - **Báo rõ "chưa hỗ trợ":** Create React App, webpack tự cấu hình, Next.js.
-- **Điều kiện phát hành:** CI xanh trên cả 3 hệ điều hành trước K10.
+- **Điều kiện phát hành:** bảng K9.5 đạt từ 9/10; CI xanh trên cả 3 hệ điều hành trước K10 (khi bật lại GitHub Actions).
 
 Phần còn lại của Phase 4 cũ và các framework mới chuyển sang lộ trình sau 1.0 (mục 9).
 
@@ -280,13 +297,13 @@ Phần còn lại của Phase 4 cũ và các framework mới chuyển sang lộ 
 
 Phase này rất lớn, nên đặt cổng con. Từ 2026-10-24 cổng con không còn là lượt riêng: `pnpm verify` + E2E chạy trong lượt QA của khối; chủ dự án kiểm tay sau K3 và trước phát hành.
 
-| Đợt | Khối    | Cổng    | Kết quả người dùng thấy                                                          |
-| --- | ------- | ------- | -------------------------------------------------------------------------------- |
-| 1   | K0, K1  | —       | Hợp đồng chốt; JSX chèn vào gọn gàng                                             |
-| 2   | K2      | **G4a** | Dự án React dùng CSS thường, CSS Modules, Bootstrap chỉnh kiểu dáng như Tailwind |
-| 3   | K3      | **G4b** | Thêm trang chạy trên dự án React cũ, theo đúng kiểu của dự án                    |
-| 4   | K4, K5  | **G4c** | Xem được Express + Pug; mở monorepo từ gốc repo (CRA chuyển sau 1.0)             |
-| 8   | K9, K10 | **G4**  | Nhiều khung, kiểm tra build, hiệu năng; phát hành 1.0                            |
+| Đợt | Khối          | Cổng    | Kết quả người dùng thấy                                                             |
+| --- | ------------- | ------- | ----------------------------------------------------------------------------------- |
+| 1   | K0, K1        | —       | Hợp đồng chốt; JSX chèn vào gọn gàng                                                |
+| 2   | K2            | **G4a** | Dự án React dùng CSS thường, CSS Modules, Bootstrap chỉnh kiểu dáng như Tailwind    |
+| 3   | K3            | **G4b** | Thêm trang chạy trên dự án React cũ, theo đúng kiểu của dự án                       |
+| 4   | K4, K5        | **G4c** | Xem được Express + Pug; mở monorepo từ gốc repo (CRA chuyển sau 1.0)                |
+| 8   | K9, K9.5, K10 | **G4**  | Nhiều khung, kiểm tra build, hiệu năng; chạy ổn định trên dự án thật; phát hành 1.0 |
 
 Đợt 4 (K4) đã xong: K6, K7, K8 dùng lại adapter và proxy của nó ở lộ trình sau 1.0 (mục 9). K2 và K3 dựa trên adapter React hiện có, nên làm được trước K4.
 
