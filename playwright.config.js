@@ -2,12 +2,14 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const isPerf = process.argv.some((arg) => arg.includes('perf'));
+// K9.5: KumiCraft against copies of real projects, only through `pnpm test:real`.
+const isReal = process.argv.some((arg) => arg.includes('e2e/real'));
 const isNetwork = process.env.RC_E2E_NETWORK === '1';
 
 export default defineConfig({
   testDir: 'e2e',
   testMatch: '**/*.e2e.ts',
-  testIgnore: isPerf ? [] : ['**/perf/**'],
+  testIgnore: [...(isPerf ? [] : ['**/perf/**']), ...(isReal ? [] : ['**/real/**'])],
   grep: isNetwork ? /@network/ : undefined,
   grepInvert: isNetwork ? /@perf/ : /(@network|@perf)/,
   fullyParallel: true,

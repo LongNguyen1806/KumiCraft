@@ -23,6 +23,7 @@
     "check:i18n": "node scripts/check-i18n.mjs",
     "bench": "vitest bench --run --reporter=default --reporter=json --outputFile.json=bench-results/bench.json",
     "bench:ui": "pnpm build && playwright test e2e/perf --workers=1",
+    "test:real": "pnpm build && playwright test e2e/real --workers=1 --project=chromium",
     "trace": "node scripts/trace.mjs",
     "gen:palette": "node scripts/gen-tailwind-palette.mjs",
     "format": "prettier --write .",
