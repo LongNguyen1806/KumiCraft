@@ -53,6 +53,12 @@ export type StaticOrString = z.infer<typeof StaticOrStringSchema>;
 
 export const ElementClassNameSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('static'), value: z.string() }),
+  z.strictObject({
+    kind: z.literal('callStatic'),
+    value: z.string(),
+    callee: z.string(),
+    rest: z.string().max(200),
+  }),
   z.strictObject({ kind: z.literal('expression'), code: z.string().max(200) }),
   z.strictObject({ kind: z.literal('none') }),
   z.strictObject({ kind: z.literal('duplicate') }),

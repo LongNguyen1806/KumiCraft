@@ -76,11 +76,16 @@ export function Page() {
       expect(r5.value.className).toEqual({ kind: 'static', value: 'static-template' });
     }
 
-    // 6. Expression
+    // 6. Expression / Call static
     const r6 = await service.getElement(tmpDir, 'src/Page.tsx:9:7');
     expect(r6.ok).toBe(true);
     if (r6.ok) {
-      expect(r6.value.className.kind).toBe('expression');
+      expect(r6.value.className).toEqual({
+        kind: 'callStatic',
+        value: 'dynamic',
+        callee: 'cn',
+        rest: "active && 'active'",
+      });
     }
 
     // 7. Duplicate
@@ -387,7 +392,7 @@ export function Page() {
   it('refuses values that are not static, with the reason [R-SE-03]', async () => {
     const code = `export function P({ url, name }: { url: string; name: string }) {
   return (
-    <main className={cn("a")}>
+    <main className={cn(base, "a")}>
       <a href={url}>{name}</a>
       <p>Hi {name}</p>
       <img src="/x.png" />

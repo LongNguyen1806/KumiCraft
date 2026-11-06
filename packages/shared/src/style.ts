@@ -7,7 +7,9 @@ import { RelPathSchema } from './rel-path.ts';
 import {
   type Breakpoint,
   BREAKPOINT_WIDTHS,
-  type ResponsiveKey,
+  BreakpointSchema,
+  isProjectBreakpointList,
+  type ProjectBreakpoint,
   type ResponsiveMode,
 } from './responsive.ts';
 
@@ -68,9 +70,17 @@ export const CSS_LONGHAND_OF: Readonly<Record<string, string>> = {
   textTransform: 'text-transform',
   backgroundColor: 'background-color',
   borderWidth: 'border-top-width',
+  borderTopWidth: 'border-top-width',
+  borderRightWidth: 'border-right-width',
+  borderBottomWidth: 'border-bottom-width',
+  borderLeftWidth: 'border-left-width',
   borderStyle: 'border-top-style',
   borderColor: 'border-top-color',
   borderRadius: 'border-top-left-radius',
+  borderTopLeftRadius: 'border-top-left-radius',
+  borderTopRightRadius: 'border-top-right-radius',
+  borderBottomRightRadius: 'border-bottom-right-radius',
+  borderBottomLeftRadius: 'border-bottom-left-radius',
   boxShadow: 'box-shadow',
   opacity: 'opacity',
   visibility: 'visibility',
@@ -90,9 +100,15 @@ export const CSS_SHORTHANDS_OF: Readonly<Record<string, readonly string[]>> = {
   'margin-left': ['margin', 'margin-inline', 'margin-inline-start'],
   'margin-right': ['margin', 'margin-inline', 'margin-inline-end'],
   'border-top-width': ['border', 'border-width', 'border-top'],
+  'border-right-width': ['border', 'border-width', 'border-right'],
+  'border-bottom-width': ['border', 'border-width', 'border-bottom'],
+  'border-left-width': ['border', 'border-width', 'border-left'],
   'border-top-style': ['border', 'border-style', 'border-top'],
   'border-top-color': ['border', 'border-color', 'border-top'],
   'border-top-left-radius': ['border-radius'],
+  'border-top-right-radius': ['border-radius'],
+  'border-bottom-right-radius': ['border-radius'],
+  'border-bottom-left-radius': ['border-radius'],
   'background-color': ['background'],
   'font-family': ['font'],
   'font-size': ['font'],
@@ -255,6 +271,7 @@ export const StyleChangeSchema = z.strictObject({
   /** `@media` condition of the frame being edited, absent on the base frame (R-ST-09). */
   media: z.string().min(1).max(200).optional(),
   state: StyleStateSchema.optional(),
+  breakpoint: BreakpointSchema.optional(),
 });
 export type StyleChange = z.infer<typeof StyleChangeSchema>;
 
@@ -280,13 +297,34 @@ export type StyleApplyResult = z.infer<typeof StyleApplyResultSchema>;
 export function mediaForBreakpoint(
   bp: Breakpoint,
   mode: ResponsiveMode,
-  widths: Readonly<Record<ResponsiveKey, number>> = BREAKPOINT_WIDTHS,
+  breakpoints?: readonly ProjectBreakpoint[] | Readonly<Record<string, number>>,
 ): string | undefined {
   if (bp === 'base') return undefined;
+  let min: number | undefined;
+  if (breakpoints !== undefined && isProjectBreakpointList(breakpoints)) {
+    const list: readonly ProjectBreakpoint[] = breakpoints;
+    const item = list.find((b) => b.key === bp);
+    if (item !== undefined) min = item.min;
+  } else if (breakpoints !== undefined) {
+    const map: Readonly<Record<string, number>> = breakpoints;
+    const mapVal = map[bp];
+    if (typeof mapVal === 'number') min = mapVal;
+  } else {
+    const defVal = BREAKPOINT_WIDTHS[bp];
+    if (typeof defVal === 'number') min = defVal;
+  }
+  if (min === undefined) return undefined;
   return mode === 'desktop-first'
-    ? `(max-width: ${String(widths[bp] - 1)}px)`
-    : `(min-width: ${String(widths[bp])}px)`;
+    ? `(max-width: ${String(min - 1)}px)`
+    : `(min-width: ${String(min)}px)`;
 }
+
+export {
+  unpackBorderRadius,
+  unpackBorderWidth,
+  type UnpackedBorderRadius,
+  type UnpackedBorderWidth,
+} from './style-unpack.ts';
 
 /** R-ST-03: the system new declarations go to, from what the project uses. */
 export function primarySystem(styling: StylingReport | undefined): StyleSystemId | undefined {

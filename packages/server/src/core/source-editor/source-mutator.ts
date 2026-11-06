@@ -48,6 +48,57 @@ export function removeAttribute(s: MagicString, code: string, attrNode: AstNode)
   s.remove(removeStart, end);
 }
 
+function modifyCallExpressionArg(s: MagicString, expr: AstNode, after: string): boolean {
+  const args = Array.isArray(expr['arguments']) ? expr['arguments'].map(asAstNode) : [];
+  const firstArg = args[0];
+  if (
+    firstArg?.type === 'StringLiteral' &&
+    typeof firstArg.start === 'number' &&
+    typeof firstArg.end === 'number'
+  ) {
+    const quote = s.original[firstArg.start] ?? "'";
+    if (after.includes(quote) || after.includes('\\') || after.includes('\n')) {
+      s.overwrite(firstArg.start, firstArg.end, JSON.stringify(after));
+    } else {
+      s.overwrite(firstArg.start + 1, firstArg.end - 1, after);
+    }
+    return true;
+  }
+  if (firstArg?.type === 'TemplateLiteral') {
+    const expressions = Array.isArray(firstArg['expressions']) ? firstArg['expressions'] : [];
+    const quasis = Array.isArray(firstArg['quasis']) ? firstArg['quasis'] : [];
+    if (expressions.length === 0 && quasis.length === 1) {
+      const quasi = asAstNode(quasis[0]);
+      if (quasi && typeof quasi.start === 'number' && typeof quasi.end === 'number') {
+        const escaped = after.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+        s.overwrite(quasi.start + 1, quasi.end - 1, escaped);
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function modifyStringLiteral(
+  s: MagicString,
+  code: string,
+  existingAttr: AstNode,
+  valNode: AstNode,
+  after: string,
+): void {
+  const vStart = valNode.start as number;
+  const vEnd = valNode.end as number;
+  const quote = code[vStart] ?? '"';
+  if (after.includes(quote) || after.includes('\n')) {
+    const nameNode = asAstNode(existingAttr['name']);
+    const nameEnd = typeof nameNode?.end === 'number' ? nameNode.end : vStart;
+    const attrEnd = typeof existingAttr.end === 'number' ? existingAttr.end : vEnd;
+    s.overwrite(nameEnd, attrEnd, `={${JSON.stringify(after)}}`);
+  } else {
+    s.overwrite(vStart + 1, vEnd - 1, after);
+  }
+}
+
 function modifyExistingAttribute(
   s: MagicString,
   code: string,
@@ -60,15 +111,7 @@ function modifyExistingAttribute(
     typeof valNode.start === 'number' &&
     typeof valNode.end === 'number'
   ) {
-    const quote = code[valNode.start] ?? '"';
-    if (after.includes(quote) || after.includes('\n')) {
-      const nameNode = asAstNode(existingAttr['name']);
-      const nameEnd = typeof nameNode?.end === 'number' ? nameNode.end : valNode.start;
-      const attrEnd = typeof existingAttr.end === 'number' ? existingAttr.end : valNode.end;
-      s.overwrite(nameEnd, attrEnd, `={${JSON.stringify(after)}}`);
-    } else {
-      s.overwrite(valNode.start + 1, valNode.end - 1, after);
-    }
+    modifyStringLiteral(s, code, existingAttr, valNode, after);
     return;
   }
 
@@ -88,7 +131,11 @@ function modifyExistingAttribute(
       if (quasi && typeof quasi.start === 'number' && typeof quasi.end === 'number') {
         const escaped = after.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
         s.overwrite(quasi.start, quasi.end, `\`${escaped}\``);
+        return;
       }
+    }
+    if (expr?.type === 'CallExpression') {
+      modifyCallExpressionArg(s, expr, after);
     }
   }
 }

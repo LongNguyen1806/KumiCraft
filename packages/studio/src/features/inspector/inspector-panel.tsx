@@ -9,7 +9,7 @@ import type {
   Scope,
   ThemeInfo,
 } from '@kumicraft/shared';
-import { BREAKPOINT_WIDTHS, parseClasses, primarySystem } from '@kumicraft/shared';
+import { parseClasses, primarySystem, projectBreakpoints } from '@kumicraft/shared';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -77,6 +77,32 @@ function EditorAlert({
   );
 }
 
+function TagAttributesBlock({
+  source,
+  disabled,
+  onAttributeChange,
+}: {
+  readonly source: ElementSource;
+  readonly disabled: boolean;
+  readonly onAttributeChange: (name: EditableAttr, value: string | undefined) => void;
+}) {
+  const editor = useOpenInEditor();
+  return (
+    <>
+      <TagAttributesSection
+        tag={source.tag}
+        attributes={source.attributes}
+        disabled={disabled}
+        onAttributeChange={onAttributeChange}
+        onOpenInEditor={() => {
+          editor.open(source.loc);
+        }}
+      />
+      <EditorAlert errorInfo={editor.errorInfo} />
+    </>
+  );
+}
+
 function ElementSections({
   editable,
   source,
@@ -91,7 +117,8 @@ function ElementSections({
   onRawChange,
   onAttributeChange,
 }: ElementSectionsProps) {
-  const editor = useOpenInEditor();
+  const callStaticRest = source.className.kind === 'callStatic' ? source.className.rest : undefined;
+
   return (
     <div className="flex flex-col gap-1">
       {editable && (
@@ -104,22 +131,18 @@ function ElementSections({
           onPropertyValueChange={onPropChange}
         />
       )}
-      <TagAttributesSection
-        tag={source.tag}
-        attributes={source.attributes}
+      <TagAttributesBlock
+        source={source}
         disabled={isAttrLocked}
         onAttributeChange={onAttributeChange}
-        onOpenInEditor={() => {
-          editor.open(source.loc);
-        }}
       />
-      <EditorAlert errorInfo={editor.errorInfo} />
       {editable && (
         <OtherClassesSection
           tokens={tokens}
           rawClassString={rawClassString}
           onRawClassChange={onRawChange}
           disabled={isLocked}
+          callStaticRest={callStaticRest}
         />
       )}
     </div>
@@ -283,7 +306,8 @@ export function InspectorPanel({
     () => ({
       theme,
       mode: options.responsiveMode ?? 'desktop-first',
-      breakpoints: BREAKPOINT_WIDTHS,
+      // The project's own breakpoints (K9 B): a frame in `3xl` reads `3xl:` classes.
+      breakpoints: Object.fromEntries(projectBreakpoints(theme).map((b) => [b.key, b.min])),
       major,
     }),
     [theme, options.responsiveMode, major],

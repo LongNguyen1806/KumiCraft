@@ -28,7 +28,7 @@ const RESPONSIVE_TO_BOOTSTRAP: Readonly<Record<ResponsiveKey, BootstrapBreakpoin
 
 function breakpointFromMedia(media: string | undefined): {
   readonly supported: boolean;
-  readonly breakpoint?: BootstrapBreakpoint;
+  readonly breakpoint?: BootstrapBreakpoint | undefined;
 } {
   if (media === undefined) return { supported: true };
   const match = /^\(\s*min-width\s*:\s*(\d+)px\s*\)$/i.exec(media.trim());

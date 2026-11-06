@@ -5,7 +5,9 @@ import {
   type Frame,
   type InteractionState,
   parseLocString,
+  projectBreakpoints,
   type ResponsiveMode,
+  type Scope,
 } from '@kumicraft/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -15,6 +17,7 @@ import { useSelectionStore } from '../selection/selection-store.ts';
 import { useStructureErrorStore } from '../structure/structure-error-store.ts';
 import type { InspectorLockReason, InspectorTarget, InspectorWarning } from './types.ts';
 import { useMultiInspectorTarget } from './use-multi-inspector-target.ts';
+import { useThemeStore } from './use-project-theme.ts';
 
 export type UseInspectorTargetOptions = {
   readonly frame?: Frame | undefined;
@@ -152,6 +155,40 @@ function useSyncActiveSource(singleRef: ElementRef | undefined, tag: string | un
   }, [loc, tag]);
 }
 
+function buildElementTarget(
+  singleRef: ElementRef,
+  locParsed: { readonly file: string; readonly line: number; readonly column: number } | undefined,
+  source: ElementSource | undefined,
+  loader: { readonly loading: boolean; readonly error?: string | undefined },
+  scope: { readonly currentScope: Scope; readonly writePrefix: string },
+  instances: number,
+  interaction: {
+    readonly state: InteractionState | undefined;
+    readonly setState: (s: InteractionState | undefined) => void;
+  },
+  refresh: () => void,
+): InspectorTarget {
+  const { lockReason, lockCode } = deriveLockReason(source);
+  return {
+    kind: 'element',
+    ref: singleRef,
+    locFile: locParsed?.file,
+    locLine: locParsed?.line,
+    locCol: locParsed?.column,
+    source,
+    loading: loader.loading,
+    error: loader.error,
+    lockReason,
+    lockCode,
+    warnings: deriveWarnings(source, instances),
+    currentScope: scope.currentScope,
+    writePrefix: scope.writePrefix,
+    interactionState: interaction.state,
+    setInteractionState: interaction.setState,
+    refresh,
+  };
+}
+
 function useSingleInspectorTarget(
   options: UseInspectorTargetOptions,
   singleRef: ElementRef | undefined,
@@ -160,7 +197,6 @@ function useSingleInspectorTarget(
   const selectionInfo = useSelectionStore((s) => s.selectionInfo);
   const [interactionState, setInteractionState] = useState<InteractionState | undefined>(undefined);
   const [refreshKey, setRefreshKey] = useState<number>(0);
-
   const refresh = useCallback(() => {
     setRefreshKey((k) => k + 1);
   }, []);
@@ -169,42 +205,34 @@ function useSingleInspectorTarget(
     () => (singleRef !== undefined ? parseLocString(singleRef.loc) : undefined),
     [singleRef],
   );
-  const { source, loading, error } = useElementSourceLoader(enabled, locParsed, refreshKey);
-  const { currentScope, writePrefix } = useScopeCalculation(
+  const loader = useElementSourceLoader(enabled, locParsed, refreshKey);
+  const theme = useThemeStore((s) => s.theme);
+  const projectBps = useMemo(() => projectBreakpoints(theme), [theme]);
+  const scope = useScopeCalculation(
     frame,
     primaryFrame,
     responsiveMode,
     interactionState,
+    projectBps,
   );
   useServerRefresh(enabled, locParsed?.file, refresh);
-  useSyncActiveSource(singleRef, source?.tag);
+  useSyncActiveSource(singleRef, loader.source?.tag);
 
   if (singleRef === undefined) return { kind: 'empty' };
 
   const info = selectionInfo.find(
     (i) => i.ref.loc === singleRef.loc && i.ref.index === singleRef.index,
   );
-  const { lockReason, lockCode } = deriveLockReason(source);
-  const warnings = deriveWarnings(source, info?.instances ?? 1);
-
-  return {
-    kind: 'element',
-    ref: singleRef,
-    locFile: locParsed?.file,
-    locLine: locParsed?.line,
-    locCol: locParsed?.column,
-    source,
-    loading,
-    error,
-    lockReason,
-    lockCode,
-    warnings,
-    currentScope,
-    writePrefix,
-    interactionState,
-    setInteractionState,
+  return buildElementTarget(
+    singleRef,
+    locParsed,
+    loader.source,
+    loader,
+    scope,
+    info?.instances ?? 1,
+    { state: interactionState, setState: setInteractionState },
     refresh,
-  };
+  );
 }
 
 export function useInspectorTarget(options: UseInspectorTargetOptions = {}): InspectorTarget {

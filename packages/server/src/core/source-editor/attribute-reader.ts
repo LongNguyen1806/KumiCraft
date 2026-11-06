@@ -63,6 +63,75 @@ export function extractStaticOrString(attr: AstNode, code: string): StaticOrStri
   };
 }
 
+const CALL_STATIC_CALLEES = new Set([
+  'cn',
+  'clsx',
+  'classnames',
+  'classNames',
+  'twMerge',
+  'twJoin',
+]);
+
+function getCalleeName(calleeNode: AstNode | undefined): string | undefined {
+  if (!calleeNode) return undefined;
+  if (calleeNode.type === 'Identifier' && typeof calleeNode['name'] === 'string') {
+    return calleeNode['name'];
+  }
+  if (calleeNode.type === 'MemberExpression') {
+    const prop = asAstNode(calleeNode['property']);
+    if (prop?.type === 'Identifier' && typeof prop['name'] === 'string') {
+      return prop['name'];
+    }
+  }
+  return undefined;
+}
+
+function extractCallStatic(expr: AstNode, code: string): ElementClassName | undefined {
+  if (expr.type !== 'CallExpression') return undefined;
+  const calleeNode = asAstNode(expr['callee']);
+  const calleeName = getCalleeName(calleeNode);
+  if (!calleeName || !CALL_STATIC_CALLEES.has(calleeName)) return undefined;
+
+  const args = Array.isArray(expr['arguments']) ? expr['arguments'].map(asAstNode) : [];
+  if (args.length === 0) return undefined;
+
+  const firstArg = args[0];
+  let val: string | undefined;
+  if (firstArg?.type === 'StringLiteral' && typeof firstArg['value'] === 'string') {
+    val = firstArg['value'];
+  } else if (firstArg?.type === 'TemplateLiteral') {
+    const expressions = Array.isArray(firstArg['expressions']) ? firstArg['expressions'] : [];
+    const quasis = Array.isArray(firstArg['quasis']) ? firstArg['quasis'] : [];
+    if (expressions.length === 0 && quasis.length === 1) {
+      const quasi = asAstNode(quasis[0]);
+      const quasiObj =
+        typeof quasi?.['value'] === 'object' && Boolean(quasi['value'])
+          ? (quasi['value'] as Record<string, unknown>)
+          : undefined;
+      if (typeof quasiObj?.['raw'] === 'string') {
+        val = quasiObj['raw'];
+      }
+    }
+  }
+
+  if (val === undefined) return undefined;
+
+  const calleeStart = typeof calleeNode?.start === 'number' ? calleeNode.start : 0;
+  const calleeEnd = typeof calleeNode?.end === 'number' ? calleeNode.end : 0;
+  const callee = code.slice(calleeStart, calleeEnd) || calleeName;
+
+  let rest = '';
+  if (args.length > 1) {
+    const secondArg = args[1];
+    const lastArg = args[args.length - 1];
+    const restStart = typeof secondArg?.start === 'number' ? secondArg.start : 0;
+    const restEnd = typeof lastArg?.end === 'number' ? lastArg.end : code.length;
+    rest = code.slice(restStart, restEnd).trim().slice(0, 200);
+  }
+
+  return { kind: 'callStatic', value: val, callee, rest };
+}
+
 /**
  * Reads className attribute from opening element (R-SE-04).
  */
@@ -80,6 +149,15 @@ export function readClassName(attributes: readonly unknown[], code: string): Ele
   const classAttr = classAttrs[0];
   if (!classAttr) {
     return { kind: 'none' };
+  }
+
+  const valueNode = asAstNode(classAttr['value']);
+  if (valueNode?.type === 'JSXExpressionContainer') {
+    const expr = asAstNode(valueNode['expression']);
+    if (expr) {
+      const callStatic = extractCallStatic(expr, code);
+      if (callStatic) return callStatic;
+    }
   }
 
   return extractStaticOrString(classAttr, code);

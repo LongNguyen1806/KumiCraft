@@ -2,6 +2,7 @@
 import {
   type BridgeStyleProbePayload,
   CSS_LONGHAND_OF,
+  CSS_SHORTHANDS_OF,
   type MatchedRule,
   primarySystem,
   type StyleProperty,
@@ -9,6 +10,10 @@ import {
   type StyleSource,
   type StyleSystemId,
   type StylingReport,
+  unpackBorderRadius,
+  unpackBorderWidth,
+  type UnpackedBorderRadius,
+  type UnpackedBorderWidth,
 } from '@kumicraft/shared';
 
 import type { CompiledCssPort } from '../ports/compiled-css-port.ts';
@@ -46,9 +51,11 @@ type Winner =
 
 /** Cascade among what the probe found: important rules, inline style, then normal rules. */
 export function winnerFor(probe: BridgeStyleProbePayload, longhand: string): Winner {
+  const shorthands = CSS_SHORTHANDS_OF[longhand] ?? [];
+  const matches = (p: string) => p === longhand || shorthands.includes(p);
   const declares = (rule: MatchedRule, important: boolean) =>
-    rule.declarations.some((d) => d.property === longhand && d.important === important);
-  const inline = probe.inline.find((d) => d.property === longhand);
+    rule.declarations.some((d) => matches(d.property) && d.important === important);
+  const inline = probe.inline.find((d) => matches(d.property));
   const importantRule = probe.rules.find((r) => declares(r, true));
   if (inline?.important === true) return { kind: 'inline' };
   if (importantRule !== undefined) return { kind: 'rule', rule: importantRule };
@@ -219,6 +226,52 @@ async function ruleSource(
   return { source, editable: true };
 }
 
+function resolveBorderUnpackedCss(
+  id: string,
+  probe: BridgeStyleProbePayload,
+  winner: Winner,
+): string | undefined {
+  if (id.startsWith('border') && id.endsWith('Radius')) {
+    const declVal =
+      winner.kind === 'rule'
+        ? winner.rule.declarations.find((d) => d.property === 'border-radius')?.value
+        : undefined;
+    const shVal = probe.computed['border-radius'] ?? declVal;
+    if (shVal !== undefined) {
+      return unpackBorderRadius(shVal)[id as keyof UnpackedBorderRadius];
+    }
+  } else if (id.startsWith('border') && id.endsWith('Width')) {
+    const declVal =
+      winner.kind === 'rule'
+        ? winner.rule.declarations.find(
+            (d) => d.property === 'border-width' || d.property === 'border',
+          )?.value
+        : undefined;
+    const shVal = probe.computed['border-width'] ?? probe.computed['border'] ?? declVal;
+    if (shVal !== undefined) {
+      return unpackBorderWidth(shVal)[id as keyof UnpackedBorderWidth];
+    }
+  }
+  return undefined;
+}
+
+async function buildStyleProperty(
+  ctx: ReadContext,
+  id: string,
+  css: string,
+  winner: Winner,
+  longhand: string,
+): Promise<StyleProperty> {
+  const value = { css };
+  if (winner.kind === 'none') {
+    return { id, value, source: { kind: 'inherited' }, editable: true };
+  }
+  if (winner.kind === 'inline') {
+    return { id, value, source: { kind: 'inline' }, editable: false, reason: 'inlineDynamic' };
+  }
+  return { id, value, ...(await ruleSource(ctx, winner.rule, longhand)) };
+}
+
 export function createStyleService(deps: {
   readonly fs: FileSystemPort;
   readonly compiledCss?: CompiledCssPort | undefined;
@@ -236,27 +289,10 @@ export function createStyleService(deps: {
       };
       const properties: StyleProperty[] = [];
       for (const [id, longhand] of Object.entries(CSS_LONGHAND_OF)) {
-        const css = probe.computed[longhand];
-        if (css === undefined) continue;
-        const value = { css };
         const winner = winnerFor(probe, longhand);
-        if (winner.kind === 'none') {
-          properties.push({ id, value, source: { kind: 'inherited' }, editable: true });
-        } else if (winner.kind === 'inline') {
-          properties.push({
-            id,
-            value,
-            source: { kind: 'inline' },
-            editable: false,
-            reason: 'inlineDynamic',
-          });
-        } else {
-          properties.push({
-            id,
-            value,
-            ...(await ruleSource(ctx, winner.rule, longhand)),
-          });
-        }
+        const css = probe.computed[longhand] ?? resolveBorderUnpackedCss(id, probe, winner);
+        if (css === undefined) continue;
+        properties.push(await buildStyleProperty(ctx, id, css, winner, longhand));
       }
       return { ...(primary === undefined ? {} : { primary }), properties };
     },

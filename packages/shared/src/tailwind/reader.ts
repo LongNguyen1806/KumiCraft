@@ -1,5 +1,5 @@
 // readValue implementation conforming to R-TW-04 and R-TW-07.
-import type { Breakpoint, InteractionState, ResponsiveKey } from '../responsive.ts';
+import { type Breakpoint, type InteractionState, parseBreakpointValue } from '../responsive.ts';
 import { SPACING_FAMILIES } from './properties.ts';
 import type { ClassContext, ClassToken, ClassValue, PropertyId, Scope } from './types.ts';
 
@@ -8,19 +8,33 @@ const STATE_KEYS_LIST = ['hover', 'focus', 'disabled'];
 
 function getThreshold(key: string, ctx: ClassContext): number {
   if (key in ctx.breakpoints) {
-    return ctx.breakpoints[key as ResponsiveKey];
+    const val = ctx.breakpoints[key];
+    if (val !== undefined) return val;
   }
   const themeBp = ctx.theme.breakpoints.find(
     (b) => b.name === key || b.name === `--breakpoint-${key}`,
   );
   if (themeBp !== undefined) {
-    const parsed = parseInt(themeBp.value, 10);
-    if (!Number.isNaN(parsed)) return parsed;
+    const parsed = parseBreakpointValue(themeBp.value);
+    if (parsed !== undefined) return parsed;
   }
   return 0;
 }
 
-function getVariantsInfo(token: ClassToken): {
+function isResponsiveVariant(v: string, ctx?: ClassContext): boolean {
+  const clean = v.startsWith('max-') ? v.slice(4) : v;
+  if (RESPONSIVE_KEYS_LIST.includes(clean)) return true;
+  if (ctx && clean in ctx.breakpoints) return true;
+  return (
+    ctx?.theme.breakpoints.some((b) => b.name === clean || b.name === `--breakpoint-${clean}`) ??
+    false
+  );
+}
+
+function getVariantsInfo(
+  token: ClassToken,
+  ctx?: ClassContext,
+): {
   readonly resp?: string | undefined;
   readonly state?: InteractionState | undefined;
 } {
@@ -29,11 +43,7 @@ function getVariantsInfo(token: ClassToken): {
   for (const v of token.variants) {
     if (STATE_KEYS_LIST.includes(v)) {
       state = v as InteractionState;
-    } else if (
-      RESPONSIVE_KEYS_LIST.includes(v) ||
-      v.startsWith('max-') ||
-      RESPONSIVE_KEYS_LIST.some((k) => v === `max-${k}`)
-    ) {
+    } else if (isResponsiveVariant(v, ctx)) {
       resp = v;
     }
   }
@@ -45,7 +55,7 @@ function appliesToView(
   view: { readonly width: number; readonly state?: InteractionState | undefined },
   ctx: ClassContext,
 ): boolean {
-  const { resp, state } = getVariantsInfo(token);
+  const { resp, state } = getVariantsInfo(token, ctx);
   if (state !== undefined && state !== view.state) {
     return false;
   }
@@ -65,7 +75,7 @@ function getRank(
   token: ClassToken,
   ctx: ClassContext,
 ): { readonly stateRank: number; readonly respRank: number } {
-  const { resp, state } = getVariantsInfo(token);
+  const { resp, state } = getVariantsInfo(token, ctx);
   const stateRank = state !== undefined ? 1 : 0;
   if (resp === undefined) {
     return { stateRank, respRank: 0 };
@@ -87,12 +97,12 @@ function getFamilySpec(targetProp: PropertyId, candidateProp: PropertyId): numbe
   return 0;
 }
 
-function extractScope(token: ClassToken): Scope {
-  const { resp, state } = getVariantsInfo(token);
+function extractScope(token: ClassToken, ctx?: ClassContext): Scope {
+  const { resp, state } = getVariantsInfo(token, ctx);
   let breakpoint: Breakpoint = 'base';
   if (resp !== undefined) {
     const raw = resp.startsWith('max-') ? resp.slice(4) : resp;
-    breakpoint = raw as Breakpoint;
+    breakpoint = raw;
   }
   return { breakpoint, state };
 }
@@ -167,7 +177,7 @@ export function readValue(
 
   return {
     value: best.value,
-    from: extractScope(best),
+    from: extractScope(best, ctx),
     token: best,
     conflict,
   };

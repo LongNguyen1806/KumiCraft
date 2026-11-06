@@ -1,10 +1,14 @@
 // Style layer endpoints (SPEC-03 section 9, SPEC-04 section 25.2).
 import {
   issuesToDetails,
+  type ProjectInfo,
+  type Result,
+  type StyleApplyRequest,
   StyleApplyRequestSchema,
   StyleReadRequestSchema,
+  type ThemeInfo,
 } from '@kumicraft/shared';
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 
 import type { HistoryService } from '../../../core/history/history-service.ts';
 import type { CompiledCssPort } from '../../../core/ports/compiled-css-port.ts';
@@ -17,13 +21,52 @@ import { sendError } from '../send-error.ts';
 
 export type StyleRoutesDeps = {
   readonly styleService: StyleService;
-  readonly projectService: Pick<ProjectService, 'getProjectInfo'>;
+  readonly projectService: Pick<ProjectService, 'getProjectInfo'> & {
+    readonly theme?: () => Promise<Result<ThemeInfo>>;
+  };
   readonly fs: FileSystemPort;
   readonly sourceEditorService: Pick<SourceEditorService, 'getElement' | 'applyEdit'>;
   readonly historyService: Pick<HistoryService, 'push' | 'recordInternalWrite'>;
   /** The dev server's compiled stylesheets, for exact source-map lookups (R-ST-04). */
   readonly compiledCss?: CompiledCssPort | undefined;
 };
+
+async function handleStyleApply(
+  deps: StyleRoutesDeps,
+  project: Extract<Result<ProjectInfo>, { ok: true }>['value'],
+  parsedData: StyleApplyRequest,
+  reply: FastifyReply,
+) {
+  const themeRes = await deps.projectService.theme?.();
+  const theme = themeRes?.ok ? themeRes.value : undefined;
+  const applied = await applyStyleChange(
+    {
+      fs: deps.fs,
+      sourceEditor: deps.sourceEditorService,
+      styling: project.support.styling,
+      compiledCss: deps.compiledCss,
+      newCssDir: project.styleFiles?.newCssDir,
+      theme,
+    },
+    project.root,
+    parsedData,
+  );
+  if (!applied.ok) return sendError(reply, applied.error);
+  const files = applied.value.files;
+  if (files.length > 0) {
+    for (const f of files) deps.historyService.recordInternalWrite(f.path, f.afterHash);
+    deps.historyService.push({
+      label: { key: 'history:setStyle', params: { tag: parsedData.tag } },
+      files,
+    });
+  }
+  return reply.status(200).send({
+    data: {
+      files: files.map((f) => f.path),
+      ...(applied.value.className === undefined ? {} : { className: applied.value.className }),
+    },
+  });
+}
 
 export function registerStyleRoutes(api: FastifyInstance, deps: StyleRoutesDeps): void {
   // R-ST-04: the Studio relays the Bridge's style-probe; the server maps each rule to its file.
@@ -49,31 +92,6 @@ export function registerStyleRoutes(api: FastifyInstance, deps: StyleRoutesDeps)
     if (!parsed.success) {
       return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
     }
-    const applied = await applyStyleChange(
-      {
-        fs: deps.fs,
-        sourceEditor: deps.sourceEditorService,
-        styling: project.value.support.styling,
-        compiledCss: deps.compiledCss,
-        newCssDir: project.value.styleFiles?.newCssDir,
-      },
-      project.value.root,
-      parsed.data,
-    );
-    if (!applied.ok) return sendError(reply, applied.error);
-    const files = applied.value.files;
-    if (files.length > 0) {
-      for (const f of files) deps.historyService.recordInternalWrite(f.path, f.afterHash);
-      deps.historyService.push({
-        label: { key: 'history:setStyle', params: { tag: parsed.data.tag } },
-        files,
-      });
-    }
-    return reply.status(200).send({
-      data: {
-        files: files.map((f) => f.path),
-        ...(applied.value.className === undefined ? {} : { className: applied.value.className }),
-      },
-    });
+    return handleStyleApply(deps, project.value, parsed.data, reply);
   });
 }

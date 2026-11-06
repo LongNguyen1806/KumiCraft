@@ -108,6 +108,7 @@
       "tokenExists": "Token đã tồn tại trong @theme.",
       "tokenNotFound": "Không tìm thấy token trong @theme.",
       "invalidValue": "Giá trị CSS không hợp lệ.",
+      "unknownBreakpoint": "Khóa breakpoint không có trong dự án.",
       "styleFileInvalid": "File kiểu dáng không hợp lệ hoặc không tồn tại.",
       "noThemeFile": "Không tìm thấy file CSS của Tailwind.",
       "invalidResponse": "Phản hồi từ server không đúng định dạng.",

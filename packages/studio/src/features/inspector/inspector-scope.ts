@@ -3,6 +3,7 @@ import {
   editBreakpoint,
   type Frame,
   type InteractionState,
+  type ProjectBreakpoint,
   type ResponsiveMode,
   type Scope,
 } from '@kumicraft/shared';
@@ -24,15 +25,16 @@ export function useScopeCalculation(
   primaryFrame: Frame | undefined,
   responsiveMode: ResponsiveMode,
   interactionState: InteractionState | undefined,
+  breakpoints?: readonly ProjectBreakpoint[],
 ): { readonly currentScope: Scope; readonly writePrefix: string } {
   return useMemo(() => {
     const frameW = frame?.width ?? 1440;
     const primW = primaryFrame?.width ?? 1440;
-    const breakpoint = editBreakpoint(frameW, primW, responsiveMode);
+    const breakpoint = editBreakpoint(frameW, primW, responsiveMode, breakpoints);
     const scope: Scope = { breakpoint, state: interactionState };
     return {
       currentScope: scope,
       writePrefix: computeWritePrefix(scope, responsiveMode),
     };
-  }, [frame?.width, primaryFrame?.width, responsiveMode, interactionState]);
+  }, [frame?.width, primaryFrame?.width, responsiveMode, interactionState, breakpoints]);
 }

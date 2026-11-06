@@ -149,7 +149,10 @@ export class LiveEditQueue {
 }
 
 function getStaticClass(target: Extract<InspectorTarget, { readonly kind: 'element' }>): string {
-  if (target.source?.className.kind === 'static') {
+  if (
+    target.source?.className.kind === 'static' ||
+    target.source?.className.kind === 'callStatic'
+  ) {
     return target.source.className.value;
   }
   return '';
@@ -172,6 +175,35 @@ function handleEditError(
   }
 }
 
+function createLiveQueue(
+  loc: string,
+  tag: string,
+  prefix: string,
+  throttleMs: number,
+  serverClass: string,
+  target: Extract<InspectorTarget, { readonly kind: 'element' }>,
+  t: TFunction,
+  setOptimisticClass: (val: string) => void,
+  setError: (msg: string | undefined) => void,
+  setIsSaving: (saving: boolean) => void,
+): LiveEditQueue {
+  const holder: { queue: LiveEditQueue | undefined } = { queue: undefined };
+  const opts = {
+    onConfirmed: () => {
+      setError(undefined);
+    },
+    onError: (err: unknown) => {
+      if (holder.queue !== undefined) {
+        handleEditError(err, holder.queue, target, t, setOptimisticClass, setError);
+      }
+    },
+    onSavingChange: setIsSaving,
+  };
+  const queue = new LiveEditQueue(loc, tag, prefix, throttleMs, opts, serverClass);
+  holder.queue = queue;
+  return queue;
+}
+
 function useLiveQueue(
   loc: string,
   tag: string,
@@ -187,21 +219,17 @@ function useLiveQueue(
   const queueRef = useRef<LiveEditQueue | undefined>(undefined);
 
   useEffect(() => {
-    const queue = new LiveEditQueue(
+    const queue = createLiveQueue(
       loc,
       tag,
       prefix,
       throttleMs,
-      {
-        onConfirmed: () => {
-          setError(undefined);
-        },
-        onError: (err) => {
-          handleEditError(err, queue, target, t, setOptimisticClass, setError);
-        },
-        onSavingChange: setIsSaving,
-      },
       serverClass,
+      target,
+      t,
+      setOptimisticClass,
+      setError,
+      setIsSaving,
     );
     queueRef.current = queue;
     return () => {
@@ -224,6 +252,23 @@ function useLiveQueue(
   return queueRef;
 }
 
+function useSyncLocState(
+  loc: string,
+  serverClass: string,
+  setOptimisticClass: (val: string) => void,
+  setError: (msg: string | undefined) => void,
+) {
+  const [prevLoc, setPrevLoc] = useState(loc);
+  const [prevServerClass, setPrevServerClass] = useState(serverClass);
+
+  if (loc !== prevLoc || serverClass !== prevServerClass) {
+    setPrevLoc(loc);
+    setPrevServerClass(serverClass);
+    setOptimisticClass(serverClass);
+    setError(undefined);
+  }
+}
+
 export function useLiveEdit({ target, ctx, throttleMs = 100 }: UseLiveEditOptions): LiveEditState {
   const { t } = useTranslation();
   const serverClass = getStaticClass(target);
@@ -234,15 +279,7 @@ export function useLiveEdit({ target, ctx, throttleMs = 100 }: UseLiveEditOption
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
 
-  const [prevLoc, setPrevLoc] = useState(loc);
-  const [prevServerClass, setPrevServerClass] = useState(serverClass);
-
-  if (loc !== prevLoc || serverClass !== prevServerClass) {
-    setPrevLoc(loc);
-    setPrevServerClass(serverClass);
-    setOptimisticClass(serverClass);
-    setError(undefined);
-  }
+  useSyncLocState(loc, serverClass, setOptimisticClass, setError);
 
   const queueRef = useLiveQueue(
     loc,

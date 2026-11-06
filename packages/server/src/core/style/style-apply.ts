@@ -1,25 +1,23 @@
 // Writes one style change of the Inspector to the project's CSS (SPEC-04 M-ST, R-ST-06 to R-ST-09,
 // R-ST-15). The browser's probe says which rule wins; the change goes to that rule ("all N
 // elements", the default of R-ST-07) or to a class made for the element ("only this one").
-import { posix } from 'node:path';
-
 import {
   CSS_LONGHAND_OF,
   err,
   type MatchedRule,
   ok,
+  projectBreakpoints,
   type Result,
   type StyleApplyRequest,
   type StylingReport,
+  type ThemeInfo,
 } from '@kumicraft/shared';
 import { customAlphabet } from 'nanoid';
 
 import type { CompiledCssPort } from '../ports/compiled-css-port.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
-import { parseJsxAst } from '../source-editor/ast-helpers.ts';
 import { computeSha256 } from '../source-editor/source-editor-lookup.ts';
 import type { SourceEditorService, WrittenFile } from '../source-editor/source-editor-service.ts';
-import { findImportInsertPosition } from '../source-editor/structure/imports.ts';
 import {
   hasStateInSelector,
   setDeclarationAtAnchor,
@@ -44,6 +42,7 @@ export type StyleApplyDeps = {
   readonly styling?: StylingReport | undefined;
   readonly compiledCss?: CompiledCssPort | undefined;
   readonly newCssDir?: string | undefined;
+  readonly theme?: ThemeInfo | undefined;
 };
 
 export type StyleApplied = {
@@ -130,11 +129,9 @@ async function applyToRule(
   const css = await readFile(deps.fs, root, target.file);
   if (!css.ok) return css;
   const { value, media, state } = change;
-  // A rule already under a @media that applies to this frame is the one to change; only a rule of
-  // every frame gets the frame's own @media (R-ST-09).
-  const inPlaceMedia = media === undefined || target.rule.media.length > 0;
-  const inPlaceState = state === undefined || hasStateInSelector(target.rule.selector, state);
-  const inPlace = inPlaceMedia && inPlaceState;
+  const inPlace =
+    (media === undefined || target.rule.media.length > 0) &&
+    (state === undefined || hasStateInSelector(target.rule.selector, state));
   const effectiveMedia = target.rule.media[0] ?? media;
   const targetSelector =
     state === undefined ? target.rule.selector : withStateSelector(target.rule.selector, state);
@@ -156,22 +153,15 @@ async function applyToRule(
   return written.ok ? ok({ files: [written.value] }) : written;
 }
 
-/** The plain `.css`, `.scss`, or `.less` file the element's own file imports, if any. */
-export function importedCss(code: string, jsxFile: string): string | undefined {
-  const match = /import\s+['"](\.{1,2}\/[^'"]+(?<!\.module)\.(?:css|scss|sass|less))['"]/.exec(
-    code,
-  );
-  return match?.[1] === undefined
-    ? undefined
-    : posix.normalize(posix.join(posix.dirname(jsxFile), match[1]));
-}
+import {
+  addCssImport,
+  addPlannedImport,
+  type CssFilePlan,
+  importedCss,
+  planCssFile,
+} from './style-css-plan.ts';
 
-/** Adds `import '<specifier>';`; the specifier is relative to the JSX file (`./Card.css`). */
-export function addCssImport(code: string, specifier: string): string {
-  const eol = code.includes('\r\n') ? '\r\n' : '\n';
-  const at = findImportInsertPosition(parseJsxAst(code), code);
-  return `${code.slice(0, at)}import '${specifier}';${eol}${code.slice(at)}`;
-}
+export { addCssImport, addPlannedImport, type CssFilePlan, importedCss, planCssFile };
 
 export function mergeWrites(files: readonly WrittenFile[]): WrittenFile[] {
   const byPath = new Map<string, WrittenFile>();
@@ -201,82 +191,16 @@ export async function elementContext(
   const element = await deps.sourceEditor.getElement(root, loc);
   if (!element.ok) return element;
   const cls = element.value.className;
-  if (cls.kind !== 'static' && cls.kind !== 'none') {
+  if (cls.kind !== 'static' && cls.kind !== 'none' && cls.kind !== 'callStatic') {
     return err({ code: 'E016', params: { reason: 'expression' } });
   }
-  const className = cls.kind === 'static' ? cls.value : undefined;
+  const className = cls.kind === 'static' || cls.kind === 'callStatic' ? cls.value : undefined;
   return ok({
     jsxFile: loc.split(':')[0] ?? loc,
     tag: element.value.tag,
     classes: (className ?? '').split(/\s+/).filter((c) => c !== ''),
     className,
   });
-}
-
-export type CssFilePlan = {
-  readonly file: string;
-  /** Set when `file` is new: the name the JSX file must import once the file exists. */
-  readonly importAs?: string | undefined;
-};
-
-/**
- * Where an element's new rule goes: the winning rule's file, the CSS its file imports, or a new
- * `<File>.css` beside it. Nothing is written: the import of a new file is added only after the
- * file exists, since Vite fails on an import of a missing file (and misses the HMR).
- */
-export async function planCssFile(
-  deps: { readonly fs: FileSystemPort },
-  root: string,
-  jsxFile: string,
-  winner: { readonly file: string } | undefined,
-  newCssDir?: string,
-): Promise<Result<CssFilePlan>> {
-  if (winner !== undefined) return ok({ file: winner.file });
-  const jsx = await readFile(deps.fs, root, jsxFile);
-  if (!jsx.ok) return jsx;
-  const imported = importedCss(jsx.value, jsxFile);
-  if (imported !== undefined) return ok({ file: imported });
-
-  const baseName = posix.basename(jsxFile).replace(/\.[jt]sx?$/, '');
-  if (newCssDir) {
-    let candidateFile = posix.join(newCssDir, `${baseName}.css`);
-    let counter = 2;
-    while (await deps.fs.exists(root, candidateFile)) {
-      candidateFile = posix.join(newCssDir, `${baseName}-${String(counter)}.css`);
-      counter += 1;
-    }
-    const jsxDir = posix.dirname(jsxFile);
-    let rel = posix.relative(jsxDir, candidateFile);
-    if (!rel.startsWith('./') && !rel.startsWith('../')) rel = `./${rel}`;
-    return ok({ file: candidateFile, importAs: rel });
-  }
-
-  const name = `${baseName}.css`;
-  return ok({ file: posix.join(posix.dirname(jsxFile), name), importAs: `./${name}` });
-}
-
-/** Adds the import a `planCssFile` plan asks for; call it after the CSS file is written. */
-export async function addPlannedImport(
-  deps: { readonly fs: FileSystemPort },
-  root: string,
-  jsxFile: string,
-  plan: CssFilePlan,
-  writes: WrittenFile[],
-): Promise<Result<WrittenFile | undefined>> {
-  if (plan.importAs === undefined) return ok(undefined);
-  const jsx = await readFile(deps.fs, root, jsxFile);
-  if (!jsx.ok) return jsx;
-  if (importedCss(jsx.value, jsxFile) === plan.file) return ok(undefined);
-  const added = await writeFile(
-    deps.fs,
-    root,
-    jsxFile,
-    jsx.value,
-    addCssImport(jsx.value, plan.importAs),
-  );
-  if (!added.ok) return added;
-  writes.push(added.value);
-  return ok(added.value);
 }
 
 function newClassName(ctx: ElementContext, newId: (() => string) | undefined): string {
@@ -379,6 +303,12 @@ export async function applyStyleChange(
   root: string,
   request: StyleApplyRequest,
 ): Promise<Result<StyleApplied>> {
+  if (request.change.breakpoint !== undefined && request.change.breakpoint !== 'base') {
+    const validBps = projectBreakpoints(deps.theme);
+    if (!validBps.some((b) => b.key === request.change.breakpoint)) {
+      return err({ code: 'E016', params: { reason: 'unknownBreakpoint' } });
+    }
+  }
   const longhand = CSS_LONGHAND_OF[request.change.property];
   if (longhand === undefined) return err({ code: 'E016', params: { reason: 'unknownProperty' } });
   const winner = winnerFor(request.probe, longhand);

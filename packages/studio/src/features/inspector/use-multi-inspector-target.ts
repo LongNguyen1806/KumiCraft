@@ -1,5 +1,5 @@
 // Hook managing Inspector multi-target selection and batch source loading (M-IN, R-CB-15).
-import { type ElementRef, parseLocString } from '@kumicraft/shared';
+import { type ElementRef, parseLocString, projectBreakpoints } from '@kumicraft/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { createEventsClient } from '../../api/events-client.ts';
@@ -8,6 +8,7 @@ import { useSelectionStore } from '../selection/selection-store.ts';
 import { useScopeCalculation } from './inspector-scope.ts';
 import type { MultiTarget, MultiTargetItem } from './types.ts';
 import type { UseInspectorTargetOptions } from './use-inspector-target.ts';
+import { useThemeStore } from './use-project-theme.ts';
 
 export function deriveMultiLock(
   items: readonly MultiTargetItem[],
@@ -135,11 +136,15 @@ export function useMultiInspectorTarget(options: UseInspectorTargetOptions = {})
   const { items, loading } = useMultiSourceLoader(isMulti, selectedRefs, refreshKey);
   useMultiServerRefresh(isMulti, refresh);
 
+  const theme = useThemeStore((s) => s.theme);
+  const projectBps = useMemo(() => projectBreakpoints(theme), [theme]);
+
   const { currentScope, writePrefix } = useScopeCalculation(
     frame,
     primaryFrame,
     responsiveMode,
     undefined,
+    projectBps,
   );
 
   const lock = useMemo(() => deriveMultiLock(items), [items]);

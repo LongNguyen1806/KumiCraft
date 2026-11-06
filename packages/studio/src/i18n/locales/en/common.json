@@ -389,8 +389,16 @@
       "backgroundColor": "Background color",
       "borderColor": "Border color",
       "borderWidth": "Border width",
+      "borderTopWidth": "Border top width",
+      "borderRightWidth": "Border right width",
+      "borderBottomWidth": "Border bottom width",
+      "borderLeftWidth": "Border left width",
       "borderStyle": "Border style",
       "borderRadius": "Border radius",
+      "borderTopLeftRadius": "Border top-left radius",
+      "borderTopRightRadius": "Border top-right radius",
+      "borderBottomRightRadius": "Border bottom-right radius",
+      "borderBottomLeftRadius": "Border bottom-left radius",
       "boxShadow": "Box shadow",
       "opacity": "Opacity",
       "overflow": "Overflow",
@@ -413,6 +421,15 @@
         "rule": "all {{count}} elements",
         "element": "only this element"
       }
+    },
+    "callStaticRest": "Conditional parts preserved: {{rest}}",
+    "borders": {
+      "allSides": "All 4 sides",
+      "individualSides": "Individual sides",
+      "allCorners": "All 4 corners",
+      "individualCorners": "Individual corners",
+      "mixedSides": "The sides differ: give them the same value and they merge into all 4 sides",
+      "mixedCorners": "The corners differ: give them the same value and they merge into all 4 corners"
     },
     "askAiDraft": "Change this element: "
   },

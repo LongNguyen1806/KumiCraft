@@ -28,7 +28,10 @@ export function applyClassNameMutation(
     return err({ code: 'E023', params: { reason: 'classExpression' } });
   if (currentClass.kind === 'duplicate')
     return err({ code: 'E023', params: { reason: 'duplicateAttr' } });
-  const currentVal = currentClass.kind === 'static' ? currentClass.value : undefined;
+  const currentVal =
+    currentClass.kind === 'static' || currentClass.kind === 'callStatic'
+      ? currentClass.value
+      : undefined;
   if (edit.before !== undefined && edit.before !== currentVal)
     return err({ code: 'E017', params: { reason: 'valueChanged' } });
   if (currentVal === edit.after) return ok({ unchanged: true });

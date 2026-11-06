@@ -205,9 +205,9 @@ describe('M-SE: Batch Edits (Scenarios #1..#7) [R-CB-14, R-CB-15]', () => {
     expect(headerRestored).toBe(headerCode);
   });
 
-  it('Scenario 3: Batch with cn(...) className fails with E023 and writes no files [R-CB-15]', async () => {
+  it('Scenario 3: Batch with dynamic cn(...) className fails with E023 and writes no files [R-CB-15]', async () => {
     const homeCode =
-      'export function Home() {\n  return (\n    <div className="box">\n      <p className={cn("dyn")}>Hi</p>\n    </div>\n  );\n}\n';
+      'export function Home() {\n  return (\n    <div className="box">\n      <p className={cn(base, "dyn")}>Hi</p>\n    </div>\n  );\n}\n';
     await fs.writeFile(path.join(tmpDir, 'src/Home.tsx'), homeCode, 'utf8');
 
     const res = await service.applyEditBatch(tmpDir, [

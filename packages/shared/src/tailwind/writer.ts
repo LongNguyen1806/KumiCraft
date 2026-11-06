@@ -55,6 +55,108 @@ function buildTokenString(
   return `${prefix}${imp}${util}`;
 }
 
+const BORDER_SIDE_PROPS = [
+  'borderTopWidth',
+  'borderRightWidth',
+  'borderBottomWidth',
+  'borderLeftWidth',
+] as const;
+
+const BORDER_CORNER_PROPS = [
+  'borderTopLeftRadius',
+  'borderTopRightRadius',
+  'borderBottomRightRadius',
+  'borderBottomLeftRadius',
+] as const;
+
+const BORDER_SIDE_SET: ReadonlySet<string> = new Set(BORDER_SIDE_PROPS);
+const BORDER_CORNER_SET: ReadonlySet<string> = new Set(BORDER_CORNER_PROPS);
+
+function valuesEqual(a?: ClassValue, b?: ClassValue): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.kind !== b.kind) return false;
+  if (a.kind === 'scale' && b.kind === 'scale') return a.token === b.token;
+  if (a.kind === 'keyword' && b.kind === 'keyword') return a.name === b.name;
+  if (a.kind === 'theme' && b.kind === 'theme') return a.name === b.name;
+  if (a.kind === 'arbitrary' && b.kind === 'arbitrary') return a.css === b.css;
+  return false;
+}
+
+function mergeEqualSidesOrCorners(
+  current: string,
+  targetVariants: readonly string[],
+  ctx: ClassContext,
+  major: 3 | 4,
+): string {
+  const tokens = parseClasses(current, ctx);
+  const matched = tokens.filter(
+    (t) => t.property !== undefined && variantsMatch(t.variants, targetVariants),
+  );
+
+  const sideTokens: ClassToken[] = [];
+  for (const prop of BORDER_SIDE_PROPS) {
+    const found = matched.find((t) => t.property === prop);
+    if (found !== undefined) sideTokens.push(found);
+  }
+  if (sideTokens.length === BORDER_SIDE_PROPS.length) {
+    const firstVal = sideTokens[0]?.value;
+    if (firstVal !== undefined && sideTokens.every((t) => valuesEqual(t.value, firstVal))) {
+      const next = removeMatchedTokens(current, sideTokens);
+      return appendNewToken(next, 'borderWidth', firstVal, targetVariants, major);
+    }
+  }
+
+  const cornerTokens: ClassToken[] = [];
+  for (const prop of BORDER_CORNER_PROPS) {
+    const found = matched.find((t) => t.property === prop);
+    if (found !== undefined) cornerTokens.push(found);
+  }
+  if (cornerTokens.length === BORDER_CORNER_PROPS.length) {
+    const firstVal = cornerTokens[0]?.value;
+    if (firstVal !== undefined && cornerTokens.every((t) => valuesEqual(t.value, firstVal))) {
+      const next = removeMatchedTokens(current, cornerTokens);
+      return appendNewToken(next, 'borderRadius', firstVal, targetVariants, major);
+    }
+  }
+
+  return current;
+}
+
+function expandShorthandBeforeSideWrite(
+  input: string,
+  property: PropertyId,
+  tokens: readonly ClassToken[],
+  targetVariants: readonly string[],
+  major: 3 | 4,
+): string {
+  if (BORDER_SIDE_SET.has(property)) {
+    const bwToken = tokens.find(
+      (t) => t.property === 'borderWidth' && variantsMatch(t.variants, targetVariants),
+    );
+    if (bwToken?.value) {
+      let next = removeMatchedTokens(input, [bwToken]);
+      for (const side of BORDER_SIDE_PROPS.filter((s) => s !== property)) {
+        next = appendNewToken(next, side, bwToken.value, targetVariants, major);
+      }
+      return next;
+    }
+  }
+  if (BORDER_CORNER_SET.has(property)) {
+    const brToken = tokens.find(
+      (t) => t.property === 'borderRadius' && variantsMatch(t.variants, targetVariants),
+    );
+    if (brToken?.value) {
+      let next = removeMatchedTokens(input, [brToken]);
+      for (const corner of BORDER_CORNER_PROPS.filter((c) => c !== property)) {
+        next = appendNewToken(next, corner, brToken.value, targetVariants, major);
+      }
+      return next;
+    }
+  }
+  return input;
+}
+
 export function writeValue(
   input: string,
   property: PropertyId,
@@ -64,7 +166,12 @@ export function writeValue(
 ): string {
   const major = ctx.major ?? 4;
   const targetVariants = getTargetVariants(scope, ctx);
-  const tokens = parseClasses(input, ctx);
+  const initialTokens = parseClasses(input, ctx);
+  const workingInput =
+    value !== undefined
+      ? expandShorthandBeforeSideWrite(input, property, initialTokens, targetVariants, major)
+      : input;
+  const tokens = workingInput === input ? initialTokens : parseClasses(workingInput, ctx);
   const familyMembers = ALL_TO_MEMBERS[property] ?? [];
   const targetProps = new Set<string>([property, ...familyMembers]);
 
@@ -75,31 +182,29 @@ export function writeValue(
       variantsMatch(t.variants, targetVariants),
   );
 
+  let result: string;
   if (value === undefined) {
-    return removeMatchedTokens(input, matched);
-  }
-
-  const exactToken = matched.find((t) => t.property === property);
-  if (exactToken !== undefined) {
-    return replaceExactToken(input, exactToken, property, value, matched, major);
-  }
-
-  if (matched.length > 0) {
-    const firstOther = matched[0];
-    if (firstOther !== undefined) {
-      return replaceFirstOtherToken(
-        input,
-        firstOther,
+    result = removeMatchedTokens(workingInput, matched);
+  } else {
+    const exactToken = matched.find((t) => t.property === property);
+    if (exactToken !== undefined) {
+      result = replaceExactToken(workingInput, exactToken, property, value, matched, major);
+    } else if (matched.length > 0 && matched[0] !== undefined) {
+      result = replaceFirstOtherToken(
+        workingInput,
+        matched[0],
         property,
         value,
         targetVariants,
         matched,
         major,
       );
+    } else {
+      result = appendNewToken(workingInput, property, value, targetVariants, major);
     }
   }
 
-  return appendNewToken(input, property, value, targetVariants, major);
+  return mergeEqualSidesOrCorners(result, targetVariants, ctx, major);
 }
 
 function removeMatchedTokens(input: string, matched: readonly ClassToken[]): string {

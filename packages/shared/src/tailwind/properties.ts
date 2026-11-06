@@ -1,5 +1,6 @@
 // Table 8.2 property definitions, matching, and formatting (SPEC-04 section 8).
 import type { ThemeInfo } from '../project.ts';
+import { PREFIX_MAP, STATIC_STANDALONE } from './property-tables.ts';
 import type { ClassValue, PropertyId } from './types.ts';
 import { v3ToV4Utility, v4ToV3Utility } from './v3-names.ts';
 
@@ -26,6 +27,14 @@ export const SPACING_FAMILIES: Readonly<
   insetX: { all: 'inset' },
   gapX: { all: 'gap' },
   gapY: { all: 'gap' },
+  borderTopWidth: { all: 'borderWidth' },
+  borderRightWidth: { all: 'borderWidth' },
+  borderBottomWidth: { all: 'borderWidth' },
+  borderLeftWidth: { all: 'borderWidth' },
+  borderTopLeftRadius: { all: 'borderRadius' },
+  borderTopRightRadius: { all: 'borderRadius' },
+  borderBottomRightRadius: { all: 'borderRadius' },
+  borderBottomLeftRadius: { all: 'borderRadius' },
 };
 
 export const ALL_TO_MEMBERS: Readonly<Record<string, readonly string[]>> = {
@@ -33,6 +42,13 @@ export const ALL_TO_MEMBERS: Readonly<Record<string, readonly string[]>> = {
   margin: ['marginX', 'marginY', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft'],
   inset: ['insetX', 'insetY', 'top', 'right', 'bottom', 'left'],
   gap: ['gapX', 'gapY'],
+  borderWidth: ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth'],
+  borderRadius: [
+    'borderTopLeftRadius',
+    'borderTopRightRadius',
+    'borderBottomRightRadius',
+    'borderBottomLeftRadius',
+  ],
 };
 
 export function isArbitrary(val: string): boolean {
@@ -135,6 +151,17 @@ function matchBorder(
   if (isBare) {
     return { property: 'borderWidth', value: { kind: 'scale', token: '1' } };
   }
+  if (tail === 't') return { property: 'borderTopWidth', value: { kind: 'scale', token: '1' } };
+  if (tail === 'r') return { property: 'borderRightWidth', value: { kind: 'scale', token: '1' } };
+  if (tail === 'b') return { property: 'borderBottomWidth', value: { kind: 'scale', token: '1' } };
+  if (tail === 'l') return { property: 'borderLeftWidth', value: { kind: 'scale', token: '1' } };
+  if (tail.startsWith('t-')) return { property: 'borderTopWidth', value: parseVal(tail.slice(2)) };
+  if (tail.startsWith('r-'))
+    return { property: 'borderRightWidth', value: parseVal(tail.slice(2)) };
+  if (tail.startsWith('b-'))
+    return { property: 'borderBottomWidth', value: parseVal(tail.slice(2)) };
+  if (tail.startsWith('l-')) return { property: 'borderLeftWidth', value: parseVal(tail.slice(2)) };
+
   const firstSeg = tail.split('-')[0] ?? '';
   if (BORDER_SIDES.has(tail) || BORDER_SIDES.has(firstSeg)) {
     return undefined;
@@ -156,52 +183,6 @@ function matchBorder(
   }
   return { property: 'borderColor', value: parseVal(tail, theme?.colors) };
 }
-
-const STATIC_STANDALONE: Readonly<
-  Record<string, { readonly property: PropertyId; readonly value: ClassValue }>
-> = {
-  block: { property: 'display', value: { kind: 'keyword', name: 'block' } },
-  'inline-block': { property: 'display', value: { kind: 'keyword', name: 'inline-block' } },
-  inline: { property: 'display', value: { kind: 'keyword', name: 'inline' } },
-  flex: { property: 'display', value: { kind: 'keyword', name: 'flex' } },
-  'inline-flex': { property: 'display', value: { kind: 'keyword', name: 'inline-flex' } },
-  grid: { property: 'display', value: { kind: 'keyword', name: 'grid' } },
-  'inline-grid': { property: 'display', value: { kind: 'keyword', name: 'inline-grid' } },
-  hidden: { property: 'display', value: { kind: 'keyword', name: 'hidden' } },
-  contents: { property: 'display', value: { kind: 'keyword', name: 'contents' } },
-  static: { property: 'position', value: { kind: 'keyword', name: 'static' } },
-  relative: { property: 'position', value: { kind: 'keyword', name: 'relative' } },
-  absolute: { property: 'position', value: { kind: 'keyword', name: 'absolute' } },
-  fixed: { property: 'position', value: { kind: 'keyword', name: 'fixed' } },
-  sticky: { property: 'position', value: { kind: 'keyword', name: 'sticky' } },
-  grow: { property: 'grow', value: { kind: 'scale', token: '1' } },
-  'grow-0': { property: 'grow', value: { kind: 'scale', token: '0' } },
-  'flex-grow': { property: 'grow', value: { kind: 'scale', token: '1' } },
-  'flex-grow-0': { property: 'grow', value: { kind: 'scale', token: '0' } },
-  shrink: { property: 'shrink', value: { kind: 'scale', token: '1' } },
-  'shrink-0': { property: 'shrink', value: { kind: 'scale', token: '0' } },
-  'flex-shrink': { property: 'shrink', value: { kind: 'scale', token: '1' } },
-  'flex-shrink-0': { property: 'shrink', value: { kind: 'scale', token: '0' } },
-  border: { property: 'borderWidth', value: { kind: 'scale', token: '1' } },
-  rounded: { property: 'borderRadius', value: { kind: 'scale', token: 'DEFAULT' } },
-  shadow: { property: 'boxShadow', value: { kind: 'scale', token: 'DEFAULT' } },
-  blur: { property: 'blur', value: { kind: 'scale', token: 'DEFAULT' } },
-  ring: { property: 'ringWidth', value: { kind: 'scale', token: 'DEFAULT' } },
-  'outline-hidden': { property: 'outline', value: { kind: 'keyword', name: 'hidden' } },
-  'outline-none': { property: 'outline', value: { kind: 'keyword', name: 'hidden' } },
-  uppercase: { property: 'textTransform', value: { kind: 'keyword', name: 'uppercase' } },
-  lowercase: { property: 'textTransform', value: { kind: 'keyword', name: 'lowercase' } },
-  capitalize: { property: 'textTransform', value: { kind: 'keyword', name: 'capitalize' } },
-  'normal-case': { property: 'textTransform', value: { kind: 'keyword', name: 'normal-case' } },
-  underline: { property: 'textDecoration', value: { kind: 'keyword', name: 'underline' } },
-  overline: { property: 'textDecoration', value: { kind: 'keyword', name: 'overline' } },
-  'line-through': { property: 'textDecoration', value: { kind: 'keyword', name: 'line-through' } },
-  'no-underline': { property: 'textDecoration', value: { kind: 'keyword', name: 'no-underline' } },
-  italic: { property: 'fontStyle', value: { kind: 'keyword', name: 'italic' } },
-  'not-italic': { property: 'fontStyle', value: { kind: 'keyword', name: 'not-italic' } },
-  visible: { property: 'visibility', value: { kind: 'keyword', name: 'visible' } },
-  invisible: { property: 'visibility', value: { kind: 'keyword', name: 'invisible' } },
-};
 
 const PREFIX_PROPERTIES: readonly [string, PropertyId][] = [
   ['justify-', 'justifyContent'],
@@ -277,6 +258,30 @@ export function matchProperty(
   return undefined;
 }
 
+function resolveBorderRadiusPrefix(
+  rest: string,
+  theme?: ThemeInfo,
+): { readonly property: PropertyId; readonly value: ClassValue } | undefined {
+  const corners: Record<string, PropertyId> = {
+    tl: 'borderTopLeftRadius',
+    tr: 'borderTopRightRadius',
+    br: 'borderBottomRightRadius',
+    bl: 'borderBottomLeftRadius',
+  };
+  for (const [prefix, propId] of Object.entries(corners)) {
+    if (rest === prefix) return { property: propId, value: { kind: 'scale', token: 'DEFAULT' } };
+    if (rest.startsWith(`${prefix}-`)) {
+      return { property: propId, value: parseVal(rest.slice(prefix.length + 1), theme?.radii) };
+    }
+  }
+  const firstSeg = rest.split('-')[0] ?? '';
+  const allCorners = ['t', 'b', 'l', 'r', 'tl', 'tr', 'bl', 'br', 's', 'e', 'ss', 'se', 'ee', 'es'];
+  if (allCorners.includes(rest) || allCorners.includes(firstSeg)) {
+    return undefined;
+  }
+  return { property: 'borderRadius', value: parseVal(rest, theme?.radii) };
+}
+
 function resolvePrefixValue(
   prop: PropertyId,
   rest: string,
@@ -308,75 +313,13 @@ function resolvePrefixValue(
     return { property: prop, value: parseVal(rest, theme?.colors) };
   }
   if (prop === 'borderRadius') {
-    const firstSeg = rest.split('-')[0] ?? '';
-    const corners = ['t', 'b', 'l', 'r', 'tl', 'tr', 'bl', 'br', 's', 'e', 'ss', 'se', 'ee', 'es'];
-    if (corners.includes(rest) || corners.includes(firstSeg)) {
-      return undefined;
-    }
-    return { property: prop, value: parseVal(rest, theme?.radii) };
+    return resolveBorderRadiusPrefix(rest, theme);
   }
   if (prop === 'boxShadow') {
     return { property: prop, value: parseVal(rest, theme?.shadows) };
   }
   return { property: prop, value: parseVal(rest) };
 }
-
-const PREFIX_MAP: Readonly<Record<string, string>> = {
-  flexDirection: 'flex-',
-  flexWrap: 'flex-',
-  justifyContent: 'justify-',
-  alignItems: 'items-',
-  alignSelf: 'self-',
-  gridCols: 'grid-cols-',
-  gap: 'gap-',
-  gapX: 'gap-x-',
-  gapY: 'gap-y-',
-  zIndex: 'z-',
-  inset: 'inset-',
-  insetX: 'inset-x-',
-  insetY: 'inset-y-',
-  top: 'top-',
-  right: 'right-',
-  bottom: 'bottom-',
-  left: 'left-',
-  width: 'w-',
-  height: 'h-',
-  minWidth: 'min-w-',
-  maxWidth: 'max-w-',
-  minHeight: 'min-h-',
-  maxHeight: 'max-h-',
-  padding: 'p-',
-  paddingX: 'px-',
-  paddingY: 'py-',
-  paddingTop: 'pt-',
-  paddingRight: 'pr-',
-  paddingBottom: 'pb-',
-  paddingLeft: 'pl-',
-  margin: 'm-',
-  marginX: 'mx-',
-  marginY: 'my-',
-  marginTop: 'mt-',
-  marginRight: 'mr-',
-  marginBottom: 'mb-',
-  marginLeft: 'ml-',
-  fontSize: 'text-',
-  fontWeight: 'font-',
-  fontFamily: 'font-',
-  lineHeight: 'leading-',
-  letterSpacing: 'tracking-',
-  textAlign: 'text-',
-  textColor: 'text-',
-  backgroundColor: 'bg-',
-  borderColor: 'border-',
-  borderStyle: 'border-',
-  blur: 'blur-',
-  ringWidth: 'ring-',
-  outline: 'outline-',
-  opacity: 'opacity-',
-  overflow: 'overflow-',
-  objectFit: 'object-',
-  flex: 'flex-',
-};
 
 function formatV4Utility(property: PropertyId, value: ClassValue): string {
   const valStr =
@@ -398,7 +341,23 @@ function formatV4Utility(property: PropertyId, value: ClassValue): string {
     return valStr === '0' ? 'shrink-0' : value.kind === 'arbitrary' ? `shrink-${valStr}` : 'shrink';
   if (property === 'borderWidth')
     return valStr === '1' || valStr === 'DEFAULT' ? 'border' : `border-${valStr}`;
+  if (property === 'borderTopWidth')
+    return valStr === '1' || valStr === 'DEFAULT' ? 'border-t' : `border-t-${valStr}`;
+  if (property === 'borderRightWidth')
+    return valStr === '1' || valStr === 'DEFAULT' ? 'border-r' : `border-r-${valStr}`;
+  if (property === 'borderBottomWidth')
+    return valStr === '1' || valStr === 'DEFAULT' ? 'border-b' : `border-b-${valStr}`;
+  if (property === 'borderLeftWidth')
+    return valStr === '1' || valStr === 'DEFAULT' ? 'border-l' : `border-l-${valStr}`;
   if (property === 'borderRadius') return valStr === 'DEFAULT' ? 'rounded' : `rounded-${valStr}`;
+  if (property === 'borderTopLeftRadius')
+    return valStr === 'DEFAULT' ? 'rounded-tl' : `rounded-tl-${valStr}`;
+  if (property === 'borderTopRightRadius')
+    return valStr === 'DEFAULT' ? 'rounded-tr' : `rounded-tr-${valStr}`;
+  if (property === 'borderBottomRightRadius')
+    return valStr === 'DEFAULT' ? 'rounded-br' : `rounded-br-${valStr}`;
+  if (property === 'borderBottomLeftRadius')
+    return valStr === 'DEFAULT' ? 'rounded-bl' : `rounded-bl-${valStr}`;
   if (property === 'boxShadow') return valStr === 'DEFAULT' ? 'shadow' : `shadow-${valStr}`;
   if (property === 'blur') return valStr === 'DEFAULT' ? 'blur' : `blur-${valStr}`;
   if (property === 'ringWidth') return valStr === 'DEFAULT' ? 'ring' : `ring-${valStr}`;

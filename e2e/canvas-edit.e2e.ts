@@ -239,8 +239,9 @@ test('detects external file modification and warns on conflicting undo [AC-10]',
   expect(postUndo).toContain('Sản phẩm từ VS Code');
 });
 
-test('dynamic expression className={cn(...)} is locked with reason in inspector [AC-12]', async ({
+test('static first argument of className={cn(...)} is editable, the rest kept byte for byte [WP-4.00, AC-12]', async ({
   page,
+  browserName,
 }) => {
   const session = await start();
   const tab = await open(page, session);
@@ -250,12 +251,46 @@ test('dynamic expression className={cn(...)} is locked with reason in inspector 
   const dynamicElement = canvas.getByText('Khối sử dụng hàm cn()');
   await expect(dynamicElement).toBeVisible({ timeout: 15_000 });
 
+  const homeFile = join(folder.path, 'src', 'pages', 'Home.tsx');
+  const originalCode = await readFile(homeFile, 'utf8');
+
   await dynamicElement.click();
 
   const lockBanner = tab.getByTestId('lock-banner');
-  await expect(lockBanner).toBeVisible({ timeout: 5_000 });
-  await expect(lockBanner.getByText(ui('inspector.lockReason.classExpression'))).toBeVisible();
-  await expect(lockBanner.getByText(ui('inspector.openInEditor'))).toBeVisible();
+  await expect(lockBanner).toBeHidden();
+
+  await expect(tab.getByText(/active && 'bg-blue-50 border-blue-300'/)).toBeVisible();
+
+  await tab.getByTestId('raw-class-details').locator('summary').click();
+  const rawClassInput = tab.getByTestId('raw-class-input');
+  await expect(rawClassInput).toBeVisible({ timeout: 5_000 });
+  await expect(rawClassInput).toHaveValue('p-4 border rounded-lg');
+
+  await rawClassInput.fill('p-6 border rounded-lg');
+  await rawClassInput.press('Enter');
+
+  await expect
+    .poll(
+      async () => {
+        const code = await readFile(homeFile, 'utf8');
+        return code.includes("cn('p-6 border rounded-lg', active && 'bg-blue-50 border-blue-300')");
+      },
+      { timeout: 10_000 },
+    )
+    .toBe(true);
+
+  await rawClassInput.blur();
+  await triggerUndo(tab, browserName);
+
+  await expect
+    .poll(
+      async () => {
+        const code = await readFile(homeFile, 'utf8');
+        return code;
+      },
+      { timeout: 10_000 },
+    )
+    .toBe(originalCode);
 });
 
 test('build error banner shows the file and hides after the fix [R-RN-25]', async ({ page }) => {

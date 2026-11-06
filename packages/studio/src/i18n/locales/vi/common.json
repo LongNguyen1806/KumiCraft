@@ -389,8 +389,16 @@
       "backgroundColor": "Màu nền",
       "borderColor": "Màu viền",
       "borderWidth": "Độ dày viền",
+      "borderTopWidth": "Viền trên",
+      "borderRightWidth": "Viền phải",
+      "borderBottomWidth": "Viền dưới",
+      "borderLeftWidth": "Viền trái",
       "borderStyle": "Kiểu viền",
       "borderRadius": "Bo góc",
+      "borderTopLeftRadius": "Bo góc trên trái",
+      "borderTopRightRadius": "Bo góc trên phải",
+      "borderBottomRightRadius": "Bo góc dưới phải",
+      "borderBottomLeftRadius": "Bo góc dưới trái",
       "boxShadow": "Đổ bóng",
       "opacity": "Độ mờ đục",
       "overflow": "Tràn ô (overflow)",
@@ -413,6 +421,15 @@
         "rule": "tất cả {{count}} phần tử",
         "element": "chỉ phần tử này"
       }
+    },
+    "callStaticRest": "Phần có điều kiện giữ nguyên: {{rest}}",
+    "borders": {
+      "allSides": "Cả 4 cạnh",
+      "individualSides": "Từng cạnh",
+      "allCorners": "Cả 4 góc",
+      "individualCorners": "Từng góc",
+      "mixedSides": "Các cạnh đang khác nhau: đặt cùng một giá trị thì tự gộp về cả 4 cạnh",
+      "mixedCorners": "Các góc đang khác nhau: đặt cùng một giá trị thì tự gộp về cả 4 góc"
     },
     "askAiDraft": "Sửa phần tử này: "
   },
