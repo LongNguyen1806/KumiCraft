@@ -3,11 +3,21 @@ import { defaultFrames, type DrawTool, type Frame, type Placement } from '@kumic
 import { create } from 'zustand';
 
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
+import {
+  buildNewOpenFrame,
+  defaultInitialOpenFrames,
+  initStoredFrames,
+  MAX_OPEN_FRAMES,
+  type OpenFrame,
+  resolveCloseTarget,
+  setStoredOpenFrames,
+} from './open-frames-storage.ts';
 
 export type CanvasMode = 'design' | 'preview';
 export type Zoom = number | 'fit';
 export type CanvasGridSize = 1 | 4 | 8 | 16;
 export const CANVAS_GRID_SIZES: readonly CanvasGridSize[] = [1, 4, 8, 16];
+export type { OpenFrame };
 
 /** R-RN-21: zoom runs from 10 % to 400 %. */
 export const MIN_ZOOM = 0.1;
@@ -28,6 +38,9 @@ export type CanvasViewState = {
   readonly displayedZoom: number;
   readonly activeFrameId: string;
   readonly frames: readonly Frame[];
+  readonly openFrames: readonly OpenFrame[];
+  readonly activeOpenFrameId: string;
+  readonly currentProjectId?: string | undefined;
   readonly draftFile?: string | undefined;
   readonly grid: CanvasGridSize;
   readonly setGrid: (grid: CanvasGridSize) => void;
@@ -50,6 +63,19 @@ export type CanvasViewState = {
   readonly selectFrameByIndex: (index: number) => boolean;
   readonly openDraft: (file: string, projectId?: string) => void;
   readonly closeDraft: (projectId?: string) => void;
+  readonly addOpenFrame: (
+    frameId?: string,
+    sessionId?: number,
+    route?: string,
+  ) => string | undefined;
+  readonly closeOpenFrame: (id: string) => void;
+  readonly setActiveOpenFrameId: (id: string) => void;
+  readonly updateOpenFrame: (id: string, patch: Partial<Omit<OpenFrame, 'id'>>) => void;
+  readonly initOpenFrames: (
+    projectId?: string,
+    initialRoute?: string,
+    initialSessionId?: number,
+  ) => void;
 };
 
 /** Tailwind major to send with a placement; none without one (WP-2.12a section 3.3). */
@@ -216,6 +242,97 @@ function createModeAndToolActions(
   };
 }
 
+function executeAddOpenFrame(
+  state: CanvasViewState,
+  frameId?: string,
+  sessionId?: number,
+  route?: string,
+) {
+  if (state.openFrames.length >= MAX_OPEN_FRAMES) return undefined;
+  const { newFrame, nextPreset } = buildNewOpenFrame(
+    state.openFrames,
+    state.frames,
+    state.activeOpenFrameId,
+    state.activeFrameId,
+    frameId,
+    sessionId,
+    route,
+  );
+  return { newFrame, nextPreset, nextList: [...state.openFrames, newFrame] };
+}
+
+type StoreSetter = (
+  updater: Partial<CanvasViewState> | ((s: CanvasViewState) => Partial<CanvasViewState>),
+) => void;
+
+function createInitOpenFrames(set: StoreSetter, get: () => CanvasViewState) {
+  return (projectId?: string, initialRoute?: string, initialSessionId?: number) => {
+    const s = get();
+    const res = initStoredFrames(
+      projectId,
+      s.activeFrameId,
+      initialRoute,
+      initialSessionId,
+      s.currentProjectId,
+    );
+    if (res) set(res);
+  };
+}
+
+function createAddOpenFrame(set: StoreSetter, get: () => CanvasViewState) {
+  return (frameId?: string, sessionId?: number, route?: string) => {
+    const s = get();
+    const res = executeAddOpenFrame(s, frameId, sessionId, route);
+    if (!res) return undefined;
+    set({
+      openFrames: res.nextList,
+      activeOpenFrameId: res.newFrame.id,
+      activeFrameId: res.nextPreset,
+    });
+    if (s.currentProjectId) setStoredOpenFrames(s.currentProjectId, res.nextList);
+    return res.newFrame.id;
+  };
+}
+
+function createCloseOpenFrame(set: StoreSetter, get: () => CanvasViewState) {
+  return (id: string) => {
+    const s = get();
+    if (s.openFrames.length <= 1) return;
+    const res = resolveCloseTarget(s.openFrames, id, s.activeOpenFrameId, s.activeFrameId);
+    set({
+      openFrames: res.nextList,
+      activeOpenFrameId: res.nextActiveId,
+      activeFrameId: res.nextFrameId,
+    });
+    if (s.currentProjectId) setStoredOpenFrames(s.currentProjectId, res.nextList);
+  };
+}
+
+function createUpdateOpenFrame(set: StoreSetter, get: () => CanvasViewState) {
+  return (id: string, patch: Partial<Omit<OpenFrame, 'id'>>) => {
+    const s = get();
+    const nextList = s.openFrames.map((f) => (f.id === id ? { ...f, ...patch } : f));
+    set({ openFrames: nextList });
+    if (s.currentProjectId) setStoredOpenFrames(s.currentProjectId, nextList);
+  };
+}
+
+function createOpenFrameActions(set: StoreSetter, get: () => CanvasViewState) {
+  return {
+    openFrames: defaultInitialOpenFrames(),
+    activeOpenFrameId: 'default',
+    currentProjectId: undefined as string | undefined,
+    initOpenFrames: createInitOpenFrames(set, get),
+    addOpenFrame: createAddOpenFrame(set, get),
+    closeOpenFrame: createCloseOpenFrame(set, get),
+    setActiveOpenFrameId: (id: string) => {
+      const match = get().openFrames.find((f) => f.id === id);
+      if (match) set({ activeOpenFrameId: id, activeFrameId: match.frameId });
+    },
+    updateOpenFrame: createUpdateOpenFrame(set, get),
+  };
+}
+
 export const useCanvasViewStore = create<CanvasViewState>((set, get) => ({
   ...createModeAndToolActions(set, get),
   zoom: 'fit',
@@ -228,6 +345,7 @@ export const useCanvasViewStore = create<CanvasViewState>((set, get) => ({
     set({ grid });
   },
   ...createProjectFactActions(set),
+  ...createOpenFrameActions(set, get),
   setZoom: (zoom) => {
     set({ zoom });
   },
@@ -237,7 +355,12 @@ export const useCanvasViewStore = create<CanvasViewState>((set, get) => ({
   ...createZoomActions(set),
   ...createPanActions(set),
   setActiveFrameId: (activeFrameId) => {
-    set({ activeFrameId });
+    const { activeOpenFrameId, openFrames, currentProjectId } = get();
+    const nextList = openFrames.map((f) =>
+      f.id === activeOpenFrameId ? { ...f, frameId: activeFrameId } : f,
+    );
+    set({ activeFrameId, openFrames: nextList });
+    if (currentProjectId) setStoredOpenFrames(currentProjectId, nextList);
   },
   setFrames: (frames) => {
     if (frames.length > 0) set((s) => updateFrames(frames, s.activeFrameId));
@@ -246,7 +369,7 @@ export const useCanvasViewStore = create<CanvasViewState>((set, get) => ({
     const { frames } = get();
     const target = frames[index];
     if (target) {
-      set({ activeFrameId: target.id });
+      get().setActiveFrameId(target.id);
       return true;
     }
     return false;

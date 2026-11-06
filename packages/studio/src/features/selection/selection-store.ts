@@ -2,6 +2,8 @@
 import type { ElementInfo, ElementRef, TreeNode } from '@kumicraft/shared';
 import { create } from 'zustand';
 
+import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+
 export type CanvasMode = 'design' | 'preview';
 
 export type SelectionState = {
@@ -73,6 +75,10 @@ export const useSelectionStore = create<SelectionState>((set) => ({
   },
   setRoute: (route) => {
     set({ currentRoute: route });
+    const viewStore = useCanvasViewStore.getState();
+    if (viewStore.activeOpenFrameId) {
+      viewStore.updateOpenFrame(viewStore.activeOpenFrameId, { route });
+    }
   },
   setBridgeReady: (ready) => {
     set({ bridgeReady: ready });

@@ -10,6 +10,39 @@ export type Zoom = number | 'fit';
 const VIEWPORT_PADDING = 32;
 
 /** "Fit": the frame as wide as the Canvas, never above 100% and never below 10%. */
+/** A frame tile never gets narrower than its title bar needs (name, size, session, close). */
+export const FRAME_TILE_MIN_WIDTH = 220;
+/** Space between frame tiles, and around the row of tiles, in Canvas pixels (not zoomed). */
+export const FRAME_TILE_GAP = 32;
+
+/** On-screen width of a frame tile at a zoom. */
+export function frameTileWidth(frameWidth: number, zoom: number): number {
+  return Math.max(frameWidth * zoom, FRAME_TILE_MIN_WIDTH);
+}
+
+/**
+ * The zoom that fits a row of frames side by side (M-MF): tiles held at their minimum width take
+ * fixed room, the others share what is left in proportion to their width.
+ */
+export function fitZoomForFrames(viewportWidth: number, frameWidths: readonly number[]): number {
+  if (frameWidths.length <= 1) return fitZoom(viewportWidth, frameWidths[0] ?? 0);
+  const fixed = FRAME_TILE_GAP * (frameWidths.length + 1);
+  let pinned = new Set<number>();
+  let zoom = 1;
+  for (let round = 0; round <= frameWidths.length; round += 1) {
+    const free = frameWidths.filter((_, i) => !pinned.has(i));
+    const room = viewportWidth - VIEWPORT_PADDING - fixed - pinned.size * FRAME_TILE_MIN_WIDTH;
+    const sum = free.reduce((acc, w) => acc + w, 0);
+    zoom = sum > 0 && room > 0 ? Math.max(0.1, Math.min(1, room / sum)) : 0.1;
+    const next = new Set(
+      frameWidths.flatMap((w, i) => (w * zoom < FRAME_TILE_MIN_WIDTH ? [i] : [])),
+    );
+    if (next.size === pinned.size) break;
+    pinned = next;
+  }
+  return zoom;
+}
+
 export function fitZoom(viewportWidth: number, frameWidth: number): number {
   const available = viewportWidth - VIEWPORT_PADDING;
   if (available <= 0 || frameWidth <= 0) return 1;

@@ -19,6 +19,7 @@ import {
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { useSettingsStore } from '../../store/settings-store.ts';
 import { useProjectStore } from '../project/project-store.ts';
+import { useCanvasViewStore } from './canvas-view-store.ts';
 import { nextFreeSessionId, sessionLabel, SessionPopover } from './session-popover.tsx';
 
 export { nextFreeSessionId, probeSessionOrigin, resetSessionProbeCache, SESSION_PROBE_TIMEOUT_MS };
@@ -59,14 +60,21 @@ export function useCanvasSession(projectInfo?: ProjectInfo, runnerOrigin?: strin
   const sessions = overriddenSessions ?? project?.sessions ?? DEFAULT_LOGIN_SESSIONS;
   const sessionIds = sessions.map((st) => st.id);
 
+  const activeOpenFrameId = useCanvasViewStore((st) => st.activeOpenFrameId);
+  const openFrames = useCanvasViewStore((st) => st.openFrames);
+  const updateOpenFrame = useCanvasViewStore((st) => st.updateOpenFrame);
+  const activeOpen = openFrames.find((f) => f.id === activeOpenFrameId);
+
   // Only the user changes the session (spec-log #79); the page on screen stays.
   const [selectedId, setSelectedId] = useState<number | undefined>();
-  const candidateId = selectedId ?? readStoredSessionId(projectId, sessions);
+  const candidateId =
+    activeOpen?.sessionId ?? selectedId ?? readStoredSessionId(projectId, sessions);
   const pickedId = sessionIds.includes(candidateId) ? candidateId : 1;
   const effectiveActiveId = enabled ? pickedId : 1;
   const selectSession = (id: number) => {
     setSelectedId(id);
     writeStoredSessionId(projectId, id);
+    if (activeOpenFrameId) updateOpenFrame(activeOpenFrameId, { sessionId: id });
   };
 
   return {

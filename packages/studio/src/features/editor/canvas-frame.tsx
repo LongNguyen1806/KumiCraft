@@ -5,7 +5,11 @@ import { useTranslation } from 'react-i18next';
 
 import { CanvasDropLayer } from '../dnd/canvas-drop-layer.tsx';
 import { LayerMenu } from '../layer-menu/layer-menu.tsx';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
+import {
+  type BridgeChannel,
+  bridgeChannels,
+  studioBridgeChannel,
+} from '../selection/bridge-channel.ts';
 import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
 
 /** S-100: the project's page runs scripts but cannot navigate the Studio window. */
@@ -16,27 +20,33 @@ export const IFRAME_SANDBOX =
 export const BRIDGE_READY_TIMEOUT_MS = 10_000;
 
 /** R-RN-21: the page the user was on, so a restarted dev server opens the same page. */
-function pageUrl(origin: string): string {
-  const route = useSelectionStore.getState().currentRoute;
-  return route.startsWith('/') ? `${origin}${route}` : `${origin}/`;
+function pageUrl(origin: string, route?: string): string {
+  const current = route ?? useSelectionStore.getState().currentRoute;
+  return current.startsWith('/') ? `${origin}${current}` : `${origin}/`;
 }
 
-export function computeIframeSrc(origin: string, draftFile?: string): string {
+export function computeIframeSrc(origin: string, draftFile?: string, route?: string): string {
   if (draftFile) {
     return `${origin}/__kumicraft/draft?file=${encodeURIComponent(draftFile)}`;
   }
-  return pageUrl(origin);
+  return pageUrl(origin, route);
 }
 
 /**
  * Attaches the channel when the page loads. The page is on another origin, so the Studio never
  * reads its document (S-102); a mode change only sends `set-mode`, it does not reattach.
  */
+/** The frame's own channel (M-MF); a frame outside the multi-frame Canvas uses the shared one. */
+function channelOfFrame(openFrameId: string | undefined): BridgeChannel {
+  return openFrameId === undefined ? studioBridgeChannel : bridgeChannels.get(openFrameId);
+}
+
 function useIframeBridge(
   iframeRef: { readonly current?: HTMLIFrameElement | undefined },
   origin: string,
   nonce: string | undefined,
   mode: CanvasMode,
+  openFrameId: string | undefined,
   onBridgeSilent: () => void,
 ) {
   const modeRef = useRef(mode);
@@ -50,13 +60,13 @@ function useIframeBridge(
     const iframe = iframeRef.current;
     if (!iframe || !nonce) return undefined;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    // Listen before the page runs: the Bridge says `ready` while its script loads, before `load`.
-    // The iframe keeps the same window object while it navigates to the page.
-    if (iframe.contentWindow) studioBridgeChannel.attach(iframe.contentWindow, origin, nonce);
+    const channel = channelOfFrame(openFrameId);
+
+    if (iframe.contentWindow) channel.attach(iframe.contentWindow, origin, nonce);
 
     const handleLoad = () => {
       if (!iframe.contentWindow) return;
-      studioBridgeChannel.setMode(modeRef.current);
+      channel.setMode(modeRef.current);
       if (timer !== undefined) clearTimeout(timer);
       timer = setTimeout(() => {
         if (!useSelectionStore.getState().bridgeReady) silentRef.current();
@@ -67,13 +77,14 @@ function useIframeBridge(
     return () => {
       if (timer !== undefined) clearTimeout(timer);
       iframe.removeEventListener('load', handleLoad);
-      studioBridgeChannel.detach();
+      channel.detach();
     };
-  }, [iframeRef, origin, nonce]);
+  }, [iframeRef, origin, nonce, openFrameId]);
 
   useEffect(() => {
-    studioBridgeChannel.setMode(mode);
-  }, [mode]);
+    const channel = channelOfFrame(openFrameId);
+    channel.setMode(mode);
+  }, [mode, openFrameId]);
 }
 
 function BridgeSilentBanner({ logTail }: { readonly logTail: readonly string[] }) {
@@ -118,6 +129,8 @@ export type IframeFrameProps = {
   readonly mode: CanvasMode;
   readonly logTail: readonly string[];
   readonly draftFile?: string | undefined;
+  readonly openFrameId?: string | undefined;
+  readonly route?: string | undefined;
 };
 
 type ZoomedIframeBoxProps = {
@@ -171,23 +184,25 @@ export function IframeFrame({
   mode,
   logTail,
   draftFile,
+  openFrameId,
+  route,
 }: IframeFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(undefined);
   const [target, setTarget] = useState(() => ({
     origin,
     draftFile,
-    src: computeIframeSrc(origin, draftFile),
+    src: computeIframeSrc(origin, draftFile, route),
   }));
   if (target.origin !== origin || target.draftFile !== draftFile) {
     setTarget({
       origin,
       draftFile,
-      src: computeIframeSrc(origin, draftFile),
+      src: computeIframeSrc(origin, draftFile, route),
     });
   }
   const [silent, setSilent] = useState(false);
   const bridgeReady = useSelectionStore((s) => s.bridgeReady);
-  useIframeBridge(iframeRef, origin, nonce, mode, () => {
+  useIframeBridge(iframeRef, origin, nonce, mode, openFrameId, () => {
     setSilent(true);
   });
 

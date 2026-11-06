@@ -1,0 +1,67 @@
+// Multi-frame layout component for Canvas (SPEC-04 M-MF).
+import type { Frame, LoginSession } from '@kumicraft/shared';
+
+import type { CanvasMode } from '../selection/selection-store.ts';
+import { CanvasFrameTile } from './canvas-frame-tile.tsx';
+import type { OpenFrame } from './open-frames-storage.ts';
+
+const FALLBACK_FRAME: Frame = { id: 'desktop', label: 'Desktop', width: 1280, height: 800 };
+
+function resolveFramePreset(frames: readonly Frame[], frameId: string): Frame {
+  return frames.find((f) => f.id === frameId) ?? frames[0] ?? FALLBACK_FRAME;
+}
+
+export type CanvasMultiFrameProps = {
+  readonly openFrames: readonly OpenFrame[];
+  readonly frames: readonly Frame[];
+  readonly activeOpenFrameId: string;
+  readonly zoom: number;
+  readonly mode: CanvasMode;
+  readonly runnerOrigin: string;
+  readonly nonce?: string | undefined;
+  readonly logTail: readonly string[];
+  readonly draftFile?: string | undefined;
+  readonly reloadTick?: number | undefined;
+  readonly sessions: readonly LoginSession[];
+  readonly sessionEnabled: boolean;
+  readonly onSelectFrame: (id: string) => void;
+  readonly onCloseFrame: (id: string) => void;
+  readonly onUpdateFrameSession: (id: string, sessionId: number) => void;
+  readonly onSessionsUpdated: (sessions: readonly LoginSession[]) => void;
+};
+
+export function CanvasMultiFrame(props: CanvasMultiFrameProps) {
+  const { openFrames, frames, activeOpenFrameId } = props;
+  const isOnlyFrame = openFrames.length <= 1;
+
+  return (
+    <div data-testid="canvas-multi-frame" className="flex flex-row items-start gap-8 min-w-max p-8">
+      {openFrames.map((of) => {
+        const preset = resolveFramePreset(frames, of.frameId);
+        const isActive = of.id === activeOpenFrameId;
+        return (
+          <CanvasFrameTile
+            key={of.id}
+            openFrame={of}
+            preset={preset}
+            isActive={isActive}
+            isOnlyFrame={isOnlyFrame}
+            zoom={props.zoom}
+            mode={props.mode}
+            runnerOrigin={props.runnerOrigin}
+            nonce={props.nonce}
+            logTail={props.logTail}
+            draftFile={props.draftFile}
+            reloadTick={props.reloadTick}
+            sessions={props.sessions}
+            sessionEnabled={props.sessionEnabled}
+            onSelect={props.onSelectFrame}
+            onClose={props.onCloseFrame}
+            onUpdateSession={props.onUpdateFrameSession}
+            onSessionsUpdated={props.onSessionsUpdated}
+          />
+        );
+      })}
+    </div>
+  );
+}

@@ -7,7 +7,7 @@ import * as projectClient from '../../api/project-client.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { useSettingsStore } from '../../store/settings-store.ts';
 import { useProjectStore } from '../project/project-store.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
+import { BridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { CanvasArea } from './canvas-area.tsx';
 import { resetSessionProbeCache } from './session-select.tsx';
@@ -235,7 +235,8 @@ describe('CanvasArea', () => {
     };
     useSelectionStore.getState().setRoute('/dashboard');
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response());
-    const attachSpy = vi.spyOn(studioBridgeChannel, 'attach');
+    // Each frame attaches its own channel (M-MF); the spy sees every frame's.
+    const attachSpy = vi.spyOn(BridgeChannel.prototype, 'attach');
 
     const projectWithTwoSessions: ProjectInfo = {
       ...mockProject,

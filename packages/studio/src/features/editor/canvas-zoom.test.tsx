@@ -4,7 +4,14 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { initI18n } from '../../i18n/i18n.ts';
 import { useCanvasViewStore } from './canvas-view-store.ts';
-import { CanvasZoomSlider, fitZoom } from './canvas-zoom.tsx';
+import {
+  CanvasZoomSlider,
+  fitZoom,
+  fitZoomForFrames,
+  FRAME_TILE_GAP,
+  FRAME_TILE_MIN_WIDTH,
+  frameTileWidth,
+} from './canvas-zoom.tsx';
 
 describe('Canvas zoom [R-RN-21]', () => {
   beforeAll(async () => {
@@ -20,6 +27,23 @@ describe('Canvas zoom [R-RN-21]', () => {
     expect(fitZoom(1600, 375)).toBe(1);
     expect(fitZoom(100, 1440)).toBe(0.1);
     expect(fitZoom(0, 1440)).toBe(1);
+  });
+
+  it('[WP-4.00] fits a row of frames, counting tiles held at their minimum width and the gaps (M-MF)', () => {
+    const viewport = 595;
+    const widths = [1440, 375];
+    const zoom = fitZoomForFrames(viewport, widths);
+    // The Mobile tile stays at its minimum width; the Desktop one takes what is left.
+    expect(375 * zoom).toBeLessThan(FRAME_TILE_MIN_WIDTH);
+    const row =
+      widths.reduce((acc, w) => acc + frameTileWidth(w, zoom), 0) +
+      FRAME_TILE_GAP * (widths.length + 1);
+    expect(row).toBeLessThanOrEqual(viewport - 32 + 0.5);
+    expect(row).toBeGreaterThan(viewport - 32 - 2);
+    // One frame: same as before.
+    expect(fitZoomForFrames(1000, [1440])).toBe(fitZoom(1000, 1440));
+    // Never below 10 %, even when the minimum widths alone overflow.
+    expect(fitZoomForFrames(300, [1440, 375, 375, 375])).toBe(0.1);
   });
 
   it('provides slider and step controls with fit and reset buttons', () => {
