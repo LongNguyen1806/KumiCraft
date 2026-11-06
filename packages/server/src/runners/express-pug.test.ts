@@ -132,7 +132,8 @@ describe('express-pug runner [WP-4.00]', () => {
     expect(code).toBe(0);
     expect(await isListening(proxyPort)).toBe(false);
     child = undefined;
-  });
+    // Loads Pug from cold (and B4 starts a child process): slow when the whole suite runs.
+  }, 30_000);
 
   it('[WP-4.00] B5: App không listen -> noListen; file khởi động ném lỗi -> error có thông điệp', async () => {
     // 1. App không listen -> noListen

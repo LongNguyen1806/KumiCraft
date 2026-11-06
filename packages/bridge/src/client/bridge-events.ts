@@ -1,4 +1,5 @@
 // Captured DOM events for the Bridge in design mode (SPEC-04 R-BR-11, R-BR-14).
+import { attachCanvasInput } from './canvas-input.ts';
 
 /** The part of Vite's `import.meta.hot` the Bridge uses (R-BR-17). */
 export type HotContext = { on(event: string, callback: (payload: unknown) => void): void };
@@ -32,7 +33,11 @@ export function addWindowListeners(
   pointerMoveHandler: (event: PointerEvent) => void,
   keyDownHandler: (event: KeyboardEvent) => void,
   scrollOrResizeHandler: () => void,
+  sendCanvasInput?: (type: string, payload: unknown) => void,
 ): () => void {
+  // First, so the middle button pans before any selection or drag listener sees it.
+  const stopCanvasInput =
+    sendCanvasInput === undefined ? undefined : attachCanvasInput(sendCanvasInput);
   for (const evtName of INTERCEPTED_EVENTS) {
     window.addEventListener(evtName, interceptedHandler, true);
   }
@@ -42,6 +47,7 @@ export function addWindowListeners(
   window.addEventListener('resize', scrollOrResizeHandler);
 
   return () => {
+    stopCanvasInput?.();
     for (const evtName of INTERCEPTED_EVENTS) {
       window.removeEventListener(evtName, interceptedHandler, true);
     }

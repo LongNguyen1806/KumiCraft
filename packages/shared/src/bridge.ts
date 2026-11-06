@@ -100,6 +100,26 @@ export const BridgeShortcutPayloadSchema = z.strictObject({
 });
 export type BridgeShortcutPayload = z.infer<typeof BridgeShortcutPayloadSchema>;
 
+/**
+ * Ctrl + wheel or a touchpad pinch inside the page: the Studio zooms the Canvas around the pointer
+ * (Canvas navigation). The pointer comes as a fraction of the page's viewport, so the Studio places
+ * it on the frame whatever the zoom.
+ */
+export const BridgeCanvasZoomPayloadSchema = z.strictObject({
+  deltaY: z.number().min(-10_000).max(10_000),
+  x: z.number().min(0).max(1),
+  y: z.number().min(0).max(1),
+});
+export type BridgeCanvasZoomPayload = z.infer<typeof BridgeCanvasZoomPayloadSchema>;
+
+/** A middle-button drag inside the page, in screen pixels: the Studio pans the Canvas. */
+export const BridgeCanvasPanPayloadSchema = z.strictObject({
+  phase: z.enum(['start', 'move', 'end']),
+  screenX: z.number(),
+  screenY: z.number(),
+});
+export type BridgeCanvasPanPayload = z.infer<typeof BridgeCanvasPanPayloadSchema>;
+
 export const BridgeTextEditRequestPayloadSchema = z.strictObject({
   ref: ElementRefSchema,
 });

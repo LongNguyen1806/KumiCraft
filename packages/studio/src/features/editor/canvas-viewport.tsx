@@ -5,6 +5,7 @@ import { RuntimeErrorList } from '../canvas-errors/runtime-error-list.tsx';
 import { useProjectInfo } from '../project/project-store.ts';
 import type { CanvasMode } from '../selection/selection-store.ts';
 import { CanvasMultiFrame } from './canvas-multi-frame.tsx';
+import { useCanvasNavigation } from './canvas-navigation.ts';
 import { CanvasPanSurface, PannedContent } from './canvas-pan.tsx';
 import {
   ErrorView,
@@ -79,6 +80,7 @@ export function CanvasContent(props: CanvasContentProps) {
 
 export function CanvasViewport(props: Omit<CanvasContentProps, 'zoom'> & { readonly zoom: Zoom }) {
   const viewport = useRef<HTMLDivElement>(undefined);
+  const area = useRef<HTMLDivElement>(undefined);
   const width = useElementWidth(viewport);
   const frameWidths = useMemo(
     () =>
@@ -93,9 +95,15 @@ export function CanvasViewport(props: Omit<CanvasContentProps, 'zoom'> & { reado
   useEffect(() => {
     setDisplayedZoom(zoom);
   }, [zoom, setDisplayedZoom]);
+  useCanvasNavigation(area, zoom);
 
   return (
-    <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+    <div
+      ref={(el) => {
+        area.current = el ?? undefined;
+      }}
+      className="relative flex min-h-0 min-w-0 flex-1 flex-col"
+    >
       <div
         ref={(el) => {
           viewport.current = el ?? undefined;

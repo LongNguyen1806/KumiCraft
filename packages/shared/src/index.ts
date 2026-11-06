@@ -51,6 +51,10 @@ export {
 export {
   type BridgeBuildErrorPayload,
   BridgeBuildErrorPayloadSchema,
+  type BridgeCanvasPanPayload,
+  BridgeCanvasPanPayloadSchema,
+  type BridgeCanvasZoomPayload,
+  BridgeCanvasZoomPayloadSchema,
   type BridgeDrawEndPayload,
   BridgeDrawEndPayloadSchema,
   type BridgeDropTargetPayload,

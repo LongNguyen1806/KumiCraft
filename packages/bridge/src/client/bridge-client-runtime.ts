@@ -133,6 +133,9 @@ export class BridgeClientRuntime {
       this.handlePointerMove,
       this.handleKeyDown,
       this.handleScrollOrResize,
+      (type, payload) => {
+        this.sendToStudio(type, payload);
+      },
     );
 
     this.historyTeardown = wrapBrowserHistory(() => {

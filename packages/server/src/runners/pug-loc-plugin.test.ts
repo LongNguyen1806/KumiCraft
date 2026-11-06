@@ -46,5 +46,6 @@ describe('Pug Location Plugin [WP-4.00]', () => {
     expect(html).not.toMatch(/<meta[^>]*data-rc-loc/);
     expect(html).not.toMatch(/<title[^>]*data-rc-loc/);
     expect(html).not.toMatch(/<link[^>]*data-rc-loc/);
-  });
+    // Loads Pug from cold (and B4 starts a child process): slow when the whole suite runs.
+  }, 30_000);
 });

@@ -28,6 +28,7 @@ import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { dispatchBridgePayload } from './bridge-payload-handlers.ts';
+import { handleCanvasNavigation } from './canvas-navigation-messages.ts';
 import { type CanvasMode, useSelectionStore } from './selection-store.ts';
 
 export type BridgeTextEditListener = {
@@ -205,6 +206,12 @@ export class BridgeChannel {
     if (this.nonce === undefined || envelopeRes.data.nonce !== this.nonce) return;
 
     this.flushWaiting();
+    // Canvas navigation comes from whichever frame the pointer is over, working one or not.
+    if (
+      handleCanvasNavigation(envelopeRes.data.type, envelopeRes.data.payload, this.iframeWindow)
+    ) {
+      return;
+    }
     const activeId = useCanvasViewStore.getState().activeOpenFrameId;
     const isActive = this.openFrameId === undefined || this.openFrameId === activeId;
 
