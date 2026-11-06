@@ -94,9 +94,9 @@ export function DrawToolbar() {
     }
   }, [canDraw, tool, setTool]);
 
-  if (mode !== 'design') return undefined;
-
-  const visibleTools = canDraw ? TOOLS : TOOLS.filter((item) => item.id === 'select');
+  // Preview: the page takes the clicks, so only Pan is offered (and stays reachable to turn off).
+  const visibleTools =
+    mode !== 'design' ? [] : canDraw ? TOOLS : TOOLS.filter((item) => item.id === 'select');
 
   return (
     <div

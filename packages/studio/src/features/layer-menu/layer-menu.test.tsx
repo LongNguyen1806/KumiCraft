@@ -130,6 +130,23 @@ describe('Studio: LayerMenu [R-SL-13]', () => {
     }
   });
 
+  it('[WP-4.00] with several frames, only the frame the menu was opened in draws it (M-MF)', () => {
+    useCanvasViewStore.setState({ activeOpenFrameId: 'frame-a' });
+    useLayerMenuStore
+      .getState()
+      .show({ x: 10, y: 10, items: [makeItem('div', 'src/Home.tsx:1:1')] });
+
+    render(
+      <>
+        <LayerMenu openFrameId="frame-a" />
+        <LayerMenu openFrameId="frame-b" />
+      </>,
+    );
+
+    expect(screen.getAllByTestId('layer-menu')).toHaveLength(1);
+    expect(useLayerMenuStore.getState().frameId).toBe('frame-a');
+  });
+
   it('Scenario 4: positions menu using displayedZoom coordinates [R-SL-13]', () => {
     useCanvasViewStore.getState().setDisplayedZoom(0.5);
     const items = [makeItem('div', 'src/Home.tsx:1:1')];

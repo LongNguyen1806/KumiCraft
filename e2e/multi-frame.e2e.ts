@@ -25,7 +25,11 @@ test.afterEach(async () => {
 const iframes = (page: Page) => page.locator('iframe[data-testid="canvas-iframe"]');
 
 /** Clicks the heading of the n-th frame, scaled to the Canvas zoom (Playwright ignores it). */
-async function clickHeadingInFrame(page: Page, index: number): Promise<void> {
+async function clickHeadingInFrame(
+  page: Page,
+  index: number,
+  button: 'left' | 'right' = 'left',
+): Promise<void> {
   const outer = (await iframes(page).nth(index).boundingBox()) ?? undefined;
   const handle = await iframes(page).nth(index).elementHandle();
   const frame = (await handle.contentFrame()) ?? undefined;
@@ -41,6 +45,7 @@ async function clickHeadingInFrame(page: Page, index: number): Promise<void> {
   await page.mouse.click(
     outer.x + (inner.x + 10) * scale,
     outer.y + (inner.y + inner.height / 2) * scale,
+    { button },
   );
 }
 
@@ -95,4 +100,15 @@ test('two frames in two sessions; clicking in the other frame makes it the worki
   await expect(page.getByTestId('inspector-panel')).toContainText('<section>');
   await clickHeadingInFrame(page, 0);
   await expect(page.getByTestId('inspector-panel')).toContainText('src/pages/Dashboard.jsx:4');
+
+  // A right click in the other frame: that frame becomes the working one and alone shows the menu.
+  await clickHeadingInFrame(page, 1, 'right');
+  await expect.poll(() => isWorking(page)).toEqual([false, true]);
+  await expect(page.getByTestId('layer-menu')).toHaveCount(1);
+  await page.keyboard.press('Escape');
+
+  // Preview: the drawing tools go, Pan stays so it can be turned on and off.
+  await page.getByTestId('canvas-mode-toggle').click();
+  await expect(page.getByTestId('draw-tool-select')).toHaveCount(0);
+  await expect(page.getByTestId('draw-tool-pan')).toBeVisible();
 });

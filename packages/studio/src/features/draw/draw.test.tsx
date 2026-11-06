@@ -53,7 +53,13 @@ describe('Canvas drawing tools (Scenarios #10..#15) [R-DT-10..R-DT-15]', () => {
     });
 
     expect(useCanvasViewStore.getState().tool).toBe('select');
-    expect(screen.queryByTestId('draw-toolbar')).toBeNull();
+    // Preview keeps only Pan (owner 2026-11-06): the page takes the clicks, Pan stays reachable.
+    expect(screen.queryByTestId('draw-tool-frame')).toBeNull();
+    expect(screen.queryByTestId('draw-tool-select')).toBeNull();
+    fireEvent.click(screen.getByTestId('draw-tool-pan'));
+    expect(useCanvasViewStore.getState().panning).toBe(true);
+    fireEvent.click(screen.getByTestId('draw-tool-pan'));
+    expect(useCanvasViewStore.getState().panning).toBe(false);
   });
 
   it('[R-DT-11] [R-DT-15] Scenario 11: handleDrawEnd frame in normal container near full width uses w-full h-30 and resets tool to select', async () => {

@@ -174,30 +174,39 @@ export function menuPlacement(
   };
 }
 
-export function LayerMenu({
-  boxWidth,
-  boxHeight,
-}: {
-  readonly boxWidth?: number | undefined;
-  readonly boxHeight?: number | undefined;
-}) {
-  const { t } = useTranslation();
-  const menu = useLayerMenuStore((s) => s.menu);
-  const mode = useCanvasViewStore((s) => s.mode);
-  const displayedZoom = useCanvasViewStore((s) => s.displayedZoom);
-  const selectedRefs = useSelectionStore((s) => s.selectedRefs);
-  const menuRef = useRef<HTMLDivElement>(undefined);
-
-  useClickOutside(menuRef);
-
+/** Preview takes the clicks: an open layer menu goes away with its highlight. */
+function useCloseInPreview(mode: string): void {
   useEffect(() => {
     if (mode === 'preview') {
       useLayerMenuStore.getState().close();
       studioBridgeChannel.highlight(undefined);
     }
   }, [mode]);
+}
 
-  if (mode === 'preview' || !menu) return <></>;
+export function LayerMenu({
+  boxWidth,
+  boxHeight,
+  openFrameId,
+}: {
+  readonly boxWidth?: number | undefined;
+  readonly boxHeight?: number | undefined;
+  /** The Canvas frame this menu sits in; another frame's menu is not drawn here (M-MF). */
+  readonly openFrameId?: string | undefined;
+}) {
+  const { t } = useTranslation();
+  const menu = useLayerMenuStore((s) => s.menu);
+  const menuFrameId = useLayerMenuStore((s) => s.frameId);
+  const mode = useCanvasViewStore((s) => s.mode);
+  const displayedZoom = useCanvasViewStore((s) => s.displayedZoom);
+  const selectedRefs = useSelectionStore((s) => s.selectedRefs);
+  const menuRef = useRef<HTMLDivElement>(undefined);
+
+  useClickOutside(menuRef);
+  useCloseInPreview(mode);
+
+  const otherFrame = openFrameId !== undefined && menuFrameId !== openFrameId;
+  if (mode === 'preview' || !menu || otherFrame) return <></>;
 
   const placement = menuPlacement(
     menu.x * displayedZoom,

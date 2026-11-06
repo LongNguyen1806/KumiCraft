@@ -225,15 +225,25 @@ export class BridgeChannel {
     this.handleActiveFrameFollowup(envelopeRes.data.type, envelopeRes.data.payload);
   }
 
+  /** The user acts in this frame: it becomes the working frame, on its own route. */
+  private becomeWorkingFrame(): void {
+    if (!this.openFrameId) return;
+    useCanvasViewStore.getState().setActiveOpenFrameId(this.openFrameId);
+    const thisFrame = useCanvasViewStore
+      .getState()
+      .openFrames.find((f) => f.id === this.openFrameId);
+    if (thisFrame) useSelectionStore.getState().setRoute(thisFrame.route);
+  }
+
   private handleNonActiveFrameMessage(type: string, payload: unknown): void {
+    if (type === 'layer-menu') {
+      // A right click is a choice of frame too; the menu then opens in this one.
+      this.becomeWorkingFrame();
+      dispatchBridgePayload(type, payload);
+      return;
+    }
     if (type === 'select') {
-      if (this.openFrameId) {
-        useCanvasViewStore.getState().setActiveOpenFrameId(this.openFrameId);
-        const thisFrame = useCanvasViewStore
-          .getState()
-          .openFrames.find((f) => f.id === this.openFrameId);
-        if (thisFrame) useSelectionStore.getState().setRoute(thisFrame.route);
-      }
+      this.becomeWorkingFrame();
       dispatchBridgePayload(type, payload);
       const res = BridgeSelectPayloadSchema.safeParse(payload);
       if (res.success && this.openFrameId) {

@@ -138,9 +138,10 @@ type ZoomedIframeBoxProps = {
   readonly zoom: number;
   readonly src: string;
   readonly iframeRef: { current?: HTMLIFrameElement | undefined };
+  readonly openFrameId?: string | undefined;
 };
 
-function ZoomedIframeBox({ frame, zoom, src, iframeRef }: ZoomedIframeBoxProps) {
+function ZoomedIframeBox({ frame, zoom, src, iframeRef, openFrameId }: ZoomedIframeBoxProps) {
   return (
     <div
       data-testid="canvas-zoom-box"
@@ -170,7 +171,11 @@ function ZoomedIframeBox({ frame, zoom, src, iframeRef }: ZoomedIframeBoxProps) 
         />
         <CanvasDropLayer iframeRef={iframeRef} zoom={zoom} />
       </div>
-      <LayerMenu boxWidth={frame.width * zoom} boxHeight={frame.height * zoom} />
+      <LayerMenu
+        boxWidth={frame.width * zoom}
+        boxHeight={frame.height * zoom}
+        openFrameId={openFrameId}
+      />
     </div>
   );
 }
@@ -209,7 +214,13 @@ export function IframeFrame({
   return (
     <>
       {silent && !bridgeReady && <BridgeSilentBanner logTail={logTail} />}
-      <ZoomedIframeBox frame={frame} zoom={zoom} src={target.src} iframeRef={iframeRef} />
+      <ZoomedIframeBox
+        frame={frame}
+        zoom={zoom}
+        src={target.src}
+        iframeRef={iframeRef}
+        openFrameId={openFrameId}
+      />
     </>
   );
 }
