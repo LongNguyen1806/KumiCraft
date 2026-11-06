@@ -2,6 +2,7 @@
 import type { PackageManager, RelPath, SupportReport, UnsupportedReason } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../../../ports/file-system-port.ts';
+import { findPackage, findPackageWorkspaceRoot } from '../../workspace-root.ts';
 import type { DetectInput } from '../types.ts';
 
 type PkgJson = {
@@ -166,16 +167,18 @@ async function resolveInstalledVersion(
   pkgName: string,
   declaredVersion?: string,
 ): Promise<string | undefined> {
-  const installedPkgPath = `node_modules/${pkgName}/package.json`;
-  const installedText = await fs.readText(root, installedPkgPath);
-  if (installedText.ok) {
-    try {
-      const parsed = JSON.parse(installedText.value) as { version?: unknown };
-      if (typeof parsed.version === 'string') {
-        return parsed.version;
+  const pkgDir = await findPackage(fs, root, pkgName);
+  if (pkgDir !== undefined) {
+    const installedText = await fs.readText(pkgDir, 'package.json');
+    if (installedText.ok) {
+      try {
+        const parsed = JSON.parse(installedText.value) as { version?: unknown };
+        if (typeof parsed.version === 'string') {
+          return parsed.version;
+        }
+      } catch {
+        // Ignored
       }
-    } catch {
-      // Ignored
     }
   }
   return declaredVersion;
@@ -198,6 +201,7 @@ export async function detectExpressPug(input: DetectInput): Promise<SupportRepor
 
   const viewsDir = await resolveViewsDir(input.fs, input.root, serverEntry);
   const packageManager = await detectPackageManager(input.fs, input.root, pkg);
+  const workspaceRoot = await findPackageWorkspaceRoot(input.fs, input.root);
 
   const expressVersion = await resolveInstalledVersion(
     input.fs,
@@ -211,6 +215,7 @@ export async function detectExpressPug(input: DetectInput): Promise<SupportRepor
     supported: reasons.length === 0,
     reasons,
     framework: 'express-pug',
+    ...(workspaceRoot !== undefined ? { workspaceRoot } : {}),
     versions: {
       ...(expressVersion !== undefined ? { express: expressVersion } : {}),
       ...(pugVersion !== undefined ? { pug: pugVersion } : {}),

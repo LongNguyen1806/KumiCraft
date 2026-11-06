@@ -219,8 +219,13 @@
       "noTailwind": "Dự án không có Tailwind CSS",
       "tailwindVersion": "Tailwind CSS phải là phiên bản 4",
       "noViteConfig": "Không tìm thấy file cấu hình vite.config.*",
-      "noTailwindCss": "Không tìm thấy file CSS chứa @import \"tailwindcss\""
+      "noTailwindCss": "Không tìm thấy file CSS chứa @import \"tailwindcss\"",
+      "craUnsupported": "Create React App đã bị React ngừng phát triển (2025). KumiCraft 1.0 hỗ trợ React + Vite; chuyển dự án sang Vite là cách được React khuyên.",
+      "nextUnsupported": "Next.js chưa có ở KumiCraft 1.0, dự kiến bản 1.1.",
+      "webpackUnsupported": "Dự án React chạy webpack tự cấu hình chưa được hỗ trợ; KumiCraft 1.0 hỗ trợ React + Vite."
     },
+    "appsCount": "Thư mục này chứa {{count}} ứng dụng",
+    "appSupported": "Mở được",
     "install": {
       "title": "Cài đặt dependencies",
       "description": "Cần cài đặt các thư viện phụ thuộc trước khi có thể khởi chạy dev server.",
@@ -279,6 +284,7 @@
     "inheritedFrom": "kế thừa từ {{scope}}",
     "removeOverride": "Bỏ ghi đè",
     "openInEditor": "Mở trong editor",
+    "askAi": "Nhờ AI sửa phần tử này",
     "moveUp": "↑ Lên",
     "moveDown": "↓ Xuống",
     "wrap": "Bọc ▾",
@@ -395,7 +401,8 @@
         "rule": "tất cả {{count}} phần tử",
         "element": "chỉ phần tử này"
       }
-    }
+    },
+    "askAiDraft": "Sửa phần tử này: "
   },
   "textEdit": {
     "loopBanner": "Lặp {{count}} lần (sửa mẫu chung)",

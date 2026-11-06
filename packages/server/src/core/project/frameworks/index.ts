@@ -39,6 +39,15 @@ export async function detectFramework(
   const pkg = (input.packageJson ?? {}) as PkgJson;
   const deps = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) };
 
+  const specialReport = reports.find(({ report }) =>
+    report.reasons.some(
+      (r) => r === 'craUnsupported' || r === 'nextUnsupported' || r === 'webpackUnsupported',
+    ),
+  );
+  if (specialReport !== undefined) {
+    return specialReport;
+  }
+
   const matched = reports.find(({ adapter }) => adapter.primaryDependency in deps);
   if (matched !== undefined) {
     return matched;

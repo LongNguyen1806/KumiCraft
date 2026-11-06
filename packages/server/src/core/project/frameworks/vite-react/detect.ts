@@ -2,6 +2,7 @@
 import type { PackageManager, RelPath, SupportReport, UnsupportedReason } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../../../ports/file-system-port.ts';
+import { findPackage, findPackageWorkspaceRoot } from '../../workspace-root.ts';
 import type { DetectInput } from '../types.ts';
 import { detectStyling } from './styling.ts';
 
@@ -43,19 +44,21 @@ export async function resolvePackageVersion(
   pkgName: string,
   declaredVersion?: string,
 ): Promise<{ readonly version?: string | undefined; readonly major?: number | undefined }> {
-  const installedPkgPath = `node_modules/${pkgName}/package.json`;
-  const installedText = await fs.readText(root, installedPkgPath);
-  if (installedText.ok) {
-    try {
-      const parsed = JSON.parse(installedText.value) as { version?: unknown };
-      if (typeof parsed.version === 'string') {
-        return {
-          version: parsed.version,
-          major: parseMajorVersion(parsed.version),
-        };
+  const pkgDir = await findPackage(fs, root, pkgName);
+  if (pkgDir !== undefined) {
+    const installedText = await fs.readText(pkgDir, 'package.json');
+    if (installedText.ok) {
+      try {
+        const parsed = JSON.parse(installedText.value) as { version?: unknown };
+        if (typeof parsed.version === 'string') {
+          return {
+            version: parsed.version,
+            major: parseMajorVersion(parsed.version),
+          };
+        }
+      } catch {
+        // ignore parse error, fall back to declared
       }
-    } catch {
-      // ignore parse error, fall back to declared
     }
   }
 
@@ -139,6 +142,17 @@ function checkDependencyReasons(
   reactInfo: { readonly major?: number | undefined },
 ): UnsupportedReason[] {
   const reasons: UnsupportedReason[] = [];
+
+  if (allDeps['react-scripts'] !== undefined) {
+    reasons.push('craUnsupported');
+  }
+  if (allDeps['next'] !== undefined) {
+    reasons.push('nextUnsupported');
+  }
+  if (allDeps['webpack'] !== undefined && allDeps['vite'] === undefined) {
+    reasons.push('webpackUnsupported');
+  }
+
   if (allDeps['vite'] === undefined) {
     reasons.push('noVite');
   } else if (viteInfo.major !== 7 && viteInfo.major !== 8) {
@@ -182,7 +196,6 @@ export async function detectViteReact(input: DetectInput): Promise<SupportReport
   }
 
   const tailwindCss = await detectTailwindCss(input.fs, input.root, 'src');
-
   const styling = await detectStyling({
     fs: input.fs,
     root: input.root,
@@ -195,13 +208,14 @@ export async function detectViteReact(input: DetectInput): Promise<SupportReport
   const isTs = await input.fs.exists(input.root, 'tsconfig.json');
   const language = isTs ? 'ts' : 'js';
   const packageManager = await detectPackageManager(input.fs, input.root, pkg);
-
+  const workspaceRoot = await findPackageWorkspaceRoot(input.fs, input.root);
   const supported = reasons.length === 0;
 
   return {
     supported,
     reasons,
     framework: supported ? 'vite-react' : undefined,
+    ...(workspaceRoot !== undefined ? { workspaceRoot } : {}),
     versions: {
       vite: viteInfo.version,
       react: reactInfo.version,

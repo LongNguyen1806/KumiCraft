@@ -168,4 +168,38 @@ describe('M-FW: Framework detection', () => {
     expect(result.report.reasons).toEqual([]);
     expect(result.report.styling?.editable).toBe(true);
   });
+
+  it('Test M7 [WP-4.00]: detect identifies craUnsupported, nextUnsupported, webpackUnsupported, and regular Vite+React has no new reasons', async () => {
+    // 1. CRA project with react-scripts
+    const craPkg = { dependencies: { 'react-scripts': '5.0.1', react: '18.3.1' } };
+    const craResult = await detectFramework({ root: dir, fs: nodeFs, packageJson: craPkg });
+    expect(craResult.report.supported).toBe(false);
+    expect(craResult.report.reasons).toContain('craUnsupported');
+
+    // 2. Next.js project with next
+    const nextPkg = { dependencies: { next: '15.1.0', react: '19.0.0' } };
+    const nextResult = await detectFramework({ root: dir, fs: nodeFs, packageJson: nextPkg });
+    expect(nextResult.report.supported).toBe(false);
+    expect(nextResult.report.reasons).toContain('nextUnsupported');
+
+    // 3. Webpack project with webpack and react without vite
+    const webpackPkg = {
+      dependencies: { react: '18.2.0' },
+      devDependencies: { webpack: '5.89.0' },
+    };
+    const webpackResult = await detectFramework({ root: dir, fs: nodeFs, packageJson: webpackPkg });
+    expect(webpackResult.report.supported).toBe(false);
+    expect(webpackResult.report.reasons).toContain('webpackUnsupported');
+
+    // 4. Regular Vite + React project has none of these unsupported reasons
+    const vitePkg = {
+      dependencies: { react: '19.0.0' },
+      devDependencies: { vite: '8.0.0' },
+    };
+    await writeFile(join(dir, 'vite.config.js'), 'export default {}');
+    const viteResult = await detectFramework({ root: dir, fs: nodeFs, packageJson: vitePkg });
+    expect(viteResult.report.reasons).not.toContain('craUnsupported');
+    expect(viteResult.report.reasons).not.toContain('nextUnsupported');
+    expect(viteResult.report.reasons).not.toContain('webpackUnsupported');
+  });
 });

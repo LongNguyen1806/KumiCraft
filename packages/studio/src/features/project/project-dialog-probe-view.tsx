@@ -1,5 +1,5 @@
 // Probe result view and create project form for ProjectDialog (SPEC-04 M-PJ).
-import type { PackageManager, ProjectProbe } from '@kumicraft/shared';
+import type { AppCandidate, PackageManager, ProjectProbe } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -89,6 +89,73 @@ function UnsupportedProjectView({
           <li key={reason}>{t(`project.reasons.${reason}`, { defaultValue: reason })}</li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function AppCandidateRow({
+  app,
+  busy,
+  onOpenCandidate,
+}: {
+  readonly app: AppCandidate;
+  readonly busy: boolean;
+  readonly onOpenCandidate?: ((path: string) => void) | undefined;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div
+      data-testid={`app-candidate-${app.path}`}
+      className="flex items-center justify-between gap-2 rounded border border-border bg-field p-2"
+    >
+      <div className="flex flex-col min-w-0">
+        <span className="font-mono font-medium truncate">{app.path}</span>
+        <span className="text-[11px] text-ink-faint">
+          {app.kind} • {app.supported ? t('project.appSupported') : t('project.unsupported')}
+        </span>
+        {!app.supported && app.reasons.length > 0 && (
+          <span className="text-[10px] text-rose-500 mt-0.5">
+            {app.reasons.map((r) => t(`project.reasons.${r}`, { defaultValue: r })).join('; ')}
+          </span>
+        )}
+      </div>
+      {app.supported && onOpenCandidate !== undefined && (
+        <button
+          type="button"
+          data-testid={`app-candidate-open-${app.path}`}
+          disabled={busy}
+          onClick={() => {
+            onOpenCandidate(app.path);
+          }}
+          className="shrink-0 rounded bg-primary px-3 py-1 font-medium text-white hover:bg-primary-hover disabled:opacity-50 text-xs"
+        >
+          {t('project.open')}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function AppsProbeView({
+  probe,
+  busy,
+  onOpenCandidate,
+}: {
+  readonly probe: Extract<ProjectProbe, { readonly kind: 'apps' }>;
+  readonly busy: boolean;
+  readonly onOpenCandidate?: ((path: string) => void) | undefined;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col gap-3" data-testid="apps-probe-view">
+      <span className="font-medium text-ink">
+        {t('project.appsCount', { count: probe.apps.length })}
+      </span>
+      <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
+        {probe.apps.map((app) => (
+          <AppCandidateRow key={app.path} app={app} busy={busy} onOpenCandidate={onOpenCandidate} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -186,6 +253,7 @@ export type ProjectProbeResultViewProps = {
   readonly busy: boolean;
   readonly errorMsg?: string | undefined;
   readonly onOpen: () => void;
+  readonly onOpenCandidate?: ((path: string) => void) | undefined;
   readonly onCreate: (name: string, pm: PackageManager) => void;
 };
 
@@ -195,6 +263,7 @@ export function ProjectProbeResultView({
   busy,
   errorMsg,
   onOpen,
+  onOpenCandidate,
   onCreate,
 }: ProjectProbeResultViewProps) {
   const { t } = useTranslation();
@@ -209,6 +278,8 @@ export function ProjectProbeResultView({
         ) : (
           <UnsupportedProjectView probe={probe} />
         )
+      ) : probe?.kind === 'apps' ? (
+        <AppsProbeView probe={probe} busy={busy} onOpenCandidate={onOpenCandidate} />
       ) : probe?.kind === 'empty' || (probe?.kind === 'missing' && probe.canCreate) ? (
         <CreateProjectForm busy={busy} onCreate={onCreate} />
       ) : probe?.kind === 'other' ? (

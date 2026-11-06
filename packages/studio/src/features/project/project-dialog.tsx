@@ -122,6 +122,40 @@ function useProjectBackendsState(currentProject?: ProjectInfo) {
   return { backends, handleAddBackend, handleRemoveBackend };
 }
 
+function useProjectActions(
+  selectedPath: string,
+  probeState: ReturnType<typeof useProjectProbe>,
+  onClose: () => void,
+  onProjectOpened: (info: ProjectInfo) => void,
+) {
+  const [busy, setBusy] = useState(false);
+
+  const runAction = async (action: () => Promise<ProjectInfo>) => {
+    setBusy(true);
+    probeState.setErrorMsg(undefined);
+    try {
+      const info = await action();
+      onProjectOpened(info);
+      onClose();
+    } catch (err) {
+      probeState.reportError(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleOpen = () => runAction(() => openProject(selectedPath));
+  const handleCreate = (createName: string, createPm: PackageManager) =>
+    runAction(() => createProject(selectedPath, createName, createPm));
+  const handleOpenCandidate = (relPath: string) => {
+    const base = selectedPath.replaceAll('\\', '/').replace(/\/+$/, '');
+    const rel = relPath.replaceAll('\\', '/').replace(/^\/+/, '');
+    return runAction(() => openProject(`${base}/${rel}`));
+  };
+
+  return { busy, handleOpen, handleCreate, handleOpenCandidate };
+}
+
 function useProjectDialogState(
   initialPath: string,
   currentProject: ProjectInfo | undefined,
@@ -129,48 +163,18 @@ function useProjectDialogState(
   onProjectOpened: (info: ProjectInfo) => void,
 ) {
   const [selectedPath, setSelectedPath] = useState(initialPath);
-  const [busy, setBusy] = useState(false);
   const backendsState = useProjectBackendsState(currentProject);
   const probeState = useProjectProbe(selectedPath);
-
-  const handleOpen = async () => {
-    setBusy(true);
-    probeState.setErrorMsg(undefined);
-    try {
-      const info = await openProject(selectedPath);
-      onProjectOpened(info);
-      onClose();
-    } catch (err) {
-      probeState.reportError(err);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleCreate = async (createName: string, createPm: PackageManager) => {
-    setBusy(true);
-    probeState.setErrorMsg(undefined);
-    try {
-      const info = await createProject(selectedPath, createName, createPm);
-      onProjectOpened(info);
-      onClose();
-    } catch (err) {
-      probeState.reportError(err);
-    } finally {
-      setBusy(false);
-    }
-  };
+  const actions = useProjectActions(selectedPath, probeState, onClose, onProjectOpened);
 
   return {
     selectedPath,
     setSelectedPath,
-    busy,
+    ...actions,
     backends: backendsState.backends,
     probe: probeState.probe,
     probing: probeState.probing,
     errorMsg: probeState.errorMsg,
-    handleOpen,
-    handleCreate,
     handleAddBackend: backendsState.handleAddBackend,
     handleRemoveBackend: backendsState.handleRemoveBackend,
   };
@@ -183,6 +187,51 @@ export type ProjectDialogProps = {
   readonly onClose: () => void;
   readonly onProjectOpened: (info: ProjectInfo) => void;
 };
+
+function ProjectDialogContent({
+  activeTab,
+  currentProject,
+  s,
+}: {
+  readonly activeTab: 'project' | 'backends';
+  readonly currentProject?: ProjectInfo | undefined;
+  readonly s: ReturnType<typeof useProjectDialogState>;
+}) {
+  if (activeTab === 'backends') {
+    return (
+      <div className="flex flex-col gap-4">
+        <DevPortForm devPort={currentProject?.devPort} />
+        <DesignDirsForm designDirs={currentProject?.designDirs} />
+        <BackendsView
+          backends={s.backends}
+          onAddBackend={s.handleAddBackend}
+          onRemoveBackend={s.handleRemoveBackend}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <DirectoryBrowser currentPath={s.selectedPath} onSelectPath={s.setSelectedPath} />
+      <ProjectProbeResultView
+        probe={s.probe}
+        probing={s.probing}
+        busy={s.busy}
+        errorMsg={s.errorMsg}
+        onOpen={() => {
+          void s.handleOpen();
+        }}
+        onOpenCandidate={(relPath) => {
+          void s.handleOpenCandidate(relPath);
+        }}
+        onCreate={(name, pm) => {
+          void s.handleCreate(name, pm);
+        }}
+      />
+    </div>
+  );
+}
 
 export function ProjectDialog({
   open,
@@ -203,34 +252,7 @@ export function ProjectDialog({
           activeTab={activeTab}
           setActiveTab={setActiveTab}
         />
-
-        {activeTab === 'backends' ? (
-          <div className="flex flex-col gap-4">
-            <DevPortForm devPort={currentProject?.devPort} />
-            <DesignDirsForm designDirs={currentProject?.designDirs} />
-            <BackendsView
-              backends={s.backends}
-              onAddBackend={s.handleAddBackend}
-              onRemoveBackend={s.handleRemoveBackend}
-            />
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            <DirectoryBrowser currentPath={s.selectedPath} onSelectPath={s.setSelectedPath} />
-            <ProjectProbeResultView
-              probe={s.probe}
-              probing={s.probing}
-              busy={s.busy}
-              errorMsg={s.errorMsg}
-              onOpen={() => {
-                void s.handleOpen();
-              }}
-              onCreate={(name, pm) => {
-                void s.handleCreate(name, pm);
-              }}
-            />
-          </div>
-        )}
+        <ProjectDialogContent activeTab={activeTab} currentProject={currentProject} s={s} />
       </div>
     </Dialog>
   );

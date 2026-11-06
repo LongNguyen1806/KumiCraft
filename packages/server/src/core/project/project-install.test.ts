@@ -44,4 +44,42 @@ describe('checkNeedsInstall [R-PJ-06]', () => {
     // The same folder is not ready for a Vite + React project.
     expect(await checkNeedsInstall(nodeFs, dir)).toBe(true);
   });
+
+  it('Test M5 [WP-4.00]: checkNeedsInstall for frontend/ returns false when vite and react are in workspace root node_modules, but true when outside workspace root', async () => {
+    // 1. Workspace root with packages hoisted to root
+    const wsRoot = join(dir, 'monorepo');
+    const frontendDir = join(wsRoot, 'frontend');
+    await mkdir(frontendDir, { recursive: true });
+    await writeFile(join(wsRoot, 'package.json'), JSON.stringify({ workspaces: ['frontend'] }));
+
+    // Before hoisting to wsRoot: needs install
+    expect(await checkNeedsInstall(nodeFs, frontendDir)).toBe(true);
+
+    // Hoist vite and react into workspace root
+    for (const name of ['vite', 'react']) {
+      const pkgDir = join(wsRoot, 'node_modules', name);
+      await mkdir(pkgDir, { recursive: true });
+      await writeFile(join(pkgDir, 'package.json'), '{}');
+    }
+
+    // Now frontend/ recognizes hoisted packages in workspace root
+    expect(await checkNeedsInstall(nodeFs, frontendDir)).toBe(false);
+
+    // 2. Packages placed in parent OUTSIDE workspace root are not recognized
+    const outsideRepo = join(dir, 'outside-repo');
+    const innerWs = join(outsideRepo, 'inner-ws');
+    const innerApp = join(innerWs, 'app');
+    await mkdir(innerApp, { recursive: true });
+    await writeFile(join(innerWs, 'package.json'), JSON.stringify({ workspaces: ['app'] }));
+
+    // Put vite and react above innerWs (in outsideRepo)
+    for (const name of ['vite', 'react']) {
+      const pkgDir = join(outsideRepo, 'node_modules', name);
+      await mkdir(pkgDir, { recursive: true });
+      await writeFile(join(pkgDir, 'package.json'), '{}');
+    }
+
+    // Must still return true because outsideRepo is above innerWs workspace root
+    expect(await checkNeedsInstall(nodeFs, innerApp)).toBe(true);
+  });
 });

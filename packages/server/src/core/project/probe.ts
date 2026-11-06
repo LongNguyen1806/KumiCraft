@@ -4,6 +4,7 @@ import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { checkBlockedPath, checkPathSyntax, parentPath } from '../shared/paths.ts';
 import { err, ok, type Result } from '../shared/result.ts';
 import type { Platform } from '../shared/session.ts';
+import { findAppCandidates } from './app-candidates.ts';
 import { detectFramework } from './frameworks/index.ts';
 import type { FrameworkAdapter } from './frameworks/types.ts';
 
@@ -25,6 +26,44 @@ export type ProbeDeps = {
   readonly homeDir?: string | undefined;
 };
 
+function hasWorkspacesField(value: unknown): boolean {
+  if (!value || typeof value !== 'object' || !('workspaces' in value)) return false;
+  const ws = (value as { readonly workspaces?: unknown }).workspaces;
+  return Array.isArray(ws) || (typeof ws === 'object' && Boolean(ws));
+}
+
+async function probePackageJsonProject(
+  path: string,
+  deps: ProbeDeps,
+): Promise<Result<ProjectProbe>> {
+  const read = await deps.fs.readText(path, 'package.json', { maxBytes: 1024 * 1024 });
+  let packageJson: unknown = {};
+  if (read.ok) {
+    try {
+      packageJson = JSON.parse(read.value);
+    } catch {
+      packageJson = {};
+    }
+  }
+
+  const { report } = await detectFramework({ root: path, fs: deps.fs, packageJson });
+  const hasWorkspace = await deps.fs.exists(path, WORKSPACE_FILE);
+  if (report.supported) {
+    return ok({ kind: 'project', support: report, hasWorkspace });
+  }
+
+  const isWorkspace =
+    hasWorkspacesField(packageJson) || (await deps.fs.exists(path, 'pnpm-workspace.yaml'));
+  if (isWorkspace) {
+    const candidates = await findAppCandidates(path, deps.fs);
+    if (candidates.length > 0) {
+      return ok({ kind: 'apps', apps: candidates });
+    }
+  }
+
+  return ok({ kind: 'project', support: report, hasWorkspace });
+}
+
 export async function probeProject(path: string, deps: ProbeDeps): Promise<Result<ProjectProbe>> {
   const syntaxError = checkPathSyntax(path, deps.platform);
   if (syntaxError !== undefined) return err(syntaxError);
@@ -41,35 +80,21 @@ export async function probeProject(path: string, deps: ProbeDeps): Promise<Resul
 
   const hasPackageJson = await deps.fs.exists(path, 'package.json');
   if (hasPackageJson) {
-    const read = await deps.fs.readText(path, 'package.json', { maxBytes: 1024 * 1024 });
-    let packageJson: unknown = {};
-    if (read.ok) {
-      try {
-        packageJson = JSON.parse(read.value);
-      } catch {
-        packageJson = {};
-      }
-    }
-
-    const { report } = await detectFramework({
-      root: path,
-      fs: deps.fs,
-      packageJson,
-    });
-
-    const hasWorkspace = await deps.fs.exists(path, WORKSPACE_FILE);
-    return ok({
-      kind: 'project',
-      support: report,
-      hasWorkspace,
-    });
+    return probePackageJsonProject(path, deps);
   }
 
   const entriesResult = await deps.fs.readDir(path, '.');
   if (!entriesResult.ok) return entriesResult;
 
   const isEmpty = entriesResult.value.every((entry) => EMPTY_ALLOWED_NAMES.has(entry.name));
-  return isEmpty ? ok({ kind: 'empty' }) : ok({ kind: 'other' });
+  if (isEmpty) return ok({ kind: 'empty' });
+
+  const candidates = await findAppCandidates(path, deps.fs);
+  if (candidates.length > 0) {
+    return ok({ kind: 'apps', apps: candidates });
+  }
+
+  return ok({ kind: 'other' });
 }
 
 export async function probeSupportedProject(

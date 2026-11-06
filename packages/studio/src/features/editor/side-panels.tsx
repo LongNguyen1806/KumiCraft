@@ -15,6 +15,9 @@ import { PagesPanel } from '../pages/pages-panel.tsx';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useShownActivity } from '../shell/activity-store.ts';
 import { PanelHeaderContext } from './panel-header-context.ts';
+import { type RightPanelTab, useRightPanelTab } from './right-panel-store.ts';
+
+export type { RightPanelTab };
 
 type PanelProps = {
   readonly label: string;
@@ -123,28 +126,6 @@ export function LeftPanel() {
   );
 }
 
-const RIGHT_PANEL_KEY = 'kumicraft.rightPanelTab';
-
-export type RightPanelTab = 'properties' | 'chat';
-
-function readRightPanelTab(): RightPanelTab {
-  try {
-    const saved = localStorage.getItem(RIGHT_PANEL_KEY) ?? undefined;
-    if (saved === 'chat') return 'chat';
-    return 'properties';
-  } catch {
-    return 'properties';
-  }
-}
-
-function saveRightPanelTab(tab: RightPanelTab): void {
-  try {
-    localStorage.setItem(RIGHT_PANEL_KEY, tab);
-  } catch {
-    // Private windows may refuse storage: the layout then lasts for this visit only.
-  }
-}
-
 type RightPanelTabsProps = {
   readonly tab: RightPanelTab;
   readonly onSelectTab: (tab: RightPanelTab) => void;
@@ -183,13 +164,8 @@ export type RightPanelProps = {
 export function RightPanel({ trusted = false }: RightPanelProps) {
   const { t } = useTranslation();
   const theme = useProjectTheme();
-  const [tab, setTab] = useState<RightPanelTab>(readRightPanelTab);
+  const [tab, setTab] = useRightPanelTab();
   const [headerSlot, setHeaderSlot] = useState<HTMLDivElement | undefined>(undefined);
-
-  const handleSetTab = (nextTab: RightPanelTab) => {
-    setTab(nextTab);
-    saveRightPanelTab(nextTab);
-  };
 
   const title = tab === 'chat' ? t('editor.ai') : t('editor.properties');
 
@@ -198,7 +174,7 @@ export function RightPanel({ trusted = false }: RightPanelProps) {
       <Panel
         label={t('editor.rightPanel')}
         title={title}
-        tabs={<RightPanelTabs tab={tab} onSelectTab={handleSetTab} />}
+        tabs={<RightPanelTabs tab={tab} onSelectTab={setTab} />}
         onHeaderSlotRef={setHeaderSlot}
       >
         {tab === 'properties' && <InspectorPanel theme={theme} />}

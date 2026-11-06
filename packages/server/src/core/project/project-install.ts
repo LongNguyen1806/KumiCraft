@@ -6,6 +6,7 @@ import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { ProcessPort } from '../ports/process-port.ts';
 import { err, ok, type Result } from '../shared/result.ts';
 import type { WorkspaceState } from './project-types.ts';
+import { findPackage } from './workspace-root.ts';
 
 /** R-PJ-06: the project needs an install while one of its framework's packages is missing. */
 export async function checkNeedsInstall(
@@ -14,7 +15,8 @@ export async function checkNeedsInstall(
   packages: readonly string[] = ['vite', 'react'],
 ): Promise<boolean> {
   for (const name of packages) {
-    if (!(await fs.exists(root, `node_modules/${name}/package.json`))) return true;
+    const found = await findPackage(fs, root, name);
+    if (found === undefined) return true;
   }
   return false;
 }
@@ -128,5 +130,6 @@ export function startProjectInstall(
 
   const { root } = current;
   const expectedCommand = getInstallCommand(current.support.packageManager);
-  return startInstallJob(deps, root, command, expectedCommand, () => afterInstall(root));
+  const installCwd = current.support.workspaceRoot ?? root;
+  return startInstallJob(deps, installCwd, command, expectedCommand, () => afterInstall(root));
 }

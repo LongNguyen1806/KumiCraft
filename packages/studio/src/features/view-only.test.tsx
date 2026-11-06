@@ -8,8 +8,12 @@ import * as editorClient from '../api/editor-client.ts';
 import * as eventsClient from '../api/events-client.ts';
 import * as sourceClient from '../api/source-client.ts';
 import { initI18n } from '../i18n/i18n.ts';
+import { useChatStore } from './chat/chat-store.ts';
 import { CanvasArea } from './editor/canvas-area.tsx';
+import { getRightPanelTab, setRightPanelTab } from './editor/right-panel-store.ts';
+import { ViewOnlyInspector } from './inspector/components/view-only-inspector.tsx';
 import { InspectorPanel } from './inspector/inspector-panel.tsx';
+import type { InspectorTarget } from './inspector/types.ts';
 import { PagesPanel } from './pages/pages-panel.tsx';
 import { useProjectStore } from './project/project-store.ts';
 import { BridgeChannel } from './selection/bridge-channel.ts';
@@ -152,5 +156,53 @@ describe('Studio viewOnly mode [WP-4.00]', () => {
     expect(screen.getByText('Index')).toBeDefined();
     expect(screen.getByText('About')).toBeDefined();
     unmountPages();
+  });
+
+  it('Test M9 [WP-4.00]: Studio bấm ask-ai-element-btn trong ViewOnlyInspector → tab chat, unhide element, gợi ý draft, focus textarea', async () => {
+    await i18next.changeLanguage('vi');
+    setRightPanelTab('properties');
+    useChatStore.getState().setHidden('element', true);
+    useChatStore.getState().setDraft('');
+
+    const target: Extract<InspectorTarget, { readonly kind: 'element' }> = {
+      kind: 'element',
+      ref: { loc: 'views/index.pug:5:3', index: 0 },
+      locFile: 'views/index.pug',
+      locLine: 5,
+      locCol: 3,
+      source: SAMPLE_SOURCE,
+      loading: false,
+      warnings: [],
+      currentScope: { breakpoint: 'base' },
+      writePrefix: '',
+      setInteractionState: vi.fn(),
+      refresh: vi.fn(),
+    };
+
+    const { unmount } = render(
+      <div>
+        <ViewOnlyInspector target={target} />
+        <textarea data-testid="chat-input" />
+      </div>,
+    );
+
+    const askBtn = screen.getByTestId('ask-ai-element-btn');
+    expect(askBtn).toBeDefined();
+
+    fireEvent.click(askBtn);
+
+    expect(getRightPanelTab()).toBe('chat');
+    expect(useChatStore.getState().hidden.element).toBe(false);
+    expect(useChatStore.getState().draft).toBe('Sửa phần tử này: ');
+
+    const textarea = screen.getByTestId<HTMLTextAreaElement>('chat-input');
+    expect(document.activeElement).toBe(textarea);
+
+    // Existing draft preserved when clicked again
+    useChatStore.getState().setDraft('Hãy thêm viền xanh');
+    fireEvent.click(askBtn);
+    expect(useChatStore.getState().draft).toBe('Hãy thêm viền xanh');
+
+    unmount();
   });
 });

@@ -14,7 +14,10 @@
       "noTailwindCss": "Tailwind CSS file not found.",
       "noExpress": "Express is not installed in the project.",
       "noPug": "Pug is not installed in the project.",
-      "noServerEntry": "Server entry file could not be found (app.js, bin/www, ...)."
+      "noServerEntry": "Server entry file could not be found (app.js, bin/www, ...).",
+      "craUnsupported": "Create React App has been deprecated by React (2025). KumiCraft 1.0 supports React + Vite; migrating to Vite is recommended by React.",
+      "nextUnsupported": "Next.js is not yet supported in KumiCraft 1.0, planned for 1.1.",
+      "webpackUnsupported": "React projects with custom webpack configuration are not yet supported; KumiCraft 1.0 supports React + Vite."
     }
   },
   "E002": {

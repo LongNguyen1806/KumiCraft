@@ -165,6 +165,8 @@ export {
   AGENT_CHOICES,
   type AgentChoice,
   AgentChoiceSchema,
+  type AppCandidate,
+  AppCandidateSchema,
   BACKEND_STATUSES,
   type BackendInfo,
   BackendInfoSchema,

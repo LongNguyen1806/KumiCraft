@@ -33,6 +33,9 @@ export const UNSUPPORTED_REASONS = [
   'noExpress',
   'noPug',
   'noServerEntry',
+  'craUnsupported',
+  'nextUnsupported',
+  'webpackUnsupported',
 ] as const;
 export const UnsupportedReasonSchema = z.enum(UNSUPPORTED_REASONS);
 export type UnsupportedReason = z.infer<typeof UnsupportedReasonSchema>;
@@ -78,6 +81,7 @@ export const SupportReportSchema = z.strictObject({
   supported: z.boolean(),
   reasons: z.array(UnsupportedReasonSchema).readonly(),
   framework: z.enum(FRAMEWORK_IDS).optional(),
+  workspaceRoot: z.string().min(1).optional(),
   versions: z.strictObject({
     vite: z.string().optional(),
     react: z.string().optional(),
@@ -96,6 +100,15 @@ export const SupportReportSchema = z.strictObject({
 });
 export type SupportReport = z.infer<typeof SupportReportSchema>;
 
+export const AppCandidateSchema = z.strictObject({
+  path: RelPathSchema,
+  framework: z.enum(FRAMEWORK_IDS).optional(),
+  kind: z.enum(['vite-react', 'express-pug', 'cra', 'next', 'webpack', 'other']),
+  supported: z.boolean(),
+  reasons: z.array(UnsupportedReasonSchema).readonly(),
+});
+export type AppCandidate = z.infer<typeof AppCandidateSchema>;
+
 export const ProjectProbeSchema = z.discriminatedUnion('kind', [
   z.strictObject({
     kind: z.literal('missing'),
@@ -108,6 +121,10 @@ export const ProjectProbeSchema = z.discriminatedUnion('kind', [
     kind: z.literal('project'),
     support: SupportReportSchema,
     hasWorkspace: z.boolean(),
+  }),
+  z.strictObject({
+    kind: z.literal('apps'),
+    apps: z.array(AppCandidateSchema).min(1).max(20).readonly(),
   }),
   z.strictObject({
     kind: z.literal('other'),
@@ -216,46 +233,20 @@ export const ExtractComponentSchema = z.strictObject({
 });
 export type ExtractComponent = z.infer<typeof ExtractComponentSchema>;
 
-export const DraftInfoSchema = z.strictObject({
-  name: z.string(),
-  file: RelPathSchema,
-  free: z.boolean(),
-  inUse: z.boolean(),
-});
-export type DraftInfo = z.infer<typeof DraftInfoSchema>;
-
-export const DraftsInfoSchema = z.strictObject({
-  drafts: z.array(DraftInfoSchema),
-  dir: RelPathSchema,
-  ignored: z.boolean(),
-});
-export type DraftsInfo = z.infer<typeof DraftsInfoSchema>;
-
-export const CreateDraftSchema = z.strictObject({
-  name: z.string().trim().max(64).optional(),
-  free: z.boolean(),
-});
-export type CreateDraft = z.infer<typeof CreateDraftSchema>;
-
-export const RenameDraftSchema = z.strictObject({
-  file: RelPathSchema,
-  newName: z.string().trim().min(1).max(64),
-});
-export type RenameDraft = z.infer<typeof RenameDraftSchema>;
-
-export const DraftFileSchema = z.strictObject({ file: RelPathSchema });
-export type DraftFile = z.infer<typeof DraftFileSchema>;
-
-export const PromoteDraftSchema = z.strictObject({
-  file: RelPathSchema,
-  as: z.enum(['page', 'component']),
-  name: z.string().trim().min(1).max(64),
-  dir: RelPathSchema.optional(),
-  fileName: z.string().max(100).optional(),
-  path: z.string().max(200).optional(),
-  keepDraft: z.boolean(),
-});
-export type PromoteDraft = z.infer<typeof PromoteDraftSchema>;
+export {
+  type CreateDraft,
+  CreateDraftSchema,
+  type DraftFile,
+  DraftFileSchema,
+  type DraftInfo,
+  DraftInfoSchema,
+  type DraftsInfo,
+  DraftsInfoSchema,
+  type PromoteDraft,
+  PromoteDraftSchema,
+  type RenameDraft,
+  RenameDraftSchema,
+} from './drafts.ts';
 
 export const ProjectAssetsSchema = z.strictObject({
   files: z.array(RelPathSchema).max(500),

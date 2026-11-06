@@ -3,6 +3,7 @@ import type { InteractionState } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
 import { errorText } from '../../../routes/error-text.ts';
+import { askAiAboutElement } from '../../chat/ask-ai-about-element.ts';
 import { useOpenInEditor } from '../../editor/use-open-in-editor.ts';
 import type { InspectorLockReason, InspectorTarget, InspectorWarning } from '../types.ts';
 import { StructureActions } from './structure-actions.tsx';
@@ -28,13 +29,25 @@ function LockBanner({
     >
       <div className="flex items-start justify-between gap-2">
         <span className="font-medium leading-relaxed">{t(`inspector.lockReason.${reason}`)}</span>
-        <button
-          type="button"
-          onClick={onOpenEditor}
-          className="shrink-0 text-accent underline hover:opacity-80 text-[11px] font-medium"
-        >
-          {t('inspector.openInEditor')}
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            data-testid="ask-ai-element-btn"
+            onClick={() => {
+              askAiAboutElement();
+            }}
+            className="text-accent underline hover:opacity-80 text-[11px] font-medium"
+          >
+            {t('inspector.askAi')}
+          </button>
+          <button
+            type="button"
+            onClick={onOpenEditor}
+            className="text-accent underline hover:opacity-80 text-[11px] font-medium"
+          >
+            {t('inspector.openInEditor')}
+          </button>
+        </div>
       </div>
       {code !== undefined && (
         <pre className="overflow-x-auto rounded bg-black/10 p-1 font-mono text-[11px] text-ink">

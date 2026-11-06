@@ -41,6 +41,28 @@ describe('ProjectProbeSchema', () => {
     expect(ProjectProbeSchema.safeParse(probe).success).toBe(true);
   });
 
+  it('parses valid apps probe with candidate apps [WP-4.00]', () => {
+    const probe = {
+      kind: 'apps',
+      apps: [
+        {
+          path: 'frontend',
+          framework: 'vite-react',
+          kind: 'vite-react',
+          supported: true,
+          reasons: [],
+        },
+        {
+          path: 'legacy-cra',
+          kind: 'cra',
+          supported: false,
+          reasons: ['craUnsupported'],
+        },
+      ],
+    };
+    expect(ProjectProbeSchema.safeParse(probe).success).toBe(true);
+  });
+
   it('rejects unknown kinds', () => {
     const probe = { kind: 'unknown' };
     expect(ProjectProbeSchema.safeParse(probe).success).toBe(false);
