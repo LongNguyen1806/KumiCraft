@@ -1,10 +1,11 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { makeTempDir, nodeFs } from '../../../workspace/test-support.ts';
 import { detectFramework } from '../index.ts';
+import { detectExpressPug } from './detect.ts';
 import { expressPugAdapter } from './index.ts';
 import { findExpressRoutes } from './routes.ts';
 
@@ -114,6 +115,46 @@ describe('Express + Pug Framework Adapter [WP-4.00]', () => {
     } finally {
       await cleanup4();
     }
+  });
+
+  it('[WP-4.00] A2: express only in devDependencies, or a workspace root, is not an Express app to start', async () => {
+    // A repo that keeps express and pug as tools (KumiCraft does, for its fixtures).
+    await writeFile(
+      join(dir, 'package.json'),
+      JSON.stringify({
+        scripts: { dev: 'node scripts/dev.mjs' },
+        devDependencies: { express: '5.3.0', pug: '3.0.4' },
+      }),
+    );
+    await mkdir(join(dir, 'scripts'), { recursive: true });
+    await writeFile(join(dir, 'scripts/dev.mjs'), '');
+    const tools = await detectExpressPug({
+      root: dir,
+      fs: nodeFs,
+      packageJson: JSON.parse(await readFile(join(dir, 'package.json'), 'utf8')),
+    });
+    expect(tools.supported).toBe(false);
+    expect(tools.reasons).toContain('noExpress');
+
+    // A workspace root: its scripts start the whole workspace, never treated as the server.
+    const rootPkg = {
+      workspaces: ['apps/*'],
+      scripts: { start: 'node scripts/dev.mjs' },
+      dependencies: { express: '5.3.0', pug: '3.0.4' },
+    };
+    await writeFile(join(dir, 'package.json'), JSON.stringify(rootPkg));
+    const workspace = await detectExpressPug({ root: dir, fs: nodeFs, packageJson: rootPkg });
+    expect(workspace.supported).toBe(false);
+    expect(workspace.serverEntry).toBeUndefined();
+    expect(workspace.reasons).toContain('noServerEntry');
+
+    // The KumiCraft repo itself (a pnpm workspace keeping express as a tool) never starts as an app.
+    const selfPkg: unknown = JSON.parse(
+      await readFile(join(process.cwd(), 'package.json'), 'utf8'),
+    );
+    const self = await detectFramework({ root: process.cwd(), fs: nodeFs, packageJson: selfPkg });
+    expect(self.report.supported).toBe(false);
+    expect(self.report.serverEntry).toBeUndefined();
   });
 
   it('[WP-4.00] A3: Fullstack project with vite, react, express, pug -> vite-react wins', async () => {

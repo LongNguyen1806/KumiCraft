@@ -9,7 +9,7 @@ function hasWorkspacesField(value: unknown): boolean {
 }
 
 /** An npm, pnpm or yarn workspace: `pnpm-workspace.yaml`, or a `package.json` with `workspaces`. */
-async function isPackageWorkspace(fs: FileSystemPort, dir: string): Promise<boolean> {
+export async function isPackageWorkspace(fs: FileSystemPort, dir: string): Promise<boolean> {
   if (await fs.exists(dir, 'pnpm-workspace.yaml')) return true;
   if (!(await fs.exists(dir, 'package.json'))) return false;
   const read = await fs.readText(dir, 'package.json', { maxBytes: 512 * 1024 });

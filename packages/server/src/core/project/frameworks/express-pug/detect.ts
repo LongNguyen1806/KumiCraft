@@ -2,7 +2,7 @@
 import type { PackageManager, RelPath, SupportReport, UnsupportedReason } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../../../ports/file-system-port.ts';
-import { findPackage, findPackageWorkspaceRoot } from '../../workspace-root.ts';
+import { findPackage, findPackageWorkspaceRoot, isPackageWorkspace } from '../../workspace-root.ts';
 import type { DetectInput } from '../types.ts';
 
 type PkgJson = {
@@ -189,12 +189,18 @@ export async function detectExpressPug(input: DetectInput): Promise<SupportRepor
   const deps = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) };
   const reasons: UnsupportedReason[] = [];
 
-  const hasExpress = 'express' in deps;
+  // A server needs express to run, so it is a dependency. In devDependencies only it is a tool of
+  // the repo (KumiCraft itself keeps express there for its fixtures), not an app to start.
+  const hasExpress = 'express' in (pkg.dependencies ?? {});
   const hasPug = 'pug' in deps;
   if (!hasExpress) reasons.push('noExpress');
   if (!hasPug) reasons.push('noPug');
 
-  const serverEntry = await resolveStartupFile(input.fs, input.root, pkg);
+  // A workspace root holds apps; it is never one, and its scripts start the whole workspace.
+  const isWorkspaceRoot = await isPackageWorkspace(input.fs, input.root);
+  const serverEntry = isWorkspaceRoot
+    ? undefined
+    : await resolveStartupFile(input.fs, input.root, pkg);
   if (serverEntry === undefined) {
     reasons.push('noServerEntry');
   }
