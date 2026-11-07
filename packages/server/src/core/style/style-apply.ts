@@ -305,6 +305,28 @@ async function applyToElement(
   return ok({ files: mergeWrites(writes), className: newClass });
 }
 
+/** `.card__title`: one class, no combinator, pseudo-class or list. */
+const SINGLE_CLASS = /^\.-?[A-Za-z_][\w-]*$/;
+
+/**
+ * No rule sets the property yet, and the element has a class of its own: a single-class rule in a
+ * project sheet that matches only this element on the page. The declaration goes into that rule,
+ * so no new class lands in the JSX (K9.5, found on MarketLink's BEM classes).
+ */
+async function soleClassRule(
+  deps: StyleApplyDeps,
+  root: string,
+  request: StyleApplyRequest,
+  longhand: string,
+): Promise<ProjectRule | undefined> {
+  const rule = request.probe.rules.find(
+    (r) => r.affects === 1 && r.media.length === 0 && SINGLE_CLASS.test(r.selector.trim()),
+  );
+  if (rule === undefined) return undefined;
+  const resolved = await resolveProjectRule(deps, root, rule, longhand);
+  return resolved === 'generated' ? undefined : resolved;
+}
+
 /** R-ST-06: one Inspector change; the caller makes the written files one history entry (R-ST-15). */
 export async function applyStyleChange(
   deps: StyleApplyDeps,
@@ -341,6 +363,10 @@ export async function applyStyleChange(
   }
   if (toProjectRule) {
     return applyToRule(deps, root, target, longhand, request.change);
+  }
+  if (winner.kind === 'none') {
+    const sole = await soleClassRule(deps, root, request, longhand);
+    if (sole !== undefined) return applyToRule(deps, root, sole, longhand, request.change);
   }
   return applyToElement(deps, root, request, longhand, target);
 }
