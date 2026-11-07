@@ -10,6 +10,7 @@ import {
   summarize,
   type UsageCounter,
 } from '../source-editor/component-usages.ts';
+import { insertJsxFor } from './component-insert-jsx.ts';
 
 export type ComponentsListDeps = {
   readonly fs: FileSystemPort;
@@ -166,6 +167,10 @@ function extractExportedComponents(
   return results;
 }
 
+function withInsertJsx(jsx: string | undefined): { insertJsx?: string } {
+  return jsx === undefined ? {} : { insertJsx: jsx };
+}
+
 export async function listProjectComponents(
   deps: ComponentsListDeps,
   root: string,
@@ -191,6 +196,7 @@ export async function listProjectComponents(
         kind: item.kind,
         usages,
         importStatement: item.importStatement,
+        ...withInsertJsx(insertJsxFor(read.value, item.name)),
       });
     }
   }

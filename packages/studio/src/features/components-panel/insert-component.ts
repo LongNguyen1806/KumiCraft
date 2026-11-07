@@ -24,7 +24,8 @@ export async function insertComponentAt(
     const res = await applyStructureEdit({
       kind: 'insert',
       target,
-      jsx: `<${component.name} />`,
+      // Required props come filled in, so the project still type-checks (K9.5).
+      jsx: component.insertJsx ?? `<${component.name} />`,
       from: {
         file: component.file,
         imports: [component.importStatement],

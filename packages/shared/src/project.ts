@@ -216,6 +216,8 @@ export const ProjectComponentSchema = z.strictObject({
   kind: z.enum(['component', 'layout']),
   usages: z.number().int().min(0),
   importStatement: z.string(),
+  /** The tag to insert, its required props filled with placeholders; absent: `<Name />`. */
+  insertJsx: z.string().max(2000).optional(),
 });
 export type ProjectComponent = z.infer<typeof ProjectComponentSchema>;
 
