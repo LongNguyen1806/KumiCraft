@@ -100,7 +100,7 @@
     "fiveHour": "5 giờ",
     "week": "Tuần",
     "resetsAt": "Làm mới lúc {{time}}",
-    "noLimitsAgy": "Antigravity CLI không báo hạn mức",
+    "noLimitsAgy": "Antigravity CLI không gửi hạn mức. Xem bằng lệnh /usage trong Antigravity",
     "noLimitsYet": "Chưa có số liệu, gửi một câu để cập nhật",
     "lastTurn": "Lượt trước: {{tokens}} token",
     "updatedAt": "Cập nhật lúc {{time}}"

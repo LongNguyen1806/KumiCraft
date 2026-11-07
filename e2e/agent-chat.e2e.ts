@@ -337,7 +337,7 @@ test('the model chip sends the picked effort and shows the turn usage without ov
   await chip.click();
   await expect(page.getByTestId('agent-settings-usage')).toContainText('4.321');
   await expect(page.getByTestId('agent-settings-usage')).toContainText(
-    'Antigravity CLI không báo hạn mức',
+    'Antigravity CLI không gửi hạn mức',
   );
   await page.keyboard.press('Escape');
 

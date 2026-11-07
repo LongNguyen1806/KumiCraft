@@ -141,7 +141,7 @@ describe('AgentSettings chip [K9.5]', () => {
     render(<AgentSettings agent={AGY} />);
     fireEvent.click(screen.getByTestId('agent-settings-chip'));
     expect(screen.getByTestId('agent-settings-usage').textContent).toContain(
-      'Antigravity CLI không báo hạn mức',
+      'Antigravity CLI không gửi hạn mức',
     );
     expect(screen.queryByRole('meter')).toBeNull();
   });

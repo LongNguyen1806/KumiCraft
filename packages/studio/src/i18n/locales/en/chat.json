@@ -100,7 +100,7 @@
     "fiveHour": "5 hours",
     "week": "Week",
     "resetsAt": "Resets {{time}}",
-    "noLimitsAgy": "Antigravity CLI does not report limits",
+    "noLimitsAgy": "Antigravity CLI does not share its limits. See them with /usage in Antigravity",
     "noLimitsYet": "No data yet, send a message to update",
     "lastTurn": "Last turn: {{tokens}} tokens",
     "updatedAt": "Updated {{time}}"

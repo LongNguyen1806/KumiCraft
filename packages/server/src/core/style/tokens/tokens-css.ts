@@ -12,6 +12,7 @@ import { err, ok } from '@kumicraft/shared';
 import type { FileSystemPort } from '../../ports/file-system-port.ts';
 import { isValidThemeValue } from '../../project/theme-edit.ts';
 import { classifyVariable } from './classify.ts';
+import { cssFilesWithImports } from './css-imports.ts';
 import {
   emptyBuckets,
   escapeRegExp,
@@ -56,16 +57,19 @@ export function parseCssVariables(css: string, file = 'src/index.css'): TokenBuc
 export const cssAdapter: TokenAdapter = {
   system: 'css',
   async read(fs: FileSystemPort, files: TokenFiles): Promise<Result<ThemeInfo>> {
-    const cssPaths = targetCssFiles(files);
+    const cssPaths = await cssFilesWithImports(fs, files.root, targetCssFiles(files));
     const combined = emptyBuckets();
     const seen = new Set<string>();
     let firstFile: string | undefined;
+    // New variables go where the project already keeps its variables, not into the entry file.
+    let tokenFile: string | undefined;
 
     for (const p of cssPaths) {
       const read = await fs.readText(files.root, p, { maxBytes: 1024 * 1024 });
       if (!read.ok) continue;
       if (firstFile === undefined) firstFile = p;
       const parsed = parseCssVariables(read.value, p);
+      if (tokenFile === undefined && Object.values(parsed).some((b) => b.length > 0)) tokenFile = p;
       for (const kind of ['colors', 'fontSizes', 'radii', 'fonts', 'shadows'] as const) {
         for (const token of parsed[kind]) {
           const key = `${kind}:${token.name}`;
@@ -78,7 +82,7 @@ export const cssAdapter: TokenAdapter = {
     }
 
     return ok({
-      file: firstFile ?? cssPaths[0],
+      file: tokenFile ?? firstFile ?? cssPaths[0],
       system: 'css',
       ...combined,
     });
@@ -95,7 +99,7 @@ export const cssAdapter: TokenAdapter = {
     const currentTheme = await cssAdapter.read(fs, files);
     if (!currentTheme.ok) return currentTheme;
 
-    const cssPaths = targetCssFiles(files);
+    const cssPaths = await cssFilesWithImports(fs, files.root, targetCssFiles(files));
     const existing = targetBucket(currentTheme.value, edit.kind).find((t) => t.name === edit.name);
 
     if (edit.op === 'add') {
