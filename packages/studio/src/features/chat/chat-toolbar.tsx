@@ -1,5 +1,5 @@
 // AI chat actions: new conversation, import folder, add image (R-CH-02, CW-52); the model sits by Send.
-import { FolderPlus, ImagePlus, Plus } from 'lucide-react';
+import { FolderPlus, History, ImagePlus, Plus } from 'lucide-react';
 import type React from 'react';
 import { useContext, useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -49,13 +49,35 @@ function ImportButton({ disabled, onOpenImport }: ImportButtonProps) {
   );
 }
 
+function SessionsButton({ onOpen }: { readonly onOpen: () => void }) {
+  const { t } = useTranslation('chat');
+  return (
+    <button
+      type="button"
+      data-testid="chat-open-sessions"
+      title={t('sessions.title')}
+      aria-label={t('sessions.title')}
+      onClick={onOpen}
+      className="flex size-6 items-center justify-center rounded-full text-ink-soft hover:bg-card-solid hover:text-ink cursor-pointer"
+    >
+      <History className="size-3.5" />
+    </button>
+  );
+}
+
 type ToolbarActionButtonsProps = {
+  readonly onOpenSessions: () => void;
   readonly disabled: boolean;
   readonly onOpenImport: () => void;
   readonly onPickImages: (files: FileList | readonly File[]) => void;
 };
 
-function ToolbarActionButtons({ disabled, onOpenImport, onPickImages }: ToolbarActionButtonsProps) {
+function ToolbarActionButtons({
+  disabled,
+  onOpenSessions,
+  onOpenImport,
+  onPickImages,
+}: ToolbarActionButtonsProps) {
   const { t } = useTranslation('chat');
   const fileInputRef = useRef<HTMLInputElement | undefined>(undefined);
   const headerSlot = useContext(PanelHeaderContext);
@@ -70,6 +92,7 @@ function ToolbarActionButtons({ disabled, onOpenImport, onPickImages }: ToolbarA
 
   const content = (
     <div className="flex items-center gap-1">
+      <SessionsButton onOpen={onOpenSessions} />
       <NewConversationButton disabled={disabled} />
       <ImportButton disabled={disabled} onOpenImport={onOpenImport} />
       <button
@@ -104,16 +127,23 @@ function ToolbarActionButtons({ disabled, onOpenImport, onPickImages }: ToolbarA
 
 export type ChatToolbarProps = {
   readonly disabled?: boolean | undefined;
+  readonly onOpenSessions: () => void;
   readonly onOpenImport: () => void;
   readonly onPickImages: (files: FileList | readonly File[]) => void;
 };
 
 /** New conversation, import and image: icons in the panel header, or a row when there is none. */
-export function ChatToolbar({ disabled = false, onOpenImport, onPickImages }: ChatToolbarProps) {
+export function ChatToolbar({
+  disabled = false,
+  onOpenSessions,
+  onOpenImport,
+  onPickImages,
+}: ChatToolbarProps) {
   const headerSlot = useContext(PanelHeaderContext);
   const buttons = (
     <ToolbarActionButtons
       disabled={disabled}
+      onOpenSessions={onOpenSessions}
       onOpenImport={onOpenImport}
       onPickImages={onPickImages}
     />

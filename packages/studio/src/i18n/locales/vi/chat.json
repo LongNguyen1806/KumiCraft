@@ -104,5 +104,19 @@
     "noLimitsYet": "Chưa có số liệu, gửi một câu để cập nhật",
     "lastTurn": "Lượt trước: {{tokens}} token",
     "updatedAt": "Cập nhật lúc {{time}}"
+  },
+  "sessions": {
+    "title": "Phiên chat",
+    "close": "Đóng",
+    "loading": "Đang tải…",
+    "loadFailed": "Không tải được danh sách phiên",
+    "openFailed": "Không mở được phiên này",
+    "empty": "Chưa có phiên nào",
+    "legacy": "Các lượt trước khi có phiên (chỉ xem)",
+    "turns_one": "{{count}} lượt",
+    "turns_other": "{{count}} lượt",
+    "current": "Đang mở",
+    "otherAgent": "của agent khác",
+    "deleteHint": "Muốn xóa phiên: xóa trong Antigravity (mục CLI Project) hoặc trong Claude Code."
   }
 }

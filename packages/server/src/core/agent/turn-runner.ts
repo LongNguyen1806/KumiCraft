@@ -2,6 +2,7 @@
 import type {
   AgentStatus,
   BackendInfo,
+  CurrentConversation,
   ProjectInfo,
   StartTurnRequest,
   TurnNotice,
@@ -56,6 +57,10 @@ export type TurnRunner = {
     request: StartTurnRequest,
   ): Promise<Result<{ readonly jobId: string; readonly turnId: string }>>;
   list(): Promise<Result<readonly TurnSummary[]>>;
+  /** The conversation the next "continue" turn resumes (K9.5). */
+  conversation(): Promise<Result<CurrentConversation>>;
+  /** Makes an earlier conversation of this project the one "continue" resumes (K9.5). */
+  resume(conversationId: string): Promise<Result<CurrentConversation>>;
   diff(turnId: string, file: string): Promise<Result<string>>;
   revert(turnId: string): Promise<Result<TurnSummary>>;
 };
@@ -172,7 +177,7 @@ async function executeAgentProcess(
   if (conversationId !== undefined) {
     await deps.store.setConversation(projectId, { agent: resolved.status.id, id: conversationId });
   }
-  return { exitCode: out.exitCode, hasErrorEvent, reply: reply.text() };
+  return { exitCode: out.exitCode, hasErrorEvent, reply: reply.text(), conversationId };
 }
 
 type TurnPreparation = {
@@ -215,7 +220,9 @@ async function prepareTurnRun(
     request.conversation,
     resolved.status.id,
   );
-  const initialSummary = runningSummary(deps, turnId, resolved, request, notices);
+  const started = runningSummary(deps, turnId, resolved, request, notices);
+  // A resumed conversation is known now; a new one once the agent reports it.
+  const initialSummary = convId === undefined ? started : { ...started, conversation: convId };
   await deps.store.save(projectInfo.id, initialSummary);
 
   const imgDir = imagePaths.length > 0 ? deps.chatImages?.dirOf(projectInfo.id) : undefined;
@@ -270,6 +277,7 @@ async function finalizeTurn(
     revertible: files.length > 0,
     notices: prep.notices,
     ...(run.reply === '' ? {} : { reply: run.reply }),
+    ...(run.conversationId === undefined ? {} : { conversation: run.conversationId }),
   };
   await deps.store.save(projectInfo.id, finalSummary);
 
@@ -381,6 +389,26 @@ export function createTurnRunner(deps: TurnRunnerDeps): TurnRunner {
       return ok(
         await settleInterruptedTurns(deps.store, pRes.value.id, summaries, activeTurnIds, deps.now),
       );
+    },
+
+    async conversation() {
+      const pRes = deps.project();
+      if (!pRes.ok) return pRes;
+      return ok((await deps.store.conversation(pRes.value.id)) ?? {});
+    },
+
+    async resume(conversationId) {
+      const pRes = deps.project();
+      if (!pRes.ok) return pRes;
+      // Only a conversation KumiCraft itself ran in this project: never an id from elsewhere.
+      const turns = await deps.store.list(pRes.value.id);
+      const owner = turns.find((t) => t.conversation === conversationId);
+      if (owner === undefined) {
+        return err({ code: 'E015', params: { resource: 'conversation', id: conversationId } });
+      }
+      const value = { agent: owner.agent, id: conversationId };
+      const saved = await deps.store.setConversation(pRes.value.id, value);
+      return saved.ok ? ok(value) : saved;
     },
 
     async diff(turnId, file) {

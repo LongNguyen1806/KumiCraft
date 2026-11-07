@@ -16,6 +16,7 @@ import { useProjectBackends } from './chat-backends.tsx';
 import { ChatContext } from './chat-context.tsx';
 import { ChatInput } from './chat-input.tsx';
 import { ChatLock } from './chat-lock.tsx';
+import { ChatSessions } from './chat-sessions.tsx';
 import { useChatStore } from './chat-store.ts';
 import { ChatThread } from './chat-thread.tsx';
 import { ChatToolbar } from './chat-toolbar.tsx';
@@ -77,6 +78,25 @@ type ActiveChatViewProps = {
   readonly onOpenImport: () => void;
 };
 
+/** The session list over the chat (K9.5); not while a turn runs. */
+function useSessionsCard(hasRunningTurn: boolean, agent: AgentStatus | undefined) {
+  const [open, setOpen] = useState(false);
+  const card = open ? (
+    <ChatSessions
+      agent={agent?.id}
+      onClose={() => {
+        setOpen(false);
+      }}
+    />
+  ) : undefined;
+  return {
+    card,
+    open: () => {
+      setOpen(!hasRunningTurn);
+    },
+  };
+}
+
 function ActiveChatView({
   hasRunningTurn,
   activeAgent,
@@ -89,11 +109,14 @@ function ActiveChatView({
   const removeDoc = useChatStore((s) => s.removeDoc);
   const { images, imageError, addFiles, removeAttachment } = useChatImages();
   const { backendError, remove: handleRemoveBackend } = useBackendRemover(reloadBackends);
+  const sessions = useSessionsCard(hasRunningTurn, activeAgent);
 
   return (
-    <div className="flex flex-col gap-2 min-h-0 flex-1 justify-between">
+    <div className="relative flex flex-col gap-2 min-h-0 flex-1 justify-between">
+      {sessions.card}
       <ChatToolbar
         disabled={hasRunningTurn}
+        onOpenSessions={sessions.open}
         onOpenImport={onOpenImport}
         onPickImages={(files) => {
           void addFiles(files);

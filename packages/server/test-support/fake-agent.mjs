@@ -31,6 +31,14 @@ function runModels() {
   terminate(0);
 }
 
+/** Flags whose value the real CLIs check; the fake refuses the same bad values. */
+const CHECKED_VALUES = {
+  '--model': (v) => !v.startsWith('-'),
+  '--effort': (v) => ['low', 'medium', 'high', 'xhigh', 'max'].includes(v),
+  '--mode': (v) => v === 'plan',
+  '--permission-mode': (v) => v === 'acceptEdits' || v === 'plan',
+};
+
 function parseArgs(args) {
   let prompt;
   let outputFormat;
@@ -58,24 +66,9 @@ function parseArgs(args) {
         return { ok: false, error: `Missing value for ${arg}` };
       }
       conversationId = next;
-    } else if (arg === '--model') {
-      if (++i >= args.length || next.startsWith('-')) {
-        return { ok: false, error: 'Missing value for --model' };
-      }
-    } else if (arg === '--effort') {
-      if (++i >= args.length || !['low', 'medium', 'high', 'xhigh', 'max'].includes(next)) {
-        return { ok: false, error: `Unknown flag or unexpected argument: --effort ${next ?? ''}` };
-      }
-    } else if (arg === '--mode') {
-      if (++i >= args.length || next !== 'plan') {
-        return { ok: false, error: `Unknown flag or unexpected argument: --mode ${next ?? ''}` };
-      }
-    } else if (arg === '--permission-mode') {
-      if (++i >= args.length || (next !== 'acceptEdits' && next !== 'plan')) {
-        return {
-          ok: false,
-          error: `Unknown flag or unexpected argument: --permission-mode ${next ?? ''}`,
-        };
+    } else if (arg in CHECKED_VALUES) {
+      if (++i >= args.length || !CHECKED_VALUES[arg](next)) {
+        return { ok: false, error: `Unknown flag or unexpected argument: ${arg} ${next ?? ''}` };
       }
     } else if (arg !== '--verbose') {
       return { ok: false, error: `Unknown flag or unexpected argument: ${arg}` };

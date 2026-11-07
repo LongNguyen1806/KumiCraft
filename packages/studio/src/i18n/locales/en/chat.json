@@ -104,5 +104,19 @@
     "noLimitsYet": "No data yet, send a message to update",
     "lastTurn": "Last turn: {{tokens}} tokens",
     "updatedAt": "Updated {{time}}"
+  },
+  "sessions": {
+    "title": "Chat sessions",
+    "close": "Close",
+    "loading": "Loading…",
+    "loadFailed": "Could not load the sessions",
+    "openFailed": "Could not open this session",
+    "empty": "No sessions yet",
+    "legacy": "Turns from before sessions (read only)",
+    "turns_one": "{{count}} turn",
+    "turns_other": "{{count}} turns",
+    "current": "Open",
+    "otherAgent": "another agent's",
+    "deleteHint": "To delete a session, delete it in Antigravity (CLI Project) or in Claude Code."
   }
 }

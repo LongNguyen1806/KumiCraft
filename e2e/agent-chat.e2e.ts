@@ -354,3 +354,53 @@ test('the model chip sends the picked effort and shows the turn usage without ov
     ).toBeLessThan(4);
   }
 });
+
+/** A fake agent turn that reports the conversation id `id` and answers `reply`. */
+async function writeConversationScript(id: string, reply: string): Promise<void> {
+  await writeFile(
+    paths().script,
+    JSON.stringify({
+      steps: [
+        { emit: { event: 'init', conversation_id: id } },
+        {
+          emit: {
+            event: 'step_update',
+            step_update: { step_type: 'agent_response', text_delta: reply },
+          },
+        },
+        { emit: { event: 'result', result: { status: 'SUCCESS' } } },
+      ],
+    }),
+  );
+}
+
+test('the session list reopens an earlier conversation and the next turn continues it [K9.5, R-AG-16]', async ({
+  page,
+}) => {
+  const session = await start();
+  await openStudio(page, session);
+  await page.getByRole('tab', { name: 'AI' }).click();
+
+  await writeConversationScript('conv-first', 'First answer.');
+  await sendChat(page, 'First question');
+  await page.getByTestId('chat-new-conversation').click();
+  await expect(page.getByText('First question')).toHaveCount(0);
+  await writeConversationScript('conv-second', 'Second answer.');
+  await sendChat(page, 'Second question');
+
+  await page.getByTestId('chat-open-sessions').click();
+  const rows = page.getByTestId('chat-session');
+  await expect(rows).toHaveCount(2);
+  await expect(rows.first()).toContainText('Second question');
+  await rows.nth(1).click();
+  await expect(page.getByTestId('chat-sessions')).toHaveCount(0);
+  await expect(page.getByText('First answer.')).toBeVisible();
+  await expect(page.getByText('Second question')).toHaveCount(0);
+
+  await writeConversationScript('conv-first', 'Continued.');
+  await page.getByTestId('chat-input').fill('Follow-up');
+  await page.getByTestId('chat-send').click();
+  await expect(page.getByText('Continued.')).toBeVisible({ timeout: 30_000 });
+  const record = await readRecord();
+  expect(record.argv[record.argv.indexOf('--conversation') + 1]).toBe('conv-first');
+});

@@ -100,6 +100,7 @@ describe('Chat files, diff, revert, history, and new conversation [WP-3.05b]', (
       { id: 'agy', installed: true, login: 'unknown', loginAvailable: false },
     ]);
     vi.spyOn(agentClient, 'fetchTurns').mockResolvedValue([]);
+    vi.spyOn(agentClient, 'fetchConversation').mockResolvedValue({});
   });
 
   afterEach(() => {
@@ -342,7 +343,7 @@ describe('Chat files, diff, revert, history, and new conversation [WP-3.05b]', (
     expect(await screen.findByText('Hai nút gọi hai API khác.')).toBeDefined();
   });
 
-  it('Sit 11 [R-CH-05]: new conversation sends conversation: new and shows divider after turn 2', async () => {
+  it('Sit 11 [R-CH-05, K9.5]: new conversation sends conversation: new and starts on an empty chat', async () => {
     const startSpy = vi
       .spyOn(agentClient, 'startTurn')
       .mockResolvedValueOnce({ jobId: 'job0001' })
@@ -382,9 +383,11 @@ describe('Chat files, diff, revert, history, and new conversation [WP-3.05b]', (
       expect(screen.queryByTestId('chat-cancel')).toBeNull();
     });
 
-    // Click new conversation
+    // Click new conversation: the earlier turns leave the chat (they stay in the session list).
+    expect(screen.getByText('Turn 2')).toBeDefined();
     fireEvent.click(screen.getByTestId('chat-new-conversation'));
-    expect(screen.getByTestId('chat-divider')).toBeDefined();
+    expect(screen.queryByText('Turn 1')).toBeNull();
+    expect(screen.queryByText('Turn 2')).toBeNull();
 
     // Turn 3
     fireEvent.change(input, { target: { value: 'Turn 3' } });

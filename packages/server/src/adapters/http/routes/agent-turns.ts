@@ -3,6 +3,7 @@ import {
   ChatImageUploadSchema,
   type ProjectInfo,
   type Result,
+  ResumeConversationRequestSchema,
   StartTurnRequestSchema,
 } from '@kumicraft/shared';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
@@ -55,11 +56,28 @@ async function handlePostImage(
   return { data: { id: saveRes.value.id } };
 }
 
-export function registerAgentTurnRoutes(api: FastifyInstance, deps: AgentTurnRoutesDeps): void {
+/** Chat images, the conversation the next turn continues, opening an earlier one (K9.5). */
+function registerConversationRoutes(api: FastifyInstance, deps: AgentTurnRoutesDeps): void {
   api.post('/agent/images', { bodyLimit: 8 * 1024 * 1024 }, (req, rep) =>
     handlePostImage(deps, req, rep),
   );
 
+  api.get('/agent/conversation', async (_request, reply) => {
+    const res = await deps.turnRunner.conversation();
+    if (!res.ok) return sendError(reply, res.error);
+    return { data: res.value };
+  });
+
+  api.post('/agent/conversation', async (request, reply) => {
+    const parsed = ResumeConversationRequestSchema.safeParse(request.body);
+    if (!parsed.success) return sendError(reply, { code: 'E016' });
+    const res = await deps.turnRunner.resume(parsed.data.id);
+    if (!res.ok) return sendError(reply, res.error);
+    return { data: res.value };
+  });
+}
+
+export function registerAgentTurnRoutes(api: FastifyInstance, deps: AgentTurnRoutesDeps): void {
   api.post('/agent/turns', async (request, reply) => {
     const parsed = StartTurnRequestSchema.safeParse(request.body);
     if (!parsed.success) {
@@ -81,6 +99,7 @@ export function registerAgentTurnRoutes(api: FastifyInstance, deps: AgentTurnRou
     return { data: res.value };
   });
 
+  registerConversationRoutes(api, deps);
   api.get('/agent/turns/:id/diff', async (request, reply) => {
     const params = TurnParamsSchema.safeParse(request.params);
     if (!params.success) {

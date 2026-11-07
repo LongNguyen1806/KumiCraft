@@ -93,14 +93,11 @@ function ChatItemView({ item }: { readonly item: ChatItem }) {
   if (item.kind === 'tool') {
     return <ToolItemRow item={item} />;
   }
-  if (item.kind === 'error') {
-    return (
-      <div className="rounded-lg bg-rose-50 border border-rose-200 p-2 text-xs text-rose-700">
-        {item.message}
-      </div>
-    );
-  }
-  return undefined;
+  return (
+    <div className="rounded-lg bg-rose-50 border border-rose-200 p-2 text-xs text-rose-700">
+      {item.message}
+    </div>
+  );
 }
 
 function getSummaryText(
@@ -198,9 +195,6 @@ function ClaudeLoginHint({ turn }: { readonly turn: ChatTurnView }) {
 }
 
 function TurnRowView({ turn, turnIdx }: { readonly turn: ChatTurnView; readonly turnIdx: number }) {
-  const { t } = useTranslation('chat');
-  const hasDivider = turn.items.some((i) => i.kind === 'divider');
-
   return (
     <div className="flex flex-col gap-2.5">
       {turn.history && turn.summary?.startedAt && (
@@ -218,14 +212,6 @@ function TurnRowView({ turn, turnIdx }: { readonly turn: ChatTurnView; readonly 
           <ChatFiles turnId={turn.summary.id} files={turn.summary.files} />
           <ChatRevert turnId={turn.summary.id} summary={turn.summary} />
         </>
-      )}
-      {hasDivider && (
-        <div
-          data-testid="chat-divider"
-          className="my-2 flex items-center justify-center gap-2 border-t border-dashed border-border/80 pt-2 text-[11px] text-ink-faint"
-        >
-          <span>{t('newConversation')}</span>
-        </div>
       )}
     </div>
   );

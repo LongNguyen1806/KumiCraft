@@ -8,6 +8,8 @@ export type AgentRun = {
   readonly exitCode: number;
   readonly hasErrorEvent: boolean;
   readonly reply: string;
+  /** The conversation id the agent reported, if any. */
+  readonly conversationId?: string | undefined;
 };
 
 export function redactEventSecrets(event: AgentEvent): AgentEvent {

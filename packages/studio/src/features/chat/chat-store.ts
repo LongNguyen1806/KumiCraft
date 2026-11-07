@@ -12,8 +12,7 @@ export type ChatItem =
     }
   | { readonly kind: 'message'; readonly text: string }
   | { readonly kind: 'tool'; readonly name: string; readonly target?: string | undefined }
-  | { readonly kind: 'error'; readonly message: string }
-  | { readonly kind: 'divider' };
+  | { readonly kind: 'error'; readonly message: string };
 
 export type ChatImageAttachment = {
   readonly localId: string;
@@ -54,6 +53,8 @@ export type ChatState = {
   readonly imageError?: string | undefined;
   readonly hidden: ChatHiddenContext;
   readonly hasConversation: boolean;
+  /** The agent conversation the chat shows; absent: a new one or turns saved before sessions. */
+  readonly sessionId?: string | undefined;
 
   readonly setDraft: (draft: string) => void;
   readonly addDoc: (path: string) => void;
@@ -74,6 +75,8 @@ export type ChatState = {
   readonly loadHistory: (summaries: readonly TurnSummary[]) => void;
   readonly markReverted: (turnId: string, summary: TurnSummary) => void;
   readonly newConversation: () => void;
+  /** Shows one session's turns (oldest first); with an id, the next turn continues it. */
+  readonly showSession: (turns: readonly TurnSummary[], id: string | undefined) => void;
   readonly reset: () => void;
 };
 
@@ -264,7 +267,18 @@ function createJobOutcomeActions(set: SetState) {
       set((state) => settle(state, jobId, { state: 'cancelled' }));
     },
     loadHistory: (summaries: readonly TurnSummary[]) => {
-      set((state) => ({ turns: mergeHistory(state.turns, summaries) }));
+      set((state) => {
+        const liveIds = new Set(state.turns.filter((t) => !t.history).map((t) => t.turnId));
+        const shownIds = new Set(state.turns.map((t) => t.turnId));
+        // A new session gets its id when its first turn ends.
+        const sessionId =
+          state.sessionId ??
+          summaries.find((s) => liveIds.has(s.id) && s.conversation !== undefined)?.conversation;
+        const picked = summaries.filter(
+          (s) => shownIds.has(s.id) || (sessionId !== undefined && s.conversation === sessionId),
+        );
+        return { turns: mergeHistory(state.turns, picked), sessionId };
+      });
     },
     markReverted: (turnId: string, summary: TurnSummary) => {
       set((state) => ({
@@ -277,21 +291,14 @@ function createJobOutcomeActions(set: SetState) {
 function createConversationActions(set: SetState) {
   return {
     newConversation: () => {
-      set((state) => {
-        if (state.turns.length === 0) return { hasConversation: false };
-        const lastIndex = state.turns.length - 1;
-        const lastTurn = state.turns[lastIndex];
-        if (lastTurn === undefined || lastTurn.items.some((i) => i.kind === 'divider')) {
-          return { hasConversation: false };
-        }
-        const updatedLast: ChatTurnView = {
-          ...lastTurn,
-          items: [...lastTurn.items, { kind: 'divider' }],
-        };
-        return {
-          hasConversation: false,
-          turns: [...state.turns.slice(0, lastIndex), updatedLast],
-        };
+      // Like Claude and Antigravity: a new conversation starts on an empty chat (K9.5).
+      set({ turns: [], hasConversation: false, sessionId: undefined });
+    },
+    showSession: (turns: readonly TurnSummary[], id: string | undefined) => {
+      set({
+        turns: mergeHistory([], turns),
+        hasConversation: id !== undefined,
+        sessionId: id,
       });
     },
     reset: () => {
@@ -304,6 +311,7 @@ function createConversationActions(set: SetState) {
         imageError: undefined,
         hidden: INITIAL_HIDDEN,
         hasConversation: false,
+        sessionId: undefined,
       });
     },
   };

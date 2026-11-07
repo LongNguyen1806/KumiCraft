@@ -108,8 +108,23 @@ export const TurnSummarySchema = z.strictObject({
   notices: z.array(TurnNoticeSchema).max(20),
   /** The agent's answer text, so a turn read back from history still shows it. */
   reply: z.string().max(TURN_REPLY_MAX).optional(),
+  /** The agent's conversation (session) the turn belongs to; absent in turns saved before K9.5. */
+  conversation: z.string().min(1).max(200).optional(),
 });
 export type TurnSummary = z.infer<typeof TurnSummarySchema>;
+
+/** The conversation the next "continue" turn resumes; `{}` when the next turn starts a new one. */
+export const CurrentConversationSchema = z.strictObject({
+  agent: AgentIdSchema.optional(),
+  id: z.string().min(1).max(200).optional(),
+});
+export type CurrentConversation = z.infer<typeof CurrentConversationSchema>;
+
+/** Opens an earlier conversation again (K9.5): only one a turn of this project belongs to. */
+export const ResumeConversationRequestSchema = z.strictObject({
+  id: z.string().min(1).max(200),
+});
+export type ResumeConversationRequest = z.infer<typeof ResumeConversationRequestSchema>;
 
 /** Context of a turn (SRS FR-62, R-AG-13). */
 export const TurnContextSchema = z.strictObject({

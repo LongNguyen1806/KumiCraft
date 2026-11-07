@@ -10,7 +10,9 @@ import { z } from 'zod';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { ok, type Result } from '../shared/result.ts';
 
-const DEFAULT_KEEP_TURNS = 20;
+// Summaries are small: keep enough for the session list (K9.5); undo snapshots stay at 20.
+const DEFAULT_KEEP_TURNS = 100;
+const DEFAULT_REVERTIBLE_TURNS = 20;
 
 export const SummariesFileSchema = z.strictObject({
   version: z.literal(1),
@@ -43,6 +45,8 @@ export type TurnStoreDeps = {
 
 export type TurnStoreOptions = {
   readonly keepTurns?: number | undefined;
+  /** Turns past this many have no undo snapshot left, so they cannot be reverted. */
+  readonly revertibleTurns?: number | undefined;
 };
 
 function summariesRelPath(projectId: string): string {
@@ -91,6 +95,7 @@ async function loadConversation(
 
 export function createTurnStore(deps: TurnStoreDeps, options: TurnStoreOptions = {}): TurnStore {
   const keepTurns = options.keepTurns ?? DEFAULT_KEEP_TURNS;
+  const revertibleTurns = options.revertibleTurns ?? DEFAULT_REVERTIBLE_TURNS;
 
   return {
     list: (projectId) => loadSummaries(deps.fs, deps.dataDir, projectId),
@@ -109,7 +114,9 @@ export function createTurnStore(deps: TurnStoreDeps, options: TurnStoreOptions =
       } else {
         updated.unshift(summary);
       }
-      const trimmed = updated.slice(0, keepTurns);
+      const trimmed = updated
+        .slice(0, keepTurns)
+        .map((t, i) => (i >= revertibleTurns && t.revertible ? { ...t, revertible: false } : t));
       const json = JSON.stringify({ version: 1, turns: trimmed }, undefined, 2);
       await deps.fs.writeTextAtomic(deps.dataDir, summariesRelPath(projectId), json);
       return ok(undefined);

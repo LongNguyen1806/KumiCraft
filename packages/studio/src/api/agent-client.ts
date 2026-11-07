@@ -7,6 +7,8 @@ import {
   AgentStatusSchema,
   type ChatImageKind,
   ChatImageSchema,
+  type CurrentConversation,
+  CurrentConversationSchema,
   JobStartedSchema,
   type StartTurnRequest,
   TurnDiffSchema,
@@ -89,6 +91,16 @@ export async function uploadChatImage(
 
 export async function startTurn(request: StartTurnRequest): Promise<{ readonly jobId: string }> {
   return parseResponse(JobStartedSchema, await apiPost('agent/turns', request));
+}
+
+/** The conversation the next "continue" turn resumes (K9.5). */
+export async function fetchConversation(): Promise<CurrentConversation> {
+  return parseResponse(CurrentConversationSchema, await apiGet('agent/conversation'));
+}
+
+/** Makes an earlier conversation of this project the one the chat continues (K9.5). */
+export async function resumeConversation(id: string): Promise<CurrentConversation> {
+  return parseResponse(CurrentConversationSchema, await apiPost('agent/conversation', { id }));
 }
 
 export async function fetchTurns(): Promise<readonly TurnSummary[]> {
