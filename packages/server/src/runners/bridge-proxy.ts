@@ -274,17 +274,37 @@ function handleUpgrade(
   });
 }
 
+/**
+ * S-04, S-104: like Vite's `allowedHosts`, the proxy answers only names of this machine:
+ * 127.0.0.1, localhost and `*.localhost` (login sessions, RFC 6761). A DNS-rebinding page reaches
+ * 127.0.0.1 with its own name in Host and must not read the app through the proxy.
+ */
+export function isLocalHost(host: string | undefined): boolean {
+  if (host === undefined) return false;
+  const name = host.toLowerCase().replace(/:\d+$/, '');
+  return name === '127.0.0.1' || name === 'localhost' || name.endsWith('.localhost');
+}
+
 export function createBridgeProxy(options: BridgeProxyOptions): {
   server: http.Server;
   start(): Promise<void>;
   close(): Promise<void>;
 } {
   const server = http.createServer((req, res) => {
+    if (!isLocalHost(req.headers.host)) {
+      res.writeHead(403, { 'content-type': 'text/plain; charset=utf-8' });
+      res.end('Blocked request: this host is not allowed.');
+      return;
+    }
     if (handleBridgeClientRoute(req, res)) return;
     forwardRequest(req, res, options);
   });
 
   server.on('upgrade', (req, socket, head) => {
+    if (!isLocalHost(req.headers.host)) {
+      socket.destroy();
+      return;
+    }
     handleUpgrade(req, socket, head, options.appPort);
   });
 

@@ -1,5 +1,5 @@
 // Tests for Bridge reverse proxy (SPEC-04 M-RN, Phase 4 K4).
-import type http from 'node:http';
+import http from 'node:http';
 import { createRequire } from 'node:module';
 import type { AddressInfo } from 'node:net';
 import { join } from 'node:path';
@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { BRIDGE_CLIENT_CODE, BRIDGE_CLIENT_URL } from '@kumicraft/bridge';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createBridgeProxy, patchCsp } from './bridge-proxy.ts';
+import { createBridgeProxy, isLocalHost, patchCsp } from './bridge-proxy.ts';
 
 const FIXTURE_ROOT = join(process.cwd(), 'fixtures/projects/express-pug');
 const fixtureRequire = createRequire(join(FIXTURE_ROOT, 'package.json'));
@@ -160,5 +160,28 @@ describe('Bridge Proxy [WP-4.00]', () => {
     expect(bridgeType).toContain('text/javascript');
     const bridgeCode = await bridgeRes.text();
     expect(bridgeCode).toBe(BRIDGE_CLIENT_CODE);
+  });
+
+  it('[S-04, K9.5] answers only names of this machine: a DNS-rebinding Host gets 403', async () => {
+    expect(
+      ['127.0.0.1:3000', 'localhost:3000', 's1.localhost:3000', 'LOCALHOST'].map(isLocalHost),
+    ).toEqual([true, true, true, true]);
+    expect(
+      ['evil.example:3000', 'localhost.evil.example', '192.168.1.13:3000', undefined].map(
+        isLocalHost,
+      ),
+    ).toEqual([false, false, false, false]);
+    const status = await new Promise<number>((resolve, reject) => {
+      const req = http.request(
+        { host: '127.0.0.1', port: proxyPort, path: '/', headers: { Host: 'evil.example' } },
+        (res) => {
+          res.resume();
+          resolve(res.statusCode ?? 0);
+        },
+      );
+      req.on('error', reject);
+      req.end();
+    });
+    expect(status).toBe(403);
   });
 });
