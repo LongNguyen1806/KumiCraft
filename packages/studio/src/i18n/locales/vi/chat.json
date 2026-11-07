@@ -1,6 +1,5 @@
 {
   "lockedUntrusted": "Dự án chưa được tin cậy. Mở hộp Project và chọn Tin cậy để dùng AI.",
-  "lockedNoAgent": "Chưa cài agent AI (agy hoặc claude). Cài agent rồi mở lại tab này.",
   "checkingAgents": "Đang kiểm tra agent…",
   "inputPlaceholder": "Hỏi hoặc yêu cầu thay đổi… (Ctrl+Enter để gửi)",
   "send": "Gửi",

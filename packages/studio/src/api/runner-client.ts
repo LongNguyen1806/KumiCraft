@@ -14,7 +14,3 @@ export async function startRunner(): Promise<RunnerStatus> {
 export async function restartRunner(): Promise<RunnerStatus> {
   return parseResponse(RunnerStatusSchema, await apiPost('runner/restart'));
 }
-
-export async function stopRunner(): Promise<RunnerStatus> {
-  return parseResponse(RunnerStatusSchema, await apiPost('runner/stop'));
-}

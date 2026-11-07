@@ -50,10 +50,6 @@ export function fitZoom(viewportWidth: number, frameWidth: number): number {
 }
 
 /** Width of an element, kept up to date while it resizes. */
-export function useElementWidth(ref: RefObject<HTMLElement | undefined>): number {
-  return useElementSize(ref).width;
-}
-
 /** Width and height of an element, kept up to date while it resizes. */
 export function useElementSize(ref: RefObject<HTMLElement | undefined>): {
   readonly width: number;

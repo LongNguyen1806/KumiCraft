@@ -320,4 +320,39 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
     rerender();
     expect(result.current.classString).toBe('p-4');
   });
+
+  it('a field changed while the source reloads after Undo waits for that read, then builds on it [K9.5, R-IN-20]', async () => {
+    const editSpy = vi.spyOn(sourceClient, 'editSource').mockImplementation((req) => {
+      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, req.edit.after ?? ''));
+    });
+    let target = createMockTarget(mockSource, vi.fn());
+    const { result, rerender } = renderHook(() =>
+      useLiveEdit({ target, ctx: mockContext, throttleMs: 100 }),
+    );
+    // First field: written, the server confirms `p-4 pt-0`.
+    act(() => {
+      result.current.mutateProperty('paddingTop', { kind: 'scale', token: '0' });
+      vi.advanceTimersByTime(100);
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(editSpy.mock.calls[0]?.[0].edit).toMatchObject({ before: 'p-4', after: 'p-4 pt-0' });
+    // Undo: the file is back to `p-4`, the Inspector is reading it again (loading).
+    target = { ...target, loading: true };
+    rerender();
+    act(() => {
+      result.current.mutateProperty('fontSize', { kind: 'scale', token: 'xs' });
+      vi.advanceTimersByTime(500);
+    });
+    expect(editSpy).toHaveBeenCalledTimes(1);
+    // The read lands: the change is built on the file's class, the undone pt-0 stays out.
+    target = createMockTarget({ ...mockSource, fileHash: 'c'.repeat(64) }, vi.fn());
+    rerender();
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(editSpy).toHaveBeenCalledTimes(2);
+    expect(editSpy.mock.calls[1]?.[0].edit).toMatchObject({ before: 'p-4', after: 'p-4 text-xs' });
+  });
 });

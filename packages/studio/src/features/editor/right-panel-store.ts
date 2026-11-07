@@ -51,10 +51,3 @@ export function useRightPanelTab(): [RightPanelTab, (tab: RightPanelTab) => void
   const tab = useSyncExternalStore(subscribeRightPanelTab, getRightPanelTab);
   return [tab, setRightPanelTab];
 }
-
-export const useRightPanelStore = {
-  getState: () => ({
-    tab: getRightPanelTab(),
-    setTab: setRightPanelTab,
-  }),
-};

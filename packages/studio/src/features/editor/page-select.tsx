@@ -77,10 +77,6 @@ export function usePagesData(): PagesData {
 }
 
 /** Pages of the open project, read again when its code changes. */
-export function usePages(): readonly PageInfo[] {
-  return usePagesData().pages;
-}
-
 function go(route: string): void {
   if (route.startsWith('/')) studioBridgeChannel.navigate(route);
 }

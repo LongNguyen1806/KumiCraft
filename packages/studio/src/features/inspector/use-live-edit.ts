@@ -229,11 +229,36 @@ function queueCallbacks(queue: () => LiveEditQueue | undefined, owner: QueueOwne
  * updates the confirmed class while idle): replacing it dropped an edit typed while the refresh
  * came in (found by PB-02, K9 C). Leaving the element still saves its last edit.
  */
+/** A change made while the source reloads: applied to the class the reload brings (K9.5). */
+type DeferredChange = (base: string) => string;
+
+/**
+ * Changes made while the source reloads (right after Undo): built on the class the file holds
+ * once the reload lands, never on the undone one, which the server would refuse with E017.
+ */
+function applyDeferred(
+  queue: LiveEditQueue,
+  deferred: DeferredChange[],
+  server: { readonly value: string; readonly hasSource: boolean },
+  setOptimisticClass: (val: string) => void,
+): boolean {
+  if (deferred.length === 0) return false;
+  const changes = deferred.splice(0);
+  // No source came back (a read error): drop them, the fields show the file again.
+  if (!server.hasSource) return false;
+  queue.syncServer(server.value);
+  const next = changes.reduce((cls, change) => change(cls), queue.getConfirmed());
+  setOptimisticClass(next);
+  queue.enqueue({ nextString: next });
+  return true;
+}
+
 function useLiveQueue(
   key: { readonly loc: string; readonly tag: string; readonly prefix: string },
   throttleMs: number,
-  server: { readonly value: string; readonly read: unknown },
+  server: { readonly value: string; readonly read: unknown; readonly hasSource: boolean },
   owner: QueueOwner,
+  deferred: React.RefObject<DeferredChange[]>,
 ): React.RefObject<LiveEditQueue | undefined> {
   const serverClass = server.value;
   const queueRef = useRef<LiveEditQueue | undefined>(undefined);
@@ -249,6 +274,7 @@ function useLiveQueue(
     queue.setCallbacks(queueCallbacks(() => queue, owner));
     // Only a new read from the server (file hash or class): the old one stays until it lands.
     if (!changed) return;
+    if (applyDeferred(queue, deferred.current, server, owner.setOptimisticClass)) return;
     // Nothing waits to be saved: the fields show what the file holds now, also when it is the
     // class read before (the undone value would stay on screen otherwise).
     if (queue.isIdle()) owner.setOptimisticClass(serverClass);
@@ -306,29 +332,42 @@ export function useLiveEdit({ target, ctx, throttleMs = 100 }: UseLiveEditOption
 
   // Each load of the source is a new object: a read that brings back the same class string (Undo
   // right after an edit) still counts as new (K9.5).
-  const server = { value: serverClass, read: target.source };
+  const server = {
+    value: serverClass,
+    read: target.source,
+    hasSource: target.source !== undefined,
+  };
+  const deferred = useRef<DeferredChange[]>([]);
+  // While the source reloads (after Undo or a save), a change waits for the class it brings.
+  const send = (change: DeferredChange, property?: PropertyId) => {
+    const next = change(optimisticClass);
+    setOptimisticClass(next);
+    if (target.loading) {
+      deferred.current.push(change);
+      return;
+    }
+    queueRef.current?.enqueue({ nextString: next, property });
+  };
   useSyncLocState(loc, serverClass, setOptimisticClass, setError);
 
-  const queueRef = useLiveQueue({ loc, tag, prefix: target.writePrefix }, throttleMs, server, {
-    target,
-    t,
-    setOptimisticClass,
-    setError,
-    setIsSaving,
-  });
+  const queueRef = useLiveQueue(
+    { loc, tag, prefix: target.writePrefix },
+    throttleMs,
+    server,
+    { target, t, setOptimisticClass, setError, setIsSaving },
+    deferred,
+  );
 
   return {
     classString: optimisticClass,
     isSaving,
     error,
     mutateProperty: (property, value) => {
-      const nextStr = writeValue(optimisticClass, property, target.currentScope, value, ctx);
-      setOptimisticClass(nextStr);
-      queueRef.current?.enqueue({ nextString: nextStr, property });
+      const scope = target.currentScope;
+      send((base) => writeValue(base, property, scope, value, ctx), property);
     },
     mutateRawClass: (raw: string) => {
-      setOptimisticClass(raw);
-      queueRef.current?.enqueue({ nextString: raw });
+      send(() => raw);
     },
     flush: () => {
       queueRef.current?.flush();

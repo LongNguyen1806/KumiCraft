@@ -42,7 +42,6 @@
   },
   "editor": {
     "canvas": "Canvas",
-    "canvasPending": "Canvas sẽ hiển thị dự án của bạn đang chạy ở đây, bằng dev server của chính dự án.",
     "runDevServer": "Chạy dev server",
     "startingDevServer": "Đang khởi động dev server…",
     "restartDevServer": "Khởi động lại",
@@ -75,7 +74,6 @@
     "toggleRight": "Ẩn/hiện panel phải ({{shortcut}}: cả hai panel)",
     "resizeLeft": "Đổi độ rộng panel trái",
     "resizeRight": "Đổi độ rộng panel phải",
-    "leftPanel": "Lớp",
     "rightPanel": "Thuộc tính",
     "layers": "Lớp",
     "layersHint": "Cấu trúc của trang hiện ở đây khi Canvas chạy dự án của bạn.",
@@ -145,7 +143,8 @@
     "batch": "sửa {{count}} phần tử",
     "dismissError": "Đóng thông báo",
     "errorFileChanged": "File {{file}} đã bị sửa từ nơi khác, không hoàn tác được bước này",
-    "setStyle": "đổi kiểu dáng <{{tag}}>"
+    "setStyle": "đổi kiểu dáng <{{tag}}>",
+    "setFlag": "bật/tắt vị trí tự do <{{tag}}>"
   },
   "settings": {
     "open": "Cài đặt",
@@ -255,7 +254,6 @@
       "confirmRemove": "Bạn có chắc muốn gỡ liên kết backend này?",
       "pathPlaceholder": "Đường dẫn thư mục (vd: /path/to/backend)",
       "labelPlaceholder": "Nhãn (tùy chọn)",
-      "addFailed": "Thêm liên kết backend thất bại",
       "statusOk": "Hoạt động",
       "statusMissing": "Không tồn tại",
       "statusBlocked": "Bị chặn"
@@ -502,15 +500,12 @@
   },
   "pages": {
     "title": "Quản lý trang",
-    "manage": "Quản lý trang",
     "add": "Thêm trang",
     "adding": "Đang thêm…",
     "rename": "Đổi tên",
     "renaming": "Đang đổi…",
     "delete": "Xóa",
-    "deleting": "Đang xóa…",
     "deleteConfirm": "Bạn có chắc muốn xóa trang \"{{path}}\"? Thao tác này sẽ xóa route, component và file của trang.",
-    "notConvention": "Dự án không theo quy ước routes.tsx nên chỉ hỗ trợ xem và chuyển trang.",
     "name": "Tên trang",
     "namePlaceholder": "Ví dụ: Giới thiệu",
     "path": "Đường dẫn URL",
@@ -561,7 +556,6 @@
   "drafts": {
     "title": "Bản nháp",
     "new": "Bản nháp mới…",
-    "manage": "Quản lý bản nháp",
     "empty": "Chưa có bản nháp nào",
     "blank": "Trắng",
     "free": "Khung tự do",
@@ -672,7 +666,6 @@
     "noThemeFile": "Dự án chưa có file CSS Tailwind",
     "invalidName": "Tên gồm chữ thường, số, gạch ngang; bắt đầu bằng chữ (tối đa 40 ký tự)",
     "inherited": "Mặc định Bootstrap",
-    "tokenFile": "File token",
     "changeTokenFile": "Đổi file…",
     "autoTokenFile": "Tự động",
     "system": {
@@ -734,9 +727,7 @@
     "add": "+ Thêm phiên",
     "rename": "Đổi tên",
     "delete": "Xóa",
-    "save": "Lưu",
     "cancel": "Hủy",
-    "newPlaceholder": "Tên phiên (vd: Admin)",
     "defaultLabel": "Phiên {{id}}",
     "localhostUnsupported": "Trình duyệt này không mở được địa chỉ *.localhost; dùng Chrome, Edge hoặc Firefox",
     "explain": "Mỗi phiên giữ đăng nhập riêng trong Canvas (cookie và local storage). Dùng một phiên cho mỗi vai trò, ví dụ Customer và Farmer, rồi đổi qua lại mà không phải đăng nhập lại."

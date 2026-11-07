@@ -18,25 +18,6 @@ export type EditorToolbarProps = {
   readonly onOpenProject?: () => void;
 };
 
-function resolveDraftHistoryLabel(key: string, name: string, t: TFunction): string | undefined {
-  if (key === 'history:draftCreate' || key === 'history.draftCreate') {
-    return t('history.draftCreate', { name });
-  }
-  if (key === 'history:draftRename' || key === 'history.draftRename') {
-    return t('history.draftRename', { name });
-  }
-  if (key === 'history:draftDuplicate' || key === 'history.draftDuplicate') {
-    return t('history.draftDuplicate', { name });
-  }
-  if (key === 'history:draftDelete' || key === 'history.draftDelete') {
-    return t('history.draftDelete', { name });
-  }
-  if (key === 'history:draftPromote' || key === 'history.draftPromote') {
-    return t('history.draftPromote', { name });
-  }
-  return undefined;
-}
-
 function resolveThemeHistoryLabel(
   label: HistoryLabel,
   name: string,
@@ -49,42 +30,55 @@ function resolveThemeHistoryLabel(
   return t('history.themeSet', { name });
 }
 
-function resolveHistoryLabel(label: HistoryLabel | undefined, t: TFunction): string | undefined {
+/** Every history label kind the server sends that has words in `history.*`. */
+const HISTORY_KINDS = [
+  'setClassName',
+  'setText',
+  'setAttribute',
+  'setStyle',
+  'setFlag',
+  'insert',
+  'remove',
+  'duplicate',
+  'move',
+  'wrap',
+  'unwrap',
+  'batch',
+  'pageAdd',
+  'pageRename',
+  'pageDelete',
+  'extract',
+  'insertImage',
+  'routerInstall',
+  'draftCreate',
+  'draftRename',
+  'draftDuplicate',
+  'draftDelete',
+  'draftPromote',
+  'fileCreate',
+  'fileRename',
+  'fileDelete',
+] as const;
+type HistoryKind = (typeof HISTORY_KINDS)[number];
+
+function isHistoryKind(kind: string): kind is HistoryKind {
+  return HISTORY_KINDS.some((k) => k === kind);
+}
+
+/**
+ * The words for the server's history label `history:<kind>` (with its params); the raw key only
+ * for a kind this Studio has no words for yet.
+ */
+export function resolveHistoryLabel(
+  label: HistoryLabel | undefined,
+  t: TFunction,
+): string | undefined {
   if (label === undefined) return undefined;
   const name = label.params?.['name'] ?? '';
-  const draft = resolveDraftHistoryLabel(label.key, name, t);
-  if (draft !== undefined) return draft;
   const theme = resolveThemeHistoryLabel(label, name, t);
   if (theme !== undefined) return theme;
-  if (label.key === 'history:setClassName' || label.key === 'history.setClassName') {
-    return t('history.setClassName');
-  }
-  if (label.key === 'history:setText' || label.key === 'history.setText') {
-    return t('history.setText');
-  }
-  if (label.key === 'history:setAttribute' || label.key === 'history.setAttribute') {
-    const tag = label.params?.['tag'] ?? '';
-    return t('history.setAttribute', { tag });
-  }
-  if (label.key === 'history:pageAdd' || label.key === 'history.pageAdd') {
-    return t('history.pageAdd', { name });
-  }
-  if (label.key === 'history:pageRename' || label.key === 'history.pageRename') {
-    return t('history.pageRename', { name });
-  }
-  if (label.key === 'history:pageDelete' || label.key === 'history.pageDelete') {
-    return t('history.pageDelete', { name });
-  }
-  if (label.key === 'history:extract' || label.key === 'history.extract') {
-    return t('history.extract', { name });
-  }
-  if (label.key === 'history:insertImage' || label.key === 'history.insertImage') {
-    return t('history.insertImage', { name });
-  }
-  if (label.key === 'history:routerInstall' || label.key === 'history.routerInstall') {
-    return t('history.routerInstall');
-  }
-  return label.key;
+  const kind = label.key.replace(/^history[:.]/, '');
+  return isHistoryKind(kind) ? t(`history.${kind}`, { ...label.params, name }) : label.key;
 }
 
 function HistoryButtons() {

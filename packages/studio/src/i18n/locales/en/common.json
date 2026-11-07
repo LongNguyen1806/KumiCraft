@@ -42,7 +42,6 @@
   },
   "editor": {
     "canvas": "Canvas",
-    "canvasPending": "The Canvas will show your project running here, from its own dev server.",
     "runDevServer": "Run dev server",
     "startingDevServer": "Starting dev server…",
     "restartDevServer": "Restart",
@@ -75,7 +74,6 @@
     "toggleRight": "Show or hide the right panel ({{shortcut}}: both panels)",
     "resizeLeft": "Resize the left panel",
     "resizeRight": "Resize the right panel",
-    "leftPanel": "Layers",
     "rightPanel": "Properties",
     "layers": "Layers",
     "layersHint": "The structure of the page shows here once the Canvas runs your project.",
@@ -145,7 +143,8 @@
     "batch": "edit {{count}} elements",
     "dismissError": "Dismiss",
     "errorFileChanged": "File {{file}} was modified externally, cannot undo this step",
-    "setStyle": "change style of <{{tag}}>"
+    "setStyle": "change style of <{{tag}}>",
+    "setFlag": "toggle free position <{{tag}}>"
   },
   "settings": {
     "open": "Settings",
@@ -255,7 +254,6 @@
       "confirmRemove": "Are you sure you want to remove this backend link?",
       "pathPlaceholder": "Folder path (e.g. /path/to/backend)",
       "labelPlaceholder": "Label (optional)",
-      "addFailed": "Failed to add backend link",
       "statusOk": "Active",
       "statusMissing": "Missing",
       "statusBlocked": "Blocked"
@@ -502,15 +500,12 @@
   },
   "pages": {
     "title": "Pages",
-    "manage": "Manage pages",
     "add": "Add page",
     "adding": "Adding…",
     "rename": "Rename",
     "renaming": "Renaming…",
     "delete": "Delete",
-    "deleting": "Deleting…",
     "deleteConfirm": "Are you sure you want to delete page \"{{path}}\"? This will remove its route, component, and file.",
-    "notConvention": "The project does not follow the routes.tsx convention. Adding, renaming, and deleting pages are disabled.",
     "name": "Page name",
     "namePlaceholder": "e.g. About",
     "path": "URL path",
@@ -561,7 +556,6 @@
   "drafts": {
     "title": "Drafts",
     "new": "New draft…",
-    "manage": "Manage drafts",
     "empty": "No drafts yet",
     "blank": "Blank",
     "free": "Freeform canvas",
@@ -672,7 +666,6 @@
     "noThemeFile": "Project has no Tailwind CSS file",
     "invalidName": "Lowercase letters, digits, hyphens; must start with a letter (max 40 chars)",
     "inherited": "Bootstrap default",
-    "tokenFile": "Token file",
     "changeTokenFile": "Change file…",
     "autoTokenFile": "Auto",
     "system": {
@@ -734,9 +727,7 @@
     "add": "+ Add session",
     "rename": "Rename",
     "delete": "Delete",
-    "save": "Save",
     "cancel": "Cancel",
-    "newPlaceholder": "Session name (e.g. Admin)",
     "defaultLabel": "Session {{id}}",
     "localhostUnsupported": "This browser cannot open *.localhost addresses; use Chrome, Edge, or Firefox",
     "explain": "Each session keeps its own sign-in in the Canvas (cookies and local storage). Use one per role, for example Customer and Farmer, and switch without signing in again."
