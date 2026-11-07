@@ -268,4 +268,56 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
     });
     expect(editSpy.mock.calls[1]?.[0].edit).toMatchObject({ before: 'p-4 a', after: 'p-4 a b' });
   });
+
+  it('after Undo puts the old class back, the next field change starts from that class [WP-4.00, K9.5]', async () => {
+    const editSpy = vi.spyOn(sourceClient, 'editSource').mockImplementation((req) => {
+      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, req.edit.after ?? ''));
+    });
+    let target = createMockTarget(mockSource, vi.fn());
+    const { result, rerender } = renderHook(() =>
+      useLiveEdit({ target, ctx: mockContext, throttleMs: 100 }),
+    );
+    act(() => {
+      result.current.mutateRawClass('p-4 pt-0');
+      vi.advanceTimersByTime(100);
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    // The source is read again after the write, then again after Undo restored the file.
+    target = createMockTarget(
+      { ...mockSource, className: { kind: 'static', value: 'p-4 pt-0' } },
+      vi.fn(),
+    );
+    rerender();
+    target = createMockTarget(mockSource, vi.fn());
+    rerender();
+    act(() => {
+      result.current.mutateRawClass('p-4 text-xs');
+      vi.advanceTimersByTime(100);
+    });
+    expect(editSpy.mock.calls[1]?.[0].edit).toMatchObject({ before: 'p-4', after: 'p-4 text-xs' });
+  });
+
+  it('a new read of the file with the same class still drops the undone value shown [WP-4.00, K9.5]', async () => {
+    vi.spyOn(sourceClient, 'editSource').mockImplementation((req) => {
+      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, req.edit.after ?? ''));
+    });
+    let target = createMockTarget(mockSource, vi.fn());
+    const { result, rerender } = renderHook(() =>
+      useLiveEdit({ target, ctx: mockContext, throttleMs: 100 }),
+    );
+    act(() => {
+      result.current.mutateRawClass('p-4 text-xs');
+      vi.advanceTimersByTime(100);
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(result.current.classString).toBe('p-4 text-xs');
+    // Undo landed before the read after the edit: the class is the old one, the file is new.
+    target = createMockTarget({ ...mockSource, fileHash: 'b'.repeat(64) }, vi.fn());
+    rerender();
+    expect(result.current.classString).toBe('p-4');
+  });
 });

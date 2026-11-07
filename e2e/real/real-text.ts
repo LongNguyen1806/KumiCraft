@@ -100,6 +100,14 @@ export async function editTextAndUndo(
   if (!(await startsEditing(frame))) {
     return { loc: c.loc, outcome: 'not editable (expression or locked)' };
   }
+  // The page moved under the pointer (data loading in): the text being edited is another one.
+  const editingLoc = await frame.evaluate(
+    () => document.activeElement?.closest('[data-rc-loc]')?.getAttribute('data-rc-loc') ?? '',
+  );
+  if (editingLoc !== c.loc) {
+    await tab.keyboard.press('Escape');
+    return { loc: c.loc, outcome: 'skipped: the page moved, another text got the click' };
+  }
   await tab.keyboard.press('End');
   await tab.keyboard.type(TYPED);
   await tab.keyboard.press('Enter');

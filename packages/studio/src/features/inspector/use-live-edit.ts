@@ -77,9 +77,12 @@ export class LiveEditQueue {
    * a read that lands between two quick edits must not reset `before` to an older value.
    */
   syncServer(value: string): void {
-    if (!this.inFlight && this.scheduled === undefined && this.pending === undefined) {
-      this.confirmed = value;
-    }
+    if (this.isIdle()) this.confirmed = value;
+  }
+
+  /** No change is waiting in the throttle, on the way, or queued behind one. */
+  isIdle(): boolean {
+    return !this.inFlight && this.scheduled === undefined && this.pending === undefined;
   }
 
   destroy(): void {
@@ -229,22 +232,27 @@ function queueCallbacks(queue: () => LiveEditQueue | undefined, owner: QueueOwne
 function useLiveQueue(
   key: { readonly loc: string; readonly tag: string; readonly prefix: string },
   throttleMs: number,
-  serverClass: string,
+  server: { readonly value: string; readonly read: unknown },
   owner: QueueOwner,
 ): React.RefObject<LiveEditQueue | undefined> {
+  const serverClass = server.value;
   const queueRef = useRef<LiveEditQueue | undefined>(undefined);
-  const latest = useRef({ serverClass, owner });
+  const latest = useRef({ read: server.read, serverClass, owner });
   const { loc, tag, prefix } = key;
 
   // First, so the queue made below on mount reads this render's values.
   useEffect(() => {
-    const changed = latest.current.serverClass !== serverClass;
-    latest.current = { serverClass, owner };
+    const changed = latest.current.read !== server.read;
+    latest.current = { read: server.read, serverClass, owner };
     const queue = queueRef.current;
     if (queue === undefined) return;
     queue.setCallbacks(queueCallbacks(() => queue, owner));
-    // Only a new read from the server: the old one stays on screen until the refresh lands.
-    if (changed) queue.syncServer(serverClass);
+    // Only a new read from the server (file hash or class): the old one stays until it lands.
+    if (!changed) return;
+    // Nothing waits to be saved: the fields show what the file holds now, also when it is the
+    // class read before (the undone value would stay on screen otherwise).
+    if (queue.isIdle()) owner.setOptimisticClass(serverClass);
+    queue.syncServer(serverClass);
   });
 
   useEffect(() => {
@@ -296,9 +304,12 @@ export function useLiveEdit({ target, ctx, throttleMs = 100 }: UseLiveEditOption
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
 
+  // Each load of the source is a new object: a read that brings back the same class string (Undo
+  // right after an edit) still counts as new (K9.5).
+  const server = { value: serverClass, read: target.source };
   useSyncLocState(loc, serverClass, setOptimisticClass, setError);
 
-  const queueRef = useLiveQueue({ loc, tag, prefix: target.writePrefix }, throttleMs, serverClass, {
+  const queueRef = useLiveQueue({ loc, tag, prefix: target.writePrefix }, throttleMs, server, {
     target,
     t,
     setOptimisticClass,

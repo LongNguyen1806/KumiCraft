@@ -13,6 +13,7 @@ import { expect, type Frame, type Page, test } from '@playwright/test';
 import { type CliSession, startCli } from '../support/cli-session.ts';
 import { makeTempDir, type TempDir } from '../support/copy-fixture.ts';
 import { getCanvasFrame, trustIfAsked } from '../support/trust.ts';
+import { checkFields } from './real-fields.ts';
 import { backup, changedSince, restore, snapshot } from './real-files.ts';
 import { editTextAndUndo, textCandidates } from './real-text.ts';
 
@@ -283,6 +284,20 @@ for (const appDir of PROJECTS) {
         if (edits.filter((e) => e.outcome.includes('edited')).length >= EDITS) break;
       }
       report('edits', edits);
+
+      // Inspector fields on an element whose classes are editable (Tailwind projects).
+      const tailwind = list.find((_, i) => edits[i]?.outcome === 'edited and undone byte for byte');
+      if (tailwind !== undefined) {
+        await page.keyboard.press('Escape');
+        await page.mouse.click(tailwind.x, tailwind.y);
+        await expect(page.getByTestId('raw-class-details')).toBeVisible({ timeout: 10_000 });
+        const fields = await checkFields(page, appDir, base);
+        report('fields', fields);
+        expect(
+          fields.filter((f) => f.outcome.startsWith('wrong')),
+          'field edits exact',
+        ).toEqual([]);
+      }
       expect(edits.some((e) => e.outcome.includes('edited'))).toBe(true);
 
       const texts: EditResult[] = [];

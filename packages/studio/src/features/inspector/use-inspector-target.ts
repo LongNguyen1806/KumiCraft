@@ -269,7 +269,9 @@ function useServerRefresh(
     const client = createEventsClient({
       onEvent: (event: StudioServerEvent) => {
         if (event.type === 'history.changed') {
-          schedule();
+          // Undo or Redo rewrote the file: read it at once, so a field changed right after
+          // starts from the restored class, not the undone one (K9.5, E017 otherwise).
+          onRefresh();
         } else if (event.type === 'project.filesChanged') {
           const payload = event.payload as { readonly files?: readonly string[] } | undefined;
           if (activeFile !== undefined && payload?.files?.includes(activeFile)) {
@@ -285,5 +287,5 @@ function useServerRefresh(
       }
       client.close();
     };
-  }, [enabled, activeFile, schedule]);
+  }, [enabled, activeFile, schedule, onRefresh]);
 }

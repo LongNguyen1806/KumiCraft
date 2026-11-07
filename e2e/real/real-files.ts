@@ -39,10 +39,15 @@ export function snapshot(dir: string): Map<string, string> {
 }
 
 /** Files that differ from `base`: changed, added or removed. */
+/** `App.tsx.2713722954`: the temp file of an atomic write, there for a moment only. */
+const ATOMIC_TEMP = /\.\d{6,}$/;
+
 export function changedSince(dir: string, base: ReadonlyMap<string, string>): string[] {
   const now = snapshot(dir);
   const paths = new Set([...base.keys(), ...now.keys()]);
-  return [...paths].filter((path) => base.get(path) !== now.get(path)).sort();
+  return [...paths]
+    .filter((path) => !ATOMIC_TEMP.test(path) && base.get(path) !== now.get(path))
+    .sort();
 }
 
 /** The bytes of every file `snapshot` sees, to put the copy back whatever happens in a run. */
