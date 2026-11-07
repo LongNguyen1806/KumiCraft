@@ -105,6 +105,21 @@ async function waitForVar(frame: Frame, variable: string): Promise<boolean> {
   return false;
 }
 
+/** Whether the dev server now serves the theme file with `value` in it. */
+async function viteServes(frame: Frame, file: string, value: string): Promise<string> {
+  return frame
+    .evaluate(
+      async ({ f, v }) => {
+        const res = await fetch(`/${f}?direct&t=${String(Date.now())}`);
+        return (await res.text()).toLowerCase().includes(v)
+          ? 'vite serves the new css'
+          : 'vite serves the old css';
+      },
+      { f: file, v: value },
+    )
+    .catch((e: unknown) => `could not ask vite: ${String(e)}`);
+}
+
 const variableOf = (token: ThemeToken) => token.variable ?? `--color-${token.name}`;
 
 for (const appDir of PROJECTS) {
@@ -117,6 +132,12 @@ for (const appDir of PROJECTS) {
     let session: CliSession | undefined;
     try {
       session = await startCli(appDir, config.path);
+      // Vite's client says "[vite] connected." once its update channel is up: an edit before that
+      // can miss the update, the Canvas page then keeps the old colour until a reload.
+      let hmrReady = false;
+      page.on('console', (m) => {
+        if (m.text().includes('[vite] connected')) hmrReady = true;
+      });
       await page.goto(session.studioUrl);
       await trustIfAsked(page);
       const frame = await canvasFrame(page);
@@ -139,6 +160,7 @@ for (const appDir of PROJECTS) {
       // Edit once the page has its styles: an edit while the CSS still loads can miss Vite's update.
       // Tailwind 4 leaves out theme variables no class uses: then there is nothing to see.
       const onPage = await waitForVar(frame, variableOf(color));
+      await expect.poll(() => hmrReady, { timeout: 30_000 }).toBe(true);
       const before = await cssVar(frame, variableOf(color));
       report('canvas before', { variable: variableOf(color), value: before, onPage });
       await session.api('project/theme', 'PATCH', {
@@ -150,9 +172,15 @@ for (const appDir of PROJECTS) {
       expect(edited(appDir, base), 'only the theme file changes').toEqual([theme.file]);
       expect(readFileSync(join(appDir, theme.file), 'utf8')).toContain(NEW_VALUE);
       if (onPage) {
-        await expect
-          .poll(() => cssVar(frame, variableOf(color)), { timeout: 20_000 })
-          .toBe(NEW_VALUE);
+        try {
+          await expect
+            .poll(() => cssVar(frame, variableOf(color)), { timeout: 20_000 })
+            .toBe(NEW_VALUE);
+        } catch (cause) {
+          // Which side missed the change: Vite still serving the old CSS, or the page not updated.
+          report('canvas missed the change', await viteServes(frame, theme.file, NEW_VALUE));
+          throw cause;
+        }
       }
 
       await session.api('project/theme', 'PATCH', { op: 'add', kind: 'color', ...ADDED });
@@ -165,7 +193,14 @@ for (const appDir of PROJECTS) {
       await session.api('history/undo', 'POST', {});
       await expect.poll(() => edited(appDir, base), { timeout: 15_000 }).toEqual([]);
       if (onPage) {
-        await expect.poll(() => cssVar(frame, variableOf(color)), { timeout: 20_000 }).toBe(before);
+        try {
+          await expect
+            .poll(() => cssVar(frame, variableOf(color)), { timeout: 20_000 })
+            .toBe(before);
+        } catch (cause) {
+          report('canvas missed the undo', await viteServes(frame, theme.file, NEW_VALUE));
+          throw cause;
+        }
       }
     } finally {
       await session?.stop();
