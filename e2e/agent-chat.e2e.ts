@@ -299,3 +299,58 @@ test('a selected element reaches the agent as file:line and is edited in place [
   await expect(undo).toBeDisabled();
   await expect(page.getByTestId('chat-files')).toContainText('src/components/Card.tsx');
 });
+
+test('the model chip sends the picked effort and shows the turn usage without overflowing [K9.5, R-CH-02]', async ({
+  page,
+}) => {
+  await writeFile(
+    paths().script,
+    JSON.stringify({
+      steps: [
+        { emit: { event: 'init', conversation_id: '$CONVERSATION' } },
+        {
+          emit: {
+            event: 'step_update',
+            step_update: { step_type: 'agent_response', text_delta: 'Done.' },
+          },
+        },
+        { emit: { event: 'result', result: { status: 'SUCCESS', usage: { total_tokens: 4321 } } } },
+      ],
+    }),
+  );
+  const session = await start();
+  await openStudio(page, session);
+
+  await page.getByRole('tab', { name: 'AI' }).click();
+  const chip = page.getByTestId('agent-settings-chip');
+  await chip.click();
+  await page.getByTestId('agent-settings-effort-high').click();
+  await expect(chip).toContainText('Cao');
+  await page.keyboard.press('Escape');
+
+  await sendChat(page, 'Say hi');
+  const record = await readRecord();
+  expect(
+    record.argv.slice(record.argv.indexOf('--effort'), record.argv.indexOf('--effort') + 2),
+  ).toEqual(['--effort', 'high']);
+
+  await chip.click();
+  await expect(page.getByTestId('agent-settings-usage')).toContainText('4.321');
+  await expect(page.getByTestId('agent-settings-usage')).toContainText(
+    'Antigravity CLI không báo hạn mức',
+  );
+  await page.keyboard.press('Escape');
+
+  // Chip and Send stay on one row inside the input box (the old switch broke a narrow panel).
+  const box = await page.getByTestId('chat-input').locator('..').boundingBox();
+  const chipBox = await chip.boundingBox();
+  const sendBox = await page.getByTestId('chat-send').boundingBox();
+  expect(box && chipBox && sendBox).toBeTruthy();
+  if (box && chipBox && sendBox) {
+    expect(chipBox.x).toBeGreaterThanOrEqual(box.x);
+    expect(chipBox.x + chipBox.width).toBeLessThanOrEqual(sendBox.x);
+    expect(
+      Math.abs(chipBox.y + chipBox.height / 2 - (sendBox.y + sendBox.height / 2)),
+    ).toBeLessThan(4);
+  }
+});

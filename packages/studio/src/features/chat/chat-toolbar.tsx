@@ -1,59 +1,12 @@
-// AI chat toolbar with new conversation, import folder, add image, and agent badge (R-CH-02, CW-52).
-import type { AgentStatus } from '@kumicraft/shared';
+// AI chat actions: new conversation, import folder, add image (R-CH-02, CW-52); the model sits by Send.
 import { FolderPlus, ImagePlus, Plus } from 'lucide-react';
 import type React from 'react';
-import { useContext, useRef, useState } from 'react';
+import { useContext, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
-import { patchProject } from '../../api/project-client.ts';
-import { AgentBadge } from '../agents/agent-badge.tsx';
 import { PanelHeaderContext } from '../editor/panel-header-context.ts';
-import { useProjectStore } from '../project/project-store.ts';
 import { useChatStore } from './chat-store.ts';
-
-function AllowEditsToggle({ disabled }: { readonly disabled: boolean }) {
-  const { t } = useTranslation('chat');
-  const allowEdits = useProjectStore((s) => s.project?.ai?.allowEdits ?? true);
-  const [busy, setBusy] = useState(false);
-
-  const toggle = async () => {
-    const next = !allowEdits;
-    setBusy(true);
-    try {
-      const info = await patchProject({ ai: { allowEdits: next } });
-      useProjectStore.getState().setProject({
-        ...info,
-        ai: info.ai ?? { allowEdits: next },
-      });
-    } catch {
-      // Keep previous state on failure.
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={allowEdits}
-      data-testid="chat-allow-edits"
-      disabled={disabled || busy}
-      onClick={() => {
-        void toggle();
-      }}
-      className={`flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs transition-colors cursor-pointer disabled:opacity-40 disabled:pointer-events-none ${
-        allowEdits
-          ? 'border-accent/40 bg-accent/10 text-ink'
-          : 'border-border bg-field text-ink-soft'
-      }`}
-    >
-      <span className={`size-2 rounded-full ${allowEdits ? 'bg-accent' : 'bg-ink-faint'}`} />
-      <span>{t('allowEdits')}</span>
-    </button>
-  );
-}
 
 function NewConversationButton({ disabled }: { readonly disabled: boolean }) {
   const { t } = useTranslation('chat');
@@ -61,14 +14,15 @@ function NewConversationButton({ disabled }: { readonly disabled: boolean }) {
     <button
       type="button"
       data-testid="chat-new-conversation"
+      title={t('newConversation')}
+      aria-label={t('newConversation')}
       disabled={disabled}
       onClick={() => {
         useChatStore.getState().newConversation();
       }}
-      className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs text-ink-soft hover:bg-card-solid hover:text-ink disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+      className="flex size-6 items-center justify-center rounded-full text-ink-soft hover:bg-card-solid hover:text-ink disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
     >
-      <Plus className="size-3" />
-      <span>{t('newConversation')}</span>
+      <Plus className="size-3.5" />
     </button>
   );
 }
@@ -116,6 +70,7 @@ function ToolbarActionButtons({ disabled, onOpenImport, onPickImages }: ToolbarA
 
   const content = (
     <div className="flex items-center gap-1">
+      <NewConversationButton disabled={disabled} />
       <ImportButton disabled={disabled} onOpenImport={onOpenImport} />
       <button
         type="button"
@@ -149,32 +104,27 @@ function ToolbarActionButtons({ disabled, onOpenImport, onPickImages }: ToolbarA
 
 export type ChatToolbarProps = {
   readonly disabled?: boolean | undefined;
-  readonly activeAgent?: AgentStatus | undefined;
   readonly onOpenImport: () => void;
   readonly onPickImages: (files: FileList | readonly File[]) => void;
 };
 
-export function ChatToolbar({
-  disabled = false,
-  activeAgent,
-  onOpenImport,
-  onPickImages,
-}: ChatToolbarProps) {
+/** New conversation, import and image: icons in the panel header, or a row when there is none. */
+export function ChatToolbar({ disabled = false, onOpenImport, onPickImages }: ChatToolbarProps) {
+  const headerSlot = useContext(PanelHeaderContext);
+  const buttons = (
+    <ToolbarActionButtons
+      disabled={disabled}
+      onOpenImport={onOpenImport}
+      onPickImages={onPickImages}
+    />
+  );
+  if (headerSlot !== undefined) return buttons;
   return (
     <div
       data-testid="chat-toolbar"
-      className="flex items-center justify-between pb-1.5 border-b border-line px-1 text-xs shrink-0"
+      className="flex items-center pb-1.5 border-b border-line px-1 shrink-0"
     >
-      <div className="flex items-center gap-1">
-        <NewConversationButton disabled={disabled} />
-        <AllowEditsToggle disabled={disabled} />
-        <ToolbarActionButtons
-          disabled={disabled}
-          onOpenImport={onOpenImport}
-          onPickImages={onPickImages}
-        />
-      </div>
-      {activeAgent !== undefined && <AgentBadge agent={activeAgent} />}
+      {buttons}
     </div>
   );
 }

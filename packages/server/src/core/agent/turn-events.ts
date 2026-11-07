@@ -31,6 +31,8 @@ export function createReplyCollector() {
   let lastWasMessage = false;
   return {
     add(event: AgentEvent): void {
+      // Usage reports are not part of the text and do not break a paragraph.
+      if (event.kind === 'usage') return;
       if (event.kind === 'message' && reply.length < TURN_REPLY_MAX) {
         const joint = reply === '' || lastWasMessage ? '' : '\n\n';
         reply = `${reply}${joint}${event.text}`.slice(0, TURN_REPLY_MAX);

@@ -27,6 +27,34 @@ export const AgentInstallRequestSchema = z.strictObject({
 });
 export type AgentInstallRequest = z.infer<typeof AgentInstallRequestSchema>;
 
+/** One usage limit window: the share used (0..1) and when it starts again. */
+export const AgentLimitSchema = z.strictObject({
+  used: z.number().min(0).max(1),
+  resetsAt: z.string().max(40).optional(),
+});
+export type AgentLimit = z.infer<typeof AgentLimitSchema>;
+
+/**
+ * What an agent reports about a turn (K9.5): the model it ran, its plan limits (Claude Code
+ * sends a five-hour and a weekly window; Antigravity CLI sends none) and the turn's tokens.
+ */
+export const AgentUsageSchema = z.strictObject({
+  model: z.string().max(120).optional(),
+  fiveHour: AgentLimitSchema.optional(),
+  week: AgentLimitSchema.optional(),
+  tokens: z.number().int().min(0).optional(),
+  costUsd: z.number().min(0).optional(),
+  contextWindow: z.number().int().min(0).optional(),
+});
+export type AgentUsage = z.infer<typeof AgentUsageSchema>;
+
+/** A model the agent offers: its CLI id and the name to show. */
+export const AgentModelOptionSchema = z.strictObject({
+  id: z.string().min(1).max(80),
+  label: z.string().min(1).max(120),
+});
+export type AgentModelOption = z.infer<typeof AgentModelOptionSchema>;
+
 export const AgentEventSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('message'), text: z.string().max(100_000) }),
   z.strictObject({
@@ -36,6 +64,7 @@ export const AgentEventSchema = z.discriminatedUnion('kind', [
   }),
   z.strictObject({ kind: z.literal('conversation'), id: z.string().min(1).max(200) }),
   z.strictObject({ kind: z.literal('error'), message: z.string().max(4000) }),
+  z.strictObject({ kind: z.literal('usage'), usage: AgentUsageSchema }),
 ]);
 export type AgentEvent = z.infer<typeof AgentEventSchema>;
 

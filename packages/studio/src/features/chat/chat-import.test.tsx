@@ -64,7 +64,7 @@ describe('Chat Import Part A [R-CH-02, R-MR-01, R-AG-21]', () => {
     vi.restoreAllMocks();
   });
 
-  it('Situation 3: ready chat has toolbar with import, add-image and badge [R-CH-02]', async () => {
+  it('Situation 3: ready chat has toolbar with import, add-image and the model chip [R-CH-02]', async () => {
     render(<ChatPanel trusted />);
     const toolbar = await screen.findByTestId('chat-toolbar');
     expect(toolbar).toBeDefined();
@@ -74,7 +74,9 @@ describe('Chat Import Part A [R-CH-02, R-MR-01, R-AG-21]', () => {
     expect(importBtn.getAttribute('title')).toBe('Nhập thư mục');
     expect(importBtn.getAttribute('aria-label')).toBe('Nhập thư mục');
     expect(screen.getByTestId('chat-add-image')).toBeDefined();
-    expect(screen.getByTestId('agent-badge')).toBeDefined();
+    // The agent and its login moved into the chip's popover by Send (K9.5).
+    expect(screen.getByTestId('agent-settings-chip')).toBeDefined();
+    expect(screen.queryByTestId('agent-badge')).toBeNull();
 
     expect(screen.queryByTestId('chat-add-backend')).toBeNull();
     expect(screen.queryByTestId('chat-attach')).toBeNull();

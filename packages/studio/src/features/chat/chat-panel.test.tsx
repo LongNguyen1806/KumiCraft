@@ -174,20 +174,25 @@ describe('ChatPanel tabs and locks [R-CH-01, R-CH-06, R-CH-07]', () => {
       ai: { allowEdits: false },
     });
 
+    vi.spyOn(agentClient, 'fetchAgentModels').mockResolvedValue([]);
     render(<ChatPanel trusted />);
-    const toggleBtn = await screen.findByTestId('chat-allow-edits');
-    expect(toggleBtn.textContent).toContain('AI được sửa file');
-    expect(toggleBtn.getAttribute('aria-checked')).toBe('true');
-    expect(screen.queryByTestId('chat-readonly-notice')).toBeNull();
+    // The switch sits in the popover of the model chip by Send (K9.5).
+    fireEvent.click(await screen.findByTestId('agent-settings-chip'));
+    const editBtn = screen.getByTestId('chat-allow-edits');
+    expect(editBtn.textContent).toBe('Sửa');
+    expect(editBtn.getAttribute('aria-checked')).toBe('true');
+    expect(screen.queryByTestId('agent-settings-ask')).toBeNull();
 
-    fireEvent.click(toggleBtn);
+    fireEvent.click(screen.getByTestId('chat-ask-only'));
 
     await vi.waitFor(() => {
       expect(patchSpy).toHaveBeenCalledWith({ ai: { allowEdits: false } });
     });
 
-    const notice = await screen.findByTestId('chat-readonly-notice');
-    expect(notice.textContent).toBe('Chỉ đọc: AI không sửa file');
+    await screen.findByTestId('agent-settings-ask');
+    expect(screen.getByTestId('agent-settings-popover').textContent).toContain(
+      'Chỉ đọc: AI không sửa file',
+    );
     expect(screen.getByTestId('chat-allow-edits').getAttribute('aria-checked')).toBe('false');
   });
 });

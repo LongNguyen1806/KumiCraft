@@ -1,6 +1,8 @@
 // Agent endpoints (WP-3.05a, WP-3.06c, R-AG-10, R-AG-11, R-AG-15, R-AG-16, R-AG-21).
 import {
   type AgentId,
+  type AgentModelOption,
+  AgentModelOptionSchema,
   type AgentStatus,
   AgentStatusSchema,
   type ChatImageKind,
@@ -53,6 +55,12 @@ export function arraySchema<T>(itemSchema: ResponseSchema<T>): ResponseSchema<re
 
 const AgentStatusesSchema = arraySchema(AgentStatusSchema);
 const TurnSummariesSchema = arraySchema(TurnSummarySchema);
+const AgentModelsSchema = arraySchema(AgentModelOptionSchema);
+
+/** The models the chat offers for one agent (K9.5); empty: only the agent's default. */
+export async function fetchAgentModels(id: AgentId): Promise<readonly AgentModelOption[]> {
+  return parseResponse(AgentModelsSchema, await apiGet(`agents/${id}/models`));
+}
 
 export async function fetchAgents(): Promise<readonly AgentStatus[]> {
   return parseResponse(AgentStatusesSchema, await apiGet('agents'));

@@ -21,6 +21,7 @@ import type { AgentAdapter, AgentCommand } from './agent-types.ts';
 import type { ChatImageStore } from './chat-images.ts';
 import { buildPrompt } from './prompt.ts';
 import type { TurnSnapshotStore } from './snapshot/snapshot-types.ts';
+import { computeAdapterArgs, runningSummary } from './turn-args.ts';
 import { type AgentRun, createReplyCollector, redactEventSecrets } from './turn-events.ts';
 import { settleInterruptedTurns } from './turn-interrupted.ts';
 import type { TurnStore } from './turn-store.ts';
@@ -181,25 +182,6 @@ type TurnPreparation = {
   readonly notices: TurnNotice[];
 };
 
-function computeAdapterArgs(
-  resolved: ResolvedAgent,
-  prompt: string,
-  mirrors: readonly { readonly dir: string }[],
-  allowEdits: boolean,
-  conversationId?: string,
-  imageDir?: string,
-): readonly string[] {
-  const mirrorDirs =
-    imageDir !== undefined ? [...mirrors.map((m) => m.dir), imageDir] : mirrors.map((m) => m.dir);
-  const adapterArgs = resolved.adapter.buildArgs({
-    prompt,
-    mirrorDirs,
-    allowEdits,
-    conversationId,
-  });
-  return [...resolved.command.prefixArgs, ...adapterArgs];
-}
-
 async function prepareTurnRun(
   deps: TurnRunnerDeps,
   projectInfo: ProjectInfo,
@@ -233,20 +215,21 @@ async function prepareTurnRun(
     request.conversation,
     resolved.status.id,
   );
-  const initialSummary: TurnSummary = {
-    id: turnId,
-    agent: resolved.status.id,
-    startedAt: deps.now().toISOString(),
-    prompt: request.prompt,
-    state: 'running',
-    files: [],
-    revertible: false,
-    notices,
-  };
+  const initialSummary = runningSummary(deps, turnId, resolved, request, notices);
   await deps.store.save(projectInfo.id, initialSummary);
 
   const imgDir = imagePaths.length > 0 ? deps.chatImages?.dirOf(projectInfo.id) : undefined;
-  const args = computeAdapterArgs(resolved, promptRes.value, mirrors, allowEdits, convId, imgDir);
+  // The model and effort the user picked for this agent in the chat (K9.5).
+  const choice = projectInfo.ai?.agents?.[resolved.status.id];
+  const args = computeAdapterArgs(
+    resolved,
+    promptRes.value,
+    mirrors,
+    allowEdits,
+    convId,
+    imgDir,
+    choice,
+  );
   return ok({ initialSummary, args, readyIds: new Set(mirrors.map((m) => m.backendId)), notices });
 }
 

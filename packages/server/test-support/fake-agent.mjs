@@ -58,6 +58,14 @@ function parseArgs(args) {
         return { ok: false, error: `Missing value for ${arg}` };
       }
       conversationId = next;
+    } else if (arg === '--model') {
+      if (++i >= args.length || next.startsWith('-')) {
+        return { ok: false, error: 'Missing value for --model' };
+      }
+    } else if (arg === '--effort') {
+      if (++i >= args.length || !['low', 'medium', 'high', 'xhigh', 'max'].includes(next)) {
+        return { ok: false, error: `Unknown flag or unexpected argument: --effort ${next ?? ''}` };
+      }
     } else if (arg === '--mode') {
       if (++i >= args.length || next !== 'plan') {
         return { ok: false, error: `Unknown flag or unexpected argument: --mode ${next ?? ''}` };

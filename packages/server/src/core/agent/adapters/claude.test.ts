@@ -133,3 +133,66 @@ describe('claudeAdapter', () => {
     }
   });
 });
+
+describe('claudeAdapter model, effort and usage [K9.5]', () => {
+  it('passes the picked model and effort to the CLI', () => {
+    const args = claudeAdapter.buildArgs({
+      prompt: 'Hi',
+      mirrorDirs: [],
+      allowEdits: true,
+      model: 'sonnet',
+      effort: 'high',
+    });
+    expect(args.slice(-4)).toEqual(['--model', 'sonnet', '--effort', 'high']);
+  });
+
+  it('reads the five-hour and weekly windows from rate_limit_event', () => {
+    const line = JSON.stringify({
+      type: 'rate_limit_event',
+      rate_limit_info: {
+        unifiedWindows: {
+          five_hour: { utilization: 0.42, resetsAt: 1_794_000_000 },
+          seven_day: { utilization: 1.3 },
+        },
+      },
+    });
+    expect(claudeAdapter.parseLine(line)).toEqual({
+      kind: 'usage',
+      usage: {
+        fiveHour: { used: 0.42, resetsAt: new Date(1_794_000_000 * 1000).toISOString() },
+        week: { used: 1 },
+      },
+    });
+  });
+
+  it('reads model, tokens, cost and context window from the result', () => {
+    const line = JSON.stringify({
+      type: 'result',
+      subtype: 'success',
+      is_error: false,
+      total_cost_usd: 0.12,
+      modelUsage: {
+        'claude-sonnet-5-5': {
+          inputTokens: 10,
+          outputTokens: 20,
+          cacheReadInputTokens: 300,
+          cacheCreationInputTokens: 0,
+          contextWindow: 200_000,
+        },
+      },
+    });
+    expect(claudeAdapter.parseLine(line)).toEqual({
+      kind: 'usage',
+      usage: { model: 'claude-sonnet-5-5', tokens: 330, costUsd: 0.12, contextWindow: 200_000 },
+    });
+  });
+
+  it('offers the model aliases Claude Code takes', () => {
+    expect(claudeAdapter.models).toEqual([
+      { id: 'fable', label: 'Fable' },
+      { id: 'opus', label: 'Opus' },
+      { id: 'sonnet', label: 'Sonnet' },
+      { id: 'haiku', label: 'Haiku' },
+    ]);
+  });
+});

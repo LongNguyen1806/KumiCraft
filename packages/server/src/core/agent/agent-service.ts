@@ -1,5 +1,10 @@
 // Agent detection and resolution service (WP-3.03a, WP-3.06b, R-AG-10, R-AG-21, S-110).
-import { AGENT_IDS, type AgentId, type AgentStatus } from '@kumicraft/shared';
+import {
+  AGENT_IDS,
+  type AgentId,
+  type AgentModelOption,
+  type AgentStatus,
+} from '@kumicraft/shared';
 
 import type { ProcessPort } from '../ports/process-port.ts';
 import { err, ok, type Result } from '../shared/result.ts';
@@ -33,7 +38,11 @@ export type AgentService = {
     }>
   >;
   commandOf(id: AgentId): Promise<AgentCommand | undefined>;
+  /** The models the chat offers for `id` (K9.5); kept for ten minutes. */
+  models(id: AgentId): Promise<readonly AgentModelOption[]>;
 };
+
+const MODELS_TTL_MS = 10 * 60_000;
 
 function resolveAdapter(deps: AgentServiceDeps, id: AgentId): AgentAdapter {
   return deps.adapters[id];
@@ -107,6 +116,24 @@ function resolveAuto(
   });
 }
 
+/** A fixed list, or the output of the adapter's list command (empty when it cannot run). */
+async function readModels(
+  deps: AgentServiceDeps,
+  id: AgentId,
+  command: AgentCommand | undefined,
+): Promise<readonly AgentModelOption[]> {
+  const source = resolveAdapter(deps, id).models;
+  if (source === undefined) return [];
+  if (!('args' in source)) return source;
+  if (command === undefined) return [];
+  const handle = deps.process.spawn(command.command, [...command.prefixArgs, ...source.args], {
+    cwd: process.cwd(),
+    timeoutMs: 30_000,
+  });
+  const out = await handle.wait();
+  return out.exitCode === 0 ? source.parse(out) : [];
+}
+
 export function createAgentService(deps: AgentServiceDeps): AgentService {
   let activeCommands = new Map<AgentId, AgentCommand>();
   let hasDetected = false;
@@ -142,5 +169,14 @@ export function createAgentService(deps: AgentServiceDeps): AgentService {
     return resolveAuto(deps, map, activeCommands);
   };
 
-  return { statuses, resolve, commandOf };
+  const modelCache = new Map<AgentId, { at: number; list: readonly AgentModelOption[] }>();
+  const models = async (id: AgentId): Promise<readonly AgentModelOption[]> => {
+    const cached = modelCache.get(id);
+    if (cached !== undefined && Date.now() - cached.at < MODELS_TTL_MS) return cached.list;
+    const list = await readModels(deps, id, await commandOf(id));
+    if (list.length > 0) modelCache.set(id, { at: Date.now(), list });
+    return list;
+  };
+
+  return { statuses, resolve, commandOf, models };
 }

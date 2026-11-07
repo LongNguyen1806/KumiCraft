@@ -94,7 +94,6 @@ function ActiveChatView({
     <div className="flex flex-col gap-2 min-h-0 flex-1 justify-between">
       <ChatToolbar
         disabled={hasRunningTurn}
-        activeAgent={activeAgent}
         onOpenImport={onOpenImport}
         onPickImages={(files) => {
           void addFiles(files);
@@ -118,7 +117,7 @@ function ActiveChatView({
       <div className="flex flex-col gap-2 shrink-0">
         <ChatContext />
         <AgentLoginCard />
-        <ChatInput disabled={hasRunningTurn} />
+        <ChatInput disabled={hasRunningTurn} agent={activeAgent} />
       </div>
     </div>
   );

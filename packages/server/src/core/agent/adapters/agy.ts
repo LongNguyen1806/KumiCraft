@@ -1,5 +1,10 @@
 // agy adapter: builds args and parses stream-json output (WP-3.03a, S-111, S-112).
-import { type AgentEvent, AgentEventSchema, type AgentLoginState } from '@kumicraft/shared';
+import {
+  type AgentEvent,
+  AgentEventSchema,
+  type AgentLoginState,
+  type AgentModelOption,
+} from '@kumicraft/shared';
 import { z } from 'zod';
 
 import type { ProcessOutput } from '../../ports/process-port.ts';
@@ -41,6 +46,7 @@ const AgyResultSchema = z.looseObject({
   event: z.literal('result'),
   result: z.looseObject({
     status: z.string(),
+    usage: z.looseObject({ total_tokens: z.number().optional() }).optional(),
   }),
 });
 
@@ -55,6 +61,13 @@ function resolveToolTarget(parameters?: Record<string, unknown>): string | undef
     return candidate.slice(0, 1024);
   }
   return undefined;
+}
+
+export function parseAgyModels(output: ProcessOutput): readonly AgentModelOption[] {
+  return output.stdout.split(/\r?\n/).flatMap((line) => {
+    const [id = '', label = ''] = line.split('\t').map((part) => part.trim());
+    return /^[A-Za-z0-9][\w.:/-]{0,79}$/.test(id) && label !== '' ? [{ id, label }] : [];
+  });
 }
 
 function parseAgyJson(data: unknown): AgentEvent | undefined {
@@ -82,6 +95,11 @@ function parseAgyJson(data: unknown): AgentEvent | undefined {
   if (resultRes.success && resultRes.data.result.status !== 'SUCCESS') {
     return { kind: 'error', message: `agy: ${resultRes.data.result.status}`.slice(0, 4000) };
   }
+  // Antigravity CLI reports the turn's tokens only: no plan limits (K9.5).
+  const tokens = resultRes.success ? resultRes.data.result.usage?.total_tokens : undefined;
+  if (tokens !== undefined) {
+    return { kind: 'usage', usage: { tokens: Math.max(0, Math.round(tokens)) } };
+  }
   return undefined;
 }
 
@@ -97,6 +115,8 @@ export const agyAdapter: AgentAdapter = {
       ...(turn.allowEdits !== false ? [] : ['--mode', 'plan']),
       ...turn.mirrorDirs.flatMap((d) => ['--add-dir', d]),
       ...(turn.conversationId !== undefined ? ['--conversation', turn.conversationId] : []),
+      ...(turn.model !== undefined ? ['--model', turn.model] : []),
+      ...(turn.effort !== undefined ? ['--effort', turn.effort] : []),
     ];
   },
   parseLine(line: string): AgentEvent | undefined {
@@ -111,6 +131,8 @@ export const agyAdapter: AgentAdapter = {
       return undefined;
     }
   },
+  // `agy models` prints `id<TAB>Name` per line after a "Fetching…" line.
+  models: { args: ['models'], parse: parseAgyModels },
   loginProbe: {
     args: ['models'],
     classify(output: ProcessOutput): AgentLoginState {

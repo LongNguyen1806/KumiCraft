@@ -19,6 +19,13 @@ const AgentParamsSchema = z.strictObject({
 export function registerAgentRoutes(api: FastifyInstance, deps: AgentRoutesDeps): void {
   api.get('/agents', async () => ({ data: await deps.agentService.statuses() }));
 
+  // K9.5: the models the chat's AI settings offer for one agent.
+  api.get('/agents/:id/models', async (request: FastifyRequest, reply: FastifyReply) => {
+    const params = AgentParamsSchema.safeParse(request.params);
+    if (!params.success) return sendError(reply, { code: 'E016', params: { reason: 'agent' } });
+    return { data: await deps.agentService.models(params.data.id) };
+  });
+
   api.post('/agents/:id/install', async (request: FastifyRequest, reply: FastifyReply) => {
     const parsedParams = AgentParamsSchema.safeParse(request.params);
     if (!parsedParams.success) {

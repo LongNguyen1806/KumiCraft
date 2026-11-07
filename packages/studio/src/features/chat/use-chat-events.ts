@@ -11,11 +11,17 @@ import { createEventsClient } from '../../api/events-client.ts';
 import { isRecord } from '../../api/http.ts';
 import { fetchJob } from '../../api/jobs-client.ts';
 import { useChatStore } from './chat-store.ts';
+import { useUsageStore } from './usage-store.ts';
 
 function handleAgentEvent(payload: unknown): void {
   const parsed = AgentEventMessageSchema.safeParse(payload);
   if (!parsed.success) return;
-  useChatStore.getState().applyAgentEvent(parsed.data.turnId, parsed.data.event);
+  const event = parsed.data.event;
+  if (event.kind === 'usage') {
+    useUsageStore.getState().record(event.usage);
+    return;
+  }
+  useChatStore.getState().applyAgentEvent(parsed.data.turnId, event);
 }
 
 function handleJobCompleted(payload: unknown): void {

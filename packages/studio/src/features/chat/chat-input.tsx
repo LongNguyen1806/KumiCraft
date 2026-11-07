@@ -1,5 +1,5 @@
 // Multi-line prompt input with keyboard submit (Ctrl+Enter / Cmd+Enter) and error notice (WP-3.05a, R-CH-01, R-CH-02).
-import type { AgentId, TurnContext } from '@kumicraft/shared';
+import type { AgentId, AgentStatus, TurnContext } from '@kumicraft/shared';
 import type { TFunction } from 'i18next';
 import { ArrowUp } from 'lucide-react';
 import {
@@ -16,9 +16,9 @@ import { startTurn } from '../../api/agent-client.ts';
 import { type ErrorInfo, errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { type LoginFlow, useAgentsStore } from '../../store/agents-store.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { useProjectStore } from '../project/project-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
+import { AgentSettings } from './agent-settings.tsx';
 import { type ChatImageAttachment, useChatStore } from './chat-store.ts';
 import { useChatImages } from './use-chat-images.ts';
 
@@ -123,13 +123,15 @@ function useSendTurn() {
 
 type ChatSendButtonProps = {
   readonly canSend: boolean;
+  readonly agent?: AgentStatus | undefined;
   readonly onSend: () => void;
 };
 
-function ChatSendButton({ canSend, onSend }: ChatSendButtonProps) {
+function ChatSendButton({ canSend, agent, onSend }: ChatSendButtonProps) {
   const { t } = useTranslation('chat');
   return (
-    <div className="flex justify-end pt-1">
+    <div className="flex min-w-0 items-center justify-end gap-1.5 pt-1">
+      {agent !== undefined && <AgentSettings agent={agent} />}
       <button
         type="button"
         data-testid="chat-send"
@@ -137,7 +139,7 @@ function ChatSendButton({ canSend, onSend }: ChatSendButtonProps) {
         title={t('send')}
         aria-label={t('send')}
         onClick={onSend}
-        className="flex size-7 items-center justify-center rounded-full bg-primary text-on-charcoal hover:bg-primary-hover disabled:opacity-40 cursor-pointer"
+        className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-on-charcoal hover:bg-primary-hover disabled:opacity-40 cursor-pointer"
       >
         <ArrowUp className="size-4" />
       </button>
@@ -147,6 +149,8 @@ function ChatSendButton({ canSend, onSend }: ChatSendButtonProps) {
 
 export type ChatInputProps = {
   readonly disabled?: boolean;
+  /** The agent the chat talks to: shows its model, effort and limits by Send. */
+  readonly agent?: AgentStatus | undefined;
 };
 
 function collectReadyImages(images: readonly ChatImageAttachment[]): {
@@ -219,6 +223,7 @@ type ChatInputFieldProps = {
   readonly disabled: boolean;
   readonly draft: string;
   readonly canSend: boolean;
+  readonly agent?: AgentStatus | undefined;
   readonly onDraftChange: (text: string) => void;
   readonly onSend: () => void;
   readonly onAddFiles: (files: FileList | readonly File[]) => Promise<void>;
@@ -256,6 +261,7 @@ function ChatInputField({
   disabled,
   draft,
   canSend,
+  agent,
   onDraftChange,
   onSend,
   onAddFiles,
@@ -295,15 +301,13 @@ function ChatInputField({
         }}
         className="w-full resize-none border-0 bg-transparent text-xs text-ink placeholder:text-ink-faint focus:outline-none disabled:opacity-50"
       />
-      <ChatSendButton canSend={canSend} onSend={onSend} />
+      <ChatSendButton canSend={canSend} agent={agent} onSend={onSend} />
     </div>
   );
 }
 
-export function ChatInput({ disabled = false }: ChatInputProps) {
-  const { t } = useTranslation('chat');
+export function ChatInput({ disabled = false, agent }: ChatInputProps) {
   const { t: tCommon } = useTranslation();
-  const allowEdits = useProjectStore((s) => s.project?.ai?.allowEdits ?? true);
   const draft = useChatStore((s) => s.draft);
   const setDraft = useChatStore((s) => s.setDraft);
   const { isUploading, addFiles } = useChatImages();
@@ -337,6 +341,7 @@ export function ChatInput({ disabled = false }: ChatInputProps) {
         disabled={disabled}
         draft={draft}
         canSend={canSend}
+        agent={agent}
         onDraftChange={setDraft}
         onSend={() => {
           if (!disabled) sendFromStore(send);
@@ -344,11 +349,6 @@ export function ChatInput({ disabled = false }: ChatInputProps) {
         onAddFiles={addFiles}
         onDropPath={handleDropPath}
       />
-      {!allowEdits && (
-        <p data-testid="chat-readonly-notice" className="text-[11px] text-ink-soft">
-          {t('readOnlyNotice')}
-        </p>
-      )}
     </div>
   );
 }

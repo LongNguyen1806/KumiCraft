@@ -26,7 +26,6 @@
   },
   "remove": "Remove",
   "newConversation": "New conversation",
-  "allowEdits": "Allow AI to edit files",
   "readOnlyNotice": "Read-only: AI will not edit files",
   "openInEditor": "Open in editor",
   "diffLoading": "Loading diff…",
@@ -81,5 +80,29 @@
     "markdownWhy": "Why",
     "markdownExample": "Example",
     "markdownLast": "Last seen"
+  },
+  "agentSettings": {
+    "title": "AI model and mode",
+    "default": "Default",
+    "model": "Model",
+    "effort": "Effort",
+    "efforts": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "xhigh": "X-high",
+      "max": "Max"
+    },
+    "mode": "Mode",
+    "edit": "Edit",
+    "ask": "Ask",
+    "editHint": "AI may edit project files",
+    "fiveHour": "5 hours",
+    "week": "Week",
+    "resetsAt": "Resets {{time}}",
+    "noLimitsAgy": "Antigravity CLI does not report limits",
+    "noLimitsYet": "No data yet, send a message to update",
+    "lastTurn": "Last turn: {{tokens}} tokens",
+    "updatedAt": "Updated {{time}}"
   }
 }

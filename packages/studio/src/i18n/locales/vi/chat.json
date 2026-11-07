@@ -26,7 +26,6 @@
   },
   "remove": "Gỡ",
   "newConversation": "Hội thoại mới",
-  "allowEdits": "AI được sửa file",
   "readOnlyNotice": "Chỉ đọc: AI không sửa file",
   "openInEditor": "Mở trong editor",
   "diffLoading": "Đang tải diff…",
@@ -81,5 +80,29 @@
     "markdownWhy": "Vì sao",
     "markdownExample": "Ví dụ",
     "markdownLast": "Lần gần nhất"
+  },
+  "agentSettings": {
+    "title": "Model và chế độ AI",
+    "default": "Mặc định",
+    "model": "Model",
+    "effort": "Mức suy nghĩ",
+    "efforts": {
+      "low": "Thấp",
+      "medium": "Vừa",
+      "high": "Cao",
+      "xhigh": "Rất cao",
+      "max": "Tối đa"
+    },
+    "mode": "Chế độ",
+    "edit": "Sửa",
+    "ask": "Hỏi",
+    "editHint": "AI được sửa file trong dự án",
+    "fiveHour": "5 giờ",
+    "week": "Tuần",
+    "resetsAt": "Làm mới lúc {{time}}",
+    "noLimitsAgy": "Antigravity CLI không báo hạn mức",
+    "noLimitsYet": "Chưa có số liệu, gửi một câu để cập nhật",
+    "lastTurn": "Lượt trước: {{tokens}} token",
+    "updatedAt": "Cập nhật lúc {{time}}"
   }
 }

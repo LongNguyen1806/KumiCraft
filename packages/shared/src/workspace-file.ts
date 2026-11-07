@@ -141,15 +141,37 @@ export function sessionOrigin(runnerOrigin: string, sessionId: number): string {
   return `${protocol}://s${String(sessionId)}.localhost:${portStr}`;
 }
 
+export const AGENT_EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
+export const AgentEffortSchema = z.enum(AGENT_EFFORTS);
+export type AgentEffort = z.infer<typeof AgentEffortSchema>;
+
+/**
+ * A model id or alias as the agent's CLI takes it (`sonnet`, `gemini-3.8-flash-high`). Never
+ * starts with `-`, so it cannot become another flag of the command (S-111).
+ */
+export const AgentModelSchema = z.string().regex(/^[A-Za-z0-9][\w.:/-]{0,79}$/);
+
+/** The model and effort the user picked for one agent; absent: the agent's own default. */
+export const AgentRunChoiceSchema = z.strictObject({
+  model: AgentModelSchema.optional(),
+  effort: AgentEffortSchema.optional(),
+});
+export type AgentRunChoice = z.infer<typeof AgentRunChoiceSchema>;
+
 export const WorkspaceAiSchema = z.strictObject({
   allowEdits: z.boolean(),
+  /** By agent id (`claude`, `agy`). */
+  agents: z.record(z.string().regex(/^[a-z]{1,20}$/), AgentRunChoiceSchema).optional(),
 });
 export type WorkspaceAi = z.infer<typeof WorkspaceAiSchema>;
 
 export const DEFAULT_WORKSPACE_AI: WorkspaceAi = { allowEdits: true };
 
 export function normalizeWorkspaceAi(ai: WorkspaceAi | undefined): WorkspaceAi {
-  return ai ? { allowEdits: ai.allowEdits } : DEFAULT_WORKSPACE_AI;
+  if (!ai) return DEFAULT_WORKSPACE_AI;
+  return ai.agents === undefined
+    ? { allowEdits: ai.allowEdits }
+    : { allowEdits: ai.allowEdits, agents: ai.agents };
 }
 
 export const DEFAULT_DESIGN_DIRS: ResolvedDesignDirs = {

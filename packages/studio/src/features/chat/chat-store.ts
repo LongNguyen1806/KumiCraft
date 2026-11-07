@@ -84,7 +84,8 @@ const INITIAL_HIDDEN: ChatHiddenContext = {
 };
 
 function appendAgentEvent(items: readonly ChatItem[], event: AgentEvent): readonly ChatItem[] {
-  if (event.kind === 'conversation') return items;
+  // Usage goes to the usage store, not the thread.
+  if (event.kind === 'conversation' || event.kind === 'usage') return items;
   if (event.kind === 'tool') {
     return [...items, { kind: 'tool', name: event.name, target: event.target }];
   }

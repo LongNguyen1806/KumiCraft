@@ -143,6 +143,7 @@ export async function buildTestApp(options: {
     statuses: options.statuses ?? (() => Promise.resolve([])),
     resolve: () => Promise.reject(new Error('unused')),
     commandOf: options.commandOf ?? (() => Promise.resolve(undefined)),
+    models: () => Promise.resolve([]),
   };
 
   const setupService: AgentSetupService = createAgentSetupService({

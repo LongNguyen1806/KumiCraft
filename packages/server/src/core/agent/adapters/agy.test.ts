@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import type { AgentEvent } from '@kumicraft/shared';
 import { describe, expect, it } from 'vitest';
 
-import { agyAdapter } from './agy.ts';
+import { agyAdapter, parseAgyModels } from './agy.ts';
 
 const FORBIDDEN_FLAGS = [
   '--dangerously-skip-permissions',
@@ -170,5 +170,40 @@ describe('agyAdapter', () => {
         }),
       ),
     ).toEqual({ kind: 'error', message: 'agy: ERROR' });
+  });
+});
+
+describe('agyAdapter model, effort and usage [K9.5]', () => {
+  it('passes the picked model and effort to the CLI', () => {
+    const args = agyAdapter.buildArgs({
+      prompt: 'Hi',
+      mirrorDirs: [],
+      allowEdits: true,
+      model: 'gemini-3.8-flash-high',
+      effort: 'low',
+    });
+    expect(args.slice(-4)).toEqual(['--model', 'gemini-3.8-flash-high', '--effort', 'low']);
+  });
+
+  it('reads the turn tokens from a successful result', () => {
+    const line = JSON.stringify({
+      event: 'result',
+      result: { status: 'SUCCESS', usage: { total_tokens: 4321 } },
+    });
+    expect(agyAdapter.parseLine(line)).toEqual({ kind: 'usage', usage: { tokens: 4321 } });
+  });
+
+  it('lists models from `agy models`, skipping the status line and bad ids', () => {
+    const out = parseAgyModels({
+      exitCode: 0,
+      stdout:
+        'Fetching available models...\ngemini-3.8-flash-high\tGemini 3.8 Flash (High)\r\n--evil\tBad\nclaude-sonnet\tClaude Sonnet\n',
+      stderr: '',
+      lines: [],
+    });
+    expect(out).toEqual([
+      { id: 'gemini-3.8-flash-high', label: 'Gemini 3.8 Flash (High)' },
+      { id: 'claude-sonnet', label: 'Claude Sonnet' },
+    ]);
   });
 });
