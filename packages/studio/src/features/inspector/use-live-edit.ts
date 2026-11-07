@@ -166,7 +166,8 @@ export class LiveEditQueue {
 function getStaticClass(target: Extract<InspectorTarget, { readonly kind: 'element' }>): string {
   if (
     target.source?.className.kind === 'static' ||
-    target.source?.className.kind === 'callStatic'
+    target.source?.className.kind === 'callStatic' ||
+    target.source?.className.kind === 'templateStatic'
   ) {
     return target.source.className.value;
   }

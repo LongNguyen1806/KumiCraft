@@ -117,7 +117,10 @@ function ElementSections({
   onRawChange,
   onAttributeChange,
 }: ElementSectionsProps) {
-  const callStaticRest = source.className.kind === 'callStatic' ? source.className.rest : undefined;
+  const callStaticRest =
+    source.className.kind === 'callStatic' || source.className.kind === 'templateStatic'
+      ? source.className.rest
+      : undefined;
 
   return (
     <div className="flex flex-col gap-1">

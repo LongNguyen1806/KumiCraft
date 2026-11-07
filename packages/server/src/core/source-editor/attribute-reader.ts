@@ -133,6 +133,33 @@ function extractCallStatic(expr: AstNode, code: string): ElementClassName | unde
 }
 
 /**
+ * `` `p-4 flex ${x}` ``: the first part is editable when it is empty or ends with whitespace, so
+ * an edit never cuts a class built with the expression (`` `btn-${variant}` `` stays locked).
+ */
+function extractTemplateStatic(expr: AstNode, code: string): ElementClassName | undefined {
+  if (expr.type !== 'TemplateLiteral') return undefined;
+  const expressions = Array.isArray(expr['expressions']) ? expr['expressions'] : [];
+  const quasis = Array.isArray(expr['quasis']) ? expr['quasis'].map(asAstNode) : [];
+  const first = quasis[0];
+  const firstExpr = asAstNode(expressions[0]);
+  if (expressions.length === 0 || first === undefined || firstExpr === undefined) return undefined;
+  if (typeof first.start !== 'number' || typeof first.end !== 'number') return undefined;
+  if (typeof expr.end !== 'number') return undefined;
+  const text = code.slice(first.start, first.end);
+  if (text.trim() !== '' && !/\s$/.test(text)) return undefined;
+  // The value as JavaScript reads it (`\``, `\${` unescaped); the writer escapes it again.
+  const parts: unknown = first['value'];
+  const cooked: unknown = parts instanceof Object ? Reflect.get(parts, 'cooked') : undefined;
+  if (typeof cooked !== 'string') return undefined;
+  // From the `${` after the first part to the closing backtick.
+  const rest = code
+    .slice(first.end, expr.end - 1)
+    .trim()
+    .slice(0, 200);
+  return { kind: 'templateStatic', value: cooked.trim().replace(/\s+/g, ' '), rest };
+}
+
+/**
  * Reads className attribute from opening element (R-SE-04).
  */
 export function readClassName(attributes: readonly unknown[], code: string): ElementClassName {
@@ -155,7 +182,7 @@ export function readClassName(attributes: readonly unknown[], code: string): Ele
   if (valueNode?.type === 'JSXExpressionContainer') {
     const expr = asAstNode(valueNode['expression']);
     if (expr) {
-      const callStatic = extractCallStatic(expr, code);
+      const callStatic = extractCallStatic(expr, code) ?? extractTemplateStatic(expr, code);
       if (callStatic) return callStatic;
     }
   }

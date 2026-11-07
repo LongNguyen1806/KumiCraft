@@ -99,6 +99,48 @@ function modifyStringLiteral(
   }
 }
 
+/**
+ * `` `${a} b` `` or `cn('', cond && 'x')`: emptying the static classes keeps the attribute, since
+ * the dynamic part is still there.
+ */
+function keepsDynamicPart(attr: AstNode | undefined): boolean {
+  const value = asAstNode(attr?.['value']);
+  if (value?.type !== 'JSXExpressionContainer') return false;
+  const expr = asAstNode(value['expression']);
+  if (expr?.type === 'TemplateLiteral') {
+    return Array.isArray(expr['expressions']) && expr['expressions'].length > 0;
+  }
+  return expr?.type === 'CallExpression';
+}
+
+function escapeTemplate(text: string): string {
+  return text.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+}
+
+/**
+ * The text before the first `${` (or the whole template without one). Babel's quasi range
+ * excludes the backticks and `${`. With an expression after it, the part keeps one space before
+ * the `${` so the static and dynamic classes stay apart.
+ */
+function modifyTemplateStart(s: MagicString, code: string, expr: AstNode, after: string): boolean {
+  const quasis = Array.isArray(expr['quasis']) ? expr['quasis'] : [];
+  const expressions = Array.isArray(expr['expressions']) ? expr['expressions'] : [];
+  const quasi = asAstNode(quasis[0]);
+  if (!quasi || typeof quasi.start !== 'number' || typeof quasi.end !== 'number') return false;
+  if (expressions.length === 0) {
+    s.overwrite(quasi.start, quasi.end, escapeTemplate(after));
+    return true;
+  }
+  const old = code.slice(quasi.start, quasi.end);
+  const lead = /^\s*/.exec(old)?.[0] ?? '';
+  const trail = /\s*$/.exec(old)?.[0] ?? '';
+  const value = after.trim();
+  const text = value === '' ? '' : `${lead}${escapeTemplate(value)}${trail === '' ? ' ' : trail}`;
+  if (quasi.start === quasi.end) s.appendLeft(quasi.start, text);
+  else s.overwrite(quasi.start, quasi.end, text);
+  return true;
+}
+
 function modifyExistingAttribute(
   s: MagicString,
   code: string,
@@ -126,13 +168,7 @@ function modifyExistingAttribute(
       return;
     }
     if (expr?.type === 'TemplateLiteral') {
-      const quasis = Array.isArray(expr['quasis']) ? expr['quasis'] : [];
-      const quasi = asAstNode(quasis[0]);
-      if (quasi && typeof quasi.start === 'number' && typeof quasi.end === 'number') {
-        const escaped = after.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
-        s.overwrite(quasi.start, quasi.end, `\`${escaped}\``);
-        return;
-      }
+      if (modifyTemplateStart(s, code, expr, after)) return;
     }
     if (expr?.type === 'CallExpression') {
       modifyCallExpressionArg(s, expr, after);
@@ -188,7 +224,8 @@ export function mutateAttribute(
     return nameNode?.['name'] === attrName;
   });
 
-  if (after === undefined || (attrName === 'className' && after === '')) {
+  const emptiesClass = attrName === 'className' && after === '' && !keepsDynamicPart(existingAttr);
+  if (after === undefined || emptiesClass) {
     if (existingAttr) {
       removeAttribute(s, code, existingAttr);
     }

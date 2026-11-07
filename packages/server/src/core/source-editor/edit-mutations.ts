@@ -29,7 +29,9 @@ export function applyClassNameMutation(
   if (currentClass.kind === 'duplicate')
     return err({ code: 'E023', params: { reason: 'duplicateAttr' } });
   const currentVal =
-    currentClass.kind === 'static' || currentClass.kind === 'callStatic'
+    currentClass.kind === 'static' ||
+    currentClass.kind === 'callStatic' ||
+    currentClass.kind === 'templateStatic'
       ? currentClass.value
       : undefined;
   if (edit.before !== undefined && edit.before !== currentVal)

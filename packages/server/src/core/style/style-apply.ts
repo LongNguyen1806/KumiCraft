@@ -191,10 +191,18 @@ export async function elementContext(
   const element = await deps.sourceEditor.getElement(root, loc);
   if (!element.ok) return element;
   const cls = element.value.className;
-  if (cls.kind !== 'static' && cls.kind !== 'none' && cls.kind !== 'callStatic') {
+  if (
+    cls.kind !== 'static' &&
+    cls.kind !== 'none' &&
+    cls.kind !== 'callStatic' &&
+    cls.kind !== 'templateStatic'
+  ) {
     return err({ code: 'E016', params: { reason: 'expression' } });
   }
-  const className = cls.kind === 'static' || cls.kind === 'callStatic' ? cls.value : undefined;
+  const className =
+    cls.kind === 'static' || cls.kind === 'callStatic' || cls.kind === 'templateStatic'
+      ? cls.value
+      : undefined;
   return ok({
     jsxFile: loc.split(':')[0] ?? loc,
     tag: element.value.tag,

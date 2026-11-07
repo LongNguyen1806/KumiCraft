@@ -59,6 +59,15 @@ export const ElementClassNameSchema = z.discriminatedUnion('kind', [
     callee: z.string(),
     rest: z.string().max(200),
   }),
+  /**
+   * `` className={`static classes ${cond ? 'a' : 'b'}`} ``: the text before the first `${` is
+   * editable (it ends at a class boundary); `rest` is everything from that `${` on, kept as is.
+   */
+  z.strictObject({
+    kind: z.literal('templateStatic'),
+    value: z.string(),
+    rest: z.string().max(200),
+  }),
   z.strictObject({ kind: z.literal('expression'), code: z.string().max(200) }),
   z.strictObject({ kind: z.literal('none') }),
   z.strictObject({ kind: z.literal('duplicate') }),
