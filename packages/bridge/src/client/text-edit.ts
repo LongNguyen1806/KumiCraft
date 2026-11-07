@@ -105,7 +105,8 @@ export class TextEditController {
     const el = this.activeElement;
     const ref = this.activeRef;
     const orig = this.originalText ?? '';
-    const rawText = el.innerText || el.textContent || '';
+    // The source text: innerText would bring CSS in (`uppercase` wrote `BOSE KCQA`, K9.5).
+    const rawText = el.textContent;
 
     this.cleanUp();
     this.activeElement = undefined;

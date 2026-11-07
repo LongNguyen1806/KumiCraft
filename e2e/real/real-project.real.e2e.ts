@@ -5,15 +5,16 @@
 // Undo must give every file back byte for byte. Files are compared with a snapshot taken at the
 // start, so a copy without git or with uncommitted work is fine. Never point it at the original
 // projects: it writes to the files and undoes the writes.
-import { createHash } from 'node:crypto';
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { expect, type Frame, type Page, test } from '@playwright/test';
 
 import { type CliSession, startCli } from '../support/cli-session.ts';
 import { makeTempDir, type TempDir } from '../support/copy-fixture.ts';
 import { getCanvasFrame, trustIfAsked } from '../support/trust.ts';
+import { backup, changedSince, restore, snapshot } from './real-files.ts';
+import { editTextAndUndo, textCandidates } from './real-text.ts';
 
 const PROJECTS = (process.env.KC_REAL_PROJECTS ?? '')
   .split(';')
@@ -25,51 +26,16 @@ const MARKER = 'kc-qa-mark';
 
 test.use({ trace: 'off', viewport: { width: 1600, height: 1000 } });
 
-const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', '.kumicraft', 'coverage']);
-const MAX_FILE = 2_000_000;
-
-/** Path → sha1 of every source-ish file under `dir` (KumiCraft's own `.kumicraft/` left out). */
-function snapshot(dir: string): Map<string, string> {
-  const out = new Map<string, string>();
-  const walk = (current: string) => {
-    for (const entry of readdirSync(current, { withFileTypes: true })) {
-      if (entry.isDirectory()) {
-        if (!SKIP_DIRS.has(entry.name) && !entry.name.startsWith('.vite')) {
-          walk(join(current, entry.name));
-        }
-        continue;
-      }
-      const full = join(current, entry.name);
-      // An atomic write's temp file (`App.jsx.123456`) can vanish between listing and reading.
-      let bytes: Buffer;
-      try {
-        if (statSync(full).size > MAX_FILE) continue;
-        bytes = readFileSync(full);
-      } catch {
-        continue;
-      }
-      const hash = createHash('sha1').update(bytes).digest('hex');
-      out.set(relative(dir, full).replaceAll('\\', '/'), hash);
-    }
-  };
-  walk(dir);
-  return out;
-}
-
-/** Files that differ from `base`: changed, added or removed. */
-function changedSince(dir: string, base: ReadonlyMap<string, string>): string[] {
-  const now = snapshot(dir);
-  const paths = new Set([...base.keys(), ...now.keys()]);
-  return [...paths].filter((path) => base.get(path) !== now.get(path)).sort();
-}
-
 function report(name: string, value: unknown): void {
   process.stdout.write(`[real] ${name}: ${JSON.stringify(value)}\n`);
 }
 
-async function canvasFrame(tab: Page): Promise<Frame> {
-  await getCanvasFrame(tab);
-  const handle = await tab.locator('iframe[data-testid="canvas-iframe"]').elementHandle();
+async function canvasFrame(tab: Page, index = 0): Promise<Frame> {
+  if (index === 0) await getCanvasFrame(tab);
+  const handle = await tab
+    .locator('iframe[data-testid="canvas-iframe"]')
+    .nth(index)
+    .elementHandle();
   const frame = (await handle.contentFrame()) ?? undefined;
   if (frame === undefined) throw new Error('canvas frame missing');
   return frame;
@@ -136,9 +102,10 @@ async function signIn(tab: Page): Promise<string | undefined> {
 type Candidate = { loc: string; x: number; y: number };
 
 /** Visible elements with a static class, one per source file line. */
-async function candidates(tab: Page, frame: Frame): Promise<Candidate[]> {
+async function candidates(tab: Page, frame: Frame, index = 0): Promise<Candidate[]> {
   const outer =
-    (await tab.locator('iframe[data-testid="canvas-iframe"]').boundingBox()) ?? undefined;
+    (await tab.locator('iframe[data-testid="canvas-iframe"]').nth(index).boundingBox()) ??
+    undefined;
   if (outer === undefined) return [];
   const inner = await frame.evaluate(() => {
     const seen = new Set<string>();
@@ -198,7 +165,8 @@ async function editStyleAndUndo(
     readFileSync(join(appDir, sheets[0] ?? ''), 'utf8'),
     'the sheet holds the value',
   ).toContain(STYLE_VALUE);
-  await input.blur();
+  // A write to a router or layout file reloads the page: the box may be gone already.
+  await input.blur({ timeout: 3_000 }).catch(() => undefined);
   await tab.keyboard.press('Control+z');
   await expect.poll(() => changedSince(appDir, base), { timeout: 15_000 }).toEqual([]);
   return { loc: `${file} (${c.loc})`, outcome: 'style edited and undone byte for byte' };
@@ -237,10 +205,48 @@ async function editAndUndo(
   const file = changed[0] ?? '';
   const text = readFileSync(join(appDir, file), 'utf8');
   expect(text, `${file} holds the new class`).toContain(`${before} ${MARKER}`);
-  await input.blur();
+  // A write to a router or layout file reloads the page: the box may be gone already.
+  await input.blur({ timeout: 3_000 }).catch(() => undefined);
   await tab.keyboard.press('Control+z');
   await expect.poll(() => changedSince(appDir, base), { timeout: 15_000 }).toEqual([]);
   return { loc: `${file} (${c.loc})`, outcome: 'edited and undone byte for byte' };
+}
+
+/** A Mobile frame next to the first: it loads the page, and an edit made in it is exact. */
+async function secondFrame(
+  tab: Page,
+  appDir: string,
+  base: ReadonlyMap<string, string>,
+): Promise<{ elements: number; runtimeErrors: number; edit?: EditResult }> {
+  await tab.keyboard.press('Escape');
+  await tab.getByTestId('add-frame-btn').click();
+  await tab.getByTestId('add-frame-item-mobile').click();
+  await expect(tab.locator('iframe[data-testid="canvas-iframe"]')).toHaveCount(2);
+  const frame = await canvasFrame(tab, 1);
+  await expect.poll(() => taggedCount(frame), { timeout: 30_000 }).toBeGreaterThan(0);
+  // Past a loading screen: the same number of elements for 1.5 s.
+  let last = -1;
+  await expect
+    .poll(
+      async () => {
+        const now = await taggedCount(frame);
+        const same = now === last;
+        last = now;
+        return same;
+      },
+      { intervals: [1_500], timeout: 30_000 },
+    )
+    .toBe(true);
+  const result = {
+    elements: await taggedCount(frame),
+    runtimeErrors: await tab.getByTestId('canvas-runtime-error-item').count(),
+  };
+  expect(result.runtimeErrors, 'second frame without runtime errors').toBe(0);
+  const first = (await candidates(tab, frame, 1))[0];
+  if (first === undefined) return result;
+  const edit = await editAndUndo(tab, appDir, base, first);
+  expect(edit.outcome.startsWith('wrong'), 'second frame edit exact').toBe(false);
+  return { ...result, edit };
 }
 
 for (const appDir of PROJECTS) {
@@ -250,6 +256,7 @@ for (const appDir of PROJECTS) {
     test.setTimeout(20 * 60_000);
     expect(existsSync(appDir), `${appDir} exists`).toBe(true);
     const base = snapshot(appDir);
+    const saved = backup(appDir);
     const config: TempDir = await makeTempDir('real-config');
     let session: CliSession | undefined;
     try {
@@ -277,10 +284,26 @@ for (const appDir of PROJECTS) {
       }
       report('edits', edits);
       expect(edits.some((e) => e.outcome.includes('edited'))).toBe(true);
+
+      const texts: EditResult[] = [];
+      for (const c of (await textCandidates(page, await canvasFrame(page))).slice(0, 20)) {
+        texts.push(await editTextAndUndo(page, appDir, base, c));
+        if (texts.filter((e) => e.outcome.includes('edited')).length >= 3) break;
+      }
+      report('text edits', texts);
+      expect(
+        texts.every((e) => !e.outcome.startsWith('wrong')),
+        'text edits exact',
+      ).toBe(true);
+
+      report('second frame', await secondFrame(page, appDir, base));
       expect(changedSince(appDir, base), 'every file as at the start').toEqual([]);
     } finally {
       await session?.stop();
       await config.remove();
+      // A failed step may leave a write behind: the copy always ends as it started.
+      const fixed = restore(appDir, saved);
+      if (fixed.length > 0) report('restored after a failure', fixed);
     }
   });
 }

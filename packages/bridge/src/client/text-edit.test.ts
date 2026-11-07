@@ -68,6 +68,19 @@ describe('TextEditController [SPEC-04 section 10 M-TX]', () => {
     expect(targetEl.hasAttribute('contenteditable')).toBe(false);
   });
 
+  it('commits the source text, not what CSS shows (text-transform: uppercase) [WP-4.00, K9.5]', () => {
+    const onCommit = vi.fn();
+    const controller = new TextEditController({ onCommit, onCancel: vi.fn() });
+    controller.start(targetEl, mockRef);
+    targetEl.textContent = 'Bose kcqa';
+    // What the browser shows under `uppercase`; the source keeps the typed letters.
+    Object.defineProperty(targetEl, 'innerText', { configurable: true, get: () => 'BOSE KCQA' });
+
+    targetEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+    expect(onCommit).toHaveBeenCalledWith(mockRef, 'Bose kcqa');
+  });
+
   it('R-TX-03: blocks Shift+Enter without ending edit', () => {
     const onCommit = vi.fn();
     const controller = new TextEditController({ onCommit, onCancel: vi.fn() });
