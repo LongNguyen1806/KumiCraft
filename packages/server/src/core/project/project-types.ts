@@ -72,6 +72,8 @@ export type ProjectServiceDeps = {
   readonly history?: HistoryService | Pick<HistoryService, 'clear'> | undefined;
   readonly watch?: { start(root: string): void; stop(): Promise<void> } | undefined;
   readonly mirror?: Pick<MirrorService, 'refresh' | 'remove'> | undefined;
+  /** The `prop-types` child script (FR-72): types of an extracted component's props. */
+  readonly propTypesScriptPath?: string | undefined;
 };
 
 export type ProjectService = {

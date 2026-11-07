@@ -25,6 +25,7 @@ import { acquireLock, type LockInfo, releaseLock } from '../workspace/lock.ts';
 import { rememberPort } from '../workspace/studio-port.ts';
 import { trustKeyOf } from '../workspace/trust.ts';
 import { extractComponent } from './component-extract.ts';
+import { createPropTypesPort } from './component-props.ts';
 import { createProject } from './create.ts';
 import { defaultAdapter } from './frameworks/index.ts';
 import type { FrameworkAdapter } from './frameworks/types.ts';
@@ -324,7 +325,19 @@ class ProjectServiceImpl implements ProjectService {
 
   async extractComponent(input: ExtractComponent): Promise<Result<StructureResult>> {
     const deps = this.getPageEditDeps();
-    return deps.ok ? extractComponent(deps.value, input) : deps;
+    if (!deps.ok) return deps;
+    // Reading types runs the project's TypeScript: only for a trusted project (S-80).
+    const script = this.deps.propTypesScriptPath;
+    const trusted = this.current.status === 'open' && this.current.trusted;
+    const propTypes =
+      script === undefined || !trusted
+        ? undefined
+        : createPropTypesPort({
+            process: this.deps.process,
+            scriptPath: script,
+            root: deps.value.projectRoot,
+          });
+    return extractComponent({ ...deps.value, propTypes }, input);
   }
 
   async dirs(): Promise<Result<readonly string[]>> {

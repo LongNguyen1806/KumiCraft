@@ -168,7 +168,9 @@
       "componentTag": "Không thể bỏ bọc component viết hoa.",
       "componentNotFound": "Không tìm thấy khai báo component hoặc file của trang.",
       "usesLocalScope": "Phần tử sử dụng biến trong phạm vi cục bộ: {{name}}.",
-      "viewOnly": "Dự án này KumiCraft chỉ xem được (Express + Pug); sửa trong editor hoặc nhờ AI."
+      "viewOnly": "Dự án này KumiCraft chỉ xem được (Express + Pug); sửa trong editor hoặc nhờ AI.",
+      "propTypes": "Không đọc được kiểu cho props của component mới: dự án cần TypeScript đã cài và được tin cậy. Có thể nhờ AI tách phần này.",
+      "propType": "Không đọc được kiểu của {{name}} để làm prop. Có thể nhờ AI tách phần này."
     }
   },
   "E024": {

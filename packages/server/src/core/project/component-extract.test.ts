@@ -1,8 +1,10 @@
-import { cp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { createNodeProcess } from '../../adapters/system/node-process.ts';
 import { resolveTemplateDir } from '../../index.ts';
 import { createHistoryService } from '../history/history-service.ts';
 import type { ProcessPort } from '../ports/process-port.ts';
@@ -63,16 +65,27 @@ afterEach(async () => {
   await cleanupDir();
 });
 
-async function setupProject(subName = 'app') {
+const PROP_TYPES = fileURLToPath(new URL('../../runners/prop-types.ts', import.meta.url));
+const TYPESCRIPT = fileURLToPath(
+  new URL('../../../../../node_modules/typescript', import.meta.url),
+);
+
+/** `real`: the project gets TypeScript and the prop-types child really runs (FR-72). */
+async function setupProject(subName = 'app', real = false) {
   const target = join(tempDir, subName);
   await cp(join(baseDir, 'base'), target, { recursive: true });
   await rm(join(target, '.kumicraft', 'lock'), { force: true });
+  if (real) {
+    await mkdir(join(target, 'node_modules'), { recursive: true });
+    await symlink(TYPESCRIPT, join(target, 'node_modules/typescript'), 'junction');
+  }
   const history = createHistoryService({ fs: directWriteFs });
 
   const service = createProjectService({
     fs: directWriteFs,
     system: fakeSystem(1, new Set([1])),
-    process: fakeProcess,
+    process: real ? createNodeProcess() : fakeProcess,
+    ...(real ? { propTypesScriptPath: PROP_TYPES } : {}),
     config: {
       isTrusted: () => true,
       setTrusted: () => Promise.resolve(ok(undefined)),
@@ -136,7 +149,23 @@ describe('component extraction (R-CP-14)', { timeout: 30_000 }, () => {
     expect(redonePromo).toBe(extractedPromo);
   });
 
-  it('[R-CP-14] fails with E023 usesLocalScope when element references props (#3)', async () => {
+  it('[FR-72] a prop the selection uses becomes a typed prop of the new component (#3) [WP-4.00]', async () => {
+    const { target, service } = await setupProject('app', true);
+    const res = await service.extractComponent({
+      loc: 'src/components/ProductCard.tsx:19:9',
+      tag: 'h3',
+      name: 'CardTitle',
+    });
+    expect(res.ok || res.error).toBe(true);
+    const card = await readFile(join(target, 'src/components/ProductCard.tsx'), 'utf8');
+    expect(card).toContain('<CardTitle name={name} />');
+    const created = await readFile(join(target, 'src/components/CardTitle.tsx'), 'utf8');
+    expect(created).toContain('type CardTitleProps = {\n  name: string;\n};');
+    expect(created).toContain('export function CardTitle({ name }: CardTitleProps) {');
+    expect(created).toContain('{name}</h3>');
+  });
+
+  it('[FR-72] without the project TypeScript a TSX extraction with props is refused (#3b) [WP-4.00]', async () => {
     const { target, service } = await setupProject();
     const originalCard = await readFile(join(target, 'src/components/ProductCard.tsx'), 'utf8');
     const res = await service.extractComponent({
@@ -144,15 +173,10 @@ describe('component extraction (R-CP-14)', { timeout: 30_000 }, () => {
       tag: 'h3',
       name: 'CardTitle',
     });
-    expect(res.ok).toBe(false);
-    if (!res.ok) {
-      expect(res.error).toMatchObject({
-        code: 'E023',
-        params: { reason: 'usesLocalScope', name: 'name' },
-      });
-    }
-    const currentCard = await readFile(join(target, 'src/components/ProductCard.tsx'), 'utf8');
-    expect(currentCard).toBe(originalCard);
+    expect(res.ok || res.error).toMatchObject({ code: 'E023', params: { reason: 'propTypes' } });
+    expect(await readFile(join(target, 'src/components/ProductCard.tsx'), 'utf8')).toBe(
+      originalCard,
+    );
   });
 
   it('[R-CP-14] succeeds when element references internal closure variable and global identifiers (#4)', async () => {
@@ -176,8 +200,8 @@ describe('component extraction (R-CP-14)', { timeout: 30_000 }, () => {
     expect(res.ok).toBe(true);
   });
 
-  it('[R-CP-14] fails with E023 usesLocalScope when element references top-level constant (#5)', async () => {
-    const { target, service } = await setupProject();
+  it('[FR-72] a top-level constant of the old file is passed as a prop (#5) [WP-4.00]', async () => {
+    const { target, service } = await setupProject('app', true);
     const homePath = join(target, 'src/pages/Home.tsx');
     const homeContent = await readFile(homePath, 'utf8');
     const modifiedHome = `const title = 'Oakline';\n${homeContent.replace('Welcome to Oakline', '{title}')}`;
@@ -188,13 +212,10 @@ describe('component extraction (R-CP-14)', { timeout: 30_000 }, () => {
       tag: 'section',
       name: 'Promo Box',
     });
-    expect(res.ok).toBe(false);
-    if (!res.ok) {
-      expect(res.error).toMatchObject({
-        code: 'E023',
-        params: { reason: 'usesLocalScope', name: 'title' },
-      });
-    }
+    expect(res.ok || res.error).toBe(true);
+    expect(await readFile(homePath, 'utf8')).toContain('<PromoBox title={title} />');
+    const created = await readFile(join(target, 'src/components/PromoBox.tsx'), 'utf8');
+    expect(created).toContain('type PromoBoxProps = {\n  title: string;\n};');
   });
 
   it('[R-CP-14] fails with E023 loopRoot when element is root of .map callback (#6)', async () => {

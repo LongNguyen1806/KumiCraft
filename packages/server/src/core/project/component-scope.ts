@@ -76,8 +76,15 @@ function collectLocalDeclaredIds(node: AstNode, out: Set<string>): void {
 type ScopeChecker = {
   readonly importedNames: ReadonlySet<string>;
   readonly neededNames: Set<string>;
+  /** Names of the old component the selection uses, in order of first use: they become props. */
+  readonly propNames: string[];
   errorName?: string | undefined;
 };
+
+/** FR-72: a name from the old component (a variable, a handler, a local component) is a prop. */
+function addProp(checker: ScopeChecker, name: string): void {
+  if (!checker.propNames.includes(name)) checker.propNames.push(name);
+}
 
 function checkJsxElementTag(ast: AstNode, checker: ScopeChecker): boolean {
   const opening = asAstNode(ast['openingElement']);
@@ -99,11 +106,8 @@ function checkJsxElementTag(ast: AstNode, checker: ScopeChecker): boolean {
     }
   }
   if (rootTag !== undefined) {
-    if (!checker.importedNames.has(rootTag) && !GLOBALS.has(rootTag)) {
-      checker.errorName = rootTag;
-      return false;
-    }
-    checker.neededNames.add(rootTag);
+    if (checker.importedNames.has(rootTag)) checker.neededNames.add(rootTag);
+    else if (!GLOBALS.has(rootTag)) addProp(checker, rootTag);
   }
   return true;
 }
@@ -157,11 +161,8 @@ function checkExpressionAst(
     if (!isMemberProp && !isObjectKey) {
       const isLocal = activeScopes.some((s) => s.has(name));
       if (!isLocal && !GLOBALS.has(name)) {
-        if (!checker.importedNames.has(name)) {
-          checker.errorName = name;
-          return false;
-        }
-        checker.neededNames.add(name);
+        if (checker.importedNames.has(name)) checker.neededNames.add(name);
+        else addProp(checker, name);
       }
     }
   }
@@ -194,19 +195,23 @@ function walkSubtreeScope(node: AstNode, checker: ScopeChecker): boolean {
   return true;
 }
 
-export function checkScopeUsage(
-  targetNode: AstNode,
-  sourceAst: AstNode,
-): Result<ReadonlySet<string>> {
+export type ScopeUsage = {
+  /** Imported names the new file imports too. */
+  readonly needed: ReadonlySet<string>;
+  /** Names of the old component, passed to the new one as props of the same name. */
+  readonly props: readonly string[];
+};
+
+export function checkScopeUsage(targetNode: AstNode, sourceAst: AstNode): Result<ScopeUsage> {
   const importedNames = getImportedNames(sourceAst);
-  const checker: ScopeChecker = { importedNames, neededNames: new Set() };
+  const checker: ScopeChecker = { importedNames, neededNames: new Set(), propNames: [] };
   if (!walkSubtreeScope(targetNode, checker)) {
     return err({
       code: 'E023',
       params: { reason: 'usesLocalScope', name: checker.errorName ?? '' },
     });
   }
-  return ok(checker.neededNames);
+  return ok({ needed: checker.neededNames, props: checker.propNames });
 }
 
 export function remapImportStatement(stmtStr: string, fromFile: string, toFile: string): string {

@@ -168,7 +168,9 @@
       "componentTag": "Cannot unwrap an uppercase component tag.",
       "componentNotFound": "Page component declaration or file could not be found.",
       "usesLocalScope": "Element uses local scope variables: {{name}}.",
-      "viewOnly": "This project is view-only in KumiCraft (Express + Pug); edit in your editor or ask an AI."
+      "viewOnly": "This project is view-only in KumiCraft (Express + Pug); edit in your editor or ask an AI.",
+      "propTypes": "Could not read the types for the new component props: the project needs TypeScript installed and to be trusted. You can ask the AI to extract it.",
+      "propType": "Could not read the type of {{name}} for a prop. You can ask the AI to extract it."
     }
   },
   "E024": {

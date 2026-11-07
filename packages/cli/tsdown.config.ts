@@ -9,6 +9,7 @@ export default defineConfig({
     'runners/format-snippet': '../server/src/runners/format-snippet.ts',
     'runners/express-pug': '../server/src/runners/express-pug.ts',
     'runners/pug-check': '../server/src/runners/pug-check.ts',
+    'runners/prop-types': '../server/src/runners/prop-types.ts',
   },
   format: 'esm',
   platform: 'node',

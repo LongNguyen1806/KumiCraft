@@ -207,6 +207,7 @@ function childScriptDeps(options: StartServerOptions) {
   return {
     agentCommands: options.deps?.agentCommands,
     formatScriptPath: resolveRunnerScript(undefined, 'format-snippet'),
+    propTypesScriptPath: resolveRunnerScript(undefined, 'prop-types'),
   };
 }
 

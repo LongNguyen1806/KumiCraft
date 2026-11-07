@@ -21,6 +21,7 @@ import type { Platform } from '../shared/session.ts';
 import { asAstNode, type AstNode, parseJsxAst } from '../source-editor/ast-helpers.ts';
 import { fileQueueKey, queueFileTask } from '../source-editor/file-queue.ts';
 import { applyTextEdits, type TextEdit } from '../source-editor/structure/text-edits.ts';
+import type { PropTypesPort } from './component-props.ts';
 
 export type PageEditDeps = {
   readonly fs: FileSystemPort;
@@ -31,6 +32,8 @@ export type PageEditDeps = {
   readonly language: 'ts' | 'js';
   readonly designDirs: ResolvedDesignDirs;
   readonly styling?: StylingReport | undefined;
+  /** Types of the props of an extracted component, from the project's TypeScript (FR-72). */
+  readonly propTypes?: PropTypesPort | undefined;
 };
 
 export function routerNotSupportedError(router: RouterStatus): AppError {

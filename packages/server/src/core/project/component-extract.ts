@@ -27,7 +27,8 @@ import {
 import { isElementLoopRoot } from '../source-editor/structure/structure-guard.ts';
 import { indentOf } from '../source-editor/structure/structure-ops.ts';
 import { applyTextEdits } from '../source-editor/structure/text-edits.ts';
-import { checkScopeUsage, remapImportStatement } from './component-scope.ts';
+import { planProps, type PropsPlan } from './component-props.ts';
+import { checkScopeUsage, remapImportStatement, type ScopeUsage } from './component-scope.ts';
 import { buildImportSource } from './components-list.ts';
 import { type PageEditDeps, validateDirectory, withFileLocks } from './page-common.ts';
 
@@ -100,6 +101,7 @@ function buildNewFileContent(
   baseIndent: string,
   imports: readonly string[],
   nl: '\r\n' | '\n',
+  props: PropsPlan,
 ): string {
   const lines = rawJsx.split(/\r?\n/);
   const indented = lines.map((line, idx) => {
@@ -114,7 +116,15 @@ function buildNewFileContent(
     parts.push(...imports);
     parts.push('');
   }
-  parts.push(`export function ${name}() {`, '  return (', ...indented, '  );', '}', '');
+  if (props.typeDecl !== undefined) parts.push(...props.typeDecl.split('\n'), '');
+  parts.push(
+    `export function ${name}(${props.signature}) {`,
+    '  return (',
+    ...indented,
+    '  );',
+    '}',
+    '',
+  );
   return parts.join(nl);
 }
 
@@ -138,34 +148,72 @@ type PlannedEdits = {
   readonly newLoc: string;
 };
 
+/** FR-72: the old component's names the selection uses, as props of the new one. */
+function propsOf(
+  deps: PageEditDeps,
+  sourceAst: AstNode,
+  sourceCode: string,
+  targetNode: AstNode,
+  validated: ValidatedInput,
+  scope: ScopeUsage,
+): Promise<Result<PropsPlan>> {
+  return planProps(
+    {
+      name: validated.name,
+      sourceAst,
+      sourceCode,
+      sourceRel: validated.sourceRel,
+      newFileRel: validated.newFileRel,
+      targetNode,
+      props: scope.props,
+      typescript: /\.tsx?$/.test(validated.newFileRel),
+    },
+    deps.propTypes,
+  );
+}
+
 async function planExtractedEdits(
   deps: PageEditDeps,
   sourceAst: AstNode,
   sourceCode: string,
   targetNode: AstNode,
   validated: ValidatedInput,
-  neededNames: ReadonlySet<string>,
+  scope: ScopeUsage,
 ): Promise<Result<PlannedEdits>> {
   const { name, newFileRel, sourceRel } = validated;
-  const rawImports = collectMatchingImportStatements(sourceAst, sourceCode, [...neededNames]);
-  const remappedImports = rawImports.map((stmt) =>
-    remapImportStatement(stmt, sourceRel, newFileRel),
-  );
-
-  const format = detectFormat(sourceCode);
-  const nl = format.newline;
+  const rawImports = collectMatchingImportStatements(sourceAst, sourceCode, [...scope.needed]);
+  const props = await propsOf(deps, sourceAst, sourceCode, targetNode, validated, scope);
+  if (!props.ok) return props;
+  const imports = new Set([
+    ...rawImports.map((stmt) => remapImportStatement(stmt, sourceRel, newFileRel)),
+    ...props.value.typeImports,
+  ]);
+  const nl = detectFormat(sourceCode).newline;
   const baseIndent = indentOf(sourceCode, targetNode.start ?? 0);
   const rawJsx = sourceCode.slice(targetNode.start ?? 0, targetNode.end ?? 0);
-  const newFileContent = buildNewFileContent(name, rawJsx, baseIndent, remappedImports, nl);
+  const newFileContent = buildNewFileContent(
+    name,
+    rawJsx,
+    baseIndent,
+    [...imports],
+    nl,
+    props.value,
+  );
 
-  const aliasPrefix = await readAliasPrefix(deps.fs, deps.projectRoot);
-  const importSource = buildImportSource(newFileRel, aliasPrefix, sourceRel);
-  const importStmt = `import { ${name} } from '${importSource}';`;
+  const alias = await readAliasPrefix(deps.fs, deps.projectRoot);
+  const importStmt = `import { ${name} } from '${buildImportSource(newFileRel, alias, sourceRel)}';`;
 
   const insertPos = findImportInsertPosition(sourceAst, sourceCode);
   const applied = applyTextEdits(sourceCode, [
     { start: insertPos, end: insertPos, text: `${importStmt}${nl}` },
-    { start: targetNode.start ?? 0, end: targetNode.end ?? 0, text: `<${name} />`, mark: 0 },
+
+    ...props.value.exportAt.map((at) => ({ start: at, end: at, text: 'export ' })),
+    {
+      start: targetNode.start ?? 0,
+      end: targetNode.end ?? 0,
+      text: `<${name}${props.value.usage} />`,
+      mark: 0,
+    },
   ]);
   if (!applied.ok) return applied;
 
