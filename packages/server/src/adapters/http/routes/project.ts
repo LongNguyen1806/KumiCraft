@@ -42,7 +42,7 @@ export type ProjectRoutesDeps = {
   readonly getSessionInfo: () => SessionInfo;
   readonly fs?: FileSystemPort | undefined;
   readonly usageCounter?: UsageCounter | undefined;
-  readonly recents?: Pick<ConfigStore, 'recentProjects'> | undefined;
+  readonly recents?: Pick<ConfigStore, 'recentProjects' | 'forgetProject'> | undefined;
   readonly historyService?: HistoryService | undefined;
 };
 

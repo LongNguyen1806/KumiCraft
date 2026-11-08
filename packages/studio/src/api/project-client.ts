@@ -60,6 +60,11 @@ export async function probeProject(path: string): Promise<ProjectProbe> {
 }
 
 /** R-PJ-25: projects opened before that still exist, newest first. */
+/** Takes a project off the recent list (the folder stays as it is). */
+export async function forgetRecentProject(path: string): Promise<void> {
+  await apiPost('project/recent/forget', { path });
+}
+
 export async function fetchRecentProjects(): Promise<readonly RecentProject[]> {
   return parseResponse(RecentProjectsSchema, await apiGet('project/recent'));
 }

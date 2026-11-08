@@ -33,7 +33,10 @@
     "title": "Chưa mở dự án nào",
     "body": "KumiCraft mở dự án trong thư mục bạn chạy lệnh. Thư mục này chưa có dự án KumiCraft (.kumicraft/workspace.json).",
     "folder": "Thư mục",
-    "recent": "Mở lại dự án gần đây"
+    "recent": "Mở lại dự án gần đây",
+    "forget": "Bỏ khỏi danh sách",
+    "forgetNamed": "Bỏ {{name}} khỏi danh sách",
+    "forgetFailed": "Không bỏ được dự án khỏi danh sách, thử lại"
   },
   "projectError": {
     "title": "Không mở được dự án",

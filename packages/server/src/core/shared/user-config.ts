@@ -79,6 +79,8 @@ export type ConfigStore = {
   /** R-PJ-25: projects opened before, newest first. */
   recentProjects(): readonly RecentProject[];
   rememberProject(path: string, name: string): Promise<Result<void>>;
+  /** Takes a project off the recent list; its folder is not touched (R-PJ-25). */
+  forgetProject(path: string): Promise<Result<void>>;
 };
 
 export const MAX_RECENT_PROJECTS = 8;
@@ -155,6 +157,10 @@ export async function createConfigStore(deps: ConfigStoreDeps): Promise<ConfigSt
       const others = config.recentProjects.filter((entry) => !samePath(entry.path, path));
       const entry = { path, name, openedAt: new Date().toISOString() };
       return save({ ...config, recentProjects: [entry, ...others].slice(0, MAX_RECENT_PROJECTS) });
+    },
+    async forgetProject(path) {
+      const others = config.recentProjects.filter((entry) => !samePath(entry.path, path));
+      return save({ ...config, recentProjects: others });
     },
   };
 }

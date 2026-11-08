@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import Fastify from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { ok } from '../../../core/shared/result.ts';
 import { nodeFs } from '../../../core/workspace/test-support.ts';
 import { registerRecentProjectRoutes } from './project-recent.ts';
 
@@ -32,6 +33,7 @@ describe('GET /project/recent [R-PJ-25]', () => {
           { path: join(dir, 'gone'), name: 'Gone', openedAt: '2026-10-24T02:00:00.000Z' },
           { path: kept, name: 'Shop', openedAt: '2026-10-24T01:00:00.000Z' },
         ],
+        forgetProject: () => Promise.resolve(ok(undefined)),
       },
     });
 
@@ -40,6 +42,33 @@ describe('GET /project/recent [R-PJ-25]', () => {
     expect(res.json()).toEqual({
       data: [{ path: kept, name: 'Shop', openedAt: '2026-10-24T01:00:00.000Z' }],
     });
+    await app.close();
+  });
+
+  it('the x takes one project off the list and leaves its folder [R-PJ-25]', async () => {
+    const forgotten: string[] = [];
+    const app = Fastify();
+    registerRecentProjectRoutes(app, {
+      fs: nodeFs,
+      recents: {
+        recentProjects: () => [],
+        forgetProject: (path) => {
+          forgotten.push(path);
+          return Promise.resolve(ok(undefined));
+        },
+      },
+    });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/project/recent/forget',
+      payload: { path: 'D:/work/shop' },
+    });
+    const bad = await app.inject({ method: 'POST', url: '/project/recent/forget', payload: {} });
+
+    expect(res.statusCode).toBe(204);
+    expect(forgotten).toEqual(['D:/work/shop']);
+    expect(bad.statusCode).toBe(400);
     await app.close();
   });
 });

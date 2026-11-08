@@ -13,23 +13,23 @@ Visual editor for **React + Vite** projects. Open your project, select elements 
 - Node.js 22.12 or newer.
 - A React + Vite project (or an empty folder: KumiCraft offers to create one).
 
-## Use
+## Install once
+
+```sh
+npm install -g kumicraft
+kumicraft --version
+```
+
+## Use it in any project
 
 In the folder of your web project:
 
 ```sh
-npx kumicraft
-```
-
-Or install once for the whole machine and run `kumicraft` in any project folder:
-
-```sh
-npm install -g kumicraft
 kumicraft            # current folder
 kumicraft ../my-app  # another folder
 ```
 
-The Studio opens in your browser. Press `Ctrl+C` in the terminal to stop.
+An empty folder: KumiCraft offers to create a React + Vite + Tailwind project. The Studio opens in your browser. Press `Ctrl+C` in the terminal to stop.
 
 | Option         | Effect                                                     |
 | -------------- | ---------------------------------------------------------- |
@@ -37,7 +37,20 @@ The Studio opens in your browser. Press `Ctrl+C` in the terminal to stop.
 | `--port <n>`   | Use a fixed port                                           |
 | `mcp [folder]` | MCP server for an AI agent, talking to a running KumiCraft |
 
-Do not add KumiCraft to your project's `dependencies`: it is a tool, run it with `npx` or install it globally.
+## Update and remove
+
+```sh
+npm install -g kumicraft@latest   # update
+npm uninstall -g kumicraft        # remove
+```
+
+## Try without installing
+
+```sh
+npx kumicraft
+```
+
+npm keeps it in its own cache; nothing is added to your project. Do not add KumiCraft to your project's `dependencies`: it is a tool, not a library.
 
 ## License
 

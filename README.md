@@ -31,51 +31,49 @@ Nguyên tắc: **spec trước, code sau** (SPEC-07 CW-01). Điều gì chưa c�
 
 ---
 
-## Dùng thử trên máy (chưa phát hành lên npm)
+## Cài đặt và sử dụng
 
-Dành cho developer dùng **Windows** hoặc **macOS** (Linux làm như macOS). Cần Node.js 22.12 trở lên và pnpm (xem [Khởi tạo lần đầu](#khởi-tạo-lần-đầu)).
+Cần **Node.js 22.12 trở lên**. Chạy được trên Windows, macOS, Linux.
 
-**1. Đóng gói** (trong thư mục repo):
+**1. Cài một lần cho cả máy** (chạy ở thư mục nào cũng được):
 
 ```sh
-pnpm install
-pnpm package        # tạo artifacts/kumicraft-cli-0.0.0.tgz
+npm install -g kumicraft
+kumicraft --version
 ```
 
-**2. Cài lệnh `kumicraft`** (một lần, sau đó gõ được ở mọi thư mục):
+Trên macOS, nếu Node cài bằng file `.pkg` từ nodejs.org thì lệnh cài có thể báo thiếu quyền (`EACCES`). Khi đó cài Node bằng Homebrew (`brew install node`) hoặc nvm, hoặc thêm `sudo` trước lệnh.
 
-| Hệ điều hành            | Lệnh                                                 |
-| ----------------------- | ---------------------------------------------------- |
-| Windows (PowerShell)    | `npm install -g .\artifacts\kumicraft-cli-0.0.0.tgz` |
-| macOS, Linux (Terminal) | `npm install -g ./artifacts/kumicraft-cli-0.0.0.tgz` |
-
-Trên macOS, nếu Node cài bằng file `.pkg` từ nodejs.org thì lệnh trên có thể báo thiếu quyền (`EACCES`). Khi đó cài Node bằng Homebrew (`brew install node`) hoặc nvm, hoặc thêm `sudo` trước lệnh.
-
-**3. Chạy** trong thư mục dự án cần thiết kế:
+**2. Dùng cho từng dự án:** vào thư mục dự án rồi chạy `kumicraft`:
 
 ```sh
 cd duong-dan/du-an
 kumicraft
 ```
 
-Trình duyệt tự mở Studio. Bấm `Ctrl+C` trong terminal để tắt; thay đổi chưa lưu được ghi nốt trước khi thoát. Lần sau chạy lại trong cùng thư mục, Studio mở đúng địa chỉ cũ và workspace còn nguyên.
+Thư mục trống thì KumiCraft hỏi tạo dự án mới (React + Vite + Tailwind). Trình duyệt tự mở Studio. Bấm `Ctrl+C` trong terminal để tắt; thay đổi chưa lưu được ghi nốt trước khi thoát. Lần sau chạy lại trong cùng thư mục, Studio mở đúng địa chỉ cũ và workspace còn nguyên.
 
-| Tham số               | Việc làm                                                    |
-| --------------------- | ----------------------------------------------------------- |
-| `kumicraft <thư mục>` | Mở workspace ở thư mục khác thư mục hiện tại                |
-| `--no-open`           | Không tự mở trình duyệt (tự mở đường dẫn in trong terminal) |
-| `--port <số>`         | Dùng cổng cố định                                           |
+| Tham số               | Việc làm                                                     |
+| --------------------- | ------------------------------------------------------------ |
+| `kumicraft <thư mục>` | Mở dự án ở thư mục khác thư mục hiện tại                     |
+| `--no-open`           | Không tự mở trình duyệt (tự mở đường dẫn in trong terminal)  |
+| `--port <số>`         | Dùng cổng cố định                                            |
+| `mcp [thư mục]`       | Máy chủ MCP cho agent AI, nói chuyện với KumiCraft đang chạy |
 
-**Cập nhật** sau khi kéo code mới: làm lại bước 1 và 2. **Gỡ:** `npm uninstall -g kumicraft`.
+**3. Cập nhật** khi có bản mới: `npm install -g kumicraft@latest`. **Gỡ:** `npm uninstall -g kumicraft`.
 
-### Cài thử bản đóng gói
+**Chạy thử không cần cài:** `npx kumicraft` trong thư mục dự án (npm tải về bộ nhớ đệm chung, không thêm gì vào dự án). Không thêm KumiCraft vào `dependencies` của dự án web: nó là công cụ, không phải thư viện.
+
+### Cài thử bản đóng gói (người phát triển KumiCraft)
 
 ```sh
-pnpm package
+pnpm package               # tạo artifacts/kumicraft-<phiên bản>.tgz
 pnpm check:package
-npm install -g artifacts/kumicraft-cli-0.0.0.tgz
+npm install -g ./artifacts/kumicraft-1.0.1.tgz
 node scripts/smoke-installed.mjs
 ```
+
+Trước khi phát hành: `pnpm release:check` (kiểm lỗ hổng, SBOM và giấy phép, đóng gói, kiểm gói), rồi `npm publish artifacts/kumicraft-<phiên bản>.tgz`.
 
 **Chạy nhanh không cần cài** (khi đang phát triển): `pnpm build` rồi `node packages/cli/dist/index.js <thư mục>`.
 

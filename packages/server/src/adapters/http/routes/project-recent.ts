@@ -1,12 +1,16 @@
 // Projects opened before, for the "no project is open" screen (R-PJ-25).
 import type { RecentProject } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
 
 import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
 import type { ConfigStore } from '../../../core/shared/user-config.ts';
+import { sendError } from '../send-error.ts';
+
+const ForgetRecentSchema = z.strictObject({ path: z.string().min(1).max(4096) });
 
 export type RecentProjectRoutesDeps = {
-  readonly recents?: Pick<ConfigStore, 'recentProjects'> | undefined;
+  readonly recents?: Pick<ConfigStore, 'recentProjects' | 'forgetProject'> | undefined;
   readonly fs?: FileSystemPort | undefined;
 };
 
@@ -26,5 +30,15 @@ export function registerRecentProjectRoutes(
       if (await stillThere(deps.fs, entry)) kept.push(entry);
     }
     return { data: kept };
+  });
+
+  // The x on a row of the list: only the list changes, never the folder.
+  api.post('/project/recent/forget', async (request, reply) => {
+    const parsed = ForgetRecentSchema.safeParse(request.body);
+    if (!parsed.success) return sendError(reply, { code: 'E016' });
+    const res = await deps.recents?.forgetProject(parsed.data.path);
+    if (res !== undefined && !res.ok) return sendError(reply, res.error);
+    reply.status(204);
+    return undefined;
   });
 }

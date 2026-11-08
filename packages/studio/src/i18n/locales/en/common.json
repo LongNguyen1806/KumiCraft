@@ -33,7 +33,10 @@
     "title": "No project is open",
     "body": "KumiCraft opens the project in the folder where you started it. This folder has no KumiCraft project yet (.kumicraft/workspace.json).",
     "folder": "Folder",
-    "recent": "Open a recent project"
+    "recent": "Open a recent project",
+    "forget": "Remove from the list",
+    "forgetNamed": "Remove {{name}} from the list",
+    "forgetFailed": "Could not remove the project from the list, try again"
   },
   "projectError": {
     "title": "Cannot open the project",

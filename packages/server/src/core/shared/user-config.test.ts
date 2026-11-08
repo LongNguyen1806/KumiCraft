@@ -135,4 +135,13 @@ describe('recent projects [R-PJ-25]', () => {
     expect(list.map((r) => r.name)).toEqual(['P5 again', 'P8', 'P7', 'P6', 'P4', 'P3', 'P2', 'P1']);
     expect(list[0]?.path).toBe(join(dir, 'p5'));
   });
+  it('forgets one project, keeps the others and that across runs', async () => {
+    const config = await store();
+    await config.rememberProject(join(dir, 'a'), 'A');
+    await config.rememberProject(join(dir, 'b'), 'B');
+    expect((await config.forgetProject(join(dir, 'a'))).ok).toBe(true);
+
+    const again = await store();
+    expect(again.recentProjects().map((r) => r.name)).toEqual(['B']);
+  });
 });

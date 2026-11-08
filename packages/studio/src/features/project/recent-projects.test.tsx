@@ -65,4 +65,36 @@ describe('RecentProjects [R-PJ-25]', () => {
     });
     expect(screen.queryByTestId('recent-projects')).toBeNull();
   });
+
+  it('the x takes a project off the list at once and does not open it [R-PJ-25]', async () => {
+    vi.spyOn(projectClient, 'fetchRecentProjects').mockResolvedValue([
+      { path: 'D:/work/shop', name: 'Shop', openedAt: '2026-10-24T02:00:00.000Z' },
+      { path: 'D:/work/blog', name: 'Blog', openedAt: '2026-10-24T01:00:00.000Z' },
+    ]);
+    const forget = vi.spyOn(projectClient, 'forgetRecentProject').mockResolvedValue();
+    const open = vi.spyOn(projectClient, 'openProject');
+    render(<RecentProjects onOpened={vi.fn()} />);
+
+    fireEvent.click(await screen.findByTestId('recent-project-forget-0'));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Shop')).toBeNull();
+    });
+    expect(screen.getByText('Blog')).toBeDefined();
+    expect(forget).toHaveBeenCalledWith('D:/work/shop');
+    expect(open).not.toHaveBeenCalled();
+  });
+
+  it('a project comes back with a message when the list cannot be saved [R-PJ-25]', async () => {
+    vi.spyOn(projectClient, 'fetchRecentProjects').mockResolvedValue([
+      { path: 'D:/work/shop', name: 'Shop', openedAt: '2026-10-24T02:00:00.000Z' },
+    ]);
+    vi.spyOn(projectClient, 'forgetRecentProject').mockRejectedValue(new Error('disk full'));
+    render(<RecentProjects onOpened={vi.fn()} />);
+
+    fireEvent.click(await screen.findByTestId('recent-project-forget-0'));
+
+    expect(await screen.findByTestId('recent-project-forget-error')).toBeDefined();
+    expect(screen.getByText('Shop')).toBeDefined();
+  });
 });
