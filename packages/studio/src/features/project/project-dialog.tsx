@@ -15,6 +15,7 @@ import { BackendsView } from './backends-view.tsx';
 import { DesignDirsForm } from './design-dirs-form.tsx';
 import { DevPortForm } from './dev-port-form.tsx';
 import { DirectoryBrowser } from './directory-browser.tsx';
+import { NewProjectForm } from './new-project-form.tsx';
 import { ProjectProbeResultView } from './project-dialog-probe-view.tsx';
 
 function ProjectDialogTabs({
@@ -145,8 +146,8 @@ function useProjectActions(
   };
 
   const handleOpen = () => runAction(() => openProject(selectedPath));
-  const handleCreate = (createName: string, createPm: PackageManager) =>
-    runAction(() => createProject(selectedPath, createName, createPm));
+  const handleCreate = (targetPath: string, createName: string, createPm: PackageManager) =>
+    runAction(() => createProject(targetPath, createName, createPm));
   const handleOpenCandidate = (relPath: string) => {
     const base = selectedPath.replaceAll('\\', '/').replace(/\/+$/, '');
     const rel = relPath.replaceAll('\\', '/').replace(/^\/+/, '');
@@ -186,36 +187,96 @@ export type ProjectDialogProps = {
   readonly currentProject?: ProjectInfo | undefined;
   readonly onClose: () => void;
   readonly onProjectOpened: (info: ProjectInfo) => void;
+  /** 'new' opens straight on the new-project form (the Home "New project" button). */
+  readonly mode?: DialogMode | undefined;
 };
+
+type DialogMode = 'open' | 'new';
+
+/** New project: its own form; the way back to opening one stays one click away. */
+function NewProjectContent({
+  s,
+  onBack,
+}: {
+  readonly s: ReturnType<typeof useProjectDialogState>;
+  readonly onBack: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col gap-3">
+      <NewProjectForm
+        initialPath={s.selectedPath}
+        busy={s.busy}
+        onCreate={(targetPath, name, pm) => {
+          void s.handleCreate(targetPath, name, pm);
+        }}
+      />
+      {s.errorMsg !== undefined && (
+        <p role="alert" className="text-xs font-medium text-danger">
+          {s.errorMsg}
+        </p>
+      )}
+      <button
+        type="button"
+        onClick={onBack}
+        className="cursor-pointer self-start text-xs text-ink-soft hover:text-ink hover:underline"
+        data-testid="open-existing-btn"
+      >
+        {t('project.openExisting')}
+      </button>
+    </div>
+  );
+}
+
+function ProjectSettingsContent({
+  currentProject,
+  s,
+}: {
+  readonly currentProject?: ProjectInfo | undefined;
+  readonly s: ReturnType<typeof useProjectDialogState>;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <DevPortForm devPort={currentProject?.devPort} />
+      <DesignDirsForm designDirs={currentProject?.designDirs} />
+      <BackendsView
+        backends={s.backends}
+        onAddBackend={s.handleAddBackend}
+        onRemoveBackend={s.handleRemoveBackend}
+      />
+    </div>
+  );
+}
 
 function ProjectDialogContent({
   activeTab,
   currentProject,
   s,
+  onNewProject,
 }: {
   readonly activeTab: 'project' | 'backends';
   readonly currentProject?: ProjectInfo | undefined;
   readonly s: ReturnType<typeof useProjectDialogState>;
+  readonly onNewProject: () => void;
 }) {
-  if (activeTab === 'backends') {
-    return (
-      <div className="flex flex-col gap-4">
-        <DevPortForm devPort={currentProject?.devPort} />
-        <DesignDirsForm designDirs={currentProject?.designDirs} />
-        <BackendsView
-          backends={s.backends}
-          onAddBackend={s.handleAddBackend}
-          onRemoveBackend={s.handleRemoveBackend}
-        />
-      </div>
-    );
-  }
+  const { t } = useTranslation();
+  if (activeTab === 'backends')
+    return <ProjectSettingsContent currentProject={currentProject} s={s} />;
 
   return (
     <div className="flex flex-col gap-4">
+      <button
+        type="button"
+        onClick={onNewProject}
+        className="cursor-pointer self-start rounded-full bg-field px-4 py-1.5 text-xs font-medium text-ink hover:bg-field-hover"
+        data-testid="new-project-btn"
+      >
+        {t('project.newProjectButton')}
+      </button>
       <DirectoryBrowser currentPath={s.selectedPath} onSelectPath={s.setSelectedPath} />
       <ProjectProbeResultView
         probe={s.probe}
+        location={s.selectedPath}
         probing={s.probing}
         busy={s.busy}
         errorMsg={s.errorMsg}
@@ -225,8 +286,8 @@ function ProjectDialogContent({
         onOpenCandidate={(relPath) => {
           void s.handleOpenCandidate(relPath);
         }}
-        onCreate={(name, pm) => {
-          void s.handleCreate(name, pm);
+        onCreate={(targetPath, name, pm) => {
+          void s.handleCreate(targetPath, name, pm);
         }}
       />
     </div>
@@ -239,20 +300,41 @@ export function ProjectDialog({
   currentProject,
   onClose,
   onProjectOpened,
+  mode: startMode = 'open',
 }: ProjectDialogProps) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'project' | 'backends'>('project');
+  const [mode, setMode] = useState<DialogMode>(startMode);
   const s = useProjectDialogState(initialPath, currentProject, onClose, onProjectOpened);
+  const title = mode === 'new' ? t('project.newDialog') : t('project.openDialog');
 
   return (
-    <Dialog open={open} title={t('project.openDialog')} closeLabel="✕" onClose={onClose}>
+    <Dialog open={open} title={title} closeLabel="✕" onClose={onClose}>
       <div className="flex flex-col gap-4 text-xs text-ink" data-testid="project-dialog">
-        <ProjectDialogTabs
-          currentProject={currentProject}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-        />
-        <ProjectDialogContent activeTab={activeTab} currentProject={currentProject} s={s} />
+        {mode === 'new' ? (
+          <NewProjectContent
+            s={s}
+            onBack={() => {
+              setMode('open');
+            }}
+          />
+        ) : (
+          <>
+            <ProjectDialogTabs
+              currentProject={currentProject}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            />
+            <ProjectDialogContent
+              activeTab={activeTab}
+              currentProject={currentProject}
+              s={s}
+              onNewProject={() => {
+                setMode('new');
+              }}
+            />
+          </>
+        )}
       </div>
     </Dialog>
   );

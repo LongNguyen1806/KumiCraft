@@ -187,7 +187,12 @@ function useDirectoryBrowserState(currentPath: string) {
         const res = await fetchDirectories(currentPath);
         if (active) setListing(res);
       } catch {
-        // Handled silently or empty listing
+        // A folder still to be made has nothing to list: never keep the last folder's entries.
+        if (active) {
+          setListing(
+            (prev) => prev && { ...prev, path: currentPath, parent: undefined, entries: [] },
+          );
+        }
       } finally {
         if (active) setLoading(false);
       }

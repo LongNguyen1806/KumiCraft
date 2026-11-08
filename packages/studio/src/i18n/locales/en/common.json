@@ -31,12 +31,14 @@
   },
   "noProject": {
     "title": "No project is open",
-    "body": "KumiCraft opens the project in the folder where you started it. This folder has no KumiCraft project yet (.kumicraft/workspace.json).",
+    "body": "Create a new React + Vite project, or open one you already have.",
     "folder": "Folder",
     "recent": "Open a recent project",
     "forget": "Remove from the list",
     "forgetNamed": "Remove {{name}} from the list",
-    "forgetFailed": "Could not remove the project from the list, try again"
+    "forgetFailed": "Could not remove the project from the list, try again",
+    "newProject": "New project",
+    "openProject": "Open project"
   },
   "projectError": {
     "title": "Cannot open the project",
@@ -202,7 +204,7 @@
   },
   "project": {
     "button": "Project",
-    "openDialog": "Open or create project",
+    "openDialog": "Open project",
     "pathLabel": "Path",
     "open": "Open project",
     "create": "Create project",
@@ -210,7 +212,7 @@
     "packageManager": "Package Manager",
     "isProject": "Project",
     "drives": "Drives",
-    "notProject": "This folder has files but is not a Vite + React project. Pick an empty folder to create a project, or a folder with a Vite + React project to open it.",
+    "notProject": "This folder holds other files, not a Vite + React project. To create a new project, click \"+ New project…\" above.",
     "supported": "✓ Valid project",
     "unsupported": "Project not supported",
     "cssPath": "CSS: {{path}}",
@@ -280,7 +282,19 @@
       "remove": "Remove",
       "save": "Save directories",
       "saved": "Directories saved"
-    }
+    },
+    "createsIn": "Created in: {{path}}",
+    "folderNameInvalid": "A folder name cannot contain / \\ : * ? \" < > | or end with a dot or a space.",
+    "newDialog": "Create a new project",
+    "newProjectButton": "+ New project…",
+    "openExisting": "← Open an existing project",
+    "location": "Location",
+    "browse": "Browse…",
+    "browseDone": "Done",
+    "willCreateAt": "The project will be created in:",
+    "targetTaken": "The folder {{path}} already has files. Change the project name or pick another location.",
+    "locationMissing": "The location folder was not found. Click Browse… to pick an existing folder.",
+    "emptyFolder": "Empty folder: create a project right here"
   },
   "inspector": {
     "title": "Properties",

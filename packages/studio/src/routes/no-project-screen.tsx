@@ -12,19 +12,51 @@ type NoProjectScreenProps = {
   readonly onProjectOpened?: () => void;
 };
 
+/** The two ways in, as in an IDE start window: a new project or one already on disk. */
+function HomeActions({
+  onNew,
+  onOpen,
+}: {
+  readonly onNew: () => void;
+  readonly onOpen: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-wrap gap-2">
+      <button
+        type="button"
+        onClick={onNew}
+        className="rounded-full bg-primary px-6 py-2.5 font-medium text-white hover:bg-primary-hover shadow-sm"
+        data-testid="no-project-new-btn"
+      >
+        {t('noProject.newProject')}
+      </button>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="rounded-full bg-card px-6 py-2.5 font-medium text-ink shadow-soft hover:bg-field"
+        data-testid="no-project-open-btn"
+      >
+        {t('noProject.openProject')}
+      </button>
+    </div>
+  );
+}
+
 /**
- * State `none`: no project is open. The Project button opens the project picker/creator (R-PJ-20).
+ * State `none`: no project is open. Home offers a new project or opening one (R-PJ-11, R-PJ-20).
  */
 export function NoProjectScreen({ version, suggestedPath, onProjectOpened }: NoProjectScreenProps) {
   const { t } = useTranslation();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  // Which dialog is up: a new project or opening one (R-PJ-20).
+  const [dialog, setDialog] = useState<'new' | 'open'>();
 
   return (
     <div className="flex h-full flex-col gap-2.5 overflow-auto px-3.5 py-3">
       <TopBar
         version={version}
         onOpenProject={() => {
-          setDialogOpen(true);
+          setDialog('open');
         }}
       />
       <main className="mx-auto grid w-full max-w-2xl flex-1 content-center gap-4 px-6 py-8">
@@ -38,27 +70,27 @@ export function NoProjectScreen({ version, suggestedPath, onProjectOpened }: NoP
             </span>
           </p>
         )}
-        <button
-          type="button"
-          onClick={() => {
-            setDialogOpen(true);
+        <HomeActions
+          onNew={() => {
+            setDialog('new');
           }}
-          className="justify-self-start rounded-full bg-primary px-6 py-2.5 font-medium text-white hover:bg-primary-hover shadow-sm"
-          data-testid="no-project-open-btn"
-        >
-          {t('project.button')}
-        </button>
+          onOpen={() => {
+            setDialog('open');
+          }}
+        />
         <RecentProjects onOpened={() => onProjectOpened?.()} />
       </main>
 
       <ProjectDialog
-        open={dialogOpen}
+        key={dialog ?? 'closed'}
+        open={dialog !== undefined}
+        mode={dialog}
         initialPath={suggestedPath}
         onClose={() => {
-          setDialogOpen(false);
+          setDialog(undefined);
         }}
         onProjectOpened={() => {
-          setDialogOpen(false);
+          setDialog(undefined);
           onProjectOpened?.();
         }}
       />

@@ -31,12 +31,14 @@
   },
   "noProject": {
     "title": "Chưa mở dự án nào",
-    "body": "KumiCraft mở dự án trong thư mục bạn chạy lệnh. Thư mục này chưa có dự án KumiCraft (.kumicraft/workspace.json).",
+    "body": "Tạo dự án React + Vite mới, hoặc mở một dự án có sẵn trên máy.",
     "folder": "Thư mục",
     "recent": "Mở lại dự án gần đây",
     "forget": "Bỏ khỏi danh sách",
     "forgetNamed": "Bỏ {{name}} khỏi danh sách",
-    "forgetFailed": "Không bỏ được dự án khỏi danh sách, thử lại"
+    "forgetFailed": "Không bỏ được dự án khỏi danh sách, thử lại",
+    "newProject": "Dự án mới",
+    "openProject": "Mở dự án"
   },
   "projectError": {
     "title": "Không mở được dự án",
@@ -202,7 +204,7 @@
   },
   "project": {
     "button": "Project",
-    "openDialog": "Mở hoặc tạo dự án",
+    "openDialog": "Mở dự án",
     "pathLabel": "Đường dẫn",
     "open": "Mở dự án",
     "create": "Tạo dự án",
@@ -210,7 +212,7 @@
     "packageManager": "Package Manager",
     "isProject": "Dự án",
     "drives": "Ổ đĩa",
-    "notProject": "Thư mục này đã có file nhưng không phải dự án Vite + React. Chọn một thư mục trống để tạo dự án mới, hoặc thư mục chứa dự án Vite + React để mở.",
+    "notProject": "Thư mục này có file khác, không phải dự án Vite + React. Để tạo dự án mới, bấm \"+ Dự án mới…\" ở trên.",
     "supported": "✓ Dự án hợp lệ",
     "unsupported": "Dự án không được hỗ trợ",
     "cssPath": "CSS: {{path}}",
@@ -280,7 +282,19 @@
       "remove": "Xóa",
       "save": "Lưu thư mục",
       "saved": "Đã lưu thư mục"
-    }
+    },
+    "createsIn": "Tạo trong thư mục: {{path}}",
+    "folderNameInvalid": "Tên thư mục không được chứa / \\ : * ? \" < > | và không được kết thúc bằng dấu chấm hay khoảng trắng.",
+    "newDialog": "Tạo dự án mới",
+    "newProjectButton": "+ Dự án mới…",
+    "openExisting": "← Mở dự án có sẵn",
+    "location": "Vị trí",
+    "browse": "Chọn…",
+    "browseDone": "Xong",
+    "willCreateAt": "Dự án sẽ được tạo tại:",
+    "targetTaken": "Thư mục {{path}} đã có file. Đổi tên dự án hoặc chọn vị trí khác.",
+    "locationMissing": "Không tìm thấy thư mục Vị trí. Bấm Chọn… để chọn một thư mục có sẵn.",
+    "emptyFolder": "Thư mục trống: tạo dự án ngay tại đây"
   },
   "inspector": {
     "title": "Thuộc tính",
