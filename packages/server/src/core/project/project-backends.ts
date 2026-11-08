@@ -122,10 +122,13 @@ export async function executeAddBackend(
     readonly backends: readonly BackendInfo[];
   }>
 > {
-  const valid = await validateAddBackendPath(ctx, root, backendPath);
+  // The project root is a real path (`open` resolves it): the backend must be one too, or a path
+  // written another way (Windows 8.3 `RUNNER~1`, a link) is seen outside the parent (K10, CI).
+  const realBackend = await ctx.fs.realRoot(backendPath);
+  const valid = await validateAddBackendPath(ctx, root, realBackend);
   if (!valid.ok) return valid;
 
-  const storedPath = toStoredBackendPath(root, backendPath, ctx.platform);
+  const storedPath = toStoredBackendPath(root, realBackend, ctx.platform);
   const allowed = checkBackendSlot(root, currentFile, storedPath);
   if (!allowed.ok) return allowed;
 

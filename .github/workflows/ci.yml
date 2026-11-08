@@ -128,7 +128,9 @@ jobs:
       - run: pnpm build
       # Installed as a developer would, without publishing: one tarball for every system.
       - run: pnpm package
-      - run: npm install -g ./artifacts/kumicraft-cli-0.0.0.tgz
+      # Whatever version `pnpm package` made (kumicraft-<version>.tgz); bash expands it on every OS.
+      - run: npm install -g ./artifacts/kumicraft-*.tgz
+        shell: bash
       - run: node scripts/smoke-installed.mjs
 
   audit:

@@ -1,5 +1,5 @@
 // Helpers shared by the workspace tests. Not used by production code.
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -63,7 +63,9 @@ export function fakeSystem(
 }
 
 export async function makeTempDir(): Promise<{ dir: string; cleanup: () => Promise<void> }> {
-  const dir = await mkdtemp(join(tmpdir(), 'kumicraft-ws-'));
+  // The real path, as KumiCraft names an opened folder: on Windows the temp folder can be an 8.3
+  // name (RUNNER~1 on CI) and macOS has /var -> /private/var.
+  const dir = await realpath(await mkdtemp(join(tmpdir(), 'kumicraft-ws-')));
   return { dir, cleanup: () => rm(dir, { recursive: true, force: true }) };
 }
 

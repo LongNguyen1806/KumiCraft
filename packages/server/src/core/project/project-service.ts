@@ -198,7 +198,9 @@ class ProjectServiceImpl implements ProjectService {
     });
     if (!created.ok) return created;
     if (packageManager !== undefined) {
-      this.createdPackageManagers.set(normalizeRoot(path, this.deps.platform), packageManager);
+      // Keyed by the real path, as `open` looks it up (a short or linked path names the same folder).
+      const root = await this.deps.fs.realRoot(path);
+      this.createdPackageManagers.set(normalizeRoot(root, this.deps.platform), packageManager);
     }
     return this.open(path);
   }
