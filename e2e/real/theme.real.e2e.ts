@@ -105,19 +105,23 @@ async function waitForVar(frame: Frame, variable: string): Promise<boolean> {
   return false;
 }
 
-/** Whether the dev server now serves the theme file with `value` in it. */
-async function viteServes(frame: Frame, file: string, value: string): Promise<string> {
+/** Whether the CSS on the page, and Vite's CSS modules now, hold `value`. */
+async function viteServes(frame: Frame, _file: string, value: string): Promise<string> {
   return frame
-    .evaluate(
-      async ({ f, v }) => {
-        const res = await fetch(`/${f}?direct&t=${String(Date.now())}`);
-        return (await res.text()).toLowerCase().includes(v)
-          ? 'vite serves the new css'
-          : 'vite serves the old css';
-      },
-      { f: file, v: value },
-    )
-    .catch((e: unknown) => `could not ask vite: ${String(e)}`);
+    .evaluate(async (v) => {
+      const styles = [...document.querySelectorAll('style[data-vite-dev-id]')];
+      const onPage = styles.some((s) => s.textContent.toLowerCase().includes(v));
+      const fresh = await Promise.all(
+        styles.map(async (s) => {
+          const id = s.getAttribute('data-vite-dev-id') ?? '';
+          const path = id.slice(id.indexOf('/src/'));
+          const res = await fetch(`${path}?t=${String(Date.now())}`);
+          return (await res.text()).toLowerCase().includes(v);
+        }),
+      );
+      return `page style has it: ${String(onPage)}; vite module has it: ${String(fresh.some(Boolean))}`;
+    }, value)
+    .catch((e: unknown) => `could not check: ${String(e)}`);
 }
 
 const variableOf = (token: ThemeToken) => token.variable ?? `--color-${token.name}`;

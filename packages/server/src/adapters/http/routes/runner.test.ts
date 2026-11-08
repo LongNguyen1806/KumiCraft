@@ -46,6 +46,7 @@ beforeEach(async () => {
       return Promise.resolve(ok(currentStatus));
     },
     dispose: () => Promise.resolve(),
+    notifyWritten: () => undefined,
   };
 
   const getSessionInfo = createSessionInfoProvider({

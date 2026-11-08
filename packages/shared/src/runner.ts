@@ -59,6 +59,11 @@ export const RunnerToChildMessageSchema = z.discriminatedUnion('type', [
   z.strictObject({
     type: z.literal('stop'),
   }),
+  /** Files KumiCraft wrote: the dev server reads them again (K9.5, a watcher can miss one). */
+  z.strictObject({
+    type: z.literal('filesWritten'),
+    files: z.array(z.string().min(1).max(4096)).max(500),
+  }),
 ]);
 export type RunnerToChildMessage = z.infer<typeof RunnerToChildMessageSchema>;
 

@@ -24,6 +24,7 @@ describe('Auto Restart Runner [WP-4.00]', () => {
       restart: restartSpy,
       stop: vi.fn(),
       dispose: vi.fn(),
+      notifyWritten: () => undefined,
     };
     const mockAdapter: FrameworkAdapter = {
       id: 'express-pug',

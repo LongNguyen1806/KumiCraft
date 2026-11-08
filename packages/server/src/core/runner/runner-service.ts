@@ -48,6 +48,8 @@ export interface RunnerService {
   restart(): Promise<Result<RunnerStatus>>;
   stop(): Promise<Result<RunnerStatus>>;
   dispose(): Promise<void>;
+  /** Files KumiCraft wrote, for the dev server to read again (K9.5); ignored when not running. */
+  readonly notifyWritten: (files: readonly string[]) => void;
 }
 
 class RunnerLogBuffer {
@@ -367,6 +369,12 @@ class RunnerExecution {
   async dispose(): Promise<void> {
     await this.stop();
   }
+
+  notifyWritten(files: readonly string[]): void {
+    if (this.currentStatus.state !== 'ready' || files.length === 0) return;
+    const msg: RunnerToChildMessage = { type: 'filesWritten', files: files.slice(0, 500) };
+    this.activeHandle?.send?.(msg);
+  }
 }
 
 export function createRunnerService(deps: RunnerServiceDeps): RunnerService {
@@ -377,5 +385,8 @@ export function createRunnerService(deps: RunnerServiceDeps): RunnerService {
     restart: () => execution.restart(),
     stop: () => execution.stop(),
     dispose: () => execution.dispose(),
+    notifyWritten: (files) => {
+      execution.notifyWritten(files);
+    },
   };
 }

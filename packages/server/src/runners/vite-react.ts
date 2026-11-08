@@ -1,6 +1,6 @@
 // Child process runner for Vite + React projects (SPEC-04 M-RN, ADR-BE-28, R-RN-03).
 // QC-52: This file is an isolated child process runner and is allowed to call process.exit().
-import { readFile } from 'node:fs/promises';
+import { readFile, utimes } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -13,6 +13,8 @@ import { devServerOptions } from './vite-server-config.ts';
 
 interface ViteDevServer {
   readonly httpServer?: { address(): unknown } | undefined;
+  /** Vite's file watcher; a `change` emitted on it makes Vite read the file again. */
+  readonly watcher?: { emit(event: string, path: string): boolean } | undefined;
   listen(): Promise<void>;
   close(): Promise<void>;
 }
@@ -184,12 +186,31 @@ async function stopServer(): Promise<void> {
   }
 }
 
+/**
+ * K9.5: Vite's watcher can miss the second of two quick writes of one file, and Tailwind's plugin
+ * rebuilds a CSS file only when its time stamp moved on. Both writes can carry the same stamp, so
+ * the stamp is set to now (the content is not touched) before Vite is told to read the file again.
+ */
+async function rereadFiles(files: readonly string[]): Promise<void> {
+  for (const file of files) {
+    const now = new Date();
+    try {
+      await utimes(file, now, now);
+    } catch {
+      continue; // deleted since: Vite already saw that
+    }
+    devServer?.watcher?.emit('change', file);
+  }
+}
+
 function handleMessage(raw: unknown): void {
   const msg = raw as RunnerToChildMessage | undefined;
   if (!msg || typeof msg !== 'object') return;
 
   if (msg.type === 'start') {
     void startServer(msg.options);
+  } else if (msg.type === 'filesWritten') {
+    void rereadFiles(msg.files);
   } else {
     void stopServer();
   }

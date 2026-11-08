@@ -30,6 +30,7 @@ import type { WatcherPort } from './core/ports/watcher-port.ts';
 import { viteReactAdapter } from './core/project/frameworks/vite-react/index.ts';
 import type { ProjectService } from './core/project/project-service.ts';
 import type { RunnerService } from './core/runner/runner-service.ts';
+import { writeReportingFileSystem } from './core/runner/write-notifier.ts';
 import { err, ok, type Result } from './core/shared/result.ts';
 import { type Platform, toSupportedPlatform } from './core/shared/session.ts';
 import { loadSessionToken } from './core/shared/session-token-store.ts';
@@ -188,13 +189,26 @@ function resolveServerPaths(options: StartServerOptions) {
 }
 
 function resolveCorePorts(options: StartServerOptions, platform: Platform) {
+  // KumiCraft's writes reach the dev server too, once the runner exists (K9.5).
+  const writes = writeReportingFileSystem(options.deps?.fs ?? createNodeFileSystem(platform));
   return {
-    fs: options.deps?.fs ?? createNodeFileSystem(platform),
+    fs: writes.fs,
+    connectWrites: writes.connect,
     logger: options.deps?.logger ?? createServerLogger({ level: options.logLevel ?? 'info' }).port,
     system: options.deps?.system ?? createNodeSystem(),
     processPort: options.deps?.process ?? createNodeProcess(),
     eventBus: options.deps?.eventBus ?? createEventBus(),
   };
+}
+
+/** Passes KumiCraft's writes to the runner (K9.5), then opens the project given at start. */
+function connectAndOpen(
+  ports: ReturnType<typeof resolveCorePorts>,
+  services: CoreServices,
+  workspaceDir: string | undefined,
+): ReturnType<typeof autoOpenProject> {
+  ports.connectWrites(services.runnerService.notifyWritten);
+  return autoOpenProject(ports.fs, services.projectService, workspaceDir);
 }
 
 /** The user config serves the settings, the trusted projects and the recent list (R-PJ-25). */
@@ -215,13 +229,11 @@ async function initServerContext(
   options: StartServerOptions,
   platform: Platform,
 ): Promise<Result<InitializedContext>> {
-  const { fs, logger, system, processPort, eventBus } = resolveCorePorts(options, platform);
+  const ports = resolveCorePorts(options, platform);
+  const { fs, logger, system, processPort, eventBus } = ports;
   const { configDir, cacheDir, dataDir, homeDir, templateDir } = resolveServerPaths(options);
-
   await prepareUserDirs(options, { configDir, cacheDir, dataDir }, logger);
   const configStore = await createConfigStore({ fs, dir: configDir, platform, logger });
-
-  const runnerScript = resolveRunnerScript(options.deps?.runnerScriptPath);
   const services = createServices(
     {
       fs,
@@ -244,12 +256,12 @@ async function initServerContext(
     eventBus,
     fs,
     options.deps?.watcher ?? createChokidarWatcher(),
-    runnerScript,
+    resolveRunnerScript(options.deps?.runnerScriptPath),
     viteReactAdapter,
     (entry: string) => resolveRunnerScript(undefined, entry),
   );
 
-  const autoOpen = await autoOpenProject(fs, services.projectService, options.workspaceDir);
+  const autoOpen = await connectAndOpen(ports, services, options.workspaceDir);
   if (!autoOpen.ok) return autoOpen;
 
   return ok({
