@@ -1,161 +1,223 @@
-# KumiCraft Local
+# KumiCraft
 
-Studio thiết kế giao diện chạy trên máy (local-first): kéo thả trên layout có cấu trúc, đọc backend để hiểu API và dữ liệu, nhờ AI chỉnh sửa từng phần tử, rồi xuất code React + TypeScript + Tailwind (hoặc HTML/CSS) vào project thật.
+**A visual editor for your real React + Vite code.**
 
-> Tên `kumicraft` là tên tạm (câu hỏi mở Q-01). Tên chính thức chốt trước khi phát hành.
+Open your project, click any element on a live Canvas and change its classes, styles, text, images, layout or pages. KumiCraft writes each change straight into **your own source files**, as clean as if you had typed it yourself, and every step can be undone.
 
-**Trạng thái:** Phase 1 (SPEC-07 mục 5), đang làm WP-1.06. Đã dùng thử được: tạo và mở workspace, màn hình lỗi kèm khôi phục bản sao lưu, khung Editor, Undo/Redo. Chưa có: hiển thị trang trên Canvas, kéo thả, chỉnh thuộc tính, xuất code.
-
----
-
-## Tài liệu
-
-| Tài liệu                                   | Nội dung                                                                                          |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| [`docs/srs.md`](docs/srs.md)               | Yêu cầu phần mềm (SRS v4.0): hệ thống phải làm gì                                                 |
-| [`docs/spec.md`](docs/spec.md)             | Bộ đặc tả thi công: công nghệ, quy chuẩn code, interface, module, bảo mật, quy trình thi công     |
-| [`docs/construction/`](docs/construction/) | Báo cáo thi công, tách khỏi spec: tiến độ, từng gói công việc, Verification Gate, cổng nghiệm thu |
-
-Nguyên tắc: **spec trước, code sau** (SPEC-07 CW-01). Điều gì chưa có trong spec thì bổ sung spec rồi mới code.
+No export step, no generated copy of your app, no lock-in: close KumiCraft and your project is a normal project.
 
 ---
 
-## Yêu cầu môi trường
+## Contents
 
-| Công cụ      | Phiên bản                                                                |
-| ------------ | ------------------------------------------------------------------------ |
-| Node.js      | 24 LTS (khuyến nghị, xem `.node-version`). Tối thiểu 22.13 để phát triển |
-| pnpm         | 10.34.6 (ghim trong `packageManager`)                                    |
-| Git          | Bản mới bất kỳ                                                           |
-| Hệ điều hành | Windows 10/11, macOS, Linux                                              |
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Using the Studio](#using-the-studio)
+- [AI assistant](#ai-assistant)
+- [Connecting an external AI agent (MCP)](#connecting-an-external-ai-agent-mcp)
+- [Command-line reference](#command-line-reference)
+- [Keyboard shortcuts](#keyboard-shortcuts)
+- [Updating and uninstalling](#updating-and-uninstalling)
+- [Troubleshooting](#troubleshooting)
+- [Privacy and data](#privacy-and-data)
+- [Development](#development)
+- [License](#license)
 
 ---
 
-## Cài đặt và sử dụng
+## Features
 
-Cần **Node.js 22.12 trở lên**. Chạy được trên Windows, macOS, Linux.
+- **Edits your source code directly.** Tailwind classes, CSS rules, text, images and component props are written into the files they came from, with readable diffs.
+- **Works with the styling you already use.** Tailwind CSS 3 and 4, plain CSS, CSS Modules, Sass/Less and Bootstrap behave the same in the Inspector.
+- **Several screens at once.** Show the same page at desktop, tablet and phone sizes side by side, or focus on one frame and step through them.
+- **Structure tools.** Layers tree, drag and drop, wrap and unwrap, duplicate, copy and paste between pages.
+- **Pages, components and brand.** Create pages and routes, turn a selection into a reusable component, manage brand colors and fonts as design tokens.
+- **Library.** Drag your project's own components onto the page, or ready-made blocks (rows, grids, buttons, forms, tables, cards, navbar, hero, footer) in Tailwind projects.
+- **Build check.** Run your project's build from the Studio and jump to the file of each error.
+- **Sign-in aware Canvas.** Pages behind a login keep their session; several sign-in sessions can run side by side for apps with more than one role.
+- **Optional AI assistant.** Chat with Claude Code or Antigravity CLI to make larger changes, using the same tools as the Studio.
+- **Local only.** Runs on `127.0.0.1`, needs no account and sends no telemetry.
 
-**1. Cài một lần cho cả máy** (chạy ở thư mục nào cũng được):
+Express + Pug projects open in view mode (browse and inspect, no editing yet).
+
+## Requirements
+
+|                  |                                                               |
+| ---------------- | ------------------------------------------------------------- |
+| Node.js          | 22.12 or newer                                                |
+| Operating system | Windows 10/11, macOS, Linux                                   |
+| Browser          | Chrome, Edge, Firefox or Safari (recent versions)             |
+| Project          | A React + Vite project, or an empty folder to start a new one |
+
+## Installation
+
+Install KumiCraft once, globally. You can run this command from any folder:
 
 ```sh
 npm install -g kumicraft
+```
+
+Check that it works:
+
+```sh
 kumicraft --version
 ```
 
-Trên macOS, nếu Node cài bằng file `.pkg` từ nodejs.org thì lệnh cài có thể báo thiếu quyền (`EACCES`). Khi đó cài Node bằng Homebrew (`brew install node`) hoặc nvm, hoặc thêm `sudo` trước lệnh.
+> **macOS / Linux:** if npm reports `EACCES` (permission denied), your Node.js was installed system-wide. Install Node.js with a version manager such as [nvm](https://github.com/nvm-sh/nvm) or Homebrew (`brew install node`) and run the command again. Using `sudo` also works but is not recommended.
 
-**2. Dùng cho từng dự án:** vào thư mục dự án rồi chạy `kumicraft`:
+## Quick start
 
-```sh
-cd duong-dan/du-an
-kumicraft
-```
+1. Open a terminal in the folder of your web project:
 
-Thư mục trống thì KumiCraft hỏi tạo dự án mới (React + Vite + Tailwind). Trình duyệt tự mở Studio. Bấm `Ctrl+C` trong terminal để tắt; thay đổi chưa lưu được ghi nốt trước khi thoát. Lần sau chạy lại trong cùng thư mục, Studio mở đúng địa chỉ cũ và workspace còn nguyên.
+   ```sh
+   cd path/to/my-app
+   kumicraft
+   ```
 
-| Tham số               | Việc làm                                                     |
-| --------------------- | ------------------------------------------------------------ |
-| `kumicraft <thư mục>` | Mở dự án ở thư mục khác thư mục hiện tại                     |
-| `--no-open`           | Không tự mở trình duyệt (tự mở đường dẫn in trong terminal)  |
-| `--port <số>`         | Dùng cổng cố định                                            |
-| `mcp [thư mục]`       | Máy chủ MCP cho agent AI, nói chuyện với KumiCraft đang chạy |
+2. KumiCraft starts your project's dev server and opens the Studio in your browser.
 
-**3. Cập nhật** khi có bản mới: `npm install -g kumicraft@latest`. **Gỡ:** `npm uninstall -g kumicraft`.
+3. Click an element on the Canvas, change it in the Inspector on the right, and look at your source file: the change is already there.
 
-**Chạy thử không cần cài:** `npx kumicraft` trong thư mục dự án (npm tải về bộ nhớ đệm chung, không thêm gì vào dự án). Không thêm KumiCraft vào `dependencies` của dự án web: nó là công cụ, không phải thư viện.
+4. To stop KumiCraft, press `Ctrl+C` in the terminal. Pending changes are saved before it exits.
 
-### Cài thử bản đóng gói (người phát triển KumiCraft)
+**Starting a new project:** run `kumicraft` in an empty folder. KumiCraft offers to create a React + Vite + Tailwind project and installs its dependencies.
 
-```sh
-pnpm package               # tạo artifacts/kumicraft-<phiên bản>.tgz
-pnpm check:package
-npm install -g ./artifacts/kumicraft-1.0.1.tgz
-node scripts/smoke-installed.mjs
-```
+**Opening another project:** run `kumicraft path/to/other-app`, or use the project picker in the Studio. Projects you opened before are listed on the start screen; remove one from the list with the **×** button (the folder itself is not touched).
 
-Trước khi phát hành: `pnpm release:check` (kiểm lỗ hổng, SBOM và giấy phép, đóng gói, kiểm gói), rồi `npm publish artifacts/kumicraft-<phiên bản>.tgz`.
+The next time you run KumiCraft in the same folder, the Studio opens at the same address with your frames, pages and settings as you left them.
 
-**Chạy nhanh không cần cài** (khi đang phát triển): `pnpm build` rồi `node packages/cli/dist/index.js <thư mục>`.
+## Using the Studio
 
-Trình duyệt: Chrome, Edge, Firefox, Safari (đều có trong test tự động). Trên macOS, phím tắt dùng `⌘` thay cho `Ctrl` (ví dụ `⌘Z` hoàn tác, `⇧⌘Z` làm lại).
+| Area                  | What it does                                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Canvas** (center)   | Your running app in one or more frames. Click to select, double-click text to edit it, drag to move elements. |
+| **Inspector** (right) | Classes, styles, text, image, layout and props of the selected element, plus the CSS rules that apply to it.  |
+| **Layers** (left)     | The element tree of the page. Select, reorder and nest elements.                                              |
+| **Pages**             | The routes of your app. Open, create and organize pages.                                                      |
+| **Library**           | Your project's components and ready-made blocks to drag onto the page.                                        |
+| **Files**             | The project's files, with "Open in editor" to jump to the exact line in VS Code, Cursor, WebStorm or Zed.     |
+| **Toolbar**           | Undo/Redo, zoom, preview mode, frame sizes, build check and Settings.                                         |
 
----
+**Settings** (gear icon) holds the interface language (English or Vietnamese), your code editor, the package manager for new projects, the preferred AI assistant and the sign-in sessions option.
 
-## Khởi tạo lần đầu
+Every edit goes through the Studio's history: `Ctrl+Z` undoes it in your files as well. Your own Git history is never touched.
 
-Dự án đang thi công ở **chế độ local** (SPEC-07 mục 12.6): repo Git chỉ nằm trên máy, chưa đưa lên GitHub, chủ sản phẩm tự commit.
+## AI assistant
 
-Chạy trong thư mục `kumicraft` (PowerShell hoặc Terminal):
+KumiCraft can work with an AI coding assistant installed on your computer. The assistant runs under your own account and subscription; KumiCraft does not resell or proxy any AI service.
 
-```sh
-# 1. Bật pnpm đúng phiên bản ghim.
-#    Trên Windows, nếu lệnh báo thiếu quyền, mở PowerShell bằng "Run as administrator"
-#    hoặc dùng: npm install -g pnpm@10.34.6
-corepack enable
+Supported assistants:
 
-# 2. Khởi tạo Git với nhánh chính là main
-git init -b main
+- **Claude Code** (Anthropic)
+- **Antigravity CLI** (Google)
 
-# 3. Cài dependency. Lệnh này tạo pnpm-lock.yaml và cài Git hooks (lefthook)
-pnpm install
+**Set up:**
 
-# 4. Kiểm tra toàn bộ (thay cho CI khi chưa có GitHub)
-pnpm verify
-```
+1. Open the chat panel or **Settings → AI Assistant**.
+2. If no assistant is installed, click **Install** and confirm. KumiCraft runs the assistant's official installer for your operating system (PowerShell on Windows, `curl … | bash` on macOS and Linux) and shows its progress.
+3. Click **Sign in**. A terminal window opens with the assistant's own sign-in; follow its steps, then return to the Studio.
+4. Choose the assistant (or leave **Auto**) and start chatting.
 
-Sau đó commit theo các bộ thay đổi đang chờ trong [`docs/construction/modules.md`](docs/construction/modules.md). Lệnh commit gợi ý cho từng bộ nằm trong báo cáo gói công việc tương ứng ở `docs/construction/wp/`.
+Already using Claude Code or Antigravity CLI? KumiCraft finds it and uses your existing sign-in.
 
----
+The assistant edits the page through KumiCraft's own tools, so its changes appear on the Canvas and can be undone like yours. Chat sessions are kept per project.
 
-## Lệnh
+To give the assistant project-specific guidance, write it in `.kumicraft/agent-guide.md` in your project; it is included in every request.
 
-| Lệnh                                | Việc làm                                             | Có từ   |
-| ----------------------------------- | ---------------------------------------------------- | ------- |
-| `pnpm verify`                       | Lint, typecheck, định dạng, i18n, test, trace, build | Bây giờ |
-| `pnpm lint`                         | ESLint toàn repo                                     | Bây giờ |
-| `pnpm typecheck`                    | `tsc --noEmit` cho 4 package                         | Bây giờ |
-| `pnpm format` / `pnpm format:check` | Prettier: định dạng / kiểm tra định dạng             | Bây giờ |
-| `pnpm changeset`                    | Thêm ghi chú thay đổi cho lần phát hành              | Bây giờ |
-| `pnpm dev`                          | Chạy server và Studio                                | WP-0.03 |
-| `pnpm build`                        | Build toàn bộ package                                | WP-0.03 |
-| `pnpm package`                      | Đóng gói lệnh `kumicraft` thành `.tgz` để cài thử    | WP-1.06 |
-| `pnpm check:i18n`                   | Kiểm tra khớp khóa `vi`/`en`                         | WP-0.05 |
-| `pnpm test`, `pnpm test:e2e`        | Vitest, Playwright                                   | WP-0.06 |
-| `pnpm bench`                        | Benchmark ngân sách hiệu năng                        | WP-0.06 |
-| `pnpm trace`                        | Truy vết mã spec → test                              | WP-0.06 |
+## Connecting an external AI agent (MCP)
 
-Lệnh chưa có in ra gói công việc sẽ làm nó và kết thúc bình thường (SPEC-07 mục 4.3, bước 9).
+Any agent that supports the Model Context Protocol can drive KumiCraft from outside the Studio: read the page structure, select elements, change styles and text, insert blocks and more.
 
----
+1. Start KumiCraft on your project (`kumicraft` in the project folder) and keep it running.
+2. Register the MCP server with your agent. For Claude Code:
 
-## Cấu trúc
+   ```sh
+   claude mcp add kumicraft -- kumicraft mcp "/path/to/my-app"
+   ```
+
+   For other agents, add a stdio MCP server with the command `kumicraft` and the arguments `mcp /path/to/my-app`.
+
+The project path must be the same project KumiCraft has open.
+
+## Command-line reference
 
 ```text
-kumicraft/
-├── .github/          # CI, mẫu Pull Request, Dependabot
-├── .changeset/       # ghi chú thay đổi cho phát hành
-├── docs/             # SRS, Spec, báo cáo thi công (docs/construction)
-├── packages/
-│   ├── model/        # @kumicraft/model: schema, operation, styling (dùng chung)
-│   ├── server/       # @kumicraft/server: Local Backend
-│   ├── studio/       # @kumicraft/studio: Studio UI
-│   └── cli/          # kumicraft: lệnh kumicraft
-├── templates/        # template Target Project mới
-├── fixtures/         # project mẫu, backend mẫu, Design Document mẫu
-├── e2e/              # test Playwright
-└── scripts/          # script phát triển chạy được trên mọi hệ điều hành
+kumicraft [folder] [options]
+kumicraft mcp [project-folder] [--port <n>]
 ```
 
----
+| Command / option         | Description                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| `kumicraft`              | Open the project in the current folder                                                |
+| `kumicraft <folder>`     | Open the project in another folder                                                    |
+| `--port <n>`             | Use a fixed Studio port (1024–65535). Default: the port used last time, or a free one |
+| `--no-open`              | Do not open the browser; open the link printed in the terminal yourself               |
+| `--log-level <level>`    | `fatal`, `error`, `warn`, `info` (default), `debug`, `trace` or `silent`              |
+| `kumicraft mcp [folder]` | Run the MCP server for an external AI agent (see above)                               |
+| `-h`, `--help`           | Show help                                                                             |
+| `-v`, `--version`        | Show the installed version                                                            |
 
-## Quy trình làm việc
+## Keyboard shortcuts
 
-- Dự án chia theo **module**, mỗi module sở hữu thư mục riêng (SPEC-07 mục 3.5). Trạng thái từng module: [`docs/construction/modules.md`](docs/construction/modules.md).
-- Mỗi lần giao việc là một **bộ thay đổi** (`CS-n.nn-k`) thuộc đúng một module, kèm danh sách file, kết quả kiểm tra và commit message gợi ý.
-- Chủ sản phẩm xem xét bộ thay đổi theo danh sách ở SPEC-02 mục 12.3, chạy `pnpm verify`, rồi tự commit.
-- Commit theo Conventional Commits, có `Refs:` ghi mã WP, module và mã spec. Hook `commit-msg` kiểm tra tự động.
-- Khi đưa lên GitHub: bật CI và bảo vệ nhánh theo SPEC-07 CW-47.
+On macOS, use `⌘` where the table says `Ctrl`. Press `Ctrl+/` in the Studio to see the full list.
 
-## Giấy phép
+| Action                                 | Shortcut                                                       |
+| -------------------------------------- | -------------------------------------------------------------- |
+| Undo / Redo                            | `Ctrl+Z` / `Ctrl+Shift+Z` (also `Ctrl+Y` on Windows and Linux) |
+| Copy / Cut / Paste                     | `Ctrl+C` / `Ctrl+X` / `Ctrl+V`                                 |
+| Duplicate                              | `Ctrl+D`                                                       |
+| Delete                                 | `Delete` or `Backspace`                                        |
+| Wrap in a container / Unwrap           | `Ctrl+G` / `Ctrl+Shift+G`                                      |
+| Move up / down among siblings          | `Ctrl+↑` / `Ctrl+↓`                                            |
+| Select parent                          | `Esc`                                                          |
+| Tools: select, frame, text, image, pan | `V`, `F`, `T`, `I`, `H`                                        |
+| Zoom in / out                          | `Ctrl++` / `Ctrl+-`                                            |
+| Zoom to 100% / fit                     | `Shift+0` / `Shift+1`                                          |
+| One frame at a time / side by side     | `Shift+2`                                                      |
+| Next / previous frame                  | `N` / `Shift+N`                                                |
+| Jump to frame 1–8                      | `1`–`8`                                                        |
+| Preview mode                           | `Alt+P`                                                        |
+| Open selected element in your editor   | `Alt+E`                                                        |
+| Show / hide panels                     | `Ctrl+\`                                                       |
 
-Độc quyền, giữ mọi quyền: cho cài và dùng miễn phí để làm dự án của mình; cấm sao chép, sửa, phân phối lại. Xem [LICENSE](LICENSE).
+## Updating and uninstalling
+
+```sh
+npm install -g kumicraft@latest   # update to the newest version
+npm uninstall -g kumicraft        # remove KumiCraft
+```
+
+Uninstalling does not change your projects. To remove KumiCraft's data from a project as well, delete its `.kumicraft` folder.
+
+**Try without installing:** `npx kumicraft` runs the latest version from npm's cache. Do not add KumiCraft to your project's `dependencies`: it is a tool, not a library.
+
+## Troubleshooting
+
+| Problem                                        | Solution                                                                                                                     |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `kumicraft: command not found`                 | Open a new terminal after installing. If it still fails, check that npm's global folder is in your `PATH` (`npm prefix -g`). |
+| `EACCES` during install (macOS, Linux)         | See the note under [Installation](#installation).                                                                            |
+| The browser does not open                      | Open the `http://127.0.0.1:…` link printed in the terminal, or run with `--no-open`.                                         |
+| The port is already in use                     | Run `kumicraft --port 5800` (any free port).                                                                                 |
+| The Canvas shows an error                      | Your app's own error is shown on the Canvas. Fix it in your code or with **Build check**; the Canvas reloads by itself.      |
+| The AI assistant is not found after installing | Close and reopen the terminal where KumiCraft runs, so it sees the new command, then start KumiCraft again.                  |
+
+## Privacy and data
+
+- KumiCraft runs only on your computer and listens on `127.0.0.1`. Other devices on your network cannot reach it.
+- It needs no account and sends no usage data.
+- It writes only to your project's files and to a `.kumicraft` folder inside the project (frames, pages, components and settings of that project).
+- The list of recent projects and your Studio settings are stored in your user profile.
+- When you use an AI assistant, your messages and the relevant project files are sent to that assistant's provider under your own account.
+
+## Development
+
+Building KumiCraft from source, running the tests and publishing a release are described in [docs/development.md](docs/development.md).
+
+## License
+
+Proprietary. Free to install and use for your own projects, personal or commercial. The code KumiCraft writes into your projects belongs to you. All other rights reserved: see [LICENSE](LICENSE).
+
+Third-party open-source components are listed in `THIRD_PARTY_LICENSES.md`, published with each release.
