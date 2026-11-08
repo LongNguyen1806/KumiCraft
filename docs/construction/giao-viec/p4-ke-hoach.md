@@ -310,6 +310,8 @@ Tốn: **cao** (nhiều bước); từng bước **vừa**.
 
 ### K10. Phát hành 1.0 (M-RL)
 
+**Trạng thái (2026-11-09): đã phát hành `kumicraft` 1.0.0 lên npm** (giấy phép độc quyền, spec-log #100–#104). Cài: `npx kumicraft` hoặc `npm i -g kumicraft`.
+
 - Tài liệu người dùng `vi`/`en`, có danh sách framework và hệ CSS được hỗ trợ. **Hoãn (chủ dự án, 2026-11-07):** chưa làm ở 1.0.
 - Kiểm tra giấy phép, SBOM, kiểm tra máy sạch, S-89a, S-90 đến S-96, S-130.
 - Phát hành gói `kumicraft` 1.0.
