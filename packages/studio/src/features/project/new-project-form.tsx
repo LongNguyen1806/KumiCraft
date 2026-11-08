@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { probeProject } from '../../api/project-client.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { NameAndManager } from './create-project-form.tsx';
-import { DirectoryBrowser } from './directory-browser.tsx';
+import { FolderField } from './folder-field.tsx';
 import { baseName, childPath, isValidFolderName, parentDir } from './project-paths.ts';
 
 /** Where the new project starts: an empty folder becomes the project, any other gets a new one. */
@@ -105,45 +105,6 @@ function TargetLine({
   );
 }
 
-function LocationField({
-  location,
-  onLocation,
-}: {
-  readonly location: string;
-  readonly onLocation: (path: string) => void;
-}) {
-  const { t } = useTranslation();
-  const [browsing, setBrowsing] = useState(false);
-  return (
-    <div className="grid gap-1">
-      <span className="text-[11px] text-ink-faint">{t('project.location')}</span>
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={location}
-          aria-label={t('project.location')}
-          onChange={(e) => {
-            onLocation(e.target.value);
-          }}
-          className="min-w-0 flex-1 rounded border border-border bg-field px-2.5 py-1.5 font-mono text-xs text-ink focus:outline-none"
-          data-testid="create-project-location"
-        />
-        <button
-          type="button"
-          onClick={() => {
-            setBrowsing(!browsing);
-          }}
-          className="shrink-0 cursor-pointer rounded-full bg-field px-4 py-1.5 text-xs font-medium text-ink hover:bg-field-hover"
-          data-testid="create-project-browse"
-        >
-          {browsing ? t('project.browseDone') : t('project.browse')}
-        </button>
-      </div>
-      {browsing && <DirectoryBrowser currentPath={location} onSelectPath={onLocation} />}
-    </div>
-  );
-}
-
 export type NewProjectFormProps = {
   /** The folder KumiCraft was started in, or the open project. */
   readonly initialPath: string;
@@ -181,11 +142,13 @@ export function NewProjectForm({ initialPath, busy, onCreate }: NewProjectFormPr
         }}
         onPm={setPm}
       />
-      <LocationField
-        location={location}
-        onLocation={(value) => {
+      <FolderField
+        label={t('project.location')}
+        value={location}
+        onChange={(value) => {
           setEdited({ ...edited, location: value });
         }}
+        testId="create-project-location"
       />
       <TargetLine nameOk={nameOk} status={status} target={target} />
       <button

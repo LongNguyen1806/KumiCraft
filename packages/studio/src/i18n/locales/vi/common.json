@@ -252,36 +252,40 @@
       "failed": "Cài đặt thất bại"
     },
     "backends": {
-      "title": "Liên kết Backend",
-      "add": "Thêm liên kết",
-      "empty": "Chưa có backend nào được liên kết.",
-      "remove": "Gỡ",
-      "confirmRemove": "Bạn có chắc muốn gỡ liên kết backend này?",
-      "pathPlaceholder": "Đường dẫn thư mục (vd: /path/to/backend)",
-      "labelPlaceholder": "Nhãn (tùy chọn)",
-      "statusOk": "Hoạt động",
-      "statusMissing": "Không tồn tại",
-      "statusBlocked": "Bị chặn"
+      "title": "Backend của dự án",
+      "empty": "Chưa liên kết backend nào.",
+      "remove": "Gỡ liên kết",
+      "confirmRemove": "Gỡ liên kết backend này? Code backend không bị xóa.",
+      "pathPlaceholder": "Ví dụ: D:/Projects/AuthApi",
+      "labelPlaceholder": "Ví dụ: Auth API",
+      "statusOk": "Đọc được",
+      "statusMissing": "Không tìm thấy thư mục",
+      "statusBlocked": "Bị chặn (thư mục hệ thống)",
+      "pathLabel": "Thư mục code backend",
+      "intro": "Liên kết thư mục code backend (ví dụ ASP.NET Core, Express, Laravel) với dự án này. Khi bạn nhờ trợ lý AI làm giao diện, nó đọc code backend để biết API có những đường dẫn nào và trả về dữ liệu gì. KumiCraft chỉ đọc một bản sao, không bao giờ sửa code backend.",
+      "addTitle": "Liên kết một backend",
+      "addButton": "Liên kết",
+      "labelLabel": "Tên hiển thị (không bắt buộc)"
     },
     "devPort": {
-      "title": "Cổng chạy frontend trong Canvas",
-      "placeholder": "Tự đọc (vd: 5173)",
-      "hint": "Để trống: KumiCraft đọc cổng của dự án (--port trong script dev, vite.config, mặc định 5173) để backend chấp nhận kết nối như khi chạy npm run dev. Lưu xong dev server chạy lại.",
+      "title": "Cổng chạy trang web trên Canvas",
+      "placeholder": "Tự động (thường là 5173)",
+      "hint": "Để trống là đúng cho hầu hết dự án: KumiCraft chạy trang web ở cùng cổng như khi bạn chạy npm run dev. Chỉ nhập số cổng khi backend chỉ cho một địa chỉ cụ thể gọi API (cấu hình CORS), ví dụ 3000 cho http://localhost:3000. Bấm lưu thì trang web trên Canvas chạy lại.",
       "save": "Lưu và chạy lại",
       "invalid": "Cổng phải là số từ 1024 đến 65535, hoặc để trống"
     },
     "designDirs": {
-      "title": "Thư mục mặc định",
-      "hint": "Thư mục mặc định cho trang, bố cục và component (tương đối từ gốc dự án).",
+      "title": "Nơi lưu file mới",
+      "hint": "Khi bạn tạo trang, bố cục hoặc component trong KumiCraft, file mới được lưu vào thư mục đầu tiên của nhóm đó. Các thư mục thêm vào sau vẫn được đọc để hiện trong danh sách. Đường dẫn tính từ thư mục gốc của dự án.",
       "pages": "Trang",
       "layouts": "Bố cục",
       "components": "Component",
-      "newCssDir": "Thư mục chứa file CSS mới",
+      "newCssDir": "Thư mục chứa file CSS mới (để trống: đặt cạnh file component)",
       "addDir": "+ Thêm thư mục",
-      "moveUp": "Đưa lên đầu",
+      "moveUp": "Đưa lên đầu (thành nơi lưu file mới)",
       "remove": "Xóa",
-      "save": "Lưu thư mục",
-      "saved": "Đã lưu thư mục"
+      "save": "Lưu",
+      "saved": "Đã lưu"
     },
     "createsIn": "Tạo trong thư mục: {{path}}",
     "folderNameInvalid": "Tên thư mục không được chứa / \\ : * ? \" < > | và không được kết thúc bằng dấu chấm hay khoảng trắng.",
@@ -294,7 +298,13 @@
     "willCreateAt": "Dự án sẽ được tạo tại:",
     "targetTaken": "Thư mục {{path}} đã có file. Đổi tên dự án hoặc chọn vị trí khác.",
     "locationMissing": "Không tìm thấy thư mục Vị trí. Bấm Chọn… để chọn một thư mục có sẵn.",
-    "emptyFolder": "Thư mục trống: tạo dự án ngay tại đây"
+    "emptyFolder": "Thư mục trống: tạo dự án ngay tại đây",
+    "dialogTitle": "Dự án",
+    "tabs": {
+      "project": "Mở dự án",
+      "backends": "Backend",
+      "settings": "Cài đặt"
+    }
   },
   "inspector": {
     "title": "Thuộc tính",

@@ -51,7 +51,7 @@ describe('BackendsView [R-PJ-23]', () => {
     const itemBe2 = screen.getByTestId('backend-item-be2');
     expect(itemBe2.textContent).toContain('Old');
     expect(itemBe2.textContent).toContain('../old');
-    expect(itemBe2.textContent).toContain('Missing');
+    expect(itemBe2.textContent).toContain(i18next.t('project.backends.statusMissing'));
 
     const removeBtnBe1 = screen.getByTestId('remove-backend-btn-be1');
 

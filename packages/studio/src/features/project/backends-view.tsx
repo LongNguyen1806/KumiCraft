@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
+import { FolderField } from './folder-field.tsx';
+import { parentDir } from './project-paths.ts';
 
 function getStatusBadgeStyle(status: BackendInfo['status']): string {
   if (status === 'ok') return 'bg-emerald-50 text-emerald-700';
@@ -85,10 +87,37 @@ function useAddBackendState(onAdd: (path: string, label?: string) => Promise<voi
   return { newPath, setNewPath, newLabel, setNewLabel, busy, errorMsg, handleAdd };
 }
 
+function LabelField({
+  value,
+  onChange,
+}: {
+  readonly value: string;
+  readonly onChange: (label: string) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <label className="grid gap-1">
+      <span className="text-[11px] text-ink-faint">{t('project.backends.labelLabel')}</span>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+        }}
+        placeholder={t('project.backends.labelPlaceholder')}
+        className="rounded border border-border bg-field px-2.5 py-1.5 text-xs text-ink focus:outline-none"
+        data-testid="backend-label-input"
+      />
+    </label>
+  );
+}
+
 function AddBackendForm({
   onAdd,
+  projectRoot,
 }: {
   readonly onAdd: (path: string, label?: string) => Promise<void>;
+  readonly projectRoot?: string | undefined;
 }) {
   const { t } = useTranslation();
   const s = useAddBackendState(onAdd);
@@ -100,28 +129,17 @@ function AddBackendForm({
       }}
       className="flex flex-col gap-2 rounded-lg border border-border bg-field/40 p-3"
     >
-      <span className="text-xs font-medium text-ink">{t('project.backends.add')}</span>
-      <div className="grid grid-cols-2 gap-2">
-        <input
-          type="text"
+      <span className="text-xs font-medium text-ink">{t('project.backends.addTitle')}</span>
+      <div className="grid gap-2">
+        <FolderField
+          label={t('project.backends.pathLabel')}
           value={s.newPath}
-          onChange={(e) => {
-            s.setNewPath(e.target.value);
-          }}
+          onChange={s.setNewPath}
           placeholder={t('project.backends.pathPlaceholder')}
-          className="rounded border border-border bg-field px-2.5 py-1.5 text-xs text-ink focus:outline-none"
-          data-testid="backend-path-input"
+          startPath={projectRoot === undefined ? undefined : parentDir(projectRoot)}
+          testId="backend-path-input"
         />
-        <input
-          type="text"
-          value={s.newLabel}
-          onChange={(e) => {
-            s.setNewLabel(e.target.value);
-          }}
-          placeholder={t('project.backends.labelPlaceholder')}
-          className="rounded border border-border bg-field px-2.5 py-1.5 text-xs text-ink focus:outline-none"
-          data-testid="backend-label-input"
-        />
+        <LabelField value={s.newLabel} onChange={s.setNewLabel} />
       </div>
       {s.errorMsg && <p className="text-xs text-rose-600">{s.errorMsg}</p>}
       <button
@@ -130,7 +148,7 @@ function AddBackendForm({
         className="self-end rounded-lg bg-charcoal px-3 py-1.5 text-xs text-on-charcoal disabled:opacity-50"
         data-testid="add-backend-btn"
       >
-        {t('project.backends.add')}
+        {t('project.backends.addButton')}
       </button>
     </form>
   );
@@ -140,9 +158,16 @@ type BackendsViewProps = {
   readonly backends: readonly BackendInfo[];
   readonly onAddBackend: (path: string, label?: string) => Promise<void>;
   readonly onRemoveBackend: (id: string) => Promise<void>;
+  /** The open project: Browse… starts next to it, where a backend usually sits. */
+  readonly projectRoot?: string | undefined;
 };
 
-export function BackendsView({ backends, onAddBackend, onRemoveBackend }: BackendsViewProps) {
+export function BackendsView({
+  backends,
+  onAddBackend,
+  onRemoveBackend,
+  projectRoot,
+}: BackendsViewProps) {
   const { t } = useTranslation();
   const [removeBusy, setRemoveBusy] = useState(false);
 
@@ -158,7 +183,10 @@ export function BackendsView({ backends, onAddBackend, onRemoveBackend }: Backen
 
   return (
     <div className="flex flex-col gap-4" data-testid="backends-view">
-      <h3 className="text-sm font-medium text-ink">{t('project.backends.title')}</h3>
+      <div className="grid gap-1">
+        <h3 className="text-sm font-medium text-ink">{t('project.backends.title')}</h3>
+        <p className="text-xs text-ink-soft">{t('project.backends.intro')}</p>
+      </div>
 
       <div className="flex flex-col gap-2" data-testid="backends-list">
         {backends.length === 0 ? (
@@ -177,7 +205,7 @@ export function BackendsView({ backends, onAddBackend, onRemoveBackend }: Backen
         )}
       </div>
 
-      <AddBackendForm onAdd={onAddBackend} />
+      <AddBackendForm onAdd={onAddBackend} projectRoot={projectRoot} />
     </div>
   );
 }

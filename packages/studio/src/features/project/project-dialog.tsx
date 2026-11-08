@@ -18,45 +18,50 @@ import { DirectoryBrowser } from './directory-browser.tsx';
 import { NewProjectForm } from './new-project-form.tsx';
 import { ProjectProbeResultView } from './project-dialog-probe-view.tsx';
 
+type ProjectTab = 'project' | 'backends' | 'settings';
+
+const TABS: readonly {
+  readonly id: ProjectTab;
+  readonly labelKey: `project.tabs.${ProjectTab}`;
+}[] = [
+  { id: 'project', labelKey: 'project.tabs.project' },
+  { id: 'backends', labelKey: 'project.tabs.backends' },
+  { id: 'settings', labelKey: 'project.tabs.settings' },
+];
+
+/** With a project open: open another one, its backends, its settings (one subject per tab). */
 function ProjectDialogTabs({
   currentProject,
   activeTab,
   setActiveTab,
 }: {
   readonly currentProject?: ProjectInfo | undefined;
-  readonly activeTab: 'project' | 'backends';
-  readonly setActiveTab: (tab: 'project' | 'backends') => void;
+  readonly activeTab: ProjectTab;
+  readonly setActiveTab: (tab: ProjectTab) => void;
 }) {
   const { t } = useTranslation();
   if (currentProject === undefined) return undefined;
   return (
-    <div className="flex border-b border-border">
-      <button
-        type="button"
-        onClick={() => {
-          setActiveTab('project');
-        }}
-        className={`px-4 py-2 font-medium border-b-2 -mb-px ${
-          activeTab === 'project'
-            ? 'border-primary text-primary'
-            : 'border-transparent text-ink-faint hover:text-ink'
-        }`}
-      >
-        {t('project.button')}
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          setActiveTab('backends');
-        }}
-        className={`px-4 py-2 font-medium border-b-2 -mb-px ${
-          activeTab === 'backends'
-            ? 'border-primary text-primary'
-            : 'border-transparent text-ink-faint hover:text-ink'
-        }`}
-      >
-        {t('project.backends.title')}
-      </button>
+    <div role="tablist" className="flex border-b border-border">
+      {TABS.map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === tab.id}
+          data-testid={`project-tab-${tab.id}`}
+          onClick={() => {
+            setActiveTab(tab.id);
+          }}
+          className={`-mb-px border-b-2 px-4 py-2 font-medium ${
+            activeTab === tab.id
+              ? 'border-primary text-primary'
+              : 'border-transparent text-ink-faint hover:text-ink'
+          }`}
+        >
+          {t(tab.labelKey)}
+        </button>
+      ))}
     </div>
   );
 }
@@ -230,39 +235,25 @@ function NewProjectContent({
 
 function ProjectSettingsContent({
   currentProject,
-  s,
 }: {
   readonly currentProject?: ProjectInfo | undefined;
-  readonly s: ReturnType<typeof useProjectDialogState>;
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <DevPortForm devPort={currentProject?.devPort} />
       <DesignDirsForm designDirs={currentProject?.designDirs} />
-      <BackendsView
-        backends={s.backends}
-        onAddBackend={s.handleAddBackend}
-        onRemoveBackend={s.handleRemoveBackend}
-      />
+      <DevPortForm devPort={currentProject?.devPort} />
     </div>
   );
 }
 
-function ProjectDialogContent({
-  activeTab,
-  currentProject,
+function OpenProjectContent({
   s,
   onNewProject,
 }: {
-  readonly activeTab: 'project' | 'backends';
-  readonly currentProject?: ProjectInfo | undefined;
   readonly s: ReturnType<typeof useProjectDialogState>;
   readonly onNewProject: () => void;
 }) {
   const { t } = useTranslation();
-  if (activeTab === 'backends')
-    return <ProjectSettingsContent currentProject={currentProject} s={s} />;
-
   return (
     <div className="flex flex-col gap-4">
       <button
@@ -294,6 +285,38 @@ function ProjectDialogContent({
   );
 }
 
+function ProjectDialogContent({
+  activeTab,
+  currentProject,
+  s,
+  onNewProject,
+}: {
+  readonly activeTab: ProjectTab;
+  readonly currentProject?: ProjectInfo | undefined;
+  readonly s: ReturnType<typeof useProjectDialogState>;
+  readonly onNewProject: () => void;
+}) {
+  if (activeTab === 'settings') return <ProjectSettingsContent currentProject={currentProject} />;
+  if (activeTab === 'backends') {
+    return (
+      <BackendsView
+        backends={s.backends}
+        onAddBackend={s.handleAddBackend}
+        onRemoveBackend={s.handleRemoveBackend}
+        projectRoot={currentProject?.root}
+      />
+    );
+  }
+  return <OpenProjectContent s={s} onNewProject={onNewProject} />;
+}
+
+/** With a project open the dialog is also its settings: a title that says so. */
+function useDialogTitle(mode: DialogMode, hasProject: boolean): string {
+  const { t } = useTranslation();
+  if (mode === 'new') return t('project.newDialog');
+  return hasProject ? t('project.dialogTitle') : t('project.openDialog');
+}
+
 export function ProjectDialog({
   open,
   initialPath = '',
@@ -302,14 +325,19 @@ export function ProjectDialog({
   onProjectOpened,
   mode: startMode = 'open',
 }: ProjectDialogProps) {
-  const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'project' | 'backends'>('project');
+  const [activeTab, setActiveTab] = useState<ProjectTab>('project');
   const [mode, setMode] = useState<DialogMode>(startMode);
   const s = useProjectDialogState(initialPath, currentProject, onClose, onProjectOpened);
-  const title = mode === 'new' ? t('project.newDialog') : t('project.openDialog');
+  const title = useDialogTitle(mode, currentProject !== undefined);
 
   return (
-    <Dialog open={open} title={title} closeLabel="✕" onClose={onClose}>
+    <Dialog
+      open={open}
+      title={title}
+      closeLabel="✕"
+      onClose={onClose}
+      size={currentProject === undefined ? 'normal' : 'wide'}
+    >
       <div className="flex flex-col gap-4 text-xs text-ink" data-testid="project-dialog">
         {mode === 'new' ? (
           <NewProjectContent

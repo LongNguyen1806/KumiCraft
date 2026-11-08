@@ -6,13 +6,15 @@ type DialogProps = {
   readonly closeLabel: string;
   readonly onClose: () => void;
   readonly children: ReactNode;
+  /** 'wide' for settings with several fields per row. */
+  readonly size?: 'normal' | 'wide' | undefined;
 };
 
 /**
  * A modal dialog on the native `<dialog>`: the browser keeps keyboard focus inside, Esc closes it
  * and the page behind is inert.
  */
-export function Dialog({ open, title, closeLabel, onClose, children }: DialogProps) {
+export function Dialog({ open, title, closeLabel, onClose, children, size }: DialogProps) {
   const [element, setElement] = useState<HTMLDialogElement>();
   const titleId = useId();
 
@@ -29,7 +31,7 @@ export function Dialog({ open, title, closeLabel, onClose, children }: DialogPro
       }}
       aria-labelledby={titleId}
       onClose={onClose}
-      className="m-auto w-[min(520px,calc(100vw-32px))] rounded-panel whitespace-normal bg-card-solid p-0 text-ink shadow-soft backdrop:bg-wash-cool/60 backdrop:backdrop-blur-sm"
+      className={`m-auto ${size === 'wide' ? 'w-[min(760px,calc(100vw-32px))]' : 'w-[min(520px,calc(100vw-32px))]'} rounded-panel whitespace-normal bg-card-solid p-0 text-ink shadow-soft backdrop:bg-wash-cool/60 backdrop:backdrop-blur-sm`}
     >
       <div className="flex items-center gap-3 px-7 pt-6 pb-2">
         <h2 id={titleId} className="text-[22px] font-light tracking-tight">

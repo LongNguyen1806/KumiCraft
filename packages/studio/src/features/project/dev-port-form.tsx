@@ -64,11 +64,11 @@ export function DevPortForm({ devPort }: { readonly devPort?: number | undefined
             setValue(e.target.value);
           }}
           placeholder={t('project.devPort.placeholder')}
-          className="w-40 rounded border border-border bg-field px-2.5 py-1.5 font-mono text-xs text-ink focus:outline-none"
+          className="w-64 rounded border border-border bg-field px-2.5 py-1.5 font-mono text-xs text-ink focus:outline-none"
           data-testid="dev-port-input"
         />
       </label>
-      <p className="text-[11px] text-ink-faint">{t('project.devPort.hint')}</p>
+      <p className="text-xs text-ink-soft">{t('project.devPort.hint')}</p>
       {errorMsg && <p className="text-xs text-rose-600">{errorMsg}</p>}
       <button
         type="submit"

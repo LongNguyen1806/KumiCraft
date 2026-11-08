@@ -165,7 +165,7 @@ function DirListItemRow({
         onChange={(val) => {
           onUpdate(kind, idx, val);
         }}
-        className="flex-1"
+        className="min-w-0 flex-1"
       />
       <DirItemActions
         kind={kind}
@@ -310,7 +310,7 @@ function DesignDirsSectionsGrid({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div className="grid gap-4">
       <DirListSection
         kind="pages"
         label={t('project.designDirs.pages')}
@@ -357,7 +357,7 @@ export function DesignDirsForm({ designDirs, styleFiles, onSaved }: DesignDirsFo
       className="flex flex-col gap-3 rounded-lg border border-border bg-field/40 p-3 text-xs"
     >
       <div className="font-medium text-ink">{t('project.designDirs.title')}</div>
-      <p className="text-[11px] text-ink-faint">{t('project.designDirs.hint')}</p>
+      <p className="text-xs text-ink-soft">{t('project.designDirs.hint')}</p>
 
       <DesignDirsSectionsGrid state={state} />
 

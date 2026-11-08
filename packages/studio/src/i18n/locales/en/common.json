@@ -252,36 +252,40 @@
       "failed": "Installation failed"
     },
     "backends": {
-      "title": "Linked Backends",
-      "add": "Add link",
-      "empty": "No linked backends.",
-      "remove": "Remove",
-      "confirmRemove": "Are you sure you want to remove this backend link?",
-      "pathPlaceholder": "Folder path (e.g. /path/to/backend)",
-      "labelPlaceholder": "Label (optional)",
-      "statusOk": "Active",
-      "statusMissing": "Missing",
-      "statusBlocked": "Blocked"
+      "title": "Project backends",
+      "empty": "No backend linked yet.",
+      "remove": "Unlink",
+      "confirmRemove": "Unlink this backend? Its code is not deleted.",
+      "pathPlaceholder": "For example: D:/Projects/AuthApi",
+      "labelPlaceholder": "For example: Auth API",
+      "statusOk": "Readable",
+      "statusMissing": "Folder not found",
+      "statusBlocked": "Blocked (system folder)",
+      "pathLabel": "Backend code folder",
+      "intro": "Link the folder of your backend code (for example ASP.NET Core, Express or Laravel) to this project. When you ask the AI assistant to build the UI, it reads the backend to learn which API routes exist and what data they return. KumiCraft only reads a copy and never changes the backend code.",
+      "addTitle": "Link a backend",
+      "addButton": "Link",
+      "labelLabel": "Display name (optional)"
     },
     "devPort": {
-      "title": "Frontend port in the Canvas",
-      "placeholder": "Read from the project (e.g. 5173)",
-      "hint": "Empty: KumiCraft reads the project's port (--port in the dev script, vite.config, 5173 by default) so the backend accepts it as with npm run dev. Saving restarts the dev server.",
+      "title": "Port of the web page on the Canvas",
+      "placeholder": "Automatic (usually 5173)",
+      "hint": "Leave it empty for most projects: KumiCraft runs the page on the same port as npm run dev. Enter a port only when your backend accepts API calls from one specific address (CORS settings), for example 3000 for http://localhost:3000. Saving restarts the page on the Canvas.",
       "save": "Save and restart",
       "invalid": "The port must be a number from 1024 to 65535, or empty"
     },
     "designDirs": {
-      "title": "Default design directories",
-      "hint": "Default directories for pages, layouts, and components (relative to project root).",
+      "title": "Where new files go",
+      "hint": "When you create a page, layout or component in KumiCraft, the new file goes in the first folder of that group. Folders added below it are still read for the lists. Paths are relative to the project root.",
       "pages": "Pages",
       "layouts": "Layouts",
       "components": "Components",
-      "newCssDir": "New CSS files directory",
+      "newCssDir": "Folder for new CSS files (empty: next to the component file)",
       "addDir": "+ Add directory",
-      "moveUp": "Move to top",
+      "moveUp": "Move to the top (new files go here)",
       "remove": "Remove",
-      "save": "Save directories",
-      "saved": "Directories saved"
+      "save": "Save",
+      "saved": "Saved"
     },
     "createsIn": "Created in: {{path}}",
     "folderNameInvalid": "A folder name cannot contain / \\ : * ? \" < > | or end with a dot or a space.",
@@ -294,7 +298,13 @@
     "willCreateAt": "The project will be created in:",
     "targetTaken": "The folder {{path}} already has files. Change the project name or pick another location.",
     "locationMissing": "The location folder was not found. Click Browse… to pick an existing folder.",
-    "emptyFolder": "Empty folder: create a project right here"
+    "emptyFolder": "Empty folder: create a project right here",
+    "dialogTitle": "Project",
+    "tabs": {
+      "project": "Open project",
+      "backends": "Backend",
+      "settings": "Settings"
+    }
   },
   "inspector": {
     "title": "Properties",
