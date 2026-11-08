@@ -82,9 +82,11 @@ kumicraft --version
 
 4. To stop KumiCraft, press `Ctrl+C` in the terminal. Pending changes are saved before it exits.
 
-**Starting a new project:** run `kumicraft` in an empty folder. KumiCraft offers to create a React + Vite + Tailwind project and installs its dependencies.
+**Starting a new project:** click **New project** on the start screen (or **Project → + New project…** in the editor). Enter a project name, choose its location with **Browse…**, and click **Create project**. KumiCraft creates the folder `location/project-name` with a React + Vite + Tailwind project and installs its dependencies. Running `kumicraft` in an empty folder fills in that folder for you.
 
-**Opening another project:** run `kumicraft path/to/other-app`, or use the project picker in the Studio. Projects you opened before are listed on the start screen; remove one from the list with the **×** button (the folder itself is not touched).
+For a frontend next to an existing backend (for example an ASP.NET Core or Express API), choose the backend's parent folder as the location, so both projects sit side by side, then link the backend under **Project → Backend** so the AI assistant can read its API.
+
+**Opening another project:** run `kumicraft path/to/other-app`, or click **Open project** in the Studio. Projects you opened before are listed on the start screen; remove one from the list with the **×** button (the folder itself is not touched).
 
 The next time you run KumiCraft in the same folder, the Studio opens at the same address with your frames, pages and settings as you left them.
 
