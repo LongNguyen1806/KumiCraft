@@ -97,12 +97,20 @@ function previewDraft(
 }
 
 function StyleRow({ property, writable, elementRef, interactionState, onCommit }: RowProps) {
-  const [draft, setDraft] = useState<string>();
-  const current = property.value?.css ?? '';
+  // What the user types, and the value the field showed when they began: a change is saved when
+  // it differs from that, whatever reading of the file lands meanwhile (K9.5, PB-02).
+  const [draft, setDraft] = useState<{ readonly text: string; readonly from: string }>();
+  // The value just saved, until a new reading of the file arrives: before that the reading still
+  // holds the old value, and a change back to it would look like no change (K9.5, PB-02).
+  const [sent, setSent] = useState<{ readonly value: string; readonly reading: unknown }>();
+  const read = property.value?.css ?? '';
+  const current = sent !== undefined && sent.reading === property ? sent.value : read;
   const longhand = CSS_LONGHAND_OF[property.id] ?? property.id;
   const commit = () => {
-    if (draft !== undefined && draft.trim() !== current) {
-      onCommit(property.id, draft.trim());
+    const next = draft?.text.trim();
+    if (draft !== undefined && next !== undefined && next !== draft.from) {
+      onCommit(property.id, next);
+      setSent({ value: next, reading: property });
     } else {
       studioBridgeChannel.clearStylePreview();
     }
@@ -117,11 +125,11 @@ function StyleRow({ property, writable, elementRef, interactionState, onCommit }
       <input
         data-testid={`style-input-${property.id}`}
         className="rounded border border-border bg-field px-1.5 py-0.5 font-mono text-ink disabled:opacity-60"
-        value={draft ?? current}
+        value={draft?.text ?? current}
         disabled={!writable || property.source?.kind === 'inline'}
         onChange={(e) => {
           const next = e.target.value;
-          setDraft(next);
+          setDraft({ text: next, from: draft?.from ?? current });
           previewDraft(elementRef, interactionState, longhand, next);
         }}
         onBlur={commit}

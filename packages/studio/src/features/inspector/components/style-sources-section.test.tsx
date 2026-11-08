@@ -97,6 +97,46 @@ describe('StyleSourcesSection [R-ST-04, R-ST-05]', () => {
     expect(onCommit).toHaveBeenCalledWith('paddingTop', '24px');
   });
 
+  it('a change back to the old value before the file is read again is still saved [K9.5, PB-02]', () => {
+    const onCommit = vi.fn();
+    const property = {
+      id: 'fontSize',
+      value: { css: '20px' },
+      source: {
+        kind: 'rule' as const,
+        system: 'css' as const,
+        file: 'src/Home.css',
+        line: 4,
+        selector: '.title',
+        affects: 1,
+      },
+      editable: true,
+    };
+    const view = (props: typeof property) => (
+      <StyleSourcesSection
+        writable
+        target="rule"
+        onCommit={onCommit}
+        reading={{ primary: 'css', properties: [props] }}
+      />
+    );
+    const { rerender } = render(view(property));
+    const input = screen.getByTestId<HTMLInputElement>('style-input-fontSize');
+    fireEvent.change(input, { target: { value: '21px' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    // The field keeps the saved value while the reading still says 20px.
+    expect(input.value).toBe('21px');
+    fireEvent.change(input, { target: { value: '20px' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onCommit.mock.calls).toEqual([
+      ['fontSize', '21px'],
+      ['fontSize', '20px'],
+    ]);
+    // A new reading of the file decides what the field shows.
+    rerender(view({ ...property, value: { css: '20px' } }));
+    expect(input.value).toBe('20px');
+  });
+
   it('enables inputs and hides unsupported banner when primary: "cssModules" [R-ST-02]', () => {
     vi.mocked(useStyleState).mockReturnValue({
       state: {
