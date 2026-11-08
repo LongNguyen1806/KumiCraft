@@ -269,11 +269,12 @@ function ChatInputField({
 }: ChatInputFieldProps) {
   const { t } = useTranslation('chat');
 
+  // Enter sends, Shift+Enter starts a new line, as in other chat apps. Enter that confirms a word
+  // of an input method (IME) is left to it.
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-      e.preventDefault();
-      onSend();
-    }
+    if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.nativeEvent.isComposing) return;
+    e.preventDefault();
+    if (canSend) onSend();
   };
 
   return (

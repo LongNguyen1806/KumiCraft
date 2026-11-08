@@ -129,7 +129,7 @@ describe('ChatFlow execution [R-CH-01, R-CH-02, R-CH-03]', () => {
     });
   });
 
-  it('Scenario 6: does not send on plain Enter or whitespace-only [R-CH-01]', async () => {
+  it('Scenario 6: Enter sends, Shift+Enter and whitespace-only do not [R-CH-01]', async () => {
     const startTurnSpy = vi.spyOn(agentClient, 'startTurn').mockResolvedValue({ jobId: 'job0001' });
 
     render(<ChatPanel trusted />);
@@ -139,9 +139,15 @@ describe('ChatFlow execution [R-CH-01, R-CH-02, R-CH-03]', () => {
 
     fireEvent.change(input, { target: { value: '   ' } });
     expect(sendBtn).toHaveProperty('disabled', true);
-
-    fireEvent.keyDown(input, { key: 'Enter', ctrlKey: false });
+    fireEvent.keyDown(input, { key: 'Enter' });
     expect(startTurnSpy).not.toHaveBeenCalled();
+
+    fireEvent.change(input, { target: { value: 'Đổi màu' } });
+    fireEvent.keyDown(input, { key: 'Enter', shiftKey: true });
+    expect(startTurnSpy).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(startTurnSpy).toHaveBeenCalledTimes(1);
   });
 
   it('Scenario 7: allows removing context chip and continues conversation on turn 2 [R-CH-02]', async () => {

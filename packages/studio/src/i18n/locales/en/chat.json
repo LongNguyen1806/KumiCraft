@@ -1,7 +1,7 @@
 {
   "lockedUntrusted": "Project is not trusted. Open the Project dialog and choose Trust to use AI.",
   "checkingAgents": "Checking agents…",
-  "inputPlaceholder": "Ask or request changes… (Ctrl+Enter to send)",
+  "inputPlaceholder": "Ask or request changes… (Enter to send, Shift+Enter for a new line)",
   "send": "Send",
   "cancel": "Cancel",
   "turnDone": "Done · {{count}} files changed",

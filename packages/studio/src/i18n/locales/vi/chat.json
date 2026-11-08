@@ -1,7 +1,7 @@
 {
   "lockedUntrusted": "Dự án chưa được tin cậy. Mở hộp Project và chọn Tin cậy để dùng AI.",
   "checkingAgents": "Đang kiểm tra agent…",
-  "inputPlaceholder": "Hỏi hoặc yêu cầu thay đổi… (Ctrl+Enter để gửi)",
+  "inputPlaceholder": "Hỏi hoặc yêu cầu thay đổi… (Enter để gửi, Shift+Enter để xuống dòng)",
   "send": "Gửi",
   "cancel": "Hủy",
   "turnDone": "Xong · {{count}} file đã đổi",
