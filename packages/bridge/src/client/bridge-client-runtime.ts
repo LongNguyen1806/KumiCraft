@@ -28,8 +28,7 @@ import { attachRuntimeErrorListeners } from './runtime-errors.ts';
 import { wrapBrowserHistory } from './runtime-history.ts';
 import { collectSelectionInfo } from './selection-info.ts';
 import { dispatchStudioMessage } from './studio-messages.ts';
-import { StylePreview } from './style-preview.ts';
-import { answerStyleProbe } from './style-probe.ts';
+import { cleanProbe, StylePreview } from './style-preview.ts';
 import { TextEditController } from './text-edit.ts';
 
 export type { BridgeRuntimeConfig, HotContext };
@@ -206,7 +205,7 @@ export class BridgeClientRuntime {
         this.tools.setTool(tool);
       },
       handleStyleProbe: (data) => {
-        this.sendToStudio('style-probe-result', answerStyleProbe(data, document));
+        this.sendToStudio('style-probe-result', cleanProbe(this.stylePreview, data, document));
       },
       handleStylePreview: (data) => {
         this.stylePreview.applyByRef(data.ref, data.property, data.value, document);

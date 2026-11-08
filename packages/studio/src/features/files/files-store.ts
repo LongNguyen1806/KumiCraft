@@ -23,6 +23,8 @@ export type FilesState = {
   readonly toggleDir: (dir: string) => Promise<void>;
   readonly expandParents: (filePath: string) => Promise<void>;
   readonly refreshAffected: (paths: readonly string[]) => Promise<void>;
+  /** Reads every folder shown again: Undo/Redo can create or delete files (K10, macOS CI). */
+  readonly refreshLoaded: () => Promise<void>;
   readonly setSelectedPath: (path?: string) => void;
   readonly setInlineAction: (action?: InlineAction) => void;
   readonly setActionError: (error?: ErrorInfo) => void;
@@ -202,6 +204,10 @@ export const useFilesStore = create<FilesState>((set, get) => ({
   toggleDir: createToggleDir(set, get),
   expandParents: createExpandParents(set, get),
   refreshAffected: createRefreshAffected(get),
+  refreshLoaded: async () => {
+    const { treeData, loadDir } = get();
+    for (const dir of Object.keys(treeData)) await loadDir(dir, true);
+  },
 
   setSelectedPath: (selectedPath) => {
     set({ selectedPath });

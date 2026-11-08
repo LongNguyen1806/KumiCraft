@@ -62,9 +62,16 @@ function useFileClickHandler(pagesData: ReturnType<typeof usePagesData>) {
 
 function useFileTreeWatcher() {
   const refreshAffected = useFilesStore((s) => s.refreshAffected);
+  const refreshLoaded = useFilesStore((s) => s.refreshLoaded);
   useEffect(() => {
     const client = createEventsClient({
       onEvent: (event) => {
+        // Undo/Redo can bring back or remove a file; KumiCraft's own writes are not reported as
+        // changed files, so the tree must not wait for that event (K10, macOS CI).
+        if (event.type === 'history.changed') {
+          void refreshLoaded();
+          return;
+        }
         if (event.type === 'project.filesChanged' && isRecord(event.payload)) {
           const files = event.payload['files'];
           if (Array.isArray(files)) {
@@ -77,7 +84,7 @@ function useFileTreeWatcher() {
     return () => {
       client.close();
     };
-  }, [refreshAffected]);
+  }, [refreshAffected, refreshLoaded]);
 }
 
 function useCanvasSelectionSync() {

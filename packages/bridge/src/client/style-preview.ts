@@ -1,5 +1,11 @@
 // Live inline style preview while typing in the Inspector (SPEC-04 M-ST, R-ST-13).
-import type { ElementRef } from '@kumicraft/shared';
+import type {
+  BridgeStyleProbePayload,
+  ElementRef,
+  StudioStyleProbePayload,
+} from '@kumicraft/shared';
+
+import { answerStyleProbe } from './style-probe.ts';
 
 type SavedDeclaration = {
   readonly value: string;
@@ -35,6 +41,27 @@ export class StylePreview {
     el.style.setProperty(longhand, value, 'important');
   }
 
+  /**
+   * Runs `read` with the previewed values taken off and puts them back right after, in the same
+   * task (no frame is drawn between): a style probe must see the element's own styles, not the
+   * preview, or Studio takes the preview for inline style while the user types (K10, macOS CI).
+   */
+  public withoutPreview<T>(read: () => T): T {
+    const shown: [HTMLElement | SVGElement, string, string][] = [];
+    for (const [el, map] of this.saved.entries()) {
+      for (const [longhand, original] of map.entries()) {
+        shown.push([el, longhand, el.style.getPropertyValue(longhand)]);
+        if (original.value === '') el.style.removeProperty(longhand);
+        else el.style.setProperty(longhand, original.value, original.priority);
+      }
+    }
+    try {
+      return read();
+    } finally {
+      for (const [el, longhand, value] of shown) el.style.setProperty(longhand, value, 'important');
+    }
+  }
+
   /** Restores all previewed elements' inline styles to their original state. */
   public clearAll(): void {
     for (const [el, map] of this.saved.entries()) {
@@ -48,4 +75,13 @@ export class StylePreview {
     }
     this.saved.clear();
   }
+}
+
+/** The style probe answered with the preview taken off (see `withoutPreview`). */
+export function cleanProbe(
+  preview: StylePreview,
+  request: StudioStyleProbePayload,
+  doc: Document,
+): BridgeStyleProbePayload {
+  return preview.withoutPreview(() => answerStyleProbe(request, doc));
 }
