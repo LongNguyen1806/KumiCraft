@@ -92,7 +92,10 @@ async function setupProject(subName = 'app') {
   return { target, service, history, fs: directWriteFs };
 }
 
-describe('page-edits [WP-2.05]', () => {
+// Each test copies a project and opens it with real files: about 0.2 s alone, but several seconds
+// when the whole suite runs in parallel on Windows (seen twice in `pnpm verify`, K10). Like the
+// other real-file suites (build-check, structure-move), it gets more time; the checks are the same.
+describe('page-edits [WP-2.05]', { timeout: 20_000 }, () => {
   it('scenario 2: adds "Giới thiệu" to template [R-PG-11, R-PG-12, AC-07]', async () => {
     const { target, service, fs } = await setupProject();
     const res = await service.addPage({ name: 'Giới thiệu' });

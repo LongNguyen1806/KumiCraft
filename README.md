@@ -66,7 +66,7 @@ Trình duyệt tự mở Studio. Bấm `Ctrl+C` trong terminal để tắt; thay
 | `--no-open`           | Không tự mở trình duyệt (tự mở đường dẫn in trong terminal) |
 | `--port <số>`         | Dùng cổng cố định                                           |
 
-**Cập nhật** sau khi kéo code mới: làm lại bước 1 và 2. **Gỡ:** `npm uninstall -g @kumicraft/cli`.
+**Cập nhật** sau khi kéo code mới: làm lại bước 1 và 2. **Gỡ:** `npm uninstall -g kumicraft`.
 
 ### Cài thử bản đóng gói
 
@@ -141,7 +141,7 @@ kumicraft/
 │   ├── model/        # @kumicraft/model: schema, operation, styling (dùng chung)
 │   ├── server/       # @kumicraft/server: Local Backend
 │   ├── studio/       # @kumicraft/studio: Studio UI
-│   └── cli/          # @kumicraft/cli: lệnh kumicraft
+│   └── cli/          # kumicraft: lệnh kumicraft
 ├── templates/        # template Target Project mới
 ├── fixtures/         # project mẫu, backend mẫu, Design Document mẫu
 ├── e2e/              # test Playwright

@@ -1,8 +1,7 @@
 {
-  "name": "@kumicraft/cli",
-  "version": "0.0.0",
-  "private": true,
-  "description": "The kumicraft command: starts the Local Server and opens the Studio",
+  "name": "kumicraft",
+  "version": "1.0.0",
+  "description": "Visual editor for React + Vite projects: design on a live Canvas, KumiCraft writes the code in your own files.",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -44,5 +43,14 @@
   },
   "scripts": {
     "build": "tsdown"
-  }
+  },
+  "keywords": [
+    "react",
+    "vite",
+    "tailwind",
+    "visual-editor",
+    "design",
+    "no-code",
+    "studio"
+  ]
 }

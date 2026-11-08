@@ -66,10 +66,16 @@ function checkBundledAssets(files, filesSet, contents) {
 
   const runnerPath = 'package/dist/runners/vite-react.js';
   const runnerText = contents[runnerPath] ?? '';
-  const hasBridge =
-    runnerText.includes('data-rc-id') ||
-    runnerText.includes('data-rc-loc') ||
-    runnerText.includes('BRIDGE_CLIENT_CODE');
+  // The runner itself, or a shared chunk it imports (`from "../src-<hash>.js"`).
+  const imported = [...runnerText.matchAll(/from "\.\.\/([^"]+\.js)"/g)].map(
+    (m) => contents[`package/dist/${m[1]}`] ?? '',
+  );
+  const hasBridge = [runnerText, ...imported].some(
+    (text) =>
+      text.includes('data-rc-id') ||
+      text.includes('data-rc-loc') ||
+      text.includes('BRIDGE_CLIENT_CODE'),
+  );
   if (!filesSet.has(runnerPath) || !hasBridge) {
     return {
       ok: false,
@@ -169,7 +175,8 @@ export function readTgzPackage(tgzPath) {
       paxPath = undefined;
       files.push(fullPath);
       sizes[fullPath] = size;
-      if (TEXT_PATHS.has(fullPath)) {
+      // Chunks the bundler splits out (`dist/src-<hash>.js`) are read too: runners import them.
+      if (TEXT_PATHS.has(fullPath) || /^package\/dist\/[^/]+\.js$/.test(fullPath)) {
         contents[fullPath] = tar.subarray(dataStart, dataEnd).toString('utf8');
       }
     } else {
