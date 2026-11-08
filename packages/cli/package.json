@@ -2,7 +2,7 @@
   "name": "kumicraft",
   "version": "1.0.0",
   "description": "Visual editor for React + Vite projects: design on a live Canvas, KumiCraft writes the code in your own files.",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "engines": {
     "node": ">=22.12"

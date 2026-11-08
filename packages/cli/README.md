@@ -41,4 +41,4 @@ Do not add KumiCraft to your project's `dependencies`: it is a tool, run it with
 
 ## License
 
-MIT. Third-party licenses: `THIRD_PARTY_LICENSES.md` published with each release.
+Proprietary: free to install and use for your own projects, all other rights reserved. See `LICENSE`. Third-party licenses: `THIRD_PARTY_LICENSES.md` published with each release.

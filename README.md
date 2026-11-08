@@ -160,4 +160,4 @@ kumicraft/
 
 ## Giấy phép
 
-[MIT](LICENSE)
+Độc quyền, giữ mọi quyền: cho cài và dùng miễn phí để làm dự án của mình; cấm sao chép, sửa, phân phối lại. Xem [LICENSE](LICENSE).

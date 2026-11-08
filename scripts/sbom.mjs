@@ -97,7 +97,7 @@ const bom = {
       name: cli.name,
       version: cli.version,
       purl: purl(cli),
-      licenses: [{ license: { id: cli.license } }],
+      licenses: [{ license: { name: 'Proprietary (see LICENSE)' } }],
     },
   },
   components: components.map((c) => ({

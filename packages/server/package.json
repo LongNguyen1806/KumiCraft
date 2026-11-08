@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "description": "Local Server: projects, dev server runner, source editing, history and the agent bridge",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"

@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "description": "KumiCraft Bridge: Vite transform plugin and client overlay running inside the target project",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
