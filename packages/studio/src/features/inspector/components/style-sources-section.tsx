@@ -11,7 +11,7 @@ import {
   StyleStateSchema,
   type StyleSystemId,
 } from '@kumicraft/shared';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { studioBridgeChannel } from '../../selection/bridge-channel.ts';
@@ -96,21 +96,40 @@ function previewDraft(
   }
 }
 
+/** How long a saved value is shown before the file's own value takes over again. */
+const SENT_HOLD_MS = 2000;
+
+/**
+ * The value just saved, shown in the field for SENT_HOLD_MS: a reading of the file that lands
+ * late can still hold the previous value and must not put it back (K9.6-0, PB-02 on MarketLink).
+ */
+function useHeldValue(): [string | undefined, (value: string) => void] {
+  const [held, setHeld] = useState<string>();
+  useEffect(() => {
+    if (held === undefined) return undefined;
+    const timer = setTimeout(() => {
+      setHeld(undefined);
+    }, SENT_HOLD_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [held]);
+  return [held, setHeld];
+}
+
 function StyleRow({ property, writable, elementRef, interactionState, onCommit }: RowProps) {
   // What the user types, and the value the field showed when they began: a change is saved when
   // it differs from that, whatever reading of the file lands meanwhile (K9.5, PB-02).
   const [draft, setDraft] = useState<{ readonly text: string; readonly from: string }>();
-  // The value just saved, until a new reading of the file arrives: before that the reading still
-  // holds the old value, and a change back to it would look like no change (K9.5, PB-02).
-  const [sent, setSent] = useState<{ readonly value: string; readonly reading: unknown }>();
   const read = property.value?.css ?? '';
-  const current = sent !== undefined && sent.reading === property ? sent.value : read;
+  const [sent, setSent] = useHeldValue();
+  const current = sent ?? read;
   const longhand = CSS_LONGHAND_OF[property.id] ?? property.id;
   const commit = () => {
     const next = draft?.text.trim();
     if (draft !== undefined && next !== undefined && next !== draft.from) {
       onCommit(property.id, next);
-      setSent({ value: next, reading: property });
+      setSent(next);
     } else {
       studioBridgeChannel.clearStylePreview();
     }

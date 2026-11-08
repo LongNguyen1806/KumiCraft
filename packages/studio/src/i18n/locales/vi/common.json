@@ -83,7 +83,7 @@
     "expand": "Mở rộng",
     "properties": "Thuộc tính",
     "ai": "AI",
-    "selectHint": "Chọn một phần tử trên Canvas để sửa class Tailwind của nó ở đây.",
+    "selectHint": "Chọn một phần tử trên Canvas để chỉnh nó ở đây.",
     "trusted": "Dự án đã tin cậy",
     "restricted": "Chế độ hạn chế: không chạy gì của dự án này",
     "narrow": {

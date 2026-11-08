@@ -83,7 +83,7 @@
     "expand": "Expand",
     "properties": "Properties",
     "ai": "AI",
-    "selectHint": "Select an element on the Canvas to edit its Tailwind classes here.",
+    "selectHint": "Select an element on the Canvas to edit it here.",
     "trusted": "Trusted project",
     "restricted": "Restricted mode: nothing of this project runs",
     "narrow": {

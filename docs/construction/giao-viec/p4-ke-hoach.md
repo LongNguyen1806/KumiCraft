@@ -300,6 +300,8 @@ Tốn: **vừa**, tùy số lỗi tìm được.
 | **K9.6-10** Component từ thư viện đã cài   | Đọc kiểu props của thư viện người dùng đã cài (MUI, Ant Design…) bằng TypeScript của dự án; bảng Component có mục "Từ thư viện"; kéo thả và chỉnh props dạng đơn giản; props phức tạp ghi rõ "sửa trong editor"                                                                                                                                                                                                                                                                       | Chèn và chỉnh một `Button`, `Card` của MUI trên dự án mẫu                                                  |
 | **K9.6-11** Bài thử lại                    | Chạy lại đúng bài thử: Antigravity chỉ dùng khối Thư viện và nút Studio (qua MCP) dựng lại `/landing` của Test UI; so ảnh với trang gốc; ghi các chỗ còn thiếu                                                                                                                                                                                                                                                                                                                        | Giống **từ 90%** và mọi tương tác của trang gốc có mặt; chỗ còn thiếu có lý do và kế hoạch                 |
 
+**Tạm dừng (chủ dự án, 2026-11-09):** chỉ làm **K9.6-0** trước K10; **K9.6-1 đến K9.6-11 hoãn sau 1.0** (bản giao việc Gemini đã có: `p4-luot-k96a-cong-cu-thiet-ke.md`, `p4-luot-k96b-tuong-tac-du-lieu-goi.md`). 1.0 phát hành với bộ công cụ thiết kế cơ bản hiện có.
+
 **Thứ tự:** 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11. Mỗi bước một lượt, xong là lưu code. Claude tự làm và tự kiểm (không giao Gemini), kiểm đúng phần vừa sửa, không chạy thử kéo dài (bộ nhớ `no-long-test-runs`).
 
 **Gói cần mạng:** gói npm (Biểu đồ, thư viện người dùng chọn) cần mạng **một lần** khi cài; Icon, Hiệu ứng, Chuyển động, Tương tác, Lặp dữ liệu, khối mẫu **không cần mạng**.
@@ -314,7 +316,7 @@ Tốn: **cao** (nhiều bước); từng bước **vừa**.
 
 Tốn: **vừa**.
 
-**Phạm vi 1.0 (spec-log #72, sửa ở #81 ngày 2026-11-06):** 1.0 = K3 → K4 → K5 thu gọn → K9 → K9.5 (chạy ổn định, spec-log #82) → K9.6 (đủ công cụ thiết kế, spec-log #98) → K10.
+**Phạm vi 1.0 (spec-log #72, sửa ở #81 ngày 2026-11-06):** 1.0 = K3 → K4 → K5 thu gọn → K9 → K9.5 (chạy ổn định, spec-log #82) → K9.6-0 (nợ K9.5; K9.6-1..11 hoãn sau 1.0, spec-log #98) → K10.
 
 - **Sửa đầy đủ:** React + Vite (TypeScript hoặc JavaScript), mọi hệ CSS của K2.
 - **Chỉ xem:** Express + Pug. Chạy server, Canvas hiện trang, bấm phần tử → mở dòng `.pug`, hoặc nhờ AI sửa.
