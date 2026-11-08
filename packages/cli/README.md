@@ -64,6 +64,12 @@ Check that it works:
 kumicraft --version
 ```
 
+**Update to the newest version** (run this again whenever a new version is out):
+
+```sh
+npm install -g kumicraft@latest
+```
+
 > **macOS / Linux:** if npm reports `EACCES` (permission denied), your Node.js was installed system-wide. Install Node.js with a version manager such as [nvm](https://github.com/nvm-sh/nvm) or Homebrew (`brew install node`) and run the command again. Using `sudo` also works but is not recommended.
 
 ## Quick start
