@@ -210,8 +210,9 @@ describe('parseWorkspaceFile', () => {
     ).toBe(false);
   });
 
-  it('D1 [WP-4.00]: sessionOrigin maps session 1 to runnerOrigin, session 2..8 to s<n>.localhost, and throws on invalid input', () => {
-    expect(sessionOrigin('http://127.0.0.1:5173', 1)).toBe('http://127.0.0.1:5173');
+  it('D1 [WP-4.00]: sessionOrigin maps session 1 to localhost, session 2..8 to s<n>.localhost, and throws on invalid input', () => {
+    // Never the Studio's site 127.0.0.1: the Canvas gets its own browser process.
+    expect(sessionOrigin('http://127.0.0.1:5173', 1)).toBe('http://localhost:5173');
     expect(sessionOrigin('http://127.0.0.1:5173', 2)).toBe('http://s2.localhost:5173');
     expect(sessionOrigin('http://127.0.0.1:4000', 8)).toBe('http://s8.localhost:4000');
 

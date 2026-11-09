@@ -30,9 +30,9 @@ export function isTokenValid(authorization: string | undefined, sessionToken: st
 }
 
 /**
- * S-10, S-11, S-12. The Canvas frames the dev server of the project, on another port of 127.0.0.1
- * (ADR-FE-04), or as `s<n>.localhost` for a login session (spec-log #76; `.localhost` is always this
- * machine, RFC 6761). Studio probes a session origin before framing it. Nothing may frame the Studio.
+ * S-10, S-11, S-12. The Canvas frames the dev server of the project as `localhost:<port>`, or as
+ * `s<n>.localhost` for a login session (spec-log #76, #108; `.localhost` is always this machine,
+ * RFC 6761): another site than the Studio, so a hanging page has its own browser process. Studio probes a session origin before framing it. Nothing may frame the Studio.
  */
 export function securityHeaders(port: number): Readonly<Record<string, string>> {
   const csp = [
@@ -42,7 +42,7 @@ export function securityHeaders(port: number): Readonly<Record<string, string>> 
     "img-src 'self' blob: data:",
     "font-src 'self'",
     `connect-src 'self' ws://127.0.0.1:${String(port)} ws://localhost:${String(port)} http://*.localhost:*`,
-    'frame-src http://127.0.0.1:* http://*.localhost:*',
+    'frame-src http://127.0.0.1:* http://localhost:* http://*.localhost:*',
     "worker-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'none'",

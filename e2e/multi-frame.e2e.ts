@@ -83,7 +83,7 @@ test('two frames in two sessions; clicking in the other frame makes it the worki
   await page.getByTestId('session-add-btn').click();
   await page.getByTestId('session-item-2').click();
   await expect.poll(() => iframes(page).nth(1).getAttribute('src')).toContain('s2.localhost');
-  expect(await iframes(page).nth(0).getAttribute('src')).toContain('127.0.0.1');
+  expect(await iframes(page).nth(0).getAttribute('src')).toContain('//localhost:');
 
   // "Fit" fits the whole row: no sideways scrolling.
   await page.getByRole('button', { name: 'Vừa khung' }).click();

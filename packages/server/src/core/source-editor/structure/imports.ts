@@ -3,6 +3,7 @@ import * as path from 'node:path';
 
 import { asAstNode, type AstNode, parseJsxAst } from '../ast-helpers.ts';
 import type { TextEdit } from './text-edits.ts';
+import { topLevelDeclarations } from './top-level-declarations.ts';
 
 /**
  * Returns identifiers declared or imported at the top-level of target file AST.
@@ -22,17 +23,9 @@ export function getTopLevelIdentifiers(targetAst: AstNode): ReadonlySet<string> 
         const local = asAstNode(asAstNode(spec)?.['local']);
         if (typeof local?.['name'] === 'string') ids.add(local['name']);
       }
-    } else if (stmt.type === 'FunctionDeclaration' || stmt.type === 'ClassDeclaration') {
-      const id = asAstNode(stmt['id']);
-      if (typeof id?.['name'] === 'string') ids.add(id['name']);
-    } else if (stmt.type === 'VariableDeclaration') {
-      const decls = Array.isArray(stmt['declarations']) ? stmt['declarations'] : [];
-      for (const decl of decls) {
-        const id = asAstNode(asAstNode(decl)?.['id']);
-        if (typeof id?.['name'] === 'string') ids.add(id['name']);
-      }
     }
   }
+  for (const decl of topLevelDeclarations(targetAst)) ids.add(decl.name);
 
   return ids;
 }

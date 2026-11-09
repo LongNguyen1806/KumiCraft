@@ -54,7 +54,7 @@ test('turned on in Settings, session 2 is s2.localhost with its own storage, and
   await trustIfAsked(page);
   const canvas = await getCanvasFrame(page);
   await headingVisible(canvas);
-  expect(await canvasUrl(page)).toContain('127.0.0.1');
+  expect(await canvasUrl(page)).toContain('//localhost:');
   await setStorage(page, 'customer');
 
   // Off by default (spec-log #77): no picker until the option is turned on in Settings.
@@ -82,7 +82,7 @@ test('turned on in Settings, session 2 is s2.localhost with its own storage, and
 
   await page.getByTestId('session-select-trigger').click();
   await page.getByTestId('session-item-1').click();
-  await expect.poll(() => canvasUrl(page)).toContain('127.0.0.1');
+  await expect.poll(() => canvasUrl(page)).toContain('//localhost:');
   await expect.poll(() => storageOf(page)).toBe('customer');
 });
 

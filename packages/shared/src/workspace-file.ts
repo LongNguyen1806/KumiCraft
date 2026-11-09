@@ -119,7 +119,12 @@ export function normalizeSessions(
 
 const ORIGIN_RE = /^(https?):\/\/([^/?#:]+):(\d+)$/;
 
-/** Maps session 1 to runnerOrigin and session n (2..8) to `http://s<n>.localhost:<port>`. */
+/**
+ * The origin the Canvas frames: session 1 is `http://localhost:<port>`, session n (2..8)
+ * `http://s<n>.localhost:<port>`. Never the Studio's own site (127.0.0.1): a cross-site frame runs
+ * in its own browser process, so project code that hangs (a component rendering itself) cannot
+ * freeze the Studio (spec-log #108).
+ */
 export function sessionOrigin(runnerOrigin: string, sessionId: number): string {
   if (!Number.isInteger(sessionId) || sessionId < 1 || sessionId > 8) {
     throw new Error(`Invalid sessionId: ${String(sessionId)} (expected integer 1..8)`);
@@ -136,7 +141,7 @@ export function sessionOrigin(runnerOrigin: string, sessionId: number): string {
     throw new Error(`Invalid runnerOrigin port: "${runnerOrigin}"`);
   }
   if (sessionId === 1) {
-    return `${protocol}://${host}:${portStr}`;
+    return `${protocol}://${host === '127.0.0.1' ? 'localhost' : host}:${portStr}`;
   }
   return `${protocol}://s${String(sessionId)}.localhost:${portStr}`;
 }

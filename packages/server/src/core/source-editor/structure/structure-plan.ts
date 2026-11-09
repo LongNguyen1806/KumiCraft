@@ -15,6 +15,7 @@ import {
   type ResolvedElement,
 } from './structure-ops.ts';
 import type { TextEdit } from './text-edits.ts';
+import { insertsComponentIntoItself } from './top-level-declarations.ts';
 import { buildUnwrapTextEdit, buildWrapTextEdit } from './wrap-ops.ts';
 
 export type GuardWithPosition = {
@@ -161,6 +162,10 @@ function planInsert(
     // validated previously
   }
   const snippetTags = astSnippet ? collectComponentTags(astSnippet) : [];
+  // A component dropped into its own code would render itself forever and hang the page.
+  if (insertsComponentIntoItself(ast, snippetTags, insertEditRes.value.start)) {
+    return err({ code: 'E016', params: { reason: 'componentIntoItself' } });
+  }
   const autoImports = buildMissingImportsEdits(ast, code, rel, snippetTags, edit.from, nl);
 
   const warnings = [...autoImports.warnings];

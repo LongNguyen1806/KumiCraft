@@ -66,7 +66,7 @@
     "gridSize": "Lưới: {{size}}px",
     "zoom": "Thu phóng",
     "zoomFit": "Vừa khung",
-    "bridgeSilent": "Bridge của trang chưa kết nối sau 10 giây. Trang có thể đang lỗi hoặc thiếu plugin Bridge.",
+    "bridgeSilent": "Trang trên Canvas không phản hồi sau 10 giây. Code của dự án có thể đang lỗi hoặc lặp vô hạn (ví dụ một component tự chứa chính nó). Sửa code trong file hoặc bấm Hoàn tác, rồi tải lại trang.",
     "showLog": "Xem log",
     "modeDesign": "Thiết kế",
     "modePreview": "Xem thử",

@@ -114,7 +114,8 @@
       "invalidResponse": "Phản hồi từ server không đúng định dạng.",
       "entryExists": "Đã có file hoặc thư mục cùng tên.",
       "folderTooLarge": "Thư mục quá lớn để hoàn tác (trên 500 file hoặc 20 MB); hãy làm việc này trong trình soạn thảo code.",
-      "buildCheckUnsupported": "Framework này chưa có kiểm tra build."
+      "buildCheckUnsupported": "Framework này chưa có kiểm tra build.",
+      "componentIntoItself": "Không thể đặt một component vào bên trong chính nó: trang sẽ tự lặp vô hạn và bị treo."
     }
   },
   "E017": {
