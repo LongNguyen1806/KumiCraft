@@ -143,7 +143,8 @@ describe('CanvasArea', () => {
     render(<CanvasArea projectInfo={mockProject} trusted />);
     const iframe = screen.getByTestId('canvas-iframe');
     expect(iframe).toBeDefined();
-    expect(iframe.getAttribute('src')).toBe('http://127.0.0.1:5173/');
+    // Session 1 is framed on localhost: another site than the Studio (spec-log #108).
+    expect(iframe.getAttribute('src')).toBe('http://localhost:5173/');
   });
 
   it('shows the current page path on the Canvas toolbar [R-RN-26]', () => {
@@ -221,7 +222,7 @@ describe('CanvasArea', () => {
       />,
     );
     expect(screen.queryByTestId('session-select-trigger') ?? undefined).toBeUndefined();
-    expect(screen.getByTestId('canvas-iframe').getAttribute('src')).toContain('127.0.0.1:5173');
+    expect(screen.getByTestId('canvas-iframe').getAttribute('src')).toContain('//localhost:5173');
   });
 
   it('D2: switching session 1 -> 2 updates iframe src to s2.localhost, calls bridgeChannel.attach with s2.localhost, and ignores messages from session 1 origin [WP-4.00]', async () => {
@@ -248,7 +249,7 @@ describe('CanvasArea', () => {
     render(<CanvasArea projectInfo={projectWithTwoSessions} trusted />);
 
     const iframe = screen.getByTestId<HTMLIFrameElement>('canvas-iframe');
-    expect(iframe.getAttribute('src')).toBe('http://127.0.0.1:5173/dashboard');
+    expect(iframe.getAttribute('src')).toBe('http://localhost:5173/dashboard');
 
     fireEvent.click(screen.getByTestId('session-select-trigger'));
     fireEvent.click(screen.getByTestId('session-item-2'));
@@ -395,6 +396,6 @@ describe('CanvasArea', () => {
       'Trình duyệt này không mở được địa chỉ *.localhost; dùng Chrome, Edge hoặc Firefox',
     );
     expect(screen.getByTestId('session-select-label').textContent).toBe('Phiên 1');
-    expect(screen.getByTestId('canvas-iframe').getAttribute('src')).toBe('http://127.0.0.1:5173/');
+    expect(screen.getByTestId('canvas-iframe').getAttribute('src')).toBe('http://localhost:5173/');
   });
 });

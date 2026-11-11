@@ -24,7 +24,7 @@ type FrameFocusControlsProps = {
 };
 
 const ROUND =
-  'grid shrink-0 place-items-center rounded-full text-ink transition-colors hover:bg-field-hover focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent';
+  'grid shrink-0 place-items-center rounded-[5px] text-ink-soft transition-colors hover:bg-card-solid hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent aria-[pressed=true]:bg-card-solid aria-[pressed=true]:text-accent aria-[pressed=true]:shadow-[0_0_0_1px_var(--color-line)]';
 
 /** Frames and sessions as the Canvas has them, for the toolbar pager that gets no props. */
 function useNameSources(): FrameFocusControlsProps {
@@ -71,7 +71,7 @@ function StepButton({
       onClick={() => {
         stepFrame(side === 'prev' ? -1 : 1);
       }}
-      className={`${ROUND} size-8`}
+      className={`${ROUND} size-6`}
     >
       {side === 'prev' ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
     </button>
@@ -105,7 +105,7 @@ function FrameJump({
           setActive(e.target.value);
           zoomFit();
         }}
-        className="max-w-72 min-w-0 rounded-full bg-transparent py-1 pr-7 pl-2 font-medium hover:bg-field-hover focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+        className="h-6 max-w-72 min-w-0 rounded-[5px] bg-transparent py-0 pr-7 pl-2 font-medium hover:bg-card-solid focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
       >
         {names.map((n, i) => (
           <option key={n.id} value={n.id}>
@@ -165,7 +165,7 @@ function FrameViewToggle({ focus }: { readonly focus: boolean }) {
         if (focus) exitFrameFocus();
         else focusFrame(activeId);
       }}
-      className={`${ROUND} size-8`}
+      className={`${ROUND} size-6`}
     >
       {focus ? (
         <LayoutGrid aria-hidden className="size-4" />
@@ -193,7 +193,7 @@ export function FramePager() {
   return (
     <div
       data-testid="frame-focus-pager"
-      className="flex h-10 shrink-0 items-center gap-0.5 rounded-full border border-border bg-field px-1 text-xs text-ink"
+      className="flex h-[30px] shrink-0 items-center gap-0.5 rounded-[7px] border border-line bg-field px-1 text-xs text-ink"
     >
       {/* Always there, so the bar keeps its size; side by side only greys these out. */}
       <StepButton side="prev" disabled={!active || index === 0} />
@@ -205,7 +205,7 @@ export function FramePager() {
       </span>
       <FrameJump names={names} currentId={names[index]?.id} disabled={!active} />
       <StepButton side="next" disabled={!active || index >= names.length - 1} />
-      <span aria-hidden className="mx-0.5 h-4 w-px bg-border" />
+      <span aria-hidden className="mx-0.5 h-4 w-px bg-line" />
       <FrameViewToggle focus={active} />
     </div>
   );

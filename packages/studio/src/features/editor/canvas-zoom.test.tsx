@@ -6,7 +6,6 @@ import { initI18n } from '../../i18n/i18n.ts';
 import { useCanvasViewStore } from './canvas-view-store.ts';
 import {
   CanvasZoomSlider,
-  fitZoom,
   fitZoomForFocus,
   fitZoomForFrames,
   FRAME_TILE_GAP,
@@ -23,11 +22,16 @@ describe('Canvas zoom [R-RN-21]', () => {
     cleanup();
   });
 
-  it('fits the frame to the Canvas width, never above 100% or below 10%', () => {
-    expect(fitZoom(1112, 1440)).toBeCloseTo(0.75);
-    expect(fitZoom(1600, 375)).toBe(1);
-    expect(fitZoom(100, 1440)).toBe(0.1);
-    expect(fitZoom(0, 1440)).toBe(1);
+  it('fits one frame inside the Canvas, row padding and border included, never above 100% or below 10%', () => {
+    // The row's padding on both sides and the tile's 1 px borders take room too: without them the
+    // frame came out about 66 px too wide and was cut at the right edge on the first open.
+    const zoom = fitZoomForFrames(1112, [1440]);
+    const tile = 1440 * zoom + FRAME_TILE_GAP * 2 + 2;
+    expect(tile).toBeLessThanOrEqual(1112 - 32 + 0.5);
+    expect(tile).toBeGreaterThan(1112 - 32 - 2);
+    expect(fitZoomForFrames(1600, [375])).toBe(1);
+    expect(fitZoomForFrames(100, [1440])).toBe(0.1);
+    expect(fitZoomForFrames(0, [1440])).toBe(1);
   });
 
   it('[WP-4.00] fits a row of frames, counting tiles held at their minimum width and the gaps (M-MF)', () => {
@@ -37,12 +41,10 @@ describe('Canvas zoom [R-RN-21]', () => {
     // The Mobile tile stays at its minimum width; the Desktop one takes what is left.
     expect(375 * zoom).toBeLessThan(FRAME_TILE_MIN_WIDTH);
     const row =
-      widths.reduce((acc, w) => acc + frameTileWidth(w, zoom), 0) +
+      widths.reduce((acc, w) => acc + frameTileWidth(w, zoom) + 2, 0) +
       FRAME_TILE_GAP * (widths.length + 1);
     expect(row).toBeLessThanOrEqual(viewport - 32 + 0.5);
     expect(row).toBeGreaterThan(viewport - 32 - 2);
-    // One frame: same as before.
-    expect(fitZoomForFrames(1000, [1440])).toBe(fitZoom(1000, 1440));
     // Never below 10 %, even when the minimum widths alone overflow.
     expect(fitZoomForFrames(300, [1440, 375, 375, 375])).toBe(0.1);
   });

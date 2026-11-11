@@ -52,7 +52,7 @@ function FrameTileHeader(props: FrameTileHeaderProps) {
 
   return (
     <div
-      className="flex h-7 min-w-0 items-center justify-between gap-2 overflow-hidden rounded-t-lg border-b border-border bg-card/90 px-2.5 text-xs select-none"
+      className="flex h-7 min-w-0 items-center justify-between gap-2 overflow-hidden rounded-t-md border-b border-line bg-card-solid px-2.5 text-xs select-none"
       data-testid={`canvas-frame-header-${openFrame.id}`}
       onPointerDown={() => {
         props.onSelect(openFrame.id);
@@ -187,10 +187,10 @@ export function CanvasFrameTile(props: CanvasFrameTileProps) {
         props.onSelect(openFrame.id);
       }}
       style={tileStyle(frameTileWidth(preset.width, zoom), hidden)}
-      className={`relative flex shrink-0 flex-col rounded-xl border transition-shadow ${
+      className={`relative flex shrink-0 flex-col rounded-md border transition-shadow ${
         isActive
-          ? 'border-primary shadow-xl ring-2 ring-primary/40'
-          : 'border-border/80 shadow-md hover:border-border'
+          ? 'border-accent shadow-md ring-2 ring-accent/30'
+          : 'border-border shadow-sm hover:border-ink-faint'
       }`}
     >
       <FrameTileHeader
@@ -230,7 +230,7 @@ function TileBody(props: CanvasFrameTileProps & { readonly origin: string }) {
   const { openFrame, preset, zoom, runnerOrigin } = props;
   return (
     // A frame narrower than the title bar sits in the middle of its tile.
-    <div className="flex justify-center overflow-hidden rounded-b-xl bg-card">
+    <div className="flex justify-center overflow-hidden rounded-b-md bg-card-solid">
       <IframeFrame
         key={`${runnerOrigin}|${props.nonce ?? ''}|${props.draftFile ?? ''}|${String(props.reloadTick ?? 0)}`}
         origin={props.origin}

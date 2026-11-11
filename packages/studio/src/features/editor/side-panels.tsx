@@ -27,15 +27,21 @@ type PanelProps = {
   readonly children: ReactNode;
 };
 
-/** A frosted panel: thin title and optional pill tabs (approved mockup). */
+/** A docked panel (P5): a 36 px header with the title, or with tabs in its place, and actions. */
 function Panel({ label, title, tabs, onHeaderSlotRef, children }: PanelProps) {
   return (
     <aside
       aria-label={label}
-      className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-panel bg-card shadow-soft backdrop-blur-xl"
+      className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-card-solid"
     >
-      <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-2.5">
-        <h2 className="truncate text-[19px] font-light tracking-tight">{title}</h2>
+      <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-line pr-2 pl-3">
+        {tabs === undefined ? (
+          <h2 className="truncate text-[12.5px] font-semibold">{title}</h2>
+        ) : (
+          <div role="tablist" aria-label={title} className="flex min-w-0 gap-0.5">
+            {tabs}
+          </div>
+        )}
         {onHeaderSlotRef !== undefined && (
           <div
             ref={(el) => {
@@ -46,11 +52,6 @@ function Panel({ label, title, tabs, onHeaderSlotRef, children }: PanelProps) {
           />
         )}
       </div>
-      {tabs !== undefined && (
-        <div role="tablist" className="mx-3 flex gap-0.5 rounded-full bg-field p-[3px]">
-          {tabs}
-        </div>
-      )}
       <div className="min-h-0 flex-1 overflow-auto px-3 pt-2.5 pb-3.5">{children}</div>
     </aside>
   );
@@ -73,7 +74,7 @@ function Tab({ selected, disabled = false, testId, onClick, children }: TabProps
       disabled={disabled}
       onClick={onClick}
       data-testid={testId}
-      className="h-7 flex-1 rounded-full text-ink-soft disabled:opacity-50 aria-selected:bg-card-solid aria-selected:text-ink aria-selected:shadow-[0_1px_3px_rgb(60_52_30/0.12)] cursor-pointer"
+      className="h-[26px] cursor-pointer rounded-md px-2.5 text-[12px] font-semibold text-ink-faint hover:text-ink disabled:opacity-50 aria-selected:bg-field aria-selected:text-ink"
     >
       {children}
     </button>

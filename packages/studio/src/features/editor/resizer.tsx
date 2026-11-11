@@ -10,7 +10,7 @@ type ResizerProps = {
   readonly onResize: (width: number) => void;
 };
 
-/** The gap beside a panel: drag it to change the panel width (R-SH-01), or use the arrow keys. */
+/** The line beside a panel: drag it to change the panel width (R-SH-01), or use the arrow keys. */
 export function Resizer({ side, width, hidden, onResize }: ResizerProps) {
   const { t } = useTranslation();
   const direction = side === 'left' ? 1 : -1;
@@ -43,9 +43,9 @@ export function Resizer({ side, width, hidden, onResize }: ResizerProps) {
         if (event.key === 'ArrowLeft') onResize(width - 16 * direction);
         if (event.key === 'ArrowRight') onResize(width + 16 * direction);
       }}
-      className="group relative cursor-col-resize"
+      className="group relative cursor-col-resize bg-card-solid"
     >
-      <span className="absolute inset-x-1 inset-y-[30%] rounded-sm transition-colors group-hover:bg-charcoal group-focus-visible:bg-charcoal" />
+      <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-line transition-[width,background-color] group-hover:w-[3px] group-hover:bg-accent group-focus-visible:w-[3px] group-focus-visible:bg-accent" />
     </button>
   );
 }

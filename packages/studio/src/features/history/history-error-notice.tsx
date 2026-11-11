@@ -20,7 +20,7 @@ export function HistoryErrorNotice() {
     <div
       role="alert"
       data-testid="history-error"
-      className="flex max-w-[28rem] min-w-0 !shrink items-center gap-2 rounded-full bg-sun-soft py-1 pr-1 pl-4 text-xs text-ink"
+      className="flex max-w-[28rem] min-w-0 !shrink items-center gap-2 rounded-md bg-sun-soft py-0.5 pr-0.5 pl-3 text-xs text-ink"
     >
       <span className="min-w-0 truncate" title={text}>
         {text}
@@ -30,7 +30,7 @@ export function HistoryErrorNotice() {
         data-testid="history-error-dismiss"
         aria-label={t('history.dismissError')}
         onClick={clearError}
-        className="h-7 shrink-0 rounded-full bg-field px-2 text-ink-soft hover:bg-field-hover"
+        className="h-6 shrink-0 rounded-md bg-field px-2 text-ink-soft hover:bg-field-hover"
       >
         ×
       </button>

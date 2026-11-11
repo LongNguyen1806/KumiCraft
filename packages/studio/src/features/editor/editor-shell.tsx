@@ -19,8 +19,8 @@ import { StatusBar } from './status-bar.tsx';
 import { type PanelLayout, type Side, usePanelLayout } from './use-panel-layout.ts';
 
 const columns = ({ width, visible }: PanelLayout): string =>
-  `48px ${visible.left ? `${String(width.left)}px 10px` : '0 0'} minmax(0,1fr) ${
-    visible.right ? `10px ${String(width.right)}px` : '0 0'
+  `44px ${visible.left ? `${String(width.left)}px 5px` : '0 0'} minmax(0,1fr) ${
+    visible.right ? `5px ${String(width.right)}px` : '0 0'
   }`;
 
 const SideHandle = ({
@@ -58,7 +58,10 @@ function WorkGrid({
 }) {
   const { layout, resize } = panels;
   return (
-    <div className="grid min-h-0 flex-1" style={{ gridTemplateColumns: columns(layout) }}>
+    <div
+      className="grid min-h-0 flex-1 bg-card-solid"
+      style={{ gridTemplateColumns: columns(layout) }}
+    >
       <ActivityBar />
       {layout.visible.left ? <LeftPanel /> : <div />}
       <SideHandle side="left" layout={layout} resize={resize} />
@@ -180,7 +183,7 @@ export function EditorShell({ projectId, projectName, trusted, onTrusted }: Edit
   const loader = useProjectLoader(trusted);
 
   return (
-    <div className="flex h-full flex-col gap-2.5 px-3.5 py-3">
+    <div className="flex h-full flex-col bg-card-solid">
       <EditorToolbar
         projectName={projectName}
         visible={panels.layout.visible}

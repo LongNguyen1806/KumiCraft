@@ -9,11 +9,12 @@ export type Zoom = number | 'fit';
 /** Side padding of the Canvas viewport (`p-4`). */
 const VIEWPORT_PADDING = 32;
 
-/** "Fit": the frame as wide as the Canvas, never above 100% and never below 10%. */
 /** A frame tile never gets narrower than its title bar needs (name, size, session, close). */
 export const FRAME_TILE_MIN_WIDTH = 220;
 /** Space between frame tiles, and around the row of tiles, in Canvas pixels (not zoomed). */
 export const FRAME_TILE_GAP = 32;
+/** The 1 px border on both sides of a tile, which the zoom does not scale. */
+const FRAME_TILE_BORDER = 2;
 
 /** On-screen width of a frame tile at a zoom. */
 export function frameTileWidth(frameWidth: number, zoom: number): number {
@@ -21,12 +22,14 @@ export function frameTileWidth(frameWidth: number, zoom: number): number {
 }
 
 /**
- * The zoom that fits a row of frames side by side (M-MF): tiles held at their minimum width take
- * fixed room, the others share what is left in proportion to their width.
+ * "Fit" (R-RN-21): the zoom that fits a row of frames, one or more, side by side (M-MF), never
+ * above 100% and never below 10%. The row's padding and gaps and the tile borders take fixed room
+ * (one frame too: it used to skip them and came out about 66 px too wide, cut at the right edge);
+ * tiles held at their minimum width take theirs, the others share what is left by their width.
  */
 export function fitZoomForFrames(viewportWidth: number, frameWidths: readonly number[]): number {
-  if (frameWidths.length <= 1) return fitZoom(viewportWidth, frameWidths[0] ?? 0);
-  const fixed = FRAME_TILE_GAP * (frameWidths.length + 1);
+  if (frameWidths.length === 0 || viewportWidth <= 0) return 1;
+  const fixed = (FRAME_TILE_GAP + FRAME_TILE_BORDER) * frameWidths.length + FRAME_TILE_GAP;
   let pinned = new Set<number>();
   let zoom = 1;
   for (let round = 0; round <= frameWidths.length; round += 1) {
@@ -41,12 +44,6 @@ export function fitZoomForFrames(viewportWidth: number, frameWidths: readonly nu
     pinned = next;
   }
   return zoom;
-}
-
-export function fitZoom(viewportWidth: number, frameWidth: number): number {
-  const available = viewportWidth - VIEWPORT_PADDING;
-  if (available <= 0 || frameWidth <= 0) return 1;
-  return Math.max(0.1, Math.min(1, available / frameWidth));
 }
 
 /** Width of an element, kept up to date while it resizes. */

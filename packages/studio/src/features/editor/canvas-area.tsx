@@ -167,7 +167,6 @@ function CanvasAreaOverlays({
   const { t: tError } = useTranslation('errors');
   return (
     <>
-      <DesignBar />
       <CanvasNotices onOpenLoc={onOpenLoc} />
       <TextEditOverlay
         warning={textEdit.warning}
@@ -237,7 +236,7 @@ export function CanvasArea(props: CanvasAreaProps) {
     <main
       aria-label={t('editor.canvas')}
       data-testid="editor"
-      className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-panel bg-card-solid/35 bg-[radial-gradient(rgb(60_52_30/0.14)_1px,transparent_1px)] bg-size-[18px_18px]"
+      className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-canvas bg-[radial-gradient(var(--color-canvas-dot)_1px,transparent_1px)] bg-size-[16px_16px]"
     >
       <CanvasToolbar
         mode={s.mode}
@@ -273,13 +272,16 @@ function CanvasToolbar({ mode, onToggleMode }: CanvasToolbarProps) {
   const editMode = useEditMode();
 
   return (
-    <header className="flex h-11 items-center justify-between gap-3 border-b border-line bg-card/60 px-4 text-xs backdrop-blur-md">
+    // One row (P5): page · what is designed (kind, name, file) · view-only · Design/Preview.
+    <header className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-line bg-card-solid px-2.5 text-xs">
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <PageSelect />
+        <span aria-hidden className="h-[18px] w-px shrink-0 bg-line" />
+        <DesignBar />
         {editMode === 'viewOnly' && (
           <span
             data-testid="view-only-chip"
-            className="inline-flex shrink-0 items-center gap-1 rounded bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400 border border-amber-500/20"
+            className="inline-flex shrink-0 items-center gap-1 rounded-md bg-sun-soft px-2 py-0.5 text-[11px] font-medium text-[#8a5200]"
             title={tErrors('E023.reasons.viewOnly')}
           >
             {t('editor.viewOnly')}
@@ -289,7 +291,7 @@ function CanvasToolbar({ mode, onToggleMode }: CanvasToolbarProps) {
       <button
         type="button"
         onClick={onToggleMode}
-        className="shrink-0 rounded border border-border bg-field px-3 py-1 font-medium text-ink hover:bg-field-hover"
+        className="h-7 shrink-0 rounded-md border border-line bg-card-solid px-2.5 font-medium text-ink hover:bg-field"
         data-testid="canvas-mode-toggle"
       >
         {mode === 'design' ? t('editor.modePreview') : t('editor.modeDesign')}

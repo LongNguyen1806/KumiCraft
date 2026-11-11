@@ -134,7 +134,7 @@ describe('Editor frame', () => {
     expect(undoSpy).toHaveBeenCalled();
   });
 
-  it('Test 12: collapses left panel while activity bar remains visible and first grid column is 48px [WP-4.00]', () => {
+  it('Test 12: collapses left panel while activity bar remains visible and first grid column is 44px [WP-4.00]', () => {
     usePanelLayoutStore.getState().show('left');
     openEditor();
 
@@ -148,9 +148,9 @@ describe('Editor frame', () => {
     // Activity bar remains visible
     expect(screen.getByTestId('activity-layers')).toBeDefined();
 
-    // Grid starts with 48px
+    // Grid starts with the 44 px activity bar
     const grid = screen.getByTestId('activity-layers').closest('.grid');
-    expect(grid?.getAttribute('style')).toContain('grid-template-columns: 48px');
+    expect(grid?.getAttribute('style')).toContain('grid-template-columns: 44px');
   });
 });
 

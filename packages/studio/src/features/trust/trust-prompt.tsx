@@ -54,7 +54,7 @@ export function TrustPrompt({
     <>
       <div
         role="status"
-        className="flex items-center gap-3 rounded-full bg-sun-soft py-1.5 pr-1.5 pl-5 text-ink"
+        className="flex shrink-0 items-center gap-3 border-b border-line bg-sun-soft py-1 pr-2 pl-4 text-xs text-ink"
         data-testid="trust-bar"
       >
         <p className="min-w-0 flex-1">{t('trust.bar')}</p>
@@ -63,7 +63,7 @@ export function TrustPrompt({
           onClick={() => {
             setOpen(true);
           }}
-          className="h-8 shrink-0 rounded-full bg-charcoal px-4 text-on-charcoal"
+          className="h-7 shrink-0 rounded-md bg-charcoal px-3 font-medium text-on-charcoal hover:bg-primary-hover"
         >
           {t('trust.review')}
         </button>

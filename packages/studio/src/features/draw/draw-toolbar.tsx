@@ -65,14 +65,15 @@ function ToolButton({ id, label, shortcut, active, onClick }: ToolButtonProps) {
       aria-label={titleText}
       title={titleText}
       onClick={onClick}
-      className={`flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition ${
+      className={`flex h-[22px] items-center gap-1 rounded px-1.5 text-xs font-medium transition ${
         active
           ? 'bg-primary text-white shadow-xs'
           : 'text-ink-soft hover:bg-field-hover hover:text-ink'
       }`}
     >
       <ToolIcon tool={id} />
-      <span>{label}</span>
+      {/* Narrow status bar: the icon alone; the name stays in the title and for screen readers. */}
+      <span className="@max-[1400px]:sr-only">{label}</span>
     </button>
   );
 }
@@ -103,7 +104,7 @@ export function DrawToolbar() {
       role="toolbar"
       aria-label={t('draw.toolbar')}
       data-testid="draw-toolbar"
-      className="flex items-center gap-0.5 rounded-md border border-border bg-field p-0.5"
+      className="flex items-center gap-0.5 rounded-md border border-line bg-field p-0.5"
     >
       {visibleTools.map((item) => (
         <ToolButton

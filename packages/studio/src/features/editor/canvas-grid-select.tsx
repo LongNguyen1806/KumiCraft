@@ -12,7 +12,7 @@ export function GridSelect() {
 
   return (
     <label className="flex items-center gap-1.5 text-ink-soft">
-      {t('editor.grid', 'Lưới')}
+      <span className="@max-[1240px]:sr-only">{t('editor.grid', 'Lưới')}</span>
       <select
         value={grid}
         onChange={(e: ChangeEvent<HTMLSelectElement>) => {
@@ -20,7 +20,7 @@ export function GridSelect() {
           setGrid(val);
           bridgeChannel.setGrid(val);
         }}
-        className="rounded border border-border bg-field px-2 py-1 text-ink"
+        className="h-6 rounded-md border border-line bg-field px-2 py-0 text-ink"
         data-testid="canvas-grid-select"
       >
         {CANVAS_GRID_SIZES.map((size) => (

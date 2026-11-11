@@ -160,7 +160,7 @@ describe('CanvasMultiFrame [WP-4.00]', () => {
     });
 
     const iframes = screen.getAllByTestId<HTMLIFrameElement>('canvas-iframe');
-    expect(iframes[0]?.getAttribute('src')).toContain('http://127.0.0.1:5173');
+    expect(iframes[0]?.getAttribute('src')).toContain('http://localhost:5173');
     expect(iframes[1]?.getAttribute('src')).toContain('http://s2.localhost:5173');
 
     const ch2 = bridgeChannels.get(frame2Id ?? '');

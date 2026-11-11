@@ -24,7 +24,9 @@ function StatusTrustBadge({ trusted }: StatusBarProps) {
   return (
     <span role="status" className="flex items-center gap-2" data-testid="trust-status">
       <span className={`size-2 rounded-full ${trusted ? 'bg-leaf' : 'bg-sun'}`} />
-      {t(trusted ? 'editor.trusted' : 'editor.restricted')}
+      <span className="@max-[1000px]:sr-only">
+        {t(trusted ? 'editor.trusted' : 'editor.restricted')}
+      </span>
     </span>
   );
 }
@@ -156,10 +158,10 @@ function AddFrameButton() {
         }}
         title={isMax ? t('editor.addFrameMax') : t('editor.addFrame')}
         aria-label={t('editor.addFrame')}
-        className="flex items-center gap-1 rounded border border-border bg-field px-2 py-1 text-xs text-ink hover:bg-field-hover disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex h-6 items-center gap-1 rounded-md border border-line bg-card-solid px-2 text-xs text-ink hover:bg-field disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Plus className="size-3.5" />
-        <span>{t('editor.addFrame')}</span>
+        <span className="@max-[1100px]:sr-only">{t('editor.addFrame')}</span>
       </button>
       {anchor !== undefined && !isMax && (
         <AddFrameMenu
@@ -178,7 +180,7 @@ function AddFrameButton() {
 
 function StatusCanvasControls() {
   return (
-    <div className="flex items-center gap-3" data-testid="status-canvas-controls">
+    <div className="flex min-w-0 items-center gap-2.5" data-testid="status-canvas-controls">
       <AddFrameButton />
       <FrameSelect />
       <GridSelect />
@@ -186,18 +188,23 @@ function StatusCanvasControls() {
   );
 }
 
-/** Bottom row of the Editor: trust state, draw tools, frame size, grid and zoom slider. */
+/**
+ * Bottom row of the Editor: trust state, draw tools, frame size, grid and zoom slider. It sizes
+ * itself to its own width (a container), so names give way to icons before anything is cut off.
+ */
 export function StatusBar({ trusted }: StatusBarProps) {
   return (
-    <footer className="flex h-9 items-center justify-between gap-4 overflow-hidden rounded-full bg-card px-4 text-xs whitespace-nowrap text-ink-soft shadow-soft">
-      <div className="flex items-center gap-3">
+    <footer className="@container flex h-[34px] shrink-0 items-center justify-between gap-3 overflow-hidden border-t border-line bg-card-solid px-2.5 text-xs whitespace-nowrap text-ink-soft">
+      <div className="flex min-w-0 items-center gap-2.5">
         <StatusTrustBadge trusted={trusted} />
         <StatusStylingBadge />
         {trusted && <BuildCheckButton />}
         {trusted && <DrawToolbar />}
       </div>
       {trusted && <StatusCanvasControls />}
-      <CanvasZoomSlider />
+      <div className="shrink-0">
+        <CanvasZoomSlider />
+      </div>
     </footer>
   );
 }

@@ -137,12 +137,18 @@ export function EditorToolbar(props: EditorToolbarProps) {
   return (
     // Three columns, the outer two equal: the pager sits in the very middle and never covers a
     // button; when room runs out the project name on the left shrinks first.
-    <header className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2.5 whitespace-nowrap">
-      <div className="flex min-w-0 items-center gap-2.5 [&>*]:shrink-0">
-        <div className="flex h-10 max-w-[24rem] min-w-[9rem] !shrink items-center gap-2 rounded-full border-[1.5px] border-charcoal px-[18px] text-[17px] tracking-tight">
+    <header className="grid h-11 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 border-b border-line bg-card-solid px-2.5 whitespace-nowrap">
+      <div className="flex min-w-0 items-center gap-1.5 [&>*]:shrink-0">
+        <div className="flex h-[30px] max-w-[24rem] min-w-[9rem] !shrink items-center gap-2 rounded-md border border-line pr-2.5 pl-1.5 text-[13px] font-semibold">
+          <span
+            aria-hidden
+            className="grid size-5 shrink-0 place-items-center rounded-[5px] bg-sun text-[11px] font-bold text-ink"
+          >
+            K
+          </span>
           {t('app.name')}
           <span
-            className="min-w-0 truncate text-xs text-ink-faint"
+            className="min-w-0 truncate font-mono text-[11.5px] font-normal text-ink-soft"
             title={props.projectName}
             data-testid="project-name"
           >
@@ -154,7 +160,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
           <button
             type="button"
             onClick={props.onOpenProject}
-            className="h-10 rounded-full border border-border bg-field px-4 text-xs font-medium text-ink hover:bg-field-hover"
+            className="h-7 rounded-md border border-line bg-card-solid px-2.5 text-xs font-medium text-ink hover:bg-field"
             data-testid="project-btn"
           >
             {t('project.button')}
@@ -166,7 +172,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
       <div className="flex justify-center">
         <FramePager />
       </div>
-      <div className="flex min-w-0 items-center justify-end gap-2.5 [&>*]:shrink-0">
+      <div className="flex min-w-0 items-center justify-end gap-1 [&>*]:shrink-0">
         <HistoryErrorNotice />
         <HistoryButtons />
         <PanelToggle side="right" {...props} />
@@ -192,7 +198,7 @@ function RoundButton({ label, onClick, disabled = false, pressed, children }: Ro
       disabled={disabled}
       {...(pressed === undefined ? {} : { 'aria-pressed': pressed })}
       onClick={onClick}
-      className="grid size-10 place-items-center rounded-full bg-card text-ink shadow-soft backdrop-blur-md transition-transform hover:-translate-y-px disabled:text-ink-faint disabled:hover:translate-y-0 aria-[pressed=false]:bg-transparent aria-[pressed=false]:text-ink-soft aria-[pressed=false]:shadow-[inset_0_0_0_1.5px_var(--color-line)]"
+      className="grid size-7 place-items-center rounded-md border border-transparent text-ink-soft transition-colors hover:bg-field hover:text-ink disabled:opacity-40 disabled:hover:bg-transparent aria-[pressed=true]:border-line aria-[pressed=true]:bg-field aria-[pressed=true]:text-ink"
     >
       {children}
     </button>

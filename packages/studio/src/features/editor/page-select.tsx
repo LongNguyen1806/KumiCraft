@@ -108,7 +108,7 @@ function ParamInput({
           onDone();
         }
       }}
-      className="w-44 rounded border border-border bg-field px-2 py-1 font-mono text-ink"
+      className="h-[26px] w-44 rounded-md border border-line bg-field px-2 py-0 font-mono text-ink"
     />
   );
 }
@@ -191,7 +191,7 @@ function PageSelectControl({
             onDraftChange,
           });
         }}
-        className="w-48 min-w-0 rounded border border-border bg-field px-2 py-1 text-ink"
+        className="h-[26px] w-48 min-w-0 rounded-md border border-line bg-field px-2 py-0 font-medium text-ink"
       >
         <option value="">
           {pages.length === 0 ? t('editor.noPages') : t('editor.pageChoose')}

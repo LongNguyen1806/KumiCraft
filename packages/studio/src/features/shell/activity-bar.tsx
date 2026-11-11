@@ -80,17 +80,17 @@ function ActivityBarButton({ item, isPressed, badgeValue, onActivate }: Activity
       onClick={() => {
         onActivate(item.id);
       }}
-      className={`relative flex size-10 items-center justify-center rounded-lg transition-colors cursor-pointer ${
+      className={`relative flex size-8 cursor-pointer items-center justify-center rounded-md transition-colors ${
         isPressed
-          ? 'text-ink bg-field/80 font-medium before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:bg-charcoal before:rounded-r'
-          : 'text-ink-soft hover:bg-field/50 hover:text-ink'
+          ? 'bg-accent-soft text-accent before:absolute before:top-[7px] before:bottom-[7px] before:-left-1.5 before:w-[3px] before:rounded-r before:bg-accent'
+          : 'text-ink-faint hover:bg-field hover:text-ink'
       }`}
     >
-      <Icon className="size-5" />
+      <Icon className="size-[17px]" />
       {badgeValue !== undefined && (
         <span
           data-testid={`activity-badge-${item.id}`}
-          className={`absolute top-1 right-1 flex min-w-4 h-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-none ${
+          className={`absolute -top-0.5 -right-0.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[9.5px] leading-none font-semibold ${
             item.id === 'files' ? 'bg-rose-600 text-white' : 'bg-charcoal text-on-charcoal'
           }`}
         >
@@ -123,9 +123,9 @@ export function ActivityBar({ context }: ActivityBarProps = {}) {
   return (
     <nav
       aria-label={t('activity.bar')}
-      className="flex flex-col justify-between w-12 min-w-12 h-full border-r border-border/60 bg-card py-2 select-none z-10"
+      className="z-10 flex h-full w-11 min-w-11 flex-col justify-between border-r border-line bg-card-solid py-1.5 select-none"
     >
-      <div className="flex flex-col items-center gap-1 w-full">
+      <div className="flex w-full flex-col items-center gap-[3px]">
         {ACTIVITY_ITEMS.map((item) => {
           if (item.visible !== undefined && !item.visible(ctx)) {
             return undefined;

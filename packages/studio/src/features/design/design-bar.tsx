@@ -26,6 +26,27 @@ function useDesignBarState() {
   return { isComponentMode, kind, name, file, usages };
 }
 
+/** The file being designed, or a warning when KumiCraft does not know it yet. */
+function DesignFile({ file }: { readonly file?: string | undefined }) {
+  const { t } = useTranslation();
+  if (file === undefined || file === '') {
+    return (
+      <span className="min-w-0 truncate rounded-md bg-sun-soft px-1.5 py-0.5 text-[11px] text-[#8a5200]">
+        {t('design.unknownFile')}
+      </span>
+    );
+  }
+  return (
+    <span
+      data-testid="design-bar-file"
+      title={file}
+      className="min-w-0 truncate font-mono text-[11px] text-ink-faint"
+    >
+      {file}
+    </span>
+  );
+}
+
 export function DesignBar() {
   const { t } = useTranslation();
   const { isComponentMode, kind, name, file, usages } = useDesignBarState();
@@ -33,29 +54,24 @@ export function DesignBar() {
   return (
     <div
       data-testid="design-bar"
-      className="flex items-center gap-2 border-b border-line bg-card/40 px-4 py-1.5 text-xs text-ink-soft backdrop-blur-sm"
+      className="flex min-w-0 items-center gap-1.5 text-xs whitespace-nowrap text-ink-soft"
     >
-      <span data-testid="design-bar-kind" className="font-medium text-ink">
+      <span
+        data-testid="design-bar-kind"
+        className={`shrink-0 rounded px-1.5 py-0.5 text-[10.5px] font-semibold ${
+          kind === 'component' ? 'bg-violet-500/10 text-violet-700' : 'bg-accent-soft text-accent'
+        }`}
+      >
         {t(`design.kind.${kind}`)}
       </span>
-      <span>·</span>
-      <span data-testid="design-bar-name" className="font-medium text-ink">
+      <span data-testid="design-bar-name" className="shrink-0 font-medium text-ink">
         {name}
       </span>
-      <span>·</span>
-      {file ? (
-        <span data-testid="design-bar-file" className="font-mono text-[11px] text-ink-soft">
-          {file}
-        </span>
-      ) : (
-        <span className="text-[11px] text-amber-600 dark:text-amber-400">
-          {t('design.unknownFile')}
-        </span>
-      )}
+      <DesignFile file={file} />
       {isComponentMode && usages > 1 && (
         <span
           data-testid="design-bar-usages"
-          className="ml-2 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400"
+          className="shrink-0 rounded-md bg-sun-soft px-1.5 py-0.5 text-[10.5px] font-medium text-[#8a5200]"
         >
           {t('design.usages', { count: usages })}
         </span>
@@ -67,7 +83,7 @@ export function DesignBar() {
           onClick={() => {
             useDesignStore.getState().exitComponentMode();
           }}
-          className="ml-auto rounded border border-border px-2 py-0.5 text-xs text-ink hover:bg-border/20"
+          className="h-6 shrink-0 rounded-md border border-line px-2 text-xs text-ink hover:bg-field"
         >
           {t('design.back')}
         </button>
