@@ -17,7 +17,7 @@ export function LibraryStatusHint({ hasSelection, errorInfo }: LibraryStatusHint
     return (
       <p
         data-testid="library-hint"
-        className="rounded bg-amber-500/10 border border-amber-500/20 p-2 text-[11px] text-amber-900 dark:text-amber-200"
+        className="rounded-md border border-sun bg-sun-soft p-2 text-[11px] text-ink"
       >
         {t('hint')}
       </p>
@@ -28,7 +28,7 @@ export function LibraryStatusHint({ hasSelection, errorInfo }: LibraryStatusHint
     return (
       <p
         data-testid="library-hint"
-        className="rounded bg-amber-500/10 border border-amber-500/20 p-2 text-[11px] text-amber-900 dark:text-amber-200"
+        className="rounded-md border border-sun bg-sun-soft p-2 text-[11px] text-ink"
       >
         <SelectInFileHint info={errorInfo} />
       </p>
@@ -64,7 +64,7 @@ export function LibrarySearchHeader({
   const { t } = useTranslation('library');
 
   return (
-    <div className="p-3 border-b border-border/40 space-y-2">
+    <div className="space-y-2 pb-2">
       <div className="flex items-center gap-2">
         <input
           type="search"
@@ -74,14 +74,14 @@ export function LibrarySearchHeader({
           onChange={(e) => {
             onQueryChange(e.target.value);
           }}
-          className="flex-1 rounded-md border border-border bg-field px-3 py-1.5 text-xs text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+          className="h-7 min-w-0 flex-1 rounded-md border border-line bg-card-solid px-2.5 text-xs text-ink placeholder:text-ink-faint"
         />
         <button
           type="button"
           data-testid="library-insert-image"
           disabled={!hasSelection}
           onClick={onOpenImagePicker}
-          className="rounded-md border border-border bg-field px-2.5 py-1.5 text-xs font-medium text-ink hover:bg-field-hover disabled:cursor-not-allowed disabled:opacity-40 whitespace-nowrap"
+          className="h-7 rounded-md border border-line bg-card-solid px-2.5 text-xs font-medium whitespace-nowrap text-ink hover:bg-field disabled:cursor-not-allowed disabled:opacity-40"
         >
           {t('insertImage', 'Ảnh…')}
         </button>

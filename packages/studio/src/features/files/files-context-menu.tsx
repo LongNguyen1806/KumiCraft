@@ -33,7 +33,7 @@ export function MenuItem({ icon, label, testId, onClick, danger, disabled }: Men
   const cls = disabled
     ? 'cursor-not-allowed text-ink-soft opacity-40'
     : danger
-      ? 'cursor-pointer text-rose-600 hover:bg-field-hover dark:text-rose-400'
+      ? 'cursor-pointer text-danger hover:bg-field-hover'
       : 'cursor-pointer text-ink hover:bg-field-hover';
   return (
     <button

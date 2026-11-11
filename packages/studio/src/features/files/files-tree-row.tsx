@@ -44,14 +44,10 @@ const IMG_EXTS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.ic
 
 function resolveFileIcon(name: string): ReactNode {
   const ext = name.slice(name.lastIndexOf('.')).toLowerCase();
-  if (CODE_EXTS.has(ext))
-    return <FileCode className="size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />;
-  if (STYLE_EXTS.has(ext))
-    return <FileText className="size-3.5 shrink-0 text-sky-600 dark:text-sky-400" />;
-  if (ext === '.json')
-    return <FileJson className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />;
-  if (IMG_EXTS.has(ext))
-    return <ImageIcon className="size-3.5 shrink-0 text-purple-600 dark:text-purple-400" />;
+  if (CODE_EXTS.has(ext)) return <FileCode className="size-3.5 shrink-0 text-amber-600" />;
+  if (STYLE_EXTS.has(ext)) return <FileText className="size-3.5 shrink-0 text-sky-600" />;
+  if (ext === '.json') return <FileJson className="size-3.5 shrink-0 text-emerald-600" />;
+  if (IMG_EXTS.has(ext)) return <ImageIcon className="size-3.5 shrink-0 text-purple-600" />;
   return <File className="size-3.5 shrink-0 text-ink-faint" />;
 }
 
@@ -78,7 +74,7 @@ function StatusDots({
           data-testid="build-error-dot"
           title={t('files.buildError')}
           aria-label={t('files.buildError')}
-          className="size-2 rounded-full bg-rose-500"
+          className="size-2 rounded-full bg-danger"
         />
       )}
       {hasParentBuildError && (
@@ -86,7 +82,7 @@ function StatusDots({
           data-testid="build-error-folder-dot"
           title={t('files.buildError')}
           aria-label={t('files.buildError')}
-          className="size-1.5 rounded-full bg-rose-500"
+          className="size-1.5 rounded-full bg-danger"
         />
       )}
       {isAiModified && (
@@ -94,7 +90,7 @@ function StatusDots({
           data-testid="ai-modified-dot"
           title={t('files.aiModified')}
           aria-label={t('files.aiModified')}
-          className="size-2 rounded-full bg-primary"
+          className="size-2 rounded-full bg-accent"
         />
       )}
     </div>
@@ -141,10 +137,10 @@ export function InlineRenameInput({ oldName, onCommit, onCancel }: InlineRenameI
         onBlur={() => {
           if (val.trim() === oldName) onCancel();
         }}
-        className="w-full rounded border border-primary bg-field px-1.5 py-0.5 text-xs text-ink focus:outline-none"
+        className="w-full rounded border border-accent bg-card-solid px-1.5 py-0.5 text-xs text-ink"
       />
       {error !== undefined && (
-        <span data-testid="files-inline-error" className="text-[10px] text-rose-500">
+        <span data-testid="files-inline-error" className="text-[10px] text-danger">
           {error}
         </span>
       )}
@@ -154,12 +150,12 @@ export function InlineRenameInput({ oldName, onCommit, onCancel }: InlineRenameI
 
 function resolveRowClasses(isSelected: boolean, isDesignSelected: boolean, hidden: boolean) {
   const base =
-    'group flex items-center gap-1.5 rounded py-1 pr-1.5 text-xs transition-colors cursor-pointer select-none';
+    'group flex min-h-[26px] cursor-pointer items-center gap-1.5 rounded-[5px] py-0.5 pr-1.5 text-xs transition-colors select-none';
   const state = isDesignSelected
-    ? 'bg-primary/10 font-semibold text-primary'
+    ? 'bg-accent-soft font-semibold text-accent'
     : isSelected
-      ? 'bg-field font-medium text-ink'
-      : 'hover:bg-field/60 text-ink-soft hover:text-ink';
+      ? 'bg-accent-soft font-medium text-ink shadow-[inset_2px_0_0_var(--color-accent)]'
+      : 'text-ink-soft hover:bg-field hover:text-ink';
   return `${base} ${state}${hidden ? ' opacity-50 text-ink-faint' : ''}`;
 }
 
@@ -210,7 +206,7 @@ function RowMoreButton({
         e.stopPropagation();
         onOpenMenu(e.currentTarget);
       }}
-      className="opacity-0 group-hover:opacity-100 rounded p-0.5 hover:bg-card text-ink-faint hover:text-ink cursor-pointer"
+      className="cursor-pointer rounded p-0.5 text-ink-faint opacity-0 group-hover:opacity-100 hover:bg-field-hover hover:text-ink focus-visible:opacity-100"
     >
       <MoreHorizontal className="size-3.5" />
     </button>

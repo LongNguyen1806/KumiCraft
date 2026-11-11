@@ -186,7 +186,7 @@ export function LayerTree({ onSelect, onHover }: LayerTreeProps) {
     <div
       role="tree"
       aria-label={t('editor.layers')}
-      className="flex flex-col gap-0.5 overflow-x-hidden font-sans text-xs select-none"
+      className="flex flex-col gap-px overflow-x-hidden font-sans text-xs select-none"
     >
       <LayerTreeRowsList
         visibleNodes={s.visibleNodes}

@@ -162,7 +162,7 @@ function CustomColorSection({ onApply }: { readonly onApply: (css: string) => vo
               handleApply();
             }
           }}
-          className="h-7 min-w-0 flex-1 rounded border border-border/60 bg-field px-2 font-mono text-xs text-ink focus:outline-none focus:ring-1 focus:ring-accent"
+          className="h-7 min-w-0 flex-1 rounded-md border border-line bg-card-solid px-2 font-mono text-xs text-ink"
         />
         <button
           type="button"
@@ -194,7 +194,7 @@ function ColorPickerPopover({
   readonly onClose: () => void;
 }) {
   return (
-    <div className="mt-1 flex flex-col gap-2 rounded border border-border bg-card p-2 shadow-md">
+    <div className="mt-1 flex flex-col gap-2 rounded-md border border-line bg-card-solid p-2 shadow-soft">
       <ProjectColorsSection
         colors={themeColors}
         onSelect={(name) => {
@@ -237,7 +237,7 @@ function ColorTriggerButton({
       data-testid={`color-field-${property}`}
       disabled={disabled}
       onClick={onClick}
-      className="flex h-7 w-full items-center gap-2 rounded border border-border/60 bg-field px-2 text-xs text-ink hover:bg-field-hover focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
+      className="flex h-7 w-full items-center gap-2 rounded-md border border-line bg-card-solid px-2 text-xs text-ink hover:bg-field focus:ring-accent disabled:opacity-50"
     >
       <ColorSwatch swatchColor={swatchColor} />
       <span className="truncate">{displayValue}</span>

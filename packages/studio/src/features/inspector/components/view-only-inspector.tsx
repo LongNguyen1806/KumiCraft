@@ -18,7 +18,7 @@ export function ViewOnlyInspector({ target }: ViewOnlyInspectorProps) {
   return (
     <div
       data-testid="view-only-inspector-banner"
-      className="flex flex-col gap-2 rounded-md bg-amber-500/10 border border-amber-500/30 p-3 text-xs text-amber-900 dark:text-amber-200"
+      className="mt-2.5 flex flex-col gap-2 rounded-md border border-sun bg-sun-soft p-3 text-xs text-ink"
     >
       <div className="flex items-center gap-1.5 min-w-0 font-mono text-xs font-semibold text-ink-strong">
         &lt;{tag}&gt;
@@ -32,7 +32,7 @@ export function ViewOnlyInspector({ target }: ViewOnlyInspectorProps) {
           onClick={() => {
             askAiAboutElement();
           }}
-          className="self-start rounded border border-amber-500/40 bg-field px-2.5 py-1 text-xs font-medium text-ink hover:bg-field-hover"
+          className="h-7 self-start rounded-md border border-line bg-card-solid px-2.5 text-xs font-medium text-ink hover:bg-field"
         >
           {t('inspector.askAi')}
         </button>
@@ -42,7 +42,7 @@ export function ViewOnlyInspector({ target }: ViewOnlyInspectorProps) {
           onClick={() => {
             editor.open(target.ref.loc);
           }}
-          className="self-start rounded border border-amber-500/40 bg-field px-2.5 py-1 text-xs font-medium text-ink hover:bg-field-hover"
+          className="h-7 self-start rounded-md border border-line bg-card-solid px-2.5 text-xs font-medium text-ink hover:bg-field"
         >
           {t('inspector.openInEditor')}
         </button>

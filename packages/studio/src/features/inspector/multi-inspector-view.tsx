@@ -100,13 +100,13 @@ function MultiInspectorHeader({
       {lock && (
         <div
           data-testid="inspector-multi-locked"
-          className="px-1 py-1.5 text-xs text-amber-600 font-medium"
+          className="px-1 py-1.5 text-xs font-medium text-amber-700"
         >
           {t('inspector.multiLocked', { tag: lock.tag, loc: lock.loc })}
         </div>
       )}
       {error && (
-        <div data-testid="inspector-error" className="py-2 text-xs text-red-500 font-medium">
+        <div data-testid="inspector-error" className="py-2 text-xs font-medium text-danger">
           {error}
         </div>
       )}
@@ -184,10 +184,8 @@ function MultiPropertyGroups({
   return (
     <>
       {PROPERTY_GROUPS.map((group) => (
-        <div key={group.id} className="flex flex-col gap-1 py-1.5 border-t border-border/30">
-          <h3 className="text-xs font-semibold text-ink-strong tracking-tight">
-            {t(group.labelKey)}
-          </h3>
+        <div key={group.id} className="-mx-3 flex flex-col gap-1 border-t border-line px-3 py-2">
+          <h3 className="text-xs font-semibold text-ink">{t(group.labelKey)}</h3>
           <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
             {group.fields.map((field) => (
               <MultiFieldItem

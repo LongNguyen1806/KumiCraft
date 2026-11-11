@@ -1,4 +1,15 @@
-// Structure action buttons (Move, Wrap, Unwrap, Duplicate, Remove, Extract) in Inspector Header (SPEC-04 R-SE-24..28, R-CP-14).
+// Structure actions as an icon row (Move, Wrap, Unwrap, Duplicate, Extract, Remove) in the Inspector header (SPEC-04 R-SE-24..28, R-CP-14).
+import type { LucideIcon } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  Component,
+  Copy,
+  Group,
+  Trash2,
+  Ungroup,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -7,70 +18,77 @@ import { ExtractDialog } from '../../components-panel/extract-dialog.tsx';
 import type { InspectorTarget } from '../types.ts';
 import { useStructureActions } from './use-structure-actions.ts';
 
+type ElementTarget = Extract<InspectorTarget, { readonly kind: 'element' }>;
+type Actions = ReturnType<typeof useStructureActions>;
+
 type StructureActionsProps = {
-  readonly target: Extract<InspectorTarget, { readonly kind: 'element' }>;
+  readonly target: ElementTarget;
 };
 
-type ActionButtonsProps = {
-  readonly target: Extract<InspectorTarget, { readonly kind: 'element' }>;
-  readonly actions: ReturnType<typeof useStructureActions>;
-};
+const ICON_BUTTON =
+  'grid size-7 shrink-0 place-items-center rounded-md text-ink-soft transition-colors hover:bg-field hover:text-ink disabled:opacity-40 disabled:hover:bg-transparent';
 
-function MoveButtons({ target, actions }: ActionButtonsProps) {
-  const { t } = useTranslation();
-  const tag = target.source?.tag;
-  const baseDisabled =
-    actions.pending || target.loading || tag === undefined || target.source?.readonly !== undefined;
-
+function IconAction({
+  testId,
+  label,
+  icon: Icon,
+  disabled,
+  danger = false,
+  onClick,
+}: {
+  readonly testId: string;
+  readonly label: string;
+  readonly icon: LucideIcon;
+  readonly disabled: boolean;
+  readonly danger?: boolean;
+  readonly onClick: () => void;
+}) {
   return (
-    <>
-      <button
-        type="button"
-        data-testid="inspector-move-up"
-        disabled={baseDisabled || actions.moveUpTarget === undefined}
-        onClick={() => {
-          void actions.runMove('up');
-        }}
-        className="h-6 rounded border border-border/60 bg-field px-2 text-xs text-ink hover:bg-border/20 disabled:opacity-50"
-      >
-        {t('inspector.moveUp')}
-      </button>
-      <button
-        type="button"
-        data-testid="inspector-move-down"
-        disabled={baseDisabled || actions.moveDownTarget === undefined}
-        onClick={() => {
-          void actions.runMove('down');
-        }}
-        className="h-6 rounded border border-border/60 bg-field px-2 text-xs text-ink hover:bg-border/20 disabled:opacity-50"
-      >
-        {t('inspector.moveDown')}
-      </button>
-    </>
+    <button
+      type="button"
+      data-testid={testId}
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onClick={onClick}
+      className={danger ? `${ICON_BUTTON} hover:bg-danger/10 hover:text-danger` : ICON_BUTTON}
+    >
+      <Icon className="size-[15px]" aria-hidden />
+    </button>
   );
 }
 
-function WrapButtons({ target, actions }: ActionButtonsProps) {
+/** The wrap menu: an icon with the native select laid over it, so the menu is the system one. */
+function WrapMenu({
+  disabled,
+  onWrap,
+}: {
+  readonly disabled: boolean;
+  readonly onWrap: (wrapper: 'row' | 'column' | 'grid') => void;
+}) {
   const { t } = useTranslation();
-  const tag = target.source?.tag;
-  const isUppercaseTag = tag !== undefined && /^[A-Z]/.test(tag);
-  const baseDisabled =
-    actions.pending || target.loading || tag === undefined || target.source?.readonly !== undefined;
-
   return (
-    <>
+    <span
+      title={t('inspector.wrap')}
+      className={`relative flex h-7 shrink-0 items-center gap-0.5 rounded-md px-1.5 text-ink-soft transition-colors focus-within:outline-2 focus-within:outline-accent ${
+        disabled ? 'opacity-40' : 'hover:bg-field hover:text-ink'
+      }`}
+    >
+      <Group className="size-[15px]" aria-hidden />
+      <ChevronDown className="size-3" aria-hidden />
       <select
         data-testid="inspector-wrap"
-        disabled={baseDisabled}
+        aria-label={t('inspector.wrap')}
+        disabled={disabled}
         defaultValue=""
         onChange={(e) => {
           const val = e.target.value;
           if (val === 'row' || val === 'column' || val === 'grid') {
-            void actions.runWrap(val);
+            onWrap(val);
             e.target.value = '';
           }
         }}
-        className="h-6 rounded border border-border/60 bg-field px-2 text-xs text-ink hover:bg-border/20 disabled:opacity-50"
+        className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-default"
       >
         <option value="" disabled>
           {t('inspector.wrap')}
@@ -79,75 +97,97 @@ function WrapButtons({ target, actions }: ActionButtonsProps) {
         <option value="column">{t('inspector.wrapColumn')}</option>
         <option value="grid">{t('inspector.wrapGrid')}</option>
       </select>
-      <button
-        type="button"
-        data-testid="inspector-unwrap"
-        disabled={baseDisabled || isUppercaseTag}
-        onClick={() => {
-          void actions.runUnwrap();
-        }}
-        className="h-6 rounded border border-border/60 bg-field px-2 text-xs text-ink hover:bg-border/20 disabled:opacity-50"
-      >
-        {t('inspector.unwrap')}
-      </button>
-    </>
+    </span>
   );
 }
 
-function DuplicateAndRemoveButtons({ target, actions }: ActionButtonsProps) {
-  const { t } = useTranslation();
-  const tag = target.source?.tag;
-  const baseDisabled =
-    actions.pending || target.loading || tag === undefined || target.source?.readonly !== undefined;
+function Divider() {
+  return <span aria-hidden className="mx-0.5 h-4 w-px shrink-0 bg-line" />;
+}
 
+function MoveAndWrap({
+  off,
+  actions,
+  canUnwrap,
+}: {
+  readonly off: boolean;
+  readonly actions: Actions;
+  readonly canUnwrap: boolean;
+}) {
+  const { t } = useTranslation();
   return (
     <>
-      <button
-        type="button"
-        data-testid="inspector-duplicate"
-        disabled={baseDisabled}
-        onClick={() => {
-          void actions.runDuplicate();
-        }}
-        className="h-6 rounded border border-border/60 bg-field px-2 text-xs text-ink hover:bg-border/20 disabled:opacity-50"
-      >
-        {t('inspector.duplicate')}
-      </button>
-      <button
-        type="button"
-        data-testid="inspector-remove"
-        disabled={baseDisabled}
-        onClick={() => {
-          void actions.runRemove();
-        }}
-        className="h-6 rounded border border-border/60 bg-field px-2 text-xs text-danger hover:bg-danger/10 disabled:opacity-50"
-      >
-        {t('inspector.remove')}
-      </button>
+      <IconAction
+        testId="inspector-move-up"
+        label={t('inspector.moveUp')}
+        icon={ArrowUp}
+        disabled={off || actions.moveUpTarget === undefined}
+        onClick={() => void actions.runMove('up')}
+      />
+      <IconAction
+        testId="inspector-move-down"
+        label={t('inspector.moveDown')}
+        icon={ArrowDown}
+        disabled={off || actions.moveDownTarget === undefined}
+        onClick={() => void actions.runMove('down')}
+      />
+      <Divider />
+      <WrapMenu disabled={off} onWrap={(wrapper) => void actions.runWrap(wrapper)} />
+      <IconAction
+        testId="inspector-unwrap"
+        label={t('inspector.unwrap')}
+        icon={Ungroup}
+        disabled={off || !canUnwrap}
+        onClick={() => void actions.runUnwrap()}
+      />
     </>
   );
 }
 
-function ExtractButton({
+function ActionRow({
   target,
   actions,
-  onOpen,
-}: ActionButtonsProps & { readonly onOpen: () => void }) {
+  onExtract,
+}: {
+  readonly target: ElementTarget;
+  readonly actions: Actions;
+  readonly onExtract: () => void;
+}) {
   const { t } = useTranslation();
   const tag = target.source?.tag;
-  const baseDisabled =
+  const isUppercaseTag = tag !== undefined && /^[A-Z]/.test(tag);
+  const off =
     actions.pending || target.loading || tag === undefined || target.source?.readonly !== undefined;
 
   return (
-    <button
-      type="button"
-      data-testid="structure-extract"
-      disabled={baseDisabled}
-      onClick={onOpen}
-      className="h-6 rounded border border-border/60 bg-field px-2 text-xs text-ink hover:bg-border/20 disabled:opacity-50"
-    >
-      {t('inspector.extract')}
-    </button>
+    <div className="flex items-center gap-0.5">
+      <MoveAndWrap off={off} actions={actions} canUnwrap={!isUppercaseTag} />
+      <IconAction
+        testId="inspector-duplicate"
+        label={t('inspector.duplicate')}
+        icon={Copy}
+        disabled={off}
+        onClick={() => void actions.runDuplicate()}
+      />
+      <IconAction
+        testId="structure-extract"
+        label={t('inspector.extract')}
+        icon={Component}
+        disabled={off}
+        onClick={onExtract}
+      />
+      <span className="ml-auto flex items-center">
+        <Divider />
+        <IconAction
+          testId="inspector-remove"
+          label={t('inspector.remove')}
+          icon={Trash2}
+          disabled={off}
+          danger
+          onClick={() => void actions.runRemove()}
+        />
+      </span>
+    </div>
   );
 }
 
@@ -159,18 +199,13 @@ export function StructureActions({ target }: StructureActionsProps) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <MoveButtons target={target} actions={actions} />
-        <WrapButtons target={target} actions={actions} />
-        <DuplicateAndRemoveButtons target={target} actions={actions} />
-        <ExtractButton
-          target={target}
-          actions={actions}
-          onOpen={() => {
-            setExtractOpen(true);
-          }}
-        />
-      </div>
+      <ActionRow
+        target={target}
+        actions={actions}
+        onExtract={() => {
+          setExtractOpen(true);
+        }}
+      />
       {extractOpen && (
         <ExtractDialog
           open={extractOpen}
@@ -187,7 +222,7 @@ export function StructureActions({ target }: StructureActionsProps) {
       )}
       {actions.warnings.length > 0 && (
         <div
-          className="flex flex-col gap-1 text-xs text-amber-600"
+          className="flex flex-col gap-1 text-xs text-amber-700"
           data-testid="structure-action-warnings"
         >
           {actions.warnings.map((w) => (

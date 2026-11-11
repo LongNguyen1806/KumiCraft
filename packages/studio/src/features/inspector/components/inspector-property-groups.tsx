@@ -7,13 +7,20 @@ import type {
   Scope,
   ThemeInfo,
 } from '@kumicraft/shared';
-import type { ParseKeys } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  groupProperties,
+  hasCornerRadii,
+  hasSideWidths,
+  resolveBorderFields,
+} from '../border-fields.ts';
 import { PROPERTY_GROUPS, type PropertyFieldDef } from '../property-groups-config.ts';
 import { ColorField } from './color-field.tsx';
+import { InspectorGroup } from './inspector-group.tsx';
 import { PropertyField } from './property-field.tsx';
+import { isBoxSide, SpacingBox } from './spacing-box.tsx';
 
 function resolveThemeTokens(property: PropertyId, theme: ThemeInfo): readonly string[] | undefined {
   switch (property) {
@@ -48,260 +55,6 @@ export function isColorProperty(p: PropertyId): boolean {
   return p === 'textColor' || p === 'backgroundColor' || p === 'borderColor';
 }
 
-const INDIVIDUAL_SIDE_FIELDS: readonly PropertyFieldDef[] = [
-  {
-    property: 'borderTopWidth',
-    labelKey: 'inspector.fields.borderTopWidth',
-    options: ['0', '1', '2', '4', '8'],
-  },
-  {
-    property: 'borderRightWidth',
-    labelKey: 'inspector.fields.borderRightWidth',
-    options: ['0', '1', '2', '4', '8'],
-  },
-  {
-    property: 'borderBottomWidth',
-    labelKey: 'inspector.fields.borderBottomWidth',
-    options: ['0', '1', '2', '4', '8'],
-  },
-  {
-    property: 'borderLeftWidth',
-    labelKey: 'inspector.fields.borderLeftWidth',
-    options: ['0', '1', '2', '4', '8'],
-  },
-  {
-    property: 'borderStyle',
-    labelKey: 'inspector.fields.borderStyle',
-    options: ['solid', 'dashed', 'dotted', 'none'],
-  },
-];
-
-const INDIVIDUAL_CORNER_FIELDS: readonly PropertyFieldDef[] = [
-  {
-    property: 'borderTopLeftRadius',
-    labelKey: 'inspector.fields.borderTopLeftRadius',
-    options: ['none', 'sm', 'DEFAULT', 'md', 'lg', 'xl', '2xl', 'full'],
-  },
-  {
-    property: 'borderTopRightRadius',
-    labelKey: 'inspector.fields.borderTopRightRadius',
-    options: ['none', 'sm', 'DEFAULT', 'md', 'lg', 'xl', '2xl', 'full'],
-  },
-  {
-    property: 'borderBottomRightRadius',
-    labelKey: 'inspector.fields.borderBottomRightRadius',
-    options: ['none', 'sm', 'DEFAULT', 'md', 'lg', 'xl', '2xl', 'full'],
-  },
-  {
-    property: 'borderBottomLeftRadius',
-    labelKey: 'inspector.fields.borderBottomLeftRadius',
-    options: ['none', 'sm', 'DEFAULT', 'md', 'lg', 'xl', '2xl', 'full'],
-  },
-];
-
-type GroupFieldRendererProps = {
-  readonly field: PropertyFieldDef;
-  readonly tokens: readonly ClassToken[];
-  readonly currentScope: Scope;
-  readonly frameWidth: number;
-  readonly ctx: ClassContext;
-  readonly isLocked: boolean;
-  readonly onPropertyValueChange: (property: PropertyId, value: ClassValue | undefined) => void;
-};
-
-function GroupFieldRenderer(props: GroupFieldRendererProps) {
-  const { field, tokens, currentScope, frameWidth, ctx, isLocked, onPropertyValueChange } = props;
-  const { t } = useTranslation();
-
-  if (isColorProperty(field.property)) {
-    return (
-      <ColorField
-        property={field.property}
-        label={t(field.labelKey)}
-        tokens={tokens}
-        currentScope={currentScope}
-        frameWidth={frameWidth}
-        ctx={ctx}
-        onValueChange={onPropertyValueChange}
-        disabled={isLocked}
-      />
-    );
-  }
-
-  const options = resolveFieldOptions(field.property, field.options, ctx.theme);
-  return (
-    <PropertyField
-      property={field.property}
-      label={t(field.labelKey)}
-      tokens={tokens}
-      currentScope={currentScope}
-      frameWidth={frameWidth}
-      ctx={ctx}
-      onValueChange={onPropertyValueChange}
-      options={options}
-      disabled={isLocked}
-    />
-  );
-}
-
-function resolveBorderFields(
-  showSides: boolean,
-  showCorners: boolean,
-  baseFields: readonly PropertyFieldDef[],
-): readonly PropertyFieldDef[] {
-  const widthFields = showSides
-    ? INDIVIDUAL_SIDE_FIELDS
-    : baseFields.filter((f) => f.property === 'borderWidth' || f.property === 'borderStyle');
-  const radiusFields = showCorners
-    ? INDIVIDUAL_CORNER_FIELDS
-    : baseFields.filter((f) => f.property === 'borderRadius');
-  return [...widthFields, ...radiusFields];
-}
-
-type BorderGroupHeaderProps = {
-  readonly labelKey: ParseKeys;
-  readonly showSides: boolean;
-  readonly showCorners: boolean;
-  readonly onToggleSides: (() => void) | undefined;
-  readonly onToggleCorners: (() => void) | undefined;
-};
-
-function BorderGroupHeader({
-  labelKey,
-  showSides,
-  showCorners,
-  onToggleSides,
-  onToggleCorners,
-}: BorderGroupHeaderProps) {
-  const { t } = useTranslation();
-  return (
-    <div className="flex items-center justify-between">
-      <h3 className="text-xs font-semibold text-ink-strong tracking-tight">{t(labelKey)}</h3>
-      <div className="flex items-center gap-1.5 text-[11px]">
-        <button
-          type="button"
-          data-testid="toggle-border-sides"
-          onClick={onToggleSides}
-          disabled={onToggleSides === undefined}
-          title={onToggleSides === undefined ? t('inspector.borders.mixedSides') : undefined}
-          className="text-accent hover:underline font-medium disabled:cursor-not-allowed disabled:text-ink-faint disabled:no-underline"
-        >
-          {showSides ? t('inspector.borders.allSides') : t('inspector.borders.individualSides')}
-        </button>
-        <span className="text-border/60">·</span>
-        <button
-          type="button"
-          data-testid="toggle-border-corners"
-          onClick={onToggleCorners}
-          disabled={onToggleCorners === undefined}
-          title={onToggleCorners === undefined ? t('inspector.borders.mixedCorners') : undefined}
-          className="text-accent hover:underline font-medium disabled:cursor-not-allowed disabled:text-ink-faint disabled:no-underline"
-        >
-          {showCorners
-            ? t('inspector.borders.allCorners')
-            : t('inspector.borders.individualCorners')}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-type PropertyGroupItemProps = {
-  readonly group: (typeof PROPERTY_GROUPS)[number];
-  readonly showSides: boolean;
-  readonly showCorners: boolean;
-  readonly onToggleSides: (() => void) | undefined;
-  readonly onToggleCorners: (() => void) | undefined;
-  readonly tokens: readonly ClassToken[];
-  readonly currentScope: Scope;
-  readonly frameWidth: number;
-  readonly ctx: ClassContext;
-  readonly isLocked: boolean;
-  readonly onPropertyValueChange: (property: PropertyId, value: ClassValue | undefined) => void;
-};
-
-function GroupFieldsGrid({
-  fields,
-  tokens,
-  currentScope,
-  frameWidth,
-  ctx,
-  isLocked,
-  onPropertyValueChange,
-}: {
-  readonly fields: readonly PropertyFieldDef[];
-  readonly tokens: readonly ClassToken[];
-  readonly currentScope: Scope;
-  readonly frameWidth: number;
-  readonly ctx: ClassContext;
-  readonly isLocked: boolean;
-  readonly onPropertyValueChange: (property: PropertyId, value: ClassValue | undefined) => void;
-}) {
-  return (
-    <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
-      {fields.map((f) => (
-        <GroupFieldRenderer
-          key={f.property}
-          field={f}
-          tokens={tokens}
-          currentScope={currentScope}
-          frameWidth={frameWidth}
-          ctx={ctx}
-          isLocked={isLocked}
-          onPropertyValueChange={onPropertyValueChange}
-        />
-      ))}
-    </div>
-  );
-}
-
-function PropertyGroupItem({
-  group,
-  showSides,
-  showCorners,
-  onToggleSides,
-  onToggleCorners,
-  tokens,
-  currentScope,
-  frameWidth,
-  ctx,
-  isLocked,
-  onPropertyValueChange,
-}: PropertyGroupItemProps) {
-  const { t } = useTranslation();
-  const fields =
-    group.id === 'borders'
-      ? resolveBorderFields(showSides, showCorners, group.fields)
-      : group.fields;
-
-  return (
-    <div className="flex flex-col gap-1 py-1.5 border-t border-border/30">
-      {group.id === 'borders' ? (
-        <BorderGroupHeader
-          labelKey={group.labelKey}
-          showSides={showSides}
-          showCorners={showCorners}
-          onToggleSides={onToggleSides}
-          onToggleCorners={onToggleCorners}
-        />
-      ) : (
-        <h3 className="text-xs font-semibold text-ink-strong tracking-tight">
-          {t(group.labelKey)}
-        </h3>
-      )}
-      <GroupFieldsGrid
-        fields={fields}
-        tokens={tokens}
-        currentScope={currentScope}
-        frameWidth={frameWidth}
-        ctx={ctx}
-        isLocked={isLocked}
-        onPropertyValueChange={onPropertyValueChange}
-      />
-    </div>
-  );
-}
-
 export type InspectorPropertyGroupsProps = {
   readonly tokens: readonly ClassToken[];
   readonly currentScope: Scope;
@@ -311,20 +64,149 @@ export type InspectorPropertyGroupsProps = {
   readonly onPropertyValueChange: (property: PropertyId, value: ClassValue | undefined) => void;
 };
 
+/** What every field of the panel gets. */
+type Shared = InspectorPropertyGroupsProps;
+
+function GroupFieldRenderer({
+  field,
+  shared,
+}: {
+  readonly field: PropertyFieldDef;
+  readonly shared: Shared;
+}) {
+  const { t } = useTranslation();
+  const common = {
+    property: field.property,
+    label: t(field.labelKey),
+    tokens: shared.tokens,
+    currentScope: shared.currentScope,
+    frameWidth: shared.frameWidth,
+    ctx: shared.ctx,
+    onValueChange: shared.onPropertyValueChange,
+    disabled: shared.isLocked,
+  };
+
+  if (isColorProperty(field.property)) {
+    return <ColorField {...common} />;
+  }
+  return (
+    <PropertyField
+      {...common}
+      options={resolveFieldOptions(field.property, field.options, shared.ctx.theme)}
+      segments={field.segments}
+    />
+  );
+}
+
+type BorderToggles = ReturnType<typeof useBorderToggles>;
+
+const TOGGLE_LINK =
+  'font-medium text-accent hover:underline disabled:cursor-not-allowed disabled:text-ink-faint disabled:no-underline';
+
+/** Borders: switch between one value for all sides or corners and one value each. */
+function BorderToggleRow({ toggles }: { readonly toggles: BorderToggles }) {
+  const { t } = useTranslation();
+  const { showSides, showCorners, toggleSides, toggleCorners } = toggles;
+  return (
+    <div className="flex items-center gap-1.5 pb-0.5 text-[11px]">
+      <button
+        type="button"
+        data-testid="toggle-border-sides"
+        onClick={toggleSides}
+        disabled={toggleSides === undefined}
+        title={toggleSides === undefined ? t('inspector.borders.mixedSides') : undefined}
+        className={TOGGLE_LINK}
+      >
+        {showSides ? t('inspector.borders.allSides') : t('inspector.borders.individualSides')}
+      </button>
+      <span className="text-ink-faint">·</span>
+      <button
+        type="button"
+        data-testid="toggle-border-corners"
+        onClick={toggleCorners}
+        disabled={toggleCorners === undefined}
+        title={toggleCorners === undefined ? t('inspector.borders.mixedCorners') : undefined}
+        className={TOGGLE_LINK}
+      >
+        {showCorners ? t('inspector.borders.allCorners') : t('inspector.borders.individualCorners')}
+      </button>
+    </div>
+  );
+}
+
+function GroupFieldsGrid({
+  fields,
+  shared,
+}: {
+  readonly fields: readonly PropertyFieldDef[];
+  readonly shared: Shared;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+      {fields.map((f) => (
+        <GroupFieldRenderer key={f.property} field={f} shared={shared} />
+      ))}
+    </div>
+  );
+}
+
+function countSet(tokens: readonly ClassToken[], properties: readonly PropertyId[]): number {
+  const used = new Set<PropertyId>();
+  for (const token of tokens) {
+    if (token.property !== undefined && properties.includes(token.property)) {
+      used.add(token.property);
+    }
+  }
+  return used.size;
+}
+
+function GroupBody({
+  group,
+  toggles,
+  shared,
+}: {
+  readonly group: (typeof PROPERTY_GROUPS)[number];
+  readonly toggles: BorderToggles;
+  readonly shared: Shared;
+}) {
+  if (group.id === 'borders') {
+    return (
+      <>
+        <BorderToggleRow toggles={toggles} />
+        <GroupFieldsGrid
+          fields={resolveBorderFields(toggles.showSides, toggles.showCorners, group.fields)}
+          shared={shared}
+        />
+      </>
+    );
+  }
+  if (group.id === 'spacing') {
+    return (
+      <>
+        <GroupFieldsGrid
+          fields={group.fields.filter((f) => !isBoxSide(f.property))}
+          shared={shared}
+        />
+        <SpacingBox
+          fields={group.fields}
+          shared={{
+            tokens: shared.tokens,
+            currentScope: shared.currentScope,
+            frameWidth: shared.frameWidth,
+            ctx: shared.ctx,
+            onValueChange: shared.onPropertyValueChange,
+            disabled: shared.isLocked,
+          }}
+        />
+      </>
+    );
+  }
+  return <GroupFieldsGrid fields={group.fields} shared={shared} />;
+}
+
 function useBorderToggles(tokens: readonly ClassToken[]) {
-  const hasSides = tokens.some((t) =>
-    ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth'].includes(
-      t.property ?? '',
-    ),
-  );
-  const hasCorners = tokens.some((t) =>
-    [
-      'borderTopLeftRadius',
-      'borderTopRightRadius',
-      'borderBottomRightRadius',
-      'borderBottomLeftRadius',
-    ].includes(t.property ?? ''),
-  );
+  const hasSides = hasSideWidths(tokens);
+  const hasCorners = hasCornerRadii(tokens);
   const [individualSides, setIndividualSides] = useState(false);
   const [individualCorners, setIndividualCorners] = useState(false);
   const showSides = individualSides || hasSides;
@@ -345,34 +227,26 @@ function useBorderToggles(tokens: readonly ClassToken[]) {
   };
 }
 
-export function InspectorPropertyGroups({
-  tokens,
-  currentScope,
-  frameWidth,
-  ctx,
-  isLocked,
-  onPropertyValueChange,
-}: InspectorPropertyGroupsProps) {
-  const { showSides, showCorners, toggleSides, toggleCorners } = useBorderToggles(tokens);
+export function InspectorPropertyGroups(props: InspectorPropertyGroupsProps) {
+  const { t } = useTranslation();
+  const toggles = useBorderToggles(props.tokens);
 
   return (
     <>
-      {PROPERTY_GROUPS.map((group) => (
-        <PropertyGroupItem
-          key={group.id}
-          group={group}
-          showSides={showSides}
-          showCorners={showCorners}
-          onToggleSides={toggleSides}
-          onToggleCorners={toggleCorners}
-          tokens={tokens}
-          currentScope={currentScope}
-          frameWidth={frameWidth}
-          ctx={ctx}
-          isLocked={isLocked}
-          onPropertyValueChange={onPropertyValueChange}
-        />
-      ))}
+      {PROPERTY_GROUPS.map((group) => {
+        const setCount = countSet(props.tokens, groupProperties(group.id, group.fields));
+        return (
+          <InspectorGroup
+            key={group.id}
+            id={group.id}
+            title={t(group.labelKey)}
+            setCount={setCount}
+            defaultOpen={setCount > 0}
+          >
+            <GroupBody group={group} toggles={toggles} shared={props} />
+          </InspectorGroup>
+        );
+      })}
     </>
   );
 }

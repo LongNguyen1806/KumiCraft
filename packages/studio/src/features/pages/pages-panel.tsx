@@ -28,7 +28,7 @@ function PageRowActions({ path, convention, onStartRename, onDelete }: PageRowAc
         data-testid={`page-rename-${path}`}
         disabled={!convention}
         onClick={onStartRename}
-        className="rounded border border-border px-2 py-0.5 text-ink-soft hover:text-ink disabled:opacity-40"
+        className="h-6 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-ink-soft hover:text-ink disabled:opacity-40"
       >
         {t('pages.rename')}
       </button>
@@ -39,7 +39,7 @@ function PageRowActions({ path, convention, onStartRename, onDelete }: PageRowAc
         onClick={() => {
           onDelete(path);
         }}
-        className="rounded border border-border px-2 py-0.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 disabled:opacity-40"
+        className="h-6 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-danger hover:bg-danger/10 disabled:opacity-40"
       >
         {t('pages.delete')}
       </button>
@@ -78,7 +78,7 @@ function PageRow({
   }
 
   return (
-    <div className="flex items-center justify-between rounded border border-border/60 bg-field/20 px-3 py-2 text-xs">
+    <div className="flex items-center justify-between rounded-[7px] border border-line bg-card-solid px-2.5 py-2 text-xs">
       <div className="flex flex-col min-w-0">
         <span className="font-medium text-ink truncate">
           {page.component !== undefined ? page.component : page.path}
@@ -192,7 +192,7 @@ export function PagesHeader({
         />
       )}
       {deleteError !== undefined && (
-        <div role="alert" className="text-xs text-rose-600">
+        <div role="alert" className="text-xs text-danger">
           {deleteError}
         </div>
       )}

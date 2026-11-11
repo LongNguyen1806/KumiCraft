@@ -64,7 +64,7 @@ function PickerItemRow({
       data-testid={`picker-item-${item.entry.path}`}
       aria-selected={selected}
       className={`flex cursor-pointer items-center gap-1.5 rounded py-1 pr-2 text-xs select-none ${
-        selected ? 'bg-primary/20 text-primary font-medium' : 'text-ink hover:bg-hover'
+        selected ? 'bg-accent-soft font-medium text-ink' : 'text-ink hover:bg-field'
       }`}
       style={{ paddingLeft }}
       onClick={() => {
@@ -173,7 +173,7 @@ function FolderPickerFooter({
         type="button"
         data-testid="folder-picker-cancel"
         onClick={onClose}
-        className="rounded border border-border px-3 py-1.5 text-xs text-ink hover:bg-hover"
+        className="rounded border border-border px-3 py-1.5 text-xs text-ink hover:bg-field"
       >
         {t('files.cancel')}
       </button>
@@ -182,7 +182,7 @@ function FolderPickerFooter({
         data-testid="folder-picker-confirm"
         disabled={!canConfirm}
         onClick={onConfirm}
-        className="rounded bg-primary px-3 py-1.5 text-xs text-primary-fg disabled:opacity-50"
+        className="h-7 rounded-md bg-charcoal px-3 text-xs font-medium text-on-charcoal hover:bg-primary-hover disabled:opacity-50"
       >
         {t('files.select')}
       </button>

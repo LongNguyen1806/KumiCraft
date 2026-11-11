@@ -81,7 +81,7 @@ function ComponentNameField({
           onNameChange(e.target.value);
         }}
         placeholder={t('components.extract.namePlaceholder')}
-        className="rounded border border-border bg-field px-2 py-1 text-ink disabled:opacity-50"
+        className="h-7 rounded-md border border-line bg-card-solid px-2 text-ink disabled:opacity-50"
       />
     </label>
   );
@@ -342,7 +342,7 @@ function PromoteDialogBody({
       {free && (
         <div
           data-testid="promote-free-warning"
-          className="rounded bg-amber-500/10 p-2 text-amber-600 dark:text-amber-400"
+          className="rounded bg-amber-500/10 p-2 text-amber-600"
         >
           {t('drafts.freeWarning')}
         </div>
@@ -358,7 +358,7 @@ function PromoteDialogBody({
         data-testid="promote-submit"
         type="submit"
         disabled={state.busy || !state.name.trim()}
-        className="self-end rounded bg-charcoal px-3 py-1.5 text-xs text-on-charcoal disabled:opacity-50"
+        className="self-end h-7 rounded-md bg-charcoal px-3 text-xs font-medium text-on-charcoal hover:bg-accent-hover disabled:opacity-50"
       >
         {t('drafts.promote')}
       </button>

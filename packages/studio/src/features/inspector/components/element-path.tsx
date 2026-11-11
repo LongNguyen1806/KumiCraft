@@ -77,7 +77,7 @@ function PathAncestorButton({ node }: { readonly node: TreeNode }) {
         studioBridgeChannel.highlight(undefined);
         useSelectionStore.getState().setHoveredRef(undefined);
       }}
-      className="rounded px-1 text-ink-soft hover:bg-field hover:text-ink transition-colors"
+      className="rounded px-1 text-ink-soft transition-colors hover:bg-field-hover hover:text-ink"
     >
       <PathNodeLabel node={node} />
     </button>
@@ -101,7 +101,7 @@ function PathSlotView({
         data-testid="element-path-more"
         aria-label={t('inspector.path.more', 'Hiện mọi bậc')}
         onClick={onExpand}
-        className="rounded px-1 font-bold text-ink-soft hover:bg-field hover:text-ink"
+        className="rounded px-1 font-bold text-ink-soft hover:bg-field-hover hover:text-ink"
       >
         …
       </button>
@@ -170,7 +170,7 @@ export function ElementPath() {
     <nav
       aria-label={t('inspector.path.label', 'Đường dẫn phần tử')}
       data-testid="element-path"
-      className="flex items-center gap-1 overflow-x-auto whitespace-nowrap py-1 px-1 text-xs border-b border-border/30"
+      className="-mx-3 -mt-2.5 flex items-center gap-1 overflow-x-auto border-b border-line bg-wash-cool px-3 py-1.5 text-[11.5px] whitespace-nowrap"
     >
       <PathSlotsList
         slots={slots}
@@ -180,7 +180,7 @@ export function ElementPath() {
       />
       <span
         data-testid="element-path-hint"
-        className="ml-auto shrink-0 text-[11px] text-ink-faint pl-2"
+        className="ml-auto shrink-0 pl-2 text-[10.5px] text-ink-faint"
       >
         {t('inspector.path.hint', 'Esc: chọn cha')}
       </span>

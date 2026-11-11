@@ -24,7 +24,7 @@ function RouterFoundBar({ file, chosen, busy, onOpenPicker, onAutoDetect }: Rout
   return (
     <div
       data-testid="router-status-found"
-      className="flex flex-wrap items-center justify-between gap-2 rounded border border-border/60 bg-field/20 px-2.5 py-1.5 text-xs"
+      className="flex flex-wrap items-center justify-between gap-2 rounded-[7px] border border-line bg-card-solid px-2.5 py-1.5 text-xs"
     >
       <span className="truncate font-mono text-[11px] text-ink-soft">
         {t('pages.routerFile', { file })}
@@ -35,7 +35,7 @@ function RouterFoundBar({ file, chosen, busy, onOpenPicker, onAutoDetect }: Rout
           data-testid="router-change-file"
           disabled={busy}
           onClick={onOpenPicker}
-          className="rounded border border-border px-2 py-0.5 text-ink-soft hover:text-ink disabled:opacity-40"
+          className="h-6 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-ink-soft hover:text-ink disabled:opacity-40"
         >
           {t('pages.changeRouterFile')}
         </button>
@@ -45,7 +45,7 @@ function RouterFoundBar({ file, chosen, busy, onOpenPicker, onAutoDetect }: Rout
             data-testid="router-auto-file"
             disabled={busy}
             onClick={onAutoDetect}
-            className="rounded border border-border px-2 py-0.5 text-ink-soft hover:text-ink disabled:opacity-40"
+            className="h-6 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-ink-soft hover:text-ink disabled:opacity-40"
           >
             {t('pages.autoRouterFile')}
           </button>
@@ -73,7 +73,7 @@ function RouterAmbiguousBox({
     <div
       data-testid="pages-not-convention"
       role="note"
-      className="flex flex-col gap-2 rounded border border-amber-500/40 bg-amber-500/10 p-2.5 text-amber-700 dark:text-amber-300"
+      className="flex flex-col gap-2 rounded-md border border-sun bg-sun-soft p-2.5 text-ink"
     >
       <div>{t('pages.routerAmbiguous')}</div>
       <div className="flex flex-wrap gap-1.5">
@@ -86,7 +86,7 @@ function RouterAmbiguousBox({
             onClick={() => {
               onSelectFile(candidate);
             }}
-            className="rounded border border-amber-500/50 bg-panel px-2 py-1 font-mono text-[11px] text-ink hover:bg-hover disabled:opacity-40"
+            className="h-7 rounded-md border border-line bg-card-solid px-2 font-mono text-[11px] text-ink hover:bg-field disabled:opacity-40"
           >
             {candidate}
           </button>
@@ -96,7 +96,7 @@ function RouterAmbiguousBox({
           data-testid="router-pick-tree"
           disabled={busy}
           onClick={onOpenPicker}
-          className="rounded border border-border bg-panel px-2 py-1 text-ink-soft hover:text-ink disabled:opacity-40"
+          className="h-7 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-ink-soft hover:text-ink disabled:opacity-40"
         >
           {t('pages.pickOnTree')}
         </button>
@@ -119,7 +119,7 @@ function RouterUnsupportedBox({ file, reason, busy, onOpenPicker }: RouterUnsupp
     <div
       data-testid="pages-not-convention"
       role="note"
-      className="flex flex-col gap-2 rounded border border-amber-500/40 bg-amber-500/10 p-2.5 text-amber-700 dark:text-amber-300"
+      className="flex flex-col gap-2 rounded-md border border-sun bg-sun-soft p-2.5 text-ink"
     >
       <div>{t('pages.routerUnsupported', { file, reason: reasonText })}</div>
       <div>
@@ -128,7 +128,7 @@ function RouterUnsupportedBox({ file, reason, busy, onOpenPicker }: RouterUnsupp
           data-testid="router-pick-another"
           disabled={busy}
           onClick={onOpenPicker}
-          className="rounded border border-border bg-panel px-2 py-1 text-ink-soft hover:text-ink disabled:opacity-40"
+          className="h-7 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-ink-soft hover:text-ink disabled:opacity-40"
         >
           {t('pages.pickAnotherFile')}
         </button>
@@ -154,7 +154,7 @@ function RouterInstallDialogButtons({
         data-testid="router-install-cancel"
         disabled={running}
         onClick={onCancel}
-        className="rounded border border-border px-2.5 py-1 text-ink-soft hover:text-ink disabled:opacity-40"
+        className="h-7 rounded-md border border-line bg-card-solid px-2.5 hover:bg-field text-ink-soft hover:text-ink disabled:opacity-40"
       >
         {t('pages.cancel')}
       </button>
@@ -163,7 +163,7 @@ function RouterInstallDialogButtons({
         data-testid="router-install-confirm"
         disabled={running}
         onClick={onConfirm}
-        className="rounded bg-accent px-2.5 py-1 font-medium text-white hover:opacity-90 disabled:opacity-40"
+        className="h-7 rounded-md bg-charcoal px-3 font-medium text-on-charcoal hover:bg-accent-hover disabled:opacity-40"
       >
         {running ? t('pages.installRouterRunning') : t('pages.installRouterConfirm')}
       </button>
@@ -186,7 +186,7 @@ function RouterInstallDialog({
   return (
     <div
       data-testid="router-install-dialog"
-      className="flex flex-col gap-2 rounded border border-border bg-panel p-2.5 text-xs text-ink"
+      className="flex flex-col gap-2 rounded-[7px] border border-line bg-card-solid p-2.5 text-xs text-ink"
     >
       <div className="font-semibold">{t('pages.installRouterTitle')}</div>
       <ol className="list-decimal pl-4 space-y-1 text-ink-soft">
@@ -224,7 +224,7 @@ function RouterNoneBoxHeader({
           data-testid="router-install-btn"
           disabled={running}
           onClick={onOpenConfirm}
-          className="shrink-0 rounded bg-accent px-2.5 py-1 font-medium text-white hover:opacity-90 disabled:opacity-40"
+          className="shrink-0 h-7 rounded-md bg-charcoal px-3 font-medium text-on-charcoal hover:bg-accent-hover disabled:opacity-40"
         >
           {running ? t('pages.installRouterRunning') : t('pages.installRouter')}
         </button>
@@ -250,7 +250,7 @@ function RouterNoneBox({ onInstalled }: { readonly onInstalled: () => void }) {
     <div
       data-testid="pages-not-convention"
       role="note"
-      className="flex flex-col gap-2 rounded border border-amber-500/40 bg-amber-500/10 p-2.5 text-amber-700 dark:text-amber-300"
+      className="flex flex-col gap-2 rounded-md border border-sun bg-sun-soft p-2.5 text-ink"
     >
       <RouterNoneBoxHeader
         confirmOpen={confirmOpen}
@@ -272,7 +272,7 @@ function RouterNoneBox({ onInstalled }: { readonly onInstalled: () => void }) {
         />
       ) : undefined}
       {job.failure !== undefined ? (
-        <div role="alert" data-testid="router-action-error" className="text-xs text-rose-600">
+        <div role="alert" data-testid="router-action-error" className="text-xs text-danger">
           {errorText(tError, job.failure.code, job.failure.params)}
         </div>
       ) : undefined}
@@ -377,7 +377,7 @@ export function RouterStatusBox({ router, onRouterChanged }: RouterStatusBoxProp
         onRouterChanged={onRouterChanged}
       />
       {s.actionError !== undefined ? (
-        <div role="alert" data-testid="router-action-error" className="text-xs text-rose-600">
+        <div role="alert" data-testid="router-action-error" className="text-xs text-danger">
           {s.actionError}
         </div>
       ) : undefined}

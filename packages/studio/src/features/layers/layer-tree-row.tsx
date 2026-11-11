@@ -44,7 +44,7 @@ function LayerTreeRowBadges({
       {isBoundary && componentName && (
         <span
           data-testid="component-badge"
-          className="rounded bg-primary/10 px-1 py-0.5 text-[10px] font-medium text-primary"
+          className="rounded bg-accent-soft px-1 py-0.5 text-[10px] font-medium text-accent"
         >
           {componentName}
         </span>
@@ -86,9 +86,9 @@ function LayerTreeChevronButton({
 
 function getRowClassName(isSelected: boolean, isHovered: boolean): string {
   const base =
-    'group flex h-7 items-center gap-1.5 rounded-md px-1.5 transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-primary';
+    'group flex h-[26px] cursor-pointer items-center gap-1.5 rounded-[5px] px-1.5 transition-colors';
   if (isSelected) {
-    return `${base} bg-card-solid text-ink font-medium shadow-[0_1px_2px_rgba(60,52,30,0.1)]`;
+    return `${base} bg-accent-soft font-medium text-ink shadow-[inset_2px_0_0_var(--color-accent)]`;
   }
   if (isHovered) return `${base} bg-field-hover text-ink`;
   return `${base} text-ink-soft hover:bg-field hover:text-ink`;
@@ -103,9 +103,9 @@ function LayerTreeRowLabel({
 }) {
   return (
     <>
-      <span className="font-mono text-[11px] text-ink">{tag}</span>
+      <span className="font-mono text-[11.5px] font-medium text-ink">{tag}</span>
       {label && (
-        <span className="truncate text-[11px] text-ink-faint group-hover:text-ink-soft">
+        <span className="truncate font-mono text-[11px] text-ink-faint group-hover:text-ink-soft">
           {label}
         </span>
       )}

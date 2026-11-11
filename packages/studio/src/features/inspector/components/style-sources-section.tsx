@@ -143,7 +143,7 @@ function StyleRow({ property, writable, elementRef, interactionState, onCommit }
       <span className="truncate font-mono text-ink">{longhand}</span>
       <input
         data-testid={`style-input-${property.id}`}
-        className="rounded border border-border bg-field px-1.5 py-0.5 font-mono text-ink disabled:opacity-60"
+        className="h-7 min-w-0 rounded-md border border-line bg-card-solid px-2 font-mono text-ink hover:bg-field disabled:opacity-60"
         value={draft?.text ?? current}
         disabled={!writable || property.source?.kind === 'inline'}
         onChange={(e) => {
@@ -179,7 +179,7 @@ function StateSelect({ value, onChange }: StateSelectProps) {
       <span>{t('inspector.state')}</span>
       <select
         data-testid="style-state"
-        className="rounded border border-border bg-field px-1.5 py-0.5 text-ink"
+        className="h-[26px] rounded-md border border-line bg-card-solid px-2 text-ink hover:bg-field"
         value={value ?? ''}
         onChange={(e) => {
           const parsed = StyleStateSchema.safeParse(e.target.value);
@@ -259,8 +259,8 @@ export function StyleSourcesSection({
     ...rows.map((p) => (p.source?.kind === 'rule' ? p.source.affects : 0)),
   );
   return (
-    <section data-testid="style-sources" className="space-y-2 text-xs">
-      <h3 className="font-medium text-ink">{t('inspector.styleSources.title')}</h3>
+    <section data-testid="style-sources" className="space-y-2 pt-2.5 text-xs">
+      <h3 className="font-semibold text-ink">{t('inspector.styleSources.title')}</h3>
       {writable && <StateSelect value={interactionState} onChange={onStateChange} />}
       {writable && shared > 1 && onTargetChange !== undefined && (
         <TargetSwitch count={shared} value={target} onChange={onTargetChange} />

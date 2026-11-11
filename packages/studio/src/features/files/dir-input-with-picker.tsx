@@ -34,7 +34,7 @@ export function DirInputWithPicker({
         onChange={(e) => {
           onChange(e.target.value);
         }}
-        className="min-w-0 flex-1 rounded border border-border bg-field px-2 py-1 text-xs text-ink disabled:opacity-50"
+        className="min-w-0 flex-1 h-7 rounded-md border border-line bg-card-solid px-2 text-xs text-ink disabled:opacity-50"
       />
       <button
         type="button"
@@ -44,7 +44,7 @@ export function DirInputWithPicker({
         onClick={() => {
           setOpen(true);
         }}
-        className="shrink-0 rounded border border-border bg-button px-2 py-1 text-xs text-ink hover:bg-hover disabled:opacity-50"
+        className="shrink-0 rounded border border-border bg-button px-2 py-1 text-xs text-ink hover:bg-field disabled:opacity-50"
       >
         {t('files.select')}…
       </button>

@@ -5,6 +5,8 @@ export type PropertyFieldDef = {
   readonly property: PropertyId;
   readonly labelKey: ParseKeys;
   readonly options?: readonly string[] | undefined;
+  /** The most used values, drawn as joined buttons; the select keeps every value (P5). */
+  readonly segments?: readonly string[] | undefined;
 };
 
 export type PropertyGroupDef = {
@@ -31,11 +33,13 @@ export const PROPERTY_GROUPS: readonly PropertyGroupDef[] = [
           'inline-grid',
           'hidden',
         ],
+        segments: ['block', 'flex', 'grid', 'hidden'],
       },
       {
         property: 'flexDirection',
         labelKey: 'inspector.fields.flexDirection',
         options: ['row', 'row-reverse', 'col', 'col-reverse'],
+        segments: ['row', 'col'],
       },
       {
         property: 'flexWrap',
@@ -46,11 +50,13 @@ export const PROPERTY_GROUPS: readonly PropertyGroupDef[] = [
         property: 'justifyContent',
         labelKey: 'inspector.fields.justifyContent',
         options: ['start', 'end', 'center', 'between', 'around', 'evenly'],
+        segments: ['start', 'center', 'end', 'between'],
       },
       {
         property: 'alignItems',
         labelKey: 'inspector.fields.alignItems',
         options: ['start', 'end', 'center', 'baseline', 'stretch'],
+        segments: ['start', 'center', 'end', 'stretch'],
       },
       {
         property: 'gap',
@@ -207,6 +213,7 @@ export const PROPERTY_GROUPS: readonly PropertyGroupDef[] = [
         property: 'textAlign',
         labelKey: 'inspector.fields.textAlign',
         options: ['left', 'center', 'right', 'justify'],
+        segments: ['left', 'center', 'right', 'justify'],
       },
       {
         property: 'lineHeight',

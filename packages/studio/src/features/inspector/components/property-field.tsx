@@ -4,7 +4,9 @@ import { readValue } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-type PropertyFieldProps = {
+import { SegmentButtons } from './segment-buttons.tsx';
+
+export type PropertyFieldProps = {
   readonly property: PropertyId;
   readonly label: string;
   readonly tokens: readonly ClassToken[];
@@ -13,11 +15,17 @@ type PropertyFieldProps = {
   readonly ctx: ClassContext;
   readonly onValueChange: (property: PropertyId, value: ClassValue | undefined) => void;
   readonly options?: readonly string[] | undefined;
+  /** The most used values, drawn as joined buttons before the select (P5). */
+  readonly segments?: readonly string[] | undefined;
   readonly disabled?: boolean | undefined;
   readonly mixed?: boolean | undefined;
 };
 
-function formatScopeName(scope: Scope): string {
+const FIELD_BASE =
+  'h-7 rounded-md border border-line bg-card-solid px-2 text-xs text-ink hover:bg-field disabled:opacity-50 disabled:hover:bg-card-solid';
+export const FIELD_CONTROL = `${FIELD_BASE} w-full`;
+
+export function formatScopeName(scope: Scope): string {
   if (scope.breakpoint === 'base') {
     return scope.state ? `base:${scope.state}` : 'base';
   }
@@ -44,14 +52,14 @@ export function PropertyHeader({
   const { t } = useTranslation();
   return (
     <div className="flex items-center justify-between gap-1">
-      <label htmlFor={`field-${property}`} className="text-xs text-ink-soft truncate font-normal">
+      <label htmlFor={`field-${property}`} className="truncate text-[11px] text-ink-faint">
         {label}
       </label>
       <div className="flex items-center gap-1">
         {isInherited && fromScope && (
           <span
             data-testid={`inherited-badge-${property}`}
-            className="text-[10px] text-ink-faint italic truncate max-w-[120px]"
+            className="max-w-[120px] truncate text-[10px] text-ink-faint italic"
           >
             {t('inspector.inheritedFrom', { scope: formatScopeName(fromScope) })}
           </span>
@@ -72,50 +80,66 @@ export function PropertyHeader({
   );
 }
 
-function PropertyInputControl({
-  property,
-  currentValStr,
-  disabled,
-  mixed,
-  options,
-  onChange,
-}: {
+type InputControlProps = {
   readonly property: PropertyId;
   readonly currentValStr: string;
   readonly disabled: boolean;
   readonly mixed?: boolean | undefined;
   readonly options?: readonly string[] | undefined;
-  readonly onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-}) {
-  const { t } = useTranslation();
-  if (options && options.length > 0) {
-    return (
-      <select
-        id={`field-${property}`}
-        data-testid={`input-${property}`}
-        disabled={disabled}
-        value={currentValStr}
-        onChange={onChange}
-        className="h-7 w-full rounded border border-border/60 bg-field px-2 text-xs text-ink focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
-      >
-        <option value="">{mixed ? t('inspector.mixed') : '—'}</option>
-        {options.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
-      </select>
-    );
-  }
+  readonly segments?: readonly string[] | undefined;
+  readonly onInput: (raw: string) => void;
+};
 
+function OptionSelect({
+  property,
+  currentValStr,
+  disabled,
+  mixed,
+  options,
+  narrow,
+  onInput,
+}: InputControlProps & { readonly options: readonly string[]; readonly narrow: boolean }) {
+  const { t } = useTranslation();
   return (
-    <TextValueInput
-      property={property}
-      currentValStr={currentValStr}
+    <select
+      id={`field-${property}`}
+      data-testid={`input-${property}`}
       disabled={disabled}
-      mixed={mixed}
-      onChange={onChange}
-    />
+      value={currentValStr}
+      onChange={(e) => {
+        onInput(e.target.value);
+      }}
+      className={narrow ? `${FIELD_BASE} w-[5.5rem] shrink-0` : FIELD_CONTROL}
+    >
+      <option value="">{mixed ? t('inspector.mixed') : '—'}</option>
+      {options.map((opt) => (
+        <option key={opt} value={opt}>
+          {opt}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function PropertyInputControl(props: InputControlProps) {
+  const { property, currentValStr, disabled, options, segments, onInput } = props;
+  if (options === undefined || options.length === 0) {
+    return <TextValueInput {...props} />;
+  }
+  if (segments === undefined) {
+    return <OptionSelect {...props} options={options} narrow={false} />;
+  }
+  return (
+    <div className="flex items-center gap-1.5">
+      <SegmentButtons
+        property={property}
+        segments={segments}
+        current={currentValStr}
+        disabled={disabled}
+        onPick={onInput}
+      />
+      <OptionSelect {...props} options={options} narrow />
+    </div>
   );
 }
 
@@ -123,19 +147,7 @@ function PropertyInputControl({
  * R-IN-20: while the field has focus it shows what the user types; a refreshed source does not
  * overwrite it until focus leaves. Every change is still sent at once (R-IN-13, R-IN-14).
  */
-function TextValueInput({
-  property,
-  currentValStr,
-  disabled,
-  mixed,
-  onChange,
-}: {
-  readonly property: PropertyId;
-  readonly currentValStr: string;
-  readonly disabled: boolean;
-  readonly mixed?: boolean | undefined;
-  readonly onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}) {
+function TextValueInput({ property, currentValStr, disabled, mixed, onInput }: InputControlProps) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState<string>();
   return (
@@ -154,9 +166,9 @@ function TextValueInput({
       }}
       onChange={(e) => {
         setDraft(e.target.value);
-        onChange(e);
+        onInput(e.target.value);
       }}
-      className="h-7 w-full rounded border border-border/60 bg-field px-2 font-mono text-xs text-ink focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
+      className={`${FIELD_CONTROL} font-mono`}
     />
   );
 }
@@ -168,7 +180,7 @@ function formatClassValueString(value: ClassValue | undefined): string {
   return value.name;
 }
 
-function parseInputToClassValue(rawVal: string): ClassValue | undefined {
+export function parseInputToClassValue(rawVal: string): ClassValue | undefined {
   const val = rawVal.trim();
   if (!val) return undefined;
   if (val.startsWith('[') && val.endsWith(']')) {
@@ -177,42 +189,50 @@ function parseInputToClassValue(rawVal: string): ClassValue | undefined {
   return { kind: 'scale', token: val };
 }
 
-export function PropertyField({
-  property,
-  label,
-  tokens,
-  currentScope,
-  frameWidth,
-  ctx,
-  onValueChange,
-  options,
-  disabled = false,
-  mixed = false,
-}: PropertyFieldProps) {
-  const read = readValue(tokens, property, { width: frameWidth, state: currentScope.state }, ctx);
+type FieldRead = {
+  readonly isInherited: boolean;
+  readonly canRemoveOverride: boolean;
+  readonly currentValStr: string;
+  readonly fromScope: Scope | undefined;
+};
 
+/** What a field shows for the active frame and state, and where the value comes from. */
+export function readField(
+  props: Pick<
+    PropertyFieldProps,
+    'tokens' | 'property' | 'frameWidth' | 'currentScope' | 'ctx' | 'mixed'
+  >,
+): FieldRead {
+  const { tokens, property, frameWidth, currentScope, ctx, mixed = false } = props;
+  const read = readValue(tokens, property, { width: frameWidth, state: currentScope.state }, ctx);
   const isInherited =
     !mixed &&
     read.from !== undefined &&
     (read.from.breakpoint !== currentScope.breakpoint || read.from.state !== currentScope.state);
-
-  const canRemoveOverride =
-    !mixed && !isInherited && currentScope.breakpoint !== 'base' && read.value !== undefined;
-
-  const currentValStr = mixed ? '' : formatClassValueString(read.value);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    onValueChange(property, parseInputToClassValue(e.target.value));
+  return {
+    isInherited,
+    canRemoveOverride:
+      !mixed && !isInherited && currentScope.breakpoint !== 'base' && read.value !== undefined,
+    currentValStr: mixed ? '' : formatClassValueString(read.value),
+    fromScope: mixed ? undefined : read.from,
   };
+}
+
+export function PropertyField(props: PropertyFieldProps) {
+  const { property, label, onValueChange, options, segments, disabled = false, mixed } = props;
+  const read = readField(props);
 
   return (
-    <div className="flex flex-col gap-1 py-1" data-testid={`property-field-${property}`}>
+    <div
+      className={`flex flex-col gap-1 py-1 ${segments === undefined ? '' : 'col-span-2'}`}
+      data-testid={`property-field-${property}`}
+    >
       <PropertyHeader
         property={property}
         label={label}
-        isInherited={isInherited}
-        canRemoveOverride={canRemoveOverride}
-        fromScope={mixed ? undefined : read.from}
+        isInherited={read.isInherited}
+        canRemoveOverride={read.canRemoveOverride}
+        fromScope={read.fromScope}
         disabled={disabled}
         onRemoveOverride={() => {
           onValueChange(property, undefined);
@@ -220,11 +240,14 @@ export function PropertyField({
       />
       <PropertyInputControl
         property={property}
-        currentValStr={currentValStr}
+        currentValStr={read.currentValStr}
         disabled={disabled}
         mixed={mixed}
         options={options}
-        onChange={handleChange}
+        segments={segments}
+        onInput={(raw) => {
+          onValueChange(property, parseInputToClassValue(raw));
+        }}
       />
     </div>
   );

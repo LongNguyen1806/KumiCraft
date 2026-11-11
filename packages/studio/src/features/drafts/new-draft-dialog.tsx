@@ -150,7 +150,7 @@ export function NewDraftDialog({ open, projectId, onClose, onCreated }: NewDraft
           data-testid="draft-create"
           type="submit"
           disabled={busy}
-          className="self-end rounded bg-charcoal px-3 py-1.5 text-xs text-on-charcoal disabled:opacity-50"
+          className="self-end h-7 rounded-md bg-charcoal px-3 text-xs font-medium text-on-charcoal hover:bg-accent-hover disabled:opacity-50"
         >
           {busy ? t('drafts.creating') : t('drafts.create')}
         </button>

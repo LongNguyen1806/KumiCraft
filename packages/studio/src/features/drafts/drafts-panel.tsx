@@ -33,7 +33,7 @@ function DraftRowActions({
         type="button"
         data-testid={`draft-rename-${draft.file}`}
         onClick={onStartRename}
-        className="rounded border border-border px-2 py-0.5 text-xs text-ink-soft hover:text-ink"
+        className="h-6 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-xs text-ink-soft hover:text-ink"
       >
         {t('drafts.rename')}
       </button>
@@ -41,7 +41,7 @@ function DraftRowActions({
         type="button"
         data-testid={`draft-duplicate-${draft.file}`}
         onClick={onDuplicate}
-        className="rounded border border-border px-2 py-0.5 text-xs text-ink-soft hover:text-ink"
+        className="h-6 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-xs text-ink-soft hover:text-ink"
       >
         {t('drafts.duplicate')}
       </button>
@@ -49,7 +49,7 @@ function DraftRowActions({
         type="button"
         data-testid={`draft-promote-${draft.file}`}
         onClick={onPromote}
-        className="rounded border border-border px-2 py-0.5 text-xs text-ink-soft hover:text-ink"
+        className="h-6 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-xs text-ink-soft hover:text-ink"
       >
         {t('drafts.promote')}
       </button>
@@ -58,7 +58,7 @@ function DraftRowActions({
         data-testid={`draft-delete-${draft.file}`}
         disabled={draft.inUse}
         onClick={onDelete}
-        className="rounded border border-border px-2 py-0.5 text-xs text-rose-600 hover:bg-rose-50 disabled:opacity-40 dark:hover:bg-rose-950/30"
+        className="h-6 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-xs text-danger hover:bg-danger/10 disabled:opacity-40"
       >
         {t('drafts.delete')}
       </button>
@@ -91,19 +91,19 @@ function DraftRenameForm({
         onChange={(e) => {
           setVal(e.target.value);
         }}
-        className="flex-1 rounded border border-border bg-field px-2 py-1 text-xs text-ink"
+        className="flex-1 h-7 rounded-md border border-line bg-card-solid px-2 text-xs text-ink"
       />
       <button
         type="submit"
         disabled={!val.trim()}
-        className="rounded bg-charcoal px-2 py-0.5 text-xs text-on-charcoal disabled:opacity-50"
+        className="h-6 rounded-md bg-charcoal px-2.5 text-xs font-medium text-on-charcoal hover:bg-accent-hover disabled:opacity-50"
       >
         {t('settings.saved', 'Lưu')}
       </button>
       <button
         type="button"
         onClick={onCancel}
-        className="rounded border border-border px-2 py-0.5 text-xs text-ink-soft"
+        className="h-6 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-xs text-ink-soft"
       >
         {t('components.extract.cancel')}
       </button>
@@ -135,14 +135,14 @@ function DraftRow({
     return <DraftRenameForm draft={draft} onCancel={onCancelRename} onSave={onSaveRename} />;
   }
   return (
-    <div className="flex items-center justify-between gap-3 rounded border border-border/60 bg-field/20 px-3 py-2 text-xs">
+    <div className="flex items-center justify-between gap-3 rounded-[7px] border border-line bg-card-solid px-2.5 py-2 text-xs">
       <div className="flex min-w-0 flex-col">
         <div className="flex items-center gap-2">
           <span className="truncate font-medium text-ink">{draft.name}</span>
           {draft.inUse && (
             <span
               data-testid="draft-in-use"
-              className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+              className="rounded bg-sun-soft px-1.5 py-0.5 text-[10px] font-semibold text-ink"
             >
               {t('drafts.inUse')}
             </span>
@@ -288,7 +288,7 @@ export function DraftsContent({
       {ignored && (
         <div
           data-testid="drafts-ignored-warning"
-          className="rounded bg-amber-500/10 p-2 text-xs text-amber-600 dark:text-amber-400"
+          className="rounded-md bg-sun-soft p-2 text-xs text-ink"
         >
           {t('drafts.ignoredWarning')}
         </div>

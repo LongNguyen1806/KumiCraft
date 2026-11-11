@@ -45,12 +45,12 @@ function ComponentItem({ component, isSelf, disabled, onSelect }: ComponentItemP
           useDndStore.getState().endDrag();
         }
       }}
-      className="relative flex w-full cursor-grab flex-col items-start gap-1 rounded-lg border border-border/50 bg-field/50 p-2.5 pr-8 text-left transition-all hover:border-accent hover:bg-accent/5 active:cursor-grabbing aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
+      className="relative flex w-full cursor-grab flex-col items-start gap-1 rounded-[7px] border border-line bg-card-solid p-2.5 pr-8 text-left transition-colors hover:border-border hover:bg-field active:cursor-grabbing aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
     >
       <div className="flex w-full items-center justify-between gap-1.5">
         <span className="text-xs font-medium text-ink leading-tight">{component.name}</span>
         {component.kind === 'layout' && (
-          <span className="rounded bg-accent/10 px-1.5 py-0.5 text-[10px] font-medium text-accent">
+          <span className="rounded bg-accent-soft px-1.5 py-0.5 text-[10px] font-medium text-accent">
             {t('components.layout')}
           </span>
         )}
@@ -84,7 +84,7 @@ function ComponentSearchHeader({ query, onQueryChange, errorInfo }: ComponentSea
   const { t: tError } = useTranslation('errors');
 
   return (
-    <div className="p-3 border-b border-border/40 space-y-2">
+    <div className="space-y-2 pb-2">
       <input
         type="search"
         data-testid="component-search"
@@ -93,7 +93,7 @@ function ComponentSearchHeader({ query, onQueryChange, errorInfo }: ComponentSea
         onChange={(e) => {
           onQueryChange(e.target.value);
         }}
-        className="w-full rounded-md border border-border bg-field px-3 py-1.5 text-xs text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+        className="h-7 w-full rounded-md border border-line bg-card-solid px-2.5 text-xs text-ink placeholder:text-ink-faint"
       />
 
       {errorInfo !== undefined && (
@@ -147,11 +147,11 @@ export function ComponentsPanel() {
     <aside
       aria-label={t('components.title')}
       data-testid="components-panel"
-      className="flex h-full flex-col overflow-hidden bg-card-solid/60 text-xs"
+      className="flex h-full flex-col overflow-hidden text-xs"
     >
       <ComponentSearchHeader query={query} onQueryChange={setQuery} errorInfo={errorInfo} />
 
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+      <div className="flex-1 space-y-1.5 overflow-y-auto py-1">
         {filtered.length === 0 ? (
           <p className="py-6 text-center text-xs text-ink-faint">{t('components.empty')}</p>
         ) : (

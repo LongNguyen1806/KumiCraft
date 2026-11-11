@@ -60,7 +60,7 @@ function RenamePageInputs({ state, convention }: RenamePageInputsProps) {
           onChange={(e) => {
             state.setNewPath(e.target.value);
           }}
-          className="rounded border border-border bg-field px-2 py-1 text-ink disabled:opacity-50"
+          className="h-7 rounded-md border border-line bg-card-solid px-2 text-ink disabled:opacity-50"
         />
       </label>
       <label className="flex flex-col gap-1 text-ink-soft">
@@ -73,7 +73,7 @@ function RenamePageInputs({ state, convention }: RenamePageInputsProps) {
           onChange={(e) => {
             state.setNewName(e.target.value);
           }}
-          className="rounded border border-border bg-field px-2 py-1 text-ink disabled:opacity-50"
+          className="h-7 rounded-md border border-line bg-card-solid px-2 text-ink disabled:opacity-50"
         />
       </label>
     </div>
@@ -89,11 +89,11 @@ export function RenamePageForm({ page, convention, onCancel, onRenamed }: Rename
       onSubmit={(e) => {
         void state.handleSubmit(e);
       }}
-      className="flex flex-col gap-2 rounded border border-border/80 bg-field/30 p-2 text-xs"
+      className="flex flex-col gap-2 rounded-[7px] border border-line bg-wash-cool p-2 text-xs"
     >
       <RenamePageInputs state={state} convention={convention} />
       {state.errorMsg !== undefined && (
-        <div role="alert" className="text-xs text-rose-600">
+        <div role="alert" className="text-xs text-danger">
           {state.errorMsg}
         </div>
       )}
@@ -103,7 +103,7 @@ export function RenamePageForm({ page, convention, onCancel, onRenamed }: Rename
           type="button"
           disabled={state.busy}
           onClick={onCancel}
-          className="rounded border border-border px-2.5 py-1 text-xs text-ink-soft hover:text-ink"
+          className="h-7 rounded-md border border-line bg-card-solid px-2.5 hover:bg-field text-xs text-ink-soft hover:text-ink"
         >
           {t('pages.cancel')}
         </button>
@@ -111,7 +111,7 @@ export function RenamePageForm({ page, convention, onCancel, onRenamed }: Rename
           data-testid="page-rename-submit"
           type="submit"
           disabled={!convention || state.busy}
-          className="rounded bg-charcoal px-3 py-1 text-xs text-on-charcoal disabled:opacity-50"
+          className="h-7 rounded-md bg-charcoal px-3 text-xs font-medium text-on-charcoal hover:bg-accent-hover disabled:opacity-50"
         >
           {state.busy ? t('pages.renaming') : t('pages.save')}
         </button>

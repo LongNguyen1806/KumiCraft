@@ -85,11 +85,11 @@ export function InlineCreateRow({ action, onCommit, onCancel }: InlineCreateRowP
             if (error !== undefined) setError(undefined);
           }}
           onKeyDown={handleKeyDown}
-          className="flex-1 rounded border border-primary bg-field px-1.5 py-0.5 text-xs text-ink focus:outline-none"
+          className="flex-1 rounded border border-accent bg-card-solid px-1.5 py-0.5 text-xs text-ink"
         />
       </div>
       {error !== undefined && (
-        <span data-testid="files-inline-create-error" className="text-[10px] text-rose-500 pl-5">
+        <span data-testid="files-inline-create-error" className="text-[10px] text-danger pl-5">
           {error}
         </span>
       )}

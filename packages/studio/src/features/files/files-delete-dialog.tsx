@@ -32,7 +32,7 @@ function ImportersList({
   const remaining = importers.length - displayed.length;
 
   return (
-    <div className="flex flex-col gap-1 rounded bg-rose-500/10 p-2.5 text-xs text-rose-700 dark:text-rose-300">
+    <div className="flex flex-col gap-1 rounded bg-danger/10 p-2.5 text-xs text-rose-700">
       <span className="font-medium">{t('files.deleteWarningImporters')}</span>
       <ul className="list-disc pl-4 font-mono text-[11px]">
         {displayed.map((imp) => (
@@ -152,7 +152,7 @@ function DeleteDialogContent({
       )}
       <ImportersList importers={importers} truncated={truncated} />
       {entry.kind === 'directory' && routerPageCount > 0 && (
-        <p className="rounded bg-amber-500/10 p-2 text-amber-700 dark:text-amber-300">
+        <p className="rounded bg-amber-500/10 p-2 text-amber-700">
           {t('files.deleteFolderRouterPages', { count: routerPageCount })}
         </p>
       )}
@@ -224,7 +224,7 @@ export function FilesDeleteDialog({
         }}
       />
       {failure !== undefined && (
-        <p data-testid="files-delete-error" role="alert" className="pt-2 text-xs text-rose-600">
+        <p data-testid="files-delete-error" role="alert" className="pt-2 text-xs text-danger">
           {failure}
         </p>
       )}

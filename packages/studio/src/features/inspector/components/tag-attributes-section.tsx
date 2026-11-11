@@ -3,6 +3,8 @@ import type { EditableAttr, ElementAttributes } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { InspectorGroup } from './inspector-group.tsx';
+
 const TAG_ATTR_MAP: Readonly<Record<string, readonly EditableAttr[]>> = {
   a: ['href'],
   img: ['src', 'alt'],
@@ -78,7 +80,7 @@ function AttrInput({
           setDraft(val);
         }
       }}
-      className="h-7 w-full rounded border border-border/60 bg-field px-2 font-mono text-xs text-ink focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
+      className="h-7 w-full rounded-md border border-line bg-card-solid px-2 font-mono text-xs text-ink hover:bg-field disabled:opacity-50"
     />
   );
 }
@@ -109,7 +111,7 @@ function TagAttrRow({
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between">
-        <label htmlFor={`attr-${attrName}`} className="text-xs text-ink-soft font-mono">
+        <label htmlFor={`attr-${attrName}`} className="font-mono text-[11px] text-ink-faint">
           {attrName}
         </label>
         {isExpression && (
@@ -150,13 +152,12 @@ export function TagAttributesSection({
   }
 
   return (
-    <div
-      className="flex flex-col gap-2 py-2 border-t border-border/40"
-      data-testid="tag-attributes-section"
+    <InspectorGroup
+      id="tagAttributes"
+      title={t('inspector.groups.tagAttributes', { tag })}
+      defaultOpen
+      testId="tag-attributes-section"
     >
-      <h3 className="text-xs font-semibold text-ink-strong tracking-tight">
-        {t('inspector.groups.tagAttributes', { tag })}
-      </h3>
       <div className="flex flex-col gap-2">
         {relevantAttrs.map((attrName) => (
           <TagAttrRow
@@ -169,6 +170,6 @@ export function TagAttributesSection({
           />
         ))}
       </div>
-    </div>
+    </InspectorGroup>
   );
 }

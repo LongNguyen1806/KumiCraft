@@ -61,13 +61,13 @@ interface ConfirmRemoveBannerProps {
 function ConfirmRemoveBanner({ name, count, onCancel, onConfirm }: ConfirmRemoveBannerProps) {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col gap-1.5 rounded bg-amber-500/10 p-2 text-xs text-ink">
+    <div className="flex flex-col gap-1.5 rounded-md bg-sun-soft p-2 text-xs text-ink">
       <p>{t('brand.confirmRemove', { name, count })}</p>
       <div className="flex justify-end gap-1.5">
         <button
           type="button"
           onClick={onCancel}
-          className="rounded border border-border bg-field px-2 py-0.5 text-xs text-ink hover:bg-field-hover cursor-pointer"
+          className="h-6 rounded-md border border-line bg-card-solid px-2 text-xs text-ink hover:bg-field"
         >
           {t('brand.cancel')}
         </button>
@@ -75,7 +75,7 @@ function ConfirmRemoveBanner({ name, count, onCancel, onConfirm }: ConfirmRemove
           type="button"
           data-testid="brand-confirm-delete"
           onClick={onConfirm}
-          className="rounded bg-red-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-red-700 cursor-pointer"
+          className="h-6 rounded-md bg-danger px-2 text-xs font-medium text-white hover:opacity-90"
         >
           {t('brand.confirmDelete')}
         </button>
@@ -112,7 +112,7 @@ function TokenValueInput({ draft, onChange, onReset, onCommit }: TokenValueInput
           onReset();
         }
       }}
-      className="h-7 min-w-0 flex-1 rounded border border-border bg-field px-2 font-mono text-xs text-ink"
+      className="h-7 min-w-0 flex-1 rounded-md border border-line bg-card-solid px-2 font-mono text-xs text-ink"
     />
   );
 }
@@ -243,7 +243,7 @@ export function BrandTokenRow({
     <div
       data-testid="brand-token"
       data-name={token.name}
-      className="flex flex-col gap-1.5 rounded-lg border border-border bg-card-solid/60 p-2"
+      className="flex flex-col gap-1.5 rounded-[7px] border border-line bg-card-solid p-2"
     >
       <TokenMainRow
         kind={kind}

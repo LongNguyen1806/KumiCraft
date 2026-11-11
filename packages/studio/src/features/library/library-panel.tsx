@@ -75,10 +75,10 @@ function BlockItem({ block, disabled, dragDisabled, onSelect }: BlockItemProps) 
           useDndStore.getState().endDrag();
         }
       }}
-      className="relative flex cursor-grab flex-col items-center justify-center gap-2 rounded-lg border border-border/50 bg-field/50 p-3 text-center transition-all hover:border-accent hover:bg-accent/5 active:cursor-grabbing"
+      className="relative flex min-w-0 cursor-grab flex-col items-center gap-1 rounded-[7px] border border-line bg-card-solid px-1 pt-2.5 pb-2 text-center transition-colors hover:border-border hover:bg-field active:cursor-grabbing"
     >
-      <BlockIcon name={block.icon} className="h-5 w-5 text-ink-soft" />
-      <span className="text-xs font-medium text-ink leading-tight">{label}</span>
+      <BlockIcon name={block.icon} className="size-[18px] text-ink-soft" />
+      <span className="max-w-full text-[11px] leading-tight break-words text-ink">{label}</span>
       <InsertButton
         testId={`library-add-${block.id}`}
         label={t('add', { name: label })}
@@ -108,11 +108,9 @@ function CategorySection({
 }: CategorySectionProps) {
   const { t } = useTranslation('library');
   return (
-    <div className="space-y-2">
-      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
-        {t(`categories.${category}`)}
-      </h3>
-      <div className="grid grid-cols-2 gap-2">
+    <div className="space-y-1.5">
+      <h3 className="text-[11px] font-semibold text-ink-faint">{t(`categories.${category}`)}</h3>
+      <div className="grid grid-cols-3 gap-1.5">
         {blocks.map((block) => (
           <BlockItem
             key={block.id}
@@ -186,7 +184,7 @@ function LibraryCategories({
   onSelect,
 }: LibraryCategoriesProps) {
   return (
-    <div className="flex-1 overflow-y-auto p-3 space-y-5">
+    <div className="flex-1 space-y-3.5 overflow-y-auto py-2.5">
       {categories.map((cat) => (
         <CategorySection
           key={cat}
@@ -282,7 +280,7 @@ export function LibraryPanel() {
     <aside
       aria-label={t('title')}
       data-testid="library-panel"
-      className="flex h-full flex-col overflow-hidden bg-card-solid/60 text-xs"
+      className="flex h-full flex-col overflow-hidden text-xs"
     >
       <LibrarySearchHeader
         query={s.query}

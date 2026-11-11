@@ -3,6 +3,8 @@ import type { ClassToken } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { InspectorGroup } from './inspector-group.tsx';
+
 type OtherClassesSectionProps = {
   readonly tokens: readonly ClassToken[];
   readonly rawClassString: string;
@@ -50,24 +52,20 @@ function RawClassInput({
         }
       }}
       placeholder="—"
-      className="h-8 w-full rounded border border-border/60 bg-field px-2 font-mono text-xs text-ink focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
+      className="h-7 w-full rounded-md border border-line bg-card-solid px-2 font-mono text-xs text-ink hover:bg-field disabled:opacity-50"
     />
   );
 }
 
 function OtherTokensList({ tokens }: { readonly tokens: readonly ClassToken[] }) {
-  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-1.5">
-      <h3 className="text-xs font-semibold text-ink-strong tracking-tight">
-        {t('inspector.groups.otherClasses')}
-      </h3>
       <div className="flex flex-wrap gap-1" data-testid="other-classes-list">
         {tokens.map((tok, idx) => (
           <span
             key={`${tok.raw}-${String(idx)}`}
             data-testid="other-class-chip"
-            className="rounded bg-field px-1.5 py-0.5 font-mono text-[11px] text-ink-soft border border-border/40"
+            className="rounded bg-field px-1.5 py-0.5 font-mono text-[11px] text-ink-soft"
           >
             {tok.raw}
           </span>
@@ -88,33 +86,37 @@ export function OtherClassesSection({
   const otherTokens = tokens.filter((tok) => tok.property === undefined);
 
   return (
-    <div
-      className="flex flex-col gap-3 py-2 border-t border-border/40"
-      data-testid="other-classes-section"
+    <InspectorGroup
+      id="otherClasses"
+      title={t('inspector.groups.otherClasses')}
+      defaultOpen
+      testId="other-classes-section"
     >
-      {otherTokens.length > 0 && <OtherTokensList tokens={otherTokens} />}
+      <div className="flex flex-col gap-3">
+        {otherTokens.length > 0 && <OtherTokensList tokens={otherTokens} />}
 
-      {callStaticRest !== undefined && (
-        <p
-          data-testid="call-static-rest-note"
-          className="text-[11px] text-ink-faint leading-tight font-mono"
-        >
-          {t('inspector.callStaticRest', { rest: callStaticRest })}
-        </p>
-      )}
+        {callStaticRest !== undefined && (
+          <p
+            data-testid="call-static-rest-note"
+            className="text-[11px] text-ink-faint leading-tight font-mono"
+          >
+            {t('inspector.callStaticRest', { rest: callStaticRest })}
+          </p>
+        )}
 
-      <details className="group flex flex-col gap-1.5" data-testid="raw-class-details">
-        <summary className="cursor-pointer text-xs font-semibold text-ink-soft hover:text-ink select-none">
-          {t('inspector.groups.rawClasses')}
-        </summary>
-        <div className="pt-1.5 flex flex-col gap-1">
-          <RawClassInput
-            rawClassString={rawClassString}
-            onRawClassChange={onRawClassChange}
-            disabled={disabled}
-          />
-        </div>
-      </details>
-    </div>
+        <details className="group flex flex-col gap-1.5" data-testid="raw-class-details">
+          <summary className="cursor-pointer text-[11px] font-medium text-ink-soft select-none hover:text-ink">
+            {t('inspector.groups.rawClasses')}
+          </summary>
+          <div className="pt-1.5 flex flex-col gap-1">
+            <RawClassInput
+              rawClassString={rawClassString}
+              onRawClassChange={onRawClassChange}
+              disabled={disabled}
+            />
+          </div>
+        </details>
+      </div>
+    </InspectorGroup>
   );
 }

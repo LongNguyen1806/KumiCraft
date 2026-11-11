@@ -35,7 +35,7 @@ function AddTokenActions({ onCancel, onSave }: AddTokenActionsProps) {
       <button
         type="button"
         onClick={onCancel}
-        className="rounded border border-border bg-field px-2 py-0.5 text-xs text-ink hover:bg-field-hover cursor-pointer"
+        className="h-6 rounded-md border border-line bg-card-solid px-2 text-xs text-ink hover:bg-field"
       >
         {t('brand.cancel')}
       </button>
@@ -43,7 +43,7 @@ function AddTokenActions({ onCancel, onSave }: AddTokenActionsProps) {
         type="button"
         data-testid="brand-new-save"
         onClick={onSave}
-        className="rounded bg-charcoal px-2.5 py-0.5 text-xs font-medium text-white hover:opacity-90 cursor-pointer"
+        className="h-6 rounded-md bg-charcoal px-2.5 text-xs font-medium text-on-charcoal hover:bg-accent-hover"
       >
         {t('brand.save')}
       </button>
@@ -68,7 +68,7 @@ function AddTokenForm({ kind, onSubmit, onCancel }: AddTokenFormProps) {
     }
   };
   return (
-    <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-field/60 p-2">
+    <div className="flex flex-col gap-1.5 rounded-[7px] border border-line bg-wash-cool p-2">
       <div className="flex gap-1.5">
         <input
           type="text"
@@ -78,7 +78,7 @@ function AddTokenForm({ kind, onSubmit, onCancel }: AddTokenFormProps) {
           onChange={(e) => {
             setName(e.target.value);
           }}
-          className="h-7 w-28 shrink-0 rounded border border-border bg-card-solid px-2 font-mono text-xs text-ink"
+          className="h-7 w-28 shrink-0 rounded-md border border-line bg-card-solid px-2 font-mono text-xs text-ink"
         />
         <input
           type="text"
@@ -92,7 +92,7 @@ function AddTokenForm({ kind, onSubmit, onCancel }: AddTokenFormProps) {
             if (e.key === 'Enter') void save();
             else if (e.key === 'Escape') onCancel();
           }}
-          className="h-7 min-w-0 flex-1 rounded border border-border bg-card-solid px-2 font-mono text-xs text-ink"
+          className="h-7 min-w-0 flex-1 rounded-md border border-line bg-card-solid px-2 font-mono text-xs text-ink"
         />
       </div>
       <AddTokenActions
@@ -123,9 +123,7 @@ function BrandGroupSection(props: BrandGroupSectionProps) {
   return (
     <section data-testid={`brand-group-${props.kind}`} className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
-          {props.title}
-        </h3>
+        <h3 className="text-[11px] font-semibold text-ink-faint">{props.title}</h3>
         <button
           type="button"
           data-testid={`brand-add-${props.kind}`}
@@ -256,7 +254,7 @@ function BrandAutoButton({ project }: { readonly project: ReturnType<typeof useP
       onClick={() => {
         void updateTokenFile(project, undefined);
       }}
-      className="cursor-pointer rounded border border-border px-1.5 py-0.5 text-[11px] text-ink-soft hover:bg-hover hover:text-ink"
+      className="h-6 rounded-md border border-line bg-card-solid px-1.5 text-[11px] text-ink-soft hover:bg-field hover:text-ink"
     >
       {t('brand.autoTokenFile')}
     </button>
@@ -286,7 +284,7 @@ function BrandFileSelector({
           onClick={() => {
             setPickerOpen(true);
           }}
-          className="cursor-pointer rounded border border-border px-1.5 py-0.5 text-[11px] text-ink hover:bg-hover"
+          className="h-6 rounded-md border border-line bg-card-solid px-1.5 text-[11px] text-ink hover:bg-field"
         >
           {t('brand.changeTokenFile')}
         </button>
@@ -359,7 +357,7 @@ export function BrandPanel() {
       {actions.errorMsg !== undefined && (
         <div
           data-testid="brand-error"
-          className="rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-1.5 text-xs text-red-700"
+          className="rounded-md border border-danger/40 bg-danger/10 px-2.5 py-1.5 text-xs text-danger"
         >
           {actions.errorMsg}
         </div>

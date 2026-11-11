@@ -182,7 +182,7 @@ export function PageNameAndPathFields({
             onNameChange(e.target.value);
           }}
           placeholder={t('pages.namePlaceholder')}
-          className="rounded border border-border bg-field px-2 py-1 text-ink disabled:opacity-50"
+          className="h-7 rounded-md border border-line bg-card-solid px-2 text-ink disabled:opacity-50"
         />
       </label>
       <label className="flex flex-col gap-1 text-ink-soft">
@@ -196,7 +196,7 @@ export function PageNameAndPathFields({
             onPathChange(e.target.value);
           }}
           placeholder="/..."
-          className="rounded border border-border bg-field px-2 py-1 text-ink disabled:opacity-50"
+          className="h-7 rounded-md border border-line bg-card-solid px-2 text-ink disabled:opacity-50"
         />
       </label>
     </>
@@ -248,7 +248,7 @@ export function PageDirAndFileFields({
             onFileChange(e.target.value);
           }}
           placeholder={filePlaceholder ?? t('pages.filePlaceholder')}
-          className="rounded border border-border bg-field px-2 py-1 text-ink disabled:opacity-50"
+          className="h-7 rounded-md border border-line bg-card-solid px-2 text-ink disabled:opacity-50"
         />
       </label>
     </>
@@ -265,7 +265,7 @@ export function AddPageForm({ convention, defaultDir = 'src/pages', onAdded }: A
       onSubmit={(e) => {
         void state.submit(e);
       }}
-      className="flex flex-col gap-2.5 rounded border border-border p-3"
+      className="flex flex-col gap-2.5 rounded-[7px] border border-line p-2.5"
     >
       <div className="text-xs font-semibold text-ink">{t('pages.add')}</div>
       <div className="grid grid-cols-2 gap-2 text-xs">
@@ -289,7 +289,7 @@ export function AddPageForm({ convention, defaultDir = 'src/pages', onAdded }: A
         />
       </div>
       {state.errorMsg !== undefined && (
-        <div role="alert" className="text-xs text-rose-600">
+        <div role="alert" className="text-xs text-danger">
           {state.errorMsg}
         </div>
       )}
@@ -297,7 +297,7 @@ export function AddPageForm({ convention, defaultDir = 'src/pages', onAdded }: A
         data-testid="page-add"
         type="submit"
         disabled={!convention || state.busy || !state.name.trim()}
-        className="self-end rounded bg-charcoal px-3 py-1.5 text-xs text-on-charcoal disabled:opacity-50"
+        className="self-end h-7 rounded-md bg-charcoal px-3 text-xs font-medium text-on-charcoal hover:bg-accent-hover disabled:opacity-50"
       >
         {state.busy ? t('pages.adding') : t('pages.add')}
       </button>

@@ -123,7 +123,7 @@ function ElementSections({
       : undefined;
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col">
       {editable && (
         <InspectorPropertyGroups
           tokens={tokens}
@@ -185,13 +185,13 @@ function InspectorStatusFeedback({
       {loading && (
         <div
           data-testid="inspector-loading"
-          className="py-2 text-center text-xs text-ink-faint animate-pulse"
+          className="animate-pulse py-2 text-center text-xs text-ink-faint"
         >
           …
         </div>
       )}
       {error && (
-        <div data-testid="inspector-error" className="py-2 text-xs text-red-500 font-medium">
+        <div data-testid="inspector-error" className="py-2 text-xs font-medium text-danger">
           {error}
         </div>
       )}
@@ -278,7 +278,7 @@ function InspectorSingleTargetView({
   const editMode = useEditMode();
 
   return (
-    <div className="flex flex-col gap-2" data-testid="inspector-panel">
+    <div className="flex flex-col" data-testid="inspector-panel">
       <ElementPath />
       {editMode === 'viewOnly' ? (
         <ViewOnlyInspector target={target} />

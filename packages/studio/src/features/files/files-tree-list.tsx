@@ -14,10 +14,8 @@ export function PanelTopActions({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="flex items-center justify-between border-b border-border/40 px-2 py-1.5 text-ink-muted shrink-0">
-      <span className="font-medium text-[11px] uppercase tracking-wider">
-        {t('activity.files')}
-      </span>
+    <div className="flex h-8 shrink-0 items-center justify-between text-ink-faint">
+      <span className="truncate text-[11px] font-semibold">{t('activity.files')}</span>
       <div className="flex items-center gap-0.5">
         <button
           type="button"
@@ -25,7 +23,7 @@ export function PanelTopActions({
           title={t('files.newFile')}
           aria-label={t('files.newFile')}
           onClick={onNewFile}
-          className="rounded p-1 text-ink-muted hover:bg-hover hover:text-ink transition-colors cursor-pointer"
+          className="rounded p-1 text-ink-faint hover:bg-field hover:text-ink transition-colors cursor-pointer"
         >
           <FilePlus className="size-3.5" />
         </button>
@@ -35,7 +33,7 @@ export function PanelTopActions({
           title={t('files.newFolder')}
           aria-label={t('files.newFolder')}
           onClick={onNewFolder}
-          className="rounded p-1 text-ink-muted hover:bg-hover hover:text-ink transition-colors cursor-pointer"
+          className="rounded p-1 text-ink-faint hover:bg-field hover:text-ink transition-colors cursor-pointer"
         >
           <FolderPlus className="size-3.5" />
         </button>
