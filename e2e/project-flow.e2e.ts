@@ -189,3 +189,35 @@ test('a Studio tab still open reconnects when KumiCraft runs again [S-05a]', asy
   await expect(tab.getByTestId('project-name')).toHaveText('Cửa hàng');
   await expect(tab.getByTestId('trust-status')).toContainText(ui('editor.trusted'));
 });
+
+test('opening another project shows its own files, not those of the one before [spec-log #115]', async ({
+  page,
+}) => {
+  await writeProject();
+  await writeFile(join(folder.path, 'only-first.txt'), 'first\n');
+  const second = await copyFixture('projects/vite8-react19-ts');
+  try {
+    await writeFile(join(second.path, 'only-second.txt'), 'second\n');
+    const session = await start();
+    await session.api('project/trust', 'POST', { trusted: true });
+    const tab = await open(page, session);
+    await trustIfAsked(tab);
+    await tab.getByTestId('activity-files').click();
+    await expect(tab.getByTestId('file-row-only-first.txt')).toBeVisible({ timeout: 15_000 });
+
+    await tab.getByTestId('project-btn').click();
+    await tab.getByTestId('path-input').fill(second.path);
+    await tab.getByTestId('path-input').press('Enter');
+    await tab.getByTestId('open-project-btn').click();
+
+    await trustIfAsked(tab);
+    // The Files panel stays open across the switch; a click would close it.
+    await expect(tab.getByTestId('activity-files')).toHaveAttribute('aria-pressed', 'true');
+    await expect(tab.getByTestId('file-row-only-second.txt')).toBeVisible({ timeout: 15_000 });
+    await expect(tab.getByTestId('file-row-only-first.txt')).toHaveCount(0);
+  } finally {
+    // The second project is the open one: stop KumiCraft first, or Windows keeps its folder locked.
+    for (const session of sessions.splice(0)) await session.stop();
+    await second.remove();
+  }
+});

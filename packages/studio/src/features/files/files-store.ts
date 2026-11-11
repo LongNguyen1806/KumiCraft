@@ -181,6 +181,26 @@ function createRefreshAffected(get: () => FilesState) {
   };
 }
 
+function createSetProjectId(set: (partial: Partial<FilesState>) => void, get: () => FilesState) {
+  return (projectId: string | undefined) => {
+    const stored = readStoredExpanded(projectId);
+    if (projectId === get().projectId) {
+      set({ expandedDirs: stored });
+      return;
+    }
+    // Another project: the folders read so far belong to the one before (spec-log #115).
+    set({
+      projectId,
+      expandedDirs: stored,
+      treeData: {},
+      loadingDirs: new Set(),
+      selectedPath: undefined,
+      inlineAction: undefined,
+      actionError: undefined,
+    });
+  };
+}
+
 export const useFilesStore = create<FilesState>((set, get) => ({
   treeData: {},
   expandedDirs: new Set(),
@@ -189,10 +209,7 @@ export const useFilesStore = create<FilesState>((set, get) => ({
   inlineAction: undefined,
   projectId: undefined,
 
-  setProjectId: (projectId) => {
-    const stored = readStoredExpanded(projectId);
-    set({ projectId, expandedDirs: stored });
-  },
+  setProjectId: createSetProjectId(set, get),
 
   loadDir: async (dir, force = false) => {
     const { treeData, loadingDirs } = get();

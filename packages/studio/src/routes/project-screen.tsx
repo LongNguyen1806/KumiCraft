@@ -25,7 +25,9 @@ export function ProjectScreen({ session, onRetry }: ProjectScreenProps) {
       return <ProjectErrorScreen version={version} error={project.error} />;
     case 'open':
       return (
+        // A new Editor per project, so no panel keeps what it read from the one before.
         <EditorScreen
+          key={project.id}
           projectId={project.id}
           projectName={project.name}
           trusted={project.trusted}
