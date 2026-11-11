@@ -62,4 +62,33 @@ describe('PropertyField [R-IN-20]', () => {
 
     expect(screen.getByTestId('input-padding')).toHaveProperty('value', '6');
   });
+
+  it('shows a value that is not one of the choices instead of "—" (spec-log #120)', () => {
+    const width = (classString: string) => (
+      <PropertyField
+        property="width"
+        label="Width"
+        tokens={parseClasses(classString, ctx)}
+        currentScope={base}
+        frameWidth={1440}
+        ctx={ctx}
+        onValueChange={vi.fn()}
+        options={['full', 'auto']}
+      />
+    );
+    const view = render(width('w-96'));
+    expect(screen.getByTestId('input-width')).toHaveProperty('value', '96');
+
+    view.rerender(width('w-[420px]'));
+    expect(screen.getByTestId('input-width')).toHaveProperty('value', '[420px]');
+
+    view.rerender(width('w-full'));
+    const select = screen.getByTestId<HTMLSelectElement>('input-width');
+    expect(select.value).toBe('full');
+    // A value of the list is not repeated.
+    expect([...select.options].map((o) => o.value)).toEqual(['', 'full', 'auto']);
+
+    view.rerender(width(''));
+    expect(screen.getByTestId('input-width')).toHaveProperty('value', '');
+  });
 });

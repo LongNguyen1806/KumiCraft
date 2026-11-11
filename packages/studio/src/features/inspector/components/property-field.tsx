@@ -25,6 +25,15 @@ const FIELD_BASE =
   'h-7 rounded-md border border-line bg-card-solid px-2 text-xs text-ink hover:bg-field disabled:opacity-50 disabled:hover:bg-card-solid';
 export const FIELD_CONTROL = `${FIELD_BASE} w-full`;
 
+/**
+ * The choices of a select, with the value read from the code added first when it is not one of
+ * them (`w-96`, `w-[420px]`…): otherwise the select would show "—" for a value that is set
+ * (spec-log #120).
+ */
+export function choicesWith(options: readonly string[], current: string): readonly string[] {
+  return current === '' || options.includes(current) ? options : [current, ...options];
+}
+
 export function formatScopeName(scope: Scope): string {
   if (scope.breakpoint === 'base') {
     return scope.state ? `base:${scope.state}` : 'base';
@@ -112,7 +121,7 @@ function OptionSelect({
       className={narrow ? `${FIELD_BASE} w-[5.5rem] shrink-0` : FIELD_CONTROL}
     >
       <option value="">{mixed ? t('inspector.mixed') : '—'}</option>
-      {options.map((opt) => (
+      {choicesWith(options, currentValStr).map((opt) => (
         <option key={opt} value={opt}>
           {opt}
         </option>

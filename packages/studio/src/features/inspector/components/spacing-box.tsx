@@ -6,7 +6,12 @@ import { useTranslation } from 'react-i18next';
 
 import type { PropertyFieldDef } from '../property-groups-config.ts';
 import type { PropertyFieldProps } from './property-field.tsx';
-import { formatScopeName, parseInputToClassValue, readField } from './property-field.tsx';
+import {
+  choicesWith,
+  formatScopeName,
+  parseInputToClassValue,
+  readField,
+} from './property-field.tsx';
 
 export type SpacingShared = Pick<
   PropertyFieldProps,
@@ -66,7 +71,7 @@ function SideSelect({
         className={`h-[22px] w-10 rounded bg-transparent bg-none px-0 text-center font-mono text-[11px] [text-align-last:center] hover:bg-field-hover disabled:opacity-50 ${tone}`}
       >
         <option value="">—</option>
-        {(field.options ?? []).map((opt) => (
+        {choicesWith(field.options ?? [], read.currentValStr).map((opt) => (
           <option key={opt} value={opt}>
             {opt}
           </option>
