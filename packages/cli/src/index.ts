@@ -7,6 +7,7 @@ import open from 'open';
 
 import packageJson from '../package.json' with { type: 'json' };
 import { type CliOptions, parseCliArgs, USAGE, USAGE_EXIT_CODE } from './args.ts';
+import { installCrashGuard } from './crash-guard.ts';
 import { runMcpCommand } from './mcp/mcp-command.ts';
 import { startFailureMessage } from './messages.ts';
 import { findStudioDir } from './paths.ts';
@@ -109,6 +110,9 @@ async function serve(options: CliOptions): Promise<void> {
     warn: (line) => {
       console.warn(line);
     },
+  });
+  installCrashGuard(process, (line) => {
+    console.error(line);
   });
   process.on('SIGINT', () => void stop());
   process.on('SIGTERM', () => void stop());

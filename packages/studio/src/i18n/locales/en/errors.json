@@ -115,6 +115,7 @@
       "entryExists": "A file or folder with this name already exists.",
       "folderTooLarge": "The folder is too large to undo (over 500 files or 20 MB); do this in your code editor.",
       "buildCheckUnsupported": "This framework has no build check yet.",
+      "noChildrenTag": "This tag cannot hold child elements (for example <img>, <input>). Place it next to it instead.",
       "componentIntoItself": "A component cannot be placed inside itself: the page would render itself forever and hang."
     }
   },

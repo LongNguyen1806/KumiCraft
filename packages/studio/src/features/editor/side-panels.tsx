@@ -2,6 +2,7 @@ import type { TFunction } from 'i18next';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ErrorBoundary } from '../../components/ui/error-boundary.tsx';
 import { BrandPanel } from '../brand/brand-panel.tsx';
 import { ChatPanel } from '../chat/chat-panel.tsx';
 import { ComponentsPanel } from '../components-panel/components-panel.tsx';
@@ -52,7 +53,12 @@ function Panel({ label, title, tabs, onHeaderSlotRef, children }: PanelProps) {
           />
         )}
       </div>
-      <div className="min-h-0 flex-1 overflow-auto px-3 pt-2.5 pb-3.5">{children}</div>
+      <div className="min-h-0 flex-1 overflow-auto px-3 pt-2.5 pb-3.5">
+        {/* A new boundary per panel or tab, so switching away and back tries again. */}
+        <ErrorBoundary key={title} scope="panel">
+          {children}
+        </ErrorBoundary>
+      </div>
     </aside>
   );
 }

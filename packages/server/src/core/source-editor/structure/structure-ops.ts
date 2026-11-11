@@ -200,6 +200,24 @@ function buildEmptyParentChildEdit(
   });
 }
 
+/** HTML elements that never take children (void elements), plus <textarea>, whose content is text. */
+const NO_CHILDREN_TAGS: ReadonlySet<string> = new Set([
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'source',
+  'track',
+  'wbr',
+  'textarea',
+]);
+
 export function buildInsertTextEdit(
   ast: AstNode,
   code: string,
@@ -218,6 +236,11 @@ export function buildInsertTextEdit(
     return ok(buildSiblingEdit(code, resolved.start, resolved.end, side, jsx, unit, nl));
   }
 
+  // <img>, <input>… cannot hold children: React would stop drawing the page (spec-log #116).
+  const parentTag = getJsxTagName(resolved.opening);
+  if (parentTag !== undefined && NO_CHILDREN_TAGS.has(parentTag)) {
+    return err({ code: 'E016', params: { reason: 'noChildrenTag' } });
+  }
   const guard = checkChildInsertGuard(resolved.node, resolved.loc);
   if (!guard.ok) return guard;
 

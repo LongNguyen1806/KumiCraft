@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '../components/ui/error-boundary.tsx';
 import { ConnectionOverlay } from '../features/shell/connection-overlay.tsx';
 import { useConnection } from '../features/shell/use-connection.ts';
 import { useSession } from '../features/shell/use-session.ts';
@@ -19,7 +20,9 @@ export function App() {
   return (
     <>
       <div className="h-full" inert={isOffline}>
-        <ProjectScreen session={state.session} onRetry={reload} />
+        <ErrorBoundary scope="screen">
+          <ProjectScreen session={state.session} onRetry={reload} />
+        </ErrorBoundary>
       </div>
       {isOffline && <ConnectionOverlay stopped={connection === 'stopped'} />}
     </>

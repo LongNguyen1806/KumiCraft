@@ -10,6 +10,7 @@ import {
 } from '@kumicraft/shared';
 import { describe, expect, it, vi } from 'vitest';
 
+import { createJobService } from '../jobs/job-service.ts';
 import { createEventBus, type ServerEvent } from '../ports/event-bus-port.ts';
 import type { ProcessPort } from '../ports/process-port.ts';
 import { createConfigStore } from '../shared/user-config.ts';
@@ -55,6 +56,12 @@ async function setup() {
   const watch = { start: vi.fn(), stop: vi.fn(() => Promise.resolve()) };
   const runner = { start: vi.fn(() => Promise.resolve()), stop: vi.fn(() => Promise.resolve()) };
   const history = { clear: vi.fn() };
+  const jobs = createJobService({
+    system: fakeSystem(1, new Set([1])),
+    logger: silentLogger,
+    eventBus: bus,
+  });
+  const cancelKind = vi.spyOn(jobs, 'cancelKind');
   const config = await createConfigStore({
     fs: nodeFs,
     dir: configDir,
@@ -74,8 +81,9 @@ async function setup() {
     runnerService: runner,
     watch,
     history,
+    jobs,
   });
-  return { ...temp, projectDir, events, watch, runner, history, service };
+  return { ...temp, projectDir, events, watch, runner, history, service, cancelKind };
 }
 
 describe('ProjectService and files changed on disk', () => {
@@ -162,6 +170,36 @@ describe('ProjectService and files changed on disk', () => {
 
       await t.service.open(otherDir);
       expect(t.history.clear).toHaveBeenCalledTimes(1);
+    } finally {
+      await t.cleanup();
+    }
+  });
+
+  it('opening another project stops the AI turn, install and build check of the old one [spec-log #116]', async () => {
+    const t = await setup();
+    try {
+      const otherDir = join(t.dir, 'work', 'admin');
+      await mkdir(join(otherDir, '.kumicraft'), { recursive: true });
+      await writeSupportedProject(otherDir);
+      await writeFile(
+        join(otherDir, WORKSPACE_FILE),
+        serializeWorkspaceFile({ ...sampleFile, id: 'proj000002', name: 'Admin' }),
+      );
+
+      await t.service.open(t.projectDir);
+      await t.service.open(t.projectDir);
+      expect(t.cancelKind).not.toHaveBeenCalled();
+
+      await t.service.open(otherDir);
+      expect(t.cancelKind.mock.calls.map(([kind]) => kind)).toEqual([
+        'agent.turn',
+        'project.install',
+        'project.buildCheck',
+      ]);
+
+      t.cancelKind.mockClear();
+      await t.service.close();
+      expect(t.cancelKind).toHaveBeenCalledWith('agent.turn');
     } finally {
       await t.cleanup();
     }

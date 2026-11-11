@@ -2,6 +2,7 @@ import type { ProjectInfo } from '@kumicraft/shared';
 import { useEffect, useState } from 'react';
 
 import { fetchProject } from '../../api/project-client.ts';
+import { ErrorBoundary } from '../../components/ui/error-boundary.tsx';
 import { useDesignTargetSync } from '../design/design-store.ts';
 import { useHistorySync } from '../history/history-store.ts';
 import { InstallDialog } from '../project/install-dialog.tsx';
@@ -65,12 +66,16 @@ function WorkGrid({
       <ActivityBar />
       {layout.visible.left ? <LeftPanel /> : <div />}
       <SideHandle side="left" layout={layout} resize={resize} />
-      <CanvasArea
-        projectInfo={projectInfo}
-        trusted={trusted}
-        onTrustRequest={onTrustRequest}
-        onInstallRequest={onInstallRequest}
-      />
+      <div className="flex min-h-0 min-w-0 flex-col">
+        <ErrorBoundary scope="panel">
+          <CanvasArea
+            projectInfo={projectInfo}
+            trusted={trusted}
+            onTrustRequest={onTrustRequest}
+            onInstallRequest={onInstallRequest}
+          />
+        </ErrorBoundary>
+      </div>
       <SideHandle side="right" layout={layout} resize={resize} />
       {layout.visible.right ? <RightPanel trusted={trusted} /> : <div />}
     </div>

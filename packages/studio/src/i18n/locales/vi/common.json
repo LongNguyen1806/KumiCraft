@@ -785,5 +785,12 @@
     "took": "Xong sau {{seconds}} giây",
     "openHint": "Bấm để mở trong editor",
     "failed": "Không chạy được kiểm tra build"
+  },
+  "errorBoundary": {
+    "panelTitle": "Phần này gặp lỗi khi hiển thị",
+    "screenTitle": "Studio gặp lỗi khi hiển thị",
+    "body": "Các phần khác vẫn dùng được. Thử lại, hoặc tải lại trang nếu lỗi vẫn còn. Code dự án của bạn không bị đổi.",
+    "retry": "Thử lại",
+    "reload": "Tải lại trang"
   }
 }

@@ -785,5 +785,12 @@
     "took": "Done in {{seconds}} s",
     "openHint": "Click to open in the editor",
     "failed": "The build check could not run"
+  },
+  "errorBoundary": {
+    "panelTitle": "This part failed to display",
+    "screenTitle": "The Studio failed to display",
+    "body": "The other parts still work. Try again, or reload the page if the error stays. Your project code was not changed.",
+    "retry": "Try again",
+    "reload": "Reload page"
   }
 }

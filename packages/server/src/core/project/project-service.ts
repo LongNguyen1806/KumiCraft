@@ -134,6 +134,7 @@ class ProjectServiceImpl implements ProjectService {
 
     // R-HI-08: steps of another project must never be undone into this one.
     if (this.current.status === 'open' && this.current.root !== root) {
+      this.stopProjectWork();
       this.deps.history?.clear();
       // The dev server of the previous project keeps its port; the Canvas would show that app.
       await this.deps.runnerService?.stop();
@@ -205,8 +206,18 @@ class ProjectServiceImpl implements ProjectService {
     return this.open(path);
   }
 
-  async close(): Promise<void> {
+  /**
+   * The AI turn, the install and the build check of the project being left: a turn would go on
+   * changing that project with nobody able to see or stop it (spec-log #116).
+   */
+  private stopProjectWork(): void {
+    this.jobs.cancelKind('agent.turn');
     this.jobs.cancelKind('project.install');
+    this.jobs.cancelKind('project.buildCheck');
+  }
+
+  async close(): Promise<void> {
+    this.stopProjectWork();
     await this.deps.watch?.stop();
     this.deps.history?.clear();
     await this.deps.runnerService?.stop();

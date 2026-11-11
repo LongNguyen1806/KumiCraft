@@ -1,6 +1,7 @@
+import { realpathSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished } from 'vitest';
 
 import { createServices } from '../../server-services.ts';
 import type { ProcessPort } from '../ports/process-port.ts';
@@ -21,7 +22,10 @@ afterEach(async () => {
 
 describe('Monorepo Open & Install [WP-4.00]', () => {
   it('Test M6 [WP-4.00]: Open frontend/ of fixture sets workspaceRoot to fixture root, reads versions, and runs install in workspaceRoot', async () => {
-    const fixtureRoot = resolve('fixtures/projects/monorepo-apps').replaceAll('\\', '/');
+    // The real path, as the server uses: the working directory may spell the drive `d:` on Windows.
+    const fixtureRoot = realpathSync
+      .native(resolve('fixtures/projects/monorepo-apps'))
+      .replaceAll('\\', '/');
     const frontendDir = resolve('fixtures/projects/monorepo-apps/frontend').replaceAll('\\', '/');
 
     let spawnedCwd: string | undefined;
@@ -79,7 +83,9 @@ describe('Monorepo Open & Install [WP-4.00]', () => {
       'runners/vite-react',
     );
 
-    // 1. Open frontend of fixture
+    // 1. Open frontend of fixture. Always closed again: a failed run must not leave its lock in the
+    // fixture, or every later run is refused with E018.
+    onTestFinished(() => services.projectService.close());
     const openRes = await services.projectService.open(frontendDir);
     expect(openRes.ok).toBe(true);
     if (!openRes.ok) return;
@@ -104,7 +110,5 @@ describe('Monorepo Open & Install [WP-4.00]', () => {
 
     expect(spawnedExe).toBe('pnpm');
     expect(spawnedCwd).toBe(fixtureRoot);
-
-    await services.projectService.close();
   });
 });
