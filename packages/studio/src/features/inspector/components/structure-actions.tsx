@@ -1,15 +1,6 @@
 // Structure actions as an icon row (Move, Wrap, Unwrap, Duplicate, Extract, Remove) in the Inspector header (SPEC-04 R-SE-24..28, R-CP-14).
 import type { LucideIcon } from 'lucide-react';
-import {
-  ArrowDown,
-  ArrowUp,
-  ChevronDown,
-  Component,
-  Copy,
-  Group,
-  Trash2,
-  Ungroup,
-} from 'lucide-react';
+import { ArrowDown, ArrowUp, Component, Copy, Trash2, Ungroup } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -17,6 +8,7 @@ import { errorText } from '../../../routes/error-text.ts';
 import { ExtractDialog } from '../../components-panel/extract-dialog.tsx';
 import type { InspectorTarget } from '../types.ts';
 import { useStructureActions } from './use-structure-actions.ts';
+import { WrapMenu } from './wrap-menu.tsx';
 
 type ElementTarget = Extract<InspectorTarget, { readonly kind: 'element' }>;
 type Actions = ReturnType<typeof useStructureActions>;
@@ -55,49 +47,6 @@ function IconAction({
     >
       <Icon className="size-[15px]" aria-hidden />
     </button>
-  );
-}
-
-/** The wrap menu: an icon with the native select laid over it, so the menu is the system one. */
-function WrapMenu({
-  disabled,
-  onWrap,
-}: {
-  readonly disabled: boolean;
-  readonly onWrap: (wrapper: 'row' | 'column' | 'grid') => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <span
-      title={t('inspector.wrap')}
-      className={`relative flex h-7 shrink-0 items-center gap-0.5 rounded-md px-1.5 text-ink-soft transition-colors focus-within:outline-2 focus-within:outline-accent ${
-        disabled ? 'opacity-40' : 'hover:bg-field hover:text-ink'
-      }`}
-    >
-      <Group className="size-[15px]" aria-hidden />
-      <ChevronDown className="size-3" aria-hidden />
-      <select
-        data-testid="inspector-wrap"
-        aria-label={t('inspector.wrap')}
-        disabled={disabled}
-        defaultValue=""
-        onChange={(e) => {
-          const val = e.target.value;
-          if (val === 'row' || val === 'column' || val === 'grid') {
-            onWrap(val);
-            e.target.value = '';
-          }
-        }}
-        className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-default"
-      >
-        <option value="" disabled>
-          {t('inspector.wrap')}
-        </option>
-        <option value="row">{t('inspector.wrapRow')}</option>
-        <option value="column">{t('inspector.wrapColumn')}</option>
-        <option value="grid">{t('inspector.wrapGrid')}</option>
-      </select>
-    </span>
   );
 }
 

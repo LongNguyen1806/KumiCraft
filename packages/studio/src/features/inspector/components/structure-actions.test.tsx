@@ -181,8 +181,9 @@ describe('StructureActions Component [Scenario #16]', () => {
 
     render(<StructureActions target={makeTarget()} />);
 
-    const wrapSelect = screen.getByTestId('inspector-wrap');
-    fireEvent.change(wrapSelect, { target: { value: 'grid' } });
+    fireEvent.click(screen.getByTestId('inspector-wrap'));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Grid|Lưới/ }));
+    expect(screen.queryByRole('menu')).toBeNull();
 
     await waitFor(() => {
       expect(spy).toHaveBeenCalledWith({

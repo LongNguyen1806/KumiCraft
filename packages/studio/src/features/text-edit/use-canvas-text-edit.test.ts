@@ -88,10 +88,9 @@ describe('useCanvasTextEdit (SPEC-04 section 10 M-TX, R-TX-01..08)', () => {
     expect(startTextEditSpy).toHaveBeenCalledWith(SAMPLE_REF);
     expect(result.current.isEditing).toBe(true);
     expect(result.current.editingRef).toEqual(SAMPLE_REF);
-    expect(result.current.warning).toBeUndefined();
   });
 
-  it('shows E023 warning when text is an expression [R-TX-01]', async () => {
+  it('ignores a double click on text that is an expression, with no notice [R-TX-01, spec-log #119]', async () => {
     const exprSource: ElementSource = {
       ...STATIC_SOURCE,
       text: { kind: 'expression', code: 'item.title' },
@@ -103,18 +102,9 @@ describe('useCanvasTextEdit (SPEC-04 section 10 M-TX, R-TX-01..08)', () => {
 
     expect(startTextEditSpy).not.toHaveBeenCalled();
     expect(result.current.isEditing).toBe(false);
-    expect(result.current.warning).toEqual({
-      code: 'E023',
-      reason: 'expression',
-      messageKey: 'textEdit.errors.expression',
-      loc: SAMPLE_REF.loc,
-      file: 'src/pages/Home.tsx',
-      line: 12,
-      column: 7,
-    });
   });
 
-  it('shows E023 warning when text is mixed [R-TX-01]', async () => {
+  it('ignores a double click on mixed text, with no notice [R-TX-01, spec-log #119]', async () => {
     const mixedSource: ElementSource = {
       ...STATIC_SOURCE,
       text: { kind: 'mixed' },
@@ -126,10 +116,9 @@ describe('useCanvasTextEdit (SPEC-04 section 10 M-TX, R-TX-01..08)', () => {
 
     expect(startTextEditSpy).not.toHaveBeenCalled();
     expect(result.current.isEditing).toBe(false);
-    expect(result.current.warning?.reason).toBe('mixed');
   });
 
-  it('shows E023 warning when source is readonly [R-TX-01]', async () => {
+  it('ignores a double click on a read-only element, with no notice [R-TX-01, spec-log #119]', async () => {
     const readonlySource: ElementSource = {
       ...STATIC_SOURCE,
       readonly: 'outsideSource',
@@ -141,7 +130,6 @@ describe('useCanvasTextEdit (SPEC-04 section 10 M-TX, R-TX-01..08)', () => {
 
     expect(startTextEditSpy).not.toHaveBeenCalled();
     expect(result.current.isEditing).toBe(false);
-    expect(result.current.warning?.reason).toBe('readonly');
   });
 
   it('detects multiple instances and sets loopCount [R-TX-07]', async () => {
@@ -214,30 +202,6 @@ describe('useCanvasTextEdit (SPEC-04 section 10 M-TX, R-TX-01..08)', () => {
 
     expect(endTextEditSpy).toHaveBeenCalledWith(SAMPLE_REF);
     expect(result.current.isEditing).toBe(false);
-  });
-
-  it('dismissWarning and openEditorForWarning work properly', async () => {
-    const onOpen = vi.fn();
-    mockFetchElementSource.mockResolvedValueOnce({
-      ...STATIC_SOURCE,
-      text: { kind: 'expression', code: 'count' },
-    });
-
-    const { result } = renderHook(() => useCanvasTextEdit({ channel, onOpenEditor: onOpen }));
-
-    await dispatchBridgeMessage('text-edit-request', { ref: SAMPLE_REF });
-
-    expect(result.current.warning).toBeDefined();
-
-    act(() => {
-      result.current.openEditorForWarning();
-    });
-    expect(onOpen).toHaveBeenCalledWith('src/pages/Home.tsx', 12, 7);
-
-    act(() => {
-      result.current.dismissWarning();
-    });
-    expect(result.current.warning).toBeUndefined();
   });
 
   it('Scenario 12: double click on foreign component enters componentMode, double click on home edits text [R-CP-15]', async () => {

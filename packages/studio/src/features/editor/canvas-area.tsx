@@ -130,13 +130,7 @@ function useCanvasAreaState(projectInfo?: ProjectInfo) {
   );
   const editor = useOpenInEditor();
   const session = useCanvasSession(projectInfo, runner.status.origin);
-  const textEdit = useCanvasTextEdit({
-    mode,
-    activeFrameId: activeFrame.id,
-    onOpenEditor: (file, line, column) => {
-      editor.open(`${file}:${String(line)}:${String(column)}`);
-    },
-  });
+  const textEdit = useCanvasTextEdit({ mode, activeFrameId: activeFrame.id });
 
   return {
     runner,
@@ -168,12 +162,7 @@ function CanvasAreaOverlays({
   return (
     <>
       <CanvasNotices onOpenLoc={onOpenLoc} />
-      <TextEditOverlay
-        warning={textEdit.warning}
-        loopCount={textEdit.loopCount}
-        onOpenEditor={textEdit.openEditorForWarning}
-        onDismiss={textEdit.dismissWarning}
-      />
+      <TextEditOverlay loopCount={textEdit.loopCount} />
       {errorInfo !== undefined && (
         <p role="alert" className="px-4 text-xs text-danger" data-testid="open-editor-error">
           {errorText(tError, errorInfo.code, errorInfo.params)}

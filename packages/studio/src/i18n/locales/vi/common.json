@@ -470,14 +470,7 @@
     "askAiDraft": "Sửa phần tử này: "
   },
   "textEdit": {
-    "loopBanner": "Lặp {{count}} lần (sửa mẫu chung)",
-    "openInEditor": "Mở trong editor",
-    "errors": {
-      "expression": "Mã nguồn chứa biểu thức, không thể sửa trực quan",
-      "mixed": "Mã nguồn chứa nội dung hỗn hợp, không thể sửa trực quan",
-      "readonly": "Tập tin chỉ đọc, không thể sửa trực quan",
-      "saveFailed": "Không thể lưu nội dung chữ vào mã nguồn"
-    }
+    "loopBanner": "Lặp {{count}} lần (sửa mẫu chung)"
   },
   "canvas": {
     "buildError": {

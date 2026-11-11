@@ -470,14 +470,7 @@
     "askAiDraft": "Change this element: "
   },
   "textEdit": {
-    "loopBanner": "Repeated {{count}} times (edits template)",
-    "openInEditor": "Open in editor",
-    "errors": {
-      "expression": "Source contains expressions, cannot edit visually",
-      "mixed": "Source contains mixed content, cannot edit visually",
-      "readonly": "File is read-only, cannot edit visually",
-      "saveFailed": "Failed to save text edit to source"
-    }
+    "loopBanner": "Repeated {{count}} times (edits template)"
   },
   "canvas": {
     "buildError": {

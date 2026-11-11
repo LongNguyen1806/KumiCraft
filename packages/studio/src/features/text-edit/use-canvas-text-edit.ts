@@ -18,80 +18,17 @@ import {
 } from '../selection/bridge-channel.ts';
 import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
 
-export type TextEditWarningKey =
-  | 'textEdit.errors.expression'
-  | 'textEdit.errors.mixed'
-  | 'textEdit.errors.readonly'
-  | 'textEdit.errors.saveFailed';
-
-export type TextEditWarning = {
-  readonly code: 'E023';
-  readonly reason: 'expression' | 'mixed' | 'readonly';
-  readonly messageKey: TextEditWarningKey;
-  readonly loc: string;
-  readonly file: string;
-  readonly line: number;
-  readonly column: number;
-};
-
 export type UseCanvasTextEditOptions = {
   readonly channel?: BridgeChannel;
   readonly mode?: CanvasMode;
   readonly activeFrameId?: string;
-  readonly onOpenEditor?: (file: string, line: number, column: number) => void;
 };
 
 export type UseCanvasTextEditReturn = {
   readonly editingRef: ElementRef | undefined;
-  readonly warning: TextEditWarning | undefined;
   readonly loopCount: number | undefined;
   readonly isEditing: boolean;
-  readonly dismissWarning: () => void;
-  readonly openEditorForWarning: () => void;
 };
-
-function getWarningForSource(
-  source: ElementSource,
-  loc: string,
-  file: string,
-  line: number,
-  column: number,
-): TextEditWarning | undefined {
-  if (source.readonly !== undefined) {
-    return {
-      code: 'E023',
-      reason: 'readonly',
-      messageKey: 'textEdit.errors.readonly',
-      loc,
-      file,
-      line,
-      column,
-    };
-  }
-  if (source.text.kind === 'expression') {
-    return {
-      code: 'E023',
-      reason: 'expression',
-      messageKey: 'textEdit.errors.expression',
-      loc,
-      file,
-      line,
-      column,
-    };
-  }
-  if (source.text.kind === 'mixed') {
-    return {
-      code: 'E023',
-      reason: 'mixed',
-      messageKey: 'textEdit.errors.mixed',
-      loc,
-      file,
-      line,
-      column,
-    };
-  }
-  return undefined;
-}
 
 function findInstanceCount(loc: string): number {
   const treeNodes = useSelectionStore.getState().treeNodes;
@@ -117,16 +54,7 @@ async function commitSourceText(
   }
 }
 
-function openEditorAt(
-  warning: TextEditWarning | undefined,
-  onOpenEditor?: (file: string, line: number, column: number) => void,
-): void {
-  // The server starts the editor of Settings (R-SL-06); the Canvas passes that action in.
-  if (warning !== undefined) onOpenEditor?.(warning.file, warning.line, warning.column);
-}
-
 type TextEditStateSetters = {
-  readonly setWarning: (w: TextEditWarning | undefined) => void;
   readonly setLoopCount: (c: number | undefined) => void;
   readonly setEditingRef: (r: ElementRef) => void;
   readonly setActiveSession: (s: { ref: ElementRef; source: ElementSource }) => void;
@@ -156,16 +84,12 @@ async function processTextEditRequest(
 
   try {
     const source = await fetchElementSource(parsed);
-    const warn = getWarningForSource(source, ref.loc, parsed.file, parsed.line, parsed.column);
-    if (warn) {
-      setters.setWarning(warn);
-      return;
-    }
-    if (source.text.kind !== 'static') return;
+    // Only plain text is edited in place; anything else ignores the double click (spec-log #119):
+    // a notice there got in the way of quick clicks, and Open in editor is in the Inspector.
+    if (source.readonly !== undefined || source.text.kind !== 'static') return;
 
     const instances = findInstanceCount(ref.loc);
     setters.setLoopCount(instances > 1 ? instances : undefined);
-    setters.setWarning(undefined);
     setters.setEditingRef(ref);
     setters.setActiveSession({ ref, source });
     channel.startTextEdit(ref);
@@ -211,7 +135,6 @@ function useTextEditBridge(
 
 function useTextEditState() {
   const [editingRef, setEditingRef] = useState<ElementRef | undefined>(undefined);
-  const [warning, setWarning] = useState<TextEditWarning | undefined>(undefined);
   const [loopCount, setLoopCount] = useState<number | undefined>(undefined);
   const activeSessionRef = useRef<{ ref: ElementRef; source: ElementSource } | undefined>(
     undefined,
@@ -226,8 +149,6 @@ function useTextEditState() {
   return {
     editingRef,
     setEditingRef,
-    warning,
-    setWarning,
     loopCount,
     setLoopCount,
     activeSessionRef,
@@ -238,7 +159,7 @@ function useTextEditState() {
 type TextEditState = ReturnType<typeof useTextEditState>;
 
 function useTextEditHandlers(channel: BridgeChannel, state: TextEditState, editMode: EditMode) {
-  const { activeSessionRef, resetEditing, setWarning, setLoopCount, setEditingRef } = state;
+  const { activeSessionRef, resetEditing, setLoopCount, setEditingRef } = state;
 
   const handleCommit = useCallback(
     async (ref: ElementRef, text: string) => {
@@ -256,7 +177,6 @@ function useTextEditHandlers(channel: BridgeChannel, state: TextEditState, editM
     async (ref: ElementRef) => {
       if (editMode === 'viewOnly') return;
       await processTextEditRequest(ref, channel, {
-        setWarning,
         setLoopCount,
         setEditingRef,
         setActiveSession: (s) => {
@@ -264,7 +184,7 @@ function useTextEditHandlers(channel: BridgeChannel, state: TextEditState, editM
         },
       });
     },
-    [channel, activeSessionRef, setEditingRef, setLoopCount, setWarning, editMode],
+    [channel, activeSessionRef, setEditingRef, setLoopCount, editMode],
   );
 
   const getActiveRef = useCallback(() => activeSessionRef.current?.ref, [activeSessionRef]);
@@ -274,10 +194,8 @@ function useTextEditHandlers(channel: BridgeChannel, state: TextEditState, editM
 
 export function useCanvasTextEdit(options: UseCanvasTextEditOptions = {}): UseCanvasTextEditReturn {
   const channel = options.channel ?? studioBridgeChannel;
-  const onOpenEditor = options.onOpenEditor;
   const editMode = useEditMode();
   const state = useTextEditState();
-  const { warning, setWarning } = state;
   const { handleCommit, handleRequest, getActiveRef } = useTextEditHandlers(
     channel,
     state,
@@ -286,20 +204,9 @@ export function useCanvasTextEdit(options: UseCanvasTextEditOptions = {}): UseCa
 
   useTextEditBridge(channel, handleRequest, handleCommit, state.resetEditing, getActiveRef);
 
-  const dismissWarning = useCallback(() => {
-    setWarning(undefined);
-  }, [setWarning]);
-
-  const openEditorForWarning = useCallback(() => {
-    openEditorAt(warning, onOpenEditor);
-  }, [warning, onOpenEditor]);
-
   return {
     editingRef: state.editingRef,
-    warning,
     loopCount: state.loopCount,
     isEditing: state.editingRef !== undefined,
-    dismissWarning,
-    openEditorForWarning,
   };
 }
