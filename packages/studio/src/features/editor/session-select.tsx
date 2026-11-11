@@ -226,7 +226,7 @@ function SessionTrigger({
       title={`${t('sessions.title')}: ${t('sessions.explain')}`}
       aria-label={`${t('sessions.title')}: ${label}`}
       onClick={onToggle}
-      className="flex items-center gap-1 whitespace-nowrap rounded border border-border bg-field px-2 py-1 text-xs font-medium text-ink hover:bg-field-hover"
+      className="flex h-7 items-center gap-1 rounded-md border border-line bg-card-solid px-2 text-xs font-medium whitespace-nowrap text-ink hover:bg-field"
     >
       <UserRound aria-hidden className="size-3.5 text-ink-soft" />
       <span data-testid="session-select-label">{label}</span>

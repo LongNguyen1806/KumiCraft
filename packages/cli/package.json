@@ -1,6 +1,6 @@
 {
   "name": "kumicraft",
-  "version": "1.0.6",
+  "version": "1.0.5",
   "description": "Visual editor for React + Vite projects: design on a live Canvas, KumiCraft writes the code in your own files.",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",

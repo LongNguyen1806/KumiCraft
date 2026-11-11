@@ -53,12 +53,8 @@ export function NoProjectScreen({ version, suggestedPath, onProjectOpened }: NoP
 
   return (
     <div className="flex h-full flex-col overflow-auto">
-      <TopBar
-        version={version}
-        onOpenProject={() => {
-          setDialog('open');
-        }}
-      />
+      {/* No Project button here: the page itself offers New project and Open project. */}
+      <TopBar version={version} />
       <main className="mx-auto grid w-full max-w-[640px] flex-1 content-center gap-4 px-6 py-10">
         <h1 className="text-[28px] font-semibold tracking-tight text-balance">
           {t('noProject.title')}

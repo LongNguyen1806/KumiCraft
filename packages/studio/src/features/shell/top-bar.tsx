@@ -5,12 +5,11 @@ import { SettingsButton } from '../settings/settings-button.tsx';
 
 type TopBarProps = {
   readonly version?: string;
-  readonly onOpenProject?: () => void;
   readonly children?: ReactNode;
 };
 
-/** Brand pill, screen-specific controls, version and language: the top row of every screen. */
-export function TopBar({ version, onOpenProject, children }: TopBarProps) {
+/** The top row outside the Editor: brand, screen controls, version and Settings. */
+export function TopBar({ version, children }: TopBarProps) {
   const { t } = useTranslation();
   return (
     <header className="flex h-11 shrink-0 items-center gap-2 border-b border-line bg-card-solid px-2.5">
@@ -23,16 +22,6 @@ export function TopBar({ version, onOpenProject, children }: TopBarProps) {
         </span>
         <span>{t('app.name')}</span>
       </div>
-      {onOpenProject !== undefined && (
-        <button
-          type="button"
-          onClick={onOpenProject}
-          className="h-7 rounded-md border border-line bg-card-solid px-2.5 text-xs font-medium text-ink hover:bg-field"
-          data-testid="project-btn"
-        >
-          {t('project.button')}
-        </button>
-      )}
       {children}
       <div className="flex-1" />
       {version !== undefined && (
