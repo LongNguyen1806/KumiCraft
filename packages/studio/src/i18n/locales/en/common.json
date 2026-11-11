@@ -603,7 +603,8 @@
     "inUse": "In use",
     "ignoredWarning": "The drafts directory is ignored by .gitignore. Changes will not be committed to Git.",
     "freeWarning": "Freeform drafts use fixed positions; check responsive display on mobile after promoting.",
-    "providerHint": "Draft runs outside the app; this component may need a Provider."
+    "providerHint": "Draft runs outside the app; this component may need a Provider.",
+    "loadFailed": "Could not load the drafts."
   },
   "components": {
     "title": "Components",
@@ -628,7 +629,8 @@
       "nameExists": "A component with this name already exists.",
       "fileExists": "Target file already exists.",
       "usesLocalScope": "Element uses local scope variables: {{name}}."
-    }
+    },
+    "loadFailed": "Could not load the components."
   },
   "freeFrame": {
     "toggle": "Free frame",

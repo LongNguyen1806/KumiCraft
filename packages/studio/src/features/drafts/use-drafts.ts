@@ -13,6 +13,8 @@ export type DraftsData = {
   readonly projectId: string | undefined;
   /** False until the first answer: the panel shows that it is reading, not that there is none. */
   readonly loaded: boolean;
+  /** The read failed and there is no list to show (spec-log #122). */
+  readonly failed: boolean;
   readonly reload: () => void;
 };
 
@@ -58,19 +60,33 @@ async function readDrafts(
   isActive: () => boolean,
   openDraft: (file: string, projectId?: string) => void,
   show: (info: DraftsInfo, projectId: string | undefined) => void,
-): Promise<void> {
+): Promise<boolean> {
   try {
     const [draftsInfo, proj] = await Promise.all([
       fetchDrafts(),
       fetchProject().catch(() => undefined),
     ]);
-    if (!isActive()) return;
+    if (!isActive()) return true;
     show(draftsInfo, proj?.id);
     useCanvasViewStore.getState().setDraftsDir(draftsInfo.dir);
     restoreStoredDraft(draftsInfo.drafts, proj?.id, openDraft);
+    return true;
   } catch {
     // Drafts endpoint or project not ready yet.
+    return false;
   }
+}
+
+/** Reads the list again when a draft file or the project changes. */
+function followDraftEvents(dir: string, isActive: () => boolean, load: () => Promise<void>) {
+  return createEventsClient({
+    onEvent: (event) => {
+      if (!isActive()) return;
+      handleDraftsEvent(event, dir, () => {
+        void load();
+      });
+    },
+  });
 }
 
 export function useDrafts(): DraftsData {
@@ -81,31 +97,27 @@ export function useDrafts(): DraftsData {
   });
   const [projectId, setProjectId] = useState<string | undefined>();
   const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [refreshCount, setRefreshCount] = useState(0);
   const openDraft = useCanvasViewStore((s) => s.openDraft);
 
   useEffect(() => {
     let active = true;
-    const load = () =>
-      readDrafts(
+    const load = async () => {
+      const ok = await readDrafts(
         () => active,
         openDraft,
         (info, pid) => {
           setData(info);
           setProjectId(pid);
         },
-      ).finally(() => {
-        if (active) setLoaded(true);
-      });
+      );
+      if (!active) return;
+      setLoaded(true);
+      setFailed(!ok);
+    };
     void load();
-    const client = createEventsClient({
-      onEvent: (event) => {
-        if (!active) return;
-        handleDraftsEvent(event, data.dir, () => {
-          void load();
-        });
-      },
-    });
+    const client = followDraftEvents(data.dir, () => active, load);
     return () => {
       active = false;
       client.close();
@@ -118,6 +130,7 @@ export function useDrafts(): DraftsData {
     ignored: data.ignored,
     projectId,
     loaded,
+    failed,
     reload: () => {
       setRefreshCount((c) => c + 1);
     },

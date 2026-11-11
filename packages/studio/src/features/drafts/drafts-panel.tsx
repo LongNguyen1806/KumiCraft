@@ -6,9 +6,8 @@ import { deleteDraft, duplicateDraft, renameDraft } from '../../api/project-clie
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { useEditMode } from '../project/use-edit-mode.ts';
-import { DraftsStatus } from './drafts-empty.tsx';
-import { NewDraftDialog } from './new-draft-dialog.tsx';
-import { PromoteDraftDialog } from './promote-draft-dialog.tsx';
+import { DraftsDialogs } from './drafts-dialogs.tsx';
+import { DraftsNotices, DraftsStatus } from './drafts-empty.tsx';
 import { useDrafts } from './use-drafts.ts';
 
 type DraftRowActionsProps = {
@@ -274,6 +273,8 @@ export type DraftsContentProps = {
   readonly actions: ReturnType<typeof useDraftItemActions>;
   readonly onPromote: (d: DraftInfo) => void;
   readonly loaded?: boolean | undefined;
+  readonly failed?: boolean | undefined;
+  readonly onRetry?: (() => void) | undefined;
   /** Opens the New draft dialog; without it the panel offers no create button. */
   readonly onNew?: (() => void) | undefined;
 };
@@ -285,27 +286,22 @@ export function DraftsContent({
   actions,
   onPromote,
   loaded = true,
+  failed = false,
   onNew,
+  onRetry,
 }: DraftsContentProps) {
-  const { t } = useTranslation();
   const [renamingFile, setRenamingFile] = useState<string>();
 
   return (
     <div data-testid="drafts-dialog" className="flex flex-col gap-3">
-      {ignored && (
-        <div
-          data-testid="drafts-ignored-warning"
-          className="rounded-md bg-sun-soft p-2 text-xs text-ink"
-        >
-          {t('drafts.ignoredWarning')}
-        </div>
-      )}
-      {errorMsg !== undefined && (
-        <div role="alert" className="text-xs text-danger">
-          {errorMsg}
-        </div>
-      )}
-      <DraftsStatus loaded={loaded} count={drafts.length} onNew={onNew} />
+      <DraftsNotices ignored={ignored} errorMsg={errorMsg} />
+      <DraftsStatus
+        loaded={loaded}
+        failed={failed}
+        count={drafts.length}
+        onNew={onNew}
+        onRetry={onRetry}
+      />
       <DraftsList
         drafts={drafts}
         renamingFile={renamingFile}
@@ -364,6 +360,8 @@ export function DraftsPanel({
         actions={actions}
         onPromote={setPromotingDraft}
         loaded={loaded}
+        failed={propDrafts === undefined && storeData.failed}
+        onRetry={onReload}
         onNew={() => {
           setNewOpen(true);
         }}
@@ -381,38 +379,5 @@ export function DraftsPanel({
         }}
       />
     </div>
-  );
-}
-
-function DraftsDialogs({
-  newOpen,
-  promoting,
-  projectId,
-  onReload,
-  onCloseNew,
-  onClosePromote,
-}: {
-  readonly newOpen: boolean;
-  readonly promoting: DraftInfo | undefined;
-  readonly projectId: string | undefined;
-  readonly onReload: () => void;
-  readonly onCloseNew: () => void;
-  readonly onClosePromote: () => void;
-}) {
-  return (
-    <>
-      {newOpen && (
-        <NewDraftDialog open projectId={projectId} onClose={onCloseNew} onCreated={onReload} />
-      )}
-      {promoting !== undefined && (
-        <PromoteDraftDialog
-          open={true}
-          draft={promoting}
-          projectId={projectId}
-          onClose={onClosePromote}
-          onPromoted={onReload}
-        />
-      )}
-    </>
   );
 }

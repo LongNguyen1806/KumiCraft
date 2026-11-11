@@ -3,12 +3,14 @@ import type { ProjectComponent } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import * as eventsClient from '../../api/events-client.ts';
 import * as projectClient from '../../api/project-client.ts';
 import * as sourceClient from '../../api/source-client.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { useDesignStore } from '../design/design-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { ComponentsPanel } from './components-panel.tsx';
+import { useComponentsStore } from './use-project-components.ts';
 
 describe('ComponentsPanel (Scenarios #11, #12) [R-CP-12, R-CP-13]', () => {
   const mockComponents: readonly ProjectComponent[] = [
@@ -134,5 +136,26 @@ describe('ComponentsPanel (Scenarios #11, #12) [R-CP-12, R-CP-13]', () => {
         imports: ["import { ProductCard } from '@/components/ProductCard';"],
       },
     });
+  });
+
+  it('says the list could not be read, not that there is none, and Try again reads it again (spec-log #122)', async () => {
+    useComponentsStore.getState().reset();
+    vi.spyOn(eventsClient, 'createEventsClient').mockReturnValue({
+      close: vi.fn(),
+      isConnected: () => true,
+    });
+    const fetchSpy = vi
+      .spyOn(projectClient, 'fetchComponents')
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValue([...mockComponents]);
+    render(<ComponentsPanel />);
+
+    expect(await screen.findByTestId('components-load-failed')).toBeDefined();
+    expect(screen.queryByText('This project has no components yet')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('Header')).toBeDefined();
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    useComponentsStore.getState().reset();
   });
 });

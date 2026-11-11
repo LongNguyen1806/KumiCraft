@@ -33,23 +33,39 @@ export type ComponentsState = {
   readonly components: readonly ProjectComponent[];
   /** False until the first list of this project arrives: the panel shows that it is looking. */
   readonly loaded: boolean;
+  /** The last read failed and nothing could be shown (spec-log #122). */
+  readonly failed: boolean;
+  /** Bumped by Try again: the panel reads the list once more. */
+  readonly attempt: number;
   setComponents: (components: readonly ProjectComponent[]) => void;
+  setFailed: () => void;
+  retry: () => void;
   reset: () => void;
 };
 
 export const useComponentsStore = create<ComponentsState>((set) => ({
   components: [],
   loaded: false,
+  failed: false,
+  attempt: 0,
   setComponents: (components) => {
-    set({ components, loaded: true });
+    set({ components, loaded: true, failed: false });
+  },
+  // A list shown before stays: only a first read that fails turns into the notice.
+  setFailed: () => {
+    set((s) => ({ loaded: true, failed: s.components.length === 0 }));
+  },
+  retry: () => {
+    set((s) => ({ loaded: false, failed: false, attempt: s.attempt + 1 }));
   },
   reset: () => {
-    set({ components: [], loaded: false });
+    set({ components: [], loaded: false, failed: false });
   },
 }));
 
 export function useProjectComponents(): readonly ProjectComponent[] {
   const components = useComponentsStore((s) => s.components);
+  const attempt = useComponentsStore((s) => s.attempt);
 
   useEffect(() => {
     let active = true;
@@ -60,7 +76,7 @@ export function useProjectComponents(): readonly ProjectComponent[] {
         const res = await fetchComponents();
         if (active) useComponentsStore.getState().setComponents(res);
       } catch {
-        if (active) useComponentsStore.getState().setComponents([]);
+        if (active) useComponentsStore.getState().setFailed();
       }
     };
 
@@ -83,7 +99,7 @@ export function useProjectComponents(): readonly ProjectComponent[] {
       if (timer !== undefined) clearTimeout(timer);
       client.close();
     };
-  }, []);
+  }, [attempt]);
 
   return components;
 }

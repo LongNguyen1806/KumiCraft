@@ -603,7 +603,8 @@
     "inUse": "Đang dùng",
     "ignoredWarning": "Thư mục bản nháp đang bị .gitignore bỏ qua. Các thay đổi sẽ không được commit vào Git.",
     "freeWarning": "Bản nháp tự do dùng vị trí tuyệt đối; hãy kiểm tra hiển thị responsive trên điện thoại sau khi chuyển đổi.",
-    "providerHint": "Bản nháp chạy ngoài app; component này cần Provider"
+    "providerHint": "Bản nháp chạy ngoài app; component này cần Provider",
+    "loadFailed": "Không tải được danh sách bản nháp."
   },
   "components": {
     "title": "Component",
@@ -628,7 +629,8 @@
       "nameExists": "Tên component đã tồn tại trong dự án.",
       "fileExists": "File đích đã tồn tại.",
       "usesLocalScope": "Phần tử sử dụng biến trong phạm vi cục bộ: {{name}}."
-    }
+    },
+    "loadFailed": "Không tải được danh sách component."
   },
   "freeFrame": {
     "toggle": "Khung tự do",

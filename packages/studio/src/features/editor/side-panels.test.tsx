@@ -1,6 +1,6 @@
 // Tests for side panels and tab switching [WP-4.00, R-PG-15, R-PJ-02].
 import type { ProjectInfo } from '@kumicraft/shared';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -10,7 +10,12 @@ import { useActivityStore } from '../shell/activity-store.ts';
 import { LeftPanel, RightPanel } from './side-panels.tsx';
 
 vi.mock('../../api/project-client.ts', () => ({
-  fetchPages: vi.fn().mockResolvedValue({ pages: [], convention: true }),
+  // The same shape as the server answers: `router` is always there (PagesInfoSchema).
+  fetchPages: vi.fn().mockResolvedValue({
+    pages: [],
+    convention: true,
+    router: { status: 'none', hasRouterPackage: false },
+  }),
   fetchProjectTheme: vi.fn().mockResolvedValue({
     file: 'src/theme.css',
     system: 'css',
@@ -114,5 +119,17 @@ describe('SidePanels [WP-4.00]', () => {
 
     expect(screen.getByRole('complementary', { name: i18next.t('editor.layers') })).toBeDefined();
     expect(screen.queryByTestId('brand-panel') ?? undefined).toBeUndefined();
+  });
+
+  it('keeps the open panel as it is when the interface language changes (spec-log #122)', async () => {
+    useActivityStore.getState().setActive('pages');
+    render(<LeftPanel />);
+    const before = screen.getByTestId('pages-panel');
+    const language = i18next.resolvedLanguage === 'vi' ? 'en' : 'vi';
+    await act(async () => {
+      await i18next.changeLanguage(language);
+    });
+    // The same element: the panel was not unmounted and drawn again.
+    expect(screen.getByTestId('pages-panel')).toBe(before);
   });
 });

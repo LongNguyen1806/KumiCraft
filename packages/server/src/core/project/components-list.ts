@@ -145,8 +145,15 @@ function extractExportedComponents(
   const results: { name: string; kind: 'component' | 'layout'; importStatement: string }[] = [];
   const importSource = buildImportSource(file, aliasPrefix);
 
+  // A capitalised name is a component only when this file makes it one (a function, a class, memo,
+  // forwardRef…); a name declared elsewhere (`export { Button } from './button'`) cannot be checked
+  // here and is kept (spec-log #121).
+  const { declared, components } = summary.kinds;
+  const isComponent = (name: string) =>
+    /^[A-Z]/.test(name) && (components.has(name) || !declared.has(name));
+
   for (const name of summary.exported) {
-    if (/^[A-Z]/.test(name)) {
+    if (isComponent(name)) {
       results.push({
         name,
         kind,
@@ -156,7 +163,7 @@ function extractExportedComponents(
   }
 
   const defaultLocal = summary.defaultLocal;
-  if (defaultLocal && /^[A-Z]/.test(defaultLocal) && !summary.exported.has(defaultLocal)) {
+  if (defaultLocal && isComponent(defaultLocal) && !summary.exported.has(defaultLocal)) {
     results.push({
       name: defaultLocal,
       kind,

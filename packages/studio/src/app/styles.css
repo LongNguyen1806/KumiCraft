@@ -24,6 +24,8 @@
   --color-on-charcoal: #ffffff;
   --color-sun: #f5cf4f;
   --color-sun-soft: #fbf0c4;
+  /* Text on the yellow brand colour: dark in both themes. */
+  --color-on-sun: #1c1c1a;
   --color-leaf: #2f7d32;
   --color-danger: #b3261e;
   /* Used by buttons, inputs and links across the Studio; they were referenced without a value, so

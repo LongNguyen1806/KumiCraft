@@ -16,7 +16,7 @@ export function TopBar({ version, children }: TopBarProps) {
       <div className="flex h-[30px] items-center gap-2 rounded-md border border-line pr-2.5 pl-1.5 text-[13px] font-semibold">
         <span
           aria-hidden
-          className="grid size-5 place-items-center rounded-[5px] bg-sun text-[11px] font-bold text-ink"
+          className="grid size-5 place-items-center rounded-[5px] bg-sun text-[11px] font-bold text-on-sun"
         >
           K
         </span>

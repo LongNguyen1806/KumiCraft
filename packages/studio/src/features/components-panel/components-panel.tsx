@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { InsertButton } from '../../components/ui/insert-button.tsx';
+import { LoadFailed } from '../../components/ui/load-failed.tsx';
 import { type ErrorInfo, errorText } from '../../routes/error-text.ts';
 import { useDesignStore } from '../design/design-store.ts';
 import { SelectInFileHint } from '../design/select-in-file-hint.tsx';
@@ -122,33 +123,60 @@ function useFilteredComponents(
 }
 
 /** The components, or that the list is still being read, or that there is none. */
+/** Still reading, could not read, or no component in the project. */
+function ComponentListStatus({
+  loaded,
+  failed,
+}: {
+  readonly loaded: boolean;
+  readonly failed: boolean;
+}) {
+  const { t } = useTranslation();
+  if (!loaded) {
+    return (
+      <p
+        role="status"
+        data-testid="components-loading"
+        className="flex items-center justify-center gap-2 py-6 text-xs text-ink-faint"
+      >
+        <Loader2 className="size-3.5 animate-spin" aria-hidden />
+        {t('components.loading')}
+      </p>
+    );
+  }
+  if (failed) {
+    return (
+      <LoadFailed
+        testId="components-load-failed"
+        message={t('components.loadFailed')}
+        onRetry={() => {
+          useComponentsStore.getState().retry();
+        }}
+      />
+    );
+  }
+  return <p className="py-6 text-center text-xs text-ink-faint">{t('components.empty')}</p>;
+}
+
 function ComponentList({
   loaded,
+  failed,
   components,
   designFile,
   disabled,
   onSelect,
 }: {
   readonly loaded: boolean;
+  readonly failed: boolean;
   readonly components: readonly ProjectComponent[];
   readonly designFile: string | undefined;
   readonly disabled: boolean;
   readonly onSelect: (component: ProjectComponent) => void;
 }) {
-  const { t } = useTranslation();
   return (
     <div className="flex-1 space-y-1.5 overflow-y-auto py-1">
-      {!loaded ? (
-        <p
-          role="status"
-          data-testid="components-loading"
-          className="flex items-center justify-center gap-2 py-6 text-xs text-ink-faint"
-        >
-          <Loader2 className="size-3.5 animate-spin" aria-hidden />
-          {t('components.loading')}
-        </p>
-      ) : components.length === 0 ? (
-        <p className="py-6 text-center text-xs text-ink-faint">{t('components.empty')}</p>
+      {!loaded || failed || components.length === 0 ? (
+        <ComponentListStatus loaded={loaded} failed={failed} />
       ) : (
         components.map((comp) => (
           <ComponentItem
@@ -168,6 +196,7 @@ export function ComponentsPanel() {
   const { t } = useTranslation();
   const components = useProjectComponents();
   const loaded = useComponentsStore((s) => s.loaded);
+  const failed = useComponentsStore((s) => s.failed);
   const designFile = useDesignStore((s) => s.componentMode?.filePath ?? s.target?.file);
   const selectedRefs = useSelectionStore((s) => s.selectedRefs);
   const [query, setQuery] = useState('');
@@ -198,6 +227,7 @@ export function ComponentsPanel() {
 
       <ComponentList
         loaded={loaded}
+        failed={failed}
         components={filtered}
         designFile={designFile}
         disabled={!hasSelection || inserting}

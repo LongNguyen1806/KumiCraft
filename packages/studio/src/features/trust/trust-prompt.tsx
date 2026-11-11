@@ -221,7 +221,7 @@ function TrustDialog({
         <button
           type="button"
           onClick={() => void trust()}
-          className="h-8 rounded-md bg-sun px-4 font-medium text-ink"
+          className="h-8 rounded-md bg-sun px-4 font-medium text-on-sun"
         >
           {t('trust.confirm')}
         </button>

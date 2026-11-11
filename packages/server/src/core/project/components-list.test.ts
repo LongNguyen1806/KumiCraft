@@ -368,4 +368,25 @@ describe('listProjectComponents', { timeout: 30_000 }, () => {
     // Before: every component read the whole project again (one file read ~20 times here).
     expect(Math.max(...reads.values())).toBeLessThanOrEqual(2);
   });
+
+  it('[R-CP-12] lists only real components, not capitalised constants (spec-log #121)', async () => {
+    const { target, info } = await setupProject();
+    await writeFile(
+      join(target, 'src', 'components', 'Verdict.jsx'),
+      [
+        "export const AI_VERDICT = { approve: 'approve', reject: 'reject' };",
+        "export const STATUS_LABELS = ['open', 'closed'];",
+        'export function VerdictBadge() {',
+        '  return <span>{AI_VERDICT.approve}</span>;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+    const names = (await listProjectComponents({ fs: directWriteFs }, target, info)).map(
+      (c) => c.name,
+    );
+    expect(names).toContain('VerdictBadge');
+    expect(names).not.toContain('AI_VERDICT');
+    expect(names).not.toContain('STATUS_LABELS');
+  });
 });

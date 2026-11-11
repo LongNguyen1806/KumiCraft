@@ -211,4 +211,19 @@ describe('Studio Drafts [R-DR-10 .. R-DR-15]', () => {
     expect(screen.getByTestId('drafts-new-btn')).toBeDefined();
     expect(screen.queryByTestId('drafts-empty')).toBeNull();
   });
+
+  it('says the drafts could not be read and Try again reads them again (spec-log #122)', async () => {
+    const fetchSpy = vi
+      .spyOn(projectClient, 'fetchDrafts')
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValue({ drafts: [], dir: 'src/drafts', ignored: false });
+    render(<DraftsPanel />);
+
+    expect(await screen.findByTestId('drafts-load-failed')).toBeDefined();
+    expect(screen.queryByTestId('drafts-empty')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /Try again|Thử lại/ }));
+    expect(await screen.findByTestId('drafts-empty')).toBeDefined();
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
 });

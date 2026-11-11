@@ -53,6 +53,11 @@ describe('guardSelfRender', () => {
     ],
     ['inside a ternary', 'function Tree({ n }) { return n ? <Tree n={n - 1} /> : <p />; }'],
     ['as another component', 'function Card() { return <div><Header /></div>; }'],
+    [
+      'with a local of the same name',
+      'function Icon({ name }) { const Icon = icons[name]; return <div><Icon /></div>; }',
+    ],
+    ['with a parameter of the same name', 'function Slot({ Slot }) { return <Slot />; }'],
   ])('leaves a real recursion or an ordinary component alone (%s)', (_case, code) => {
     expect(run(`export ${code}\n`)).not.toContain('throw new Error(');
   });

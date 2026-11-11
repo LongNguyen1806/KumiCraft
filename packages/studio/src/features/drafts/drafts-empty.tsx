@@ -1,6 +1,8 @@
-// What the Drafts panel shows while it reads the list, and when the project has no draft yet.
+// What the Drafts panel shows above its list: reading, could not read, none yet, notices.
 import { Loader2, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+
+import { LoadFailed } from '../../components/ui/load-failed.tsx';
 
 function DraftsLoading() {
   const { t } = useTranslation();
@@ -51,14 +53,52 @@ function DraftsEmpty({ onNew }: { readonly onNew: () => void }) {
 /** Reading, no draft yet (with the button), or the button above the list. */
 export function DraftsStatus({
   loaded,
+  failed = false,
   count,
   onNew,
+  onRetry,
 }: {
   readonly loaded: boolean;
+  readonly failed?: boolean | undefined;
   readonly count: number;
   readonly onNew: (() => void) | undefined;
+  readonly onRetry?: (() => void) | undefined;
 }) {
+  const { t } = useTranslation();
   if (!loaded) return <DraftsLoading />;
+  if (failed && count === 0 && onRetry !== undefined) {
+    return (
+      <LoadFailed testId="drafts-load-failed" message={t('drafts.loadFailed')} onRetry={onRetry} />
+    );
+  }
   if (onNew === undefined) return undefined;
   return count === 0 ? <DraftsEmpty onNew={onNew} /> : <NewDraftButton onNew={onNew} />;
+}
+
+/** The .gitignore warning and the last action's error, above the list. */
+export function DraftsNotices({
+  ignored,
+  errorMsg,
+}: {
+  readonly ignored: boolean;
+  readonly errorMsg: string | undefined;
+}) {
+  const { t } = useTranslation();
+  return (
+    <>
+      {ignored && (
+        <div
+          data-testid="drafts-ignored-warning"
+          className="rounded-md bg-sun-soft p-2 text-xs text-ink"
+        >
+          {t('drafts.ignoredWarning')}
+        </div>
+      )}
+      {errorMsg !== undefined && (
+        <div role="alert" className="text-xs text-danger">
+          {errorMsg}
+        </div>
+      )}
+    </>
+  );
 }

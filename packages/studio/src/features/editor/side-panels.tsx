@@ -25,11 +25,13 @@ type PanelProps = {
   readonly title: string;
   readonly tabs?: ReactNode | undefined;
   readonly onHeaderSlotRef?: ((el: HTMLDivElement | undefined) => void) | undefined;
+  /** What the panel shows (`files`, `chat`…): a new one starts a fresh error boundary. */
+  readonly view: string;
   readonly children: ReactNode;
 };
 
 /** A docked panel (P5): a 36 px header with the title, or with tabs in its place, and actions. */
-function Panel({ label, title, tabs, onHeaderSlotRef, children }: PanelProps) {
+function Panel({ label, title, tabs, onHeaderSlotRef, view, children }: PanelProps) {
   return (
     <aside
       aria-label={label}
@@ -54,8 +56,9 @@ function Panel({ label, title, tabs, onHeaderSlotRef, children }: PanelProps) {
         )}
       </div>
       <div className="min-h-0 flex-1 overflow-auto px-3 pt-2.5 pb-3.5">
-        {/* A new boundary per panel or tab, so switching away and back tries again. */}
-        <ErrorBoundary key={title} scope="panel">
+        {/* A new boundary per panel or tab, so switching away and back tries again. Keyed by the
+            view, not the title: changing the language must not redraw the panel. */}
+        <ErrorBoundary key={view} scope="panel">
           {children}
         </ErrorBoundary>
       </div>
@@ -115,7 +118,7 @@ export function LeftPanel() {
   const title = resolveLeftPanelTitle(active, t);
 
   return (
-    <Panel label={title} title={title}>
+    <Panel label={title} title={title} view={active}>
       {active === 'files' && <FilesPanel />}
       {active === 'layers' && <LayerTree />}
       {active === 'library' && <LibraryPanel />}
@@ -181,6 +184,7 @@ export function RightPanel({ trusted = false }: RightPanelProps) {
       <Panel
         label={t('editor.rightPanel')}
         title={title}
+        view={tab}
         tabs={<RightPanelTabs tab={tab} onSelectTab={setTab} />}
         onHeaderSlotRef={setHeaderSlot}
       >

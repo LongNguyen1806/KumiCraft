@@ -127,11 +127,44 @@ function lineOf(element: Node): number | undefined {
   return typeof start.line === 'number' ? start.line : undefined;
 }
 
+/** Whether a node, its params or anything inside it declares `name` again (`const Icon = …`). */
+function redeclares(node: unknown, name: string): boolean {
+  if (Array.isArray(node)) return node.some((item) => redeclares(item, name));
+  if (!isNode(node)) return false;
+  const id = child(node, 'id');
+  if (
+    (node.type === 'VariableDeclarator' ||
+      node.type === 'FunctionDeclaration' ||
+      node.type === 'ClassDeclaration') &&
+    id?.type === 'Identifier' &&
+    id['name'] === name
+  ) {
+    return true;
+  }
+  return Object.keys(node).some((key) => key !== 'loc' && redeclares(node[key], name));
+}
+
+/** Whether a parameter pattern binds `name` (`({ Icon })`, `(Icon)`, `([Icon])`). */
+function bindsParam(node: unknown, name: string): boolean {
+  if (Array.isArray(node)) return node.some((item) => bindsParam(item, name));
+  if (!isNode(node)) return false;
+  if (node.type === 'Identifier') return node['name'] === name;
+  return Object.keys(node).some(
+    (key) =>
+      key !== 'loc' && key !== 'key' && key !== 'typeAnnotation' && bindsParam(node[key], name),
+  );
+}
+
+/** The component's own name can mean something else inside it: then it is not a self-draw. */
+const shadowed = (fn: Node, name: string): boolean =>
+  bindsParam(fn['params'], name) || redeclares(child(fn, 'body'), name);
+
 /** Adds the error where each component of the file draws itself unconditionally. */
 export function guardSelfRender(program: unknown, s: MagicString, file: string): number {
   if (!isNode(program)) return 0;
   let guarded = 0;
   for (const { name, fn } of componentsOf(program)) {
+    if (shadowed(fn, name)) continue;
     const found = findDirectSelf(alwaysReturned(fn), name);
     const start = found === undefined ? undefined : offset(found.element, 'start');
     const end = found === undefined ? undefined : offset(found.element, 'end');

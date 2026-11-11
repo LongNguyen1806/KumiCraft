@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { asAstNode, type AstNode, parseJsxAst } from './ast-helpers.ts';
+import { type TopLevelKinds, topLevelKinds } from './component-kinds.ts';
 
 const MAX_FILES = 2000;
 const MAX_FILE_BYTES = 1024 * 1024;
@@ -19,6 +20,8 @@ type FileSummary = {
   /** Local names exported under their own name, and the local name of the default export. */
   readonly exported: ReadonlySet<string>;
   readonly defaultLocal?: string | undefined;
+  /** Which top-level names are declared here, and which of them are components. */
+  readonly kinds: TopLevelKinds;
 };
 
 export type UsageCounter = {
@@ -109,7 +112,13 @@ export function summarize(code: string): FileSummary | undefined {
       if (tag !== undefined) jsxCounts.set(tag, (jsxCounts.get(tag) ?? 0) + 1);
     }
   });
-  return { imports, jsxCounts, exported, defaultLocal };
+  return {
+    imports,
+    jsxCounts,
+    exported,
+    defaultLocal,
+    kinds: topLevelKinds(asAstNode(ast['program'])),
+  };
 }
 
 /** `@/*` → target prefix from tsconfig.json `compilerOptions.paths`, without comments. */
