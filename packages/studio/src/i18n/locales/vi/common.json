@@ -158,6 +158,13 @@
     "interface": "Giao diện",
     "language": "Ngôn ngữ giao diện",
     "languageHelp": "Đổi ngay, không tải lại trang. Được nhớ cho mọi dự án trên máy này.",
+    "theme": "Màu giao diện",
+    "themeHelp": "Theo hệ thống đổi theo cài đặt sáng/tối của máy. Trang của dự án trong Canvas giữ màu của chính nó.",
+    "themes": {
+      "light": "Sáng",
+      "dark": "Tối",
+      "system": "Theo hệ thống"
+    },
     "tools": "Công cụ",
     "editor": "Editor để mở file mã nguồn",
     "editorHelp": "\"Mở trong editor\" nhảy tới đúng file và dòng của phần tử đang chọn trong editor này.",

@@ -44,9 +44,9 @@ const IMG_EXTS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.ic
 
 function resolveFileIcon(name: string): ReactNode {
   const ext = name.slice(name.lastIndexOf('.')).toLowerCase();
-  if (CODE_EXTS.has(ext)) return <FileCode className="size-3.5 shrink-0 text-amber-600" />;
-  if (STYLE_EXTS.has(ext)) return <FileText className="size-3.5 shrink-0 text-sky-600" />;
-  if (ext === '.json') return <FileJson className="size-3.5 shrink-0 text-emerald-600" />;
+  if (CODE_EXTS.has(ext)) return <FileCode className="size-3.5 shrink-0 text-warn" />;
+  if (STYLE_EXTS.has(ext)) return <FileText className="size-3.5 shrink-0 text-accent" />;
+  if (ext === '.json') return <FileJson className="size-3.5 shrink-0 text-leaf" />;
   if (IMG_EXTS.has(ext)) return <ImageIcon className="size-3.5 shrink-0 text-purple-600" />;
   return <File className="size-3.5 shrink-0 text-ink-faint" />;
 }
@@ -54,7 +54,7 @@ function resolveFileIcon(name: string): ReactNode {
 function resolveEntryIcon(entry: FileTreeEntry, isExpanded: boolean): ReactNode {
   if (entry.kind !== 'directory') return resolveFileIcon(entry.name);
   const Icon = isExpanded ? FolderOpen : Folder;
-  return <Icon className="size-3.5 shrink-0 text-amber-500" />;
+  return <Icon className="size-3.5 shrink-0 text-warn" />;
 }
 
 function StatusDots({

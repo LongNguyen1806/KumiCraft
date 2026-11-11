@@ -83,7 +83,8 @@ describe('/api/v1/settings', () => {
   it('rejects unknown fields and invalid values with E016', async () => {
     for (const payload of [
       { language: 'fr' },
-      { theme: 'dark' },
+      { theme: 'blue' },
+      { colours: 'dark' },
       { editor: 'notepad' },
       { ai: { keys: { openai: 'x' } } },
       { agent: { preferred: 'gpt' } },

@@ -50,7 +50,7 @@ function LoginStatusView() {
 
   if (loginFlow.phase === 'timedOut') {
     return (
-      <div data-testid="agent-login-timeout" className="text-xs text-amber-700 font-medium">
+      <div data-testid="agent-login-timeout" className="text-xs text-warn font-medium">
         {t('loginTimeoutNotice')}
       </div>
     );
@@ -177,7 +177,7 @@ export function AgentLoginCard() {
   return (
     <div
       data-testid="agent-login-card"
-      className="flex flex-col gap-3 rounded-lg border border-amber-300 bg-amber-50/70 p-3.5 text-ink shadow-sm"
+      className="flex flex-col gap-3 rounded-lg border border-sun bg-sun-soft p-3.5 text-ink shadow-sm"
     >
       <div className="flex items-center justify-between">
         <h4 className="text-xs font-semibold text-ink">

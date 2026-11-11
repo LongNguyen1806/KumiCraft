@@ -98,7 +98,7 @@ function ImageChip({
         onClick={() => {
           onRemove(image.localId);
         }}
-        className="absolute top-0.5 right-0.5 rounded-md bg-charcoal/70 p-0.5 text-white hover:bg-charcoal"
+        className="absolute top-0.5 right-0.5 rounded-md bg-charcoal/70 p-0.5 text-on-charcoal hover:bg-charcoal"
       >
         <X className="size-2.5" />
       </button>

@@ -74,7 +74,7 @@ function RevertConfirmDialog({
           data-testid="chat-revert-confirm"
           disabled={busy}
           onClick={onConfirm}
-          className="rounded bg-rose-600 px-2.5 py-1 text-white hover:bg-rose-700 cursor-pointer font-medium"
+          className="rounded bg-danger px-2.5 py-1 text-on-danger hover:opacity-90 cursor-pointer font-medium"
         >
           {t('confirmRevert')}
         </button>
@@ -133,7 +133,7 @@ export function ChatRevert({ turnId, summary }: ChatRevertProps) {
       {errorMsg !== undefined && (
         <div
           data-testid="chat-revert-error"
-          className="text-xs text-danger bg-rose-50/70 p-2 rounded border border-rose-200"
+          className="text-xs text-danger bg-danger/10 p-2 rounded border border-danger/30"
         >
           {errorMsg}
         </div>

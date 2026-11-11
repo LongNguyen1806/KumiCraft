@@ -100,7 +100,7 @@ function MultiInspectorHeader({
       {lock && (
         <div
           data-testid="inspector-multi-locked"
-          className="px-1 py-1.5 text-xs font-medium text-amber-700"
+          className="px-1 py-1.5 text-xs font-medium text-warn"
         >
           {t('inspector.multiLocked', { tag: lock.tag, loc: lock.loc })}
         </div>

@@ -7,15 +7,15 @@ import { useRunnerStatus } from './use-runner-status.ts';
 function dotColor(state: RunnerStatus['state']): string {
   switch (state) {
     case 'ready':
-      return 'bg-emerald-500';
+      return 'bg-leaf';
     case 'starting':
-      return 'bg-amber-500';
+      return 'bg-sun';
     case 'error':
     case 'crashed':
-      return 'bg-rose-500';
+      return 'bg-danger';
     case 'stopped':
     default:
-      return 'bg-slate-400';
+      return 'bg-ink-faint';
   }
 }
 

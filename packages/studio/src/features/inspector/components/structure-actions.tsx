@@ -222,7 +222,7 @@ export function StructureActions({ target }: StructureActionsProps) {
       )}
       {actions.warnings.length > 0 && (
         <div
-          className="flex flex-col gap-1 text-xs text-amber-700"
+          className="flex flex-col gap-1 text-xs text-warn"
           data-testid="structure-action-warnings"
         >
           {actions.warnings.map((w) => (

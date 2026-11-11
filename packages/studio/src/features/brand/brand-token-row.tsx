@@ -75,7 +75,7 @@ function ConfirmRemoveBanner({ name, count, onCancel, onConfirm }: ConfirmRemove
           type="button"
           data-testid="brand-confirm-delete"
           onClick={onConfirm}
-          className="h-6 rounded-md bg-danger px-2 text-xs font-medium text-white hover:opacity-90"
+          className="h-6 rounded-md bg-danger px-2 text-xs font-medium text-on-danger hover:opacity-90"
         >
           {t('brand.confirmDelete')}
         </button>

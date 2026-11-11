@@ -296,7 +296,7 @@ function FormStatusMessages({
           {errorMsg}
         </div>
       )}
-      {successMsg !== undefined && <div className="text-xs text-emerald-600">{successMsg}</div>}
+      {successMsg !== undefined && <div className="text-xs text-leaf">{successMsg}</div>}
     </>
   );
 }

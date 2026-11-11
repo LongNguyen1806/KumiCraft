@@ -67,7 +67,7 @@ function ColorSwatch({ swatchColor }: { readonly swatchColor?: string | undefine
   }
   return (
     <span className="size-3.5 rounded border border-border/80 shrink-0 relative overflow-hidden bg-field-hover">
-      <span className="absolute inset-0 m-auto h-[1.5px] w-full bg-rose-500/70 rotate-45" />
+      <span className="absolute inset-0 m-auto h-[1.5px] w-full bg-danger/70 rotate-45" />
     </span>
   );
 }
@@ -174,7 +174,7 @@ function CustomColorSection({ onApply }: { readonly onApply: (css: string) => vo
         </button>
       </div>
       {hasError && (
-        <div role="alert" className="text-xs text-rose-500">
+        <div role="alert" className="text-xs text-danger">
           {t('inspector.color.invalid')}
         </div>
       )}

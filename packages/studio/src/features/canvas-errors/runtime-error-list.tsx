@@ -15,7 +15,7 @@ function RuntimeErrorItems({ errors, draftFile }: RuntimeErrorItemsProps) {
       {draftFile !== undefined && (
         <div
           data-testid="draft-provider-hint"
-          className="rounded bg-amber-500/10 px-2 py-1 text-[11px] text-amber-600 dark:text-amber-400"
+          className="rounded bg-sun-soft px-2 py-1 text-[11px] text-warn dark:text-warn"
         >
           {t('drafts.providerHint')}
         </div>
@@ -24,7 +24,7 @@ function RuntimeErrorItems({ errors, draftFile }: RuntimeErrorItemsProps) {
         <div
           key={err.message}
           data-testid="canvas-runtime-error-item"
-          className="flex items-center justify-between gap-2 overflow-hidden rounded bg-red-500/5 px-2 py-1 text-ink"
+          className="flex items-center justify-between gap-2 overflow-hidden rounded bg-danger/10 px-2 py-1 text-ink"
         >
           <span className="truncate font-mono text-[11px]" title={err.message}>
             {err.message}
@@ -32,7 +32,7 @@ function RuntimeErrorItems({ errors, draftFile }: RuntimeErrorItemsProps) {
           {err.count > 1 && (
             <span
               data-testid="canvas-runtime-error-count"
-              className="shrink-0 font-mono text-[11px] font-bold text-red-500"
+              className="shrink-0 font-mono text-[11px] font-bold text-danger"
             >
               ×{String(err.count)}
             </span>
@@ -56,10 +56,10 @@ export function RuntimeErrorList() {
   return (
     <div
       data-testid="canvas-runtime-errors"
-      className="absolute bottom-3 left-3 z-10 flex max-w-md flex-col gap-2 rounded-xl border border-red-500/25 bg-card-solid/95 p-3 text-xs shadow-xl backdrop-blur-md"
+      className="absolute bottom-3 left-3 z-10 flex max-w-md flex-col gap-2 rounded-xl border border-danger/30 bg-card-solid/95 p-3 text-xs shadow-xl backdrop-blur-md"
     >
       <div className="flex items-center justify-between gap-3">
-        <span className="font-semibold text-red-500">
+        <span className="font-semibold text-danger">
           {t('canvas.runtimeErrors.title', { count: runtimeErrors.length })}
         </span>
         <button

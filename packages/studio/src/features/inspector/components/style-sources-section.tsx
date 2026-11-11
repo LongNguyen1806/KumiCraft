@@ -54,7 +54,7 @@ function SourceText({ property }: { readonly property: StyleProperty }) {
       <span className="font-mono">
         {source.file}:{source.line}
         {source.affects > 1 && (
-          <span data-testid={`style-affects-${property.id}`} className="ml-1.5 text-amber-600">
+          <span data-testid={`style-affects-${property.id}`} className="ml-1.5 text-warn">
             {t('inspector.styleSources.affects', { count: source.affects })}
           </span>
         )}

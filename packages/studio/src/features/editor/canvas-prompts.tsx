@@ -15,7 +15,7 @@ export function UntrustedPrompt({ onTrust }: { readonly onTrust?: (() => void) |
         <button
           type="button"
           onClick={onTrust}
-          className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-soft"
+          className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-charcoal shadow-soft"
           data-testid="canvas-trust-btn"
         >
           {t('editor.trustButton')}
@@ -42,7 +42,7 @@ export function NeedsInstallPrompt({
         <button
           type="button"
           onClick={onInstall}
-          className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-soft"
+          className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-charcoal shadow-soft"
           data-testid="canvas-install-btn"
         >
           {t('editor.installButton')}
@@ -69,7 +69,7 @@ export function StoppedView({ onStart }: { readonly onStart: () => void }) {
       <button
         type="button"
         onClick={onStart}
-        className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-soft transition-transform hover:-translate-y-px"
+        className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-on-charcoal shadow-soft transition-transform hover:-translate-y-px"
         data-testid="canvas-run-btn"
       >
         {t('editor.runDevServer')}
@@ -93,7 +93,7 @@ export function ErrorView({ status, logTail, onRestart }: ErrorViewProps) {
 
   return (
     <div
-      className="flex max-w-2xl flex-col gap-3 rounded-lg border border-red-500/20 bg-card/90 p-5 shadow-soft backdrop-blur-md"
+      className="flex max-w-2xl flex-col gap-3 rounded-lg border border-danger/30 bg-card/90 p-5 shadow-soft backdrop-blur-md"
       data-testid="canvas-error"
     >
       <div className="flex items-center justify-between gap-4">

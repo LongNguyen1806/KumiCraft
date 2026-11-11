@@ -68,7 +68,7 @@ export function InlineCreateRow({ action, onCommit, onCancel }: InlineCreateRowP
     >
       <div className="flex items-center gap-1.5">
         {isFolder ? (
-          <Folder className="size-3.5 shrink-0 text-amber-500" />
+          <Folder className="size-3.5 shrink-0 text-warn" />
         ) : (
           <div className="size-3.5 shrink-0" />
         )}

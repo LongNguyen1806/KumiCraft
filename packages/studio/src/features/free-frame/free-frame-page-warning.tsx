@@ -59,7 +59,7 @@ export function FreeFramePageWarning({ source }: { readonly source?: ElementSour
     <div
       role="alert"
       data-testid="free-frame-page-warning"
-      className="rounded border border-amber-500/30 bg-amber-500/10 p-2 text-xs text-amber-500"
+      className="rounded border border-sun bg-sun-soft p-2 text-xs text-warn"
     >
       {t(
         'freeFrame.pageWarning',

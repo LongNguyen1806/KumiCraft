@@ -10,6 +10,8 @@ import {
   type Settings,
   type SettingsPatch,
   SettingsSchema,
+  type Theme,
+  THEMES,
 } from '@kumicraft/shared';
 
 import { apiGet, apiPatch, parseResponse } from './http.ts';
@@ -23,6 +25,8 @@ export {
   type PackageManager,
   type Settings,
   type SettingsPatch,
+  type Theme,
+  THEMES,
 };
 
 export async function fetchSettings(): Promise<Settings> {

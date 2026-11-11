@@ -340,10 +340,7 @@ function PromoteDialogBody({
     >
       <TargetSelect target={state.target} onSelect={state.handleTargetChange} />
       {free && (
-        <div
-          data-testid="promote-free-warning"
-          className="rounded bg-amber-500/10 p-2 text-amber-600"
-        >
+        <div data-testid="promote-free-warning" className="rounded bg-sun-soft p-2 text-warn">
           {t('drafts.freeWarning')}
         </div>
       )}

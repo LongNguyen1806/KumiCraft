@@ -111,6 +111,21 @@ describe('Settings dialog', () => {
     expect(patches()).toEqual([{ loginSessions: true }, { loginSessions: false }]);
   });
 
+  it('switches the Studio to dark at once and saves the choice; system is the default [P5]', async () => {
+    stubSettings();
+    await openSettings();
+
+    expect(screen.getByRole<HTMLInputElement>('radio', { name: 'System' }).checked).toBe(true);
+    fireEvent.click(screen.getByRole('radio', { name: 'Dark' }));
+
+    expect(document.documentElement.dataset['theme']).toBe('dark');
+    expect(await screen.findByText('Saved')).toBeDefined();
+    expect(patches()).toEqual([{ theme: 'dark' }]);
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Light' }));
+    expect(document.documentElement.dataset['theme']).toBe('light');
+  });
+
   it('saves the package manager for new projects', async () => {
     stubSettings();
     await openSettings();

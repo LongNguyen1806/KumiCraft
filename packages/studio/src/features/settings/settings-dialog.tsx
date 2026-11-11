@@ -2,7 +2,7 @@ import { Code, Languages, Sparkles, Square } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { EDITORS, PACKAGE_MANAGERS } from '../../api/settings-client.ts';
+import { EDITORS, PACKAGE_MANAGERS, THEMES } from '../../api/settings-client.ts';
 import { CHOICE_TRACK, ChoicePill } from '../../components/ui/choice-pill.tsx';
 import { Dialog } from '../../components/ui/dialog.tsx';
 import { LANGUAGES } from '../../i18n/i18n.ts';
@@ -59,7 +59,14 @@ function SectionNav({
 function SectionBody({ id, open }: { readonly id: SectionId; readonly open: boolean }) {
   const { t: tChat } = useTranslation('chat');
   const project = useProjectInfo();
-  if (id === 'interface') return <LanguageChoice />;
+  if (id === 'interface') {
+    return (
+      <>
+        <LanguageChoice />
+        <ThemeChoice />
+      </>
+    );
+  }
   if (id === 'tools') {
     return (
       <>
@@ -195,6 +202,35 @@ function PackageManagerChoice() {
         ))}
       </div>
       <span className="text-xs text-ink-soft">{t('settings.packageManagerHelp')}</span>
+    </fieldset>
+  );
+}
+
+/** Light, dark or the system colours: switches at once and is remembered (P5 round 4). */
+function ThemeChoice() {
+  const { t } = useTranslation();
+  const settings = useSettingsStore((state) => state.settings);
+  const update = useSettingsStore((state) => state.update);
+  const theme = settings?.theme ?? 'system';
+  return (
+    <fieldset className="grid min-w-0 gap-2 py-2.5" disabled={settings === undefined}>
+      <legend className="pb-1.5 font-medium">{t('settings.theme')}</legend>
+      <div className={CHOICE_TRACK} data-testid="settings-theme">
+        {THEMES.map((value) => (
+          <ChoicePill
+            key={value}
+            name="theme"
+            value={value}
+            checked={theme === value}
+            onChange={() => {
+              void update({ theme: value });
+            }}
+          >
+            {t(`settings.themes.${value}`)}
+          </ChoicePill>
+        ))}
+      </div>
+      <span className="text-xs text-ink-soft">{t('settings.themeHelp')}</span>
     </fieldset>
   );
 }

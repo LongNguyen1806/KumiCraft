@@ -285,7 +285,7 @@ function ChatInputField({
       onDrop={(e) => {
         handleInputDrop(e, onDropPath, onAddFiles);
       }}
-      className="relative rounded-lg border border-line bg-card-solid p-2 focus-within:border-accent focus-within:shadow-[0_0_0_3px_rgb(42_98_217/0.18)]"
+      className="relative rounded-lg border border-line bg-card-solid p-2 focus-within:border-accent focus-within:ring-3 focus-within:ring-accent/20"
     >
       <textarea
         data-testid="chat-input"

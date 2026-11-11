@@ -62,7 +62,7 @@ function useModels(agentId: AgentStatus['id'], open: boolean) {
 }
 
 function ringClass(used: number | undefined): string {
-  if (used !== undefined && used > 0.95) return 'border-rose-500';
+  if (used !== undefined && used > 0.95) return 'border-danger';
   if (used !== undefined && used > 0.8) return 'border-sun';
   return 'border-border';
 }

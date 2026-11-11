@@ -67,7 +67,7 @@ function ToolButton({ id, label, shortcut, active, onClick }: ToolButtonProps) {
       onClick={onClick}
       className={`flex h-[22px] items-center gap-1 rounded px-1.5 text-xs font-medium transition ${
         active
-          ? 'bg-primary text-white shadow-xs'
+          ? 'bg-primary text-on-charcoal shadow-xs'
           : 'text-ink-soft hover:bg-field-hover hover:text-ink'
       }`}
     >

@@ -20,8 +20,8 @@ function getLineKind(line: string): DiffKind {
 }
 
 function getLineClass(kind: DiffKind): string {
-  if (kind === 'add') return 'bg-emerald-500/10 text-emerald-700';
-  if (kind === 'del') return 'bg-rose-500/10 text-rose-700';
+  if (kind === 'add') return 'bg-leaf/10 text-leaf';
+  if (kind === 'del') return 'bg-danger/10 text-danger';
   if (kind === 'hunk') return 'bg-field text-ink-faint font-semibold';
   return 'text-ink-soft';
 }
@@ -72,7 +72,7 @@ export function ChatDiff({ turnId, path }: ChatDiffProps) {
 
   if (errorMsg !== undefined) {
     return (
-      <div data-testid="chat-diff" className="rounded bg-rose-50 p-2 text-xs text-danger">
+      <div data-testid="chat-diff" className="rounded bg-danger/10 p-2 text-xs text-danger">
         {errorMsg}
       </div>
     );

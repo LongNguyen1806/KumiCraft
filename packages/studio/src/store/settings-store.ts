@@ -10,6 +10,7 @@ import {
   type SettingsPatch,
   updateSettings,
 } from '../api/settings-client.ts';
+import { applyTheme } from '../app/theme.ts';
 import { type ErrorInfo, toErrorInfo } from '../routes/error-text.ts';
 
 export type SaveState =
@@ -35,6 +36,7 @@ function merge(settings: Settings | undefined, patch: SettingsPatch): Settings |
     ...(patch.packageManager === undefined ? {} : { packageManager: patch.packageManager }),
     agent: { preferred: patch.agent?.preferred ?? settings.agent.preferred },
     ...(patch.loginSessions === undefined ? {} : { loginSessions: patch.loginSessions }),
+    ...(patch.theme === undefined ? {} : { theme: patch.theme }),
   };
 }
 
@@ -45,6 +47,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     try {
       const settings = await fetchSettings();
       set({ settings });
+      applyTheme(settings.theme);
       if (settings.language !== undefined && settings.language !== i18next.resolvedLanguage) {
         await i18next.changeLanguage(settings.language);
       }
@@ -55,11 +58,13 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   update: async (patch) => {
     const before = get().settings;
     set({ settings: merge(before, patch), save: { status: 'saving' } });
+    if (patch.theme !== undefined) applyTheme(patch.theme);
     try {
       set({ settings: await updateSettings(patch), save: { status: 'saved' } });
     } catch (error) {
       const info = toErrorInfo(error);
       set({ settings: before, save: { status: 'failed', info, code: info.code } });
+      if (patch.theme !== undefined) applyTheme(before?.theme);
     }
   },
   setLanguage: async (language) => {

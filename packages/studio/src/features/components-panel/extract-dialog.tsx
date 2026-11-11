@@ -249,7 +249,7 @@ export function ExtractDialog({ open, target, onClose, onExtracted }: ExtractDia
             data-testid="extract-submit"
             type="submit"
             disabled={!form.validation.canSubmit || form.busy}
-            className="rounded bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90 disabled:opacity-50"
+            className="rounded bg-accent px-3 py-1.5 text-xs font-medium text-on-accent hover:bg-accent/90 disabled:opacity-50"
           >
             {form.busy ? t('components.extract.submitting') : t('components.extract.submit')}
           </button>

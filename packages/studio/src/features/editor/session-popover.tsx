@@ -57,7 +57,7 @@ function SessionRenameEditor({
         onClick={() => {
           onSave(draft.trim());
         }}
-        className="rounded bg-accent px-1.5 py-0.5 text-[11px] text-white"
+        className="rounded bg-accent px-1.5 py-0.5 text-[11px] text-on-accent"
       >
         OK
       </button>
@@ -96,7 +96,7 @@ function SessionRowButtons({
           onClick={() => {
             onDelete(sessionId);
           }}
-          className="rounded border border-border px-1.5 py-0.5 text-[10px] text-danger hover:bg-rose-50"
+          className="rounded border border-border px-1.5 py-0.5 text-[10px] text-danger hover:bg-danger/10"
         >
           {t('sessions.delete')}
         </button>

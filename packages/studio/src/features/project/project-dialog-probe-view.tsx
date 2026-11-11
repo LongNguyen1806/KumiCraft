@@ -49,7 +49,7 @@ function SupportedProjectView({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="font-medium text-emerald-600">{t('project.supported')}</span>
+        <span className="font-medium text-leaf">{t('project.supported')}</span>
         <span className="font-mono text-[11px] text-ink-faint">
           {probe.support.framework} • {probe.support.language.toUpperCase()}
         </span>
@@ -125,7 +125,7 @@ function AppCandidateRow({
           onClick={() => {
             onOpenCandidate(app.path);
           }}
-          className="shrink-0 rounded bg-primary px-3 py-1 font-medium text-white hover:bg-primary-hover disabled:opacity-50 text-xs"
+          className="shrink-0 rounded bg-primary px-3 py-1 font-medium text-on-charcoal hover:bg-primary-hover disabled:opacity-50 text-xs"
         >
           {t('project.open')}
         </button>

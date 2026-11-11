@@ -158,6 +158,13 @@
     "interface": "Interface",
     "language": "Interface language",
     "languageHelp": "Changes at once, without reloading. Remembered for every project on this computer.",
+    "theme": "Colours",
+    "themeHelp": "System follows the light or dark setting of this computer. The project page in the Canvas keeps its own colours.",
+    "themes": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
     "tools": "Tools",
     "editor": "Editor that opens source files",
     "editorHelp": "\"Open in editor\" jumps to the file and line of the selected element in this editor.",

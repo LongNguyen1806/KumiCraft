@@ -129,7 +129,7 @@ function ImageAltInput({ alt, onChange, label, placeholder }: AltInputProps) {
   return (
     <div className="flex flex-col gap-1">
       <label htmlFor="image-picker-alt-input" className="text-xs font-medium text-ink-soft">
-        {label} <span className="text-rose-500">*</span>
+        {label} <span className="text-danger">*</span>
       </label>
       <input
         id="image-picker-alt-input"
@@ -176,7 +176,7 @@ function ImageDialogActions({
         data-testid="image-picker-insert"
         disabled={!canInsert}
         onClick={onInsert}
-        className="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-40"
+        className="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-on-charcoal hover:bg-primary-hover disabled:opacity-40"
       >
         {insertLabel}
       </button>
@@ -248,7 +248,7 @@ function ImageErrorAlert({ error }: { readonly error?: string | undefined }) {
   return (
     <div
       data-testid="image-picker-error"
-      className="rounded-md bg-rose-50 p-2 text-sm text-rose-600 dark:bg-rose-950/30"
+      className="rounded-md bg-danger/10 p-2 text-sm text-danger dark:bg-danger/10"
     >
       {error}
     </div>

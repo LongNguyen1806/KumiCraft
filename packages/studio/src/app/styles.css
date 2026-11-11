@@ -40,6 +40,10 @@
   /* The Canvas around the frames. */
   --color-canvas: #e6e5e1;
   --color-canvas-dot: #cfcdc6;
+  /* Warning text on the yellow notes; text on accent and danger buttons. */
+  --color-warn: #8a5200;
+  --color-on-accent: #ffffff;
+  --color-on-danger: #ffffff;
 
   --font-sans: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
@@ -49,9 +53,49 @@
   --shadow-soft: 0 1px 2px rgb(20 20 18 / 0.06), 0 8px 24px rgb(20 20 18 / 0.08);
 }
 
+/* Dark (P5 round 4): `data-theme` is set by app/theme.ts, which also resolves "system". The
+   project page inside the Canvas keeps its own colours. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-wash-cool: #151514;
+  --color-wash-warm: #151514;
+  --color-card: #1e1e1c;
+  --color-card-solid: #1e1e1c;
+  --color-field: #2a2a27;
+  --color-field-hover: #343430;
+  --color-ink: #ecebe6;
+  --color-ink-soft: #b7b5ad;
+  --color-ink-faint: #9a988f;
+  --color-ink-strong: #ffffff;
+  --color-line: #37362f;
+  --color-border: #4a4940;
+  --color-charcoal: #ecebe6;
+  --color-on-charcoal: #1c1c1a;
+  --color-primary: #ecebe6;
+  --color-primary-hover: #d6d4cc;
+  --color-primary-soft: #2a2a27;
+  --color-sun-soft: #3a2f14;
+  --color-leaf: #7cc47f;
+  --color-danger: #f28b82;
+  --color-accent: #7ba6ff;
+  --color-accent-soft: #22324f;
+  --color-canvas: #111110;
+  --color-canvas-dot: #2b2b28;
+  --color-warn: #e8b65a;
+  --color-on-accent: #10172a;
+  --color-on-danger: #2a0f0c;
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.45);
+}
+
 @layer base {
   :root {
     color-scheme: light;
+  }
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+  }
+  :root[data-theme='dark'] select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b7b5ad' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   }
   html,
   body,

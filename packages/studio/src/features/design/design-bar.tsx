@@ -31,7 +31,7 @@ function DesignFile({ file }: { readonly file?: string | undefined }) {
   const { t } = useTranslation();
   if (file === undefined || file === '') {
     return (
-      <span className="min-w-0 truncate rounded-md bg-sun-soft px-1.5 py-0.5 text-[11px] text-[#8a5200]">
+      <span className="min-w-0 truncate rounded-md bg-sun-soft px-1.5 py-0.5 text-[11px] text-warn">
         {t('design.unknownFile')}
       </span>
     );
@@ -59,7 +59,7 @@ export function DesignBar() {
       <span
         data-testid="design-bar-kind"
         className={`shrink-0 rounded px-1.5 py-0.5 text-[10.5px] font-semibold ${
-          kind === 'component' ? 'bg-violet-500/10 text-violet-700' : 'bg-accent-soft text-accent'
+          kind === 'component' ? 'bg-accent-soft text-ink' : 'bg-accent-soft text-accent'
         }`}
       >
         {t(`design.kind.${kind}`)}
@@ -71,7 +71,7 @@ export function DesignBar() {
       {isComponentMode && usages > 1 && (
         <span
           data-testid="design-bar-usages"
-          className="shrink-0 rounded-md bg-sun-soft px-1.5 py-0.5 text-[10.5px] font-medium text-[#8a5200]"
+          className="shrink-0 rounded-md bg-sun-soft px-1.5 py-0.5 text-[10.5px] font-medium text-warn"
         >
           {t('design.usages', { count: usages })}
         </span>

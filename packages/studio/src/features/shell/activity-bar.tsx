@@ -91,7 +91,7 @@ function ActivityBarButton({ item, isPressed, badgeValue, onActivate }: Activity
         <span
           data-testid={`activity-badge-${item.id}`}
           className={`absolute -top-0.5 -right-0.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[9.5px] leading-none font-semibold ${
-            item.id === 'files' ? 'bg-rose-600 text-white' : 'bg-charcoal text-on-charcoal'
+            item.id === 'files' ? 'bg-danger text-on-danger' : 'bg-charcoal text-on-charcoal'
           }`}
         >
           {badgeValue}

@@ -281,7 +281,7 @@ function CanvasToolbar({ mode, onToggleMode }: CanvasToolbarProps) {
         {editMode === 'viewOnly' && (
           <span
             data-testid="view-only-chip"
-            className="inline-flex shrink-0 items-center gap-1 rounded-md bg-sun-soft px-2 py-0.5 text-[11px] font-medium text-[#8a5200]"
+            className="inline-flex shrink-0 items-center gap-1 rounded-md bg-sun-soft px-2 py-0.5 text-[11px] font-medium text-warn"
             title={tErrors('E023.reasons.viewOnly')}
           >
             {t('editor.viewOnly')}

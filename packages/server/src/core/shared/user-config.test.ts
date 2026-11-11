@@ -57,6 +57,14 @@ describe('createConfigStore', () => {
     expect((await store()).settings()).toMatchObject({ language: 'vi', editor: 'cursor' });
   });
 
+  it('saves the Studio theme and reads it back; unset means system [P5]', async () => {
+    const first = await store();
+    expect(first.settings().theme).toBeUndefined();
+    const updated = await first.updateSettings({ theme: 'dark' });
+    expect(updated.ok && updated.value.theme).toBe('dark');
+    expect((await store()).settings().theme).toBe('dark');
+  });
+
   it('writes the file readable by the user only on macOS and Linux', async () => {
     await (await store()).updateSettings({ language: 'en' });
 

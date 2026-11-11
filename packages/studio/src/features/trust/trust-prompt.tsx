@@ -89,7 +89,7 @@ function TrustBackendItem({ backend }: { readonly backend: BackendInfo }) {
       {backend.outsideParent && (
         <span
           role="note"
-          className="text-xs font-medium text-amber-700"
+          className="text-xs font-medium text-warn"
           data-testid="trust-backend-outside"
         >
           {t('trust.backendOutside')}

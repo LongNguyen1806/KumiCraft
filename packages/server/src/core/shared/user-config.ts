@@ -18,11 +18,13 @@ export const CONFIG_FILE = 'config.json';
 export const EDITORS = ['vscode', 'cursor', 'webstorm', 'zed'] as const;
 export const PACKAGE_MANAGERS = ['pnpm', 'npm', 'yarn'] as const;
 export const AGENT_CHOICES = ['auto', 'agy', 'claude'] as const;
+export const THEMES = ['light', 'dark', 'system'] as const;
 
 const LanguageSchema = z.enum(['vi', 'en']);
 const EditorSchema = z.enum(EDITORS);
 const PackageManagerSchema = z.enum(PACKAGE_MANAGERS);
 const AgentChoiceSchema = z.enum(AGENT_CHOICES);
+const ThemeSchema = z.enum(THEMES);
 
 const TrustedProjectSchema = z.strictObject({
   id: z.string(),
@@ -40,6 +42,7 @@ const UserConfigSchema = z.object({
   packageManager: PackageManagerSchema.optional(),
   agent: z.object({ preferred: AgentChoiceSchema.default('auto') }).default({ preferred: 'auto' }),
   loginSessions: z.boolean().optional(),
+  theme: ThemeSchema.optional(),
   trustedProjects: z.array(TrustedProjectSchema).default([]),
   recentProjects: RecentProjectsSchema.default([]),
 });
@@ -52,6 +55,8 @@ export type Settings = {
   readonly editor: (typeof EDITORS)[number];
   readonly packageManager?: (typeof PACKAGE_MANAGERS)[number];
   readonly agent: { readonly preferred: (typeof AGENT_CHOICES)[number] };
+  readonly loginSessions?: boolean;
+  readonly theme?: (typeof THEMES)[number];
 };
 
 export const SettingsPatchSchema = z.strictObject({
@@ -60,6 +65,7 @@ export const SettingsPatchSchema = z.strictObject({
   packageManager: PackageManagerSchema.optional(),
   agent: z.strictObject({ preferred: AgentChoiceSchema.optional() }).optional(),
   loginSessions: z.boolean().optional(),
+  theme: ThemeSchema.optional(),
 });
 export type SettingsPatch = z.infer<typeof SettingsPatchSchema>;
 
@@ -95,6 +101,7 @@ function merge(config: UserConfig, patch: SettingsPatch): UserConfig {
     ...(patch.packageManager === undefined ? {} : { packageManager: patch.packageManager }),
     agent: { preferred: patch.agent?.preferred ?? config.agent.preferred },
     ...(patch.loginSessions === undefined ? {} : { loginSessions: patch.loginSessions }),
+    ...(patch.theme === undefined ? {} : { theme: patch.theme }),
   };
 }
 
@@ -104,6 +111,7 @@ const toSettings = (config: UserConfig): Settings => ({
   ...(config.packageManager === undefined ? {} : { packageManager: config.packageManager }),
   agent: { ...config.agent },
   ...(config.loginSessions === undefined ? {} : { loginSessions: config.loginSessions }),
+  ...(config.theme === undefined ? {} : { theme: config.theme }),
 });
 
 /** A missing or broken `config.json` falls back to defaults, with a warning. */

@@ -7,7 +7,7 @@ import type { AgentUsageView } from './usage-store.ts';
 function LimitBar({ label, limit }: { readonly label: string; readonly limit: AgentLimit }) {
   const { t, i18n } = useTranslation('chat');
   const pct = Math.round(limit.used * 100);
-  const fill = limit.used > 0.95 ? 'bg-rose-500' : limit.used > 0.8 ? 'bg-sun' : 'bg-accent';
+  const fill = limit.used > 0.95 ? 'bg-danger' : limit.used > 0.8 ? 'bg-sun' : 'bg-accent';
   const reset =
     limit.resetsAt === undefined
       ? undefined

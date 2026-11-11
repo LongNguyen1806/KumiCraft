@@ -28,10 +28,10 @@ export function BuildErrorBanner({ onOpenLoc }: BuildErrorBannerProps) {
     <div
       role="alert"
       data-testid="canvas-build-error"
-      className="flex flex-col gap-1.5 border-b border-red-500/30 bg-red-500/10 px-4 py-2.5 text-ink backdrop-blur-md"
+      className="flex flex-col gap-1.5 border-b border-danger/30 bg-danger/10 px-4 py-2.5 text-ink backdrop-blur-md"
     >
       <div className="flex items-center justify-between gap-3">
-        <h4 className="text-xs font-semibold text-red-500">{t('canvas.buildError.title')}</h4>
+        <h4 className="text-xs font-semibold text-danger">{t('canvas.buildError.title')}</h4>
         {hasLocation && locationLabel && (
           <button
             type="button"
@@ -39,7 +39,7 @@ export function BuildErrorBanner({ onOpenLoc }: BuildErrorBannerProps) {
               onOpenLoc(`${file}:${String(line)}:${String(column ?? 1)}`);
             }}
             data-testid="canvas-build-error-open"
-            className="rounded border border-red-500/30 bg-card px-2 py-0.5 font-mono text-[11px] text-red-500 hover:bg-field-hover"
+            className="rounded border border-danger/30 bg-card px-2 py-0.5 font-mono text-[11px] text-danger hover:bg-field-hover"
           >
             {locationLabel}
           </button>

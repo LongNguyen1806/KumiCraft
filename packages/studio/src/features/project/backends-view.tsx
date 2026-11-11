@@ -7,9 +7,9 @@ import { FolderField } from './folder-field.tsx';
 import { parentDir } from './project-paths.ts';
 
 function getStatusBadgeStyle(status: BackendInfo['status']): string {
-  if (status === 'ok') return 'bg-emerald-50 text-emerald-700';
-  if (status === 'blocked') return 'bg-rose-50 text-rose-700';
-  return 'bg-amber-50 text-amber-700';
+  if (status === 'ok') return 'bg-leaf/10 text-leaf';
+  if (status === 'blocked') return 'bg-danger/10 text-danger';
+  return 'bg-sun-soft text-warn';
 }
 
 function BackendItem({
@@ -50,7 +50,7 @@ function BackendItem({
             onRemove(backend.id);
           }}
           disabled={busy}
-          className="rounded px-2 py-1 text-xs text-danger hover:bg-rose-50 disabled:opacity-50"
+          className="rounded px-2 py-1 text-xs text-danger hover:bg-danger/10 disabled:opacity-50"
           data-testid={`remove-backend-btn-${backend.id}`}
         >
           {t('project.backends.remove')}

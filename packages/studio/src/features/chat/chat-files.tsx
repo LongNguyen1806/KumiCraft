@@ -17,12 +17,12 @@ export type ChatFilesProps = {
 
 function ChangeBadge({ change }: { readonly change: TurnFileChange }) {
   if (change === 'created') {
-    return <span className="font-mono text-[11px] font-bold text-emerald-600">A</span>;
+    return <span className="font-mono text-[11px] font-bold text-leaf">A</span>;
   }
   if (change === 'deleted') {
     return <span className="font-mono text-[11px] font-bold text-danger">D</span>;
   }
-  return <span className="font-mono text-[11px] font-bold text-amber-700">M</span>;
+  return <span className="font-mono text-[11px] font-bold text-warn">M</span>;
 }
 
 type FileRowProps = {
@@ -76,7 +76,7 @@ function FileRow({
         )}
       </div>
       {openError !== undefined && (
-        <div className="px-2 py-0.5 text-[11px] text-danger bg-rose-50/50">{openError}</div>
+        <div className="px-2 py-0.5 text-[11px] text-danger bg-danger/10">{openError}</div>
       )}
       {isSelected && (
         <div className="px-2 py-1">

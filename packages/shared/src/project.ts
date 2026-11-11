@@ -367,6 +367,11 @@ export const AGENT_CHOICES = ['auto', 'agy', 'claude'] as const;
 export const AgentChoiceSchema = z.enum(AGENT_CHOICES);
 export type AgentChoice = z.infer<typeof AgentChoiceSchema>;
 
+/** Studio colours (P5 round 4): light, dark, or whatever the system uses. */
+export const THEMES = ['light', 'dark', 'system'] as const;
+export const ThemeSchema = z.enum(THEMES);
+export type Theme = z.infer<typeof ThemeSchema>;
+
 export const SettingsSchema = z.strictObject({
   language: InterfaceLanguageSchema.optional(),
   editor: EditorSchema,
@@ -376,6 +381,8 @@ export const SettingsSchema = z.strictObject({
   }),
   /** Login sessions on the Canvas toolbar (spec-log #77); off by default, hidden when off. */
   loginSessions: z.boolean().optional(),
+  /** Unset means `system`. */
+  theme: ThemeSchema.optional(),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
 
@@ -389,5 +396,6 @@ export const SettingsPatchSchema = z.strictObject({
     })
     .optional(),
   loginSessions: z.boolean().optional(),
+  theme: ThemeSchema.optional(),
 });
 export type SettingsPatch = z.infer<typeof SettingsPatchSchema>;
