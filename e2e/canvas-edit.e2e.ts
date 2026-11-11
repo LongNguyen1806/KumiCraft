@@ -379,3 +379,27 @@ test('selected element removed by an external edit reports found false [R-BR-16]
     await writeFile(homeFile, originalCode, 'utf8');
   }
 });
+
+test('a page that draws itself forever stops with a message and the Studio keeps working [spec-log #116]', async ({
+  page,
+}) => {
+  const homeFile = join(folder.path, 'src', 'pages', 'Home.tsx');
+  await writeFile(
+    homeFile,
+    'export function Home() {\n  return (\n    <div>\n      <h1>Loop</h1>\n      <Home />\n    </div>\n  );\n}\n',
+    'utf8',
+  );
+  const session = await start();
+  await session.api('project/trust', 'POST', { trusted: true });
+  const tab = await open(page, session);
+  await trustIfAsked(tab);
+
+  await expect(tab.getByTestId('canvas-runtime-error-item').first()).toContainText('draws itself', {
+    timeout: 30_000,
+  });
+  // The Studio still answers: a panel opens at once.
+  await tab.getByTestId('activity-files').click();
+  await expect(tab.getByTestId('file-row-src')).toBeVisible({ timeout: 5_000 });
+  // The file on disk is left as the user wrote it.
+  expect(await readFile(homeFile, 'utf8')).not.toContain('throw new Error');
+});

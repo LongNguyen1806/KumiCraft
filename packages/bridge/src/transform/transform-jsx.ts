@@ -4,6 +4,8 @@ import { isAbsolute, normalize, relative } from 'node:path';
 import { parse } from '@babel/parser';
 import MagicString from 'magic-string';
 
+import { guardSelfRender } from './self-render-guard.ts';
+
 export type TransformJsxOptions = {
   readonly rootDir: string;
   readonly sourceDir: string;
@@ -121,6 +123,7 @@ export function transformJsx(
     const locString = `${relPath}:${String(line)}:${String(column)}`;
     s.appendLeft(nameNode.end, ` data-rc-loc="${locString}"`);
   });
+  guardSelfRender(ast.program, s, relPath);
 
   if (!s.hasChanged()) {
     return { code };
