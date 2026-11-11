@@ -6,6 +6,8 @@ import { deleteDraft, duplicateDraft, renameDraft } from '../../api/project-clie
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { useEditMode } from '../project/use-edit-mode.ts';
+import { DraftsStatus } from './drafts-empty.tsx';
+import { NewDraftDialog } from './new-draft-dialog.tsx';
 import { PromoteDraftDialog } from './promote-draft-dialog.tsx';
 import { useDrafts } from './use-drafts.ts';
 
@@ -271,6 +273,9 @@ export type DraftsContentProps = {
   readonly errorMsg: string | undefined;
   readonly actions: ReturnType<typeof useDraftItemActions>;
   readonly onPromote: (d: DraftInfo) => void;
+  readonly loaded?: boolean | undefined;
+  /** Opens the New draft dialog; without it the panel offers no create button. */
+  readonly onNew?: (() => void) | undefined;
 };
 
 export function DraftsContent({
@@ -279,6 +284,8 @@ export function DraftsContent({
   errorMsg,
   actions,
   onPromote,
+  loaded = true,
+  onNew,
 }: DraftsContentProps) {
   const { t } = useTranslation();
   const [renamingFile, setRenamingFile] = useState<string>();
@@ -298,6 +305,7 @@ export function DraftsContent({
           {errorMsg}
         </div>
       )}
+      <DraftsStatus loaded={loaded} count={drafts.length} onNew={onNew} />
       <DraftsList
         drafts={drafts}
         renamingFile={renamingFile}
@@ -339,6 +347,8 @@ export function DraftsPanel({
   const ignored = propIgnored ?? storeData.ignored;
   const projectId = propProjectId ?? storeData.projectId;
   const onReload = propReload ?? storeData.reload;
+  const loaded = propDrafts !== undefined || storeData.loaded;
+  const [newOpen, setNewOpen] = useState(false);
 
   const { t: tError } = useTranslation('errors');
   const [promotingDraft, setPromotingDraft] = useState<DraftInfo>();
@@ -353,20 +363,56 @@ export function DraftsPanel({
         errorMsg={errorMsg}
         actions={actions}
         onPromote={setPromotingDraft}
+        loaded={loaded}
+        onNew={() => {
+          setNewOpen(true);
+        }}
       />
-      {promotingDraft !== undefined && (
+      <DraftsDialogs
+        newOpen={newOpen}
+        promoting={promotingDraft}
+        projectId={projectId}
+        onReload={onReload}
+        onCloseNew={() => {
+          setNewOpen(false);
+        }}
+        onClosePromote={() => {
+          setPromotingDraft(undefined);
+        }}
+      />
+    </div>
+  );
+}
+
+function DraftsDialogs({
+  newOpen,
+  promoting,
+  projectId,
+  onReload,
+  onCloseNew,
+  onClosePromote,
+}: {
+  readonly newOpen: boolean;
+  readonly promoting: DraftInfo | undefined;
+  readonly projectId: string | undefined;
+  readonly onReload: () => void;
+  readonly onCloseNew: () => void;
+  readonly onClosePromote: () => void;
+}) {
+  return (
+    <>
+      {newOpen && (
+        <NewDraftDialog open projectId={projectId} onClose={onCloseNew} onCreated={onReload} />
+      )}
+      {promoting !== undefined && (
         <PromoteDraftDialog
           open={true}
-          draft={promotingDraft}
+          draft={promoting}
           projectId={projectId}
-          onClose={() => {
-            setPromotingDraft(undefined);
-          }}
-          onPromoted={() => {
-            onReload();
-          }}
+          onClose={onClosePromote}
+          onPromoted={onReload}
         />
       )}
-    </div>
+    </>
   );
 }

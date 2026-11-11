@@ -11,6 +11,8 @@ export type DraftsData = {
   readonly draftsDir: string;
   readonly ignored: boolean;
   readonly projectId: string | undefined;
+  /** False until the first answer: the panel shows that it is reading, not that there is none. */
+  readonly loaded: boolean;
   readonly reload: () => void;
 };
 
@@ -51,6 +53,26 @@ function handleDraftsEvent(event: StudioServerEvent, dir: string, onReload: () =
   }
 }
 
+/** Reads the drafts and the project id; `show` runs only while the panel still wants them. */
+async function readDrafts(
+  isActive: () => boolean,
+  openDraft: (file: string, projectId?: string) => void,
+  show: (info: DraftsInfo, projectId: string | undefined) => void,
+): Promise<void> {
+  try {
+    const [draftsInfo, proj] = await Promise.all([
+      fetchDrafts(),
+      fetchProject().catch(() => undefined),
+    ]);
+    if (!isActive()) return;
+    show(draftsInfo, proj?.id);
+    useCanvasViewStore.getState().setDraftsDir(draftsInfo.dir);
+    restoreStoredDraft(draftsInfo.drafts, proj?.id, openDraft);
+  } catch {
+    // Drafts endpoint or project not ready yet.
+  }
+}
+
 export function useDrafts(): DraftsData {
   const [data, setData] = useState<DraftsInfo>({
     drafts: [],
@@ -58,27 +80,23 @@ export function useDrafts(): DraftsData {
     ignored: false,
   });
   const [projectId, setProjectId] = useState<string | undefined>();
+  const [loaded, setLoaded] = useState(false);
   const [refreshCount, setRefreshCount] = useState(0);
   const openDraft = useCanvasViewStore((s) => s.openDraft);
 
   useEffect(() => {
     let active = true;
-    const load = async () => {
-      try {
-        const [draftsInfo, proj] = await Promise.all([
-          fetchDrafts(),
-          fetchProject().catch(() => undefined),
-        ]);
-        if (!active) return;
-        setData(draftsInfo);
-        useCanvasViewStore.getState().setDraftsDir(draftsInfo.dir);
-        const pid = proj?.id;
-        setProjectId(pid);
-        restoreStoredDraft(draftsInfo.drafts, pid, openDraft);
-      } catch {
-        // Drafts endpoint or project not ready yet.
-      }
-    };
+    const load = () =>
+      readDrafts(
+        () => active,
+        openDraft,
+        (info, pid) => {
+          setData(info);
+          setProjectId(pid);
+        },
+      ).finally(() => {
+        if (active) setLoaded(true);
+      });
     void load();
     const client = createEventsClient({
       onEvent: (event) => {
@@ -99,6 +117,7 @@ export function useDrafts(): DraftsData {
     draftsDir: data.dir,
     ignored: data.ignored,
     projectId,
+    loaded,
     reload: () => {
       setRefreshCount((c) => c + 1);
     },

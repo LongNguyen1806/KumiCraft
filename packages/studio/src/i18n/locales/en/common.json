@@ -594,6 +594,7 @@
   "drafts": {
     "title": "Drafts",
     "new": "New draft…",
+    "loading": "Loading drafts…",
     "empty": "No drafts yet",
     "blank": "Blank",
     "free": "Freeform canvas",

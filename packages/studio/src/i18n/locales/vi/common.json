@@ -594,6 +594,7 @@
   "drafts": {
     "title": "Bản nháp",
     "new": "Bản nháp mới…",
+    "loading": "Đang tải bản nháp…",
     "empty": "Chưa có bản nháp nào",
     "blank": "Trắng",
     "free": "Khung tự do",

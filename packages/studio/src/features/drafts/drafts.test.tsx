@@ -187,4 +187,28 @@ describe('Studio Drafts [R-DR-10 .. R-DR-15]', () => {
     expect(screen.getByTestId('promote-free-warning')).toBeDefined();
     expect(screen.getByTestId('promote-keep')).toHaveProperty('checked', true);
   });
+
+  it('shows that it is reading, then No drafts yet with a New draft button that opens the dialog', async () => {
+    vi.spyOn(projectClient, 'fetchDrafts').mockResolvedValue({
+      drafts: [],
+      dir: 'src/drafts',
+      ignored: false,
+    });
+    render(<DraftsPanel />);
+
+    expect(screen.getByTestId('drafts-loading')).toBeDefined();
+    expect(await screen.findByTestId('drafts-empty')).toBeDefined();
+    expect(screen.queryByTestId('drafts-loading')).toBeNull();
+
+    fireEvent.click(screen.getByTestId('drafts-new-btn'));
+    expect(await screen.findByTestId('draft-new-dialog')).toBeDefined();
+  });
+
+  it('keeps the New draft button above the list when there are drafts', () => {
+    render(
+      <DraftsPanel drafts={[{ name: 'A', file: 'src/drafts/A.tsx', free: false, inUse: false }]} />,
+    );
+    expect(screen.getByTestId('drafts-new-btn')).toBeDefined();
+    expect(screen.queryByTestId('drafts-empty')).toBeNull();
+  });
 });
