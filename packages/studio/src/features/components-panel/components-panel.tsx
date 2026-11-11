@@ -1,5 +1,6 @@
 // Project Components Panel (SPEC-04 R-CP-11..13, spec-log #23).
 import { normalizeText, type ProjectComponent } from '@kumicraft/shared';
+import { Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -11,7 +12,7 @@ import { useDndStore } from '../dnd/dnd-store.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { insertComponent } from './insert-component.ts';
-import { useProjectComponents } from './use-project-components.ts';
+import { useComponentsStore, useProjectComponents } from './use-project-components.ts';
 
 type ComponentItemProps = {
   readonly component: ProjectComponent;
@@ -120,9 +121,53 @@ function useFilteredComponents(
   }, [components, query]);
 }
 
+/** The components, or that the list is still being read, or that there is none. */
+function ComponentList({
+  loaded,
+  components,
+  designFile,
+  disabled,
+  onSelect,
+}: {
+  readonly loaded: boolean;
+  readonly components: readonly ProjectComponent[];
+  readonly designFile: string | undefined;
+  readonly disabled: boolean;
+  readonly onSelect: (component: ProjectComponent) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex-1 space-y-1.5 overflow-y-auto py-1">
+      {!loaded ? (
+        <p
+          role="status"
+          data-testid="components-loading"
+          className="flex items-center justify-center gap-2 py-6 text-xs text-ink-faint"
+        >
+          <Loader2 className="size-3.5 animate-spin" aria-hidden />
+          {t('components.loading')}
+        </p>
+      ) : components.length === 0 ? (
+        <p className="py-6 text-center text-xs text-ink-faint">{t('components.empty')}</p>
+      ) : (
+        components.map((comp) => (
+          <ComponentItem
+            key={`${comp.file}#${comp.name}`}
+            component={comp}
+            isSelf={designFile !== undefined && comp.file === designFile}
+            disabled={disabled}
+            onSelect={onSelect}
+          />
+        ))
+      )}
+    </div>
+  );
+}
+
 export function ComponentsPanel() {
   const { t } = useTranslation();
   const components = useProjectComponents();
+  const loaded = useComponentsStore((s) => s.loaded);
   const designFile = useDesignStore((s) => s.componentMode?.filePath ?? s.target?.file);
   const selectedRefs = useSelectionStore((s) => s.selectedRefs);
   const [query, setQuery] = useState('');
@@ -151,23 +196,15 @@ export function ComponentsPanel() {
     >
       <ComponentSearchHeader query={query} onQueryChange={setQuery} errorInfo={errorInfo} />
 
-      <div className="flex-1 space-y-1.5 overflow-y-auto py-1">
-        {filtered.length === 0 ? (
-          <p className="py-6 text-center text-xs text-ink-faint">{t('components.empty')}</p>
-        ) : (
-          filtered.map((comp) => (
-            <ComponentItem
-              key={`${comp.file}#${comp.name}`}
-              component={comp}
-              isSelf={designFile !== undefined && comp.file === designFile}
-              disabled={!hasSelection || inserting}
-              onSelect={(c) => {
-                void handleSelect(c);
-              }}
-            />
-          ))
-        )}
-      </div>
+      <ComponentList
+        loaded={loaded}
+        components={filtered}
+        designFile={designFile}
+        disabled={!hasSelection || inserting}
+        onSelect={(c) => {
+          void handleSelect(c);
+        }}
+      />
     </aside>
   );
 }

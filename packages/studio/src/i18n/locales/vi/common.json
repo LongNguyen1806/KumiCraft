@@ -616,6 +616,7 @@
     "search": "Tìm component…",
     "usages": "Dùng ở {{count}} chỗ",
     "layout": "Bố cục",
+    "loading": "Đang tìm component trong dự án…",
     "empty": "Dự án chưa có component",
     "selfInsert": "Không chèn component vào chính nó",
     "add": "Chèn {{name}} tại phần tử đang chọn",

@@ -31,13 +31,20 @@ function handleEvent(
 
 export type ComponentsState = {
   readonly components: readonly ProjectComponent[];
+  /** False until the first list of this project arrives: the panel shows that it is looking. */
+  readonly loaded: boolean;
   setComponents: (components: readonly ProjectComponent[]) => void;
+  reset: () => void;
 };
 
 export const useComponentsStore = create<ComponentsState>((set) => ({
   components: [],
+  loaded: false,
   setComponents: (components) => {
-    set({ components });
+    set({ components, loaded: true });
+  },
+  reset: () => {
+    set({ components: [], loaded: false });
   },
 }));
 

@@ -5,6 +5,7 @@
 import { useBuildCheckStore } from '../build-check/build-check-store.ts';
 import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
 import { useChatStore } from '../chat/chat-store.ts';
+import { useComponentsStore } from '../components-panel/use-project-components.ts';
 import { useDesignStore } from '../design/design-store.ts';
 import { useFilesStore } from '../files/files-store.ts';
 import { useHistoryStore } from '../history/history-store.ts';
@@ -20,6 +21,7 @@ export function resetProjectState(): void {
   useCanvasErrorStore.getState().reset();
   useBuildCheckStore.getState().reset();
   useDesignStore.setState({ target: undefined, componentMode: undefined });
+  useComponentsStore.getState().reset();
 }
 
 /**

@@ -178,7 +178,8 @@ export async function listProjectComponents(
 ): Promise<ProjectComponent[]> {
   const targets = await collectAllTargets(deps.fs, root, info);
   const aliasPrefix = await readAliasPrefix(deps.fs, root);
-  const counter = deps.usageCounter ?? createUsageCounter(deps.fs);
+  // One read of each file for the whole list, not one per component (spec-log #117).
+  const counter = (deps.usageCounter ?? createUsageCounter(deps.fs)).batch();
   const { sourceDir } = info;
 
   const components: ProjectComponent[] = [];

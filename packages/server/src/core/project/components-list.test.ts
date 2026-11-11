@@ -346,4 +346,26 @@ describe('listProjectComponents', { timeout: 30_000 }, () => {
     const allLayoutOccurrences = components.filter((c) => c.name === 'DashboardLayout');
     expect(allLayoutOccurrences.length).toBe(1);
   });
+
+  it('[R-CP-12] reads each file at most twice for the whole list, with the same usage counts (spec-log #117)', async () => {
+    const { target, info } = await setupProject();
+    const reads = new Map<string, number>();
+    const countingFs: typeof directWriteFs = {
+      ...directWriteFs,
+      readText: (root, rel, options) => {
+        reads.set(rel, (reads.get(rel) ?? 0) + 1);
+        return directWriteFs.readText(root, rel, options);
+      },
+    };
+
+    const batched = await listProjectComponents({ fs: countingFs }, target, info);
+    const plain = createUsageCounter(directWriteFs);
+    for (const component of batched) {
+      expect(await plain.count(target, info.sourceDir, component.file, component.name)).toBe(
+        component.usages,
+      );
+    }
+    // Before: every component read the whole project again (one file read ~20 times here).
+    expect(Math.max(...reads.values())).toBeLessThanOrEqual(2);
+  });
 });

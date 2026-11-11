@@ -616,6 +616,7 @@
     "search": "Search components…",
     "usages": "Used in {{count}} places",
     "layout": "Layout",
+    "loading": "Looking for components in the project…",
     "empty": "This project has no components yet",
     "selfInsert": "A component cannot be inserted into itself",
     "add": "Insert {{name}} at the selected element",

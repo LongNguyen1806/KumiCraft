@@ -23,6 +23,8 @@ type FileSummary = {
 
 export type UsageCounter = {
   count(projectRoot: string, sourceDir: string, file: string, component: string): Promise<number>;
+  /** A counter for one listing: what it reads is read once and kept until it is dropped. */
+  batch(): UsageCounter;
 };
 
 const hashOf = (text: string) => createHash('sha256').update(text, 'utf8').digest('hex');
@@ -181,6 +183,54 @@ export async function listSourceFiles(
   return files;
 }
 
+/** How a count reads the project: straight from disk, or once per listing (see `batch`). */
+type CountIo = {
+  readonly summaryOf: (root: string, file: string) => Promise<FileSummary | undefined>;
+  readonly sourceFiles: (root: string, sourceDir: string) => Promise<readonly string[]>;
+  readonly alias: (root: string) => Promise<string | undefined>;
+};
+
+async function countWith(
+  io: CountIo,
+  root: string,
+  sourceDir: string,
+  file: string,
+  component: string,
+): Promise<number> {
+  const own = await io.summaryOf(root, file);
+  const isDefault = own?.defaultLocal === component;
+  const isNamed = own?.exported.has(component) === true;
+  let total = own?.jsxCounts.get(component) ?? 0;
+  if (!isDefault && !isNamed) return total;
+
+  const alias = await io.alias(root);
+  const targets = new Set(
+    RESOLVE_SUFFIXES.map((suffix) => `${file.replace(/\.(tsx|jsx)$/, '')}${suffix}`),
+  );
+  targets.add(file);
+  if (/\/index\.(tsx|jsx)$/.test(file)) targets.add(file.replace(/\/index\.(tsx|jsx)$/, ''));
+  for (const other of await io.sourceFiles(root, sourceDir)) {
+    if (other === file) continue;
+    const summary = await io.summaryOf(root, other);
+    for (const binding of summary?.imports ?? []) {
+      const base = importBase(other, binding.source, alias);
+      const matchesFile = base !== undefined && targets.has(base);
+      const matchesName =
+        binding.imported === 'default' ? isDefault : binding.imported === component;
+      if (matchesFile && matchesName) total += summary?.jsxCounts.get(binding.local) ?? 0;
+    }
+  }
+  return total;
+}
+
+function once<T>(cache: Map<string, Promise<T>>, key: string, make: () => Promise<T>): Promise<T> {
+  const hit = cache.get(key);
+  if (hit !== undefined) return hit;
+  const made = make();
+  cache.set(key, made);
+  return made;
+}
+
 export function createUsageCounter(fs: FileSystemPort): UsageCounter {
   const cache = new Map<string, { readonly hash: string; readonly summary?: FileSummary }>();
 
@@ -196,32 +246,33 @@ export function createUsageCounter(fs: FileSystemPort): UsageCounter {
     return summary;
   };
 
-  return {
-    async count(root, sourceDir, file, component) {
-      const own = await summaryOf(root, file);
-      const isDefault = own?.defaultLocal === component;
-      const isNamed = own?.exported.has(component) === true;
-      let total = own?.jsxCounts.get(component) ?? 0;
-      if (!isDefault && !isNamed) return total;
+  const direct: CountIo = {
+    summaryOf,
+    sourceFiles: (root, sourceDir) => listSourceFiles(fs, root, sourceDir),
+    alias: (root) => readAliasPrefix(fs, root),
+  };
 
-      const alias = await readAliasPrefix(fs, root);
-      const targets = new Set(
-        RESOLVE_SUFFIXES.map((suffix) => `${file.replace(/\.(tsx|jsx)$/, '')}${suffix}`),
-      );
-      targets.add(file);
-      if (/\/index\.(tsx|jsx)$/.test(file)) targets.add(file.replace(/\/index\.(tsx|jsx)$/, ''));
-      for (const other of await listSourceFiles(fs, root, sourceDir)) {
-        if (other === file) continue;
-        const summary = await summaryOf(root, other);
-        for (const binding of summary?.imports ?? []) {
-          const base = importBase(other, binding.source, alias);
-          const matchesFile = base !== undefined && targets.has(base);
-          const matchesName =
-            binding.imported === 'default' ? isDefault : binding.imported === component;
-          if (matchesFile && matchesName) total += summary?.jsxCounts.get(binding.local) ?? 0;
-        }
-      }
-      return total;
+  return {
+    count: (root, sourceDir, file, component) =>
+      countWith(direct, root, sourceDir, file, component),
+    batch() {
+      // One listing of many components reads each file, the file list and the alias once
+      // (spec-log #117): before, every component read the whole project again.
+      const summaries = new Map<string, Promise<FileSummary | undefined>>();
+      const lists = new Map<string, Promise<readonly string[]>>();
+      const aliases = new Map<string, Promise<string | undefined>>();
+      const io: CountIo = {
+        summaryOf: (root, file) => once(summaries, `${root}:${file}`, () => summaryOf(root, file)),
+        sourceFiles: (root, sourceDir) =>
+          once(lists, `${root}:${sourceDir}`, () => listSourceFiles(fs, root, sourceDir)),
+        alias: (root) => once(aliases, root, () => readAliasPrefix(fs, root)),
+      };
+      const batched: UsageCounter = {
+        count: (root, sourceDir, file, component) =>
+          countWith(io, root, sourceDir, file, component),
+        batch: () => batched,
+      };
+      return batched;
     },
   };
 }
