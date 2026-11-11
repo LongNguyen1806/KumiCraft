@@ -59,7 +59,7 @@ function OnboardingActions({
           onClick={() => {
             onInstall?.(agent);
           }}
-          className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary-hover cursor-pointer"
+          className="rounded-md bg-charcoal px-3 h-6 text-xs font-medium text-on-charcoal hover:bg-primary-hover"
         >
           {t('install')}
         </button>
@@ -73,7 +73,7 @@ function OnboardingActions({
       onClick={() => {
         onUse?.(agent.id);
       }}
-      className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary-hover cursor-pointer"
+      className="rounded-md bg-charcoal px-3 h-6 text-xs font-medium text-on-charcoal hover:bg-primary-hover"
     >
       {t('useThisAgent')}
     </button>
@@ -99,7 +99,7 @@ function SettingsInstalledActions({
           onClick={() => {
             onLogin?.(agent.id);
           }}
-          className="rounded-full bg-field px-3 py-1 text-xs text-ink hover:bg-field-hover cursor-pointer"
+          className="rounded-md bg-field px-3 h-6 text-xs text-ink hover:bg-field-hover"
         >
           {t('login')}
         </button>
@@ -110,7 +110,7 @@ function SettingsInstalledActions({
         onClick={() => {
           onRecheck?.();
         }}
-        className="rounded-full bg-field px-3 py-1 text-xs text-ink hover:bg-field-hover cursor-pointer"
+        className="rounded-md bg-field px-3 h-6 text-xs text-ink hover:bg-field-hover"
       >
         {t('recheck')}
       </button>
@@ -139,7 +139,7 @@ function SettingsActions({
           onClick={() => {
             onInstall?.(agent);
           }}
-          className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary-hover cursor-pointer"
+          className="rounded-md bg-charcoal px-3 h-6 text-xs font-medium text-on-charcoal hover:bg-primary-hover"
         >
           {t('install')}
         </button>

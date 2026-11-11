@@ -112,6 +112,7 @@ describe('Settings AgentSection [R-AG-10, R-AG-21, R-CH-06]', () => {
     const fetchSpy = vi.spyOn(agentClient, 'fetchAgents').mockResolvedValue(AGENTS_LIST);
 
     render(<SettingsDialog open onClose={vi.fn()} />);
+    fireEvent.click(screen.getByTestId('settings-section-agent'));
 
     await vi.waitFor(() => {
       expect(fetchSpy).toHaveBeenCalled();
@@ -138,6 +139,7 @@ describe('Settings AgentSection [R-AG-10, R-AG-21, R-CH-06]', () => {
     const openLoginSpy = vi.spyOn(agentClient, 'openAgentLogin').mockResolvedValue(undefined);
 
     render(<SettingsDialog open onClose={vi.fn()} />);
+    fireEvent.click(screen.getByTestId('settings-section-agent'));
 
     const fieldset = await screen.findByTestId('settings-agent-preferred');
     const agyRadio = fieldset.querySelector('input[value="agy"]');
@@ -168,6 +170,7 @@ describe('Settings AgentSection [R-AG-10, R-AG-21, R-CH-06]', () => {
     vi.spyOn(agentClient, 'fetchAgents').mockResolvedValue(agentsNoLogin);
 
     render(<SettingsDialog open onClose={vi.fn()} />);
+    fireEvent.click(screen.getByTestId('settings-section-agent'));
 
     await screen.findByTestId('agent-card-agy');
     expect(screen.queryByTestId('agent-login-agy')).toBeNull();
@@ -201,6 +204,7 @@ describe('Settings AgentSection [R-AG-10, R-AG-21, R-CH-06]', () => {
         <SettingsDialog open onClose={vi.fn()} />
       </div>,
     );
+    fireEvent.click(screen.getByTestId('settings-section-agent'));
 
     // Chat is currently in onboarding install step
     expect(await screen.findByTestId('agent-onboarding-install')).toBeDefined();

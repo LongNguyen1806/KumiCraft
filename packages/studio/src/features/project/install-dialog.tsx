@@ -38,7 +38,7 @@ function InstallError({ failure }: { readonly failure: InstallFailure }) {
   const { t: tError } = useTranslation('errors');
   return (
     <div className="flex flex-col gap-1" data-testid="install-error">
-      <p className="text-xs text-rose-600 font-medium">
+      <p className="text-xs text-danger font-medium">
         {errorText(tError, failure.code, failure.params)}
       </p>
       {failure.details.length > 0 && (
@@ -68,7 +68,7 @@ function InstallActionButtons({
           type="button"
           onClick={onCancel}
           disabled={phase === 'starting'}
-          className="rounded-full bg-field px-4 py-2 text-ink hover:bg-field-hover disabled:opacity-50"
+          className="rounded-md bg-field px-4 h-8 text-ink hover:bg-field-hover disabled:opacity-50"
           data-testid="cancel-install-btn"
         >
           {t('project.install.cancel')}
@@ -77,7 +77,7 @@ function InstallActionButtons({
         <button
           type="button"
           onClick={onInstall}
-          className="rounded-full bg-primary px-5 py-2 font-medium text-white shadow-sm hover:bg-primary-hover"
+          className="rounded-md bg-charcoal px-4 h-8 font-medium text-on-charcoal hover:bg-primary-hover"
           data-testid="install-btn"
         >
           {t('project.install.btn')}

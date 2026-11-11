@@ -189,7 +189,7 @@ export function CanvasFrameTile(props: CanvasFrameTileProps) {
       style={tileStyle(frameTileWidth(preset.width, zoom), hidden)}
       className={`relative flex shrink-0 flex-col rounded-md border transition-shadow ${
         isActive
-          ? 'border-accent shadow-md ring-2 ring-accent/30'
+          ? 'border-accent shadow-soft ring-2 ring-accent/30'
           : 'border-border shadow-sm hover:border-ink-faint'
       }`}
     >

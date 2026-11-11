@@ -53,7 +53,7 @@ function DirectoryPathBar({
           onClick={() => {
             onSelectPath(parent);
           }}
-          className="rounded-full bg-field px-3 py-1.5 text-xs text-ink-soft hover:text-ink shrink-0"
+          className="rounded-md bg-field px-3 h-7 text-xs text-ink-soft hover:text-ink shrink-0"
           data-testid="parent-dir-btn"
         >
           ↑

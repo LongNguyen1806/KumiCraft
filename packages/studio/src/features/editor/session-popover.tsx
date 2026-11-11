@@ -96,7 +96,7 @@ function SessionRowButtons({
           onClick={() => {
             onDelete(sessionId);
           }}
-          className="rounded border border-border px-1.5 py-0.5 text-[10px] text-rose-600 hover:bg-rose-50"
+          className="rounded border border-border px-1.5 py-0.5 text-[10px] text-danger hover:bg-rose-50"
         >
           {t('sessions.delete')}
         </button>

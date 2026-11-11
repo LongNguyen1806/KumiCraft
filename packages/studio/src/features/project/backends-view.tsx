@@ -50,7 +50,7 @@ function BackendItem({
             onRemove(backend.id);
           }}
           disabled={busy}
-          className="rounded px-2 py-1 text-xs text-rose-600 hover:bg-rose-50 disabled:opacity-50"
+          className="rounded px-2 py-1 text-xs text-danger hover:bg-rose-50 disabled:opacity-50"
           data-testid={`remove-backend-btn-${backend.id}`}
         >
           {t('project.backends.remove')}
@@ -141,7 +141,7 @@ function AddBackendForm({
         />
         <LabelField value={s.newLabel} onChange={s.setNewLabel} />
       </div>
-      {s.errorMsg && <p className="text-xs text-rose-600">{s.errorMsg}</p>}
+      {s.errorMsg && <p className="text-xs text-danger">{s.errorMsg}</p>}
       <button
         type="submit"
         disabled={s.busy || !s.newPath.trim()}

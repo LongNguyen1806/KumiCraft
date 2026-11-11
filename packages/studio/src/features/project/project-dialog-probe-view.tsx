@@ -64,7 +64,7 @@ function SupportedProjectView({
         type="button"
         onClick={onOpen}
         disabled={busy}
-        className="self-end rounded-full bg-primary px-5 py-2 font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+        className="self-end rounded-md bg-charcoal px-4 h-8 font-medium text-on-charcoal hover:bg-primary-hover disabled:opacity-50"
         data-testid="open-project-btn"
       >
         {busy ? t('project.opening') : t('project.open')}
@@ -81,7 +81,7 @@ function UnsupportedProjectView({
   const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-2">
-      <span className="font-medium text-rose-600">{t('project.unsupported')}:</span>
+      <span className="font-medium text-danger">{t('project.unsupported')}:</span>
       <ul className="list-disc pl-4 text-ink-soft space-y-1">
         {probe.support.reasons.map((reason) => (
           <li key={reason}>{t(`project.reasons.${reason}`, { defaultValue: reason })}</li>
@@ -112,7 +112,7 @@ function AppCandidateRow({
           {app.kind} • {app.supported ? t('project.appSupported') : t('project.unsupported')}
         </span>
         {!app.supported && app.reasons.length > 0 && (
-          <span className="text-[10px] text-rose-500 mt-0.5">
+          <span className="text-[10px] text-danger mt-0.5">
             {app.reasons.map((r) => t(`project.reasons.${r}`, { defaultValue: r })).join('; ')}
           </span>
         )}
@@ -212,7 +212,7 @@ export function ProjectProbeResultView({
       ) : (
         <ProbeBody {...body} />
       )}
-      {errorMsg && <p className="mt-2 text-xs text-rose-600 font-medium">{errorMsg}</p>}
+      {errorMsg && <p className="mt-2 text-xs text-danger font-medium">{errorMsg}</p>}
     </div>
   );
 }

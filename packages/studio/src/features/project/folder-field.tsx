@@ -45,7 +45,7 @@ export function FolderField({
           onClick={() => {
             setBrowsing(!browsing);
           }}
-          className="shrink-0 cursor-pointer rounded-full bg-field px-4 py-1.5 text-xs font-medium text-ink hover:bg-field-hover"
+          className="shrink-0 rounded-md bg-field px-4 h-7 text-xs font-medium text-ink hover:bg-field-hover"
           data-testid={`${testId}-browse`}
         >
           {browsing ? t('project.browseDone') : t('project.browse')}

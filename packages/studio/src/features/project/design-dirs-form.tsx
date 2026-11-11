@@ -292,13 +292,11 @@ function FormStatusMessages({
   return (
     <>
       {errorMsg !== undefined && (
-        <div role="alert" className="text-xs text-rose-600">
+        <div role="alert" className="text-xs text-danger">
           {errorMsg}
         </div>
       )}
-      {successMsg !== undefined && (
-        <div className="text-xs text-emerald-600 dark:text-emerald-400">{successMsg}</div>
-      )}
+      {successMsg !== undefined && <div className="text-xs text-emerald-600">{successMsg}</div>}
     </>
   );
 }

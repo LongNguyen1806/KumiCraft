@@ -92,7 +92,7 @@ function DialogActions({ canConfirm, onClose, onConfirm }: DialogActionsProps) {
         type="button"
         data-testid="chat-import-cancel"
         onClick={onClose}
-        className="rounded-full px-3 py-1.5 text-xs text-ink-soft hover:bg-field cursor-pointer"
+        className="rounded-md px-3 h-7 text-xs text-ink-soft hover:bg-field"
       >
         {t('import.cancel')}
       </button>
@@ -101,7 +101,7 @@ function DialogActions({ canConfirm, onClose, onConfirm }: DialogActionsProps) {
         data-testid="chat-import-confirm"
         disabled={!canConfirm}
         onClick={onConfirm}
-        className="rounded-full bg-primary px-4 py-1.5 text-xs font-medium text-on-charcoal hover:bg-primary-hover disabled:opacity-40 cursor-pointer"
+        className="rounded-md bg-charcoal px-4 h-7 text-xs font-medium text-on-charcoal hover:bg-primary-hover disabled:opacity-40"
       >
         {t('import.add')}
       </button>

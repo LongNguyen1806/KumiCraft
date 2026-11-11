@@ -37,7 +37,7 @@ function ToolItemRow({ item }: { readonly item: Extract<ChatItem, { kind: 'tool'
   return (
     <div
       data-testid="chat-tool"
-      className="flex items-center gap-1.5 rounded bg-field/60 px-2 py-1 font-mono text-[11px] text-ink-soft overflow-hidden"
+      className="flex items-center gap-1.5 overflow-hidden rounded-md border border-line bg-wash-cool px-2 py-1 font-mono text-[11px] text-ink-soft"
     >
       <ToolIcon name={item.name} />
       <span className="font-semibold text-ink">{item.name}</span>
@@ -76,7 +76,7 @@ function ChatItemView({ item }: { readonly item: ChatItem }) {
     const hasImages = item.images !== undefined && item.images.length > 0;
     return (
       <div className="flex justify-end">
-        <div className="max-w-[85%] rounded-2xl bg-primary px-3 py-2 text-xs text-white leading-relaxed whitespace-pre-wrap break-words">
+        <div className="max-w-[85%] rounded-lg rounded-br-sm bg-accent-soft px-3 py-2 text-xs leading-relaxed break-words whitespace-pre-wrap text-ink">
           {hasImages && <UserImagesRow images={item.images} />}
           <div>{item.text}</div>
         </div>
@@ -94,7 +94,7 @@ function ChatItemView({ item }: { readonly item: ChatItem }) {
     return <ToolItemRow item={item} />;
   }
   return (
-    <div className="rounded-lg bg-rose-50 border border-rose-200 p-2 text-xs text-rose-700">
+    <div className="rounded-md border border-danger/30 bg-danger/10 p-2 text-xs text-danger">
       {item.message}
     </div>
   );
@@ -136,7 +136,7 @@ function TurnSummaryView({ turn }: { readonly turn: ChatTurnView }) {
             onClick={() => {
               void cancelJob(turn.jobId);
             }}
-            className="rounded-full bg-field px-2.5 py-1 text-xs text-ink-soft hover:bg-field-hover hover:text-ink cursor-pointer"
+            className="rounded-md bg-field px-2.5 h-6 text-xs text-ink-soft hover:bg-field-hover hover:text-ink"
           >
             {t('cancel')}
           </button>
@@ -151,7 +151,7 @@ function TurnSummaryView({ turn }: { readonly turn: ChatTurnView }) {
   return (
     <div
       data-testid="chat-turn-summary"
-      className="pt-1 text-xs font-medium text-ink-soft border-t border-border/50"
+      className="border-t border-line pt-1 text-xs font-medium text-ink-soft"
     >
       {summaryText}
     </div>
@@ -180,13 +180,13 @@ function ClaudeLoginHint({ turn }: { readonly turn: ChatTurnView }) {
   return (
     <div
       data-testid="chat-login-hint"
-      className="flex items-center justify-between gap-2 rounded-lg bg-amber-50 border border-amber-200 p-2 text-xs text-amber-900 mt-1"
+      className="mt-1 flex items-center justify-between gap-2 rounded-md border border-sun bg-sun-soft p-2 text-xs text-ink"
     >
       <span>{t('loginHintClaude')}</span>
       <button
         type="button"
         onClick={handleLogin}
-        className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary-hover cursor-pointer"
+        className="rounded-md bg-charcoal px-3 h-6 text-xs font-medium text-on-charcoal hover:bg-primary-hover"
       >
         {t('login')}
       </button>

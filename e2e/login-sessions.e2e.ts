@@ -60,6 +60,7 @@ test('turned on in Settings, session 2 is s2.localhost with its own storage, and
   // Off by default (spec-log #77): no picker until the option is turned on in Settings.
   await expect(page.getByTestId('session-select-trigger')).toHaveCount(0);
   await page.getByTestId('activity-settings').click();
+  await page.getByTestId('settings-section-canvas').click();
   await page.getByTestId('settings-login-sessions').check();
   await page.keyboard.press('Escape');
 
@@ -88,6 +89,7 @@ test('turned on in Settings, session 2 is s2.localhost with its own storage, and
 
 async function turnSessionsOn(page: Page): Promise<void> {
   await page.getByTestId('activity-settings').click();
+  await page.getByTestId('settings-section-canvas').click();
   await page.getByTestId('settings-login-sessions').check();
   await page.keyboard.press('Escape');
 }

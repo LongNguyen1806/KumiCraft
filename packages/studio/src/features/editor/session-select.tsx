@@ -241,7 +241,7 @@ function SessionError({ anchor, message }: { readonly anchor: Anchor; readonly m
       <div
         role="alert"
         data-testid="session-error"
-        className="w-72 rounded border border-amber-500/40 bg-card-solid p-2 text-xs text-amber-600 shadow-lg dark:text-amber-300"
+        className="w-72 rounded border border-sun bg-card-solid p-2 text-xs text-amber-700 shadow-soft"
       >
         {message}
       </div>

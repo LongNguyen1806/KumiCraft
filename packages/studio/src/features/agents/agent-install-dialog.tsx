@@ -82,7 +82,7 @@ function InstallFailureView({ failure }: { readonly failure: JobFailure }) {
   const details = failure.details.length > 0 ? failure.details : [];
   return (
     <div data-testid="agent-install-error" className="flex flex-col gap-2">
-      <p className="text-xs text-rose-600 font-medium">
+      <p className="text-xs text-danger font-medium">
         {errorText(t, failure.code, failure.params)}
       </p>
       {details.length > 0 && (
@@ -114,7 +114,7 @@ function InstallDialogActions({
           type="button"
           data-testid="agent-install-stop"
           onClick={onStop}
-          className="rounded-full bg-field px-4 py-1.5 text-xs text-ink hover:bg-field-hover cursor-pointer"
+          className="rounded-md bg-field px-4 h-7 text-xs text-ink hover:bg-field-hover"
         >
           {t('installStop')}
         </button>
@@ -128,7 +128,7 @@ function InstallDialogActions({
         type="button"
         data-testid="agent-install-cancel"
         onClick={onClose}
-        className="rounded-full bg-field px-4 py-1.5 text-xs text-ink hover:bg-field-hover cursor-pointer"
+        className="rounded-md bg-field px-4 h-7 text-xs text-ink hover:bg-field-hover"
       >
         {phase === 'failed' ? t('close') : t('cancel')}
       </button>
@@ -137,7 +137,7 @@ function InstallDialogActions({
           type="button"
           data-testid="agent-install-confirm"
           onClick={onConfirm}
-          className="rounded-full bg-primary px-4 py-1.5 text-xs font-medium text-white hover:bg-primary-hover cursor-pointer"
+          className="rounded-md bg-charcoal px-4 h-7 text-xs font-medium text-on-charcoal hover:bg-primary-hover"
         >
           {t('installConfirm')}
         </button>

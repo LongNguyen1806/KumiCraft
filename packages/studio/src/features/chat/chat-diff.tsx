@@ -72,7 +72,7 @@ export function ChatDiff({ turnId, path }: ChatDiffProps) {
 
   if (errorMsg !== undefined) {
     return (
-      <div data-testid="chat-diff" className="rounded bg-rose-50 p-2 text-xs text-rose-600">
+      <div data-testid="chat-diff" className="rounded bg-rose-50 p-2 text-xs text-danger">
         {errorMsg}
       </div>
     );

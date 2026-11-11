@@ -27,7 +27,7 @@ export function SettingsButton({ variant = 'round', testId }: SettingsButtonProp
         className={
           isActivity
             ? 'relative flex size-8 cursor-pointer items-center justify-center rounded-md text-ink-faint transition-colors hover:bg-field hover:text-ink'
-            : 'grid size-10 place-items-center rounded-full bg-card text-ink shadow-soft backdrop-blur-md transition-transform hover:-translate-y-px'
+            : 'grid size-10 place-items-center rounded-md border border-line bg-card-solid text-ink backdrop-blur-md transition-transform hover:-translate-y-px'
         }
       >
         <SettingsIcon />

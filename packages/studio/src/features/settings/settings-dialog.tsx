@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { Code, Languages, Sparkles, Square } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { EDITORS, PACKAGE_MANAGERS } from '../../api/settings-client.ts';
-import { ChoicePill } from '../../components/ui/choice-pill.tsx';
+import { CHOICE_TRACK, ChoicePill } from '../../components/ui/choice-pill.tsx';
 import { Dialog } from '../../components/ui/dialog.tsx';
 import { LANGUAGES } from '../../i18n/i18n.ts';
 import { errorText } from '../../routes/error-text.ts';
@@ -14,16 +15,83 @@ import { useProjectInfo } from '../project/project-store.ts';
 
 type SettingsDialogProps = { readonly open: boolean; readonly onClose: () => void };
 
+const SECTIONS = [
+  { id: 'interface', icon: Languages },
+  { id: 'tools', icon: Code },
+  { id: 'agent', icon: Sparkles },
+  { id: 'canvas', icon: Square },
+] as const;
+type SectionId = (typeof SECTIONS)[number]['id'];
+
+/** The four parts of Settings, one at a time (P5). */
+function SectionNav({
+  current,
+  onPick,
+}: {
+  readonly current: SectionId;
+  readonly onPick: (id: SectionId) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <nav
+      aria-label={t('settings.sections')}
+      className="flex flex-col gap-0.5 border-r border-line bg-wash-cool p-2"
+    >
+      {SECTIONS.map(({ id, icon: Icon }) => (
+        <button
+          key={id}
+          type="button"
+          data-testid={`settings-section-${id}`}
+          aria-current={current === id}
+          onClick={() => {
+            onPick(id);
+          }}
+          className="flex h-8 items-center gap-2 rounded-md px-2.5 text-left text-xs text-ink-soft hover:bg-field hover:text-ink aria-[current=true]:bg-card-solid aria-[current=true]:font-medium aria-[current=true]:text-ink aria-[current=true]:shadow-[0_0_0_1px_var(--color-line)]"
+        >
+          <Icon className="size-4 shrink-0" aria-hidden />
+          <span className="truncate">{t(`settings.${id}`)}</span>
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+function SectionBody({ id, open }: { readonly id: SectionId; readonly open: boolean }) {
+  const { t: tChat } = useTranslation('chat');
+  const project = useProjectInfo();
+  if (id === 'interface') return <LanguageChoice />;
+  if (id === 'tools') {
+    return (
+      <>
+        <EditorChoice />
+        <PackageManagerChoice />
+      </>
+    );
+  }
+  if (id === 'canvas') return <LoginSessionsChoice />;
+  return (
+    <>
+      <AgentSection />
+      {/* The gaps live in the project, which must be open and trusted (R-AG-20). */}
+      {project?.trusted === true && (
+        <section className="mt-3 border-t border-line pt-3">
+          <h3 className="pb-1 font-medium">{tChat('toolGaps.title')}</h3>
+          <ToolGapsSection open={open} projectRoot={project.root} />
+        </section>
+      )}
+    </>
+  );
+}
+
 /**
- * Settings (SPEC-03 section 5.2): interface language, the editor that opens source files and the
- * package manager for new projects. Changes apply at once and are remembered for every project on
- * this computer. The agent choice comes with the `ai` feature (Phase 3).
+ * Settings (SPEC-03 section 5.2): interface language, the editor that opens source files, the
+ * package manager for new projects, the AI assistant and the Canvas options. Changes apply at once
+ * and are remembered for every project on this computer.
  */
 export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const { t } = useTranslation();
   const refreshAgents = useAgentsStore((state) => state.refresh);
-  const { t: tChat } = useTranslation('chat');
-  const project = useProjectInfo();
+  const [section, setSection] = useState<SectionId>('interface');
 
   useEffect(() => {
     if (open) {
@@ -37,25 +105,16 @@ export function SettingsDialog({ open, onClose }: SettingsDialogProps) {
       title={t('settings.title')}
       closeLabel={t('settings.close')}
       onClose={onClose}
+      size="wide"
+      flush
+      headerExtra={<SaveStatus />}
     >
-      <Section title={t('settings.interface')}>
-        <LanguageChoice />
-      </Section>
-      <Section title={t('settings.tools')}>
-        <EditorChoice />
-        <PackageManagerChoice />
-        <LoginSessionsChoice />
-      </Section>
-      <Section title={t('settings.agent')}>
-        <AgentSection />
-      </Section>
-      {/* The gaps live in the project, which must be open and trusted (R-AG-20). */}
-      {project?.trusted === true && (
-        <Section title={tChat('toolGaps.title')}>
-          <ToolGapsSection open={open} projectRoot={project.root} />
-        </Section>
-      )}
-      <SaveStatus />
+      <div className="grid min-h-[22rem] grid-cols-[11rem_minmax(0,1fr)]">
+        <SectionNav current={section} onPick={setSection} />
+        <section aria-label={t(`settings.${section}`)} className="min-w-0 px-5 pt-2 pb-5">
+          <SectionBody id={section} open={open} />
+        </section>
+      </div>
     </Dialog>
   );
 }
@@ -91,8 +150,8 @@ function EditorChoice() {
   const update = useSettingsStore((state) => state.update);
   return (
     <fieldset className="grid min-w-0 gap-2 py-2.5" disabled={editor === undefined}>
-      <legend className="pb-2 font-medium">{t('settings.editor')}</legend>
-      <div className="flex flex-wrap gap-1 justify-self-start rounded-full bg-field p-1">
+      <legend className="pb-1.5 font-medium">{t('settings.editor')}</legend>
+      <div className={CHOICE_TRACK}>
         {EDITORS.map((value) => (
           <ChoicePill
             key={value}
@@ -119,8 +178,8 @@ function PackageManagerChoice() {
   const update = useSettingsStore((state) => state.update);
   return (
     <fieldset className="grid min-w-0 gap-2 py-2.5" disabled={settings === undefined}>
-      <legend className="pb-2 font-medium">{t('settings.packageManager')}</legend>
-      <div className="flex gap-1 justify-self-start rounded-full bg-field p-1">
+      <legend className="pb-1.5 font-medium">{t('settings.packageManager')}</legend>
+      <div className={CHOICE_TRACK}>
         {PACKAGE_MANAGERS.map((value) => (
           <ChoicePill
             key={value}
@@ -146,8 +205,8 @@ function LanguageChoice() {
   const setLanguage = useSettingsStore((state) => state.setLanguage);
   return (
     <fieldset className="grid min-w-0 gap-2 py-2.5">
-      <legend className="pb-2 font-medium">{t('settings.language')}</legend>
-      <div className="flex gap-1 justify-self-start rounded-full bg-field p-1">
+      <legend className="pb-1.5 font-medium">{t('settings.language')}</legend>
+      <div className={CHOICE_TRACK}>
         {LANGUAGES.map((language) => (
           <ChoicePill
             key={language}
@@ -167,21 +226,6 @@ function LanguageChoice() {
   );
 }
 
-function Section({
-  title,
-  children,
-}: {
-  readonly title: string;
-  readonly children: React.ReactNode;
-}) {
-  return (
-    <section className="border-t border-dashed border-line pt-3 first-of-type:border-t-0">
-      <h3 className="text-ink-faint">{title}</h3>
-      {children}
-    </section>
-  );
-}
-
 /** "Saved", or why the last change could not be saved (it was undone). */
 function SaveStatus() {
   const { t } = useTranslation();
@@ -189,13 +233,13 @@ function SaveStatus() {
   const save = useSettingsStore((state) => state.save);
   if (save.status === 'failed') {
     return (
-      <p role="alert" className="pt-2 text-danger">
+      <p role="alert" className="max-w-64 truncate text-xs text-danger">
         {errorText(tError, save.info.code, save.info.params)}
       </p>
     );
   }
   return (
-    <p role="status" className="min-h-5 pt-2 text-xs text-ink-faint">
+    <p role="status" className="text-xs text-leaf">
       {save.status === 'idle' ? '' : t(`settings.${save.status}`)}
     </p>
   );

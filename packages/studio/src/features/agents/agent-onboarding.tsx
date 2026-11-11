@@ -51,7 +51,7 @@ export function AgentOnboarding({ step, agents }: AgentOnboardingProps) {
   return (
     <div
       data-testid={isInstall ? 'agent-onboarding-install' : 'agent-onboarding-choose'}
-      className="flex flex-col gap-4 p-4 rounded-xl border border-border bg-field/20"
+      className="flex flex-col gap-4 p-4 rounded-lg border border-border bg-field/20"
     >
       <OnboardingHeader isInstall={isInstall} />
       <div className="flex flex-col gap-2.5">

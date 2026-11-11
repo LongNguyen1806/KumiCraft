@@ -13,15 +13,21 @@ type TopBarProps = {
 export function TopBar({ version, onOpenProject, children }: TopBarProps) {
   const { t } = useTranslation();
   return (
-    <header className="flex items-center gap-2.5">
-      <div className="flex h-10 items-center gap-2 rounded-full border-[1.5px] border-charcoal px-[18px] text-[17px] tracking-tight">
-        {t('app.name')}
+    <header className="flex h-11 shrink-0 items-center gap-2 border-b border-line bg-card-solid px-2.5">
+      <div className="flex h-[30px] items-center gap-2 rounded-md border border-line pr-2.5 pl-1.5 text-[13px] font-semibold">
+        <span
+          aria-hidden
+          className="grid size-5 place-items-center rounded-[5px] bg-sun text-[11px] font-bold text-ink"
+        >
+          K
+        </span>
+        <span>{t('app.name')}</span>
       </div>
       {onOpenProject !== undefined && (
         <button
           type="button"
           onClick={onOpenProject}
-          className="h-10 rounded-full border border-border bg-field px-4 text-xs font-medium text-ink hover:bg-field-hover"
+          className="h-7 rounded-md border border-line bg-card-solid px-2.5 text-xs font-medium text-ink hover:bg-field"
           data-testid="project-btn"
         >
           {t('project.button')}

@@ -93,11 +93,11 @@ export function ErrorView({ status, logTail, onRestart }: ErrorViewProps) {
 
   return (
     <div
-      className="flex max-w-2xl flex-col gap-3 rounded-xl border border-red-500/20 bg-card/90 p-5 shadow-soft backdrop-blur-md"
+      className="flex max-w-2xl flex-col gap-3 rounded-lg border border-red-500/20 bg-card/90 p-5 shadow-soft backdrop-blur-md"
       data-testid="canvas-error"
     >
       <div className="flex items-center justify-between gap-4">
-        <h3 className="text-sm font-semibold text-red-500">{t('editor.devServerError')}</h3>
+        <h3 className="text-sm font-semibold text-danger">{t('editor.devServerError')}</h3>
         <button
           type="button"
           onClick={onRestart}

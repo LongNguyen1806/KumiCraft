@@ -20,9 +20,9 @@ function ChangeBadge({ change }: { readonly change: TurnFileChange }) {
     return <span className="font-mono text-[11px] font-bold text-emerald-600">A</span>;
   }
   if (change === 'deleted') {
-    return <span className="font-mono text-[11px] font-bold text-rose-600">D</span>;
+    return <span className="font-mono text-[11px] font-bold text-danger">D</span>;
   }
-  return <span className="font-mono text-[11px] font-bold text-amber-600">M</span>;
+  return <span className="font-mono text-[11px] font-bold text-amber-700">M</span>;
 }
 
 type FileRowProps = {
@@ -47,7 +47,7 @@ function FileRow({
   const { t } = useTranslation('chat');
 
   return (
-    <div className="flex flex-col border-b border-border/40 last:border-b-0">
+    <div className="flex flex-col border-b border-line last:border-b-0">
       <div className="flex items-center justify-between gap-2 px-2 py-1.5 text-xs hover:bg-field/50">
         <button
           type="button"
@@ -76,7 +76,7 @@ function FileRow({
         )}
       </div>
       {openError !== undefined && (
-        <div className="px-2 py-0.5 text-[11px] text-rose-600 bg-rose-50/50">{openError}</div>
+        <div className="px-2 py-0.5 text-[11px] text-danger bg-rose-50/50">{openError}</div>
       )}
       {isSelected && (
         <div className="px-2 py-1">
@@ -181,7 +181,7 @@ function VirtualFileList(props: VirtualFileListProps) {
       ref={(el) => {
         setScrollElement(el ?? undefined);
       }}
-      className="max-h-64 overflow-auto border border-border/60 rounded relative"
+      className="max-h-64 overflow-auto border border-line rounded relative"
     >
       {scrollElement !== undefined && <VirtualRows {...props} scrollElement={scrollElement} />}
     </div>
@@ -204,7 +204,7 @@ function NormalFileList({
   readonly onOpen: (path: string) => void;
 }) {
   return (
-    <div className="flex flex-col border border-border/60 rounded">
+    <div className="flex flex-col border border-line rounded">
       {files.map((file, index) => (
         <FileRow
           key={file.path}

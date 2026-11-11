@@ -85,6 +85,7 @@ describe('Settings dialog', () => {
   it('saves the editor that opens source files and says so', async () => {
     stubSettings();
     await openSettings();
+    fireEvent.click(screen.getByTestId('settings-section-tools'));
 
     fireEvent.click(screen.getByRole('radio', { name: 'Cursor' }));
 
@@ -96,6 +97,7 @@ describe('Settings dialog', () => {
   it('turns the advanced login sessions on and off; off is the default [spec-log #77]', async () => {
     stubSettings();
     await openSettings();
+    fireEvent.click(screen.getByTestId('settings-section-canvas'));
 
     const box = screen.getByTestId<HTMLInputElement>('settings-login-sessions');
     expect(box.checked).toBe(false);
@@ -112,6 +114,7 @@ describe('Settings dialog', () => {
   it('saves the package manager for new projects', async () => {
     stubSettings();
     await openSettings();
+    fireEvent.click(screen.getByTestId('settings-section-tools'));
 
     fireEvent.click(screen.getByRole('radio', { name: 'pnpm' }));
 
@@ -123,6 +126,7 @@ describe('Settings dialog', () => {
   it('puts the choice back and explains when it cannot be saved', async () => {
     stubSettings(DEFAULTS, 'E011');
     await openSettings();
+    fireEvent.click(screen.getByTestId('settings-section-tools'));
 
     fireEvent.click(screen.getByRole('radio', { name: 'Zed' }));
 

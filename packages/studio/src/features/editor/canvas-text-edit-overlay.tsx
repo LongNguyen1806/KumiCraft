@@ -17,7 +17,7 @@ function TextEditWarningBanner({
     <div
       role="alert"
       data-testid="text-edit-warning-banner"
-      className="absolute top-14 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-lg border border-amber-500/30 bg-card-solid/95 px-4 py-2 text-xs text-amber-500 shadow-xl backdrop-blur-md"
+      className="absolute top-14 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-lg border border-sun bg-card-solid/95 px-4 py-2 text-xs text-amber-500 shadow-xl backdrop-blur-md"
     >
       <span>{t(warning.messageKey)}</span>
       <button
@@ -65,7 +65,7 @@ export function TextEditOverlay({
       {loopCount !== undefined && (
         <div
           data-testid="text-edit-loop-banner"
-          className="absolute top-14 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-primary/30 bg-card-solid/95 px-3 py-1 text-xs font-medium text-primary shadow-lg backdrop-blur-md"
+          className="absolute top-14 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-md border border-primary/30 bg-card-solid/95 px-3 h-6 text-xs font-medium text-primary shadow-soft backdrop-blur-md"
         >
           <span>{t('textEdit.loopBanner', { count: loopCount })}</span>
         </div>

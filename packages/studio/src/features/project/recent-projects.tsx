@@ -77,7 +77,7 @@ function RecentRow({ entry, index, busy, onOpen, onForget }: RecentRowProps) {
         data-testid={`recent-project-${String(index)}`}
         disabled={busy}
         onClick={onOpen}
-        className="grid w-full cursor-pointer rounded-2xl bg-card py-2.5 pr-12 pl-4 text-left shadow-soft hover:bg-field disabled:opacity-60"
+        className="grid w-full cursor-pointer rounded-lg bg-card py-2.5 pr-12 pl-4 text-left shadow-soft hover:bg-field disabled:opacity-60"
       >
         <span className="font-medium text-ink">{entry.name}</span>
         <span className="font-mono text-xs break-all text-ink-faint">{entry.path}</span>
@@ -89,7 +89,7 @@ function RecentRow({ entry, index, busy, onOpen, onForget }: RecentRowProps) {
         aria-label={t('noProject.forgetNamed', { name: entry.name })}
         disabled={busy}
         onClick={onForget}
-        className="absolute top-1/2 right-3 flex size-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-ink-faint hover:bg-field hover:text-ink disabled:opacity-60"
+        className="absolute top-1/2 right-3 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-ink-faint hover:bg-field hover:text-ink disabled:opacity-60"
       >
         <X className="size-4" />
       </button>

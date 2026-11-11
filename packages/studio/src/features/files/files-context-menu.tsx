@@ -235,7 +235,7 @@ export function FilesContextMenu(props: FilesContextMenuProps) {
       role="menu"
       data-testid="files-context-menu"
       style={{ left: `${String(x)}px`, top: `${String(y)}px` }}
-      className="fixed z-50 min-w-44 rounded-lg border border-border bg-card-solid p-1 shadow-lg backdrop-blur-md"
+      className="fixed z-50 min-w-44 rounded-lg border border-line bg-card-solid p-1 shadow-soft"
     >
       <ContextMenuBody
         entry={entry}

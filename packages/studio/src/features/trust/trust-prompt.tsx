@@ -89,7 +89,7 @@ function TrustBackendItem({ backend }: { readonly backend: BackendInfo }) {
       {backend.outsideParent && (
         <span
           role="note"
-          className="text-xs font-medium text-amber-700 dark:text-amber-400"
+          className="text-xs font-medium text-amber-700"
           data-testid="trust-backend-outside"
         >
           {t('trust.backendOutside')}
@@ -110,7 +110,7 @@ function TrustBackends({ backends }: { readonly backends?: readonly BackendInfo[
   const { t } = useTranslation();
   if (backends === undefined) {
     return (
-      <p className="grid gap-0.5 rounded-2xl bg-field px-4 py-2.5">
+      <p className="grid gap-0.5 rounded-lg bg-field px-4 py-2.5">
         <span className="text-xs text-ink-faint">{t('trust.backends')}</span>
         <span className="text-xs text-ink-soft" data-testid="trust-loading">
           {t('trust.loading')}
@@ -120,7 +120,7 @@ function TrustBackends({ backends }: { readonly backends?: readonly BackendInfo[
   }
   if (backends.length === 0) {
     return (
-      <p className="grid gap-0.5 rounded-2xl bg-field px-4 py-2.5">
+      <p className="grid gap-0.5 rounded-lg bg-field px-4 py-2.5">
         <span className="text-xs text-ink-faint">{t('trust.backends')}</span>
         <span className="text-xs text-ink-soft" data-testid="trust-no-backends">
           {t('trust.noBackends')}
@@ -129,7 +129,7 @@ function TrustBackends({ backends }: { readonly backends?: readonly BackendInfo[
     );
   }
   return (
-    <div className="grid gap-1.5 rounded-2xl bg-field px-4 py-2.5">
+    <div className="grid gap-1.5 rounded-lg bg-field px-4 py-2.5">
       <span className="text-xs text-ink-faint">{t('trust.backends')}</span>
       <ul className="flex flex-col gap-2" data-testid="trust-backends">
         {backends.map((b) => (
@@ -156,14 +156,14 @@ function TrustDialogBody({
   return (
     <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto pr-1">
       <p className="text-ink-soft">{t('trust.intro')}</p>
-      <p className="grid gap-0.5 rounded-2xl bg-field px-4 py-2.5">
+      <p className="grid gap-0.5 rounded-lg bg-field px-4 py-2.5">
         <span className="text-xs text-ink-faint">{t('trust.project')}</span>
         <span className="font-medium break-all" data-testid="trust-project">
           {projectName}
         </span>
       </p>
       {projectRoot !== undefined && (
-        <p className="grid gap-0.5 rounded-2xl bg-field px-4 py-2.5">
+        <p className="grid gap-0.5 rounded-lg bg-field px-4 py-2.5">
           <span className="text-xs text-ink-faint">{t('trust.root')}</span>
           <span className="font-mono text-xs break-all" data-testid="trust-root">
             {projectRoot}
@@ -221,14 +221,14 @@ function TrustDialog({
         <button
           type="button"
           onClick={() => void trust()}
-          className="h-10 rounded-full bg-sun px-5 font-medium text-ink"
+          className="h-8 rounded-md bg-sun px-4 font-medium text-ink"
         >
           {t('trust.confirm')}
         </button>
         <button
           type="button"
           onClick={onClose}
-          className="h-10 rounded-full bg-field px-5 text-ink-soft"
+          className="h-8 rounded-md bg-field px-4 text-ink-soft"
         >
           {t('trust.later')}
         </button>

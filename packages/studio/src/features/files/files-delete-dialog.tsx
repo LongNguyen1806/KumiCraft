@@ -98,7 +98,7 @@ function DialogButtons({ busy, isDangerous, onClose, onConfirm }: DialogButtonsP
         data-testid="files-delete-cancel"
         onClick={onClose}
         disabled={busy}
-        className="rounded-full px-4 py-1.5 text-xs text-ink-soft hover:bg-field cursor-pointer"
+        className="rounded-md px-4 h-7 text-xs text-ink-soft hover:bg-field"
       >
         {t('files.cancel')}
       </button>
@@ -107,7 +107,7 @@ function DialogButtons({ busy, isDangerous, onClose, onConfirm }: DialogButtonsP
         data-testid="files-delete-confirm"
         onClick={onConfirm}
         disabled={busy}
-        className={`rounded-full px-4 py-1.5 text-xs font-medium cursor-pointer ${
+        className={`rounded-md px-4 h-7 text-xs font-medium ${
           isDangerous
             ? 'bg-rose-600 text-white hover:bg-rose-700'
             : 'bg-primary text-on-charcoal hover:bg-primary-hover'

@@ -49,7 +49,7 @@ function ElementChip() {
         onClick={() => {
           setHidden('element', true);
         }}
-        className="rounded-full p-0.5 hover:bg-field-hover text-ink-faint hover:text-ink cursor-pointer"
+        className="rounded-md p-0.5 hover:bg-field-hover text-ink-faint hover:text-ink"
       >
         <X className="size-3" />
       </button>
@@ -78,7 +78,7 @@ function PageChip() {
         onClick={() => {
           setHidden('page', true);
         }}
-        className="rounded-full p-0.5 hover:bg-field-hover text-ink-faint hover:text-ink cursor-pointer"
+        className="rounded-md p-0.5 hover:bg-field-hover text-ink-faint hover:text-ink"
       >
         <X className="size-3" />
       </button>
@@ -110,7 +110,7 @@ function FrameChip() {
         onClick={() => {
           setHidden('frame', true);
         }}
-        className="rounded-full p-0.5 hover:bg-field-hover text-ink-faint hover:text-ink cursor-pointer"
+        className="rounded-md p-0.5 hover:bg-field-hover text-ink-faint hover:text-ink"
       >
         <X className="size-3" />
       </button>

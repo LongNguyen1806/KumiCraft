@@ -71,11 +71,11 @@ function ShortcutGroupsList({ apple }: { readonly apple: boolean }) {
           <h3 className="text-xs font-semibold uppercase tracking-wider text-ink-faint">
             {t(group.groupKey)}
           </h3>
-          <div className="divide-y divide-border/20 rounded-lg border border-border/30 bg-field/40 px-3">
+          <div className="divide-y divide-border/20 rounded-lg border border-line bg-field/40 px-3">
             {group.items.map((item) => (
               <div key={item.action} className="flex items-center justify-between py-2 text-xs">
                 <span className="text-ink">{t(item.labelKey)}</span>
-                <kbd className="rounded border border-border/60 bg-field px-2 py-0.5 font-mono text-[11px] font-medium text-ink-strong shadow-xs">
+                <kbd className="rounded border border-line bg-field px-2 py-0.5 font-mono text-[11px] font-medium text-ink-strong shadow-xs">
                   {displayShortcutKey(item.action, apple)}
                 </kbd>
               </div>
@@ -95,7 +95,7 @@ type ShortcutHelpHeaderProps = {
 
 function ShortcutHelpHeader({ title, closeLabel, onClose }: ShortcutHelpHeaderProps) {
   return (
-    <div className="flex items-center justify-between border-b border-border/40 pb-4 mb-4">
+    <div className="flex items-center justify-between border-b border-line pb-4 mb-4">
       <h2 className="text-lg font-semibold text-ink">{title}</h2>
       <button
         type="button"
@@ -147,7 +147,7 @@ export function ShortcutHelp() {
         role="dialog"
         aria-modal="true"
         aria-label={t('shortcuts.title')}
-        className="relative z-10 flex max-h-[85vh] w-full max-w-xl flex-col rounded-xl border border-border bg-card-solid p-6 shadow-2xl overflow-hidden"
+        className="relative z-10 flex max-h-[85vh] w-full max-w-xl flex-col overflow-hidden rounded-panel border border-line bg-card-solid p-5 shadow-soft"
       >
         <ShortcutHelpHeader
           title={t('shortcuts.title')}

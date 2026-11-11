@@ -117,7 +117,7 @@ function SessionList({
   }
   return (
     <>
-      {failed && <p className="px-2.5 text-xs text-rose-600">{t('sessions.openFailed')}</p>}
+      {failed && <p className="px-2.5 text-xs text-danger">{t('sessions.openFailed')}</p>}
       <ul className="flex flex-col gap-0.5">
         {sessions.map((session) => (
           <SessionRow
@@ -156,7 +156,7 @@ export function ChatSessions({ agent, onClose }: ChatSessionsProps) {
       role="dialog"
       aria-label={t('sessions.title')}
       data-testid="chat-sessions"
-      className="absolute inset-0 z-20 flex flex-col rounded-xl border border-border bg-card-solid shadow-lg"
+      className="absolute inset-0 z-20 flex flex-col rounded-panel border border-line bg-card-solid shadow-soft"
     >
       <div className="flex items-center gap-1.5 border-b border-line px-3 py-2">
         <History className="size-3.5 text-ink-soft" />
@@ -167,7 +167,7 @@ export function ChatSessions({ agent, onClose }: ChatSessionsProps) {
           title={t('sessions.close')}
           aria-label={t('sessions.close')}
           onClick={onClose}
-          className="flex size-6 items-center justify-center rounded-full text-ink-soft hover:bg-field hover:text-ink cursor-pointer"
+          className="flex size-6 items-center justify-center rounded-md text-ink-soft hover:bg-field hover:text-ink"
         >
           <X className="size-3.5" />
         </button>
@@ -177,7 +177,7 @@ export function ChatSessions({ agent, onClose }: ChatSessionsProps) {
           <p className="px-2.5 py-4 text-xs text-ink-soft">{t('sessions.loading')}</p>
         )}
         {state.kind === 'failed' && (
-          <p className="px-2.5 py-4 text-xs text-rose-600">{t('sessions.loadFailed')}</p>
+          <p className="px-2.5 py-4 text-xs text-danger">{t('sessions.loadFailed')}</p>
         )}
         {state.kind === 'ready' && (
           <SessionList turns={state.turns} agent={agent} onClose={onClose} />

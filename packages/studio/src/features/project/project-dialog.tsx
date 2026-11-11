@@ -259,7 +259,7 @@ function OpenProjectContent({
       <button
         type="button"
         onClick={onNewProject}
-        className="cursor-pointer self-start rounded-full bg-field px-4 py-1.5 text-xs font-medium text-ink hover:bg-field-hover"
+        className="self-start rounded-md bg-field px-4 h-7 text-xs font-medium text-ink hover:bg-field-hover"
         data-testid="new-project-btn"
       >
         {t('project.newProjectButton')}

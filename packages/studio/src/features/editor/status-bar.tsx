@@ -79,7 +79,7 @@ function AddFrameMenu({ frames, anchor, menuRef, onSelect }: AddFrameMenuProps) 
       }}
       data-testid="add-frame-menu"
       style={{ left: `${String(anchor.left)}px`, bottom: `${String(anchor.bottom)}px` }}
-      className="fixed z-50 min-w-36 rounded-lg border border-border bg-card-solid p-1 shadow-lg text-xs"
+      className="fixed z-50 min-w-36 rounded-lg border border-border bg-card-solid p-1 shadow-soft text-xs"
     >
       {frames.map((f) => (
         <button

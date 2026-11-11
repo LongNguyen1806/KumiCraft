@@ -97,7 +97,7 @@ function ConnectHint({ projectRoot }: { readonly projectRoot: string }) {
             };
             void copy();
           }}
-          className="shrink-0 cursor-pointer rounded-full bg-field px-2.5 py-1 hover:bg-field-hover"
+          className="shrink-0 rounded-md bg-field px-2.5 h-6 hover:bg-field-hover"
         >
           {t(copied ? 'toolGaps.copied' : 'toolGaps.copy')}
         </button>
@@ -147,7 +147,7 @@ function GapsActions({
         type="button"
         data-testid="tool-gaps-refresh"
         onClick={onReload}
-        className="cursor-pointer rounded-full bg-field px-2.5 py-1 text-xs hover:bg-field-hover"
+        className="rounded-md bg-field px-2.5 h-6 text-xs hover:bg-field-hover"
       >
         {t('toolGaps.refresh')}
       </button>
@@ -158,7 +158,7 @@ function GapsActions({
         onClick={() => {
           exportMarkdown(gaps, labels);
         }}
-        className="cursor-pointer rounded-full bg-primary px-2.5 py-1 text-xs text-on-charcoal hover:bg-primary-hover disabled:opacity-40"
+        className="rounded-md bg-charcoal px-2.5 h-6 text-xs text-on-charcoal hover:bg-primary-hover disabled:opacity-40 font-medium"
       >
         {t('toolGaps.export')}
       </button>

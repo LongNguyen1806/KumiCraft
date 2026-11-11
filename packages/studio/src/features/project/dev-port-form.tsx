@@ -69,7 +69,7 @@ export function DevPortForm({ devPort }: { readonly devPort?: number | undefined
         />
       </label>
       <p className="text-xs text-ink-soft">{t('project.devPort.hint')}</p>
-      {errorMsg && <p className="text-xs text-rose-600">{errorMsg}</p>}
+      {errorMsg && <p className="text-xs text-danger">{errorMsg}</p>}
       <button
         type="submit"
         disabled={busy}

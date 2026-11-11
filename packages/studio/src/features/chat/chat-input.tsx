@@ -139,7 +139,7 @@ function ChatSendButton({ canSend, agent, onSend }: ChatSendButtonProps) {
         title={t('send')}
         aria-label={t('send')}
         onClick={onSend}
-        className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-on-charcoal hover:bg-primary-hover disabled:opacity-40 cursor-pointer"
+        className="flex size-7 shrink-0 items-center justify-center rounded-md bg-charcoal text-on-charcoal hover:bg-primary-hover disabled:opacity-40 font-medium"
       >
         <ArrowUp className="size-4" />
       </button>
@@ -285,7 +285,7 @@ function ChatInputField({
       onDrop={(e) => {
         handleInputDrop(e, onDropPath, onAddFiles);
       }}
-      className="relative rounded-xl border border-border bg-card p-2 shadow-xs focus-within:border-ink-soft focus-within:ring-1 focus-within:ring-line"
+      className="relative rounded-lg border border-line bg-card-solid p-2 focus-within:border-accent focus-within:shadow-[0_0_0_3px_rgb(42_98_217/0.18)]"
     >
       <textarea
         data-testid="chat-input"
@@ -327,14 +327,14 @@ export function ChatInput({ disabled = false, agent }: ChatInputProps) {
   };
 
   return (
-    <div className="flex flex-col gap-2 pt-2 border-t border-border/50">
+    <div className="flex flex-col gap-2 border-t border-line pt-2">
       {sendError !== undefined && (
-        <p data-testid="chat-send-error" className="text-xs text-rose-600">
+        <p data-testid="chat-send-error" className="text-xs text-danger">
           {sendError}
         </p>
       )}
       {docError !== undefined && (
-        <p data-testid="chat-doc-error" className="text-xs text-rose-600">
+        <p data-testid="chat-doc-error" className="text-xs text-danger">
           {docError}
         </p>
       )}

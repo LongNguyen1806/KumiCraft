@@ -154,7 +154,7 @@ export function NewProjectForm({ initialPath, busy, onCreate }: NewProjectFormPr
       <button
         type="submit"
         disabled={!ready}
-        className="self-end rounded-full bg-primary px-6 py-2 font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+        className="self-end rounded-md bg-charcoal px-4 h-8 font-medium text-on-charcoal hover:bg-primary-hover disabled:opacity-50"
         data-testid="create-project-btn"
       >
         {busy ? t('project.creating') : t('project.create')}

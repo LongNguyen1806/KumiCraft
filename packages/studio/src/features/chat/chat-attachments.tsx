@@ -27,7 +27,7 @@ function BackendChip({
         onClick={() => {
           onRemove(backend.id);
         }}
-        className="rounded-full p-0.5 hover:bg-field-hover text-ink-faint hover:text-ink cursor-pointer"
+        className="rounded-md p-0.5 hover:bg-field-hover text-ink-faint hover:text-ink"
       >
         <X className="size-3" />
       </button>
@@ -63,7 +63,7 @@ function DocChip({
         onClick={() => {
           onRemove(doc);
         }}
-        className="rounded-full p-0.5 hover:bg-field-hover text-ink-faint hover:text-ink cursor-pointer"
+        className="rounded-md p-0.5 hover:bg-field-hover text-ink-faint hover:text-ink"
       >
         <X className="size-3" />
       </button>
@@ -89,7 +89,7 @@ function ImageChip({
       <img src={image.previewUrl} alt={image.localId} className="size-full object-cover" />
       {image.state === 'uploading' && (
         <div className="absolute inset-0 flex items-center justify-center bg-charcoal/50">
-          <Loader2 className="size-4 animate-spin text-paper" />
+          <Loader2 className="size-4 animate-spin text-white" />
         </div>
       )}
       <button
@@ -98,7 +98,7 @@ function ImageChip({
         onClick={() => {
           onRemove(image.localId);
         }}
-        className="absolute top-0.5 right-0.5 rounded-full bg-charcoal/70 p-0.5 text-paper hover:bg-charcoal cursor-pointer"
+        className="absolute top-0.5 right-0.5 rounded-md bg-charcoal/70 p-0.5 text-white hover:bg-charcoal"
       >
         <X className="size-2.5" />
       </button>

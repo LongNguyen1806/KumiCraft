@@ -94,7 +94,7 @@ function BridgeSilentBanner({ logTail }: { readonly logTail: readonly string[] }
     <div
       role="alert"
       data-testid="canvas-bridge-warning"
-      className="absolute top-3 left-1/2 z-10 flex w-[min(32rem,90%)] -translate-x-1/2 flex-col gap-2 rounded-xl border border-amber-500/40 bg-card-solid/95 p-3 text-xs shadow-xl"
+      className="absolute top-3 left-1/2 z-10 flex w-[min(32rem,90%)] -translate-x-1/2 flex-col gap-2 rounded-lg border border-sun bg-card-solid/95 p-3 text-xs shadow-xl"
     >
       <div className="flex items-center justify-between gap-3">
         <span className="font-medium text-ink">{t('editor.bridgeSilent')}</span>
@@ -163,7 +163,7 @@ function ZoomedIframeBox({ frame, zoom, src, iframeRef, openFrameId }: ZoomedIfr
           sandbox={IFRAME_SANDBOX}
           title={frame.label}
           data-testid="canvas-iframe"
-          className="overflow-auto rounded-lg border border-border bg-white shadow-2xl"
+          className="overflow-auto rounded-lg border border-border bg-white shadow-soft"
           style={{
             width: `${String(frame.width)}px`,
             height: `${String(frame.height)}px`,

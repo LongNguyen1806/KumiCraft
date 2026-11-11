@@ -13,7 +13,7 @@ export function PortBusyBanner() {
     <div
       role="status"
       data-testid="canvas-port-busy"
-      className="flex items-center justify-between gap-3 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs text-ink backdrop-blur-md"
+      className="flex items-center justify-between gap-3 border-b border-sun bg-sun-soft px-4 py-2 text-xs text-ink backdrop-blur-md"
     >
       <span>{t('canvas.portBusy.message', { port: status.busyPort })}</span>
       <button

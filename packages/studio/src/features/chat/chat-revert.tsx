@@ -29,7 +29,7 @@ function RevertButton({ onClick }: { readonly onClick: () => void }) {
         type="button"
         data-testid="chat-revert"
         onClick={onClick}
-        className="flex items-center gap-1.5 rounded-full bg-field px-2.5 py-1 text-xs text-ink-soft hover:bg-field-hover hover:text-ink cursor-pointer"
+        className="flex items-center gap-1.5 rounded-md bg-field px-2.5 h-6 text-xs text-ink-soft hover:bg-field-hover hover:text-ink"
       >
         <RotateCcw className="size-3" />
         <span>{t('revertTurn')}</span>
@@ -56,7 +56,7 @@ function RevertConfirmDialog({
       data-testid="chat-revert-dialog"
       role="dialog"
       aria-modal="true"
-      className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3 shadow-md text-xs"
+      className="flex flex-col gap-2 rounded-panel border border-line bg-card-solid p-3 text-xs shadow-soft"
     >
       <p className="text-ink">{t('revertConfirmPrompt', { count: fileCount })}</p>
       <div className="flex justify-end gap-2 pt-1">
@@ -133,7 +133,7 @@ export function ChatRevert({ turnId, summary }: ChatRevertProps) {
       {errorMsg !== undefined && (
         <div
           data-testid="chat-revert-error"
-          className="text-xs text-rose-600 bg-rose-50/70 p-2 rounded border border-rose-200"
+          className="text-xs text-danger bg-rose-50/70 p-2 rounded border border-rose-200"
         >
           {errorMsg}
         </div>

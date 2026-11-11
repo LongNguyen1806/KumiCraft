@@ -124,7 +124,7 @@ function BuildCheckPanel({ anchor }: { readonly anchor: { left: number; bottom: 
       aria-label={t('buildCheck.title')}
       data-testid="build-check-panel"
       style={{ left: anchor.left, bottom: anchor.bottom }}
-      className="fixed z-50 flex w-[min(28rem,calc(100vw-2rem))] flex-col gap-1 rounded-lg border border-border bg-card-solid p-2 text-xs shadow-lg"
+      className="fixed z-50 flex w-[min(28rem,calc(100vw-2rem))] flex-col gap-1 rounded-panel border border-line bg-card-solid p-2 text-xs shadow-soft"
     >
       <header className="flex items-center justify-between gap-2 px-2">
         <h2 className="font-medium text-ink">{t('buildCheck.title')}</h2>

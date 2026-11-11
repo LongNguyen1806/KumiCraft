@@ -291,7 +291,7 @@ function SettingsPopover({
       role="dialog"
       aria-label={t('agentSettings.title')}
       data-testid="agent-settings-popover"
-      className="absolute bottom-full right-0 z-30 mb-1 flex w-64 max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-xl border border-border bg-card-solid p-3 shadow-lg"
+      className="absolute bottom-full right-0 z-30 mb-1 flex w-64 max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-panel border border-line bg-card-solid p-3 shadow-soft"
     >
       <AgentBadge agent={agent} />
       <ModelAndEffort

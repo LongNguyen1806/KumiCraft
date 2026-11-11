@@ -20,7 +20,7 @@ function NewConversationButton({ disabled }: { readonly disabled: boolean }) {
       onClick={() => {
         useChatStore.getState().newConversation();
       }}
-      className="flex size-6 items-center justify-center rounded-full text-ink-soft hover:bg-card-solid hover:text-ink disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+      className="flex size-6 items-center justify-center rounded-md text-ink-soft hover:bg-field hover:text-ink disabled:opacity-40 disabled:pointer-events-none"
     >
       <Plus className="size-3.5" />
     </button>
@@ -42,7 +42,7 @@ function ImportButton({ disabled, onOpenImport }: ImportButtonProps) {
       aria-label={t('import.button')}
       disabled={disabled}
       onClick={onOpenImport}
-      className="flex size-6 items-center justify-center rounded-full text-ink-soft hover:bg-card-solid hover:text-ink disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+      className="flex size-6 items-center justify-center rounded-md text-ink-soft hover:bg-field hover:text-ink disabled:opacity-40 disabled:pointer-events-none"
     >
       <FolderPlus className="size-3.5" />
     </button>
@@ -58,7 +58,7 @@ function SessionsButton({ onOpen }: { readonly onOpen: () => void }) {
       title={t('sessions.title')}
       aria-label={t('sessions.title')}
       onClick={onOpen}
-      className="flex size-6 items-center justify-center rounded-full text-ink-soft hover:bg-card-solid hover:text-ink cursor-pointer"
+      className="flex size-6 items-center justify-center rounded-md text-ink-soft hover:bg-field hover:text-ink"
     >
       <History className="size-3.5" />
     </button>
@@ -104,7 +104,7 @@ function ToolbarActionButtons({
         onClick={() => {
           fileInputRef.current?.click();
         }}
-        className="flex size-6 items-center justify-center rounded-full text-ink-soft hover:bg-card-solid hover:text-ink disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+        className="flex size-6 items-center justify-center rounded-md text-ink-soft hover:bg-field hover:text-ink disabled:opacity-40 disabled:pointer-events-none"
       >
         <ImagePlus className="size-3.5" />
       </button>

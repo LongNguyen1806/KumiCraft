@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { type ReactNode, useEffect, useId, useState } from 'react';
 
 type DialogProps = {
@@ -8,13 +9,61 @@ type DialogProps = {
   readonly children: ReactNode;
   /** 'wide' for settings with several fields per row. */
   readonly size?: 'normal' | 'wide' | undefined;
+  /** Drawn at the right of the title row, before the close button (e.g. "Saved"). */
+  readonly headerExtra?: ReactNode;
+  /** Set when the body lays itself out edge to edge (a side menu, for example). */
+  readonly flush?: boolean | undefined;
 };
+
+function DialogHeader({
+  titleId,
+  title,
+  closeLabel,
+  onClose,
+  extra,
+}: {
+  readonly titleId: string;
+  readonly title: string;
+  readonly closeLabel: string;
+  readonly onClose: () => void;
+  readonly extra: ReactNode;
+}) {
+  return (
+    <div className="flex h-12 shrink-0 items-center gap-3 border-b border-line pr-2.5 pl-5">
+      <h2 id={titleId} className="truncate text-[15px] font-semibold">
+        {title}
+      </h2>
+      <span className="ml-auto flex items-center gap-2">
+        {extra}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={closeLabel}
+          title={closeLabel}
+          className="grid size-8 place-items-center rounded-md text-ink-soft hover:bg-field hover:text-ink"
+        >
+          <X className="size-4" aria-hidden />
+        </button>
+      </span>
+    </div>
+  );
+}
 
 /**
  * A modal dialog on the native `<dialog>`: the browser keeps keyboard focus inside, Esc closes it
- * and the page behind is inert.
+ * and the page behind is inert. One shell for every dialog: a 48 px title row with a line under it
+ * and a close button.
  */
-export function Dialog({ open, title, closeLabel, onClose, children, size }: DialogProps) {
+export function Dialog({
+  open,
+  title,
+  closeLabel,
+  onClose,
+  children,
+  size,
+  headerExtra,
+  flush,
+}: DialogProps) {
   const [element, setElement] = useState<HTMLDialogElement>();
   const titleId = useId();
 
@@ -31,21 +80,26 @@ export function Dialog({ open, title, closeLabel, onClose, children, size }: Dia
       }}
       aria-labelledby={titleId}
       onClose={onClose}
-      className={`m-auto ${size === 'wide' ? 'w-[min(760px,calc(100vw-32px))]' : 'w-[min(520px,calc(100vw-32px))]'} rounded-panel whitespace-normal bg-card-solid p-0 text-ink shadow-soft backdrop:bg-wash-cool/60 backdrop:backdrop-blur-sm`}
+      className={`m-auto ${size === 'wide' ? 'w-[min(760px,calc(100vw-32px))]' : 'w-[min(520px,calc(100vw-32px))]'} max-h-[calc(100vh-48px)] overflow-hidden rounded-panel border border-line bg-card-solid p-0 whitespace-normal text-ink shadow-soft backdrop:bg-ink/25`}
     >
-      <div className="flex items-center gap-3 px-7 pt-6 pb-2">
-        <h2 id={titleId} className="text-[22px] font-light tracking-tight">
-          {title}
-        </h2>
-        <button
-          type="button"
-          onClick={onClose}
-          className="ml-auto h-9 rounded-full bg-field px-4 text-ink-soft hover:text-ink"
+      <div className="flex max-h-[calc(100vh-48px)] flex-col">
+        <DialogHeader
+          titleId={titleId}
+          title={title}
+          closeLabel={closeLabel}
+          onClose={onClose}
+          extra={headerExtra}
+        />
+        <div
+          className={
+            flush === true
+              ? 'min-h-0 flex-1 overflow-auto'
+              : 'grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] gap-1 overflow-auto px-5 pt-4 pb-5'
+          }
         >
-          {closeLabel}
-        </button>
+          {children}
+        </div>
       </div>
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-1 px-7 pb-7">{children}</div>
     </dialog>
   );
 }

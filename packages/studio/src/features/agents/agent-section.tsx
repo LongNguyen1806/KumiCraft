@@ -2,7 +2,7 @@
 import { AGENT_CHOICES, type AgentChoice, type AgentId, type AgentStatus } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
-import { ChoicePill } from '../../components/ui/choice-pill.tsx';
+import { CHOICE_TRACK, ChoicePill } from '../../components/ui/choice-pill.tsx';
 import { useAgentsStore } from '../../store/agents-store.ts';
 import { useSettingsStore } from '../../store/settings-store.ts';
 import { AgentCard } from './agent-card.tsx';
@@ -29,7 +29,7 @@ function PreferredChoiceField({
   return (
     <fieldset data-testid="settings-agent-preferred" className="grid min-w-0 gap-2 py-2.5">
       <legend className="pb-2 font-medium">{t('settings.agentPreferred')}</legend>
-      <div className="flex flex-wrap gap-1 justify-self-start rounded-full bg-field p-1">
+      <div className={CHOICE_TRACK}>
         {AGENT_CHOICES.map((choice) => (
           <ChoicePill
             key={choice}

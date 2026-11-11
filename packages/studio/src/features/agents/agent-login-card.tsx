@@ -29,7 +29,7 @@ function LoginFailureView() {
   const error = loginFlow?.error;
   if (error === undefined) return undefined;
   return (
-    <div data-testid="agent-login-error" className="text-xs text-rose-600 font-medium">
+    <div data-testid="agent-login-error" className="text-xs text-danger font-medium">
       {errorText(t, error.code, error.params)}
     </div>
   );
@@ -78,7 +78,7 @@ function ManualDoneButton({ onDone }: { readonly onDone: () => void }) {
       type="button"
       data-testid="agent-login-manual-done"
       onClick={onDone}
-      className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary-hover cursor-pointer"
+      className="rounded-md bg-charcoal px-3 h-6 text-xs font-medium text-on-charcoal hover:bg-primary-hover"
     >
       {t('loginManualDone')}
     </button>
@@ -92,7 +92,7 @@ function TimeoutRecheckButton({ onRecheck }: { readonly onRecheck: () => void })
       type="button"
       data-testid="agent-login-recheck"
       onClick={onRecheck}
-      className="rounded-full bg-field px-3 py-1 text-xs text-ink hover:bg-field-hover cursor-pointer"
+      className="rounded-md bg-field px-3 h-6 text-xs text-ink hover:bg-field-hover"
     >
       {t('recheck')}
     </button>
@@ -150,7 +150,7 @@ function LoginCardActions() {
         onClick={() => {
           void startLogin(loginFlow.agent, loginFlow.resend);
         }}
-        className="rounded-full bg-field px-3 py-1 text-xs text-ink hover:bg-field-hover cursor-pointer"
+        className="rounded-md bg-field px-3 h-6 text-xs text-ink hover:bg-field-hover"
       >
         {t('loginReopen')}
       </button>
@@ -158,7 +158,7 @@ function LoginCardActions() {
         type="button"
         data-testid="agent-login-cancel"
         onClick={cancelLogin}
-        className="rounded-full bg-field px-3 py-1 text-xs text-ink hover:bg-field-hover cursor-pointer"
+        className="rounded-md bg-field px-3 h-6 text-xs text-ink hover:bg-field-hover"
       >
         {t('cancel')}
       </button>
@@ -177,7 +177,7 @@ export function AgentLoginCard() {
   return (
     <div
       data-testid="agent-login-card"
-      className="flex flex-col gap-3 rounded-xl border border-amber-300 bg-amber-50/70 p-3.5 text-ink shadow-sm"
+      className="flex flex-col gap-3 rounded-lg border border-amber-300 bg-amber-50/70 p-3.5 text-ink shadow-sm"
     >
       <div className="flex items-center justify-between">
         <h4 className="text-xs font-semibold text-ink">

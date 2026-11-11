@@ -68,6 +68,7 @@ test('two frames in two sessions; clicking in the other frame makes it the worki
     timeout: 20_000,
   });
   await page.getByTestId('activity-settings').click();
+  await page.getByTestId('settings-section-canvas').click();
   await page.getByTestId('settings-login-sessions').check();
   await page.keyboard.press('Escape');
 

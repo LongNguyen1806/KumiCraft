@@ -12,9 +12,9 @@ export function ChatLock({ reason }: ChatLockProps) {
   return (
     <div
       data-testid={`chat-locked-${reason}`}
-      className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 flex items-start gap-2.5"
+      className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-ink flex items-start gap-2.5"
     >
-      <AlertCircle className="size-4 shrink-0 text-amber-600 mt-0.5" />
+      <AlertCircle className="size-4 shrink-0 text-amber-700 mt-0.5" />
       <span>{t('lockedUntrusted')}</span>
     </div>
   );

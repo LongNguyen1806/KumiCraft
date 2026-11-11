@@ -146,7 +146,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
           >
             K
           </span>
-          {t('app.name')}
+          <span>{t('app.name')}</span>
           <span
             className="min-w-0 truncate font-mono text-[11.5px] font-normal text-ink-soft"
             title={props.projectName}
