@@ -638,6 +638,8 @@
   "freeFrame": {
     "toggle": "Khung tự do",
     "confirmDisable": "Tắt khung tự do sẽ chuyển các phần tử con về luồng xếp thông thường. Tiếp tục?",
+    "restoredAll": "Đã trả {{restored}} phần tử về như cũ.",
+    "restoredSome": "Đã trả {{restored}} phần tử về như cũ, {{kept}} phần tử giữ vị trí mới.",
     "measureTimeout": "Không thể đo kích thước khung (quá hạn 2 giây).",
     "pageWarning": "Vị trí cố định, có thể lệch trên màn hình khác.",
     "section": "Khung tự do",

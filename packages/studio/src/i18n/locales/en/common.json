@@ -638,6 +638,8 @@
   "freeFrame": {
     "toggle": "Free frame",
     "confirmDisable": "Turning off free frame will switch child elements back to normal flow. Continue?",
+    "restoredAll": "Put {{restored}} elements back as they were.",
+    "restoredSome": "Put {{restored}} elements back as they were; {{kept}} kept their new place.",
     "measureTimeout": "Failed to measure frame size (2s timeout).",
     "pageWarning": "Fixed positions — may shift on other screen sizes.",
     "section": "Free frame",

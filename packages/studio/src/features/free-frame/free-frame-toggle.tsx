@@ -1,4 +1,9 @@
-import { type ElementRef, type ElementSource, isContainerTag } from '@kumicraft/shared';
+import {
+  type ElementRef,
+  type ElementSource,
+  isContainerTag,
+  type TreeNode,
+} from '@kumicraft/shared';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -6,10 +11,18 @@ import { type ErrorInfo, errorText } from '../../routes/error-text.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { requestFreeMeasure } from './free-context.ts';
-import { executeDisableFreeFrame, executeEnableFreeFrame } from './free-frame-ops.ts';
+import {
+  executeDisableFreeFrame,
+  executeEnableFreeFrame,
+  executeRestoreFreeFrame,
+} from './free-frame-ops.ts';
+import { findFreeSnapshot, type FreeSnapshot, saveFreeSnapshot } from './free-frame-snapshot.ts';
 
 /** Shown error: a server error code, or the measure timeout (R-FF-10). */
 type ToggleError = ErrorInfo | 'measureTimeout';
+
+/** What turning the frame off gave back (spec-log #126), shown under the switch of that frame. */
+type RestoreNotice = { readonly loc: string; readonly restored: number; readonly kept: number };
 
 function useEnableFreeFrame(
   source: ElementSource | undefined,
@@ -18,6 +31,7 @@ function useEnableFreeFrame(
 ) {
   const grid = useCanvasViewStore((s) => s.grid);
   const tailwindMajor = useCanvasViewStore((s) => s.tailwindMajor);
+  const projectId = useCanvasViewStore((s) => s.currentProjectId);
 
   return useCallback(() => {
     if (!source || !primaryRef) return;
@@ -39,21 +53,74 @@ function useEnableFreeFrame(
           grid,
           tailwindMajor,
           measurePayload: payload,
+          remember:
+            projectId === undefined
+              ? undefined
+              : (snapshot) => {
+                  saveFreeSnapshot(projectId, snapshot);
+                },
         }),
       );
     })();
-  }, [source, primaryRef, grid, tailwindMajor, setError]);
+  }, [source, primaryRef, grid, tailwindMajor, projectId, setError]);
+}
+
+/** Turns the frame off with its record and reports what came back (spec-log #126). */
+async function restoreFrame(
+  source: ElementSource,
+  currentClassName: string,
+  treeNodes: readonly TreeNode[],
+  snapshot: FreeSnapshot,
+  setError: (e: ToggleError | undefined) => void,
+  setNotice: (notice: RestoreNotice | undefined) => void,
+): Promise<void> {
+  const res = await executeRestoreFreeFrame({
+    loc: source.loc,
+    tag: source.tag,
+    currentClassName,
+    treeNodes,
+    snapshot,
+  });
+  setError(res.error);
+  if (res.error === undefined)
+    setNotice({ loc: source.loc, restored: res.restored, kept: res.kept });
+}
+
+function RestoredNotice({ notice }: { readonly notice: RestoreNotice }) {
+  const { t } = useTranslation();
+  return (
+    <div role="status" data-testid="free-frame-restored" className="text-xs text-ink-soft">
+      {notice.kept === 0
+        ? t('freeFrame.restoredAll', { restored: notice.restored })
+        : t('freeFrame.restoredSome', { restored: notice.restored, kept: notice.kept })}
+    </div>
+  );
 }
 
 function useDisableFreeFrame(
   source: ElementSource | undefined,
   setError: (e: ToggleError | undefined) => void,
+  setNotice: (notice: RestoreNotice | undefined) => void,
 ) {
   const { t } = useTranslation();
   const treeNodes = useSelectionStore((s) => s.treeNodes);
+  const projectId = useCanvasViewStore((s) => s.currentProjectId);
 
   return useCallback(() => {
     if (!source) return;
+    setNotice(undefined);
+    const currentClassName = source.className.kind === 'static' ? source.className.value : '';
+    const snapshot =
+      projectId === undefined
+        ? undefined
+        : findFreeSnapshot(projectId, source.loc, currentClassName);
+    if (snapshot !== undefined) {
+      // What turning it on replaced is known: give it back, no question (spec-log #126).
+      setError(undefined);
+      void restoreFrame(source, currentClassName, treeNodes, snapshot, setError, setNotice);
+      return;
+    }
+    // Turned on before this was recorded: children can only go back to the flow.
     const confirmed = window.confirm(
       t(
         'freeFrame.confirmDisable',
@@ -62,8 +129,6 @@ function useDisableFreeFrame(
     );
     if (!confirmed) return;
     setError(undefined);
-
-    const currentClassName = source.className.kind === 'static' ? source.className.value : '';
 
     void (async () => {
       setError(
@@ -75,7 +140,7 @@ function useDisableFreeFrame(
         }),
       );
     })();
-  }, [source, treeNodes, setError, t]);
+  }, [source, treeNodes, projectId, setError, setNotice, t]);
 }
 
 function FreeFrameSwitch({
@@ -111,6 +176,7 @@ export function FreeFrameToggle({ source }: { readonly source?: ElementSource | 
   const { t: tError } = useTranslation('errors');
   const selectedRefs = useSelectionStore((s) => s.selectedRefs);
   const [error, setError] = useState<ToggleError | undefined>(undefined);
+  const [notice, setNotice] = useState<RestoreNotice>();
 
   const primaryRef = selectedRefs.length === 1 ? selectedRefs[0] : undefined;
   const isEligible =
@@ -120,7 +186,7 @@ export function FreeFrameToggle({ source }: { readonly source?: ElementSource | 
     (source.className.kind === 'static' || source.className.kind === 'none');
 
   const handleEnable = useEnableFreeFrame(source, primaryRef, setError);
-  const handleDisable = useDisableFreeFrame(source, setError);
+  const handleDisable = useDisableFreeFrame(source, setError, setNotice);
 
   if (!isEligible) return <></>;
 
@@ -146,6 +212,9 @@ export function FreeFrameToggle({ source }: { readonly source?: ElementSource | 
           }}
         />
       </div>
+      {notice !== undefined && notice.loc === source.loc && !isFree && (
+        <RestoredNotice notice={notice} />
+      )}
       {error !== undefined && (
         <div role="alert" data-testid="free-frame-error" className="text-xs text-danger">
           {error === 'measureTimeout'
