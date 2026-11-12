@@ -108,3 +108,47 @@ test('a block moved while free keeps its place when turned off; the rest comes b
   // Still the positioning parent of the moved block.
   expect(await lineWith('<section')).toMatch(/\brelative\b/);
 });
+
+const NESTED = `export function Home() {
+  return (
+    <main data-rc-free className="relative h-[700px] w-[1000px] bg-slate-50">
+      <section className="absolute top-[40px] left-[300px] h-[400px] w-[500px] bg-white">
+        <div className="absolute top-8 right-8 h-20 w-20 bg-pink-200">Góc</div>
+        <div className="mx-auto max-w-xl text-center">Khung con</div>
+      </section>
+    </main>
+  );
+}
+
+export default Home;
+`;
+
+test('a block already placed in a free frame stays put when turned free itself [spec-log #127]', async ({
+  page,
+}) => {
+  await writeFile(pageFile(), NESTED);
+  const session = await startCli(folder.path, config.path);
+  sessions.push(session);
+  const tab = await page.context().newPage();
+  await tab.goto(session.studioUrl);
+  await trustIfAsked(tab);
+  const canvas = await getCanvasFrame(tab);
+  const text = canvas.getByText('Khung con');
+  await expect(text).toBeVisible({ timeout: 15_000 });
+  const section = canvas.locator('section');
+  const before = await section.boundingBox();
+
+  await text.click();
+  await tab.keyboard.press('Escape');
+  await tab.getByTestId('free-frame-toggle').click();
+  await expect.poll(() => lineWith('<section'), { timeout: 10_000 }).toContain('data-rc-free');
+
+  // Its own `absolute` is kept: no `relative` beside it to pull it out of its place.
+  expect(await lineWith('<section')).not.toMatch(/\brelative\b/);
+  await expect
+    .poll(async () => {
+      const now = await section.boundingBox();
+      return now && before ? Math.abs(now.x - before.x) + Math.abs(now.y - before.y) : -1;
+    })
+    .toBeLessThan(1);
+});

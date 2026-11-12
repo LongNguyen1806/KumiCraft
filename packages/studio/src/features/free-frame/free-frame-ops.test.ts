@@ -120,6 +120,39 @@ describe('Free frame on: Studio batch [R-FF-10]', () => {
     ]);
   });
 
+  it.each([
+    ['absolute left-151 top-0 w-[838px]', 'absolute left-151 top-0 w-[838px] h-[300px]'],
+    ['fixed inset-0', 'fixed inset-0 h-[300px]'],
+    ['sticky top-0', 'sticky top-0 h-[300px]'],
+    // A variant is not the base position: the frame still needs one of its own.
+    ['lg:relative p-4', 'lg:relative p-4 relative h-[300px]'],
+  ])(
+    'a frame already positioned keeps its own position, no `relative` beside it: %s [spec-log #127]',
+    async (before, after) => {
+      const batchSpy = vi
+        .spyOn(sourceClient, 'editSourceBatch')
+        .mockResolvedValue({ changed: true, files: ['src/pages/Home.tsx'] });
+      mockSources({});
+
+      await executeEnableFreeFrame({
+        loc: FRAME,
+        tag: 'div',
+        currentClassName: before,
+        grid: 8,
+        tailwindMajor: 4,
+        measurePayload: measure([]),
+      });
+
+      expect(batchEdits(batchSpy)[1]).toEqual({
+        kind: 'setClassName',
+        loc: FRAME,
+        tag: 'div',
+        before,
+        after,
+      });
+    },
+  );
+
   it('Scenario 9b: Tailwind v3 writes arbitrary px', async () => {
     const batchSpy = vi
       .spyOn(sourceClient, 'editSourceBatch')

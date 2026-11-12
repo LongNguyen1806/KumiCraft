@@ -23,6 +23,9 @@ export type EnableFreeFrameParams = {
   readonly remember?: ((snapshot: FreeSnapshot) => void) | undefined;
 };
 
+/** Unprefixed position classes that already make the frame the parent of absolute children. */
+const POSITIONED: ReadonlySet<string> = new Set(['relative', 'absolute', 'fixed', 'sticky']);
+
 async function sendBatch(edits: readonly AttributeLevelEdit[]): Promise<ErrorInfo | undefined> {
   try {
     await editSourceBatch({ edits: [...edits] });
@@ -46,7 +49,10 @@ export async function executeEnableFreeFrame(
   const { loc, tag, currentClassName, grid, tailwindMajor, measurePayload } = params;
 
   const frameClasses = currentClassName.split(/\s+/).filter(Boolean);
-  if (!frameClasses.includes('relative')) frameClasses.push('relative');
+  // Children are placed from the frame's corner, so the frame must be positioned. One that already
+  // is (a free child is `absolute`) keeps its own: adding `relative` beside `absolute` let
+  // `relative` win and dropped the frame out of its place (spec-log #127).
+  if (!frameClasses.some((c) => POSITIONED.has(c))) frameClasses.push('relative');
   if (!measurePayload.hasHeight) {
     frameClasses.push(`h-[${String(Math.round(measurePayload.height))}px]`);
   }
