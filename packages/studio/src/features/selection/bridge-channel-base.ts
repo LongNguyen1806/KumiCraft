@@ -144,8 +144,10 @@ export class BridgeChannel {
     this.sendMessage('style-preview-clear', {});
   }
 
+  /** The grid, with the snap switch and the Canvas zoom the Bridge needs to snap (spec-log #125). */
   setGrid(size: 1 | 4 | 8 | 16): void {
-    this.sendMessage('set-grid', { size });
+    const { snap, displayedZoom } = useCanvasViewStore.getState();
+    this.sendMessage('set-grid', { size, snap, scale: displayedZoom });
   }
 
   setTool(tool: DrawTool): void {

@@ -56,7 +56,12 @@ describe('BridgeChannel', () => {
     expect(postMessageSpy).toHaveBeenCalledTimes(2);
     expect(postMessageSpy).toHaveBeenNthCalledWith(
       1,
-      { rc: 1, nonce: currentNonce, type: 'set-grid', payload: { size: 8 } },
+      {
+        rc: 1,
+        nonce: currentNonce,
+        type: 'set-grid',
+        payload: { size: 8, snap: true, scale: 1 },
+      },
       runnerOrigin,
     );
     expect(postMessageSpy).toHaveBeenNthCalledWith(

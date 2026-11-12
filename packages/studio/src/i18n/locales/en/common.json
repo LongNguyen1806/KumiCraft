@@ -63,6 +63,8 @@
     "closeFrame": "Close frame",
     "cannotCloseLastFrame": "At least one frame must stay open",
     "grid": "Grid",
+    "snap": "Snap",
+    "snapHint": "Snap to the edges and centres of other elements while dragging in a free frame. Hold Alt to drag freely.",
     "gridSize": "Grid: {{size}}px",
     "zoom": "Zoom",
     "zoomFit": "Fit",
@@ -467,7 +469,8 @@
       "mixedSides": "The sides differ: give them the same value and they merge into all 4 sides",
       "mixedCorners": "The corners differ: give them the same value and they merge into all 4 corners"
     },
-    "askAiDraft": "Change this element: "
+    "askAiDraft": "Change this element: ",
+    "invalidValue": "Not a valid Tailwind {{major}} value: for example 4, 2.5, 1/2 or [13px]"
   },
   "textEdit": {
     "loopBanner": "Repeated {{count}} times (edits template)"
@@ -636,7 +639,7 @@
     "toggle": "Free frame",
     "confirmDisable": "Turning off free frame will switch child elements back to normal flow. Continue?",
     "measureTimeout": "Failed to measure frame size (2s timeout).",
-    "pageWarning": "This is a regular page, not a draft. In-place visual editing with free frame may affect responsive layouts. Consider promoting to a draft.",
+    "pageWarning": "Fixed positions — may shift on other screen sizes.",
     "section": "Free frame",
     "position": "Position",
     "x": "X",

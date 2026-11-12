@@ -44,6 +44,9 @@ export type CanvasViewState = {
   readonly draftFile?: string | undefined;
   readonly grid: CanvasGridSize;
   readonly setGrid: (grid: CanvasGridSize) => void;
+  /** Snap dragged elements to the edges and centres of others in a free frame (spec-log #125). */
+  readonly snap: boolean;
+  readonly setSnap: (snap: boolean) => void;
   /** Tailwind major version of the open project (WP-2.12a section 3.1). */
   readonly tailwindMajor: 3 | 4;
   readonly setTailwindMajor: (major: 3 | 4) => void;
@@ -99,6 +102,25 @@ export function getStoredGrid(): CanvasGridSize {
 export function setStoredGrid(grid: CanvasGridSize): void {
   try {
     localStorage.setItem(GRID_STORAGE_KEY, String(grid));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+const SNAP_STORAGE_KEY = 'kumicraft:canvas-snap';
+
+/** Snapping is on unless the user turned it off. */
+export function getStoredSnap(): boolean {
+  try {
+    return localStorage.getItem(SNAP_STORAGE_KEY) !== '0';
+  } catch {
+    return true;
+  }
+}
+
+function setStoredSnap(snap: boolean): void {
+  try {
+    localStorage.setItem(SNAP_STORAGE_KEY, snap ? '1' : '0');
   } catch {
     // Ignore storage errors
   }
@@ -343,6 +365,11 @@ export const useCanvasViewStore = create<CanvasViewState>((set, get) => ({
   setGrid: (grid) => {
     setStoredGrid(grid);
     set({ grid });
+  },
+  snap: getStoredSnap(),
+  setSnap: (snap) => {
+    setStoredSnap(snap);
+    set({ snap });
   },
   ...createProjectFactActions(set),
   ...createOpenFrameActions(set, get),

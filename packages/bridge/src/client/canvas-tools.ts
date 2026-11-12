@@ -116,6 +116,12 @@ export class CanvasTools {
     this.overlay.requestRender();
   }
 
+  /** The snap switch and Canvas zoom from `set-grid` (spec-log #125). */
+  public setSnap(on: boolean, scale: number): void {
+    this.freeDrag.setSnap(on, scale);
+    this.overlay.free.setScale(scale);
+  }
+
   /** `measure-free` from Studio: answers with `free-measure`; an unknown element gets no answer. */
   public measureFree(ref: ElementRef, doc: Document): void {
     const frame = doc.querySelectorAll(`[data-rc-loc="${ref.loc}"]`)[ref.index];

@@ -82,9 +82,9 @@ describe('MultiInspectorView (Scenarios #13..#15) [R-CB-15]', () => {
 
     render(<MultiInspectorView target={target} ctx={testCtx} frameWidth={1440} />);
 
-    // Padding differs (p-4 vs p-2) -> placeholder option is "Hỗn hợp", select value is empty
-    const paddingInput = screen.getByTestId<HTMLSelectElement>('input-padding');
-    expect(paddingInput.options[0]?.textContent).toBe('Hỗn hợp');
+    // Padding differs (p-4 vs p-2) -> the field shows "Hỗn hợp" and holds no value
+    const paddingInput = screen.getByTestId<HTMLInputElement>('input-padding');
+    expect(paddingInput.placeholder).toBe('Hỗn hợp');
     expect(paddingInput.value).toBe('');
 
     // Background is identical (bg-white) -> shows white

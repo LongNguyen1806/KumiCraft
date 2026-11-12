@@ -53,7 +53,8 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
 
     const multi = screen.getByTestId('inspector-multi');
     expect(multi).toBeDefined();
-    expect(multi.textContent).toContain('2');
+    // The shared fields are drawn (this used to check for a "2" that came from a select's options).
+    expect(screen.getByTestId('input-padding')).toBeDefined();
     expect(screen.queryByTestId('inspector-panel')).toBeNull();
   });
 
@@ -326,8 +327,9 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
       expect(screen.getByTestId('input-fontSize')).toBeDefined();
     });
 
-    const fontSizeSelect = screen.getByTestId<HTMLSelectElement>('input-fontSize');
-    expect(fontSizeSelect.options[1]?.value).toBe('hero');
+    // The project's sizes come first among the suggestions of the typed field (spec-log #123).
+    fireEvent.focus(screen.getByTestId('input-fontSize'));
+    expect(screen.getByTestId('suggest-fontSize').querySelector('li')?.textContent).toBe('hero');
   });
 
   it('reads text-brand as the project color brand [R-IN-19]', async () => {

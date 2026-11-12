@@ -27,7 +27,19 @@ export interface GuideResult {
   gaps: GapMark[];
 }
 
+/** How near (page pixels) an edge or centre must come to snap, when no Canvas zoom is known. */
 export const GUIDE_THRESHOLD_PX = 4;
+
+/**
+ * The snap reach in screen pixels (spec-log #125): at 60 % zoom a 4 page-pixel reach was under
+ * 3 screen pixels and almost impossible to hit, so the reach follows the zoom like a CAD snap.
+ */
+export const SNAP_SCREEN_PX = 8;
+
+/** The snap reach in page pixels for a Canvas `scale` (1 = 100 %). */
+export function snapThreshold(scale: number): number {
+  return scale > 0 ? SNAP_SCREEN_PX / scale : GUIDE_THRESHOLD_PX;
+}
 
 interface TargetPoint {
   val: number;
@@ -69,11 +81,12 @@ function buildTargets(
 function snapAxis(
   movingPts: readonly number[],
   targets: readonly TargetPoint[],
+  threshold: number,
 ): { delta?: number | undefined; pos?: number | undefined; target?: TargetPoint | undefined } {
   let bestDelta: number | undefined;
   let bestPos: number | undefined;
   let bestTarget: TargetPoint | undefined;
-  let minDiff = GUIDE_THRESHOLD_PX + 1;
+  let minDiff = threshold + 1;
 
   for (const pt of movingPts) {
     for (const t of targets) {
@@ -123,6 +136,7 @@ function computeLineSpan(
 function checkEqualGapX(
   moving: Box,
   others: readonly Box[],
+  threshold: number,
 ): { pos?: number | undefined; gaps: GapMark[] } {
   const overlapY = others.filter(
     (b) => Math.max(b.top, moving.top) < Math.min(b.top + b.height, moving.top + moving.height),
@@ -143,7 +157,7 @@ function checkEqualGapX(
 
   const gL = moving.left - (leftA.left + leftA.width);
   const gR = rightB.left - (moving.left + moving.width);
-  if (gL < 0 || gR < 0 || Math.abs(gL - gR) > GUIDE_THRESHOLD_PX) return { gaps: [] };
+  if (gL < 0 || gR < 0 || Math.abs(gL - gR) > threshold) return { gaps: [] };
 
   const newLeft = Math.round((leftA.left + leftA.width + rightB.left - moving.width) / 2);
   const at = Math.round(moving.top + moving.height / 2);
@@ -157,6 +171,7 @@ function checkEqualGapX(
 function checkEqualGapY(
   moving: Box,
   others: readonly Box[],
+  threshold: number,
 ): { pos?: number | undefined; gaps: GapMark[] } {
   const overlapX = others.filter(
     (b) => Math.max(b.left, moving.left) < Math.min(b.left + b.width, moving.left + moving.width),
@@ -177,7 +192,7 @@ function checkEqualGapY(
 
   const gT = moving.top - (topA.top + topA.height);
   const gB = bottomB.top - (moving.top + moving.height);
-  if (gT < 0 || gB < 0 || Math.abs(gT - gB) > GUIDE_THRESHOLD_PX) return { gaps: [] };
+  if (gT < 0 || gB < 0 || Math.abs(gT - gB) > threshold) return { gaps: [] };
 
   const newTop = Math.round((topA.top + topA.height + bottomB.top - moving.height) / 2);
   const at = Math.round(moving.left + moving.width / 2);
@@ -192,9 +207,10 @@ function pickBestSnap(
   movingStart: number,
   movingLen: number,
   targets: { edges: TargetPoint[]; centers: TargetPoint[] },
+  threshold: number,
 ): { delta?: number | undefined; pos?: number | undefined; target?: TargetPoint | undefined } {
-  const snapEdges = snapAxis([movingStart, movingStart + movingLen], targets.edges);
-  const snapCenter = snapAxis([movingStart + movingLen / 2], targets.centers);
+  const snapEdges = snapAxis([movingStart, movingStart + movingLen], targets.edges, threshold);
+  const snapCenter = snapAxis([movingStart + movingLen / 2], targets.centers, threshold);
   if (snapEdges.delta === undefined) return snapCenter;
   if (snapCenter.delta === undefined) return snapEdges;
   const diffEdge = Math.abs((snapEdges.pos ?? 0) - movingStart);
@@ -209,11 +225,12 @@ function resolveAxisSnap(
   frame: { width: number; height: number },
   perpStart: number,
   perpLen: number,
+  threshold: number,
 ): { pos?: number | undefined; line?: GuideLine | undefined; gaps: GapMark[] } {
   const targets = buildTargets(axis, others, frame);
   const movingStart = axis === 'x' ? moving.left : moving.top;
   const movingLen = axis === 'x' ? moving.width : moving.height;
-  const snapped = pickBestSnap(movingStart, movingLen, targets);
+  const snapped = pickBestSnap(movingStart, movingLen, targets, threshold);
 
   if (snapped.delta !== undefined && snapped.pos !== undefined && snapped.target !== undefined) {
     const pos = Math.round(movingStart + snapped.delta);
@@ -224,7 +241,10 @@ function resolveAxisSnap(
     return { pos, line: { axis, pos: snapped.pos, from: span.from, to: span.to }, gaps: [] };
   }
 
-  const gap = axis === 'x' ? checkEqualGapX(moving, others) : checkEqualGapY(moving, others);
+  const gap =
+    axis === 'x'
+      ? checkEqualGapX(moving, others, threshold)
+      : checkEqualGapY(moving, others, threshold);
   return { pos: gap.pos, gaps: gap.gaps };
 }
 
@@ -232,19 +252,20 @@ export function snapMove(
   moving: Box,
   others: readonly Box[],
   frame: { width: number; height: number },
+  threshold = GUIDE_THRESHOLD_PX,
 ): GuideResult {
   const targetsX = buildTargets('x', others, frame);
   const targetsY = buildTargets('y', others, frame);
-  const preSnapX = pickBestSnap(moving.left, moving.width, targetsX);
-  const preSnapY = pickBestSnap(moving.top, moving.height, targetsY);
+  const preSnapX = pickBestSnap(moving.left, moving.width, targetsX, threshold);
+  const preSnapY = pickBestSnap(moving.top, moving.height, targetsY, threshold);
 
   const initialTop =
     preSnapY.delta !== undefined ? Math.round(moving.top + preSnapY.delta) : moving.top;
   const initialLeft =
     preSnapX.delta !== undefined ? Math.round(moving.left + preSnapX.delta) : moving.left;
 
-  const resX = resolveAxisSnap('x', moving, others, frame, initialTop, moving.height);
-  const resY = resolveAxisSnap('y', moving, others, frame, initialLeft, moving.width);
+  const resX = resolveAxisSnap('x', moving, others, frame, initialTop, moving.height, threshold);
+  const resY = resolveAxisSnap('y', moving, others, frame, initialLeft, moving.width, threshold);
 
   const lines: GuideLine[] = [];
   if (resX.line) lines.push(resX.line);
@@ -263,9 +284,10 @@ export function snapEdge(
   value: number,
   others: readonly Box[],
   frame: { width: number; height: number },
+  threshold = GUIDE_THRESHOLD_PX,
 ): { value?: number | undefined; line?: GuideLine | undefined } {
   const targets = buildTargets(axis, others, frame);
-  const snapped = snapAxis([value], targets.all);
+  const snapped = snapAxis([value], targets.all, threshold);
   if (snapped.pos === undefined || snapped.target === undefined) return {};
   const span = computeLineSpan(snapped.target, snapped.pos, axis, others, frame);
   return {

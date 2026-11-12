@@ -83,12 +83,83 @@ describe('PropertyField [R-IN-20]', () => {
     expect(screen.getByTestId('input-width')).toHaveProperty('value', '[420px]');
 
     view.rerender(width('w-full'));
-    const select = screen.getByTestId<HTMLSelectElement>('input-width');
-    expect(select.value).toBe('full');
-    // A value of the list is not repeated.
-    expect([...select.options].map((o) => o.value)).toEqual(['', 'full', 'auto']);
+    expect(screen.getByTestId('input-width')).toHaveProperty('value', 'full');
+    // The usual values are offered as suggestions of the typed field, all of them whatever the
+    // field holds (spec-log #123, #124), and picking one closes the list.
+    fireEvent.focus(screen.getByTestId('input-width'));
+    const items = [...screen.getByTestId('suggest-width').querySelectorAll('li')];
+    expect(items.map((li) => li.textContent)).toEqual(['full', 'auto']);
+    fireEvent.mouseDown(items[1] ?? document.body);
+    expect(screen.queryByTestId('suggest-width')).toBeNull();
+    fireEvent.blur(screen.getByTestId('input-width'));
 
     view.rerender(width(''));
     expect(screen.getByTestId('input-width')).toHaveProperty('value', '');
+  });
+
+  it('writes any valid typed value and nothing for an invalid one (spec-log #123)', () => {
+    const onValueChange = vi.fn();
+    const margin = (major: 3 | 4) => (
+      <PropertyField
+        property="marginBottom"
+        label="Margin bottom"
+        tokens={parseClasses('', ctx)}
+        currentScope={base}
+        frameWidth={1440}
+        ctx={{ ...ctx, major }}
+        onValueChange={onValueChange}
+        options={['auto', '0', '1', '2', '4', '8']}
+      />
+    );
+    const view = render(margin(4));
+    const input = screen.getByTestId('input-marginBottom');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: '13' } });
+    expect(onValueChange).toHaveBeenLastCalledWith('marginBottom', { kind: 'scale', token: '13' });
+    fireEvent.change(input, { target: { value: '[13px]' } });
+    expect(onValueChange).toHaveBeenLastCalledWith('marginBottom', {
+      kind: 'arbitrary',
+      css: '13px',
+    });
+
+    onValueChange.mockClear();
+    fireEvent.change(input, { target: { value: 'abc' } });
+    fireEvent.change(input, { target: { value: '[13' } });
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+
+    // Tailwind 3 has no mb-13: the field says so instead of writing a class that does nothing.
+    view.rerender(margin(3));
+    fireEvent.change(input, { target: { value: '13' } });
+    expect(onValueChange).not.toHaveBeenCalled();
+    fireEvent.change(input, { target: { value: '14' } });
+    expect(onValueChange).toHaveBeenLastCalledWith('marginBottom', { kind: 'scale', token: '14' });
+  });
+
+  it('Enter keeps a typed value; the arrows then Enter pick a suggestion (spec-log #124)', () => {
+    const onValueChange = vi.fn();
+    render(
+      <PropertyField
+        property="paddingRight"
+        label="Padding right"
+        tokens={parseClasses('p-6', ctx)}
+        currentScope={base}
+        frameWidth={1440}
+        ctx={ctx}
+        onValueChange={onValueChange}
+        options={['0', '1', '2', '4', '6', '8']}
+      />,
+    );
+    const input = screen.getByTestId('input-paddingRight');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: '50' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    // It used to pick the highlighted old value (6) and write it over the typed 50.
+    expect(onValueChange).toHaveBeenLastCalledWith('paddingRight', { kind: 'scale', token: '50' });
+
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onValueChange).toHaveBeenLastCalledWith('paddingRight', { kind: 'scale', token: '1' });
   });
 });

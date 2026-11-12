@@ -1,17 +1,13 @@
 // The margin / padding box (P5): the four sides of each drawn around the element, one small
-// select per side. The "all sides" fields stay as ordinary fields above the box.
+// typed field per side with the usual values as suggestions (spec-log #123). The "all sides" fields stay as ordinary fields above the box.
 import type { PropertyId } from '@kumicraft/shared';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { PropertyFieldDef } from '../property-groups-config.ts';
 import type { PropertyFieldProps } from './property-field.tsx';
-import {
-  choicesWith,
-  formatScopeName,
-  parseInputToClassValue,
-  readField,
-} from './property-field.tsx';
+import { formatScopeName, parseInputToClassValue, readField } from './property-field.tsx';
+import { ScaleInput } from './scale-input.tsx';
 
 export type SpacingShared = Pick<
   PropertyFieldProps,
@@ -58,25 +54,19 @@ function SideSelect({
 
   return (
     <span data-testid={`property-field-${property}`} className="grid place-items-center">
-      <select
-        id={`field-${property}`}
-        data-testid={`input-${property}`}
-        aria-label={label}
-        title={`${label}${from}`}
-        disabled={shared.disabled}
+      <ScaleInput
+        property={property}
         value={read.currentValStr}
-        onChange={(e) => {
-          shared.onValueChange(property, parseInputToClassValue(e.target.value));
+        suggestions={field.options ?? []}
+        major={shared.ctx.major ?? 4}
+        disabled={shared.disabled === true}
+        label={label}
+        title={`${label}${from}`}
+        className={`h-[22px] w-11 rounded border border-transparent bg-transparent px-0.5 text-center font-mono text-[11px] hover:bg-field-hover focus:border-accent focus:bg-card-solid disabled:opacity-50 ${tone}`}
+        onInput={(raw) => {
+          shared.onValueChange(property, parseInputToClassValue(raw));
         }}
-        className={`h-[22px] w-10 rounded bg-transparent bg-none px-0 text-center font-mono text-[11px] [text-align-last:center] hover:bg-field-hover disabled:opacity-50 ${tone}`}
-      >
-        <option value="">—</option>
-        {choicesWith(field.options ?? [], read.currentValStr).map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
-      </select>
+      />
     </span>
   );
 }

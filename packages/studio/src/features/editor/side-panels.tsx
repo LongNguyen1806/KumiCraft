@@ -17,6 +17,7 @@ import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useShownActivity } from '../shell/activity-store.ts';
 import { PanelHeaderContext } from './panel-header-context.ts';
 import { type RightPanelTab, useRightPanelTab } from './right-panel-store.ts';
+import { useInspectorFrame } from './use-inspector-frame.ts';
 
 export type { RightPanelTab };
 
@@ -174,6 +175,8 @@ export type RightPanelProps = {
 export function RightPanel({ trusted = false }: RightPanelProps) {
   const { t } = useTranslation();
   const theme = useProjectTheme();
+  // The frame being edited decides what the Inspector reads and writes (spec-log #124).
+  const frameOptions = useInspectorFrame();
   const [tab, setTab] = useRightPanelTab();
   const [headerSlot, setHeaderSlot] = useState<HTMLDivElement | undefined>(undefined);
 
@@ -188,7 +191,7 @@ export function RightPanel({ trusted = false }: RightPanelProps) {
         tabs={<RightPanelTabs tab={tab} onSelectTab={setTab} />}
         onHeaderSlotRef={setHeaderSlot}
       >
-        {tab === 'properties' && <InspectorPanel theme={theme} />}
+        {tab === 'properties' && <InspectorPanel theme={theme} options={frameOptions} />}
         {tab === 'chat' && <ChatPanel trusted={trusted} />}
       </Panel>
     </PanelHeaderContext.Provider>

@@ -15,7 +15,7 @@ import {
 } from './free-geometry.ts';
 import { PreviewStyles } from './preview-styles.ts';
 import { type HandleDir, resizeBox, resizeChanges } from './resize-box.ts';
-import { type GapMark, type GuideLine, snapEdge, snapMove } from './smart-guides.ts';
+import { type GapMark, type GuideLine, snapEdge, snapMove, snapThreshold } from './smart-guides.ts';
 
 export type FreeDragCallbacks = {
   sendMove: (p: BridgeFreeMovePayload) => void;
@@ -59,6 +59,10 @@ export class FreeDragController {
   private readonly preview = new PreviewStyles();
   private session: Session | undefined;
   private grid: GridSize = 8;
+  /** Snap to other elements (Studio's switch); Alt held while dragging skips it for that move. */
+  private snapOn = true;
+  /** Canvas zoom (1 = 100 %), so the snap reach stays the same on screen (spec-log #125). */
+  private scale = 1;
   private suppressClick = false;
 
   constructor(cb: FreeDragCallbacks, win: Window, measure: Measure = viewportMeasure) {
@@ -73,6 +77,11 @@ export class FreeDragController {
 
   public getGrid(): GridSize {
     return this.grid;
+  }
+
+  public setSnap(on: boolean, scale: number): void {
+    this.snapOn = on;
+    this.scale = scale;
   }
 
   public isActive(): boolean {
@@ -210,11 +219,13 @@ export class FreeDragController {
     const dy = event.clientY - s.startY;
     if (!s.moved && Math.hypot(dx, dy) < MOVE_THRESHOLD_PX) return;
     s.moved = true;
-    if (s.kind === 'move') this.previewMove(s, dx, dy);
-    else this.previewResize(s, dx, dy, event.shiftKey);
+    const threshold = this.snapOn && !event.altKey ? snapThreshold(this.scale) : undefined;
+    if (s.kind === 'move') this.previewMove(s, dx, dy, threshold);
+    else this.previewResize(s, { dx, dy }, event.shiftKey, threshold);
   };
 
-  private previewMove(s: MoveSession, dx: number, dy: number): void {
+  /** `threshold` undefined: snapping is off, only the grid applies. */
+  private previewMove(s: MoveSession, dx: number, dy: number, threshold?: number): void {
     const first = s.items[0];
     if (first === undefined) return;
     const rawLead: Box = {
@@ -223,7 +234,10 @@ export class FreeDragController {
       width: first.start.width,
       height: first.start.height,
     };
-    const guide = snapMove(rawLead, s.others, s.frameSize);
+    const guide =
+      threshold === undefined
+        ? { lines: [], gaps: [] }
+        : snapMove(rawLead, s.others, s.frameSize, threshold);
     const left = guide.left ?? snap(rawLead.left, this.grid);
     const top = guide.top ?? snap(rawLead.top, this.grid);
     const shiftX = left - first.start.left;
@@ -239,15 +253,20 @@ export class FreeDragController {
     this.cb.showLabel(label, first.el);
   }
 
-  private previewResize(s: ResizeSession, dx: number, dy: number, ratio: boolean): void {
+  private previewResize(
+    s: ResizeSession,
+    { dx, dy }: { dx: number; dy: number },
+    ratio: boolean,
+    threshold?: number,
+  ): void {
     let lineX: GuideLine | undefined;
     let lineY: GuideLine | undefined;
     const others = s.others;
     const frameSize = s.frameSize;
     const edgeSnap =
-      s.inFree && others !== undefined && frameSize !== undefined
+      s.inFree && threshold !== undefined && others !== undefined && frameSize !== undefined
         ? (axis: 'x' | 'y', val: number): number | undefined => {
-            const res = snapEdge(axis, val, others, frameSize);
+            const res = snapEdge(axis, val, others, frameSize, threshold);
             if (axis === 'x') lineX = res.line;
             else lineY = res.line;
             return res.value;

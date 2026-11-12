@@ -63,6 +63,8 @@
     "closeFrame": "Đóng khung",
     "cannotCloseLastFrame": "Cần giữ lại ít nhất một khung",
     "grid": "Lưới",
+    "snap": "Bắt điểm",
+    "snapHint": "Bắt dính vào cạnh và tâm phần tử khác khi kéo trong khung tự do. Giữ Alt khi kéo để tạm tắt.",
     "gridSize": "Lưới: {{size}}px",
     "zoom": "Thu phóng",
     "zoomFit": "Vừa khung",
@@ -467,7 +469,8 @@
       "mixedSides": "Các cạnh đang khác nhau: đặt cùng một giá trị thì tự gộp về cả 4 cạnh",
       "mixedCorners": "Các góc đang khác nhau: đặt cùng một giá trị thì tự gộp về cả 4 góc"
     },
-    "askAiDraft": "Sửa phần tử này: "
+    "askAiDraft": "Sửa phần tử này: ",
+    "invalidValue": "Giá trị không hợp lệ với Tailwind {{major}}: ví dụ 4, 2.5, 1/2 hoặc [13px]"
   },
   "textEdit": {
     "loopBanner": "Lặp {{count}} lần (sửa mẫu chung)"
@@ -636,7 +639,7 @@
     "toggle": "Khung tự do",
     "confirmDisable": "Tắt khung tự do sẽ chuyển các phần tử con về luồng xếp thông thường. Tiếp tục?",
     "measureTimeout": "Không thể đo kích thước khung (quá hạn 2 giây).",
-    "pageWarning": "Đây là trang chính thức, không phải bản nháp. Chỉnh sửa tự do có thể ảnh hưởng bố cục co giãn. Bạn nên tạo bản nháp trước.",
+    "pageWarning": "Vị trí cố định, có thể lệch trên màn hình khác.",
     "section": "Khung tự do",
     "position": "Vị trí",
     "x": "X",

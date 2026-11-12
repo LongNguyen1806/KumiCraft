@@ -224,9 +224,12 @@ export const StudioDesignFilePayloadSchema = z.strictObject({
 });
 export type StudioDesignFilePayload = z.infer<typeof StudioDesignFilePayloadSchema>;
 
-// Studio -> Bridge: set-grid: lưới hiện hành (R-FF-11)
+// Studio -> Bridge: set-grid: lưới hiện hành (R-FF-11), and the snap switch with the Canvas zoom
+// (spec-log #125) so the snap reach stays the same on screen. Both are optional for older Studios.
 export const StudioSetGridPayloadSchema = z.strictObject({
   size: z.union([z.literal(1), z.literal(4), z.literal(8), z.literal(16)]),
+  snap: z.boolean().optional(),
+  scale: z.number().positive().optional(),
 });
 export type StudioSetGridPayload = z.infer<typeof StudioSetGridPayloadSchema>;
 

@@ -4,6 +4,8 @@ import { readValue } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isOpenScale } from '../scale-values.ts';
+import { ScaleInput } from './scale-input.tsx';
 import { SegmentButtons } from './segment-buttons.tsx';
 
 export type PropertyFieldProps = {
@@ -97,6 +99,8 @@ type InputControlProps = {
   readonly options?: readonly string[] | undefined;
   readonly segments?: readonly string[] | undefined;
   readonly onInput: (raw: string) => void;
+  /** Tailwind major version of the project, for which typed values are valid. */
+  readonly major: 3 | 4;
 };
 
 function OptionSelect({
@@ -132,6 +136,21 @@ function OptionSelect({
 
 function PropertyInputControl(props: InputControlProps) {
   const { property, currentValStr, disabled, options, segments, onInput } = props;
+  // Spacing, sizes, borders, z-index…: any value can be typed, the usual ones are suggested.
+  if (isOpenScale(property)) {
+    return (
+      <ScaleInput
+        property={property}
+        value={currentValStr}
+        suggestions={options ?? []}
+        major={props.major}
+        disabled={disabled}
+        mixed={props.mixed}
+        className={`${FIELD_CONTROL} font-mono`}
+        onInput={onInput}
+      />
+    );
+  }
   if (options === undefined || options.length === 0) {
     return <TextValueInput {...props} />;
   }
@@ -254,6 +273,7 @@ export function PropertyField(props: PropertyFieldProps) {
         mixed={mixed}
         options={options}
         segments={segments}
+        major={props.ctx.major ?? 4}
         onInput={(raw) => {
           onValueChange(property, parseInputToClassValue(raw));
         }}

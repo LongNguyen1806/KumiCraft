@@ -55,3 +55,17 @@ describe('studio-messages [R-ST-13]', () => {
     expect(handlers.handleStylePreviewClear).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('studio-messages set-grid [R-FF-11, spec-log #125]', () => {
+  it('passes the grid with the snap switch and the zoom, and drops a bad zoom', () => {
+    const handlers = createHandlers();
+    dispatchStudioMessage('set-grid', { size: 8, snap: false, scale: 0.5 }, handlers);
+    expect(handlers.handleSetGrid).toHaveBeenCalledWith({ size: 8, snap: false, scale: 0.5 });
+
+    dispatchStudioMessage('set-grid', { size: 8 }, handlers);
+    expect(handlers.handleSetGrid).toHaveBeenLastCalledWith({ size: 8 });
+
+    dispatchStudioMessage('set-grid', { size: 8, scale: -1 }, handlers);
+    expect(handlers.handleSetGrid).toHaveBeenCalledTimes(2);
+  });
+});

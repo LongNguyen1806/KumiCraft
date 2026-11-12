@@ -59,6 +59,13 @@ export const FREE_OVERLAY_CSS = `
   pointer-events: none;
   background: #ec4899;
 }
+.snap-mark {
+  position: absolute;
+  pointer-events: none;
+  box-sizing: border-box;
+  border: 1.5px solid #ec4899;
+  background: #fff;
+}
 .gap-mark {
   position: absolute;
   pointer-events: none;
@@ -94,6 +101,9 @@ function handlePoint(dir: HandleDir, r: DOMRect): { x: number; y: number } {
   return { x, y };
 }
 
+/** Snap marker side in screen pixels. */
+const SNAP_MARK_SCREEN_PX = 7;
+
 export class FreeOverlay {
   private readonly frameLayer: HTMLDivElement;
   private readonly guideLayer: HTMLDivElement;
@@ -102,6 +112,8 @@ export class FreeOverlay {
   private callbacks: FreeOverlayCallbacks | undefined;
   private target: Element | undefined;
   private grid: GridSize = 8;
+  /** Canvas zoom, so snap marks keep one size on screen. */
+  private scale = 1;
   private label: { text: string; anchor: Element } | undefined;
   private guides: readonly GuideLine[] = [];
   private gaps: readonly GapMark[] = [];
@@ -131,6 +143,10 @@ export class FreeOverlay {
 
   public setGrid(grid: GridSize): void {
     this.grid = grid;
+  }
+
+  public setScale(scale: number): void {
+    this.scale = scale > 0 ? scale : 1;
   }
 
   /** Element that gets size handles (the primary selection), or `undefined` for none. */
@@ -178,9 +194,29 @@ export class FreeOverlay {
         el.style.height = '1px';
       }
       this.guideLayer.appendChild(el);
+      this.renderSnapMarks(line, origin);
     }
     for (const gap of this.gaps) {
       this.renderGapMark(gap, origin);
+    }
+  }
+
+  /**
+   * A small square at each end of a guide, like a CAD snap marker (spec-log #125): the ends are the
+   * corners or centres that line up, so the user sees the point that caught the element.
+   */
+  private renderSnapMarks(line: GuideLine, origin: { x: number; y: number }): void {
+    const size = SNAP_MARK_SCREEN_PX / this.scale;
+    for (const along of [line.from, line.to]) {
+      const mark = document.createElement('div');
+      mark.className = 'snap-mark';
+      const x = line.axis === 'x' ? line.pos : along;
+      const y = line.axis === 'x' ? along : line.pos;
+      mark.style.left = `${String(origin.x + x - size / 2)}px`;
+      mark.style.top = `${String(origin.y + y - size / 2)}px`;
+      mark.style.width = `${String(size)}px`;
+      mark.style.height = `${String(size)}px`;
+      this.guideLayer.appendChild(mark);
     }
   }
 

@@ -195,8 +195,9 @@ export class BridgeClientRuntime {
         this.drag.studioDragEnd(data.drop);
       },
       handleDesignFile: this.setDesignFile,
-      handleSetGrid: (size) => {
-        this.tools.setGrid(size);
+      handleSetGrid: (data) => {
+        this.tools.setGrid(data.size);
+        this.tools.setSnap(data.snap ?? true, data.scale ?? 1);
       },
       handleMeasureFree: (ref) => {
         this.tools.measureFree(ref, document);

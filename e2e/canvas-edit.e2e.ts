@@ -403,3 +403,35 @@ test('a page that draws itself forever stops with a message and the Studio keeps
   // The file on disk is left as the user wrote it.
   expect(await readFile(homeFile, 'utf8')).not.toContain('throw new Error');
 });
+
+test('the Inspector writes for the frame being edited: a typed padding on Mobile gets max-sm [AC-04, spec-log #124]', async ({
+  page,
+}) => {
+  const session = await start();
+  const tab = await open(page, session);
+  await trustIfAsked(tab);
+
+  const canvas = await getCanvasFrame(tab);
+  const main = canvas.locator('main.p-6');
+  await expect(main).toBeVisible({ timeout: 15_000 });
+  await tab.getByTestId('canvas-frame-select').selectOption('mobile');
+  await main.click({ position: { x: 5, y: 5 } });
+
+  // The scope shown is the frame's, not Base.
+  await expect(tab.getByTestId('write-prefix-badge')).toHaveText('max-sm:');
+  const side = tab.getByTestId('input-paddingRight');
+  await side.click();
+  // Every suggestion shows on click, whatever the field holds.
+  await expect(tab.getByTestId('suggest-paddingRight').locator('li')).not.toHaveCount(0);
+  await side.fill('50');
+  await side.press('Enter');
+
+  const homeFile = join(folder.path, 'src', 'pages', 'Home.tsx');
+  await expect
+    .poll(async () => (await readFile(homeFile, 'utf8')).includes('max-sm:pr-50'), {
+      timeout: 10_000,
+    })
+    .toBe(true);
+  // Nothing unprefixed: the desktop layout keeps its padding.
+  expect(await readFile(homeFile, 'utf8')).not.toMatch(/\spr-50/);
+});

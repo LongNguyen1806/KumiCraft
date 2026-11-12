@@ -36,7 +36,7 @@ export type StudioMessageHandlers = {
   handleDragOver: (data: StudioDragOverPayload) => void;
   handleDragEnd: (data: StudioDragEndPayload) => void;
   handleDesignFile: (file?: string, focus?: boolean) => void;
-  handleSetGrid: (size: StudioSetGridPayload['size']) => void;
+  handleSetGrid: (data: StudioSetGridPayload) => void;
   handleMeasureFree: (ref: ElementRef) => void;
   handleSetTool?: ((tool: DrawTool) => void) | undefined;
   handleStyleProbe?: ((data: StudioStyleProbePayload) => void) | undefined;
@@ -52,7 +52,7 @@ function dispatchFreeFrame(
 ): boolean {
   if (type === 'set-grid') {
     const parsed = StudioSetGridPayloadSchema.safeParse(payload);
-    if (parsed.success) handlers.handleSetGrid(parsed.data.size);
+    if (parsed.success) handlers.handleSetGrid(parsed.data);
     return true;
   }
   if (type === 'measure-free') {

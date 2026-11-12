@@ -34,12 +34,16 @@ async function checkField(
   if ((await select.count()) === 0) return { field: check.property, outcome: 'no field' };
   if (await select.isDisabled()) return { field: check.property, outcome: 'locked' };
   const current = await select.inputValue();
-  const options = await select
-    .locator('option')
-    .evaluateAll((all) => all.map((o) => (o instanceof HTMLOptionElement ? o.value : '')));
+  // A select lists its options; a typed field (spacing, sizes…, spec-log #123) its suggestions.
+  const isInput = await select.evaluate((el) => el instanceof HTMLInputElement);
+  const options = await select.evaluate((el) => {
+    const list = el instanceof HTMLInputElement ? el.list : el;
+    return [...(list?.querySelectorAll('option') ?? [])].map((o) => o.getAttribute('value') ?? '');
+  });
   const pick = options.find((o) => o !== '' && o !== current);
   if (pick === undefined) return { field: check.property, outcome: 'no other option' };
-  await select.selectOption(pick);
+  if (isInput) await select.fill(pick);
+  else await select.selectOption(pick);
   await expect
     .poll(() => changedSince(appDir, base).length, { timeout: 15_000 })
     .toBeGreaterThan(0);
