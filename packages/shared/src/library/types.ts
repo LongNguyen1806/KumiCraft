@@ -11,6 +11,13 @@ export type NeutralBlock = {
   readonly bootstrap: Readonly<Record<string, string>>;
 };
 
+export type LibraryBlockVariant = {
+  readonly id: string;
+  readonly labelKey: string;
+  readonly jsx: { readonly vi: string; readonly en: string };
+  readonly neutral: NeutralBlock;
+};
+
 export type LibraryBlock = {
   readonly id: string;
   readonly category: LibraryBlockCategory;
@@ -25,4 +32,5 @@ export type LibraryBlock = {
     readonly en: string;
   };
   readonly neutral: NeutralBlock;
+  readonly variants?: readonly LibraryBlockVariant[];
 };

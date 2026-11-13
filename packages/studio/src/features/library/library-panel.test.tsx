@@ -5,9 +5,10 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import * as sourceClient from '../../api/source-client.ts';
 import { initI18n } from '../../i18n/i18n.ts';
+import { useThemeStore } from '../inspector/use-project-theme.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { useStructureErrorStore } from '../structure/structure-error-store.ts';
-import { determineInsertTarget, insertBlock } from './insert-block.ts';
+import { determineInsertTarget, insertBlock, resetThemeLookAttempt } from './insert-block.ts';
 import { LibraryPanel } from './library-panel.tsx';
 
 describe('Library Panel and Insertion (Scenarios #14, #15)', () => {
@@ -16,6 +17,19 @@ describe('Library Panel and Insertion (Scenarios #14, #15)', () => {
   });
 
   beforeEach(() => {
+    localStorage.clear();
+    resetThemeLookAttempt();
+    useThemeStore.setState({
+      theme: {
+        file: 'src/index.css',
+        colors: [],
+        fontSizes: [],
+        radii: [],
+        fonts: [],
+        shadows: [],
+        breakpoints: [],
+      },
+    });
     useSelectionStore.getState().reset();
     useStructureErrorStore.getState().clearError();
     useStructureErrorStore.getState().setActiveSource(undefined);
@@ -103,5 +117,53 @@ describe('Library Panel and Insertion (Scenarios #14, #15)', () => {
     expect(useSelectionStore.getState().selectedRefs).toEqual([
       { loc: 'src/Home.tsx:25:5', index: 0 },
     ]);
+  });
+
+  it('11. [TK-47] shows variant picker only on blocks with variants, persists selection to localStorage, and remembers across remount', async () => {
+    const spy = vi.spyOn(sourceClient, 'applyStructureEdit').mockResolvedValue({
+      changed: true,
+      files: ['src/Home.tsx'],
+      locs: ['src/Home.tsx:25:5'],
+    });
+    useSelectionStore.getState().setSelectedRefs([{ loc: 'src/Home.tsx:10:1', index: 0 }]);
+    useStructureErrorStore.getState().setActiveSource({ loc: 'src/Home.tsx:10:1', tag: 'div' });
+
+    const { unmount } = render(<LibraryPanel />);
+
+    expect(screen.getByTestId('library-variant-form.button')).toBeDefined();
+    expect(screen.getByTestId('library-variant-composite.card')).toBeDefined();
+    expect(screen.getByTestId('library-variant-content.heading')).toBeDefined();
+    expect(screen.getByTestId('library-variant-composite.hero')).toBeDefined();
+    expect(screen.queryByTestId('library-variant-content.paragraph')).toBeNull();
+
+    fireEvent.click(screen.getByTestId('library-variant-form.button'));
+    expect(screen.getByTestId('library-variant-menu')).toBeDefined();
+    fireEvent.click(screen.getByTestId('library-variant-form.button-outline'));
+
+    expect(localStorage.getItem('kumicraft.libraryVariant.form.button')).toBe('outline');
+    expect(screen.queryByTestId('library-variant-menu')).toBeNull();
+
+    fireEvent.click(screen.getByTestId('library-variant-form.button'));
+    const outlineItem = screen.getByTestId('library-variant-form.button-outline');
+    expect(outlineItem.textContent).toContain('✓');
+    expect(screen.getByTestId('library-variant-form.button-default').textContent).not.toContain(
+      '✓',
+    );
+    unmount();
+
+    render(<LibraryPanel />);
+    fireEvent.click(screen.getByTestId('library-variant-form.button'));
+    expect(screen.getByTestId('library-variant-form.button-outline').textContent).toContain('✓');
+
+    fireEvent.click(screen.getByTestId('library-add-form.button'));
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+    const call = spy.mock.calls[0]?.[0];
+    expect(call?.kind).toBe('insert');
+    if (call?.kind === 'insert') {
+      expect(call.jsx).toContain('border');
+      expect(call.jsx).not.toContain('bg-blue-600');
+    }
   });
 });

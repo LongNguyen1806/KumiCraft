@@ -1,20 +1,50 @@
-// Block insertion logic (SPEC-04 R-LB-14, R-LB-15).
+// Block insertion logic (SPEC-04 R-LB-14, R-LB-15, TK-43, TK-47).
 import {
   type ElementRef,
   type InsertTarget,
   isContainerTag,
   type LibraryBlock,
+  lookFromTheme,
   type Placement,
   primarySystem,
+  type ProjectLook,
   renderBlock,
 } from '@kumicraft/shared';
 
 import { applyStructureEdit } from '../../api/source-client.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';
 import { selectionAnchor } from '../design/selection-anchor.ts';
+import { useThemeStore } from '../inspector/use-project-theme.ts';
 import { useProjectStore } from '../project/project-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
+import { getSelectedVariant } from './library-variants.ts';
+
+let themeAttempted = false;
+let attemptedProjectId: string | undefined;
+
+export function resetThemeLookAttempt(): void {
+  themeAttempted = false;
+  attemptedProjectId = undefined;
+}
+
+async function currentLook(): Promise<ProjectLook> {
+  const projectId = useProjectStore.getState().project?.id ?? '';
+  if (attemptedProjectId !== projectId) {
+    attemptedProjectId = projectId;
+    themeAttempted = false;
+  }
+  const theme = useThemeStore.getState().theme;
+  if (theme.file === undefined && !themeAttempted) {
+    themeAttempted = true;
+    try {
+      await useThemeStore.getState().load();
+    } catch {
+      // Theme fetch failed; fall back to default role values.
+    }
+  }
+  return lookFromTheme(useThemeStore.getState().theme);
+}
 
 export function determineInsertTarget(ref: ElementRef, tag: string): InsertTarget {
   if (isContainerTag(tag)) {
@@ -39,10 +69,12 @@ export function localizedBlockLang(lang: string): 'vi' | 'en' {
   return lang.toLowerCase().startsWith('vi') ? 'vi' : 'en';
 }
 
-export function localizedBlockJsx(block: LibraryBlock, lang: string): string {
+export function localizedBlockJsx(block: LibraryBlock, lang: string, variantId?: string): string {
   const styling = useProjectStore.getState().project?.support.styling;
   const system = styling !== undefined ? primarySystem(styling) : 'tailwind4';
-  return renderBlock(block, system, localizedBlockLang(lang)).jsx;
+  const look = lookFromTheme(useThemeStore.getState().theme);
+  const activeVariant = variantId ?? getSelectedVariant(block.id);
+  return renderBlock(block, system, localizedBlockLang(lang), look, activeVariant).jsx;
 }
 
 export async function insertBlockAt(
@@ -51,10 +83,13 @@ export async function insertBlockAt(
   lang: string,
   placement?: Placement,
   tailwindMajor?: 3 | 4,
+  variantId?: string,
 ): Promise<InsertBlockResult> {
   const styling = useProjectStore.getState().project?.support.styling;
   const system = styling !== undefined ? primarySystem(styling) : 'tailwind4';
-  const rendered = renderBlock(block, system, localizedBlockLang(lang));
+  const look = await currentLook();
+  const activeVariant = variantId ?? getSelectedVariant(block.id);
+  const rendered = renderBlock(block, system, localizedBlockLang(lang), look, activeVariant);
   try {
     const res = await applyStructureEdit({
       kind: 'insert',
@@ -74,7 +109,11 @@ export async function insertBlockAt(
   }
 }
 
-export async function insertBlock(block: LibraryBlock, lang: string): Promise<InsertBlockResult> {
+export async function insertBlock(
+  block: LibraryBlock,
+  lang: string,
+  variantId?: string,
+): Promise<InsertBlockResult> {
   const selectedRefs = useSelectionStore.getState().selectedRefs;
   if (selectedRefs.length !== 1) {
     return { ok: false, skipped: true };
@@ -90,5 +129,5 @@ export async function insertBlock(block: LibraryBlock, lang: string): Promise<In
 
   const tag = resolveTargetTag(anchor) ?? 'div';
   const target = determineInsertTarget(anchor, tag);
-  return insertBlockAt(block, target, lang);
+  return insertBlockAt(block, target, lang, undefined, undefined, variantId);
 }

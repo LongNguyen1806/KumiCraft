@@ -4,6 +4,8 @@
   "insertImage": "Ảnh…",
   "hint": "Kéo khối vào Canvas, hoặc chọn một phần tử rồi bấm + trên khối để chèn",
   "add": "Chèn {{name}} tại phần tử đang chọn",
+  "variantMenu": "Chọn kiểu {{name}}",
+  "variantCheck": "✓",
   "unsupportedForSystem": "Mẫu phần tử có sẵn dùng Tailwind chưa hỗ trợ cho hệ này. Dùng tab Thành phần để chèn component của dự án.",
   "categories": {
     "layout": "Bố cục",
@@ -29,5 +31,20 @@
     "navbar": "Thanh điều hướng",
     "footer": "Chân trang",
     "hero": "Hero"
+  },
+  "variants": {
+    "solid": "Chính",
+    "outline": "Viền",
+    "ghost": "Chữ",
+    "sm": "Nhỏ",
+    "lg": "Lớn",
+    "bordered": "Có viền",
+    "flat": "Phẳng",
+    "elevated": "Nổi",
+    "headingMd": "Vừa",
+    "headingLg": "Lớn",
+    "headingSm": "Nhỏ",
+    "centered": "Căn giữa",
+    "split": "Chia đôi"
   }
 }

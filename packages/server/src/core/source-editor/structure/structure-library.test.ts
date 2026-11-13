@@ -3,7 +3,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { LIBRARY_BLOCKS } from '@kumicraft/shared';
+import { LIBRARY_BLOCKS, renderBlock } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { directWriteFs, makeTempDir } from '../../workspace/test-support.ts';
@@ -34,7 +34,7 @@ describe('M-SE: Library Blocks in Source Editor [WP-2.03]', () => {
 
     for (const block of LIBRARY_BLOCKS) {
       for (const locale of ['vi', 'en'] as const) {
-        const snippet = block.jsx[locale];
+        const snippet = renderBlock(block, 'tailwind4', locale).jsx;
         const res = validateInsertedJsx(snippet);
         expect(res.ok).toBe(true);
 
@@ -67,7 +67,7 @@ describe('M-SE: Library Blocks in Source Editor [WP-2.03]', () => {
         await fs.mkdir(path.dirname(pageTarget), { recursive: true });
         await fs.writeFile(pageTarget, originalAbout, 'utf8');
 
-        const snippet = block.jsx[locale];
+        const snippet = renderBlock(block, 'tailwind4', locale).jsx;
         const validateRes = validateInsertedJsx(snippet);
         expect(validateRes.ok).toBe(true);
         if (!validateRes.ok) continue;

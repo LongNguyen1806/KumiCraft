@@ -22,6 +22,8 @@ import { useSelectionStore } from '../selection/selection-store.ts';
 import { insertBlock } from './insert-block.ts';
 import { getBlockIcon } from './library-icons.ts';
 import { LibrarySearchHeader } from './library-search-header.tsx';
+import { LibraryVariantMenu } from './library-variant-menu.tsx';
+import { getSelectedVariant, setSelectedVariant } from './library-variants.ts';
 
 const CATEGORIES: readonly LibraryBlockCategory[] = [
   'layout',
@@ -47,8 +49,27 @@ type BlockItemProps = {
   readonly disabled: boolean;
   /** Drag is disabled (e.g. view-only mode). */
   readonly dragDisabled?: boolean | undefined;
-  readonly onSelect: (block: LibraryBlock) => void;
+  readonly onSelect: (block: LibraryBlock, variantId?: string) => void;
 };
+
+function handleBlockDragStart(
+  e: React.DragEvent<HTMLDivElement>,
+  block: LibraryBlock,
+  dragDisabled: boolean | undefined,
+  variantId?: string,
+) {
+  if (dragDisabled) return;
+  e.dataTransfer.setData('text/plain', block.id);
+  e.dataTransfer.effectAllowed = 'copy';
+  useDndStore.getState().startDrag({ source: 'library', block, variantId });
+}
+
+function handleBlockDragEnd() {
+  if (useDndStore.getState().drag !== undefined) {
+    studioBridgeChannel.dragEnd(false);
+    useDndStore.getState().endDrag();
+  }
+}
 
 /**
  * A block is dragged onto the Canvas; only its + button inserts at the selection (R-LB-14). A click
@@ -58,25 +79,31 @@ function BlockItem({ block, disabled, dragDisabled, onSelect }: BlockItemProps) 
   const { t } = useTranslation('library');
   const rawKey = block.labelKey.replace(/^library:blocks\./, '');
   const label = isBlockKey(rawKey) ? t(`blocks.${rawKey}`) : block.id;
+  const [selectedVariant, setSelectedVariantState] = useState<string | undefined>(() =>
+    getSelectedVariant(block.id),
+  );
+
+  const handleSelectVariant = (nextVariant: string | undefined) => {
+    setSelectedVariant(block.id, nextVariant);
+    setSelectedVariantState(nextVariant);
+  };
 
   return (
     <div
       data-testid={`library-block-${block.id}`}
       draggable={!dragDisabled}
       onDragStart={(e) => {
-        if (dragDisabled) return;
-        e.dataTransfer.setData('text/plain', block.id);
-        e.dataTransfer.effectAllowed = 'copy';
-        useDndStore.getState().startDrag({ source: 'library', block });
+        handleBlockDragStart(e, block, dragDisabled, selectedVariant);
       }}
-      onDragEnd={() => {
-        if (useDndStore.getState().drag !== undefined) {
-          studioBridgeChannel.dragEnd(false);
-          useDndStore.getState().endDrag();
-        }
-      }}
+      onDragEnd={handleBlockDragEnd}
       className="relative flex min-w-0 cursor-grab flex-col items-center gap-1 rounded-[7px] border border-line bg-card-solid px-1 pt-2.5 pb-2 text-center transition-colors hover:border-border hover:bg-field active:cursor-grabbing"
     >
+      <LibraryVariantMenu
+        block={block}
+        blockLabel={label}
+        selectedVariant={selectedVariant}
+        onSelectVariant={handleSelectVariant}
+      />
       <BlockIcon name={block.icon} className="size-[18px] text-ink-soft" />
       <span className="max-w-full text-[11px] leading-tight break-words text-ink">{label}</span>
       <InsertButton
@@ -84,7 +111,7 @@ function BlockItem({ block, disabled, dragDisabled, onSelect }: BlockItemProps) 
         label={t('add', { name: label })}
         disabled={disabled}
         onInsert={() => {
-          onSelect(block);
+          onSelect(block, selectedVariant);
         }}
       />
     </div>
@@ -96,7 +123,7 @@ type CategorySectionProps = {
   readonly blocks: readonly LibraryBlock[];
   readonly disabled: boolean;
   readonly dragDisabled?: boolean | undefined;
-  readonly onSelect: (block: LibraryBlock) => void;
+  readonly onSelect: (block: LibraryBlock, variantId?: string) => void;
 };
 
 function CategorySection({
@@ -130,11 +157,11 @@ function useLibraryInsert(hasSelection: boolean) {
   const [inserting, setInserting] = useState(false);
   const [errorInfo, setErrorInfo] = useState<ErrorInfo>();
 
-  const handleInsert = async (block: LibraryBlock) => {
+  const handleInsert = async (block: LibraryBlock, variantId?: string) => {
     if (!hasSelection || inserting) return;
     setInserting(true);
     setErrorInfo(undefined);
-    const res = await insertBlock(block, i18n.language);
+    const res = await insertBlock(block, i18n.language, variantId);
     setInserting(false);
     if (!res.ok && res.error) setErrorInfo(res.error);
   };
@@ -173,7 +200,7 @@ type LibraryCategoriesProps = {
   readonly blocks: readonly LibraryBlock[];
   readonly disabled: boolean;
   readonly dragDisabled?: boolean | undefined;
-  readonly onSelect: (block: LibraryBlock) => void;
+  readonly onSelect: (block: LibraryBlock, variantId?: string) => void;
 };
 
 function LibraryCategories({
@@ -230,7 +257,7 @@ function LibraryContent({
   readonly inserting: boolean;
   readonly disabled?: boolean | undefined;
   readonly dragDisabled?: boolean | undefined;
-  readonly onSelect: (block: LibraryBlock) => void;
+  readonly onSelect: (block: LibraryBlock, variantId?: string) => void;
 }) {
   if (!editable) return <LibraryUnsupportedNotice />;
   return (
@@ -300,8 +327,8 @@ export function LibraryPanel() {
         inserting={s.insert.inserting}
         disabled={!s.hasSelection || s.insert.inserting || s.isViewOnly}
         dragDisabled={s.isViewOnly}
-        onSelect={(b) => {
-          void s.insert.handleInsert(b);
+        onSelect={(b, variantId) => {
+          void s.insert.handleInsert(b, variantId);
         }}
       />
 

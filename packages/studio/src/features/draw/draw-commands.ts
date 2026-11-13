@@ -14,6 +14,7 @@ import { toErrorInfo } from '../../routes/error-text.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { placementTailwindMajor, useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { localizedBlockJsx } from '../library/insert-block.ts';
+import { getSelectedVariant } from '../library/library-variants.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { insertImageAt, type InsertImageChoice } from './insert-image.ts';
@@ -110,7 +111,9 @@ function startTextEditWhenInTree(loc: string): void {
 function paragraphJsx(): string {
   const block = LIBRARY_BLOCKS.find((b) => b.id === 'content.paragraph');
   const lang = i18next.language || 'en';
-  return block ? localizedBlockJsx(block, lang) : '<p className="text-base text-slate-600"></p>';
+  return block
+    ? localizedBlockJsx(block, lang, getSelectedVariant(block.id))
+    : '<p className="text-base text-slate-600"></p>';
 }
 
 export async function handleDrawEnd(payload: BridgeDrawEndPayload): Promise<void> {

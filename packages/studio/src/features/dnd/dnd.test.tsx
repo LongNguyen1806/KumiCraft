@@ -6,7 +6,9 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { ApiError } from '../../api/http.ts';
 import * as sourceClient from '../../api/source-client.ts';
 import { initI18n } from '../../i18n/i18n.ts';
-import { localizedBlockJsx } from '../library/insert-block.ts';
+import { DEFAULT_THEME, useThemeStore } from '../inspector/use-project-theme.ts';
+import { localizedBlockJsx, resetThemeLookAttempt } from '../library/insert-block.ts';
+import { setSelectedVariant } from '../library/library-variants.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { toFrameCoords } from './canvas-drop-layer.tsx';
 import { DndErrorBanner } from './dnd-error-banner.tsx';
@@ -19,6 +21,11 @@ describe('Canvas Drag and Drop (Scenarios #14, #15)', () => {
   });
 
   beforeEach(() => {
+    localStorage.clear();
+    resetThemeLookAttempt();
+    useThemeStore.setState({
+      theme: { ...DEFAULT_THEME, file: 'src/index.css' },
+    });
     useSelectionStore.getState().reset();
     useDndStore.getState().endDrag();
     useDndStore.getState().setError(undefined);
@@ -134,5 +141,53 @@ describe('Canvas Drag and Drop (Scenarios #14, #15)', () => {
     render(<DndErrorBanner />);
     const banner = screen.getByTestId('dnd-error');
     expect(banner.textContent).toContain('E023');
+  });
+
+  it('13. [TK-47] handleDrop uses the dragged or stored variant for library blocks', async () => {
+    const spy = vi.spyOn(sourceClient, 'applyStructureEdit').mockResolvedValue({
+      changed: true,
+      files: ['src/Home.tsx'],
+      locs: ['src/Home.tsx:40:5'],
+    });
+    const buttonBlock = LIBRARY_BLOCKS.find((b) => b.id === 'form.button');
+    if (!buttonBlock) throw new Error('Missing form.button block');
+
+    // (a) Explicit variantId carried on DragSource
+    useDndStore
+      .getState()
+      .startDrag({ source: 'library', block: buttonBlock, variantId: 'outline' });
+    useDndStore.getState().setDropTarget({
+      kind: 'child',
+      parent: { loc: 'src/Home.tsx:10:1', tag: 'section' },
+      where: 'end',
+    });
+
+    const okExplicit = await handleDrop('en');
+    expect(okExplicit).toBe(true);
+    const firstCall = spy.mock.calls[0]?.[0];
+    expect(firstCall?.kind).toBe('insert');
+    if (firstCall?.kind === 'insert') {
+      expect(firstCall.jsx).toContain('border');
+      expect(firstCall.jsx).not.toContain('bg-blue-600');
+    }
+
+    // (b) Persisted variant in localStorage when DragSource omits variantId
+    spy.mockClear();
+    setSelectedVariant('form.button', 'ghost');
+    useDndStore.getState().startDrag({ source: 'library', block: buttonBlock });
+    useDndStore.getState().setDropTarget({
+      kind: 'child',
+      parent: { loc: 'src/Home.tsx:10:1', tag: 'section' },
+      where: 'end',
+    });
+
+    const okStored = await handleDrop('en');
+    expect(okStored).toBe(true);
+    const secondCall = spy.mock.calls[0]?.[0];
+    expect(secondCall?.kind).toBe('insert');
+    if (secondCall?.kind === 'insert') {
+      expect(secondCall.jsx).toContain('bg-transparent');
+      expect(secondCall.jsx).not.toContain('border-blue-600');
+    }
   });
 });

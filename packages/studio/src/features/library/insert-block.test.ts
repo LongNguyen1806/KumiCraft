@@ -3,9 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';
 import { useDesignStore } from '../design/design-store.ts';
+import { DEFAULT_THEME, useThemeStore } from '../inspector/use-project-theme.ts';
 import { useProjectStore } from '../project/project-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
-import { insertBlock } from './insert-block.ts';
+import { insertBlock, resetThemeLookAttempt } from './insert-block.ts';
 
 function makeProject(
   primary: 'bootstrap' | 'sass',
@@ -70,6 +71,10 @@ describe('insertBlock (Scenario #13) [R-CP-11]', () => {
   ];
 
   beforeEach(() => {
+    resetThemeLookAttempt();
+    useThemeStore.setState({
+      theme: { ...DEFAULT_THEME, file: 'src/index.css' },
+    });
     useSelectionStore.getState().reset();
     useDesignStore.getState().setTarget(undefined);
     useProjectStore.getState().setProject(undefined);
@@ -152,6 +157,79 @@ describe('insertBlock (Scenario #13) [R-CP-11]', () => {
       expect(sassCall.jsx).toContain('className="kc-card"');
       expect(sassCall.css?.rules.length).toBeGreaterThan(0);
       expect(sassCall.css?.rules.some((r) => r.selector === '.kc-card')).toBe(true);
+    }
+  });
+
+  it('12. [TK-43] applies brand token from theme, loads theme once when unloaded, and falls back to defaults on load error', async () => {
+    const editSpy = vi.spyOn(sourceClient, 'applyStructureEdit').mockResolvedValue({
+      changed: true,
+      files: ['src/pages/Home.tsx'],
+      locs: ['src/pages/Home.tsx:35:5'],
+    });
+    const buttonBlock = LIBRARY_BLOCKS.find((b) => b.id === 'form.button');
+    if (!buttonBlock) throw new Error('Missing form.button block');
+
+    useSelectionStore.getState().setTree([...treeNodes]);
+    useSelectionStore.getState().setSelectedRefs([homeMainRef]);
+
+    // (a) Theme already loaded with brand token: uses bg-brand without calling load()
+    const loadSpy = vi.spyOn(useThemeStore.getState(), 'load');
+    useThemeStore.getState().setTheme({
+      ...DEFAULT_THEME,
+      file: 'src/index.css',
+      colors: [{ name: 'brand', value: '#3b82f6' }],
+    });
+
+    const loadedRes = await insertBlock(buttonBlock, 'en');
+    expect(loadedRes.ok).toBe(true);
+    expect(loadSpy).not.toHaveBeenCalled();
+    const loadedCall = editSpy.mock.calls[0]?.[0];
+    expect(loadedCall?.kind).toBe('insert');
+    if (loadedCall?.kind === 'insert') {
+      expect(loadedCall.jsx).toContain('bg-brand');
+    }
+
+    // (b) Theme not loaded yet: load() is called once, then subsequent insert does not reload
+    editSpy.mockClear();
+    loadSpy.mockClear();
+    resetThemeLookAttempt();
+    useThemeStore.getState().setTheme(DEFAULT_THEME);
+    useSelectionStore.getState().setSelectedRefs([homeMainRef]);
+    loadSpy.mockImplementation(() => {
+      useThemeStore.getState().setTheme({
+        ...DEFAULT_THEME,
+        file: 'src/index.css',
+        colors: [{ name: 'brand', value: '#3b82f6' }],
+      });
+      return Promise.resolve();
+    });
+
+    await insertBlock(buttonBlock, 'en');
+    expect(loadSpy).toHaveBeenCalledTimes(1);
+    const afterLoadCall = editSpy.mock.calls[0]?.[0];
+    if (afterLoadCall?.kind === 'insert') {
+      expect(afterLoadCall.jsx).toContain('bg-brand');
+    }
+
+    useSelectionStore.getState().setSelectedRefs([homeMainRef]);
+    await insertBlock(buttonBlock, 'en');
+    expect(loadSpy).toHaveBeenCalledTimes(1);
+
+    // (c) Theme load throws: still inserts using default blue-600
+    editSpy.mockClear();
+    loadSpy.mockClear();
+    resetThemeLookAttempt();
+    useThemeStore.getState().setTheme(DEFAULT_THEME);
+    useSelectionStore.getState().setSelectedRefs([homeMainRef]);
+    loadSpy.mockRejectedValueOnce(new Error('network error'));
+
+    const errRes = await insertBlock(buttonBlock, 'en');
+    expect(errRes.ok).toBe(true);
+    expect(loadSpy).toHaveBeenCalledTimes(1);
+    const fallbackCall = editSpy.mock.calls[0]?.[0];
+    expect(fallbackCall?.kind).toBe('insert');
+    if (fallbackCall?.kind === 'insert') {
+      expect(fallbackCall.jsx).toContain('bg-blue-600');
     }
   });
 });

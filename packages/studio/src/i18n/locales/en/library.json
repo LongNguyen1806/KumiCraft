@@ -4,6 +4,8 @@
   "insertImage": "Image…",
   "hint": "Drag a block onto the Canvas, or select an element and press + on a block to insert it",
   "add": "Insert {{name}} at the selected element",
+  "variantMenu": "Choose {{name}} style",
+  "variantCheck": "✓",
   "unsupportedForSystem": "Tailwind template blocks are not supported for this styling system. Use the Components tab to insert project components.",
   "categories": {
     "layout": "Layout",
@@ -29,5 +31,20 @@
     "navbar": "Navbar",
     "footer": "Footer",
     "hero": "Hero"
+  },
+  "variants": {
+    "solid": "Solid",
+    "outline": "Outline",
+    "ghost": "Ghost",
+    "sm": "Small",
+    "lg": "Large",
+    "bordered": "Bordered",
+    "flat": "Flat",
+    "elevated": "Elevated",
+    "headingMd": "Medium",
+    "headingLg": "Large",
+    "headingSm": "Small",
+    "centered": "Centered",
+    "split": "Split"
   }
 }

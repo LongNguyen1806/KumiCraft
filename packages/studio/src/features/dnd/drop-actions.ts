@@ -47,9 +47,10 @@ export async function executeDropInsert(
   lang: string,
   placement?: Placement,
   tailwindMajor?: 3 | 4,
+  variantId?: string,
 ): Promise<boolean> {
   useDndStore.getState().setError(undefined);
-  const res = await insertBlockAt(block, target, lang, placement, tailwindMajor);
+  const res = await insertBlockAt(block, target, lang, placement, tailwindMajor, variantId);
   if (!res.ok) {
     if (res.error) {
       useDndStore.getState().setError(res.error);
@@ -83,7 +84,14 @@ export async function handleDrop(lang = i18next.language): Promise<boolean> {
   const tailwindMajor = placementTailwindMajor(placement);
 
   if (drag.source === 'library') {
-    return executeDropInsert(drag.block, dropTarget, lang, placement, tailwindMajor);
+    return executeDropInsert(
+      drag.block,
+      dropTarget,
+      lang,
+      placement,
+      tailwindMajor,
+      drag.variantId,
+    );
   }
   if (drag.source === 'component') {
     return executeDropComponent(drag.component, dropTarget, placement, tailwindMajor);

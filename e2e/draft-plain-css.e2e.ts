@@ -76,8 +76,9 @@ test('a draft in a plain-CSS project has a size, takes a Library block and opens
   const draftRow = tab.getByTestId(`file-row-src/drafts/${draftFile.split(/[\\/]/).pop() ?? ''}`);
   const draftsRow = tab.getByTestId('file-row-src/drafts');
   // The tree may already show the folders of the open file; expand only what is closed.
-  if ((await draftsRow.count()) === 0) await tab.getByTestId('file-row-src').click();
-  if ((await draftRow.count()) === 0) await draftsRow.click();
+  const srcRow = tab.getByTestId('file-row-src');
+  if ((await srcRow.getAttribute('aria-expanded')) !== 'true') await srcRow.click();
+  if ((await draftsRow.getAttribute('aria-expanded')) !== 'true') await draftsRow.click();
   await draftRow.click();
   await expect(tab.getByTestId('design-bar-back')).toHaveCount(0);
 });

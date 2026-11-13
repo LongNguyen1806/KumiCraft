@@ -1,9 +1,7 @@
-// Basic library blocks: layout and content (R-LB-10, R-LB-11, R-LB-12).
-import { NEUTRAL_BLOCKS } from './blocks-neutral.ts';
+// Basic library blocks: layout and content (R-LB-10, R-LB-11, R-LB-12, TK-43, TK-47, TK-48).
+import { NEUTRAL_BLOCKS, SVG_PLACEHOLDER } from './blocks-neutral.ts';
+import { HEADING_VARIANTS } from './blocks-variants.ts';
 import type { LibraryBlock } from './types.ts';
-
-const SVG_PLACEHOLDER =
-  "data:image/svg+xml,%3Csvg viewBox='0 0 400 300' fill='%23e5e7eb'%3E%3Crect width='400' height='300'/%3E%3C/svg%3E";
 
 export const BASIC_BLOCKS: readonly LibraryBlock[] = [
   // 1. Layout: Row
@@ -17,20 +15,20 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
     },
     icon: 'Rows',
     jsx: {
-      vi: `<div className="flex flex-row gap-4">
-  <div className="flex-1 p-4 bg-gray-100 rounded">
-    <p className="text-sm text-gray-500">Cột 1</p>
+      vi: `<div className="flex flex-wrap gap-4">
+  <div className="flex-1 basis-60 p-4 bg-{surface-muted} rounded-{radius}">
+    <p className="text-sm text-{muted}">Cột 1</p>
   </div>
-  <div className="flex-1 p-4 bg-gray-100 rounded">
-    <p className="text-sm text-gray-500">Cột 2</p>
+  <div className="flex-1 basis-60 p-4 bg-{surface-muted} rounded-{radius}">
+    <p className="text-sm text-{muted}">Cột 2</p>
   </div>
 </div>`,
-      en: `<div className="flex flex-row gap-4">
-  <div className="flex-1 p-4 bg-gray-100 rounded">
-    <p className="text-sm text-gray-500">Column 1</p>
+      en: `<div className="flex flex-wrap gap-4">
+  <div className="flex-1 basis-60 p-4 bg-{surface-muted} rounded-{radius}">
+    <p className="text-sm text-{muted}">Column 1</p>
   </div>
-  <div className="flex-1 p-4 bg-gray-100 rounded">
-    <p className="text-sm text-gray-500">Column 2</p>
+  <div className="flex-1 basis-60 p-4 bg-{surface-muted} rounded-{radius}">
+    <p className="text-sm text-{muted}">Column 2</p>
   </div>
 </div>`,
     },
@@ -49,19 +47,19 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
     icon: 'Columns',
     jsx: {
       vi: `<div className="flex flex-col gap-4">
-  <div className="p-4 bg-gray-100 rounded">
-    <p className="text-sm text-gray-500">Mục trên</p>
+  <div className="p-4 bg-{surface-muted} rounded-{radius}">
+    <p className="text-sm text-{muted}">Mục trên</p>
   </div>
-  <div className="p-4 bg-gray-100 rounded">
-    <p className="text-sm text-gray-500">Mục dưới</p>
+  <div className="p-4 bg-{surface-muted} rounded-{radius}">
+    <p className="text-sm text-{muted}">Mục dưới</p>
   </div>
 </div>`,
       en: `<div className="flex flex-col gap-4">
-  <div className="p-4 bg-gray-100 rounded">
-    <p className="text-sm text-gray-500">Top item</p>
+  <div className="p-4 bg-{surface-muted} rounded-{radius}">
+    <p className="text-sm text-{muted}">Top item</p>
   </div>
-  <div className="p-4 bg-gray-100 rounded">
-    <p className="text-sm text-gray-500">Bottom item</p>
+  <div className="p-4 bg-{surface-muted} rounded-{radius}">
+    <p className="text-sm text-{muted}">Bottom item</p>
   </div>
 </div>`,
     },
@@ -79,20 +77,20 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
     },
     icon: 'Grid',
     jsx: {
-      vi: `<div className="grid grid-cols-2 gap-4">
-  <div className="p-4 bg-gray-100 rounded">
-    <p className="text-sm text-gray-500">Ô 1</p>
+      vi: `<div className="grid grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-6">
+  <div className="p-4 bg-{surface-muted} rounded-{radius}">
+    <p className="text-sm text-{muted}">Ô 1</p>
   </div>
-  <div className="p-4 bg-gray-100 rounded">
-    <p className="text-sm text-gray-500">Ô 2</p>
+  <div className="p-4 bg-{surface-muted} rounded-{radius}">
+    <p className="text-sm text-{muted}">Ô 2</p>
   </div>
 </div>`,
-      en: `<div className="grid grid-cols-2 gap-4">
-  <div className="p-4 bg-gray-100 rounded">
-    <p className="text-sm text-gray-500">Cell 1</p>
+      en: `<div className="grid grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-6">
+  <div className="p-4 bg-{surface-muted} rounded-{radius}">
+    <p className="text-sm text-{muted}">Cell 1</p>
   </div>
-  <div className="p-4 bg-gray-100 rounded">
-    <p className="text-sm text-gray-500">Cell 2</p>
+  <div className="p-4 bg-{surface-muted} rounded-{radius}">
+    <p className="text-sm text-{muted}">Cell 2</p>
   </div>
 </div>`,
     },
@@ -112,14 +110,14 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
     jsx: {
       vi: `<section className="py-12 px-4">
   <div className="max-w-5xl mx-auto">
-    <h2 className="text-2xl font-bold mb-4 text-gray-900">Tiêu đề phần</h2>
-    <p className="text-gray-600">Nội dung trong phần này.</p>
+    <h2 className="text-2xl font-bold font-{heading} mb-4 text-{text}">Tiêu đề phần</h2>
+    <p className="text-{muted}">Nội dung trong phần này.</p>
   </div>
 </section>`,
       en: `<section className="py-12 px-4">
   <div className="max-w-5xl mx-auto">
-    <h2 className="text-2xl font-bold mb-4 text-gray-900">Section Title</h2>
-    <p className="text-gray-600">Content inside this section.</p>
+    <h2 className="text-2xl font-bold font-{heading} mb-4 text-{text}">Section Title</h2>
+    <p className="text-{muted}">Content inside this section.</p>
   </div>
 </section>`,
     },
@@ -137,14 +135,15 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
     },
     icon: 'Heading',
     jsx: {
-      vi: `<h2 className="text-2xl font-bold text-gray-900">
+      vi: `<h2 className="text-2xl font-bold font-{heading} text-{text}">
   Tiêu đề bài viết
 </h2>`,
-      en: `<h2 className="text-2xl font-bold text-gray-900">
+      en: `<h2 className="text-2xl font-bold font-{heading} text-{text}">
   Article Heading
 </h2>`,
     },
     neutral: NEUTRAL_BLOCKS['content.heading'],
+    variants: HEADING_VARIANTS,
   },
 
   // 6. Content: Paragraph
@@ -158,10 +157,10 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
     },
     icon: 'AlignLeft',
     jsx: {
-      vi: `<p className="text-base text-gray-600 leading-relaxed">
+      vi: `<p className="text-base text-{muted} leading-relaxed">
   Đây là nội dung đoạn văn bản mẫu giúp bạn dễ dàng hình dung bố cục.
 </p>`,
-      en: `<p className="text-base text-gray-600 leading-relaxed">
+      en: `<p className="text-base text-{muted} leading-relaxed">
   This is sample paragraph text to help you preview the visual layout.
 </p>`,
     },
@@ -179,8 +178,8 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
     },
     icon: 'Image',
     jsx: {
-      vi: `<img src="${SVG_PLACEHOLDER}" alt="Hình ảnh mẫu" className="w-full h-auto rounded-lg object-cover" />`,
-      en: `<img src="${SVG_PLACEHOLDER}" alt="Sample image" className="w-full h-auto rounded-lg object-cover" />`,
+      vi: `<img src="${SVG_PLACEHOLDER}" alt="Hình ảnh mẫu" className="w-full max-w-full h-auto rounded-{radius} object-cover" />`,
+      en: `<img src="${SVG_PLACEHOLDER}" alt="Sample image" className="w-full max-w-full h-auto rounded-{radius} object-cover" />`,
     },
     neutral: NEUTRAL_BLOCKS['content.image'],
   },
@@ -196,10 +195,10 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
     },
     icon: 'Link',
     jsx: {
-      vi: `<a href="#" className="text-blue-600 hover:text-blue-800 underline font-medium">
+      vi: `<a href="#" className="text-{primary} hover:opacity-80 underline font-medium">
   Xem thêm chi tiết
 </a>`,
-      en: `<a href="#" className="text-blue-600 hover:text-blue-800 underline font-medium">
+      en: `<a href="#" className="text-{primary} hover:opacity-80 underline font-medium">
   Learn more details
 </a>`,
     },

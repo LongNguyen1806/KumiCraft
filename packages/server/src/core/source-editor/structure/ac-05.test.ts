@@ -5,7 +5,7 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { LIBRARY_BLOCKS, type StructureEdit } from '@kumicraft/shared';
+import { LIBRARY_BLOCKS, renderBlock, type StructureEdit } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -24,7 +24,7 @@ const HEADERS = {
   'content-type': 'application/json',
 };
 const HOME = 'src/pages/Home.tsx';
-const CARD_MARKER = 'p-6 bg-white border border-gray-200 rounded-xl';
+const CARD_MARKER = 'min-w-0 p-6 bg-white border border-gray-200 rounded-lg shadow-sm';
 
 /** Loc of the first JSX element whose opening tag starts with `needle` (1-based line and column). */
 function locOf(text: string, needle: string): string {
@@ -100,7 +100,7 @@ describe('AC-05: Library Card, move, duplicate, remove on the template [AC-05]',
     const [cardLoc] = await edit({
       kind: 'insert',
       target: { kind: 'sibling', ref: { loc: heroLoc, tag: 'section' }, where: 'after' },
-      jsx: card.jsx.en,
+      jsx: renderBlock(card, 'tailwind4', 'en').jsx,
     });
     let home = await readHome();
     expect(home.indexOf('</section>')).toBeLessThan(home.indexOf(CARD_MARKER));

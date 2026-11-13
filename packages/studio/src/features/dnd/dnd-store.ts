@@ -10,7 +10,11 @@ import { create } from 'zustand';
 import type { ErrorInfo } from '../../routes/error-text.ts';
 
 export type DragSource =
-  | { readonly source: 'library'; readonly block: LibraryBlock }
+  | {
+      readonly source: 'library';
+      readonly block: LibraryBlock;
+      readonly variantId?: string | undefined;
+    }
   | { readonly source: 'layer'; readonly ref: ElementRef; readonly tag: string }
   | { readonly source: 'component'; readonly component: ProjectComponent };
 

@@ -3,6 +3,7 @@ import { ADVANCED_BLOCKS } from './blocks-advanced.ts';
 import { BASIC_BLOCKS } from './blocks-basic.ts';
 import type { LibraryBlock } from './types.ts';
 
+export * from './project-look.ts';
 export * from './render-block.ts';
 export * from './types.ts';
 

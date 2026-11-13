@@ -1,5 +1,6 @@
-// Advanced library blocks: form, data, and composite (R-LB-10, R-LB-11, R-LB-12).
+// Advanced library blocks: form, data, and composite (R-LB-10, R-LB-11, R-LB-12, TK-43, TK-47, TK-48).
 import { NEUTRAL_BLOCKS } from './blocks-neutral.ts';
+import { BUTTON_VARIANTS, CARD_VARIANTS, HERO_VARIANTS } from './blocks-variants.ts';
 import type { LibraryBlock } from './types.ts';
 
 export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
@@ -14,14 +15,15 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
     },
     icon: 'MousePointerClick',
     jsx: {
-      vi: `<button type="button" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium">
+      vi: `<button type="button" className="px-4 py-2 bg-{primary} text-{on-primary} rounded-{radius} hover:bg-{primary}/90 font-medium">
   Bấm vào đây
 </button>`,
-      en: `<button type="button" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium">
+      en: `<button type="button" className="px-4 py-2 bg-{primary} text-{on-primary} rounded-{radius} hover:bg-{primary}/90 font-medium">
   Click here
 </button>`,
     },
     neutral: NEUTRAL_BLOCKS['form.button'],
+    variants: BUTTON_VARIANTS,
   },
 
   // 10. Form: Input
@@ -36,16 +38,16 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
     icon: 'TextCursorInput',
     jsx: {
       vi: `<div className="flex flex-col gap-1.5">
-  <label className="text-sm font-medium text-gray-700">
+  <label className="text-sm font-medium text-{text}">
     Họ và tên
   </label>
-  <input type="text" placeholder="Nhập văn bản..." className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+  <input type="text" placeholder="Nhập văn bản..." className="px-3 py-2 bg-{surface} text-{text} border border-{border} rounded-{radius} focus:outline-none focus:ring-2 focus:ring-{primary}" />
 </div>`,
       en: `<div className="flex flex-col gap-1.5">
-  <label className="text-sm font-medium text-gray-700">
+  <label className="text-sm font-medium text-{text}">
     Full Name
   </label>
-  <input type="text" placeholder="Enter text..." className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+  <input type="text" placeholder="Enter text..." className="px-3 py-2 bg-{surface} text-{text} border border-{border} rounded-{radius} focus:outline-none focus:ring-2 focus:ring-{primary}" />
 </div>`,
     },
     neutral: NEUTRAL_BLOCKS['form.input'],
@@ -62,25 +64,25 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
     },
     icon: 'FormInput',
     jsx: {
-      vi: `<form className="space-y-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+      vi: `<form className="space-y-4 p-6 bg-{surface} border border-{border} rounded-{radius} shadow-sm">
   <div className="flex flex-col gap-1.5">
-    <label className="text-sm font-medium text-gray-700">
+    <label className="text-sm font-medium text-{text}">
       Email
     </label>
-    <input type="email" placeholder="ban@vidu.com" className="px-3 py-2 border border-gray-300 rounded-md" />
+    <input type="email" placeholder="ban@vidu.com" className="px-3 py-2 bg-{surface} text-{text} border border-{border} rounded-{radius}" />
   </div>
-  <button type="submit" className="w-full py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700">
+  <button type="submit" className="w-full py-2 bg-{primary} text-{on-primary} rounded-{radius} font-medium hover:bg-{primary}/90">
     Gửi thông tin
   </button>
 </form>`,
-      en: `<form className="space-y-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+      en: `<form className="space-y-4 p-6 bg-{surface} border border-{border} rounded-{radius} shadow-sm">
   <div className="flex flex-col gap-1.5">
-    <label className="text-sm font-medium text-gray-700">
+    <label className="text-sm font-medium text-{text}">
       Email
     </label>
-    <input type="email" placeholder="you@example.com" className="px-3 py-2 border border-gray-300 rounded-md" />
+    <input type="email" placeholder="you@example.com" className="px-3 py-2 bg-{surface} text-{text} border border-{border} rounded-{radius}" />
   </div>
-  <button type="submit" className="w-full py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700">
+  <button type="submit" className="w-full py-2 bg-{primary} text-{on-primary} rounded-{radius} font-medium hover:bg-{primary}/90">
     Submit
   </button>
 </form>`,
@@ -99,34 +101,34 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
     },
     icon: 'Table',
     jsx: {
-      vi: `<div className="overflow-x-auto border border-gray-200 rounded-lg">
-  <table className="min-w-full divide-y divide-gray-200 text-sm text-left">
-    <thead className="bg-gray-50">
+      vi: `<div className="overflow-x-auto border border-{border} rounded-{radius}">
+  <table className="min-w-full divide-y divide-{border} text-sm text-left">
+    <thead className="bg-{surface-muted}">
       <tr>
-        <th className="px-4 py-2 font-medium text-gray-700">Cột 1</th>
-        <th className="px-4 py-2 font-medium text-gray-700">Cột 2</th>
+        <th className="px-4 py-2 font-medium text-{text}">Cột 1</th>
+        <th className="px-4 py-2 font-medium text-{text}">Cột 2</th>
       </tr>
     </thead>
-    <tbody className="divide-y divide-gray-200">
+    <tbody className="divide-y divide-{border} bg-{surface}">
       <tr>
-        <td className="px-4 py-2 text-gray-600">Dữ liệu 1</td>
-        <td className="px-4 py-2 text-gray-600">Dữ liệu 2</td>
+        <td className="px-4 py-2 text-{muted}">Dữ liệu 1</td>
+        <td className="px-4 py-2 text-{muted}">Dữ liệu 2</td>
       </tr>
     </tbody>
   </table>
 </div>`,
-      en: `<div className="overflow-x-auto border border-gray-200 rounded-lg">
-  <table className="min-w-full divide-y divide-gray-200 text-sm text-left">
-    <thead className="bg-gray-50">
+      en: `<div className="overflow-x-auto border border-{border} rounded-{radius}">
+  <table className="min-w-full divide-y divide-{border} text-sm text-left">
+    <thead className="bg-{surface-muted}">
       <tr>
-        <th className="px-4 py-2 font-medium text-gray-700">Column 1</th>
-        <th className="px-4 py-2 font-medium text-gray-700">Column 2</th>
+        <th className="px-4 py-2 font-medium text-{text}">Column 1</th>
+        <th className="px-4 py-2 font-medium text-{text}">Column 2</th>
       </tr>
     </thead>
-    <tbody className="divide-y divide-gray-200">
+    <tbody className="divide-y divide-{border} bg-{surface}">
       <tr>
-        <td className="px-4 py-2 text-gray-600">Data 1</td>
-        <td className="px-4 py-2 text-gray-600">Data 2</td>
+        <td className="px-4 py-2 text-{muted}">Data 1</td>
+        <td className="px-4 py-2 text-{muted}">Data 2</td>
       </tr>
     </tbody>
   </table>
@@ -146,30 +148,31 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
     },
     icon: 'CreditCard',
     jsx: {
-      vi: `<div className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+      vi: `<div className="min-w-0 p-6 bg-{surface} border border-{border} rounded-{radius} shadow-sm">
+  <h3 className="text-lg font-semibold font-{heading} text-{text} mb-2">
     Tiêu đề thẻ
   </h3>
-  <p className="text-sm text-gray-600 mb-4">
+  <p className="text-sm text-{muted} mb-4">
     Nội dung mô tả ngắn gọn giúp người dùng hiểu thông tin chính của thẻ này.
   </p>
-  <button type="button" className="text-sm font-medium text-blue-600 hover:underline">
+  <button type="button" className="text-sm font-medium text-{primary} hover:underline">
     Xem chi tiết
   </button>
 </div>`,
-      en: `<div className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+      en: `<div className="min-w-0 p-6 bg-{surface} border border-{border} rounded-{radius} shadow-sm">
+  <h3 className="text-lg font-semibold font-{heading} text-{text} mb-2">
     Card Title
   </h3>
-  <p className="text-sm text-gray-600 mb-4">
+  <p className="text-sm text-{muted} mb-4">
     A short description helping the user understand the primary card details.
   </p>
-  <button type="button" className="text-sm font-medium text-blue-600 hover:underline">
+  <button type="button" className="text-sm font-medium text-{primary} hover:underline">
     View details
   </button>
 </div>`,
     },
     neutral: NEUTRAL_BLOCKS['composite.card'],
+    variants: CARD_VARIANTS,
   },
 
   // 14. Composite: Navbar
@@ -183,24 +186,24 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
     },
     icon: 'Menu',
     jsx: {
-      vi: `<nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
-  <span className="text-xl font-bold text-gray-900">
+      vi: `<nav className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 bg-{surface} border-b border-{border}">
+  <span className="text-xl font-bold font-{heading} text-{text}">
     Logo
   </span>
-  <div className="flex items-center gap-6 text-sm font-medium text-gray-600">
-    <a href="#" className="hover:text-gray-900">Trang chủ</a>
-    <a href="#" className="hover:text-gray-900">Giới thiệu</a>
-    <a href="#" className="hover:text-gray-900">Liên hệ</a>
+  <div className="flex flex-wrap items-center gap-6 text-sm font-medium text-{muted}">
+    <a href="#" className="hover:text-{text}">Trang chủ</a>
+    <a href="#" className="hover:text-{text}">Giới thiệu</a>
+    <a href="#" className="hover:text-{text}">Liên hệ</a>
   </div>
 </nav>`,
-      en: `<nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
-  <span className="text-xl font-bold text-gray-900">
+      en: `<nav className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 bg-{surface} border-b border-{border}">
+  <span className="text-xl font-bold font-{heading} text-{text}">
     Logo
   </span>
-  <div className="flex items-center gap-6 text-sm font-medium text-gray-600">
-    <a href="#" className="hover:text-gray-900">Home</a>
-    <a href="#" className="hover:text-gray-900">About</a>
-    <a href="#" className="hover:text-gray-900">Contact</a>
+  <div className="flex flex-wrap items-center gap-6 text-sm font-medium text-{muted}">
+    <a href="#" className="hover:text-{text}">Home</a>
+    <a href="#" className="hover:text-{text}">About</a>
+    <a href="#" className="hover:text-{text}">Contact</a>
   </div>
 </nav>`,
     },
@@ -218,15 +221,31 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
     },
     icon: 'PanelBottom',
     jsx: {
-      vi: `<footer className="py-8 px-4 bg-gray-50 border-t border-gray-200 text-center text-sm text-gray-500">
-  <p>
-    Bản quyền 2026. Mọi quyền được bảo lưu.
-  </p>
+      vi: `<footer className="py-8 px-6 bg-{surface-muted} border-t border-{border} text-sm text-{muted}">
+  <div className="max-w-5xl mx-auto grid grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-6">
+    <div>
+      <p className="font-semibold font-{heading} text-{text} mb-1">Thương hiệu</p>
+      <p>Bản quyền 2026. Mọi quyền được bảo lưu.</p>
+    </div>
+    <div className="flex flex-wrap items-center gap-4">
+      <a href="#" className="hover:text-{text}">Giới thiệu</a>
+      <a href="#" className="hover:text-{text}">Điều khoản</a>
+      <a href="#" className="hover:text-{text}">Liên hệ</a>
+    </div>
+  </div>
 </footer>`,
-      en: `<footer className="py-8 px-4 bg-gray-50 border-t border-gray-200 text-center text-sm text-gray-500">
-  <p>
-    Copyright 2026. All rights reserved.
-  </p>
+      en: `<footer className="py-8 px-6 bg-{surface-muted} border-t border-{border} text-sm text-{muted}">
+  <div className="max-w-5xl mx-auto grid grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-6">
+    <div>
+      <p className="font-semibold font-{heading} text-{text} mb-1">Brand</p>
+      <p>Copyright 2026. All rights reserved.</p>
+    </div>
+    <div className="flex flex-wrap items-center gap-4">
+      <a href="#" className="hover:text-{text}">About</a>
+      <a href="#" className="hover:text-{text}">Terms</a>
+      <a href="#" className="hover:text-{text}">Contact</a>
+    </div>
+  </div>
 </footer>`,
     },
     neutral: NEUTRAL_BLOCKS['composite.footer'],
@@ -243,33 +262,34 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
     },
     icon: 'Sparkles',
     jsx: {
-      vi: `<section className="py-20 px-4 bg-gray-50 text-center">
+      vi: `<section className="py-20 px-4 bg-{surface-muted} text-center">
   <div className="max-w-3xl mx-auto">
-    <h1 className="text-4xl font-extrabold text-gray-900 mb-4">
+    <h1 className="text-4xl font-extrabold font-{heading} text-{text} mb-4">
       Chào mừng đến với chúng tôi
     </h1>
-    <p className="text-lg text-gray-600 mb-8">
+    <p className="text-lg text-{muted} mb-8">
       Giải pháp thiết kế giao diện hiện đại và nhanh chóng.
     </p>
-    <button type="button" className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+    <button type="button" className="px-6 py-3 bg-{primary} text-{on-primary} rounded-{radius} font-semibold hover:bg-{primary}/90">
       Bắt đầu ngay
     </button>
   </div>
 </section>`,
-      en: `<section className="py-20 px-4 bg-gray-50 text-center">
+      en: `<section className="py-20 px-4 bg-{surface-muted} text-center">
   <div className="max-w-3xl mx-auto">
-    <h1 className="text-4xl font-extrabold text-gray-900 mb-4">
+    <h1 className="text-4xl font-extrabold font-{heading} text-{text} mb-4">
       Welcome to our website
     </h1>
-    <p className="text-lg text-gray-600 mb-8">
+    <p className="text-lg text-{muted} mb-8">
       Modern and swift visual interface design solution.
     </p>
-    <button type="button" className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+    <button type="button" className="px-6 py-3 bg-{primary} text-{on-primary} rounded-{radius} font-semibold hover:bg-{primary}/90">
       Get Started
     </button>
   </div>
 </section>`,
     },
     neutral: NEUTRAL_BLOCKS['composite.hero'],
+    variants: HERO_VARIANTS,
   },
 ];

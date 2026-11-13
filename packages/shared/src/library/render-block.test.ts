@@ -1,8 +1,10 @@
-// Unit tests for renderBlock across all style systems (R-LB-11, R-ST-12).
+// Unit tests for renderBlock across all style systems, look roles, variants, and responsive classes (R-LB-11, R-ST-12, TK-43, TK-47, TK-48).
 import { describe, expect, it } from 'vitest';
 
+import type { ThemeInfo } from '../project.ts';
 import { STYLE_SYSTEM_IDS } from '../style.ts';
 import { LIBRARY_BLOCKS } from './blocks.ts';
+import { lookFromTheme } from './project-look.ts';
 import { renderBlock } from './render-block.ts';
 import type { LibraryBlock } from './types.ts';
 
@@ -27,52 +29,83 @@ function extractClassNames(jsx: string): string[] {
   return classes;
 }
 
+function makeTheme(overrides: Partial<ThemeInfo> = {}): ThemeInfo {
+  return {
+    colors: [],
+    fontSizes: [],
+    radii: [],
+    fonts: [],
+    shadows: [],
+    breakpoints: [],
+    ...overrides,
+  };
+}
+
 describe('renderBlock', () => {
-  it('1. [R-ST-12] all 16 blocks have matching @key tokens in styles and bootstrap, and leave no @ after rendering in any system', () => {
+  it('1. [R-ST-12] all 16 blocks and variants have matching @key tokens and leave no @ or {role} after rendering in any system', () => {
     expect(LIBRARY_BLOCKS).toHaveLength(16);
 
     for (const block of LIBRARY_BLOCKS) {
-      const viKeys = extractKeyTokens(block.neutral.jsx.vi);
-      const enKeys = extractKeyTokens(block.neutral.jsx.en);
-      expect(viKeys.length).toBeGreaterThan(0);
-      expect(enKeys).toEqual(viKeys);
+      const variants = [undefined, ...(block.variants?.map((v) => v.id) ?? [])];
+      for (const variantId of variants) {
+        const neutral =
+          variantId !== undefined
+            ? block.variants?.find((v) => v.id === variantId)?.neutral
+            : block.neutral;
+        expect(neutral).toBeDefined();
+        if (neutral === undefined) continue;
 
-      for (const key of viKeys) {
-        expect(block.neutral.styles[key], `${block.id} missing styles.${key}`).toBeDefined();
-      }
-      for (const bsKey of Object.keys(block.neutral.bootstrap)) {
-        expect(viKeys, `${block.id} bootstrap.${bsKey} not in neutral.jsx`).toContain(bsKey);
-      }
+        const viKeys = extractKeyTokens(neutral.jsx.vi);
+        const enKeys = extractKeyTokens(neutral.jsx.en);
+        expect(viKeys.length).toBeGreaterThan(0);
+        expect(enKeys).toEqual(viKeys);
 
-      for (const sys of [...STYLE_SYSTEM_IDS, undefined]) {
-        for (const lang of ['vi', 'en'] as const) {
-          const rendered = renderBlock(block, sys, lang);
-          for (const cls of extractClassNames(rendered.jsx)) {
+        for (const key of viKeys) {
+          expect(
+            neutral.styles[key],
+            `${block.id}:${String(variantId)} missing styles.${key}`,
+          ).toBeDefined();
+        }
+        for (const bsKey of Object.keys(neutral.bootstrap)) {
+          expect(
+            viKeys,
+            `${block.id}:${String(variantId)} bootstrap.${bsKey} not in neutral.jsx`,
+          ).toContain(bsKey);
+        }
+
+        for (const sys of [...STYLE_SYSTEM_IDS, undefined]) {
+          for (const lang of ['vi', 'en'] as const) {
+            const rendered = renderBlock(block, sys, lang, undefined, variantId);
             expect(
-              cls,
-              `${block.id} (${String(sys)}, ${lang}) still has @ in className`,
-            ).not.toContain('@');
+              rendered.jsx,
+              `${block.id}:${String(variantId)} (${String(sys)}) left {role}`,
+            ).not.toMatch(/\{[a-zA-Z0-9_-]+\}/);
+            for (const cls of extractClassNames(rendered.jsx)) {
+              expect(
+                cls,
+                `${block.id}:${String(variantId)} (${String(sys)}, ${lang}) still has @ in className`,
+              ).not.toContain('@');
+            }
           }
         }
       }
     }
   });
 
-  it('2. [R-LB-11] tailwind4 and undefined return block.jsx[lang] byte-for-byte with empty rules for all 16 blocks', () => {
+  it('2. [R-LB-11] tailwind4 and undefined resolve roles identically with empty rules for all 16 blocks', () => {
     for (const block of LIBRARY_BLOCKS) {
       for (const lang of ['vi', 'en'] as const) {
         const tw4 = renderBlock(block, 'tailwind4', lang);
-        expect(tw4.jsx).toBe(block.jsx[lang]);
-        expect(tw4.rules).toEqual([]);
-
         const undef = renderBlock(block, undefined, lang);
-        expect(undef.jsx).toBe(block.jsx[lang]);
+        expect(tw4.jsx).toBe(undef.jsx);
+        expect(tw4.rules).toEqual([]);
         expect(undef.rules).toEqual([]);
+        expect(tw4.jsx).not.toMatch(/\{[a-zA-Z0-9_-]+\}/);
       }
     }
   });
 
-  it('3. [R-ST-12] layout.row with css produces kc-row and kc-row-cell classes and .kc-row-cell rule with padding: 16px', () => {
+  it('3. [R-ST-12] layout.row with css produces kc-row and kc-row-cell classes and resolved default declarations', () => {
     const rowBlock = LIBRARY_BLOCKS.find((b) => b.id === 'layout.row');
     expect(rowBlock).toBeDefined();
     if (rowBlock === undefined) return;
@@ -86,15 +119,24 @@ describe('renderBlock', () => {
     expect(extractClassNames(vi.jsx)).toEqual(extractClassNames(en.jsx));
 
     expect(vi.rules).toEqual([
-      { selector: '.kc-row', declarations: rowBlock.neutral.styles['root'] },
-      { selector: '.kc-row-cell', declarations: rowBlock.neutral.styles['cell'] },
-      { selector: '.kc-row-text', declarations: rowBlock.neutral.styles['text'] },
+      { selector: '.kc-row', declarations: { display: 'flex', 'flex-wrap': 'wrap', gap: '16px' } },
+      {
+        selector: '.kc-row-cell',
+        declarations: {
+          flex: '1 1 240px',
+          padding: '16px',
+          'background-color': '#f9fafb',
+          'border-radius': '8px',
+        },
+      },
+      {
+        selector: '.kc-row-text',
+        declarations: { 'font-size': '14px', 'line-height': '20px', color: '#4b5563' },
+      },
     ]);
-    const cellRule = vi.rules.find((r) => r.selector === '.kc-row-cell');
-    expect(cellRule?.declarations['padding']).toBe('16px');
   });
 
-  it('4. [R-ST-12] composite.card with bootstrap5 outputs Bootstrap classes and falls back to .kc-card-* rules for keys without Bootstrap classes', () => {
+  it('4. [R-ST-12] composite.card with bootstrap5 outputs Bootstrap classes and falls back to resolved .kc-card-* rules', () => {
     const cardBlock = LIBRARY_BLOCKS.find((b) => b.id === 'composite.card');
     expect(cardBlock).toBeDefined();
     if (cardBlock === undefined) return;
@@ -120,32 +162,136 @@ describe('renderBlock', () => {
     expect(partialBs.jsx).toContain('className="kc-card-title"');
     expect(partialBs.jsx).toContain('className="kc-card-body"');
     expect(partialBs.rules).toEqual([
-      { selector: '.kc-card-title', declarations: cardBlock.neutral.styles['title'] },
-      { selector: '.kc-card-body', declarations: cardBlock.neutral.styles['body'] },
+      {
+        selector: '.kc-card-title',
+        declarations: {
+          'font-size': '18px',
+          'line-height': '28px',
+          'font-weight': '600',
+          color: '#111827',
+          'margin-bottom': '8px',
+        },
+      },
+      {
+        selector: '.kc-card-body',
+        declarations: {
+          'font-size': '14px',
+          'line-height': '20px',
+          color: '#4b5563',
+          'margin-bottom': '16px',
+        },
+      },
     ]);
   });
 
-  it('5. [R-ST-12] tailwind3 translates shadow-sm to shadow and rounded-sm to rounded while preserving unmapped classes', () => {
+  it('5. [TK-43, R-ST-12] tailwind3 resolves roles first, then translates v4 utility names (rounded-sm -> rounded, shadow-sm -> shadow)', () => {
     const cardBlock = LIBRARY_BLOCKS.find((b) => b.id === 'composite.card');
     expect(cardBlock).toBeDefined();
     if (cardBlock === undefined) return;
 
-    const renderedCard = renderBlock(cardBlock, 'tailwind3', 'vi');
-    expect(renderedCard.jsx).toContain(
-      'className="p-6 bg-white border border-gray-200 rounded-xl shadow"',
+    const themeLook = lookFromTheme(
+      makeTheme({
+        colors: [{ name: 'brand', value: '#3b82f6' }],
+        radii: [{ name: 'md', value: '6px' }],
+      }),
     );
+    const renderedCard = renderBlock(cardBlock, 'tailwind3', 'vi', themeLook);
+    expect(renderedCard.jsx).toContain(
+      'className="min-w-0 p-6 bg-white border border-gray-200 rounded-md shadow"',
+    );
+    expect(renderedCard.jsx).toContain('text-brand');
     expect(renderedCard.jsx).not.toContain('shadow-sm');
-    expect(renderedCard.rules).toEqual([]);
 
-    const customBlock: LibraryBlock = {
-      ...cardBlock,
-      jsx: {
-        vi: '<div className="p-4 rounded-sm shadow-sm text-gray-900">Thẻ</div>',
-        en: '<div className="p-4 rounded-sm shadow-sm text-gray-900">Card</div>',
+    const smRadiusLook = { roles: { radius: { tailwind: 'sm', css: '4px' } } };
+    const renderedSm = renderBlock(cardBlock, 'tailwind3', 'vi', smRadiusLook);
+    expect(renderedSm.jsx).toContain(
+      'className="min-w-0 p-6 bg-white border border-gray-200 rounded shadow"',
+    );
+    expect(renderedSm.jsx).not.toContain('rounded-sm');
+    expect(renderedSm.rules).toEqual([]);
+  });
+
+  it('6. [TK-43] plain css with look emits var(--...) declarations in rules', () => {
+    const buttonBlock = LIBRARY_BLOCKS.find((b) => b.id === 'form.button');
+    expect(buttonBlock).toBeDefined();
+    if (buttonBlock === undefined) return;
+
+    const look = lookFromTheme(
+      makeTheme({
+        colors: [{ name: 'brand', value: '#2563eb', variable: '--brand' }],
+        radii: [{ name: 'radius', value: '8px', variable: '--radius' }],
+      }),
+    );
+    const rendered = renderBlock(buttonBlock, 'css', 'vi', look);
+    expect(rendered.jsx).toContain('className="kc-button"');
+    expect(rendered.rules).toEqual([
+      {
+        selector: '.kc-button',
+        declarations: {
+          padding: '8px 16px',
+          'background-color': 'var(--brand)',
+          color: '#ffffff',
+          'border-radius': 'var(--radius)',
+          'font-weight': '500',
+          border: 'none',
+        },
       },
-    };
-    const renderedCustom = renderBlock(customBlock, 'tailwind3', 'vi');
-    expect(renderedCustom.jsx).toBe('<div className="p-4 rounded shadow text-gray-900">Thẻ</div>');
-    expect(renderedCustom.rules).toEqual([]);
+    ]);
+  });
+
+  it('7. [TK-43] bootstrap5 keeps Bootstrap classes for form.button and its variants', () => {
+    const buttonBlock = LIBRARY_BLOCKS.find((b) => b.id === 'form.button');
+    expect(buttonBlock).toBeDefined();
+    if (buttonBlock === undefined) return;
+
+    const look = lookFromTheme(
+      makeTheme({ colors: [{ name: 'brand', value: '#2563eb', variable: '--brand' }] }),
+    );
+    const solid = renderBlock(buttonBlock, 'bootstrap5', 'en', look);
+    expect(solid.jsx).toContain('className="btn btn-primary"');
+    expect(solid.rules).toEqual([]);
+
+    const outline = renderBlock(buttonBlock, 'bootstrap5', 'en', look, 'outline');
+    expect(outline.jsx).toContain('className="btn btn-outline-primary"');
+    expect(outline.rules).toEqual([]);
+  });
+
+  it('8. [TK-47] variants: form.button + outline differs from default; unknown variantId falls back to default', () => {
+    const buttonBlock = LIBRARY_BLOCKS.find((b) => b.id === 'form.button');
+    expect(buttonBlock).toBeDefined();
+    if (buttonBlock === undefined) return;
+
+    const def = renderBlock(buttonBlock, 'tailwind4', 'en');
+    const outline = renderBlock(buttonBlock, 'tailwind4', 'en', undefined, 'outline');
+    const unknown = renderBlock(buttonBlock, 'tailwind4', 'en', undefined, 'non-existent');
+
+    expect(outline.jsx).not.toBe(def.jsx);
+    expect(outline.jsx).toContain('border');
+    expect(outline.jsx).not.toContain('bg-blue-600');
+    expect(unknown.jsx).toBe(def.jsx);
+
+    const cssDef = renderBlock(buttonBlock, 'css', 'en');
+    const cssOutline = renderBlock(buttonBlock, 'css', 'en', undefined, 'outline');
+    expect(cssOutline.jsx).toContain('kc-button-outline');
+    expect(cssOutline.rules[0]?.selector).toBe('.kc-button-outline');
+    expect(cssOutline.rules[0]?.selector).not.toBe(cssDef.rules[0]?.selector);
+  });
+
+  it('10. [TK-48] no Tailwind block or variant uses sm:, md:, lg:, xl:, or max- breakpoint prefixes (except max-w-*)', () => {
+    const forbiddenPrefixRe = /(?:^|\s)(?:sm:|md:|lg:|xl:|max-(?!w-))/;
+    for (const block of LIBRARY_BLOCKS) {
+      const variants = [undefined, ...(block.variants?.map((v) => v.id) ?? [])];
+      for (const variantId of variants) {
+        for (const lang of ['vi', 'en'] as const) {
+          const rendered = renderBlock(block, 'tailwind4', lang, undefined, variantId);
+          for (const cls of extractClassNames(rendered.jsx)) {
+            expect(
+              cls,
+              `${block.id}:${String(variantId)} (${lang}) has forbidden responsive prefix: ${cls}`,
+            ).not.toMatch(forbiddenPrefixRe);
+          }
+        }
+      }
+    }
   });
 });
