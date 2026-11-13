@@ -11,7 +11,9 @@ import { useBuildCheckStore } from '../build-check/build-check-store.ts';
 import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
 import { type ChatTurnView, useChatStore } from '../chat/chat-store.ts';
 import { useDesignStore } from '../design/design-store.ts';
+import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { usePagesData } from '../editor/page-select.tsx';
+import { isDraftFile } from '../free-frame/free-frame-page-warning.tsx';
 import { useProjectInfo } from '../project/project-store.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
@@ -46,6 +48,14 @@ function useFileClickHandler(pagesData: ReturnType<typeof usePagesData>) {
       const matchedPage = pagesData.pages.find((p) => p.file === entry.path);
       if (matchedPage !== undefined) {
         studioBridgeChannel.navigate(matchedPage.path);
+        return;
+      }
+      const view = useCanvasViewStore.getState();
+      if (isDraftFile(entry.path, view.draftsDir)) {
+        // A draft opens as the draft it is, not as a component of the page shown (spec-log #130).
+        const design = useDesignStore.getState();
+        if (design.componentMode !== undefined) design.exitComponentMode();
+        view.openDraft(entry.path, view.currentProjectId);
         return;
       }
       if (/\.(jsx|tsx)$/i.test(entry.name)) {

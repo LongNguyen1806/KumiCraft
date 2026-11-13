@@ -9,9 +9,11 @@ import {
   err,
   ok,
   pageNames,
+  primarySystem,
   type RenameDraft,
   type Result,
   type StructureResult,
+  type StylingReport,
 } from '@kumicraft/shared';
 
 import { computeSha256 } from '../history/history-service.ts';
@@ -54,17 +56,36 @@ export async function listDrafts(deps: PageEditDeps): Promise<Result<DraftsInfo>
   return ok({ drafts, dir: draftsDir, ignored });
 }
 
-function buildDraftContent(componentName: string, free: boolean): string {
-  if (free) {
-    return [
-      `export function ${componentName}() {`,
-      '  return <div data-rc-free className="relative min-h-screen w-full bg-white"></div>;',
-      '}\n',
-    ].join('\n');
+/**
+ * The draft's root in the project's own styling (spec-log #130): Tailwind classes in a plain-CSS
+ * project gave a root 0 px high, with nowhere to drop a block and nothing to select. Bootstrap gets
+ * its utilities; every other system an inline size, the only one that needs no stylesheet.
+ */
+function draftRootAttrs(free: boolean, styling: StylingReport | undefined): string {
+  const system = primarySystem(styling);
+  if (system === 'tailwind4' || system === 'tailwind3' || styling === undefined) {
+    return free
+      ? 'data-rc-free className="relative min-h-screen w-full bg-white"'
+      : 'className="min-h-screen bg-white p-8"';
   }
+  if (system === 'bootstrap5') {
+    return free
+      ? 'data-rc-free className="position-relative min-vh-100 w-100 bg-white"'
+      : 'className="min-vh-100 bg-white p-4"';
+  }
+  return free
+    ? "data-rc-free style={{ position: 'relative', minHeight: '100vh', width: '100%', background: '#fff' }}"
+    : "style={{ minHeight: '100vh', background: '#fff', padding: 32 }}";
+}
+
+export function buildDraftContent(
+  componentName: string,
+  free: boolean,
+  styling: StylingReport | undefined,
+): string {
   return [
     `export function ${componentName}() {`,
-    '  return <div className="min-h-screen bg-white p-8"></div>;',
+    `  return <div ${draftRootAttrs(free, styling)}></div>;`,
     '}\n',
   ].join('\n');
 }
@@ -116,7 +137,7 @@ export async function createDraft(
     return err({ code: 'E016', params: { file: names.fileRel, reason: 'fileExists' } });
   }
 
-  const content = buildDraftContent(names.componentName, input.free);
+  const content = buildDraftContent(names.componentName, input.free, deps.styling);
   const hash = computeSha256(content);
 
   return withFileLocks(deps.projectRoot, [names.fileRel], async () => {
