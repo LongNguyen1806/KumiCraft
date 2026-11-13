@@ -68,6 +68,9 @@ export function selectParentNode(): boolean {
   }
 
   useSelectionStore.getState().setSelectedRefs([parentNode.ref]);
+  // The Canvas must select it too, like the path buttons do: without it the Bridge kept the child,
+  // so size handles and free moves still acted on the child (spec-log #129).
+  studioBridgeChannel.select([parentNode.ref], true);
   return true;
 }
 

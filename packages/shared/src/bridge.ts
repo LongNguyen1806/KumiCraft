@@ -246,6 +246,12 @@ export const BridgeFreeMeasurePayloadSchema = z.strictObject({
   width: z.number(),
   height: z.number(),
   hasHeight: z.boolean(),
+  /**
+   * The frame's width comes from its content (absolute, inline-block, a flex item…) and no class
+   * sets it: turning it on must keep the width, or the frame collapses once its children leave the
+   * flow (spec-log #129). Optional for older Bridges.
+   */
+  keepWidth: z.boolean().optional(),
   children: z
     .array(
       z.strictObject({

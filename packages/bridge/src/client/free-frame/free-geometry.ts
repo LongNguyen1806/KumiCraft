@@ -78,6 +78,59 @@ export function hasHeightClass(el: Element): boolean {
   });
 }
 
+/** True when an unprefixed `w-*` or `min-w-*` sets the width. */
+export function hasWidthClass(el: Element): boolean {
+  return parseRawClasses(el.getAttribute('class') ?? '').some((tok) => {
+    if (tok.variants.length > 0) return false;
+    const property = matchProperty(tok.utility)?.property;
+    return property === 'width' || property === 'minWidth';
+  });
+}
+
+const START_LIKE = new Set([
+  'start',
+  'end',
+  'center',
+  'left',
+  'right',
+  'flex-start',
+  'flex-end',
+  'self-start',
+  'self-end',
+  'baseline',
+]);
+
+/** `auto` (or not computed): the item follows its parent's `align-items` / `justify-items`. */
+const isAuto = (value: string): boolean => value === '' || value === 'auto';
+
+/**
+ * True when the element's width follows its content rather than its parent: placed absolutely or
+ * fixed, floated, inline-level, a flex item in a row, or not stretched across a column or grid
+ * cell. Such a frame collapses when its children turn absolute (spec-log #129).
+ */
+export function widthFollowsContent(el: Element): boolean {
+  const view = el.ownerDocument.defaultView;
+  if (!view) return false;
+  const style = view.getComputedStyle(el);
+  if (style.position === 'absolute' || style.position === 'fixed') return true;
+  const float = style.getPropertyValue('float');
+  if (float !== '' && float !== 'none') return true;
+  if (style.display.startsWith('inline') || style.display === 'table') return true;
+  const parent = el.parentElement;
+  if (!parent) return false;
+  const p = view.getComputedStyle(parent);
+  if (p.display === 'flex' || p.display === 'inline-flex') {
+    if (!p.flexDirection.startsWith('column')) return true;
+    const align = isAuto(style.alignSelf) ? p.alignItems : style.alignSelf;
+    return START_LIKE.has(align);
+  }
+  if (p.display === 'grid' || p.display === 'inline-grid') {
+    const justify = isAuto(style.justifySelf) ? p.justifyItems : style.justifySelf;
+    return START_LIKE.has(justify);
+  }
+  return false;
+}
+
 /** Answer to `measure-free`: where each direct child sits now, so turning the frame on moves nothing. */
 export function measureFreeFrame(
   frame: Element,
@@ -109,6 +162,7 @@ export function measureFreeFrame(
     width: Math.round(frameBox.width),
     height: Math.round(frameBox.height),
     hasHeight: hasHeightClass(frame),
+    keepWidth: !hasWidthClass(frame) && widthFollowsContent(frame),
     children,
   };
 }

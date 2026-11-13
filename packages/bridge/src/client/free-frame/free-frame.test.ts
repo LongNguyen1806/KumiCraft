@@ -75,6 +75,8 @@ describe('free-geometry [R-FF-10, R-FF-12]', () => {
       width: 600,
       height: 400,
       hasHeight: false,
+      // A block section takes its width from its parent: nothing to keep.
+      keepWidth: false,
       children: [
         {
           ref: { loc: 'src/pages/Home.tsx:4:7', index: 0 },

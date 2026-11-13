@@ -153,6 +153,26 @@ describe('Free frame on: Studio batch [R-FF-10]', () => {
     },
   );
 
+  it('a frame sized by its content keeps its width, so it does not collapse [spec-log #129]', async () => {
+    const batchSpy = vi
+      .spyOn(sourceClient, 'editSourceBatch')
+      .mockResolvedValue({ changed: true, files: ['src/pages/Home.tsx'] });
+    mockSources({});
+
+    await executeEnableFreeFrame({
+      loc: FRAME,
+      tag: 'div',
+      currentClassName: 'p-6 absolute left-4 top-0',
+      grid: 8,
+      tailwindMajor: 4,
+      measurePayload: { ...measure([]), width: 376.4, keepWidth: true },
+    });
+
+    expect(batchEdits(batchSpy)[1]).toMatchObject({
+      after: 'p-6 absolute left-4 top-0 w-[376px] h-[300px]',
+    });
+  });
+
   it('Scenario 9b: Tailwind v3 writes arbitrary px', async () => {
     const batchSpy = vi
       .spyOn(sourceClient, 'editSourceBatch')

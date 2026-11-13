@@ -152,3 +152,69 @@ test('a block already placed in a free frame stays put when turned free itself [
     })
     .toBeLessThan(1);
 });
+
+const CARD_PAGE = `export function Home() {
+  return (
+    <main data-rc-free className="relative h-[700px] w-[1200px] bg-slate-50">
+      <div className="p-6 border rounded-lg bg-white absolute left-4 top-0">
+        <h3 className="text-lg font-semibold">Card Title</h3>
+        <p className="text-sm text-slate-600">A short description helping the user understand the card.</p>
+        <a href="#" className="text-sm text-blue-600">View details</a>
+      </div>
+    </main>
+  );
+}
+
+export default Home;
+`;
+
+test('a card placed in a free frame turned free itself keeps its size, then resizes and moves [spec-log #129]', async ({
+  page,
+}) => {
+  await writeFile(pageFile(), CARD_PAGE);
+  const session = await startCli(folder.path, config.path);
+  sessions.push(session);
+  const tab = await page.context().newPage();
+  await tab.goto(session.studioUrl);
+  await trustIfAsked(tab);
+  const canvas = await getCanvasFrame(tab);
+  const title = canvas.getByText('Card Title');
+  await expect(title).toBeVisible({ timeout: 15_000 });
+  const card = canvas.locator('main > div');
+  const before = await card.boundingBox();
+  if (!before) throw new Error('No box for the card');
+
+  await title.click();
+  await tab.keyboard.press('Escape');
+  await tab.getByTestId('free-frame-toggle').click();
+  await expect.poll(() => lineWith('p-6 border'), { timeout: 10_000 }).toContain('data-rc-free');
+  // The card keeps its width instead of collapsing around children that left the flow.
+  expect(await lineWith('p-6 border')).toMatch(/\bw-\[\d+px\]/);
+  await expect
+    .poll(async () => Math.abs(((await card.boundingBox())?.width ?? 0) - before.width))
+    .toBeLessThan(2);
+
+  // Wider by dragging the east handle.
+  const box = await card.boundingBox();
+  if (!box) throw new Error('No box for the card');
+  await tab.mouse.move(box.x + box.width, box.y + box.height / 2);
+  await tab.mouse.down();
+  await tab.mouse.move(box.x + box.width + 80, box.y + box.height / 2, { steps: 10 });
+  await tab.mouse.up();
+  await expect
+    .poll(async () => ((await card.boundingBox())?.width ?? 0) - box.width, { timeout: 10_000 })
+    .toBeGreaterThan(40);
+
+  // Moved by dragging its body (a free child of the page frame).
+  const moved = await card.boundingBox();
+  if (!moved) throw new Error('No box for the card');
+  const lineBefore = await lineWith('p-6 border');
+  await tab.mouse.move(moved.x + 10, moved.y + moved.height - 6);
+  await tab.mouse.down();
+  await tab.mouse.move(moved.x + 130, moved.y + moved.height + 54, { steps: 12 });
+  await tab.mouse.up();
+  await expect.poll(() => lineWith('p-6 border'), { timeout: 10_000 }).not.toBe(lineBefore);
+  await expect
+    .poll(async () => ((await card.boundingBox())?.x ?? 0) - moved.x, { timeout: 10_000 })
+    .toBeGreaterThan(40);
+});

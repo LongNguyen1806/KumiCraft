@@ -123,3 +123,27 @@ describe('snap markers [spec-log #125]', () => {
     expect(root.querySelectorAll('.snap-mark')).toHaveLength(0);
   });
 });
+
+describe('size handles keep one size on screen [spec-log #129]', () => {
+  it('are 8 screen pixels at any zoom', () => {
+    document.body.innerHTML = `
+      <main data-rc-loc="src/App.tsx:2:3" data-rc-free><div id="c" data-rc-loc="src/App.tsx:3:5">C</div></main>`;
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const root = host.attachShadow({ mode: 'open' });
+    const overlay = new FreeOverlay(root);
+    overlay.setResizeTarget(elById('c'));
+
+    const sizes = (): string[] =>
+      [...root.querySelectorAll<HTMLElement>('.size-handle')]
+        .filter((h) => h.style.display === 'block')
+        .map((h) => h.style.width);
+    overlay.render(document);
+    expect(sizes()).toHaveLength(8);
+    expect(new Set(sizes())).toEqual(new Set(['8px']));
+
+    overlay.setScale(0.25);
+    overlay.render(document);
+    expect(new Set(sizes())).toEqual(new Set(['32px']));
+  });
+});

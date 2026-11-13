@@ -329,9 +329,13 @@ export class FreeOverlay {
         continue;
       }
       const p = handlePoint(dir, r);
+      // 8 px on screen at any zoom: at a fitted 30 % a page-sized handle was under 3 px (#129).
+      const size = HANDLE_PX / this.scale;
       handle.style.display = 'block';
-      handle.style.left = `${String(p.x - HANDLE_PX / 2)}px`;
-      handle.style.top = `${String(p.y - HANDLE_PX / 2)}px`;
+      handle.style.width = `${String(size)}px`;
+      handle.style.height = `${String(size)}px`;
+      handle.style.left = `${String(p.x - size / 2)}px`;
+      handle.style.top = `${String(p.y - size / 2)}px`;
     }
   }
 

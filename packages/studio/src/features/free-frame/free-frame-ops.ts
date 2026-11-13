@@ -53,6 +53,10 @@ export async function executeEnableFreeFrame(
   // is (a free child is `absolute`) keeps its own: adding `relative` beside `absolute` let
   // `relative` win and dropped the frame out of its place (spec-log #127).
   if (!frameClasses.some((c) => POSITIONED.has(c))) frameClasses.push('relative');
+  // A frame sized by its content keeps its width, or it shrinks to nothing (spec-log #129).
+  if (measurePayload.keepWidth === true) {
+    frameClasses.push(`w-[${String(Math.round(measurePayload.width))}px]`);
+  }
   if (!measurePayload.hasHeight) {
     frameClasses.push(`h-[${String(Math.round(measurePayload.height))}px]`);
   }
