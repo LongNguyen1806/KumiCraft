@@ -357,6 +357,22 @@ TK-8 tải ảnh, SVG vào `public` (kiểm nút "Image…" hiện có trước)
 
 Tốn: **cao** cả khối; từng đợt **vừa** (D1, D4, D6 có thể chia 2 lượt).
 
+### K9.8. Công cụ còn thiếu sau bài thử TK-68 (2026-11-14)
+
+**Vì sao:** bài thử TK-68 phần landing (Claude dựng lại `/landing` của Test UI chỉ bằng khối Thư viện và lệnh Studio, khoảng 730 thao tác) giống bản gốc 99,8–99,9% về hình ở cả 3 khung, code qua typecheck và lint. Nhưng **6/7 tương tác bị mất** (chọn ảnh, chọn màu, chọn chế độ ANC, chọn EQ, chế độ tối, thông báo); chỉ hỏi đáp còn chạy (thẻ `details`). Đối chiếu thêm với 119 quy tắc UX của ui-ux-pro-max ra phần còn thiếu dưới đây. Các quy tắc còn lại hoặc đã có công cụ (tương phản, `alt`, giảm chuyển động, hover/focus, trạng thái trống, breadcrumb, bảng sắp theo cột), hoặc không phải việc của công cụ thiết kế (chia gói JS, ngoại tuyến, rung, điều hướng app di động).
+
+**Nguyên tắc riêng:** công cụ do **người dùng** xài trong Studio. MCP chỉ để AI test công cụ chạy đúng, nên mỗi công cụ có một lệnh MCP tương ứng. Mỗi công cụ nằm đúng một chỗ trong giao diện, chỉ hiện khi áp dụng được cho phần tử đang chọn (không áp dụng thì hiện mờ kèm lý do), có Hoàn tác, chạy như nhau cho mọi hệ style.
+
+| Lượt                                  | Mục                                                                                                                                                                                                                                                                                                                                                                                                      | Bản giao việc                           |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| **K9.8-1** Tương tác và trạng thái    | TK-73 nhóm chọn (nối nội dung theo lựa chọn); TK-74 trạng thái mới trong Inspector: Đang nhấn, Rê vào khung cha, Đang chọn, và chế độ tối; TK-75 chế độ tối cho dự án + nút Sáng/Tối + xem tối trên Canvas; TK-76 thông báo (toast) khi bấm; TK-77 nút đang xử lý; TK-78 sửa chữ khi phần tử có icon hoặc chữ tô; TK-79 chọn đích liên kết trong trang, cuộn mượt; TK-80 đánh dấu mục menu đang xem      | `p4-luot-k98-1-tuong-tac-trang-thai.md` |
+| **K9.8-2** Form, quản trị, chất lượng | TK-81 form có kiểm tra (lỗi dưới ô, tóm tắt lỗi, hiện/ẩn mật khẩu, trạng thái gửi); TK-82 form nhiều bước; TK-83 bảng quản trị (chọn nhiều dòng, làm hàng loạt, hộp xác nhận, Hoàn tác khi xóa); TK-84 kiểm tra thêm (tiêu đề nhảy cấp, vùng bấm nhỏ, mất viền focus); TK-85 ảnh tối ưu (tải chậm, giữ khung); TK-86 chữ (cân dòng tiêu đề, số đều cột, dòng quá dài); TK-87 trình chiếu ảnh có nút dừng | `p4-luot-k98-2-form-quan-tri.md`        |
+| Bài thử lại                           | Claude: thử lại tương tác trên `/landing-rebuild` sau K9.8-1; bài thử màn hình quản trị (danh sách + form + modal) sau K9.8-2, Claude tự làm bản gốc trong Test UI rồi dựng lại bằng Studio                                                                                                                                                                                                              | —                                       |
+
+**Không làm ở đây:** trạng thái nghiệp vụ như số lượng giỏ hàng (đó là logic của app, không phải thiết kế).
+
+Tốn: **vừa** mỗi lượt Gemini; QA và bài thử **cao**.
+
 ### K10. Phát hành 1.0 (M-RL)
 
 **Trạng thái (2026-11-09): đã phát hành `kumicraft` 1.0.0 lên npm** (giấy phép độc quyền, spec-log #100–#104). Cài: `npx kumicraft` hoặc `npm i -g kumicraft`.
