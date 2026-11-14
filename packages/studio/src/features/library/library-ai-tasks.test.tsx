@@ -6,6 +6,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import { initI18n } from '../../i18n/i18n.ts';
 import { useChatStore } from '../chat/chat-store.ts';
+import { useDesignStore } from '../design/design-store.ts';
 import { getRightPanelTab } from '../editor/right-panel-store.ts';
 import { LibraryAiTasks } from './library-ai-tasks.tsx';
 
@@ -17,20 +18,40 @@ beforeAll(async () => {
 afterEach(() => {
   cleanup();
   useChatStore.getState().setDraft('');
+  useDesignStore.getState().setTarget(undefined);
 });
 
 describe('LibraryAiTasks', () => {
-  it('opens the dark mode description and sends the prepared request to the AI tab', () => {
+  it('asks the AI for dark mode on the page open on the Canvas only', () => {
+    useDesignStore.getState().setTarget({
+      kind: 'draft',
+      name: 'BanNhap1',
+      file: 'src/drafts/BanNhap1.tsx',
+      route: '/__kumicraft/draft/BanNhap1',
+    });
     render(<LibraryAiTasks query="" />);
 
     fireEvent.click(screen.getByTestId('library-ai-dark-mode'));
-    expect(screen.getByTestId('library-ai-dark-mode-dialog').textContent).toContain(
-      'KumiCraft has no tool for it',
+    expect(screen.getByTestId('library-ai-dark-mode-target').textContent).toContain(
+      'src/drafts/BanNhap1.tsx',
     );
 
     fireEvent.click(screen.getByTestId('library-ai-dark-mode-ask'));
-    expect(useChatStore.getState().draft).toBe(i18next.t('inspector.darkSetupAiPrompt'));
+    const draft = useChatStore.getState().draft;
+    expect(draft).toContain('src/drafts/BanNhap1.tsx');
+    expect(draft).toContain('/__kumicraft/draft/BanNhap1');
+    expect(draft).toContain('do not edit other pages');
     expect(getRightPanelTab()).toBe('chat');
+  });
+
+  it('asks to open a page first when none is open', () => {
+    render(<LibraryAiTasks query="" />);
+    fireEvent.click(screen.getByTestId('library-ai-dark-mode'));
+    expect(screen.getByTestId('library-ai-dark-mode-target').textContent).toContain('Open a page');
+    const ask = screen.getByTestId('library-ai-dark-mode-ask');
+    expect(ask instanceof HTMLButtonElement && ask.disabled).toBe(true);
+    fireEvent.click(ask);
+    expect(useChatStore.getState().draft).toBe('');
   });
 
   it('follows the Library search', () => {

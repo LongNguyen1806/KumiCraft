@@ -1,8 +1,5 @@
-// Per-project persistent favorite and recently used library blocks (K9.7-3).
+// Per-project persistent favorite library blocks (K9.7-3; the Recent row was dropped 2026-11-15).
 const FAVORITES_PREFIX = 'kumicraft.libraryFavorites.';
-const RECENT_PREFIX = 'kumicraft.libraryRecent.';
-
-export const MAX_RECENT_BLOCKS = 8;
 
 function readIdList(key: string): readonly string[] {
   try {
@@ -42,23 +39,6 @@ export function toggleFavoriteBlock(
   const current = readIdList(key);
   const exists = current.includes(blockId);
   const next = exists ? current.filter((id) => id !== blockId) : [blockId, ...current];
-  writeIdList(key, next);
-  return next;
-}
-
-export function getRecentBlocks(projectId: string | undefined): readonly string[] {
-  if (projectId === undefined || projectId.length === 0) return [];
-  return readIdList(`${RECENT_PREFIX}${projectId}`).slice(0, MAX_RECENT_BLOCKS);
-}
-
-export function recordRecentBlock(
-  projectId: string | undefined,
-  blockId: string,
-): readonly string[] {
-  if (projectId === undefined || projectId.length === 0) return [];
-  const key = `${RECENT_PREFIX}${projectId}`;
-  const current = readIdList(key).filter((id) => id !== blockId);
-  const next = [blockId, ...current].slice(0, MAX_RECENT_BLOCKS);
   writeIdList(key, next);
   return next;
 }

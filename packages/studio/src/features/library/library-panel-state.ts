@@ -25,7 +25,7 @@ import {
   isDataGeneratorBlock,
 } from './data-source-picker-dialog.tsx';
 import { insertBlock } from './insert-block.ts';
-import { getFavoriteBlocks, getRecentBlocks, toggleFavoriteBlock } from './library-favorites.ts';
+import { getFavoriteBlocks, toggleFavoriteBlock } from './library-favorites.ts';
 import { type PreviewAnchor } from './library-preview-card.tsx';
 import { getSelectedStyle, setSelectedStyle } from './library-styles.ts';
 
@@ -107,23 +107,13 @@ function useLibraryQuickState(projectId: string | undefined, editable: boolean, 
     readonly projectId: string | undefined;
     readonly ids: readonly string[];
   }>(() => ({ projectId, ids: getFavoriteBlocks(projectId) }));
-  const [recentChoice, setRecentChoice] = useState<{
-    readonly projectId: string | undefined;
-    readonly ids: readonly string[];
-  }>(() => ({ projectId, ids: getRecentBlocks(projectId) }));
 
   const favoriteIds =
     favChoice.projectId === projectId ? favChoice.ids : getFavoriteBlocks(projectId);
-  const recentIds =
-    recentChoice.projectId === projectId ? recentChoice.ids : getRecentBlocks(projectId);
 
   const toggleFavorite = (blockId: string) => {
     const next = toggleFavoriteBlock(projectId, blockId);
     setFavChoice({ projectId, ids: next });
-  };
-
-  const refreshRecent = () => {
-    setRecentChoice({ projectId, ids: getRecentBlocks(projectId) });
   };
 
   const showQuick = editable && query.trim().length === 0;
@@ -131,8 +121,6 @@ function useLibraryQuickState(projectId: string | undefined, editable: boolean, 
     favoriteIds,
     toggleFavorite,
     favoriteBlocks: showQuick ? blocksByIds(favoriteIds) : [],
-    recentBlocks: showQuick ? blocksByIds(recentIds) : [],
-    bumpRecent: refreshRecent,
   };
 }
 
@@ -190,7 +178,7 @@ export function useLibraryPanelState() {
   const visibleBlocks = useFilteredLibraryBlocks(query);
   const activeBlocks = editable ? visibleBlocks : [];
   const quick = useLibraryQuickState(projectId, editable, query);
-  const rawInsert = useLibraryInsert(hasSelection || hasTreeRoot, quick.bumpRecent);
+  const rawInsert = useLibraryInsert(hasSelection || hasTreeRoot);
 
   return {
     query,

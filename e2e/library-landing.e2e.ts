@@ -66,8 +66,9 @@ test('11. Landing page blocks, accent-insensitive search, 375px mobile fit, and 
   ] as const;
   for (const id of landingIds) {
     await selectMainAndOpenLibrary(page);
+    const before = await readFile(homeTsx, 'utf8');
     await page.getByTestId(`library-add-${id}`).click();
-    await expect(page.getByTestId(`library-recent-item-${id}`)).toBeVisible({ timeout: 10_000 });
+    await expect.poll(() => readFile(homeTsx, 'utf8'), { timeout: 10_000 }).not.toBe(before);
   }
 
   await expect.poll(() => readFile(homeTsx, 'utf8')).toContain('<footer');

@@ -574,7 +574,7 @@
     },
     "askAiDraft": "Sửa phần tử này: ",
     "invalidValue": "Giá trị không hợp lệ với Tailwind {{major}}: ví dụ 4, 2.5, 1/2 hoặc [13px]",
-    "darkSetupAiPrompt": "Hãy thiết lập chế độ tối cho dự án này theo đúng cách dự án đang làm: nếu đã có cơ chế sáng/tối (store, ThemeProvider, next-themes, data-theme…) thì dùng lại, không tạo cơ chế thứ hai. Dùng lớp dark trên <html> nếu dự án chưa có gì, lần đầu theo cài đặt của máy, nhớ lựa chọn của người xem, có đoạn chống nháy màu trong index.html. Thêm nút Sáng/Tối ở header nếu chưa có. Không cài thêm gói."
+    "darkSetupAiPrompt": "Thêm chế độ tối cho trang {{file}} (đường dẫn {{route}}). Chỉ đổi màu ở file này và các component chỉ nó dùng; không sửa trang khác. Cách làm: nếu dự án đã có cơ chế sáng/tối (store, ThemeProvider, next-themes, data-theme, lớp dark…) thì dùng lại, không tạo cơ chế thứ hai; nếu chưa có thì thêm lớp dark trên <html> (lần đầu theo cài đặt của máy, nhớ lựa chọn của người xem, đoạn chống nháy màu trong index.html). Nếu dự án chưa có nút Sáng/Tối thì đặt một nút trong trang này. Không cài thêm gói."
   },
   "textEdit": {
     "loopBanner": "Lặp {{count}} lần (sửa mẫu chung)",

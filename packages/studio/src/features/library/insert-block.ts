@@ -20,7 +20,6 @@ import { useThemeStore } from '../inspector/use-project-theme.ts';
 import { useProjectStore } from '../project/project-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
-import { recordRecentBlock } from './library-favorites.ts';
 import { getSelectedStyle } from './library-styles.ts';
 import { getSelectedVariant } from './library-variants.ts';
 
@@ -130,7 +129,6 @@ export async function insertBlockAt(
         : {}),
       ...(rendered.kit !== undefined ? { kit: rendered.kit } : {}),
     });
-    recordRecentBlock(project?.id, block.id);
     const newLoc = res.locs[0];
     if (newLoc) {
       useSelectionStore.getState().setSelectedRefs([{ loc: newLoc, index: 0 }]);

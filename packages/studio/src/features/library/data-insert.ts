@@ -14,7 +14,6 @@ import { useProjectStore } from '../project/project-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
 import { determineInsertTarget, localizedBlockLang } from './insert-block.ts';
-import { recordRecentBlock } from './library-favorites.ts';
 import { getSelectedStyle } from './library-styles.ts';
 
 export type DataPickerMode = 'form' | 'table';
@@ -115,10 +114,6 @@ export async function submitDataInsert(
     ...(output.kit !== undefined ? { kit: output.kit } : {}),
     ...('dataArray' in built ? { dataArray: built.dataArray } : {}),
   });
-  recordRecentBlock(
-    useProjectStore.getState().project?.id,
-    mode === 'form' ? 'data.form-from-source' : 'data.table-from-source',
-  );
   const nextLoc = res.locs[0];
   if (nextLoc !== undefined)
     useSelectionStore.getState().setSelectedRefs([{ loc: nextLoc, index: 0 }]);

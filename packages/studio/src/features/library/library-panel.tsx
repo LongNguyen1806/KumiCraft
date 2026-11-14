@@ -87,7 +87,6 @@ function LibraryContent({ s }: { readonly s: ReturnType<typeof useLibraryPanelSt
     <div className="flex-1 space-y-3.5 overflow-y-auto py-2.5">
       <LibraryQuickRows
         favoriteBlocks={s.favoriteBlocks}
-        recentBlocks={s.recentBlocks}
         disabled={insertLocked || !s.hasSelection}
         onInsert={(b) => {
           onSelect(b);
@@ -146,7 +145,6 @@ function LibraryDialogs({ s }: { readonly s: ReturnType<typeof useLibraryPanelSt
         onClose={() => {
           s.setDataPickerMode(undefined);
         }}
-        onInserted={s.bumpRecent}
       />
     </>
   );

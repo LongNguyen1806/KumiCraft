@@ -10,14 +10,12 @@
     "empty": "No matching icons found.",
     "count": "{{shown}} / {{total}}"
   },
-  "hint": "Drag a block onto the Canvas, or select an element and press + on a block to insert it",
   "add": "Insert {{name}} at the selected element",
   "variantMenu": "Choose {{name}} style",
   "variantCheck": "✓",
   "fromProject": "from project",
   "styleLabel": "Style",
   "favorites": "Favorites",
-  "recent": "Recent",
   "favoriteAdd": "Favorite {{name}}",
   "favoriteRemove": "Unfavorite {{name}}",
   "empty": "No matching blocks found.",
@@ -165,7 +163,9 @@
     "hint": "Project-wide jobs: the AI does them the way the project already works.",
     "darkMode": {
       "label": "Dark mode",
-      "description": "Dark mode touches the whole project (colors for each element, a light/dark button, remembering the visitor's choice) and every project does it its own way, so KumiCraft has no tool for it. Click \"Ask AI\" to open the AI tab with a prepared request; read it, edit if needed, then send. The AI reuses the light/dark setup the project already has and never adds a second one."
+      "description": "Dark mode needs one project-wide mechanism (switching, remembering the visitor's choice) and every project does it its own way, so KumiCraft has no tool for it. The prepared request tells the AI to reuse the mechanism the project already has (never a second one) and to change colors only on the open page; read it, edit if needed, then send.",
+      "target": "Page that gets dark mode: {{file}}",
+      "noPage": "Open a page (or a draft) on the Canvas first, so the AI knows which page gets dark mode."
     }
   }
 }

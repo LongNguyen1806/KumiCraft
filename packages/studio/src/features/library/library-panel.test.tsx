@@ -70,7 +70,7 @@ describe('Library Panel and Insertion (Scenarios #14, #15)', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it('Scenario 15: LibraryPanel keeps blocks draggable, locks + and shows hint when no selection; + inserts when selected, then selects the new element [R-LB-14, R-LB-15]', async () => {
+  it('Scenario 15: LibraryPanel keeps blocks draggable, locks + without a hint when no selection; + inserts when selected, then selects the new element [R-LB-14, R-LB-15]', async () => {
     const spy = vi.spyOn(sourceClient, 'applyStructureEdit').mockResolvedValue({
       changed: true,
       files: ['src/Home.tsx'],
@@ -80,7 +80,7 @@ describe('Library Panel and Insertion (Scenarios #14, #15)', () => {
     // 1. Render when nothing is selected: the block stays draggable, its + button is locked
     const { rerender } = render(<LibraryPanel />);
 
-    expect(screen.getByTestId('library-hint')).toBeDefined();
+    expect(screen.queryByTestId('library-hint')).toBeNull();
     const buttonBlock = screen.getByTestId('library-block-form.button');
     const addButton = screen.getByTestId<HTMLButtonElement>('library-add-form.button');
     expect(buttonBlock.getAttribute('draggable')).toBe('true');
@@ -93,7 +93,6 @@ describe('Library Panel and Insertion (Scenarios #14, #15)', () => {
     useStructureErrorStore.getState().setActiveSource({ loc: 'src/Home.tsx:10:1', tag: 'div' });
     rerender(<LibraryPanel />);
 
-    expect(screen.queryByTestId('library-hint')).toBeNull();
     expect(addButton.disabled).toBe(false);
 
     // 3. A click on the block itself inserts nothing (owner, 2026-10-23); its + button does
@@ -169,7 +168,7 @@ describe('Library Panel and Insertion (Scenarios #14, #15)', () => {
     }
   });
 
-  it('Test 4: persists favorite star across remount and caps recent blocks to 8', async () => {
+  it('Test 4: persists favorite star across remount and shows no Recent row', async () => {
     const project: ProjectInfo = {
       id: 'proj-fav-test',
       name: 'Fav Project',
@@ -216,32 +215,12 @@ describe('Library Panel and Insertion (Scenarios #14, #15)', () => {
     expect(screen.getByTestId('library-fav-item-form.button')).toBeDefined();
     expect(screen.getByTestId('library-fav-form.button').getAttribute('aria-pressed')).toBe('true');
 
-    const idsToInsert = [
-      'form.button',
-      'form.input',
-      'content.heading',
-      'content.paragraph',
-      'layout.row',
-      'layout.column',
-      'layout.grid',
-      'layout.section',
-      'display.badge',
-      'display.avatar',
-    ];
-    for (const id of idsToInsert) {
-      useSelectionStore.getState().setSelectedRefs([{ loc: 'src/Home.tsx:10:1', index: 0 }]);
-      useStructureErrorStore.getState().setActiveSource({ loc: 'src/Home.tsx:10:1', tag: 'div' });
-      fireEvent.click(screen.getByTestId(`library-add-${id}`));
-      await waitFor(() => {
-        expect(screen.getByTestId(`library-recent-item-${id}`)).toBeDefined();
-      });
-    }
-
-    const recentSection = screen.getByTestId('library-recent');
-    const items = recentSection.querySelectorAll('[data-testid^="library-recent-item-"]');
-    expect(items.length).toBe(8);
-    expect(screen.queryByTestId('library-recent-item-form.button')).toBeNull();
-    expect(screen.queryByTestId('library-recent-item-form.input')).toBeNull();
+    // No "Recent" row (owner, 2026-11-15): inserting a block adds nothing above the Library.
+    fireEvent.click(screen.getByTestId('library-add-content.heading'));
+    await waitFor(() => {
+      expect(sourceClient.applyStructureEdit).toHaveBeenCalled();
+    });
+    expect(screen.queryByTestId('library-recent')).toBeNull();
   }, 15_000);
 
   it('Test 5: shows static SVG wireframe previews on hover and focus with zero iframes for every block', () => {

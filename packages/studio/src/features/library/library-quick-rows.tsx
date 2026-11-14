@@ -111,7 +111,6 @@ function QuickBlockRow({
 
 type LibraryQuickRowsProps = {
   readonly favoriteBlocks: readonly LibraryBlock[];
-  readonly recentBlocks: readonly LibraryBlock[];
   readonly disabled: boolean;
   readonly onInsert: (block: LibraryBlock) => void;
   readonly onToggleFavorite: (blockId: string) => void;
@@ -119,13 +118,12 @@ type LibraryQuickRowsProps = {
 
 export function LibraryQuickRows({
   favoriteBlocks,
-  recentBlocks,
   disabled,
   onInsert,
   onToggleFavorite,
 }: LibraryQuickRowsProps) {
   const { t } = useTranslation('library');
-  if (favoriteBlocks.length === 0 && recentBlocks.length === 0) return undefined;
+  if (favoriteBlocks.length === 0) return undefined;
 
   return (
     <div className="space-y-2.5 pb-1">
@@ -138,14 +136,6 @@ export function LibraryQuickRows({
         onInsert={onInsert}
         isFavoriteRow
         onToggleFavorite={onToggleFavorite}
-      />
-      <QuickBlockRow
-        testId="library-recent"
-        itemPrefix="library-recent-item"
-        title={t('recent')}
-        blocks={recentBlocks}
-        disabled={disabled}
-        onInsert={onInsert}
       />
     </div>
   );

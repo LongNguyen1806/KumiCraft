@@ -574,7 +574,7 @@
     },
     "askAiDraft": "Change this element: ",
     "invalidValue": "Not a valid Tailwind {{major}} value: for example 4, 2.5, 1/2 or [13px]",
-    "darkSetupAiPrompt": "Set up dark mode for this project the way the project already works: if it has a light/dark mechanism (a store, ThemeProvider, next-themes, data-theme…), reuse it and do not add a second one. If it has none, use a dark class on <html>, follow the system setting at first, remember the visitor's choice, and add a no-flash snippet to index.html. Add a light/dark button to the header if there is none. Do not install packages."
+    "darkSetupAiPrompt": "Add dark mode to the page {{file}} (route {{route}}). Change colors only in this file and the components only it uses; do not edit other pages. How: if the project already has a light/dark mechanism (a store, ThemeProvider, next-themes, data-theme, a dark class…), reuse it and do not add a second one; if it has none, use a dark class on <html> (follow the system setting at first, remember the visitor's choice, add a no-flash snippet to index.html). If the project has no light/dark button yet, put one on this page. Do not install packages."
   },
   "textEdit": {
     "loopBanner": "Repeated {{count}} times (edits template)",

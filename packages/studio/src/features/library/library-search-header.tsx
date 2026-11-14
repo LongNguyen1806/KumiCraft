@@ -1,4 +1,4 @@
-// Search header, style preset selector, and status hint for Library Panel (SPEC-04 M-LB, TK-69).
+// Search header, style preset selector, and insert notices for Library Panel (SPEC-04 M-LB, TK-69).
 import { LIBRARY_STYLES, type LibraryStyle } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
@@ -7,24 +7,11 @@ import { SelectInFileHint } from '../design/select-in-file-hint.tsx';
 import { isLibraryStyle } from './library-styles.ts';
 
 type LibraryStatusHintProps = {
-  readonly hasSelection: boolean;
   readonly errorInfo?: ErrorInfo | undefined;
 };
 
-export function LibraryStatusHint({ hasSelection, errorInfo }: LibraryStatusHintProps) {
-  const { t } = useTranslation('library');
+export function LibraryStatusHint({ errorInfo }: LibraryStatusHintProps) {
   const { t: tError } = useTranslation('errors');
-
-  if (!hasSelection) {
-    return (
-      <p
-        data-testid="library-hint"
-        className="rounded-md border border-sun bg-sun-soft p-2 text-[11px] text-ink"
-      >
-        {t('hint')}
-      </p>
-    );
-  }
 
   if (errorInfo !== undefined && errorInfo.code === 'design.selectInFile') {
     return (
@@ -167,7 +154,7 @@ export function LibrarySearchHeader({
         onOpenImagePicker={onOpenImagePicker}
         onOpenIconPicker={onOpenIconPicker}
       />
-      <LibraryStatusHint hasSelection={hasSelection} errorInfo={errorInfo} />
+      <LibraryStatusHint errorInfo={errorInfo} />
     </div>
   );
 }
