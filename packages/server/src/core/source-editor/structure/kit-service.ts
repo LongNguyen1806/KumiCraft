@@ -7,6 +7,7 @@ import type { FileSystemPort } from '../../ports/file-system-port.ts';
 import type { SnippetFormatter } from '../snippet-format.ts';
 import { computeSha256 } from '../source-editor-lookup.ts';
 import type { WrittenFile } from '../source-editor-service.ts';
+import { buildDataFileContent } from './data-repeat-extract.ts';
 import { groupKitComponentsByFile, type KitFilePlan } from './kit-templates/index.ts';
 
 export type PendingKitFile = {
@@ -137,4 +138,32 @@ export async function prepareEditFormatting(
       ? { ...edit, jsx: await formatSnippet({ projectRoot, file: targetRel, jsx: edit.jsx }) }
       : edit;
   return mergeKitImports(formatted, kitPlan, targetRel);
+}
+
+/** Builds kit component + optional `.data.ts` file creation plan for insert edits. */
+export async function prepareInsertKitWithData(
+  fs: FileSystemPort,
+  projectRoot: string,
+  sourceDir: string,
+  edit: StructureEdit,
+  targetRel: string | undefined,
+): Promise<KitPlan | undefined> {
+  if (edit.kind !== 'insert') return undefined;
+  const base =
+    edit.kit !== undefined && targetRel !== undefined
+      ? await prepareKitPlan(fs, projectRoot, sourceDir, targetRel, edit.kit.components)
+      : undefined;
+  if (edit.dataArray === undefined || (await fs.exists(projectRoot, edit.dataArray.file))) {
+    return base;
+  }
+  const dataFile = {
+    relPath: edit.dataArray.file,
+    content: buildDataFileContent(edit.dataArray.exportName, edit.dataArray.rows, '\n'),
+  };
+  return {
+    imports: base?.imports ?? [],
+    filesToCreate: [...(base?.filesToCreate ?? []), dataFile],
+    allKitPaths: base?.allKitPaths ?? [],
+    importBases: base?.importBases ?? [],
+  };
 }

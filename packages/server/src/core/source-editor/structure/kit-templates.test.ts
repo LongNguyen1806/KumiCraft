@@ -22,7 +22,7 @@ describe('kit-templates (Test 7): strict TypeScript, JS syntax, and security', (
 
   it('compiles every TS template with tsc --strict and checks JS syntax & security', async () => {
     const names = kitFileNames();
-    expect(names).toHaveLength(10);
+    expect(names).toHaveLength(11);
 
     const studioTypes = path.resolve(__dirname, '../../../../../studio/node_modules/@types');
     const tsFiles: string[] = [];

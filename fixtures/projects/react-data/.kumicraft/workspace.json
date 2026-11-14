@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "id": "e2edata001",
+  "name": "React Data Tools Fixture",
+  "createdAt": "2026-10-15T00:00:00.000Z",
+  "framework": "vite-react",
+  "sourceDir": "src",
+  "backends": [
+    { "id": "backend001", "path": "backend", "label": "Django API" }
+  ],
+  "responsiveMode": "desktop-first",
+  "frames": [
+    { "id": "desktop", "label": "Desktop", "width": 1440, "height": 900 },
+    { "id": "mobile", "label": "Mobile", "width": 375, "height": 812 }
+  ],
+  "primaryFrameId": "desktop"
+}

@@ -1,5 +1,9 @@
 // Unit tests for useLiveEdit hook (SPEC-04 R-IN-13, R-IN-14, R-IN-20, Scenarios 3 & 4).
-import type { ClassContext, EditResult, ElementSource } from '@kumicraft/shared';
+import type { ClassContext, EditResult, ElementSource, SourceEdit } from '@kumicraft/shared';
+
+function readEditAfter(edit: SourceEdit | undefined): string {
+  return edit !== undefined && 'after' in edit ? (edit.after ?? '') : '';
+}
 import { BREAKPOINT_WIDTHS } from '@kumicraft/shared';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -83,7 +87,7 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
 
   it('Scenario 3: throttles continuous edits at 100ms and commits final value', () => {
     const editSpy = vi.spyOn(sourceClient, 'editSource').mockImplementation((req) => {
-      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, req.edit.after ?? ''));
+      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, readEditAfter(req.edit)));
     });
 
     const target = createMockTarget(mockSource, vi.fn());
@@ -108,7 +112,7 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
 
     // Final call must have the final value 'p-20'
     const lastCall = editSpy.mock.calls[editSpy.mock.calls.length - 1];
-    expect(lastCall?.[0].edit.after).toBe('p-20');
+    expect(readEditAfter(lastCall?.[0].edit)).toBe('p-20');
   });
 
   it('Scenario 4: rolls back optimistic state on E017 conflict and triggers target.refresh()', async () => {
@@ -148,7 +152,7 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
       .spyOn(sourceClient, 'editSource')
       .mockReturnValueOnce(firstPromise)
       .mockImplementation((req) =>
-        Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, req.edit.after ?? '')),
+        Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, readEditAfter(req.edit))),
       );
 
     const target = createMockTarget(mockSource, vi.fn());
@@ -188,7 +192,7 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
 
   it('flushes pending throttled mutation immediately on flush()', () => {
     const editSpy = vi.spyOn(sourceClient, 'editSource').mockImplementation((req) => {
-      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, req.edit.after ?? ''));
+      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, readEditAfter(req.edit)));
     });
 
     const target = createMockTarget(mockSource, vi.fn());
@@ -206,12 +210,12 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
 
     // Dispatched immediately without waiting 500ms
     expect(editSpy).toHaveBeenCalledTimes(1);
-    expect(editSpy.mock.calls[0]?.[0].edit.after).toBe('flex flex-col gap-2');
+    expect(readEditAfter(editSpy.mock.calls[0]?.[0].edit)).toBe('flex flex-col gap-2');
   });
 
   it('an edit typed while the source refresh comes in is still saved, with the newest before [WP-4.00, R-IN-13]', async () => {
     const editSpy = vi.spyOn(sourceClient, 'editSource').mockImplementation((req) => {
-      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, req.edit.after ?? ''));
+      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, readEditAfter(req.edit)));
     });
     let target = createMockTarget(mockSource, vi.fn());
     const { result, rerender } = renderHook(() =>
@@ -244,7 +248,7 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
 
   it('a stale source read while an edit waits does not reset before to the older class [WP-4.00]', async () => {
     const editSpy = vi.spyOn(sourceClient, 'editSource').mockImplementation((req) => {
-      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, req.edit.after ?? ''));
+      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, readEditAfter(req.edit)));
     });
     let target = createMockTarget(mockSource, vi.fn());
     const { result, rerender } = renderHook(() =>
@@ -271,7 +275,7 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
 
   it('after Undo puts the old class back, the next field change starts from that class [WP-4.00, K9.5]', async () => {
     const editSpy = vi.spyOn(sourceClient, 'editSource').mockImplementation((req) => {
-      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, req.edit.after ?? ''));
+      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, readEditAfter(req.edit)));
     });
     let target = createMockTarget(mockSource, vi.fn());
     const { result, rerender } = renderHook(() =>
@@ -301,7 +305,7 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
 
   it('a new read of the file with the same class still drops the undone value shown [WP-4.00, K9.5]', async () => {
     vi.spyOn(sourceClient, 'editSource').mockImplementation((req) => {
-      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, req.edit.after ?? ''));
+      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, readEditAfter(req.edit)));
     });
     let target = createMockTarget(mockSource, vi.fn());
     const { result, rerender } = renderHook(() =>
@@ -323,7 +327,7 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
 
   it('a field changed while the source reloads after Undo waits for that read, then builds on it [K9.5, R-IN-20]', async () => {
     const editSpy = vi.spyOn(sourceClient, 'editSource').mockImplementation((req) => {
-      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, req.edit.after ?? ''));
+      return Promise.resolve(makeEditResult(req.edit.loc, req.edit.tag, readEditAfter(req.edit)));
     });
     let target = createMockTarget(mockSource, vi.fn());
     const { result, rerender } = renderHook(() =>

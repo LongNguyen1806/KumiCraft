@@ -19,6 +19,7 @@ import type MagicString from 'magic-string';
 
 import { asAstNode, type AstNode, getJsxTagName, parseJsxAst } from './ast-helpers.ts';
 import { readClassName, readEditableAttributes } from './attribute-reader.ts';
+import { applySetPropMutation } from './prop-mutator.ts';
 import { parseText } from './source-editor-lookup.ts';
 import { mutateAttribute, mutateFlag, mutateText } from './source-mutator.ts';
 
@@ -174,6 +175,9 @@ export function executeEditMutation(
   }
   if (edit.kind === 'setTag') {
     return applySetTagMutation(edit, targetNode, opening, s);
+  }
+  if (edit.kind === 'setProp') {
+    return applySetPropMutation(edit, rawAttrs, opening, code, s);
   }
   return applyTextMutation(edit, targetNode, opening, code, s, newline);
 }

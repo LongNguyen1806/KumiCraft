@@ -9,19 +9,23 @@ import type {
   Scope,
   ThemeInfo,
 } from '@kumicraft/shared';
-import { parseClasses, primarySystem, projectBreakpoints } from '@kumicraft/shared';
-import { useMemo } from 'react';
+import { parseClasses, parseLocString, primarySystem, projectBreakpoints } from '@kumicraft/shared';
+import { type ReactNode, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { errorText } from '../../routes/error-text.ts';
+import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { useOpenInEditor } from '../editor/use-open-in-editor.ts';
-import { FreeFramePageWarning } from '../free-frame/free-frame-page-warning.tsx';
+import { FreeFramePageWarning, isDraftFile } from '../free-frame/free-frame-page-warning.tsx';
 import { FreeFrameSection } from '../free-frame/free-frame-section.tsx';
 import { FreeFrameToggle } from '../free-frame/free-frame-toggle.tsx';
 import { useProjectInfo } from '../project/project-store.ts';
 import { useEditMode } from '../project/use-edit-mode.ts';
 import { useStyleEditable } from '../project/use-style-edit.ts';
+import { A11yHintsSection } from './components/a11y-hints-section.tsx';
 import { AttributesEditorSection } from './components/attributes-editor.tsx';
+import { ComponentPropsSection } from './components/component-props-section.tsx';
+import { DataGridSection } from './components/data-grid-section.tsx';
 import { ElementPath } from './components/element-path.tsx';
 import { InspectorHeader } from './components/inspector-header.tsx';
 import { InspectorIconSection } from './components/inspector-icon-section.tsx';
@@ -65,6 +69,7 @@ type ElementSectionsProps = {
   readonly isAttrLocked: boolean;
   readonly onAttributeChange: (name: EditableAttr, value: string | undefined) => void;
   readonly onRefresh: () => void;
+  readonly layoutFooter?: ReactNode | undefined;
 };
 
 function EditorAlert({
@@ -116,26 +121,27 @@ function TagAttributesBlock({
   );
 }
 
+function readCallStaticRest(source: ElementSectionsProps['source']): string | undefined {
+  return source.className.kind === 'callStatic' || source.className.kind === 'templateStatic'
+    ? source.className.rest
+    : undefined;
+}
+
 function ElementSections(props: ElementSectionsProps) {
-  const {
-    editable,
-    source,
-    tokens,
-    isLocked,
-    isAttrLocked,
-    rawClassString,
-    onPropChange,
-    onRawChange,
-    onAttributeChange,
-    onRefresh,
-  } = props;
-  const callStaticRest =
-    source.className.kind === 'callStatic' || source.className.kind === 'templateStatic'
-      ? source.className.rest
-      : undefined;
+  const { editable, source, tokens, isLocked, isAttrLocked, rawClassString } = props;
+  const { onPropChange, onRawChange, onAttributeChange, onRefresh, layoutFooter } = props;
 
   return (
     <div className="flex flex-col">
+      <ComponentPropsSection
+        loc={source.loc}
+        tag={source.tag}
+        fileHash={source.fileHash}
+        componentName={source.component?.name}
+        disabled={isAttrLocked}
+        onSaved={onRefresh}
+      />
+      <DataGridSection dataContext={source.dataContext} onSaved={onRefresh} />
       <InspectorIconSection
         source={source}
         disabled={isAttrLocked}
@@ -145,7 +151,7 @@ function ElementSections(props: ElementSectionsProps) {
         }}
         onRefresh={onRefresh}
       />
-      {editable && <EditablePropertySections {...props} />}
+      {editable && <EditablePropertySections {...props} layoutFooter={layoutFooter} />}
       <TagAttributesBlock
         source={source}
         disabled={isAttrLocked}
@@ -157,7 +163,7 @@ function ElementSections(props: ElementSectionsProps) {
           rawClassString={rawClassString}
           onRawClassChange={onRawChange}
           disabled={isLocked}
-          callStaticRest={callStaticRest}
+          callStaticRest={readCallStaticRest(source)}
         />
       )}
     </div>
@@ -211,11 +217,17 @@ function InspectorStatusFeedback({
   );
 }
 
-function FreeFrameGroup({ source }: { readonly source: ElementSource }) {
+function FreeFrameGroup({
+  source,
+  showToggleInline,
+}: {
+  readonly source: ElementSource;
+  readonly showToggleInline: boolean;
+}) {
   return (
     <>
       <FreeFramePageWarning source={source} />
-      <FreeFrameToggle source={source} />
+      {showToggleInline && <FreeFrameToggle source={source} />}
       <FreeFrameSection source={source} />
     </>
   );
@@ -229,6 +241,69 @@ type SingleTargetEditableBodyProps = {
   readonly editable: boolean;
 };
 
+function isDraftSource(
+  source: Extract<InspectorTarget, { readonly kind: 'element' }>['source'],
+  draftsDir: string,
+): boolean {
+  return source !== undefined && isDraftFile(parseLocString(source.loc)?.file ?? '', draftsDir);
+}
+
+type InspectorSourceBodyProps = {
+  readonly target: SingleTargetEditableBodyProps['target'];
+  readonly source: NonNullable<SingleTargetEditableBodyProps['target']['source']>;
+  readonly ctx: SingleTargetEditableBodyProps['ctx'];
+  readonly frameWidth: number;
+  readonly editable: boolean;
+  readonly isDraft: boolean;
+  readonly isLocked: boolean;
+  readonly isAttrLocked: boolean;
+  readonly classString: string;
+  readonly onAttributeChange: ReturnType<typeof useAttributeEdit>['setAttribute'];
+  readonly callbacks: ReturnType<typeof useSingleTargetLiveCallbacks>;
+};
+
+function InspectorSourceBody({
+  target,
+  source,
+  ctx,
+  frameWidth,
+  editable,
+  isDraft,
+  isLocked,
+  isAttrLocked,
+  classString,
+  onAttributeChange,
+  callbacks,
+}: InspectorSourceBodyProps) {
+  return (
+    <>
+      <A11yHintsSection
+        target={target}
+        disabled={isAttrLocked}
+        onFixAltEmpty={() => {
+          onAttributeChange('alt', '');
+        }}
+      />
+      {editable && <FreeFrameGroup source={source} showToggleInline={isDraft} />}
+      <ElementSections
+        editable={editable}
+        source={source}
+        tokens={parseClasses(classString, ctx)}
+        currentScope={target.currentScope}
+        frameWidth={frameWidth}
+        ctx={ctx}
+        isLocked={isLocked}
+        isAttrLocked={isAttrLocked}
+        onAttributeChange={onAttributeChange}
+        onRefresh={target.refresh}
+        rawClassString={classString}
+        layoutFooter={editable && !isDraft ? <FreeFrameToggle source={source} /> : undefined}
+        {...callbacks}
+      />
+    </>
+  );
+}
+
 function SingleTargetEditableBody({
   target,
   ctx,
@@ -236,40 +311,39 @@ function SingleTargetEditableBody({
   onClassStringChange,
   editable,
 }: SingleTargetEditableBodyProps) {
+  const project = useProjectInfo();
   const liveEdit = useLiveEdit({ target, ctx });
-  const tokens = parseClasses(liveEdit.classString, ctx);
   const attrEdit = useAttributeEdit(target);
   const { isLocked, isAttrLocked } = computeTargetLocks(target, attrEdit.isSaving);
-  const displayedError = liveEdit.error ?? attrEdit.error ?? target.error;
-  const project = useProjectInfo();
   const callbacks = useSingleTargetLiveCallbacks(liveEdit, onClassStringChange);
+  const isDraft = isDraftSource(
+    target.source,
+    useCanvasViewStore((s) => s.draftsDir),
+  );
+  const source = target.source;
 
   return (
     <>
       <InspectorHeader target={target} />
       {!editable && <CssStyleEditor project={project} target={target} />}
       <InspectorStatusFeedback
-        loading={target.loading && target.source === undefined}
-        error={displayedError}
+        loading={target.loading && source === undefined}
+        error={liveEdit.error ?? attrEdit.error ?? target.error}
       />
-      {target.source && (
-        <>
-          {editable && <FreeFrameGroup source={target.source} />}
-          <ElementSections
-            editable={editable}
-            source={target.source}
-            tokens={tokens}
-            currentScope={target.currentScope}
-            frameWidth={frameWidth}
-            ctx={ctx}
-            isLocked={isLocked}
-            isAttrLocked={isAttrLocked}
-            onAttributeChange={attrEdit.setAttribute}
-            onRefresh={target.refresh}
-            rawClassString={liveEdit.classString}
-            {...callbacks}
-          />
-        </>
+      {source && (
+        <InspectorSourceBody
+          target={target}
+          source={source}
+          ctx={ctx}
+          frameWidth={frameWidth}
+          editable={editable}
+          isDraft={isDraft}
+          isLocked={isLocked}
+          isAttrLocked={isAttrLocked}
+          classString={liveEdit.classString}
+          onAttributeChange={attrEdit.setAttribute}
+          callbacks={callbacks}
+        />
       )}
     </>
   );

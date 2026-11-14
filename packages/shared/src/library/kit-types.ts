@@ -12,6 +12,7 @@ export const KIT_COMPONENT_IDS = [
   'Dropdown',
   'Tooltip',
   'MobileMenu',
+  'DataTable',
 ] as const;
 
 export const KitComponentIdSchema = z.enum(KIT_COMPONENT_IDS);
@@ -33,6 +34,7 @@ const KIT_FILE_MAP: Readonly<Record<KitComponentId, string>> = {
   Dropdown: 'Dropdown',
   Tooltip: 'Tooltip',
   MobileMenu: 'MobileMenu',
+  DataTable: 'DataTable',
 };
 
 export function kitFileNameFor(component: KitComponentId): string {

@@ -63,10 +63,16 @@ function buildStructureHistoryLabel(edit: StructureEdit): HistoryLabel {
       params: { tag: edit.element.tag, count: '1' },
     };
   }
-  if (edit.kind === 'wrapText' || edit.kind === 'replaceSvg') {
+  if (edit.kind === 'wrapText' || edit.kind === 'replaceSvg' || edit.kind === 'repeatElement') {
     return {
       key: `history:${edit.kind}`,
       params: { tag: edit.tag },
+    };
+  }
+  if (edit.kind === 'setDataArray') {
+    return {
+      key: 'history:setDataArray',
+      params: { name: edit.exportName },
     };
   }
   const tag = edit.elements[0]?.tag ?? 'div';
@@ -147,7 +153,9 @@ async function handleApplyEdit(
     edit.kind === 'wrap' ||
     edit.kind === 'unwrap' ||
     edit.kind === 'wrapText' ||
-    edit.kind === 'replaceSvg'
+    edit.kind === 'replaceSvg' ||
+    edit.kind === 'repeatElement' ||
+    edit.kind === 'setDataArray'
   ) {
     const label = buildStructureHistoryLabel(edit);
     const edited = await deps.sourceEditorService.applyStructureEdit(projectRoot, edit, (files) => {

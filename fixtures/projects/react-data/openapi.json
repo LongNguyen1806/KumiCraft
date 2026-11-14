@@ -1,0 +1,17 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "Store API", "version": "1.0.0" },
+  "components": {
+    "schemas": {
+      "Order": {
+        "type": "object",
+        "required": ["orderCode", "total"],
+        "properties": {
+          "orderCode": { "type": "string", "title": "Order Code" },
+          "total": { "type": "number", "title": "Total" },
+          "paid": { "type": "boolean", "title": "Paid" }
+        }
+      }
+    }
+  }
+}

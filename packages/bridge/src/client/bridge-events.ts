@@ -1,4 +1,5 @@
 // Captured DOM events for the Bridge in design mode (SPEC-04 R-BR-11, R-BR-14).
+import { toBuildError } from './build-error.ts';
 import { attachCanvasInput } from './canvas-input.ts';
 import { measureSince } from './perf-marks.ts';
 
@@ -89,4 +90,63 @@ export function addWindowListeners(
     window.removeEventListener('scroll', scrollOrResizeHandler, true);
     window.removeEventListener('resize', scrollOrResizeHandler);
   };
+}
+
+export function addAltClearListeners(onClear: () => void): () => void {
+  const onKeyUp = (event: KeyboardEvent) => {
+    if (event.key === 'Alt') onClear();
+  };
+  window.addEventListener('keyup', onKeyUp, true);
+  window.addEventListener('blur', onClear);
+  return () => {
+    window.removeEventListener('keyup', onKeyUp, true);
+    window.removeEventListener('blur', onClear);
+  };
+}
+
+export function attachViteHmrListeners(
+  hot: HotContext | undefined,
+  rootDir: string,
+  onError: (payload: ReturnType<typeof toBuildError>) => void,
+  onUpdate: () => void,
+): void {
+  if (hot === undefined) return;
+  hot.on('vite:error', (payload) => {
+    onError(toBuildError(payload, rootDir));
+  });
+  hot.on('vite:afterUpdate', onUpdate);
+}
+
+export function runCanvasEscapeAction(
+  event: KeyboardEvent,
+  drag: { isDragging(): boolean; cancel(): void },
+  tools: { escape(): boolean },
+): boolean {
+  if (event.key !== 'Escape') return false;
+  if (drag.isDragging()) {
+    event.preventDefault();
+    event.stopPropagation();
+    drag.cancel();
+    return true;
+  }
+  if (tools.escape()) {
+    event.preventDefault();
+    event.stopPropagation();
+    return true;
+  }
+  return false;
+}
+
+export function trimRuntimeErrorPayload(message: string, stack?: string) {
+  return {
+    message: message.slice(0, 2000),
+    ...(stack !== undefined ? { stack: stack.slice(0, 8000) } : {}),
+  };
+}
+
+export function isToolClickSwallowed(event: Event, swallowDrawClick: () => boolean): boolean {
+  return (
+    (event.type === 'click' || event.type === 'dblclick') &&
+    (isOverlayHost(event.target) || swallowDrawClick())
+  );
 }

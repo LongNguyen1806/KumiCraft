@@ -3,7 +3,15 @@ import {
   type AddPage,
   type BackendInfo,
   BackendInfoSchema,
+  type ComponentPropsRequest,
+  type ComponentPropsResponse,
+  ComponentPropsResponseSchema,
   type CreateDraft,
+  type DataSourceFieldsRequest,
+  type DataSourceFieldsResponse,
+  DataSourceFieldsResponseSchema,
+  type DataSourceListResponse,
+  DataSourceListResponseSchema,
   type DeletePage,
   type DesignDirs,
   type DirectoryListing,
@@ -209,6 +217,28 @@ export async function deleteDraft(payload: DraftFile): Promise<StructureResult> 
 
 export async function promoteDraft(payload: PromoteDraft): Promise<StructureResult> {
   return parseResponse(StructureResultSchema, await apiPost('project/drafts/promote', payload));
+}
+
+export async function fetchDataSources(): Promise<DataSourceListResponse> {
+  return parseResponse(DataSourceListResponseSchema, await apiGet('project/data-sources'));
+}
+
+export async function fetchDataSourceFields(
+  payload: DataSourceFieldsRequest,
+): Promise<DataSourceFieldsResponse> {
+  return parseResponse(
+    DataSourceFieldsResponseSchema,
+    await apiPost('project/data-sources/fields', payload),
+  );
+}
+
+export async function fetchComponentProps(
+  payload: ComponentPropsRequest,
+): Promise<ComponentPropsResponse> {
+  return parseResponse(
+    ComponentPropsResponseSchema,
+    await apiPost('project/component-props', payload),
+  );
 }
 
 export const SESSION_PROBE_TIMEOUT_MS = 3_000;

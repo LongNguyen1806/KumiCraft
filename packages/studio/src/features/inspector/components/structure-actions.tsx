@@ -9,6 +9,7 @@ import { ExtractDialog } from '../../components-panel/extract-dialog.tsx';
 import { studioBridgeChannel } from '../../selection/bridge-channel.ts';
 import type { InspectorTarget } from '../types.ts';
 import { InspectorListActions } from './inspector-list-actions.tsx';
+import { RepeatElementControl } from './repeat-element-control.tsx';
 
 const INTERACTIVE_PREVIEW_TAGS = new Set([
   'details',
@@ -202,6 +203,7 @@ export function StructureActions({ target }: StructureActionsProps) {
         target={target}
         disabled={actions.pending || target.loading || target.source?.readonly !== undefined}
       />
+      <RepeatElementControl target={target} />
       <InteractivePreviewButton target={target} />
       {extractOpen && (
         <ExtractDialog

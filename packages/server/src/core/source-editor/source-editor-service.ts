@@ -33,6 +33,7 @@ import {
   validateLocAndExt,
 } from './source-editor-lookup.ts';
 import { listSourceFiles, type SourceFiles } from './source-files.ts';
+import { readDataContextForNode } from './structure/data-ops.ts';
 import { getElementTextFromAst } from './structure/element-text.ts';
 import type { NewCssDirProvider, StylingProvider } from './structure/insert-css.ts';
 
@@ -156,7 +157,10 @@ async function executeGetElement(
   const targetNode = findNodeAt(ast, line, column);
   if (!targetNode) return err({ code: 'E017', params: { loc, reason: 'moved' } });
 
-  return ok(buildElementSource(loc, targetNode, code, fileHash, ast));
+  const element = buildElementSource(loc, targetNode, code, fileHash, ast);
+  if (!element.inLoop) return ok(element);
+  const dataContext = await readDataContextForNode(deps.fs, projectRoot, rel, ast, targetNode);
+  return ok(dataContext ? { ...element, dataContext } : element);
 }
 
 type TargetNodeContext = {

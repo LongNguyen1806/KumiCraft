@@ -26,6 +26,9 @@ describe('resolveHistoryLabel [K9.5]', () => {
     expect(label('history:theme', { op: 'add', name: 'brand' })).toBe('thêm token brand');
     expect(label('history:draftCreate', { name: 'Hero' })).toBe('tạo bản nháp Hero');
     expect(label('history:setClassName')).toBe('đổi class');
+    expect(label('history:repeatElement', { tag: 'article' })).toBe('lặp danh sách <article>');
+    expect(label('history:setDataArray', { name: 'products' })).toBe('sửa bảng dữ liệu products');
+    expect(label('history:setProp', { tag: 'Button' })).toBe('đổi prop <Button>');
   });
 
   it('shows the key itself only when there is no translation', () => {

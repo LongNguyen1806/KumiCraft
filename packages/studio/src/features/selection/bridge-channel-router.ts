@@ -10,6 +10,7 @@ const sharedListeners: BridgeListenerSets = {
   textEdit: new Set(),
   freeFrame: new Set(),
   styleProbe: new Set(),
+  responsiveAudit: new Set(),
 };
 
 /**
@@ -94,6 +95,15 @@ export class BridgeChannelRegistry {
     for (const ch of this.channels.values()) {
       ch.setMode(mode);
     }
+  }
+
+  broadcastResponsiveAudit(requestId: string): number {
+    let count = 0;
+    for (const ch of this.channels.values()) {
+      ch.requestResponsiveAudit(requestId);
+      count += 1;
+    }
+    return count;
   }
 }
 
@@ -226,6 +236,11 @@ export class StudioBridgeChannel extends BridgeChannel {
     super.toggleInteractive(ref, open);
     const active = this.getActiveChannel();
     if (active !== this) active.toggleInteractive(ref, open);
+  }
+
+  override requestResponsiveAudit(requestId: string): void {
+    const count = bridgeChannels.broadcastResponsiveAudit(requestId);
+    if (count === 0) super.requestResponsiveAudit(requestId);
   }
 }
 

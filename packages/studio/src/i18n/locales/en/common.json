@@ -152,7 +152,10 @@
     "dismissError": "Dismiss",
     "errorFileChanged": "File {{file}} was modified externally, cannot undo this step",
     "setStyle": "change style of <{{tag}}>",
-    "setFlag": "toggle free position <{{tag}}>"
+    "setFlag": "toggle free position <{{tag}}>",
+    "setProp": "set prop <{{tag}}>",
+    "repeatElement": "repeat list <{{tag}}>",
+    "setDataArray": "edit data list {{name}}"
   },
   "settings": {
     "open": "Settings",
@@ -373,7 +376,7 @@
       "noProjectColors": "The project declares no @theme colors"
     },
     "groups": {
-      "layout": "Layout",
+      "layout": "Auto layout",
       "selfLayout": "Self layout",
       "sizing": "Sizing",
       "spacing": "Spacing",
@@ -724,6 +727,7 @@
     "restoredSome": "Put {{restored}} elements back as they were; {{kept}} kept their new place.",
     "measureTimeout": "Failed to measure frame size (2s timeout).",
     "pageWarning": "Fixed positions — may shift on other screen sizes.",
+    "advanced": "Advanced",
     "section": "Free frame",
     "position": "Position",
     "x": "X",
@@ -883,5 +887,49 @@
     "body": "The other parts still work. Try again, or reload the page if the error stays. Your project code was not changed.",
     "retry": "Try again",
     "reload": "Reload page"
+  },
+  "dataTools": {
+    "repeatButton": "Repeat from list",
+    "repeatDisabledInLoop": "Already inside a .map() loop",
+    "gridTitle": "Data table ({{name}})",
+    "readonlyBanner": "Data expression is read-only ({{reason}}). Edit in editor.",
+    "addRow": "Add row",
+    "deleteRow": "Delete row",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "columnNamePlaceholder": "Column name…",
+    "addColumn": "Add column",
+    "saveData": "Save data",
+    "savingData": "Saving…",
+    "emptyRows": "No rows yet."
+  },
+  "componentProps": {
+    "title": "Component Props ({{tag}})",
+    "loading": "Inspecting component props…",
+    "empty": "No editable props detected.",
+    "editInEditor": "Edit in editor",
+    "openEditor": "Open",
+    "required": "Required",
+    "unset": "(unset)"
+  },
+  "a11y": {
+    "title": "Accessibility hints",
+    "contrastLow": "Low text contrast ({{ratio}}:1 < 4.5:1)",
+    "missingAlt": "Image is missing an alt attribute",
+    "missingAccessibleName": "Element has no visible text or aria-label",
+    "unlabeledInput": "Form input has no associated label or aria-label",
+    "fixAltEmpty": "Add alt=\"\"",
+    "fixAriaLabel": "Add aria-label",
+    "ariaLabelPlaceholder": "Accessible label…",
+    "applyFix": "Apply"
+  },
+  "responsiveAudit": {
+    "button": "Responsive audit",
+    "running": "Auditing…",
+    "title": "Responsive audit",
+    "noIssues": "No horizontal overflow or sibling overlap detected.",
+    "close": "Close",
+    "overflow": "Horizontal overflow",
+    "overlap": "Sibling overlap"
   }
 }

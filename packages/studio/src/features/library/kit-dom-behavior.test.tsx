@@ -12,7 +12,7 @@ import { buildKitTemplateCode } from '../../../../server/src/core/source-editor/
 type CompiledExports = Record<string, React.ComponentType<Record<string, unknown>>>;
 
 async function compileKitComponent(
-  name: 'Tabs' | 'Modal' | 'Dropdown' | 'Carousel',
+  name: 'Tabs' | 'Modal' | 'Dropdown' | 'Carousel' | 'DataTable',
 ): Promise<CompiledExports> {
   const source = buildKitTemplateCode(name, true);
   if (source === undefined) throw new Error(`Missing template: ${name}`);
@@ -171,5 +171,65 @@ describe('kit DOM behavior (Test 8)', () => {
     fireEvent.click(screen.getByRole('button', { name: /Next|Sau/ }));
     expect(screen.getByText('Slide 2')).toBeDefined();
     vi.unstubAllGlobals();
+  });
+
+  it('DataTable filters rows, sorts columns with aria-sort, paginates, and shows empty state (Test 5)', async () => {
+    const mod = await compileKitComponent('DataTable');
+    const DataTable = mod.DataTable;
+    expect(DataTable).toBeDefined();
+    if (!DataTable) return;
+
+    const rows = [
+      { id: 1, name: 'Charlie', score: 30 },
+      { id: 2, name: 'Alice', score: 10 },
+      { id: 3, name: 'Bob', score: 20 },
+      { id: 4, name: 'Diana', score: 40 },
+    ];
+    const columns = [
+      { key: 'name', label: 'Name' },
+      { key: 'score', label: 'Score' },
+    ];
+
+    render(
+      React.createElement(DataTable, {
+        data: rows,
+        columns,
+        pageSize: 2,
+        searchPlaceholder: 'Search...',
+        emptyMessage: 'Chưa có dữ liệu',
+      }),
+    );
+
+    // Page 1 shows first 2 rows (Charlie, Alice), not Bob
+    expect(screen.getByText('Charlie')).toBeDefined();
+    expect(screen.queryByText('Bob')).toBeNull();
+
+    // Pagination Next -> page 2 shows Bob & Diana
+    fireEvent.click(screen.getByRole('button', { name: 'Trang sau' }));
+    expect(screen.getByText('Bob')).toBeDefined();
+    expect(screen.queryByText('Charlie')).toBeNull();
+
+    // Sort Name ascending then descending
+    const nameHeader = screen.getByRole('columnheader', { name: /Name/i });
+    const sortBtn = nameHeader.querySelector('button');
+    expect(sortBtn).toBeDefined();
+    if (sortBtn) {
+      fireEvent.click(sortBtn);
+      expect(nameHeader.getAttribute('aria-sort')).toBe('ascending');
+      expect(screen.getByText('Alice')).toBeDefined();
+
+      fireEvent.click(sortBtn);
+      expect(nameHeader.getAttribute('aria-sort')).toBe('descending');
+      expect(screen.getByText('Diana')).toBeDefined();
+    }
+
+    // Search filters rows & empty match shows emptyMessage
+    const searchInput = screen.getByPlaceholderText('Search...');
+    fireEvent.change(searchInput, { target: { value: 'Bob' } });
+    expect(screen.getByText('Bob')).toBeDefined();
+    expect(screen.queryByText('Alice')).toBeNull();
+
+    fireEvent.change(searchInput, { target: { value: 'NonExistent' } });
+    expect(screen.getByText('Chưa có dữ liệu')).toBeDefined();
   });
 });

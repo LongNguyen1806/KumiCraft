@@ -127,6 +127,14 @@ function hasForeignExpression(root: AstNode): boolean {
   return found;
 }
 
+function tryParseFragment(jsx: string): AstNode | undefined {
+  try {
+    return parseJsxAst(`<>${jsx}</>`);
+  } catch {
+    return undefined;
+  }
+}
+
 function planInsert(
   ast: AstNode,
   code: string,
@@ -156,18 +164,17 @@ function planInsert(
   );
   if (!insertEditRes.ok) return insertEditRes;
 
-  let astSnippet: AstNode | undefined;
-  try {
-    astSnippet = parseJsxAst(`<>${jsxToInsert}</>`);
-  } catch {
-    // validated previously
-  }
+  const astSnippet = tryParseFragment(jsxToInsert);
   const snippetTags = astSnippet ? collectComponentTags(astSnippet) : [];
   // A component dropped into its own code would render itself forever and hang the page.
   if (insertsComponentIntoItself(ast, snippetTags, insertEditRes.value.start)) {
     return err({ code: 'E016', params: { reason: 'componentIntoItself' } });
   }
-  const autoImports = buildMissingImportsEdits(ast, code, rel, snippetTags, edit.from, nl);
+  const neededIds =
+    edit.dataArray !== undefined
+      ? [...new Set([...snippetTags, edit.dataArray.exportName])]
+      : snippetTags;
+  const autoImports = buildMissingImportsEdits(ast, code, rel, neededIds, edit.from, nl);
 
   const warnings = [...autoImports.warnings];
   if (edit.from && edit.from.file !== rel && astSnippet && hasForeignExpression(astSnippet)) {

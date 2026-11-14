@@ -97,6 +97,8 @@ function buildRouteConfigs(
       projectService: ctx.projectService,
       getSessionInfo,
       fs: ctx.fs,
+      process: ctx.processPort,
+      tsInspectScript: resolveRunnerScript(undefined, 'ts-inspect'),
       usageCounter: ctx.usageCounter,
       recents: ctx.configStore,
       historyService: ctx.historyService,

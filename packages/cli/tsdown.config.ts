@@ -10,6 +10,7 @@ export default defineConfig({
     'runners/express-pug': '../server/src/runners/express-pug.ts',
     'runners/pug-check': '../server/src/runners/pug-check.ts',
     'runners/prop-types': '../server/src/runners/prop-types.ts',
+    'runners/ts-inspect': '../server/src/runners/ts-inspect.ts',
   },
   format: 'esm',
   platform: 'node',

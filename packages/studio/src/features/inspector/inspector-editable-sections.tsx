@@ -6,6 +6,7 @@ import type {
   PropertyId,
   Scope,
 } from '@kumicraft/shared';
+import type { ReactNode } from 'react';
 
 import { InspectorImageSection } from './components/inspector-image-section.tsx';
 import { InspectorMotionSection } from './components/inspector-motion-section.tsx';
@@ -22,6 +23,7 @@ export type EditablePropertySectionsProps = {
   readonly onPropChange: (property: PropertyId, value: ClassValue | undefined) => void;
   readonly onBatchProps: (entries: readonly BatchPropEntry[]) => void;
   readonly onRefresh: () => void;
+  readonly layoutFooter?: ReactNode | undefined;
 };
 
 export function EditablePropertySections({
@@ -34,6 +36,7 @@ export function EditablePropertySections({
   onPropChange,
   onBatchProps,
   onRefresh,
+  layoutFooter,
 }: EditablePropertySectionsProps) {
   return (
     <>
@@ -54,6 +57,7 @@ export function EditablePropertySections({
         isLocked={isLocked}
         onPropertyValueChange={onPropChange}
         onBatchProperties={onBatchProps}
+        layoutFooter={layoutFooter}
       />
       <InspectorMotionSection
         refTarget={{ loc: source.loc, index: 0 }}

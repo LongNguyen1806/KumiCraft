@@ -2,13 +2,13 @@
 // vite build, lists the error at its file:line:col, marks the file in the tree, and after the fix
 // says "Build OK"; the project's dist/ is never made.
 import { existsSync } from 'node:fs';
-import { readFile, symlink, writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { expect, test } from '@playwright/test';
 
 import { type CliSession, startCli } from './support/cli-session.ts';
-import { copyFixture, makeTempDir, REPO_ROOT, type TempDir } from './support/copy-fixture.ts';
+import { copyFixture, makeTempDir, type TempDir } from './support/copy-fixture.ts';
 import { getCanvasFrame, trustIfAsked } from './support/trust.ts';
 import { ui } from './support/ui-text.ts';
 
@@ -18,12 +18,6 @@ const sessions: CliSession[] = [];
 
 test.beforeEach(async ({ browserName }) => {
   folder = await copyFixture('projects/vite8-react19-ts');
-  // A real project has its own TypeScript; the fixture copy links only the Studio's packages.
-  await symlink(
-    join(REPO_ROOT, 'node_modules/typescript'),
-    join(folder.path, 'node_modules/typescript'),
-    'junction',
-  );
   // The linked TypeScript is 6, which stops on the fixture's `baseUrl` (TS5101) as the project's
   // own `tsc -b` would; relative `paths` work without it.
   const tsconfig = join(folder.path, 'tsconfig.json');

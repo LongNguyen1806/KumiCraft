@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { ImagePickerDialog } from '../draw/image-picker-dialog.tsx';
 import { IconPickerDialog } from '../icons/icon-picker.tsx';
+import { DataSourcePickerDialog } from './data-source-picker-dialog.tsx';
 import { BlockItem } from './library-block-item.tsx';
 import { useLibraryPanelState } from './library-panel-state.ts';
 import { LibraryPreviewCard } from './library-preview-card.tsx';
@@ -136,6 +137,14 @@ function LibraryDialogs({ s }: { readonly s: ReturnType<typeof useLibraryPanelSt
         onPick={(icon) => {
           void s.insert.handlePickIcon(icon);
         }}
+      />
+      <DataSourcePickerDialog
+        open={s.dataPickerMode !== undefined}
+        mode={s.dataPickerMode ?? 'form'}
+        onClose={() => {
+          s.setDataPickerMode(undefined);
+        }}
+        onInserted={s.bumpRecent}
       />
     </>
   );

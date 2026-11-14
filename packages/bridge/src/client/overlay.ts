@@ -1,6 +1,11 @@
 // Bridge overlay in closed shadow root (SPEC-04 R-BR-11, R-BR-15, R-DD-10, R-DD-13).
 import type { ElementRef } from '@kumicraft/shared';
 
+import {
+  ALT_MEASURE_CSS,
+  computeAltMeasureSegments,
+  renderAltMeasureSegments,
+} from './alt-measure.ts';
 import type { DropRect, DropResult } from './drop-target.ts';
 import { FreeOverlay } from './free-frame/free-overlay.ts';
 import { focusPath, focusRoots } from './overlay-focus.ts';
@@ -12,19 +17,22 @@ export type OverlayState = {
   textEditingEl?: HTMLElement | undefined;
   dragHandleEl?: Element | undefined;
   dropIndicator?: DropResult | undefined;
+  altMeasureTarget?: { selected: Element; target: Element } | undefined;
 };
 
 function applyRectStyle(
   el: HTMLElement,
   rect: {
-    readonly top: number;
-    readonly left: number;
+    readonly top?: number | undefined;
+    readonly left?: number | undefined;
+    readonly x?: number | undefined;
+    readonly y?: number | undefined;
     readonly width: number;
     readonly height: number;
   },
 ): void {
-  el.style.top = `${String(rect.top)}px`;
-  el.style.left = `${String(rect.left)}px`;
+  el.style.top = `${String(rect.top ?? rect.y ?? 0)}px`;
+  el.style.left = `${String(rect.left ?? rect.x ?? 0)}px`;
   el.style.width = `${String(rect.width)}px`;
   el.style.height = `${String(rect.height)}px`;
 }
@@ -40,8 +48,10 @@ export class BridgeOverlay {
   private dropLine: HTMLDivElement;
   private dropBox: HTMLDivElement;
   private dropBoxLabel: HTMLSpanElement;
+  private altMeasureLayer: HTMLDivElement;
   private drawBox: HTMLDivElement = document.createElement('div');
   private gridCells: readonly DropRect[] | undefined;
+  private scale = 1;
   private observer: MutationObserver;
   private state: OverlayState = { selectedRefs: [] };
   private rafId: number | undefined;
@@ -66,7 +76,7 @@ export class BridgeOverlay {
     this.shadow = this.host.attachShadow({ mode: 'closed' });
 
     const style = document.createElement('style');
-    style.textContent = OVERLAY_CSS;
+    style.textContent = `${OVERLAY_CSS}\n${ALT_MEASURE_CSS}`;
     this.shadow.appendChild(style);
 
     const focusEls = this.createFocusSvgElement();
@@ -99,6 +109,8 @@ export class BridgeOverlay {
     this.dropBoxLabel.className = 'tag-label';
     this.dropBox.appendChild(this.dropBoxLabel);
     this.shadow.appendChild(this.dropBox);
+    this.altMeasureLayer = document.createElement('div');
+    this.shadow.appendChild(this.altMeasureLayer);
 
     // Size handles go under the drag handle, which wins where the two overlap at the top-right corner.
     this.free = new FreeOverlay(this.shadow);
@@ -222,6 +234,18 @@ export class BridgeOverlay {
     this.requestRender();
   }
 
+  public setScale(scale: number): void {
+    this.scale = scale > 0 ? scale : 1;
+  }
+
+  public setAltMeasure(selected?: Element, target?: Element): void {
+    this.state.altMeasureTarget =
+      selected !== undefined && target !== undefined && selected !== target
+        ? { selected, target }
+        : undefined;
+    this.requestRender();
+  }
+
   public setDrawRect(
     rect: { x: number; y: number; width: number; height: number } | undefined,
   ): void {
@@ -235,12 +259,7 @@ export class BridgeOverlay {
       this.shadow.appendChild(this.drawBox);
     }
     this.drawBox.style.display = 'block';
-    applyRectStyle(this.drawBox, {
-      top: rect.y,
-      left: rect.x,
-      width: rect.width,
-      height: rect.height,
-    });
+    applyRectStyle(this.drawBox, rect);
   }
 
   public requestRender(): void {
@@ -344,22 +363,12 @@ export class BridgeOverlay {
     if (d.indicator === 'line') {
       this.dropBox.style.display = 'none';
       this.dropLine.style.display = 'block';
-      applyRectStyle(this.dropLine, {
-        top: d.rect.y,
-        left: d.rect.x,
-        width: d.rect.width,
-        height: d.rect.height,
-      });
+      applyRectStyle(this.dropLine, d.rect);
     } else {
       this.dropLine.style.display = 'none';
       this.dropBox.style.display = 'block';
       this.dropBoxLabel.textContent = `↳ ${d.label}`;
-      applyRectStyle(this.dropBox, {
-        top: d.rect.y,
-        left: d.rect.x,
-        width: d.rect.width,
-        height: d.rect.height,
-      });
+      applyRectStyle(this.dropBox, d.rect);
     }
   }
 
@@ -391,7 +400,7 @@ export class BridgeOverlay {
       box.style.border = '1px dashed rgba(59, 130, 246, 0.45)';
       box.style.background = 'rgba(59, 130, 246, 0.03)';
       box.style.pointerEvents = 'none';
-      applyRectStyle(box, { top: cell.y, left: cell.x, width: cell.width, height: cell.height });
+      applyRectStyle(box, cell);
       this.gridLayer.appendChild(box);
     }
   }
@@ -402,9 +411,27 @@ export class BridgeOverlay {
     this.renderHover();
     this.renderSelections();
     this.free.render(document);
+    this.renderAltMeasure();
     this.renderDragHandle();
     this.renderGridCells();
     this.renderDropIndicator();
+  }
+
+  private renderAltMeasure(): void {
+    const pair = this.state.altMeasureTarget;
+    if (
+      pair === undefined ||
+      !document.documentElement.contains(pair.selected) ||
+      !document.documentElement.contains(pair.target)
+    ) {
+      this.altMeasureLayer.replaceChildren();
+      return;
+    }
+    const segments = computeAltMeasureSegments(
+      pair.selected.getBoundingClientRect(),
+      pair.target.getBoundingClientRect(),
+    );
+    renderAltMeasureSegments(this.altMeasureLayer, segments, this.scale);
   }
 
   public destroy(): void {

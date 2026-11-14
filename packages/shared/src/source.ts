@@ -4,6 +4,13 @@ import { z } from 'zod';
 import { KitComponentIdSchema } from './library/kit-types.ts';
 import { RelPathSchema } from './rel-path.ts';
 import {
+  DataArrayRowSchema,
+  ElementDataContextSchema,
+  RepeatElementEditSchema,
+  SetDataArrayEditSchema,
+  SetPropEditSchema,
+} from './source-data.ts';
+import {
   EditableAttrSchema,
   InsertedCssSchema,
   ReplaceSvgEditSchema,
@@ -11,6 +18,7 @@ import {
   WrapTextEditSchema,
 } from './source-edits-extra.ts';
 import { PlacementSchema } from './tailwind/free-position.ts';
+export * from './source-data.ts';
 export * from './source-edits-extra.ts';
 
 export type SourceLoc = {
@@ -117,6 +125,7 @@ export const ElementSourceSchema = z.strictObject({
     .optional(),
   inLoop: z.boolean(),
   free: z.boolean().optional(),
+  dataContext: ElementDataContextSchema.optional(),
 });
 export type ElementSource = z.infer<typeof ElementSourceSchema>;
 
@@ -165,6 +174,7 @@ export const SourceEditSchema = z.discriminatedUnion('kind', [
   SetAttributeEditSchema,
   SetFlagEditSchema,
   SetTagEditSchema,
+  SetPropEditSchema,
 ]);
 export type SourceEdit = z.infer<typeof SourceEditSchema>;
 
@@ -231,6 +241,13 @@ export const InsertEditSchema = z.strictObject({
     })
     .readonly()
     .optional(),
+  dataArray: z
+    .strictObject({
+      file: RelPathSchema,
+      exportName: z.string().min(1).max(64),
+      rows: z.array(DataArrayRowSchema).max(500).readonly(),
+    })
+    .optional(),
 });
 export type InsertEdit = z.infer<typeof InsertEditSchema>;
 
@@ -280,6 +297,8 @@ export const StructureEditSchema = z.discriminatedUnion('kind', [
   UnwrapEditSchema,
   WrapTextEditSchema,
   ReplaceSvgEditSchema,
+  RepeatElementEditSchema,
+  SetDataArrayEditSchema,
 ]);
 export type StructureEdit = z.infer<typeof StructureEditSchema>;
 
@@ -289,6 +308,7 @@ export const AnyEditSchema = z.discriminatedUnion('kind', [
   SetAttributeEditSchema,
   SetFlagEditSchema,
   SetTagEditSchema,
+  SetPropEditSchema,
   InsertEditSchema,
   InsertImageEditSchema,
   RemoveEditSchema,
@@ -298,6 +318,8 @@ export const AnyEditSchema = z.discriminatedUnion('kind', [
   UnwrapEditSchema,
   WrapTextEditSchema,
   ReplaceSvgEditSchema,
+  RepeatElementEditSchema,
+  SetDataArrayEditSchema,
 ]);
 export type AnyEdit = z.infer<typeof AnyEditSchema>;
 

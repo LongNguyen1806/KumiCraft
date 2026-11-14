@@ -111,7 +111,30 @@
     "screenListDetail": "List & Detail Screen",
     "screenNotFound": "404 Screen",
     "screenLandingA": "Minimal Landing",
-    "screenLandingB": "Full SaaS Landing"
+    "screenLandingB": "Full SaaS Landing",
+    "dataFormFromSource": "Form from Data",
+    "dataTableFromSource": "Table from Data",
+    "dataStates": "Data States",
+    "dataLoading": "Loading Skeleton",
+    "dataEmpty": "Empty State",
+    "dataError": "Error State"
+  },
+  "dataPicker": {
+    "titleForm": "Generate form from data source",
+    "titleTable": "Generate table from data source",
+    "loadingSources": "Scanning data sources…",
+    "loadingFields": "Reading fields…",
+    "emptySources": "No TypeScript interfaces, Zod schemas, Django models, or OpenAPI JSON files found.",
+    "yamlNotice": "YAML OpenAPI files ignored (JSON supported): {{files}}",
+    "sourceLabel": "Data source",
+    "fieldsTitle": "Fields",
+    "noFields": "No fields found in this model.",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "insertForm": "Insert Form",
+    "insertTable": "Insert Table",
+    "cancel": "Cancel",
+    "required": "required"
   },
   "variants": {
     "solid": "Solid",

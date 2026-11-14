@@ -1,5 +1,6 @@
 // Free frame decorations, size handles and live labels drawn in the overlay's shadow root
 // (SPEC-04 section 18E, R-FF-11, R-FF-13, R-FF-14, R-FF-18).
+import { CHILD_GUIDE_CSS, renderChildFrameGuides, scalePx } from './child-guides.ts';
 import { FREE_ATTR, type GridSize } from './free-geometry.ts';
 import { FLOW_HANDLES, FREE_HANDLES, type HandleDir } from './resize-box.ts';
 import type { GapMark, GuideLine } from './smart-guides.ts';
@@ -82,6 +83,7 @@ export const FREE_OVERLAY_CSS = `
   white-space: nowrap;
   transform: translate(-50%, -50%);
 }
+${CHILD_GUIDE_CSS}
 `;
 
 const CURSORS: Readonly<Record<HandleDir, string>> = {
@@ -107,6 +109,7 @@ const SNAP_MARK_SCREEN_PX = 7;
 export class FreeOverlay {
   private readonly frameLayer: HTMLDivElement;
   private readonly guideLayer: HTMLDivElement;
+  private readonly childGuideLayer: HTMLDivElement;
   private readonly handles = new Map<HandleDir, HTMLDivElement>();
   private readonly sizeLabel: HTMLSpanElement;
   private callbacks: FreeOverlayCallbacks | undefined;
@@ -127,6 +130,8 @@ export class FreeOverlay {
     root.appendChild(this.frameLayer);
     this.guideLayer = document.createElement('div');
     root.appendChild(this.guideLayer);
+    this.childGuideLayer = document.createElement('div');
+    root.appendChild(this.childGuideLayer);
     for (const dir of FREE_HANDLES) {
       const handle = this.createHandle(dir);
       this.handles.set(dir, handle);
@@ -169,7 +174,8 @@ export class FreeOverlay {
   }
 
   public render(doc: Document): void {
-    this.renderFrames(doc);
+    const activeFrame = renderChildFrameGuides(this.childGuideLayer, this.target, doc, this.scale);
+    this.renderFrames(doc, activeFrame);
     this.renderGuides();
     this.renderHandles(doc);
     this.renderLabel(doc);
@@ -297,21 +303,31 @@ export class FreeOverlay {
     return handle;
   }
 
-  private renderFrames(doc: Document): void {
+  private renderFrames(doc: Document, activeFrame?: Element): void {
     this.frameLayer.replaceChildren();
     const spacing = `${String(Math.max(this.grid, MIN_DOT_SPACING_PX))}px`;
+    const isChildSelected = activeFrame !== undefined;
     for (const frame of Array.from(doc.querySelectorAll(`[${FREE_ATTR}]`))) {
       const r = frame.getBoundingClientRect();
       const box = document.createElement('div');
-      box.className = 'free-frame';
+      const isHighlighted = frame === activeFrame || frame === this.target;
+      box.className = isHighlighted ? 'free-frame free-frame-active' : 'free-frame';
       box.style.top = `${String(r.top)}px`;
       box.style.left = `${String(r.left)}px`;
       box.style.width = `${String(r.width)}px`;
       box.style.height = `${String(r.height)}px`;
       box.style.backgroundSize = `${spacing} ${spacing}`;
+      if (isChildSelected && frame === activeFrame) {
+        box.style.borderWidth = scalePx(1.5, this.scale);
+      }
       const label = document.createElement('span');
       label.className = 'free-frame-label';
       label.textContent = 'Khung tự do';
+      if (isHighlighted) {
+        label.style.fontSize = scalePx(10, this.scale);
+        label.style.padding = `${scalePx(3, this.scale)} ${scalePx(5, this.scale)}`;
+        label.style.top = `-${scalePx(18, this.scale)}`;
+      }
       box.appendChild(label);
       this.frameLayer.appendChild(box);
     }

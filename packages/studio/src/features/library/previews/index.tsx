@@ -1,6 +1,7 @@
 import type { JSX } from 'react';
 
 import { PREVIEWS_BASIC } from './previews-basic.tsx';
+import { PREVIEWS_DATA } from './previews-data.tsx';
 import { PREVIEWS_DISPLAY_NAV } from './previews-display-nav.tsx';
 import { PREVIEWS_INTERACTIVE } from './previews-interactive.tsx';
 import { PREVIEWS_LANDING } from './previews-landing.tsx';
@@ -8,6 +9,7 @@ import { PREVIEWS_SCREEN } from './previews-screen.tsx';
 
 export const BLOCK_PREVIEWS: Readonly<Record<string, () => JSX.Element>> = {
   ...PREVIEWS_BASIC,
+  ...PREVIEWS_DATA,
   ...PREVIEWS_DISPLAY_NAV,
   ...PREVIEWS_INTERACTIVE,
   ...PREVIEWS_LANDING,

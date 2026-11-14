@@ -8,6 +8,7 @@ import { commitPreparedFiles, type PreparedFileWrite, withFileLocks } from '../f
 import type { SnippetFormatter } from '../snippet-format.ts';
 import { computeSha256, getCachedAst } from '../source-editor-lookup.ts';
 import type { WrittenFile } from '../source-editor-service.ts';
+import { executeRepeatElement, executeSetDataArray } from './data-ops.ts';
 import {
   collectComponentTags,
   collectMatchingImportStatements,
@@ -25,7 +26,7 @@ import {
   commitKitFiles,
   type KitPlan,
   prepareEditFormatting,
-  prepareKitPlan,
+  prepareInsertKitWithData,
 } from './kit-service.ts';
 import { type ResolvedElement, validateInsertedJsx } from './structure-ops.ts';
 import {
@@ -36,22 +37,9 @@ import {
   resolveElementsInAst,
   validateGuards,
 } from './structure-plan.ts';
-import { applyTextEdits } from './text-edits.ts';
+import { applyTextEdits, offsetToLoc } from './text-edits.ts';
 
 const MAX_FILE_SIZE = 1024 * 1024;
-
-function offsetToLoc(rel: string, code: string, offset: number): string {
-  let line = 1;
-  let lastNewline = -1;
-  for (let i = 0; i < offset && i < code.length; i++) {
-    if (code[i] === '\n') {
-      line++;
-      lastNewline = i;
-    }
-  }
-  const column = lastNewline === -1 ? offset + 1 : offset - lastNewline;
-  return `${rel}:${String(line)}:${String(column)}`;
-}
 
 function parseModifiedAst(code: string): Result<AstNode> {
   try {
@@ -126,6 +114,9 @@ function collectGuardsForEdit(edit: StructureEdit): readonly ElementGuard[] {
   if (edit.kind === 'wrapText' || edit.kind === 'replaceSvg') {
     return [{ loc: edit.loc, tag: edit.tag }];
   }
+  if (edit.kind === 'repeatElement' || edit.kind === 'setDataArray') {
+    return [];
+  }
   return edit.elements;
 }
 
@@ -191,6 +182,7 @@ function filterRelevantElements(
     }
     if (edit.kind === 'unwrap') return r.loc === edit.element.loc;
     if (edit.kind === 'wrapText' || edit.kind === 'replaceSvg') return r.loc === edit.loc;
+    if (edit.kind === 'repeatElement' || edit.kind === 'setDataArray') return false;
     return edit.elements.some((eg) => eg.loc === r.loc);
   });
 }
@@ -389,10 +381,13 @@ async function executeStandardEdit(
   const targetGuard =
     edit.kind === 'insert' || edit.kind === 'move' ? validatedGuards.at(-1) : undefined;
   const { byFile, sortedFiles } = groupGuardsByFile(validatedGuards);
-  const kitPlan =
-    edit.kind === 'insert' && edit.kit !== undefined && targetGuard !== undefined
-      ? await prepareKitPlan(fs, projectRoot, sourceDir, targetGuard.rel, edit.kit.components)
-      : undefined;
+  const kitPlan = await prepareInsertKitWithData(
+    fs,
+    projectRoot,
+    sourceDir,
+    edit,
+    targetGuard?.rel,
+  );
   const planned = await prepareEditFormatting(
     edit,
     targetGuard?.rel,
@@ -435,5 +430,11 @@ export async function executeStructureEdit(
       newCssDir,
     );
   if (edit.kind === 'insertImage') return executeInsertImage(fs, projectRoot, edit, run, onWritten);
+  if (edit.kind === 'repeatElement') {
+    return executeRepeatElement(fs, projectRoot, sourceDir, sourceExtensions, edit, onWritten);
+  }
+  if (edit.kind === 'setDataArray') {
+    return executeSetDataArray(fs, projectRoot, sourceDir, edit, onWritten);
+  }
   return run(edit, onWritten);
 }

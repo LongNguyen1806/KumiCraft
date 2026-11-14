@@ -1,6 +1,7 @@
 import { type KitComponentId, kitFileNameFor } from '@kumicraft/shared';
 
 import { buildCarouselTemplate } from './carousel.ts';
+import { buildDataTableTemplate } from './data-table.ts';
 import { buildDropdownTemplate, buildTooltipTemplate } from './dropdown-tooltip.ts';
 import { buildMobileMenuTemplate } from './mobile-menu.ts';
 import { buildDrawerTemplate, buildModalTemplate } from './modal-drawer.ts';
@@ -25,6 +26,7 @@ const KIT_FILE_SPECS: Readonly<Record<string, Omit<KitFilePlan, 'fileBase'>>> = 
   Dropdown: { exportedSymbols: ['Dropdown'], buildCode: buildDropdownTemplate },
   Tooltip: { exportedSymbols: ['Tooltip'], buildCode: buildTooltipTemplate },
   MobileMenu: { exportedSymbols: ['MobileMenu'], buildCode: buildMobileMenuTemplate },
+  DataTable: { exportedSymbols: ['DataTable'], buildCode: buildDataTableTemplate },
 };
 
 export function kitFileNames(): readonly string[] {

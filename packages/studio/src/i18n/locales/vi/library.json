@@ -111,7 +111,30 @@
     "screenListDetail": "Danh sách & chi tiết",
     "screenNotFound": "Trang 404",
     "screenLandingA": "Trang chủ tối giản",
-    "screenLandingB": "Trang sản phẩm đầy đủ"
+    "screenLandingB": "Trang sản phẩm đầy đủ",
+    "dataFormFromSource": "Biểu mẫu từ dữ liệu",
+    "dataTableFromSource": "Bảng từ dữ liệu",
+    "dataStates": "Tải / Trống / Lỗi",
+    "dataLoading": "Đang tải (Skeleton)",
+    "dataEmpty": "Trạng thái trống",
+    "dataError": "Trạng thái lỗi"
+  },
+  "dataPicker": {
+    "titleForm": "Sinh biểu mẫu từ nguồn dữ liệu",
+    "titleTable": "Sinh bảng từ nguồn dữ liệu",
+    "loadingSources": "Đang quét nguồn dữ liệu…",
+    "loadingFields": "Đang đọc các trường…",
+    "emptySources": "Không tìm thấy interface TypeScript, Zod schema, Django models.py hay OpenAPI JSON.",
+    "yamlNotice": "Bỏ qua file OpenAPI YAML (chỉ hỗ trợ JSON): {{files}}",
+    "sourceLabel": "Nguồn dữ liệu",
+    "fieldsTitle": "Các trường dữ liệu",
+    "noFields": "Không tìm thấy trường nào trong mô hình này.",
+    "moveUp": "Đưa lên",
+    "moveDown": "Đưa xuống",
+    "insertForm": "Chèn biểu mẫu",
+    "insertTable": "Chèn bảng",
+    "cancel": "Hủy",
+    "required": "bắt buộc"
   },
   "variants": {
     "solid": "Chính",

@@ -132,7 +132,9 @@ describe('FreeFrameSection [R-FF-11, R-FF-14, R-FF-17]', () => {
     fireEvent.blur(inputW);
 
     expect(editSpy).toHaveBeenCalledTimes(1);
-    const afterClass = editSpy.mock.calls[0]?.[0].edit.after ?? '';
+    const firstEdit = editSpy.mock.calls[0]?.[0].edit;
+    const afterClass =
+      firstEdit !== undefined && 'after' in firstEdit ? (firstEdit.after ?? '') : '';
     expect(afterClass).toContain('w-[122px]');
     expect(afterClass).not.toContain('w-full');
 

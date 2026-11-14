@@ -4,6 +4,8 @@ import {
   EditableAttrSchema,
   HTML_SETTABLE_TAGS,
   HtmlSettableTagSchema,
+  isValidSettablePropName,
+  SetPropValueSchema,
   VOID_HTML_TAGS,
 } from '@kumicraft/shared';
 import { z } from 'zod';
@@ -37,6 +39,17 @@ const SetAttributeInput = z.strictObject({
 const SetTagInput = z.strictObject({
   loc: LocSchema,
   tag: HtmlSettableTagSchema,
+});
+
+const SetPropInput = z.strictObject({
+  loc: LocSchema,
+  name: z
+    .string()
+    .min(1)
+    .max(64)
+    .refine(isValidSettablePropName, { message: 'Prop name is blocked or invalid' }),
+  value: SetPropValueSchema.optional().describe('Omit to remove the prop'),
+  required: z.boolean().optional(),
 });
 
 const NOT_STATIC_CLASS =
@@ -122,6 +135,19 @@ async function setTag(api: ApiClient, loc: string, nextTag: z.infer<typeof HtmlS
   });
 }
 
+async function setProp(api: ApiClient, input: z.infer<typeof SetPropInput>) {
+  const element = await readElement(api, input.loc);
+  if (!element.ok) return element;
+  return applyEdit(api, {
+    kind: 'setProp',
+    loc: input.loc,
+    tag: element.value.tag,
+    name: input.name,
+    ...(input.value === undefined ? {} : { value: input.value }),
+    ...(input.required === undefined ? {} : { required: input.required }),
+  });
+}
+
 export const EDIT_TOOLS: readonly McpTool[] = [
   {
     name: 'kumicraft_set_class_name',
@@ -166,5 +192,12 @@ export const EDIT_TOOLS: readonly McpTool[] = [
       const { loc, tag } = SetTagInput.parse(args);
       return setTag(api, loc, tag);
     },
+  },
+  {
+    name: 'kumicraft_set_prop',
+    description:
+      'Set or remove a constant JSX component prop (string, number, or boolean). Rejects children, key, ref, on*, className, style, dangerouslySetInnerHTML, and expressions.',
+    input: SetPropInput,
+    run: (api, args) => setProp(api, SetPropInput.parse(args)),
   },
 ];

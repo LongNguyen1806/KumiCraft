@@ -19,6 +19,11 @@ import { useProjectStore } from '../project/project-store.ts';
 import { useEditMode } from '../project/use-edit-mode.ts';
 import { useStyleLayerSupported } from '../project/use-style-edit.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
+import {
+  dataGeneratorMode,
+  type DataPickerMode,
+  isDataGeneratorBlock,
+} from './data-source-picker-dialog.tsx';
 import { insertBlock } from './insert-block.ts';
 import { getFavoriteBlocks, getRecentBlocks, toggleFavoriteBlock } from './library-favorites.ts';
 import { getSelectedStyle, setSelectedStyle } from './library-styles.ts';
@@ -144,28 +149,42 @@ function useProjectStyleChoice(projectId: string | undefined) {
   return { style, handleStyleChange };
 }
 
+function usePanelModalsState() {
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
+  const [dataPickerMode, setDataPickerMode] = useState<DataPickerMode | undefined>();
+  const [hoveredPreview, setHoveredPreview] = useState<
+    { readonly block: LibraryBlock; readonly label?: string | undefined } | undefined
+  >();
+  return {
+    imagePickerOpen,
+    setImagePickerOpen,
+    iconPickerOpen,
+    setIconPickerOpen,
+    dataPickerMode,
+    setDataPickerMode,
+    hoveredPreview,
+    setPreviewBlock: (block: LibraryBlock | undefined, label?: string) => {
+      setHoveredPreview(block !== undefined ? { block, label } : undefined);
+    },
+  };
+}
+
 export function useLibraryPanelState() {
   const project = useProjectStore((s) => s.project);
   const projectId = project?.id;
   const [query, setQuery] = useState('');
-  const [imagePickerOpen, setImagePickerOpen] = useState(false);
-  const [iconPickerOpen, setIconPickerOpen] = useState(false);
-  const [hoveredPreview, setHoveredPreview] = useState<
-    { readonly block: LibraryBlock; readonly label?: string | undefined } | undefined
-  >();
+  const modals = usePanelModalsState();
   const { style, handleStyleChange } = useProjectStyleChoice(projectId);
   const editable = useStyleLayerSupported();
   const editMode = useEditMode();
   const selectedRefs = useSelectionStore((s) => s.selectedRefs);
   const hasTreeRoot = useSelectionStore((s) => s.treeNodes.length > 0);
   const hasSelection = selectedRefs.length === 1;
-  const filteredBlocks = useFilteredLibraryBlocks(query);
-  const visibleBlocks = editable ? filteredBlocks : [];
+  const visibleBlocks = useFilteredLibraryBlocks(query);
+  const activeBlocks = editable ? visibleBlocks : [];
   const quick = useLibraryQuickState(projectId, editable, query);
-  const insert = useLibraryInsert(hasSelection || hasTreeRoot, quick.bumpRecent);
-  const activeCategories = CATEGORIES.filter((cat) =>
-    visibleBlocks.some((b) => b.category === cat),
-  );
+  const rawInsert = useLibraryInsert(hasSelection || hasTreeRoot, quick.bumpRecent);
 
   return {
     query,
@@ -173,21 +192,23 @@ export function useLibraryPanelState() {
     style,
     handleStyleChange,
     uiKit: project?.support.uiKit,
-    imagePickerOpen,
-    setImagePickerOpen,
-    iconPickerOpen,
-    setIconPickerOpen,
+    ...modals,
     editable,
     isViewOnly: editMode === 'viewOnly',
     hasSelection,
     hasTreeRoot,
-    visibleBlocks,
-    insert,
-    activeCategories,
-    hoveredPreview,
-    setPreviewBlock: (block: LibraryBlock | undefined, label?: string) => {
-      setHoveredPreview(block !== undefined ? { block, label } : undefined);
+    visibleBlocks: activeBlocks,
+    insert: {
+      ...rawInsert,
+      handleInsert: async (block: LibraryBlock, variantId?: string) => {
+        if (isDataGeneratorBlock(block.id)) {
+          if (hasSelection) modals.setDataPickerMode(dataGeneratorMode(block.id));
+          return;
+        }
+        await rawInsert.handleInsert(block, variantId);
+      },
     },
+    activeCategories: CATEGORIES.filter((cat) => activeBlocks.some((b) => b.category === cat)),
     ...quick,
   };
 }

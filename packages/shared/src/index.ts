@@ -87,6 +87,8 @@ export {
   BridgeMoveIntentPayloadSchema,
   type BridgeReadyPayload,
   BridgeReadyPayloadSchema,
+  type BridgeResponsiveAuditResultPayload,
+  BridgeResponsiveAuditResultPayloadSchema,
   type BridgeRoutePayload,
   BridgeRoutePayloadSchema,
   type BridgeRuntimeErrorPayload,
@@ -112,6 +114,8 @@ export {
   DrawToolSchema,
   type DropRect,
   DropRectSchema,
+  type ElementA11yInfo,
+  ElementA11yInfoSchema,
   type ElementInfo,
   ElementInfoSchema,
   type ElementRef,
@@ -120,6 +124,8 @@ export {
   LayerMenuItemSchema,
   type Rect,
   RectSchema,
+  type ResponsiveAuditIssue,
+  ResponsiveAuditIssueSchema,
   type StudioDesignFilePayload,
   StudioDesignFilePayloadSchema,
   type StudioDragEndPayload,
@@ -134,6 +140,8 @@ export {
   StudioMotionPreviewPayloadSchema,
   type StudioNavigatePayload,
   StudioNavigatePayloadSchema,
+  type StudioResponsiveAuditPayload,
+  StudioResponsiveAuditPayloadSchema,
   type StudioSelectPayload,
   StudioSelectPayloadSchema,
   type StudioSetGridPayload,
@@ -338,6 +346,7 @@ export {
   WORKS_WHILE_TYPING,
 } from './shortcuts.ts';
 export * from './source.ts';
+export * from './source-data.ts';
 export * from './style.ts';
 export * from './style-composite.ts';
 export * from './tailwind/index.ts';

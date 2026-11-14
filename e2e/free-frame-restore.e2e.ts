@@ -3,7 +3,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import { type CliSession, startCli } from './support/cli-session.ts';
 import { copyFixture, makeTempDir, type TempDir } from './support/copy-fixture.ts';
@@ -43,6 +43,21 @@ test.afterEach(async () => {
   await config.remove();
 });
 
+async function openFreeFrameToggle(tab: Page): Promise<Locator> {
+  const toggle = tab.getByTestId('free-frame-toggle');
+  if (!(await toggle.isVisible())) {
+    const layoutBtn = tab.getByTestId('inspector-group-layout');
+    if ((await layoutBtn.getAttribute('aria-expanded')) === 'false') {
+      await layoutBtn.click();
+    }
+    if (!(await toggle.isVisible())) {
+      await tab.getByTestId('free-frame-advanced').locator('> summary').click();
+    }
+  }
+  await expect(toggle).toBeVisible();
+  return toggle;
+}
+
 /** Opens the page, selects the section (through its text block, then Esc) and turns it free. */
 async function openAndTurnOn(page: Page): Promise<Page> {
   const session = await startCli(folder.path, config.path);
@@ -55,7 +70,7 @@ async function openAndTurnOn(page: Page): Promise<Page> {
   await expect(text).toBeVisible({ timeout: 15_000 });
   await text.click();
   await tab.keyboard.press('Escape');
-  const toggle = tab.getByTestId('free-frame-toggle');
+  const toggle = await openFreeFrameToggle(tab);
   await expect(toggle).toHaveAttribute('aria-checked', 'false');
   await toggle.click();
   await expect.poll(() => lineWith('<section'), { timeout: 10_000 }).toContain('data-rc-free');
@@ -64,7 +79,7 @@ async function openAndTurnOn(page: Page): Promise<Page> {
 }
 
 async function turnOff(tab: Page): Promise<void> {
-  const toggle = tab.getByTestId('free-frame-toggle');
+  const toggle = await openFreeFrameToggle(tab);
   await toggle.click();
   await expect.poll(() => lineWith('<section'), { timeout: 10_000 }).not.toContain('data-rc-free');
   await expect(tab.getByTestId('free-frame-restored')).toBeVisible();
@@ -140,7 +155,7 @@ test('a block already placed in a free frame stays put when turned free itself [
 
   await text.click();
   await tab.keyboard.press('Escape');
-  await tab.getByTestId('free-frame-toggle').click();
+  await (await openFreeFrameToggle(tab)).click();
   await expect.poll(() => lineWith('<section'), { timeout: 10_000 }).toContain('data-rc-free');
 
   // Its own `absolute` is kept: no `relative` beside it to pull it out of its place.
@@ -186,7 +201,7 @@ test('a card placed in a free frame turned free itself keeps its size, then resi
 
   await title.click();
   await tab.keyboard.press('Escape');
-  await tab.getByTestId('free-frame-toggle').click();
+  await (await openFreeFrameToggle(tab)).click();
   await expect.poll(() => lineWith('p-6 border'), { timeout: 10_000 }).toContain('data-rc-free');
   // The card keeps its width instead of collapsing around children that left the flow.
   expect(await lineWith('p-6 border')).toMatch(/\bw-\[\d+px\]/);

@@ -42,8 +42,8 @@ function makeTheme(overrides: Partial<ThemeInfo> = {}): ThemeInfo {
 }
 
 describe('renderBlock', () => {
-  it('1. [R-ST-12] all 70 blocks and variants have matching @key tokens and leave no @ or {role} after rendering in any system', () => {
-    expect(LIBRARY_BLOCKS).toHaveLength(70);
+  it('1. [R-ST-12] all 76 blocks and variants have matching @key tokens and leave no @ or {role} after rendering in any system', () => {
+    expect(LIBRARY_BLOCKS).toHaveLength(76);
 
     for (const block of LIBRARY_BLOCKS) {
       const variants = [undefined, ...(block.variants?.map((v) => v.id) ?? [])];

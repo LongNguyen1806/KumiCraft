@@ -152,7 +152,10 @@
     "dismissError": "Đóng thông báo",
     "errorFileChanged": "File {{file}} đã bị sửa từ nơi khác, không hoàn tác được bước này",
     "setStyle": "đổi kiểu dáng <{{tag}}>",
-    "setFlag": "bật/tắt vị trí tự do <{{tag}}>"
+    "setFlag": "bật/tắt vị trí tự do <{{tag}}>",
+    "setProp": "đổi prop <{{tag}}>",
+    "repeatElement": "lặp danh sách <{{tag}}>",
+    "setDataArray": "sửa bảng dữ liệu {{name}}"
   },
   "settings": {
     "open": "Cài đặt",
@@ -373,7 +376,7 @@
       "noProjectColors": "Dự án chưa khai báo màu trong @theme"
     },
     "groups": {
-      "layout": "Bố cục",
+      "layout": "Auto layout",
       "selfLayout": "Vị trí trong cha",
       "sizing": "Kích thước",
       "spacing": "Khoảng cách",
@@ -724,6 +727,7 @@
     "restoredSome": "Đã trả {{restored}} phần tử về như cũ, {{kept}} phần tử giữ vị trí mới.",
     "measureTimeout": "Không thể đo kích thước khung (quá hạn 2 giây).",
     "pageWarning": "Vị trí cố định, có thể lệch trên màn hình khác.",
+    "advanced": "Nâng cao",
     "section": "Khung tự do",
     "position": "Vị trí",
     "x": "X",
@@ -883,5 +887,49 @@
     "body": "Các phần khác vẫn dùng được. Thử lại, hoặc tải lại trang nếu lỗi vẫn còn. Code dự án của bạn không bị đổi.",
     "retry": "Thử lại",
     "reload": "Tải lại trang"
+  },
+  "dataTools": {
+    "repeatButton": "Lặp theo danh sách",
+    "repeatDisabledInLoop": "Đã nằm trong vòng lặp .map()",
+    "gridTitle": "Bảng dữ liệu ({{name}})",
+    "readonlyBanner": "Biểu thức dữ liệu chỉ đọc ({{reason}}). Sửa trong editor.",
+    "addRow": "Thêm dòng",
+    "deleteRow": "Xóa dòng",
+    "moveUp": "Lên",
+    "moveDown": "Xuống",
+    "columnNamePlaceholder": "Tên cột…",
+    "addColumn": "Thêm cột",
+    "saveData": "Lưu dữ liệu",
+    "savingData": "Đang lưu…",
+    "emptyRows": "Chưa có dòng dữ liệu."
+  },
+  "componentProps": {
+    "title": "Thuộc tính component ({{tag}})",
+    "loading": "Đang đọc kiểu props…",
+    "empty": "Không phát hiện prop chỉnh sửa trực tiếp.",
+    "editInEditor": "Sửa trong editor",
+    "openEditor": "Mở",
+    "required": "Bắt buộc",
+    "unset": "(chưa đặt)"
+  },
+  "a11y": {
+    "title": "Gợi ý trợ năng",
+    "contrastLow": "Tương phản chữ thấp ({{ratio}}:1 < 4.5:1)",
+    "missingAlt": "Ảnh thiếu thuộc tính alt",
+    "missingAccessibleName": "Phần tử thiếu chữ hiển thị hoặc aria-label",
+    "unlabeledInput": "Ô nhập thiếu label liên kết hoặc aria-label",
+    "fixAltEmpty": "Thêm alt=\"\"",
+    "fixAriaLabel": "Thêm aria-label",
+    "ariaLabelPlaceholder": "Nhãn trợ năng…",
+    "applyFix": "Áp dụng"
+  },
+  "responsiveAudit": {
+    "button": "Soát responsive",
+    "running": "Đang soát…",
+    "title": "Kết quả soát responsive",
+    "noIssues": "Không phát hiện tràn ngang hoặc chồng lấn giữa phần tử anh em.",
+    "close": "Đóng",
+    "overflow": "Tràn ngang",
+    "overlap": "Chồng nhau"
   }
 }

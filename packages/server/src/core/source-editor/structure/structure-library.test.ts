@@ -29,8 +29,8 @@ describe('M-SE: Library Blocks in Source Editor [WP-2.03]', () => {
     await cleanupTemp();
   });
 
-  it('#11 validates all 70 library blocks in vi and en [R-LB-10, R-LB-11, R-LB-12]', () => {
-    expect(LIBRARY_BLOCKS).toHaveLength(70);
+  it('#11 validates all 76 library blocks in vi and en [R-LB-10, R-LB-11, R-LB-12]', () => {
+    expect(LIBRARY_BLOCKS).toHaveLength(76);
 
     for (const block of LIBRARY_BLOCKS) {
       for (const locale of ['vi', 'en'] as const) {
@@ -41,10 +41,12 @@ describe('M-SE: Library Blocks in Source Editor [WP-2.03]', () => {
         if (block.kit === undefined) {
           // No uppercase tags on standard HTML blocks
           expect(/<[A-Z]/.test(snippet)).toBe(false);
+          // No dynamic expressions
+          expect(snippet.includes('{')).toBe(false);
+        } else {
+          // No leftover {role} placeholders on kit components
+          expect(snippet).not.toMatch(/\{[a-zA-Z0-9_-]+\}/);
         }
-
-        // No dynamic expressions
-        expect(snippet.includes('{')).toBe(false);
 
         // No external links
         expect(snippet.includes('http:')).toBe(false);

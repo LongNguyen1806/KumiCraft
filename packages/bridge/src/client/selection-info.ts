@@ -1,5 +1,7 @@
 import type { ElementInfo, ElementRef } from '@kumicraft/shared';
 
+import { measureElementA11y } from './a11y-measure.ts';
+
 export const MAX_DOM_CLASS = 4000;
 
 const MAX_ANCESTORS = 200;
@@ -35,6 +37,7 @@ function resolveFoundInfo(
   };
   const rawClass = el.getAttribute('class') ?? undefined;
   const domClass = rawClass !== undefined ? rawClass.slice(0, MAX_DOM_CLASS) : undefined;
+  const a11y = measureElementA11y(el);
 
   return {
     ref,
@@ -44,6 +47,7 @@ function resolveFoundInfo(
     instances,
     ...(domClass !== undefined ? { domClass } : {}),
     ancestors: [...ancestors],
+    ...(a11y !== undefined ? { a11y } : {}),
   };
 }
 

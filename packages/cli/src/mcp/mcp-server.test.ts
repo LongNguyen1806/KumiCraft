@@ -81,6 +81,7 @@ describe('kumicraft mcp server [R-AG-19]', () => {
       'kumicraft_report_tool_gap',
       'kumicraft_set_attribute',
       'kumicraft_set_class_name',
+      'kumicraft_set_prop',
       'kumicraft_set_tag',
       'kumicraft_set_text',
       'kumicraft_set_theme_token',

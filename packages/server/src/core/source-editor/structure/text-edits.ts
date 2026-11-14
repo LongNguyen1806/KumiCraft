@@ -49,3 +49,16 @@ export function applyTextEdits(code: string, edits: readonly TextEdit[]): Result
 
   return ok({ code: chunks.join(''), marks });
 }
+
+export function offsetToLoc(rel: string, code: string, offset: number): string {
+  let line = 1;
+  let lastNewline = -1;
+  for (let i = 0; i < offset && i < code.length; i++) {
+    if (code[i] === '\n') {
+      line += 1;
+      lastNewline = i;
+    }
+  }
+  const col = lastNewline === -1 ? offset + 1 : offset - lastNewline;
+  return `${rel}:${String(line)}:${String(col)}`;
+}

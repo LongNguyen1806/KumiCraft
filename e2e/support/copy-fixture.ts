@@ -18,6 +18,7 @@ const EXTRA_PACKAGES = [
   'pug',
   'compression',
   'helmet',
+  'typescript',
 ] as const;
 
 export type TempDir = {

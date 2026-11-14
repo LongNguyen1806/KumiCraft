@@ -19,6 +19,18 @@ export const RectSchema = z.strictObject({
 });
 export type Rect = z.infer<typeof RectSchema>;
 
+export const ElementA11yInfoSchema = z.strictObject({
+  hasText: z.boolean(),
+  textLength: z.number().int().min(0).optional(),
+  contrast: z.number().min(0).max(21).optional(),
+  textColor: z.string().max(64).optional(),
+  bgColor: z.string().max(64).optional(),
+  missingAlt: z.boolean(),
+  missingAccessibleName: z.boolean(),
+  unlabeledInput: z.boolean(),
+});
+export type ElementA11yInfo = z.infer<typeof ElementA11yInfoSchema>;
+
 export const ElementInfoSchema = z.strictObject({
   ref: ElementRefSchema,
   found: z.boolean(),
@@ -31,6 +43,7 @@ export const ElementInfoSchema = z.strictObject({
    * lists the children of a repeated element's first copy, this is the real chain of this copy.
    */
   ancestors: z.array(ElementRefSchema).max(200).optional(),
+  a11y: ElementA11yInfoSchema.optional(),
 });
 export type ElementInfo = z.infer<typeof ElementInfoSchema>;
 
@@ -365,3 +378,29 @@ export const StudioMotionPreviewPayloadSchema = z.strictObject({
   durationMs: z.number().int().min(100).max(5000).optional(),
 });
 export type StudioMotionPreviewPayload = z.infer<typeof StudioMotionPreviewPayloadSchema>;
+
+/** Studio -> Bridge, type 'responsive-audit' (TK-66: check horizontal overflow and sibling overlap). */
+export const StudioResponsiveAuditPayloadSchema = z.strictObject({
+  requestId: z.string().min(1).max(64),
+});
+export type StudioResponsiveAuditPayload = z.infer<typeof StudioResponsiveAuditPayloadSchema>;
+
+export const ResponsiveAuditIssueSchema = z.strictObject({
+  ref: ElementRefSchema,
+  tag: z.string().min(1),
+  kind: z.enum(['overflow', 'overlap']),
+  detail: z.string().max(200).optional(),
+  frameId: z.string().optional(),
+  frameLabel: z.string().optional(),
+  width: z.number().int().positive().optional(),
+});
+export type ResponsiveAuditIssue = z.infer<typeof ResponsiveAuditIssueSchema>;
+
+/** Bridge -> Studio, type 'responsive-audit-result' (TK-66). */
+export const BridgeResponsiveAuditResultPayloadSchema = z.strictObject({
+  requestId: z.string().min(1).max(64),
+  issues: z.array(ResponsiveAuditIssueSchema).max(200),
+});
+export type BridgeResponsiveAuditResultPayload = z.infer<
+  typeof BridgeResponsiveAuditResultPayloadSchema
+>;

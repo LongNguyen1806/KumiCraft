@@ -9,31 +9,34 @@ import {
 } from '@kumicraft/shared';
 
 import {
+  addAltClearListeners,
   addWindowListeners,
+  attachViteHmrListeners,
   type BridgeRuntimeConfig,
   type HotContext,
   isOverlayHost,
+  isToolClickSwallowed,
   navigateCanvasRoute,
   revealSelectedElement,
+  runCanvasEscapeAction,
   shortcutPayload,
+  trimRuntimeErrorPayload,
 } from './bridge-events.ts';
-import { toBuildError } from './build-error.ts';
+import { buildBridgeMessageHandlers } from './bridge-runtime-handlers.ts';
 import { getRefForElement, handleElementClick } from './candidate-chain.ts';
 import { CanvasTools } from './canvas-tools.ts';
 import { scanDomTree } from './dom-scanner.ts';
 import { computeDragHandleTarget, DragController, resolveElementsByRefs } from './drag.ts';
 import { browserDropEnv } from './drop-target.ts';
-import { toggleInteractiveElement } from './interactive-toggle.ts';
 import { shouldForwardShortcut } from './keyboard.ts';
 import { fitsMessageLimit } from './message-size.ts';
-import { triggerMotionPreview } from './motion-preview.ts';
 import { BridgeOverlay } from './overlay.ts';
 import { getBridgeElementAtPoint } from './overlay-focus.ts';
 import { attachRuntimeErrorListeners } from './runtime-errors.ts';
 import { wrapBrowserHistory } from './runtime-history.ts';
 import { collectSelectionInfo } from './selection-info.ts';
 import { dispatchStudioMessage } from './studio-messages.ts';
-import { cleanProbe, StylePreview } from './style-preview.ts';
+import { StylePreview } from './style-preview.ts';
 import { TextEditController } from './text-edit.ts';
 
 export type { BridgeRuntimeConfig, HotContext };
@@ -51,14 +54,13 @@ export class BridgeClientRuntime {
   private readonly stylePreview = new StylePreview();
   private selectedRefs: ElementRef[] = [];
   private lastSelectionInfo: ElementInfo[] = [];
+  private lastHoverEl: Element | undefined;
   private treeDebounceTimer: ReturnType<typeof setTimeout> | undefined;
   private selectionInfoTimer: ReturnType<typeof setTimeout> | undefined;
   private domObserver: MutationObserver;
   private isDestroyed = false;
   private textEdit: TextEditController;
-  private historyTeardown?: () => void;
-  private errorTeardown?: () => void;
-  private windowListenersTeardown?: () => void;
+  private readonly teardowns: Array<() => void> = [];
   private designFile: string | undefined;
   private focus = false;
 
@@ -135,26 +137,26 @@ export class BridgeClientRuntime {
 
   private init(): void {
     window.addEventListener('message', this.handleStudioMessage);
-    this.windowListenersTeardown = addWindowListeners(
-      this.handleCapturedEvent,
-      this.handlePointerMove,
-      this.handleKeyDown,
-      this.handleScrollOrResize,
-      (type, payload) => {
-        this.sendToStudio(type, payload);
-      },
+    this.teardowns.push(
+      addWindowListeners(
+        this.handleCapturedEvent,
+        this.handlePointerMove,
+        this.handleKeyDown,
+        this.handleScrollOrResize,
+        (type, payload) => {
+          this.sendToStudio(type, payload);
+        },
+      ),
+      addAltClearListeners(() => {
+        this.overlay.setAltMeasure(undefined, undefined);
+      }),
+      wrapBrowserHistory(() => {
+        this.sendToStudio('route', { route: window.location.pathname });
+      }),
+      attachRuntimeErrorListeners((msg, stack) => {
+        this.sendToStudio('runtime-error', trimRuntimeErrorPayload(msg, stack));
+      }),
     );
-
-    this.historyTeardown = wrapBrowserHistory(() => {
-      this.sendToStudio('route', { route: window.location.pathname });
-    });
-
-    this.errorTeardown = attachRuntimeErrorListeners((message, stack) => {
-      this.sendToStudio('runtime-error', {
-        message: message.slice(0, 2000),
-        ...(stack !== undefined ? { stack: stack.slice(0, 8000) } : {}),
-      });
-    });
 
     this.domObserver.observe(document.documentElement, {
       childList: true,
@@ -163,7 +165,18 @@ export class BridgeClientRuntime {
       attributeFilter: ['data-rc-loc', 'class'],
     });
 
-    this.attachViteHmr();
+    attachViteHmrListeners(
+      this.hot,
+      this.rootDir,
+      (err) => {
+        this.sendToStudio('build-error', err);
+      },
+      () => {
+        this.sendToStudio('build-ok', {});
+        this.scheduleTreeScan();
+        this.scheduleSelectionInfo();
+      },
+    );
 
     this.sendToStudio('ready', {
       bridgeVersion: '1.0.0',
@@ -187,51 +200,31 @@ export class BridgeClientRuntime {
     if (event.source !== window.parent || event.origin !== this.studioOrigin) return;
     const envelope = BridgeEnvelopeSchema.safeParse(event.data);
     if (!envelope.success || envelope.data.nonce !== this.nonce) return;
-    dispatchStudioMessage(envelope.data.type, envelope.data.payload, {
+    dispatchStudioMessage(envelope.data.type, envelope.data.payload, this.buildMessageHandlers());
+  };
+
+  private buildMessageHandlers() {
+    return buildBridgeMessageHandlers({
+      getMode: () => this.mode,
       setMode: this.setMode,
       handleSelect: this.handleSelectMessage,
       handleHighlight: this.handleHighlightMessage,
       handleNavigate: this.handleNavigateMessage,
       handleTextEditStart: this.handleTextEditStartMessage,
-      handleDesignFile: this.setDesignFile,
-      commitTextEdit: () => {
-        this.textEdit.commit();
+      setDesignFile: this.setDesignFile,
+      textEdit: this.textEdit,
+      drag: this.drag,
+      tools: this.tools,
+      overlay: this.overlay,
+      stylePreview: this.stylePreview,
+      scheduleTreeScan: () => {
+        this.scheduleTreeScan();
       },
-      handleDragOver: (d) => {
-        if (this.mode === 'design' && !this.textEdit.isActive()) this.drag.studioDragOver(d);
-      },
-      handleDragEnd: (d) => {
-        this.drag.studioDragEnd(d.drop);
-      },
-      handleSetGrid: (d) => {
-        this.tools.setGrid(d.size);
-        this.tools.setSnap(d.snap ?? true, d.scale ?? 1);
-      },
-      handleMeasureFree: (ref) => {
-        this.tools.measureFree(ref, document);
-      },
-      handleSetTool: (tool) => {
-        this.tools.setTool(tool);
-      },
-      handleStyleProbe: (d) => {
-        this.sendToStudio('style-probe-result', cleanProbe(this.stylePreview, d, document));
-      },
-      handleStylePreview: (d) => {
-        this.stylePreview.applyByRef(d.ref, d.property, d.value, document);
-      },
-      handleStylePreviewClear: () => {
-        this.stylePreview.clearAll();
-      },
-      handleMotionPreview: (d) => {
-        triggerMotionPreview(d, document);
-      },
-      handleToggleInteractive: (d) => {
-        if (toggleInteractiveElement(d, document)) {
-          this.scheduleTreeScan();
-        }
+      sendToStudio: (t, p) => {
+        this.sendToStudio(t, p);
       },
     });
-  };
+  }
 
   private setMode = (mode: 'design' | 'preview'): void => {
     this.stylePreview.clearAll();
@@ -239,6 +232,7 @@ export class BridgeClientRuntime {
       this.textEdit.commit();
       this.drag.cancel();
       this.tools.cancel();
+      this.overlay.setAltMeasure(undefined, undefined);
     }
     this.mode = mode;
     this.overlay.setVisible(mode === 'design');
@@ -321,7 +315,6 @@ export class BridgeClientRuntime {
     return getBridgeElementAtPoint(document, x, y, this.designFile, this.focus);
   }
 
-  /** Presses, right-clicks and handle clicks owned by the Canvas tools. True when handled. */
   private handleToolEvent(event: Event): boolean {
     if (event.type === 'pointerdown') {
       this.tools.pointerDown(
@@ -334,11 +327,7 @@ export class BridgeClientRuntime {
       this.tools.contextMenu(event as MouseEvent, this.designFile, this.focus);
       return true;
     }
-    // Clicks on overlay controls (size or drag handles) or with a draw tool active must not select.
-    return (
-      (event.type === 'click' || event.type === 'dblclick') &&
-      (isOverlayHost(event.target) || this.tools.swallowDrawClick())
-    );
+    return isToolClickSwallowed(event, () => this.tools.swallowDrawClick());
   }
 
   private handleClick(mouseEvt: MouseEvent): void {
@@ -362,26 +351,34 @@ export class BridgeClientRuntime {
   private handlePointerMove = (event: PointerEvent): void => {
     if (this.mode !== 'design' || this.drag.isDragging() || this.tools.isDragging()) return;
     const target = this.elementAt(event.clientX, event.clientY);
+    this.lastHoverEl = target;
     this.overlay.setHover(target);
+    this.syncAltMeasure(event.altKey);
     const ref = target ? getRefForElement(target, document) : undefined;
     this.sendToStudio('hover', ref ? { ref } : {});
   };
 
-  private handleKeyDown = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape' && this.drag.isDragging()) {
-      event.preventDefault();
-      event.stopPropagation();
-      this.drag.cancel();
+  private syncAltMeasure(altHeld: boolean): void {
+    if (!altHeld || this.mode !== 'design' || this.selectedRefs.length !== 1 || !this.lastHoverEl) {
+      this.overlay.setAltMeasure(undefined, undefined);
       return;
     }
-    if (event.key === 'Escape' && this.tools.escape()) {
-      event.preventDefault();
-      event.stopPropagation();
-      return;
-    }
-    const isMac = navigator.platform.toUpperCase().includes('MAC');
-    if (!shouldForwardShortcut(event, this.mode, this.textEdit.isActive(), isMac)) return;
+    const selectedEl = resolveElementsByRefs(this.selectedRefs, document)[0];
+    this.overlay.setAltMeasure(selectedEl, this.lastHoverEl);
+  }
 
+  private handleKeyDown = (event: KeyboardEvent): void => {
+    if (event.key === 'Alt') this.syncAltMeasure(true);
+    if (runCanvasEscapeAction(event, this.drag, this.tools)) return;
+    if (
+      !shouldForwardShortcut(
+        event,
+        this.mode,
+        this.textEdit.isActive(),
+        navigator.platform.toUpperCase().includes('MAC'),
+      )
+    )
+      return;
     event.preventDefault();
     this.sendToStudio('shortcut', shortcutPayload(event));
   };
@@ -394,18 +391,6 @@ export class BridgeClientRuntime {
     }, 100);
   }
 
-  private attachViteHmr(): void {
-    if (this.hot === undefined) return;
-    this.hot.on('vite:error', (payload) => {
-      this.sendToStudio('build-error', toBuildError(payload, this.rootDir));
-    });
-    this.hot.on('vite:afterUpdate', () => {
-      this.sendToStudio('build-ok', {});
-      this.scheduleTreeScan();
-      this.scheduleSelectionInfo();
-    });
-  }
-
   private handleScrollOrResize = (): void => {
     this.tools.scrolled();
     this.scheduleSelectionInfo();
@@ -416,9 +401,12 @@ export class BridgeClientRuntime {
     this.selectionInfoTimer = setTimeout(() => {
       this.selectionInfoTimer = undefined;
       this.syncDragHandle();
-      const items = collectSelectionInfo(this.selectedRefs, document, this.lastSelectionInfo);
-      this.lastSelectionInfo = items;
-      this.sendToStudio('selection-info', { items });
+      this.lastSelectionInfo = collectSelectionInfo(
+        this.selectedRefs,
+        document,
+        this.lastSelectionInfo,
+      );
+      this.sendToStudio('selection-info', { items: this.lastSelectionInfo });
     }, 16);
   }
 
@@ -434,9 +422,7 @@ export class BridgeClientRuntime {
     this.drag.destroy();
     this.tools.destroy();
     this.textEdit.destroy();
-    this.historyTeardown?.();
-    this.errorTeardown?.();
-    this.windowListenersTeardown?.();
+    for (const stop of this.teardowns) stop();
     if (this.treeDebounceTimer !== undefined) clearTimeout(this.treeDebounceTimer);
     if (this.selectionInfoTimer !== undefined) clearTimeout(this.selectionInfoTimer);
     this.domObserver.disconnect();

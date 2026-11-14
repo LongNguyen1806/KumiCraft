@@ -27,6 +27,7 @@ import { z } from 'zod';
 
 import type { HistoryService } from '../../../core/history/history-service.ts';
 import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
+import type { ProcessPort } from '../../../core/ports/process-port.ts';
 import { listProjectComponents } from '../../../core/project/components-list.ts';
 import { listPublicImages } from '../../../core/project/images.ts';
 import type { ProjectService } from '../../../core/project/project-service.ts';
@@ -34,6 +35,7 @@ import type { SessionInfo } from '../../../core/shared/session.ts';
 import type { ConfigStore } from '../../../core/shared/user-config.ts';
 import type { UsageCounter } from '../../../core/source-editor/component-usages.ts';
 import { sendError } from '../send-error.ts';
+import { registerProjectDataRoutes } from './project-data.ts';
 import { registerProjectFilesRoutes } from './project-files.ts';
 import { registerRecentProjectRoutes } from './project-recent.ts';
 
@@ -41,6 +43,8 @@ export type ProjectRoutesDeps = {
   readonly projectService: ProjectService;
   readonly getSessionInfo: () => SessionInfo;
   readonly fs?: FileSystemPort | undefined;
+  readonly process?: ProcessPort | undefined;
+  readonly tsInspectScript?: string | undefined;
   readonly usageCounter?: UsageCounter | undefined;
   readonly recents?: Pick<ConfigStore, 'recentProjects' | 'forgetProject'> | undefined;
   readonly historyService?: HistoryService | undefined;
@@ -376,4 +380,5 @@ export function registerProjectRoutes(api: FastifyInstance, deps: ProjectRoutesD
   registerDraftCrudRoutes(api, deps);
   registerDraftOpRoutes(api, deps);
   registerThemeRoutes(api, deps);
+  registerProjectDataRoutes(api, deps);
 }

@@ -7,7 +7,7 @@ import type {
   Scope,
   ThemeInfo,
 } from '@kumicraft/shared';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -65,6 +65,7 @@ export type InspectorPropertyGroupsProps = {
   readonly isLocked: boolean;
   readonly onPropertyValueChange: (property: PropertyId, value: ClassValue | undefined) => void;
   readonly onBatchProperties?: ((entries: readonly BatchPropEntry[]) => void) | undefined;
+  readonly layoutFooter?: ReactNode | undefined;
 };
 
 /** What every field of the panel gets. */
@@ -208,6 +209,29 @@ function EffectsGroupBody({
   );
 }
 
+function LayoutGroupBody({
+  fields,
+  shared,
+}: {
+  readonly fields: (typeof PROPERTY_GROUPS)[number]['fields'];
+  readonly shared: Shared;
+}) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <GroupFieldsGrid fields={fields} shared={shared} />
+      {shared.layoutFooter !== undefined && (
+        <details data-testid="free-frame-advanced" className="mt-2 border-t border-line pt-2">
+          <summary className="cursor-pointer select-none text-[11px] font-medium text-ink-soft hover:text-ink">
+            {t('freeFrame.advanced')}
+          </summary>
+          <div className="pt-1.5">{shared.layoutFooter}</div>
+        </details>
+      )}
+    </>
+  );
+}
+
 function GroupBody({
   group,
   toggles,
@@ -228,6 +252,7 @@ function GroupBody({
       </>
     );
   }
+  if (group.id === 'layout') return <LayoutGroupBody fields={group.fields} shared={shared} />;
   if (group.id === 'spacing') return <SpacingGroupBody fields={group.fields} shared={shared} />;
   if (group.id === 'effects') return <EffectsGroupBody fields={group.fields} shared={shared} />;
   return <GroupFieldsGrid fields={group.fields} shared={shared} />;
