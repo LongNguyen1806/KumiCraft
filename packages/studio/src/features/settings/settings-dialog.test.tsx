@@ -70,6 +70,18 @@ describe('Settings dialog', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it('shows what KumiCraft is and who made it under About', async () => {
+    stubSettings();
+    await openSettings();
+
+    fireEvent.click(screen.getByTestId('settings-section-about'));
+    const author = screen.getByTestId('about-author');
+    expect(author.textContent).toContain('Long Nguyen');
+    expect(author.textContent).toContain('Full Stack Engineer');
+    expect(author.textContent).toContain('FPT Aptech');
+    expect(screen.getByTestId('settings-about').textContent).toContain('© 2026 Long Nguyen');
+  });
+
   it('switches the interface language at once and remembers it', async () => {
     stubSettings();
     await openSettings();

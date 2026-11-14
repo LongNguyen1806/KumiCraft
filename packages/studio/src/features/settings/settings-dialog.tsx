@@ -1,4 +1,4 @@
-import { Code, Languages, Sparkles, Square } from 'lucide-react';
+import { Code, Info, Languages, Sparkles, Square } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -12,6 +12,7 @@ import { useSettingsStore } from '../../store/settings-store.ts';
 import { AgentSection } from '../agents/agent-section.tsx';
 import { ToolGapsSection } from '../agents/tool-gaps-section.tsx';
 import { useProjectInfo } from '../project/project-store.ts';
+import { AboutSection } from './about-section.tsx';
 
 type SettingsDialogProps = { readonly open: boolean; readonly onClose: () => void };
 
@@ -20,10 +21,11 @@ const SECTIONS = [
   { id: 'tools', icon: Code },
   { id: 'agent', icon: Sparkles },
   { id: 'canvas', icon: Square },
+  { id: 'about', icon: Info },
 ] as const;
 type SectionId = (typeof SECTIONS)[number]['id'];
 
-/** The four parts of Settings, one at a time (P5). */
+/** The parts of Settings, one at a time (P5). */
 function SectionNav({
   current,
   onPick,
@@ -76,6 +78,7 @@ function SectionBody({ id, open }: { readonly id: SectionId; readonly open: bool
     );
   }
   if (id === 'canvas') return <LoginSessionsChoice />;
+  if (id === 'about') return <AboutSection open={open} />;
   return (
     <>
       <AgentSection />

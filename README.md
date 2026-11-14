@@ -2,6 +2,8 @@
 
 **A visual editor for your real React + Vite code.**
 
+Designed and built by **Long Nguyen**, Full Stack Engineer · FPT Aptech.
+
 Open your project, click any element on a live Canvas and change its classes, styles, text, images, layout or pages. KumiCraft writes each change straight into **your own source files**, as clean as if you had typed it yourself, and every step can be undone.
 
 No export step, no generated copy of your app, no lock-in: close KumiCraft and your project is a normal project.
@@ -10,20 +12,23 @@ No export step, no generated copy of your app, no lock-in: close KumiCraft and y
 
 ## Contents
 
-- [Features](#features)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Quick start](#quick-start)
-- [Using the Studio](#using-the-studio)
-- [AI assistant](#ai-assistant)
-- [Connecting an external AI agent (MCP)](#connecting-an-external-ai-agent-mcp)
-- [Command-line reference](#command-line-reference)
-- [Keyboard shortcuts](#keyboard-shortcuts)
-- [Updating and uninstalling](#updating-and-uninstalling)
-- [Troubleshooting](#troubleshooting)
-- [Privacy and data](#privacy-and-data)
-- [Development](#development)
-- [License](#license)
+- [KumiCraft](#kumicraft)
+  - [Contents](#contents)
+  - [Features](#features)
+  - [Requirements](#requirements)
+  - [Installation](#installation)
+  - [Quick start](#quick-start)
+  - [Using the Studio](#using-the-studio)
+  - [AI assistant](#ai-assistant)
+  - [Connecting an external AI agent (MCP)](#connecting-an-external-ai-agent-mcp)
+  - [Command-line reference](#command-line-reference)
+  - [Keyboard shortcuts](#keyboard-shortcuts)
+  - [Updating and uninstalling](#updating-and-uninstalling)
+  - [Troubleshooting](#troubleshooting)
+  - [Privacy and data](#privacy-and-data)
+  - [Development](#development)
+  - [Author](#author)
+  - [License](#license)
 
 ---
 
@@ -223,6 +228,12 @@ Uninstalling does not change your projects. To remove KumiCraft's data from a pr
 ## Development
 
 Building KumiCraft from source, running the tests and publishing a release are described in [docs/development.md](docs/development.md).
+
+## Author
+
+**Long Nguyen**, Full Stack Engineer · FPT Aptech.
+
+KumiCraft is designed and developed by Long Nguyen: product idea, design, architecture and code. The same information is shown in the app under **Settings → About**.
 
 ## License
 
