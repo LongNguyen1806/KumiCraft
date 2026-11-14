@@ -102,7 +102,8 @@
     "noLimitsAgy": "Antigravity CLI does not share its limits. See them with /usage in Antigravity",
     "noLimitsYet": "No data yet, send a message to update",
     "lastTurn": "Last turn: {{tokens}} tokens",
-    "updatedAt": "Updated {{time}}"
+    "updatedAt": "Updated {{time}}",
+    "pickModelHint": "Using the AI's default model (it may be a costly one). Click to pick a model."
   },
   "sessions": {
     "title": "Chat sessions",

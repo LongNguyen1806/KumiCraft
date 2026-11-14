@@ -7,7 +7,6 @@ import {
   type AgentStatus,
   normalizeWorkspaceAi,
 } from '@kumicraft/shared';
-import { ChevronDown, Eye, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -15,7 +14,9 @@ import { fetchAgentModels } from '../../api/agent-client.ts';
 import { patchProject } from '../../api/project-client.ts';
 import { AgentBadge } from '../agents/agent-badge.tsx';
 import { useProjectStore } from '../project/project-store.ts';
+import { SettingsChip } from './agent-settings-chip.tsx';
 import { UsageSection } from './agent-usage.tsx';
+import { useModelHint } from './model-hint.ts';
 import { type AgentUsageView, highestUse, useUsageStore } from './usage-store.ts';
 
 type AiPatch = {
@@ -59,12 +60,6 @@ function useModels(agentId: AgentStatus['id'], open: boolean) {
     };
   }, [agentId, open, models]);
   return models[agentId];
-}
-
-function ringClass(used: number | undefined): string {
-  if (used !== undefined && used > 0.95) return 'border-danger';
-  if (used !== undefined && used > 0.8) return 'border-sun';
-  return 'border-border';
 }
 
 type ChoiceProps = {
@@ -221,51 +216,6 @@ function useCloseOnOutside(open: boolean, close: () => void) {
   return rootRef;
 }
 
-type SettingsChipProps = {
-  readonly open: boolean;
-  readonly allowEdits: boolean;
-  readonly choice: AgentRunChoice | undefined;
-  readonly models: readonly AgentModelOption[] | undefined;
-  readonly used: number | undefined;
-  readonly onToggle: () => void;
-};
-
-/** `✦ Sonnet · Cao ▾`, an eye in Ask mode, the border warns as the limits run out. */
-function SettingsChip({ open, allowEdits, choice, models, used, onToggle }: SettingsChipProps) {
-  const { t } = useTranslation('chat');
-  const modelLabel =
-    models?.find((m) => m.id === choice?.model)?.label ??
-    choice?.model ??
-    t('agentSettings.default');
-  const effortLabel =
-    choice?.effort === undefined ? undefined : t(`agentSettings.efforts.${choice.effort}`);
-  return (
-    <button
-      type="button"
-      data-testid="agent-settings-chip"
-      aria-haspopup="dialog"
-      aria-expanded={open}
-      title={allowEdits ? t('agentSettings.title') : t('readOnlyNotice')}
-      onClick={onToggle}
-      className={`flex max-w-full min-w-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] text-ink-soft hover:text-ink cursor-pointer ${ringClass(used)}`}
-    >
-      <Sparkles className="size-3 shrink-0" />
-      <span className="truncate">
-        {modelLabel}
-        {effortLabel !== undefined && ` · ${effortLabel}`}
-      </span>
-      {!allowEdits && (
-        <Eye
-          data-testid="agent-settings-ask"
-          aria-label={t('agentSettings.ask')}
-          className="size-3 shrink-0"
-        />
-      )}
-      <ChevronDown className="size-3 shrink-0" />
-    </button>
-  );
-}
-
 type SettingsPopoverProps = {
   readonly agent: AgentStatus;
   readonly allowEdits: boolean;
@@ -348,6 +298,7 @@ export function AgentSettings({ agent }: { readonly agent: AgentStatus }) {
   }, [agent.id]);
 
   const choice = ai.agents?.[agent.id];
+  const glow = useModelHint(choice?.model);
 
   return (
     <div
@@ -362,6 +313,7 @@ export function AgentSettings({ agent }: { readonly agent: AgentStatus }) {
         choice={choice}
         models={models}
         used={highestUse(usage)}
+        glow={glow}
         onToggle={() => {
           setOpen((v) => !v);
         }}

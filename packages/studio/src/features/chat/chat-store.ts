@@ -53,6 +53,8 @@ export type ChatState = {
   readonly imageError?: string | undefined;
   readonly hidden: ChatHiddenContext;
   readonly hasConversation: boolean;
+  /** A message was sent since the Studio opened (the model chip stops glowing). */
+  readonly sentThisVisit: boolean;
   /** The agent conversation the chat shows; absent: a new one or turns saved before sessions. */
   readonly sessionId?: string | undefined;
 
@@ -227,6 +229,7 @@ function createTurnLifecycleActions(set: SetState) {
         images: [],
         hidden: INITIAL_HIDDEN,
         hasConversation: true,
+        sentThisVisit: true,
       }));
     },
     setRunningJobId: (jobId: string) => {
@@ -326,6 +329,7 @@ export const useChatStore = create<ChatState>((set) => ({
   imageError: undefined,
   hidden: INITIAL_HIDDEN,
   hasConversation: false,
+  sentThisVisit: false,
   ...createInputActions(set),
   ...createTurnLifecycleActions(set),
   ...createJobOutcomeActions(set),

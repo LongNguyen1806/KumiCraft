@@ -8,6 +8,7 @@ import * as agentClient from '../../api/agent-client.ts';
 import * as projectClient from '../../api/project-client.ts';
 import { useProjectStore } from '../project/project-store.ts';
 import { AgentSettings } from './agent-settings.tsx';
+import { useChatStore } from './chat-store.ts';
 import { useUsageStore } from './usage-store.ts';
 
 const CLAUDE: AgentStatus = {
@@ -152,5 +153,25 @@ describe('AgentSettings chip [K9.5]', () => {
     expect(screen.getByTestId('agent-settings-popover')).toBeDefined();
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByTestId('agent-settings-popover')).toBeNull();
+  });
+
+  it('glows around "Default" each visit, old chats included, until a message is sent', () => {
+    useChatStore.setState({ hasConversation: true, sentThisVisit: false });
+    render(<AgentSettings agent={CLAUDE} />);
+    const chip = screen.getByTestId('agent-settings-chip');
+    expect(chip.getAttribute('data-glow')).toBe('true');
+
+    act(() => {
+      useChatStore.getState().startLocal('Hello');
+    });
+    expect(chip.getAttribute('data-glow')).toBeNull();
+    cleanup();
+
+    act(() => {
+      useChatStore.setState({ turns: [], hasConversation: false, sentThisVisit: false });
+    });
+    setAi({ allowEdits: true, agents: { claude: { model: 'sonnet' } } });
+    render(<AgentSettings agent={CLAUDE} />);
+    expect(screen.getByTestId('agent-settings-chip').getAttribute('data-glow')).toBeNull();
   });
 });
