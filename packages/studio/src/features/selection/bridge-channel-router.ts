@@ -111,15 +111,6 @@ export class BridgeChannelRegistry {
     }
     return count;
   }
-
-  broadcastDarkPreview(dark: boolean): number {
-    let count = 0;
-    for (const ch of this.channels.values()) {
-      ch.setDarkPreview(dark);
-      count += 1;
-    }
-    return count;
-  }
 }
 
 export class StudioBridgeChannel extends BridgeChannel {
@@ -227,11 +218,6 @@ export class StudioBridgeChannel extends BridgeChannel {
     super.styleProbe(ref, properties, state, dark, groupSelector);
     const active = this.getActiveChannel();
     if (active !== this) active.styleProbe(ref, properties, state, dark, groupSelector);
-  }
-
-  override setDarkPreview(dark: boolean): void {
-    super.setDarkPreview(dark);
-    bridgeChannels.broadcastDarkPreview(dark);
   }
 
   override setStatePreview(

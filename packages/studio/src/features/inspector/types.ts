@@ -52,8 +52,6 @@ export type InspectorTarget =
       readonly setInteractionState: (state?: InteractionState) => void;
       readonly previewState?: InspectorPreviewState | undefined;
       readonly setPreviewState?: ((state?: InspectorPreviewState) => void) | undefined;
-      readonly darkMode?: boolean | undefined;
-      readonly setDarkMode?: ((dark: boolean) => void) | undefined;
       readonly groupRef?: ElementRef | undefined;
       readonly setGroupRef?: ((ref?: ElementRef) => void) | undefined;
       readonly refresh: () => void;

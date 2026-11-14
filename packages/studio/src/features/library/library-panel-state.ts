@@ -26,6 +26,7 @@ import {
 } from './data-source-picker-dialog.tsx';
 import { insertBlock } from './insert-block.ts';
 import { getFavoriteBlocks, getRecentBlocks, toggleFavoriteBlock } from './library-favorites.ts';
+import { type PreviewAnchor } from './library-preview-card.tsx';
 import { getSelectedStyle, setSelectedStyle } from './library-styles.ts';
 
 const CATEGORIES: readonly LibraryBlockCategory[] = [
@@ -154,7 +155,12 @@ function usePanelModalsState() {
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [dataPickerMode, setDataPickerMode] = useState<DataPickerMode | undefined>();
   const [hoveredPreview, setHoveredPreview] = useState<
-    { readonly block: LibraryBlock; readonly label?: string | undefined } | undefined
+    | {
+        readonly block: LibraryBlock;
+        readonly label?: string | undefined;
+        readonly anchor?: PreviewAnchor | undefined;
+      }
+    | undefined
   >();
   return {
     imagePickerOpen,
@@ -164,8 +170,8 @@ function usePanelModalsState() {
     dataPickerMode,
     setDataPickerMode,
     hoveredPreview,
-    setPreviewBlock: (block: LibraryBlock | undefined, label?: string) => {
-      setHoveredPreview(block !== undefined ? { block, label } : undefined);
+    setPreviewBlock: (block: LibraryBlock | undefined, label?: string, anchor?: PreviewAnchor) => {
+      setHoveredPreview(block !== undefined ? { block, label, anchor } : undefined);
     },
   };
 }

@@ -158,5 +158,14 @@
     "success": "Success",
     "warn": "Warning",
     "error": "Error"
+  },
+  "aiTasks": {
+    "title": "Done by AI",
+    "badge": "AI",
+    "hint": "Project-wide jobs: the AI does them the way the project already works.",
+    "darkMode": {
+      "label": "Dark mode",
+      "description": "Dark mode touches the whole project (colors for each element, a light/dark button, remembering the visitor's choice) and every project does it its own way, so KumiCraft has no tool for it. Click \"Ask AI\" to open the AI tab with a prepared request; read it, edit if needed, then send. The AI reuses the light/dark setup the project already has and never adds a second one."
+    }
   }
 }

@@ -1,4 +1,4 @@
-// E2E tests for K9.8-1 Group 11: SelectGroup, Linked Content, Dark Mode + ThemeToggle, Toast, and Mixed Text Edit.
+// E2E tests for K9.8-1 Group 11: SelectGroup, Linked Content, Toast, and Mixed Text Edit.
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -100,7 +100,7 @@ test('Group 11a: SelectGroup multi-select wrap, link content panels, and live Pr
   await expect(card3).toHaveAttribute('data-selected', 'true');
 });
 
-test('Group 11b: Dark preview (view only), Toast on click, and Mixed text run edit preserving SVG', async ({
+test('Group 11b: No dark tools, Toast on click, and Mixed text run edit preserving SVG', async ({
   page,
 }) => {
   folder = await copyFixture('projects/vite8-react19-ts');
@@ -137,13 +137,10 @@ test('Group 11b: Dark preview (view only), Toast on click, and Mixed text run ed
   const canvas = await getCanvasFrame(page);
   await expect(canvas.getByRole('button', { name: 'Đặt hàng' })).toBeVisible({ timeout: 20_000 });
 
-  // Dark preview only shows the page dark on the Canvas: nothing is written (QA K9.8-1: setting
-  // dark mode up is a job for the AI tab).
+  // Dark mode is a job for the AI tab (owner 2026-11-15): no Dark button on the Canvas toolbar and
+  // nothing dark is ever written by KumiCraft itself.
   const cssBefore = await readFile(indexCss, 'utf8');
-  await page.getByTestId('canvas-dark-preview').click();
-  await expect(canvas.locator('html')).toHaveClass(/dark/);
-  await page.getByTestId('canvas-dark-preview').click();
-  await expect(canvas.locator('html')).not.toHaveClass(/dark/);
+  await expect(page.getByTestId('canvas-dark-preview')).toHaveCount(0);
   expect(await readFile(indexCss, 'utf8')).toBe(cssBefore);
   expect(existsSync(join(folder.path, 'src', 'kumicraft', 'theme.ts'))).toBe(false);
 

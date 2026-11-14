@@ -9,6 +9,7 @@ import { resources } from '../../i18n/i18n.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { getBlockIcon } from './library-icons.ts';
+import { previewAnchorOf, type PreviewHandler } from './library-preview-card.tsx';
 import { LibraryVariantMenu } from './library-variant-menu.tsx';
 import { getSelectedVariant, setSelectedVariant } from './library-variants.ts';
 
@@ -111,7 +112,7 @@ export type BlockItemProps = {
   readonly uiKit?: UiKitReport | undefined;
   readonly isFavorite: boolean;
   readonly onToggleFavorite: (blockId: string) => void;
-  readonly onPreview: (block: LibraryBlock | undefined, label?: string) => void;
+  readonly onPreview: PreviewHandler;
   readonly onSelect: (block: LibraryBlock, variantId?: string) => void;
 };
 
@@ -193,21 +194,22 @@ function buildBlockTileHandlers(
   label: string,
   dragDisabled: boolean | undefined,
   selectedVariant: string | undefined,
-  onPreview: (block: LibraryBlock | undefined, label?: string) => void,
+  onPreview: PreviewHandler,
 ) {
   return {
     onDragStart: (e: React.DragEvent<HTMLDivElement>) => {
+      onPreview(undefined);
       handleBlockDragStart(e, block, dragDisabled, selectedVariant);
     },
     onDragEnd: handleBlockDragEnd,
-    onMouseEnter: () => {
-      onPreview(block, label);
+    onMouseEnter: (e: React.MouseEvent<HTMLDivElement>) => {
+      onPreview(block, label, previewAnchorOf(e.currentTarget));
     },
     onMouseLeave: () => {
       onPreview(undefined);
     },
-    onFocus: () => {
-      onPreview(block, label);
+    onFocus: (e: React.FocusEvent<HTMLDivElement>) => {
+      onPreview(block, label, previewAnchorOf(e.currentTarget));
     },
     onBlur: () => {
       onPreview(undefined);

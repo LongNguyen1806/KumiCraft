@@ -5,9 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { ImagePickerDialog } from '../draw/image-picker-dialog.tsx';
 import { IconPickerDialog } from '../icons/icon-picker.tsx';
 import { DataSourcePickerDialog } from './data-source-picker-dialog.tsx';
+import { LibraryAiTasks } from './library-ai-tasks.tsx';
 import { BlockItem } from './library-block-item.tsx';
 import { useLibraryPanelState } from './library-panel-state.ts';
-import { LibraryPreviewCard } from './library-preview-card.tsx';
+import { LibraryPreviewCard, type PreviewHandler } from './library-preview-card.tsx';
 import { LibraryQuickRows } from './library-quick-rows.tsx';
 import { LibrarySearchHeader } from './library-search-header.tsx';
 
@@ -21,7 +22,7 @@ type CategorySectionProps = {
   readonly uiKit?: UiKitReport | undefined;
   readonly favoriteIds: readonly string[];
   readonly onToggleFavorite: (blockId: string) => void;
-  readonly onPreview: (block: LibraryBlock | undefined, label?: string) => void;
+  readonly onPreview: PreviewHandler;
   readonly onSelect: (block: LibraryBlock, variantId?: string) => void;
 };
 
@@ -113,6 +114,7 @@ function LibraryContent({ s }: { readonly s: ReturnType<typeof useLibraryPanelSt
           />
         ))
       )}
+      <LibraryAiTasks query={s.query} />
     </div>
   );
 }
@@ -158,7 +160,7 @@ export function LibraryPanel() {
     <aside
       aria-label={t('title')}
       data-testid="library-panel"
-      className="relative flex h-full flex-col overflow-hidden text-xs"
+      className="flex h-full flex-col overflow-hidden text-xs"
     >
       <LibrarySearchHeader
         query={s.query}
@@ -175,7 +177,11 @@ export function LibraryPanel() {
         errorInfo={s.insert.errorInfo}
       />
       <LibraryContent s={s} />
-      <LibraryPreviewCard block={s.hoveredPreview?.block} label={s.hoveredPreview?.label} />
+      <LibraryPreviewCard
+        block={s.hoveredPreview?.block}
+        label={s.hoveredPreview?.label}
+        anchor={s.hoveredPreview?.anchor}
+      />
       <LibraryDialogs s={s} />
     </aside>
   );

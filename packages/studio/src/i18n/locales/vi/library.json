@@ -158,5 +158,14 @@
     "success": "Thành công",
     "warn": "Cảnh báo",
     "error": "Lỗi"
+  },
+  "aiTasks": {
+    "title": "Làm bằng AI",
+    "badge": "AI",
+    "hint": "Việc đụng cả dự án: AI làm theo đúng cách dự án đang làm.",
+    "darkMode": {
+      "label": "Chế độ tối",
+      "description": "Chế độ tối đụng tới cả dự án (màu cho từng phần tử, nút Sáng/Tối, nhớ lựa chọn của người xem) và mỗi dự án làm một kiểu khác nhau, nên KumiCraft không tự làm bằng công cụ. Bấm \"Nhờ AI làm\" để mở tab AI với lời nhờ soạn sẵn; bạn đọc, sửa nếu cần rồi gửi. AI sẽ dùng lại cách sáng/tối dự án đang có, không tạo cái thứ hai."
+    }
   }
 }

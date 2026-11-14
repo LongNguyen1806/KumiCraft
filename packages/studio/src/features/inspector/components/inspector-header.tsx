@@ -15,17 +15,9 @@ import { errorText } from '../../../routes/error-text.ts';
 import { askAiAboutElement } from '../../chat/ask-ai-about-element.ts';
 import { useOpenInEditor } from '../../editor/use-open-in-editor.ts';
 import { useEditMode } from '../../project/use-edit-mode.ts';
-import { useStyleEditable } from '../../project/use-style-edit.ts';
 import { useSelectionStore } from '../../selection/selection-store.ts';
 import type { InspectorLockReason, InspectorTarget, InspectorWarning } from '../types.ts';
-import {
-  canEnableSelectedState,
-  DarkColorSuggestStrip,
-  DarkModeSetupBanner,
-  DarkModeToggleButton,
-  GroupHoverParentPicker,
-  useDarkModePrompt,
-} from './inspector-scope-controls.tsx';
+import { canEnableSelectedState, GroupHoverParentPicker } from './inspector-scope-controls.tsx';
 import { StructureActions } from './structure-actions.tsx';
 
 function isHtmlSettableTag(tag: string): tag is HtmlSettableTag {
@@ -230,40 +222,8 @@ function TargetTitleRow({
   );
 }
 
-function ScopeExtras({
-  target,
-  editable,
-  previewState,
-  darkPrompt,
-}: {
-  readonly target: Extract<InspectorTarget, { readonly kind: 'element' }>;
-  readonly editable: boolean;
-  readonly previewState?: InspectorPreviewState | undefined;
-  readonly darkPrompt: ReturnType<typeof useDarkModePrompt>;
-}) {
-  const darkMode = target.darkMode === true;
-  return (
-    <>
-      {darkPrompt.promptNeeded && <DarkModeSetupBanner onDismiss={darkPrompt.dismiss} />}
-      {darkMode && editable && target.lockReason === undefined && target.source !== undefined && (
-        <DarkColorSuggestStrip target={target} />
-      )}
-      {previewState === 'groupHover' && (
-        <GroupHoverParentPicker
-          target={target}
-          onGroupChange={(ref) => {
-            target.setGroupRef?.(ref);
-          }}
-        />
-      )}
-    </>
-  );
-}
-
-/** The state and Dark switches of the scope row. */
+/** The state switch of the scope row. */
 function useScopeControls(target: Extract<InspectorTarget, { readonly kind: 'element' }>) {
-  const darkPrompt = useDarkModePrompt();
-  const darkMode = target.darkMode === true;
   const previewState = target.previewState ?? target.interactionState;
   const handleStateChange = (next: InspectorPreviewState | undefined) => {
     if (target.setPreviewState !== undefined) {
@@ -273,29 +233,21 @@ function useScopeControls(target: Extract<InspectorTarget, { readonly kind: 'ele
     const parsed = InteractionStateSchema.safeParse(next);
     target.setInteractionState(parsed.success ? parsed.data : undefined);
   };
-  const handleDarkToggle = () => {
-    const nextDark = !darkMode;
-    target.setDarkMode?.(nextDark);
-    if (nextDark) void darkPrompt.checkBeforeDarkUse();
-  };
-  return { darkPrompt, darkMode, previewState, handleStateChange, handleDarkToggle };
+  return { previewState, handleStateChange };
 }
 
 /** Where a change is written: the breakpoint of the active frame and the chosen state. */
 function ScopeRow({
   target,
   tag,
-  editable,
   canSelect,
 }: {
   readonly target: Extract<InspectorTarget, { readonly kind: 'element' }>;
   readonly tag: string;
-  readonly editable: boolean;
   readonly canSelect: boolean;
 }) {
   const { t } = useTranslation();
-  const { darkPrompt, darkMode, previewState, handleStateChange, handleDarkToggle } =
-    useScopeControls(target);
+  const { previewState, handleStateChange } = useScopeControls(target);
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -314,14 +266,15 @@ function ScopeRow({
           canSelect={canSelect}
           onStateChange={handleStateChange}
         />
-        <DarkModeToggleButton dark={darkMode} onToggle={handleDarkToggle} />
       </div>
-      <ScopeExtras
-        target={target}
-        editable={editable}
-        previewState={previewState}
-        darkPrompt={darkPrompt}
-      />
+      {previewState === 'groupHover' && (
+        <GroupHoverParentPicker
+          target={target}
+          onGroupChange={(ref) => {
+            target.setGroupRef?.(ref);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -349,7 +302,6 @@ export function InspectorHeader({ target }: InspectorHeaderProps) {
   const { t: tError } = useTranslation('errors');
   const editor = useOpenInEditor();
   const editMode = useEditMode();
-  const editable = useStyleEditable();
   const selectionInfo = useSelectionStore((s) => s.selectionInfo);
   const treeNodes = useSelectionStore((s) => s.treeNodes);
   const { changingTag, handleTagChange } = useHeaderTagChange(target);
@@ -376,7 +328,7 @@ export function InspectorHeader({ target }: InspectorHeaderProps) {
           editor.open(target.ref.loc);
         }}
       />
-      <ScopeRow target={target} tag={tag} editable={editable} canSelect={canSelect} />
+      <ScopeRow target={target} tag={tag} canSelect={canSelect} />
       <StructureActions target={target} />
       {target.lockReason !== undefined && (
         <LockBanner reason={target.lockReason} code={target.lockCode} />

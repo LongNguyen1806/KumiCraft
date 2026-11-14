@@ -32,7 +32,6 @@ import {
 import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { useDarkPreviewStore } from '../inspector/dark-preview-store.ts';
 import { dispatchBridgePayload } from './bridge-payload-handlers.ts';
 import { handleCanvasNavigation } from './canvas-navigation-messages.ts';
 import { type CanvasMode, useSelectionStore } from './selection-store.ts';
@@ -171,10 +170,6 @@ export class BridgeChannel {
       ...(dark === undefined ? {} : { dark }),
       ...(groupSelector === undefined ? {} : { groupSelector }),
     });
-  }
-
-  setDarkPreview(dark: boolean): void {
-    this.sendMessage('set-dark-preview', { dark });
   }
 
   setStatePreview(ref?: ElementRef, state?: InspectorPreviewState, groupRef?: ElementRef): void {
@@ -376,7 +371,6 @@ export class BridgeChannel {
       this.sendMessage('design-file', designPayload);
       this.setGrid(useCanvasViewStore.getState().grid);
       this.setTool(useCanvasViewStore.getState().tool);
-      if (useDarkPreviewStore.getState().canvasDark) this.setDarkPreview(true);
     }
     this.handleTextEditMessage(type, payload);
     this.handleFreeFrameMessage(type, payload);

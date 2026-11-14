@@ -1,14 +1,12 @@
 // @vitest-environment happy-dom
-// Tests for K9.8-1 Groups 7 & 10 (Studio UI): InteractionSection gating, disabled reasons, vi/en labels, MixedTextEditor, contrast suggest.
-import type { ElementSource, ThemeInfo } from '@kumicraft/shared';
+// Tests for K9.8-1 Groups 7 & 10 (Studio UI): InteractionSection gating, disabled reasons, vi/en labels, MixedTextEditor.
+import type { ElementSource } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { initI18n } from '../../../../i18n/i18n.ts';
-import { useThemeStore } from '../../use-project-theme.ts';
-import { DarkColorSuggestStrip } from '../inspector-scope-controls.tsx';
 import { MixedTextEditor } from '../mixed-text-editor.tsx';
 import { InteractionSection } from './interaction-section.tsx';
 
@@ -26,18 +24,6 @@ vi.mock('../../../editor/page-select.tsx', () => ({
     refresh: () => {},
   }),
 }));
-
-const sampleTheme: ThemeInfo = {
-  colors: [
-    { name: 'surface', value: '#ffffff' },
-    { name: 'ink', value: '#111827' },
-  ],
-  fontSizes: [],
-  radii: [],
-  fonts: [],
-  shadows: [],
-  breakpoints: [],
-};
 
 function makeSource(tag: string, overrides: Partial<ElementSource> = {}): ElementSource {
   return {
@@ -143,43 +129,5 @@ describe('Studio interaction UI, mixed text editor, contrast strip & vi/en i18n 
         },
       });
     });
-  });
-
-  it('suggests WCAG >= 4.5 dark colors in DarkColorSuggestStrip (Group 4)', async () => {
-    await i18next.changeLanguage('en');
-    useThemeStore.setState({ theme: sampleTheme });
-    const onApplyCss = vi.fn().mockResolvedValue(undefined);
-
-    render(
-      <I18nextProvider i18n={i18next}>
-        <DarkColorSuggestStrip
-          target={{
-            kind: 'element',
-            ref: { loc: 'src/Home.tsx:10:7', index: 0 },
-            source: makeSource('div'),
-            loading: false,
-            warnings: [],
-            currentScope: { breakpoint: 'base', dark: true },
-            darkMode: true,
-            setDarkMode: () => {},
-            setInteractionState: () => {},
-            writePrefix: 'dark:',
-            refresh: () => {},
-          }}
-          onApplyCssColors={onApplyCss}
-        />
-      </I18nextProvider>,
-    );
-
-    fireEvent.click(screen.getByTestId('suggest-dark-colors-btn'));
-    const card = screen.getByTestId('dark-color-suggestion-card');
-    expect(card.textContent).toMatch(/:\s*1|[\d.]+:1/);
-
-    fireEvent.click(screen.getByTestId('apply-dark-colors-btn'));
-    await vi.waitFor(() => {
-      expect(onApplyCss).toHaveBeenCalledTimes(1);
-    });
-    const arg = onApplyCss.mock.calls[0]?.[0] as { readonly contrastRatio: number } | undefined;
-    expect(arg?.contrastRatio).toBeGreaterThanOrEqual(4.5);
   });
 });

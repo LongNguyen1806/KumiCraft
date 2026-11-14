@@ -1,4 +1,4 @@
-// E2E test for K9.8-1 Group 12: Plain CSS project (react-css) SelectGroup + Dark style rules in .css (no Tailwind classes).
+// E2E test for K9.8-1 Group 12: Plain CSS project (react-css) SelectGroup rules in .css (no Tailwind classes).
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -23,7 +23,7 @@ test.afterEach(async () => {
   await config.remove();
 });
 
-test('Group 12: Plain CSS SelectGroup writes [data-selected="true"] rule and dark style writes .dark selector in CSS', async ({
+test('Group 12: Plain CSS SelectGroup writes [data-selected="true"] rule; no Dark switch in the Inspector', async ({
   page,
 }) => {
   folder = await copyFixture('projects/react-css');
@@ -87,23 +87,13 @@ test('Group 12: Plain CSS SelectGroup writes [data-selected="true"] rule and dar
     ),
   ).not.toBe('contents');
 
-  // Select .box via Layer Tree and apply dark mode background color -> writes .dark selector into CSS
+  // Dark mode is a job for the AI tab (owner 2026-11-15): the Inspector has no Dark switch.
   await page
     .getByRole('treeitem', { name: /div box/ })
     .first()
     .click();
-  const darkToggle = page.getByTestId('inspector-dark-toggle');
-  await expect(darkToggle).toBeVisible({ timeout: 10_000 });
-  await darkToggle.click();
-  // This plain-CSS project has no dark mode yet: setting it up is handed to the AI tab.
-  await expect(page.getByTestId('dark-mode-ask-ai').first()).toBeVisible({ timeout: 10_000 });
-  const bgInput = page.getByTestId('style-input-backgroundColor');
-  await expect(bgInput).toBeVisible({ timeout: 10_000 });
-  await bgInput.fill('#0f172a');
-  await bgInput.press('Enter');
-
-  await expect.poll(() => readFile(indexCss, 'utf8')).toContain('.dark ');
-  await expect.poll(() => readFile(indexCss, 'utf8')).toContain('#0f172a');
+  await expect(page.getByTestId('style-input-backgroundColor')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId('inspector-dark-toggle')).toHaveCount(0);
   const finalHome = await readFile(home, 'utf8');
   expect(finalHome).not.toContain('dark:bg-');
 });

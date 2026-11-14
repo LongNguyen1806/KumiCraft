@@ -20,7 +20,7 @@ import { InspectorEffectsExtra } from './inspector-effects-extra.tsx';
 import { InspectorGroup } from './inspector-group.tsx';
 import { InspectorImageSection } from './inspector-image-section.tsx';
 import { InspectorMotionSection } from './inspector-motion-section.tsx';
-import { canEnableSelectedState, DarkColorSuggestStrip } from './inspector-scope-controls.tsx';
+import { canEnableSelectedState } from './inspector-scope-controls.tsx';
 import { InspectorStyleUnsupportedBanner } from './inspector-style-unsupported-banner.tsx';
 import { InteractionSection } from './interaction/interaction-section.tsx';
 import { StyleSourcesSection } from './style-sources-section.tsx';
@@ -102,12 +102,11 @@ function useCssStyleEditorController(
 ) {
   const styleState = useStyleElementState(elementKey);
   const interactionState = inspected.interactionState ?? styleState;
-  const dark = inspected.darkMode === true;
   const selectionInfo = useSelectionStore((s) => s.selectionInfo);
   const treeNodes = useSelectionStore((s) => s.treeNodes);
   const groupSelector = useGroupHoverSelector(inspected, interactionState);
 
-  const { state, refresh } = useStyleState(true, interactionState, dark, groupSelector);
+  const { state, refresh } = useStyleState(true, interactionState, undefined, groupSelector);
   const ref = state?.probe.ref ?? inspected.ref;
   const target = useStyleTarget(elementKey);
   const primary = state?.reading.primary;
@@ -126,12 +125,10 @@ function useCssStyleEditorController(
     tag: inspected.source?.tag ?? 'div',
     target,
     interactionState,
-    dark,
     groupSelector,
   });
   return {
     interactionState,
-    dark,
     canSelectState,
     state,
     refresh,
@@ -141,28 +138,6 @@ function useCssStyleEditorController(
     commit,
     error,
   };
-}
-
-function CssDarkColorSuggest({
-  visible,
-  inspected,
-  commit,
-}: {
-  readonly visible: boolean;
-  readonly inspected: Extract<InspectorTarget, { readonly kind: 'element' }>;
-  readonly commit: (prop: string, val: string) => Promise<void>;
-}) {
-  if (!visible) return undefined;
-  return (
-    <DarkColorSuggestStrip
-      target={inspected}
-      onApplyCssColors={async (suggestion) => {
-        await commit('background-color', suggestion.backgroundColor);
-        await commit('color', suggestion.textColor);
-        await commit('border-color', suggestion.borderColor);
-      }}
-    />
-  );
 }
 
 type CssController = ReturnType<typeof useCssStyleEditorController>;
@@ -216,11 +191,6 @@ function CssStyleEditorBody({ elementKey, project, inspected }: CssStyleEditorBo
   return (
     <>
       {!c.writable && <InspectorStyleUnsupportedBanner styling={project?.support.styling} />}
-      <CssDarkColorSuggest
-        visible={c.writable && c.dark && inspected.source !== undefined}
-        inspected={inspected}
-        commit={c.commit}
-      />
       {c.state !== undefined && (
         <>
           <CssStyleSources
