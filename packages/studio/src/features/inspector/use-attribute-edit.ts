@@ -1,10 +1,10 @@
 // Tag attribute edit hook for Inspector (SPEC-04 R-IN-18, FR-25; SPEC-03 R-SE-04..06).
-import type { EditableAttr } from '@kumicraft/shared';
+import { type EditableAttr, type SetAttributeEdit } from '@kumicraft/shared';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ApiError } from '../../api/http.ts';
-import { editSource } from '../../api/source-client.ts';
+import { editSource, editSourceBatch } from '../../api/source-client.ts';
 import type { InspectorTarget } from './types.ts';
 
 export type AttributeEditState = {
@@ -12,6 +12,45 @@ export type AttributeEditState = {
   readonly error?: string | undefined;
   readonly setAttribute: (name: EditableAttr, value: string | undefined) => void;
 };
+
+function buildAttributeSaveEdits(
+  source: NonNullable<Extract<InspectorTarget, { readonly kind: 'element' }>['source']>,
+  name: EditableAttr,
+  value: string | undefined,
+): SetAttributeEdit[] | undefined {
+  const current = source.attributes[name];
+  if (current?.kind === 'expression') return undefined;
+  const before = current?.kind === 'static' ? current.value : undefined;
+  if (before === value) return undefined;
+  const mainEdit: SetAttributeEdit = {
+    kind: 'setAttribute',
+    loc: source.loc,
+    tag: source.tag,
+    name,
+    before,
+    after: value,
+  };
+  if (name !== 'target' || value !== '_blank') return [mainEdit];
+  const relEntry = source.attributes['rel'];
+  const relBefore = relEntry?.kind === 'static' ? relEntry.value : undefined;
+  const needsRel =
+    relEntry?.kind !== 'expression' &&
+    (relBefore === undefined ||
+      !relBefore.includes('noopener') ||
+      !relBefore.includes('noreferrer'));
+  if (!needsRel) return [mainEdit];
+  return [
+    mainEdit,
+    {
+      kind: 'setAttribute',
+      loc: source.loc,
+      tag: source.tag,
+      name: 'rel',
+      before: relBefore,
+      after: 'noopener noreferrer',
+    },
+  ];
+}
 
 export function useAttributeEdit(
   target: Extract<InspectorTarget, { readonly kind: 'element' }>,
@@ -24,32 +63,18 @@ export function useAttributeEdit(
   const save = useCallback(
     async (name: EditableAttr, value: string | undefined) => {
       if (source === undefined) return;
-      const current = source.attributes[name];
-      if (current?.kind === 'expression') return;
-      const before = current?.kind === 'static' ? current.value : undefined;
-      if (before === value) return;
-
+      const edits = buildAttributeSaveEdits(source, name, value);
+      if (edits === undefined) return;
       setIsSaving(true);
       try {
-        await editSource({
-          edit: {
-            kind: 'setAttribute',
-            loc: source.loc,
-            tag: source.tag,
-            name,
-            before,
-            after: value,
-          },
-        });
+        if (edits.length === 1 && edits[0] !== undefined) await editSource({ edit: edits[0] });
+        else await editSourceBatch({ edits });
         setError(undefined);
         refresh();
       } catch (err) {
-        if (err instanceof ApiError && err.code === 'E017') {
-          setError(t('inspector.errors.sourceConflict'));
-          refresh();
-        } else {
-          setError(t('inspector.errors.editFailed'));
-        }
+        const isConflict = err instanceof ApiError && err.code === 'E017';
+        setError(t(isConflict ? 'inspector.errors.sourceConflict' : 'inspector.errors.editFailed'));
+        if (isConflict) refresh();
       } finally {
         setIsSaving(false);
       }

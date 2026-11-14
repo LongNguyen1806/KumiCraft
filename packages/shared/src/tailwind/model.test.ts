@@ -164,13 +164,13 @@ describe('M-TW Table 8.2 properties & scenarios [SPEC-04 section 8]', () => {
       'dark:text-white',
       'group-hover:flex',
       '[&>*]:p-2',
-      'scale-95',
-      'rotate-45',
+      'cursor-grab',
+      'pointer-events-none',
       'custom-card',
-      'animate-spin',
+      'scroll-smooth',
       'cursor-pointer',
       'select-none',
-      'backdrop-blur-md',
+      'accent-pink-500',
     ];
     for (const cls of strangeClasses) {
       const tokens = parseClasses(cls, defaultContext);

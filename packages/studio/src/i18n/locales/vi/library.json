@@ -2,6 +2,14 @@
   "title": "Thư viện",
   "search": "Tìm kiếm khối…",
   "insertImage": "Ảnh…",
+  "openIcons": "Icon…",
+  "iconPicker": {
+    "title": "Chọn biểu tượng",
+    "search": "Tìm icon (vd: tim, mũi tên, người)…",
+    "loading": "Đang tải bộ icon…",
+    "empty": "Không tìm thấy icon phù hợp.",
+    "count": "{{shown}} / {{total}}"
+  },
   "hint": "Kéo khối vào Canvas, hoặc chọn một phần tử rồi bấm + trên khối để chèn",
   "add": "Chèn {{name}} tại phần tử đang chọn",
   "variantMenu": "Chọn kiểu {{name}}",
@@ -39,7 +47,10 @@
     "card": "Thẻ",
     "navbar": "Thanh điều hướng",
     "footer": "Chân trang",
-    "hero": "Hero"
+    "hero": "Hero",
+    "list": "Danh sách",
+    "listOrdered": "Danh sách số",
+    "placeholderImage": "Ảnh giữ chỗ"
   },
   "variants": {
     "solid": "Chính",
@@ -54,6 +65,9 @@
     "headingLg": "Lớn",
     "headingSm": "Nhỏ",
     "centered": "Căn giữa",
-    "split": "Chia đôi"
+    "split": "Chia đôi",
+    "ratio169": "16:9",
+    "ratio11": "1:1",
+    "ratio43": "4:3"
   }
 }

@@ -17,7 +17,9 @@ import {
   resolveBorderFields,
 } from '../border-fields.ts';
 import { PROPERTY_GROUPS, type PropertyFieldDef } from '../property-groups-config.ts';
+import type { BatchPropEntry } from '../use-live-edit.ts';
 import { ColorField } from './color-field.tsx';
+import { InspectorEffectsExtra } from './inspector-effects-extra.tsx';
 import { InspectorGroup } from './inspector-group.tsx';
 import { PropertyField } from './property-field.tsx';
 import { isBoxSide, SpacingBox } from './spacing-box.tsx';
@@ -62,6 +64,7 @@ export type InspectorPropertyGroupsProps = {
   readonly ctx: ClassContext;
   readonly isLocked: boolean;
   readonly onPropertyValueChange: (property: PropertyId, value: ClassValue | undefined) => void;
+  readonly onBatchProperties?: ((entries: readonly BatchPropEntry[]) => void) | undefined;
 };
 
 /** What every field of the panel gets. */
@@ -181,22 +184,35 @@ function GroupBody({
     );
   }
   if (group.id === 'spacing') {
+    const boxShared = {
+      tokens: shared.tokens,
+      currentScope: shared.currentScope,
+      frameWidth: shared.frameWidth,
+      ctx: shared.ctx,
+      onValueChange: shared.onPropertyValueChange,
+      disabled: shared.isLocked,
+    };
     return (
       <>
         <GroupFieldsGrid
           fields={group.fields.filter((f) => !isBoxSide(f.property))}
           shared={shared}
         />
-        <SpacingBox
-          fields={group.fields}
-          shared={{
-            tokens: shared.tokens,
-            currentScope: shared.currentScope,
-            frameWidth: shared.frameWidth,
-            ctx: shared.ctx,
-            onValueChange: shared.onPropertyValueChange,
-            disabled: shared.isLocked,
-          }}
+        <SpacingBox fields={group.fields} shared={boxShared} />
+      </>
+    );
+  }
+  if (group.id === 'effects') {
+    return (
+      <>
+        <GroupFieldsGrid fields={group.fields} shared={shared} />
+        <InspectorEffectsExtra
+          editable={true}
+          disabled={shared.isLocked}
+          tokens={shared.tokens}
+          currentScope={shared.currentScope}
+          onPropChange={shared.onPropertyValueChange}
+          onBatchProps={shared.onBatchProperties}
         />
       </>
     );

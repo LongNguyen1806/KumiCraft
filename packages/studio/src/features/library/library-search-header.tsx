@@ -53,6 +53,7 @@ export type LibrarySearchHeaderProps = {
   readonly onQueryChange: (q: string) => void;
   readonly hasSelection: boolean;
   readonly onOpenImagePicker: () => void;
+  readonly onOpenIconPicker?: (() => void) | undefined;
   readonly style?: LibraryStyle | undefined;
   readonly onStyleChange?: ((style: LibraryStyle) => void) | undefined;
   readonly errorInfo?: ErrorInfo | undefined;
@@ -99,6 +100,7 @@ export function LibrarySearchHeader({
   onQueryChange,
   hasSelection,
   onOpenImagePicker,
+  onOpenIconPicker,
   style = 'default',
   onStyleChange,
   errorInfo,
@@ -110,7 +112,7 @@ export function LibrarySearchHeader({
       {onStyleChange !== undefined && (
         <LibraryStyleRow style={style} onStyleChange={onStyleChange} />
       )}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <input
           type="search"
           data-testid="library-search"
@@ -121,12 +123,23 @@ export function LibrarySearchHeader({
           }}
           className="h-7 min-w-0 flex-1 rounded-md border border-line bg-card-solid px-2.5 text-xs text-ink placeholder:text-ink-faint"
         />
+        {onOpenIconPicker !== undefined && (
+          <button
+            type="button"
+            data-testid="library-open-icons"
+            disabled={!hasSelection}
+            onClick={onOpenIconPicker}
+            className="h-7 rounded-md border border-line bg-card-solid px-2 text-xs font-medium whitespace-nowrap text-ink hover:bg-field disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {t('openIcons')}
+          </button>
+        )}
         <button
           type="button"
           data-testid="library-insert-image"
           disabled={!hasSelection}
           onClick={onOpenImagePicker}
-          className="h-7 rounded-md border border-line bg-card-solid px-2.5 text-xs font-medium whitespace-nowrap text-ink hover:bg-field disabled:cursor-not-allowed disabled:opacity-40"
+          className="h-7 rounded-md border border-line bg-card-solid px-2 text-xs font-medium whitespace-nowrap text-ink hover:bg-field disabled:cursor-not-allowed disabled:opacity-40"
         >
           {t('insertImage', 'Ảnh…')}
         </button>

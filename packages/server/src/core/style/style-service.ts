@@ -3,6 +3,7 @@ import {
   type BridgeStyleProbePayload,
   CSS_LONGHAND_OF,
   CSS_SHORTHANDS_OF,
+  isCompositeStyleProperty,
   type MatchedRule,
   primarySystem,
   type StyleProperty,
@@ -19,6 +20,7 @@ import {
 import type { CompiledCssPort } from '../ports/compiled-css-port.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { parseUtility } from './bootstrap-utilities.ts';
+import { extractRuleOrComputedSubValue } from './css-composite-apply.ts';
 import { findRuleSource, locateRule, locateRuleByIndex } from './css-locate.ts';
 import { type CompiledCache, locateBySourceMap } from './mapped-source.ts';
 import { projectFileOf } from './project-file.ts';
@@ -290,7 +292,14 @@ export function createStyleService(deps: {
       const properties: StyleProperty[] = [];
       for (const [id, longhand] of Object.entries(CSS_LONGHAND_OF)) {
         const winner = winnerFor(probe, longhand);
-        const css = probe.computed[longhand] ?? resolveBorderUnpackedCss(id, probe, winner);
+        const css = isCompositeStyleProperty(id)
+          ? extractRuleOrComputedSubValue(
+              id,
+              longhand,
+              winner.kind === 'rule' ? winner.rule.declarations : undefined,
+              probe.computed[longhand],
+            )
+          : (probe.computed[longhand] ?? resolveBorderUnpackedCss(id, probe, winner));
         if (css === undefined) continue;
         properties.push(await buildStyleProperty(ctx, id, css, winner, longhand));
       }

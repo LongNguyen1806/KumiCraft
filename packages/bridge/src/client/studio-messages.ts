@@ -10,6 +10,8 @@ import {
   type StudioHighlightPayload,
   StudioHighlightPayloadSchema,
   StudioMeasureFreePayloadSchema,
+  type StudioMotionPreviewPayload,
+  StudioMotionPreviewPayloadSchema,
   StudioNavigatePayloadSchema,
   type StudioSelectPayload,
   StudioSelectPayloadSchema,
@@ -42,6 +44,7 @@ export type StudioMessageHandlers = {
   handleStyleProbe?: ((data: StudioStyleProbePayload) => void) | undefined;
   handleStylePreview?: ((data: StudioStylePreviewPayload) => void) | undefined;
   handleStylePreviewClear?: (() => void) | undefined;
+  handleMotionPreview?: ((data: StudioMotionPreviewPayload) => void) | undefined;
 };
 
 /** Free frame and drawing tool messages (R-FF-10, R-FF-11, R-DT-10). */
@@ -98,6 +101,42 @@ function dispatchDragOrEdit(
   return false;
 }
 
+function dispatchStyleAndNav(
+  type: string,
+  payload: unknown,
+  handlers: StudioMessageHandlers,
+): boolean {
+  switch (type) {
+    case 'navigate': {
+      const parsed = StudioNavigatePayloadSchema.safeParse(payload);
+      if (parsed.success) handlers.handleNavigate(parsed.data.route);
+      return true;
+    }
+    case 'style-probe': {
+      const parsed = StudioStyleProbePayloadSchema.safeParse(payload);
+      if (parsed.success) handlers.handleStyleProbe?.(parsed.data);
+      return true;
+    }
+    case 'style-preview': {
+      const parsed = StudioStylePreviewPayloadSchema.safeParse(payload);
+      if (parsed.success) handlers.handleStylePreview?.(parsed.data);
+      return true;
+    }
+    case 'style-preview-clear': {
+      const parsed = StudioStylePreviewClearPayloadSchema.safeParse(payload);
+      if (parsed.success) handlers.handleStylePreviewClear?.();
+      return true;
+    }
+    case 'motion-preview': {
+      const parsed = StudioMotionPreviewPayloadSchema.safeParse(payload);
+      if (parsed.success) handlers.handleMotionPreview?.(parsed.data);
+      return true;
+    }
+    default:
+      return false;
+  }
+}
+
 export function dispatchStudioMessage(
   type: string,
   payload: unknown,
@@ -105,6 +144,7 @@ export function dispatchStudioMessage(
 ): void {
   if (dispatchDragOrEdit(type, payload, handlers)) return;
   if (dispatchFreeFrame(type, payload, handlers)) return;
+  if (dispatchStyleAndNav(type, payload, handlers)) return;
   switch (type) {
     case 'set-mode': {
       const parsed = StudioSetModePayloadSchema.safeParse(payload);
@@ -119,26 +159,6 @@ export function dispatchStudioMessage(
     case 'highlight': {
       const parsed = StudioHighlightPayloadSchema.safeParse(payload);
       if (parsed.success) handlers.handleHighlight(parsed.data);
-      break;
-    }
-    case 'navigate': {
-      const parsed = StudioNavigatePayloadSchema.safeParse(payload);
-      if (parsed.success) handlers.handleNavigate(parsed.data.route);
-      break;
-    }
-    case 'style-probe': {
-      const parsed = StudioStyleProbePayloadSchema.safeParse(payload);
-      if (parsed.success) handlers.handleStyleProbe?.(parsed.data);
-      break;
-    }
-    case 'style-preview': {
-      const parsed = StudioStylePreviewPayloadSchema.safeParse(payload);
-      if (parsed.success) handlers.handleStylePreview?.(parsed.data);
-      break;
-    }
-    case 'style-preview-clear': {
-      const parsed = StudioStylePreviewClearPayloadSchema.safeParse(payload);
-      if (parsed.success) handlers.handleStylePreviewClear?.();
       break;
     }
     case 'design-file': {

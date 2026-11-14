@@ -237,4 +237,115 @@ describe('MCP edit tools [R-AG-19]', () => {
       { method: 'POST', path: 'history/redo', body: {} },
     ]);
   });
+
+  it('Test 2 & Test 6 (MCP): supports kumicraft_set_tag & extended kumicraft_set_attribute with unsafe rejections', async () => {
+    const { api, writes } = fakeApi({ [BTN]: element(BTN), [H1]: element(H1, { tag: 'h1' }) });
+
+    await run('kumicraft_set_tag', api, { loc: H1, tag: 'h2' });
+    await run('kumicraft_set_attribute', api, { loc: BTN, name: 'id', value: 'buy-btn' });
+    await run('kumicraft_set_attribute', api, {
+      loc: BTN,
+      name: 'aria-label',
+      value: 'Buy item',
+    });
+
+    expect(writes().map((call) => call.body)).toEqual([
+      { edit: { kind: 'setTag', loc: H1, tag: 'h1', after: 'h2' } },
+      { edit: { kind: 'setAttribute', loc: BTN, tag: 'button', name: 'id', after: 'buy-btn' } },
+      {
+        edit: {
+          kind: 'setAttribute',
+          loc: BTN,
+          tag: 'button',
+          name: 'aria-label',
+          after: 'Buy item',
+        },
+      },
+    ]);
+
+    expect(() =>
+      MCP_TOOLS.find((t) => t.name === 'kumicraft_set_attribute')?.input.parse({
+        loc: BTN,
+        name: 'onClick',
+        value: 'x',
+      }),
+    ).toThrow();
+    expect(() =>
+      MCP_TOOLS.find((t) => t.name === 'kumicraft_set_tag')?.input.parse({
+        loc: H1,
+        tag: 'script',
+      }),
+    ).toThrow();
+  });
+
+  it('Test 7 (MCP): kumicraft_insert_block renders block using project theme brand color for Tailwind & CSS', async () => {
+    const makeProjectApi = (system: 'tailwind' | 'css') => {
+      const posted: Sent[] = [];
+      const customApi: ApiClient = {
+        get(path) {
+          if (path === 'source/element')
+            return Promise.resolve({ ok: true, data: element(BTN, { tag: 'div' }) });
+          if (path === 'project') {
+            return Promise.resolve({
+              ok: true,
+              data: {
+                support: {
+                  styling: {
+                    systems: [
+                      system === 'tailwind' ? { id: 'tailwind', version: '4' } : { id: 'css' },
+                    ],
+                    primary: system,
+                    editable: true,
+                    globalCss: ['src/index.css'],
+                  },
+                },
+              },
+            });
+          }
+          if (path === 'project/theme') {
+            return Promise.resolve({
+              ok: true,
+              data: {
+                colors: [{ name: 'brand', value: '#e11d48', variable: '--brand' }],
+                fontSizes: [],
+                radii: [],
+                fonts: [],
+                shadows: [],
+                breakpoints: [],
+              },
+            });
+          }
+          return Promise.resolve({ ok: true, data: {} });
+        },
+        post(path, body) {
+          posted.push({ method: 'POST', path, body });
+          return Promise.resolve({ ok: true, data: { changed: true } });
+        },
+        patch(path, body) {
+          posted.push({ method: 'PATCH', path, body });
+          return Promise.resolve({ ok: true, data: {} });
+        },
+      };
+      return { customApi, posted };
+    };
+
+    const tw = makeProjectApi('tailwind');
+    const rTw = await run('kumicraft_insert_block', tw.customApi, {
+      blockId: 'form.button',
+      target: { loc: BTN, where: 'after' },
+    });
+    expect(rTw.ok).toBe(true);
+    const twBody = JSON.stringify(tw.posted[0]?.body);
+    expect(twBody).toContain('bg-brand');
+
+    const cssProj = makeProjectApi('css');
+    const rCss = await run('kumicraft_insert_block', cssProj.customApi, {
+      blockId: 'form.button',
+      target: { loc: BTN, where: 'after' },
+    });
+    expect(rCss.ok).toBe(true);
+    const cssBody = JSON.stringify(cssProj.posted[0]?.body);
+    expect(cssBody).toContain('.kc-button');
+    expect(cssBody).toContain('var(--brand)');
+  });
 });

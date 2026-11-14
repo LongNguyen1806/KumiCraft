@@ -1,6 +1,11 @@
 // MCP tools that change one element's class names, text or attributes (R-AG-19, round 7b). Each
 // call is one history step; the Studio shows it at once and can undo it.
-import { EDITABLE_ATTRS } from '@kumicraft/shared';
+import {
+  EditableAttrSchema,
+  HTML_SETTABLE_TAGS,
+  HtmlSettableTagSchema,
+  VOID_HTML_TAGS,
+} from '@kumicraft/shared';
 import { z } from 'zod';
 
 import type { ApiClient, ApiResult } from './api-client.ts';
@@ -25,8 +30,13 @@ const SetTextInput = z.strictObject({ loc: LocSchema, text: z.string().max(10_00
 
 const SetAttributeInput = z.strictObject({
   loc: LocSchema,
-  name: z.enum(EDITABLE_ATTRS),
+  name: EditableAttrSchema,
   value: z.string().max(2000).optional().describe('Leave out to remove the attribute'),
+});
+
+const SetTagInput = z.strictObject({
+  loc: LocSchema,
+  tag: HtmlSettableTagSchema,
 });
 
 const NOT_STATIC_CLASS =
@@ -97,6 +107,21 @@ async function setAttribute(api: ApiClient, input: z.infer<typeof SetAttributeIn
   });
 }
 
+async function setTag(api: ApiClient, loc: string, nextTag: z.infer<typeof HtmlSettableTagSchema>) {
+  const element = await readElement(api, loc);
+  if (!element.ok) return element;
+  const currentTag = element.value.tag;
+  if (/^[A-Z]/.test(currentTag) || VOID_HTML_TAGS.has(currentTag)) {
+    return cannot(`E023: cannot change tag of <${currentTag}>.`);
+  }
+  return applyEdit(api, {
+    kind: 'setTag',
+    loc,
+    tag: currentTag,
+    after: nextTag,
+  });
+}
+
 export const EDIT_TOOLS: readonly McpTool[] = [
   {
     name: 'kumicraft_set_class_name',
@@ -128,8 +153,18 @@ export const EDIT_TOOLS: readonly McpTool[] = [
   },
   {
     name: 'kumicraft_set_attribute',
-    description: `Set or remove one attribute of an element: ${EDITABLE_ATTRS.join(', ')}.`,
+    description:
+      'Set or remove an HTML attribute (href, src, alt, placeholder, type, id, title, target, rel, role, tabIndex, aria-*, data-*).',
     input: SetAttributeInput,
     run: (api, args) => setAttribute(api, SetAttributeInput.parse(args)),
+  },
+  {
+    name: 'kumicraft_set_tag',
+    description: `Change the HTML tag of one intrinsic element while preserving attributes and children (${HTML_SETTABLE_TAGS.join(', ')}).`,
+    input: SetTagInput,
+    run: (api, args) => {
+      const { loc, tag } = SetTagInput.parse(args);
+      return setTag(api, loc, tag);
+    },
   },
 ];

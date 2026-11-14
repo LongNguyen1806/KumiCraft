@@ -18,6 +18,7 @@ import type { CompiledCssPort } from '../ports/compiled-css-port.ts';
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import { computeSha256 } from '../source-editor/source-editor-lookup.ts';
 import type { SourceEditorService, WrittenFile } from '../source-editor/source-editor-service.ts';
+import { ensureKeyframesBlock, resolveMergedCssValue } from './css-composite-apply.ts';
 import {
   hasStateInSelector,
   setDeclarationAtAnchor,
@@ -135,21 +136,31 @@ async function applyToRule(
   const effectiveMedia = target.rule.media[0] ?? media;
   const targetSelector =
     state === undefined ? target.rule.selector : withStateSelector(target.rule.selector, state);
+  const resolvedVal = resolveMergedCssValue(css.value, {
+    propertyId: change.property,
+    longhand,
+    value,
+    selector: inPlace ? target.rule.selector : targetSelector,
+    media: effectiveMedia,
+    ruleKey: inPlace ? target.rule : undefined,
+    file: target.file,
+  });
   const next = inPlace
     ? target.anchor === undefined
-      ? setRuleDeclaration(css.value, target.rule, longhand, value, target.file)
-      : setDeclarationAtAnchor(css.value, target.anchor, longhand, value, target.file)
+      ? setRuleDeclaration(css.value, target.rule, longhand, resolvedVal, target.file)
+      : setDeclarationAtAnchor(css.value, target.anchor, longhand, resolvedVal, target.file)
     : upsertRuleDeclaration(
         css.value,
         targetSelector,
         longhand,
-        value,
+        resolvedVal,
         effectiveMedia,
         target.file,
       );
   if (!next.ok) return next;
-  if (next.value === css.value) return ok({ files: [] });
-  const written = await writeFile(deps.fs, root, target.file, css.value, next.value);
+  const finalCss = ensureKeyframesBlock(next.value, change.property, resolvedVal);
+  if (finalCss === css.value) return ok({ files: [] });
+  const written = await writeFile(deps.fs, root, target.file, css.value, finalCss);
   return written.ok ? ok({ files: [written.value] }) : written;
 }
 
@@ -253,6 +264,50 @@ function elementSelector(
   return state === undefined ? base : withStateSelector(base, state);
 }
 
+async function buildNewElementCss(
+  deps: StyleApplyDeps,
+  root: string,
+  jsxFile: string,
+  selector: string,
+  change: StyleApplyRequest['change'],
+  winner: ProjectRule | undefined,
+): Promise<
+  Result<{
+    readonly file: string;
+    readonly before: string | undefined;
+    readonly after: string;
+    readonly plan: Extract<Awaited<ReturnType<typeof planCssFile>>, { readonly ok: true }>['value'];
+  }>
+> {
+  const plan = await planCssFile(deps, root, jsxFile, winner, deps.newCssDir);
+  if (!plan.ok) return plan;
+  const css = await readFile(deps.fs, root, plan.value.file);
+  const before = css.ok ? css.value : undefined;
+  const resolvedVal = resolveMergedCssValue(before ?? '', {
+    propertyId: change.property,
+    longhand: change.property,
+    value: change.value ?? '',
+    selector,
+    media: change.media,
+    file: plan.value.file,
+  });
+  const next = upsertRuleDeclaration(
+    before ?? '',
+    selector,
+    change.property,
+    resolvedVal,
+    change.media,
+    plan.value.file,
+  );
+  if (!next.ok) return next;
+  return ok({
+    file: plan.value.file,
+    before,
+    after: ensureKeyframesBlock(next.value, change.property, resolvedVal),
+    plan: plan.value,
+  });
+}
+
 /** "Only this element": a class of its own, kept for the next change (R-ST-06). */
 async function applyToElement(
   deps: StyleApplyDeps,
@@ -277,30 +332,31 @@ async function applyToElement(
   const selector = elementSelector(winner, newClass, change.state);
 
   // Every check happens before the first write, so a refused change leaves no file touched.
-  const plan = await planCssFile(deps, root, ctx.value.jsxFile, winner, deps.newCssDir);
-  if (!plan.ok) return plan;
-  const css = await readFile(deps.fs, root, plan.value.file);
-  const cssBefore = css.ok ? css.value : undefined;
-  const next = upsertRuleDeclaration(
-    cssBefore ?? '',
+  const built = await buildNewElementCss(
+    deps,
+    root,
+    ctx.value.jsxFile,
     selector,
-    longhand,
-    change.value,
-    change.media,
-    plan.value.file,
+    { ...change, property: longhand },
+    winner,
   );
-  if (!next.ok) return next;
-
+  if (!built.ok) return built;
   const writes: WrittenFile[] = [];
   if (own === undefined) {
     const nextClasses = [...ctx.value.classes, newClass];
     const classEdit = await addClass(deps, root, request, ctx.value, nextClasses, writes);
     if (!classEdit.ok) return classEdit;
   }
-  const written = await writeFile(deps.fs, root, plan.value.file, cssBefore, next.value);
+  const written = await writeFile(
+    deps.fs,
+    root,
+    built.value.file,
+    built.value.before,
+    built.value.after,
+  );
   if (!written.ok) return written;
   writes.push(written.value);
-  const imported = await addPlannedImport(deps, root, ctx.value.jsxFile, plan.value, writes);
+  const imported = await addPlannedImport(deps, root, ctx.value.jsxFile, built.value.plan, writes);
   if (!imported.ok) return imported;
   return ok({ files: mergeWrites(writes), className: newClass });
 }

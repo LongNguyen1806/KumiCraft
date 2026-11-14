@@ -6,6 +6,7 @@ import { asAstNode, type AstNode, getJsxTagName, parseJsxAst } from '../ast-help
 import { findNodeAt, validateLocAndExt } from '../source-editor-lookup.ts';
 import { collectComponentTags } from './element-text.ts';
 import { buildMissingImportsEdits } from './imports.ts';
+import { buildReplaceSvgEdits, buildWrapTextInlineEdits } from './inline-svg-ops.ts';
 import { buildSameFileMoveEdits } from './move-ops.ts';
 import { applyPlacementToJsx } from './placement-jsx.ts';
 import {
@@ -322,6 +323,18 @@ export function planFileEdits(
   }
   if (edit.kind === 'wrap' || edit.kind === 'unwrap') {
     return planWrapOrUnwrap(ast, code, nl, resolved, edit);
+  }
+  if (edit.kind === 'wrapText') {
+    const first = resolved[0];
+    if (!first) return err({ code: 'E017', params: { loc: edit.loc, reason: 'moved' } });
+    const inlineRes = buildWrapTextInlineEdits(code, first, edit);
+    return inlineRes.ok ? ok({ edits: inlineRes.value, locsFromMarks: true }) : inlineRes;
+  }
+  if (edit.kind === 'replaceSvg') {
+    const first = resolved[0];
+    if (!first) return err({ code: 'E017', params: { loc: edit.loc, reason: 'moved' } });
+    const svgRes = buildReplaceSvgEdits(code, nl, first, edit);
+    return svgRes.ok ? ok({ edits: svgRes.value, locsFromMarks: false }) : svgRes;
   }
   return err({ code: 'E016', params: { reason: 'unsupportedStructureEdit' } });
 }

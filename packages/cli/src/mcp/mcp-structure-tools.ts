@@ -1,11 +1,24 @@
 // MCP tools that change the element structure, pages, theme and history (R-AG-19, round 7b). Edits
 // go through the same API as the Studio, so each is one history step the Studio can undo.
-import { AddPageSchema, ThemeEditSchema } from '@kumicraft/shared';
+import {
+  AddPageSchema,
+  LIBRARY_BLOCKS,
+  LIBRARY_STYLES,
+  type LibraryStyle,
+  lookFromTheme,
+  primarySystem,
+  renderBlock,
+  StylingReportSchema,
+  ThemeEditSchema,
+  ThemeInfoSchema,
+  UiKitReportSchema,
+} from '@kumicraft/shared';
 import { z } from 'zod';
 
 import type { ApiClient, ApiResult } from './api-client.ts';
 import {
   applyEdit,
+  cannot,
   insertTarget,
   LocSchema,
   readGuards,
@@ -36,6 +49,77 @@ const InsertImageInput = z.strictObject({
   alt: z.string().trim().min(1).max(200),
   className: z.string().max(500).default(''),
 });
+
+const InsertBlockInput = z.strictObject({
+  blockId: z
+    .string()
+    .min(1)
+    .max(100)
+    .describe(
+      `Library block id, e.g. form.button, composite.card, content.list, content.placeholder-image`,
+    ),
+  variantId: z.string().min(1).max(80).optional(),
+  style: z.enum(LIBRARY_STYLES).optional(),
+  lang: z.enum(['vi', 'en']).default('en'),
+  target: TargetSchema,
+});
+
+const ProjectSupportWrapSchema = z.object({
+  support: z
+    .object({
+      styling: StylingReportSchema.optional(),
+      uiKit: UiKitReportSchema.optional(),
+    })
+    .optional(),
+});
+
+async function insertLibraryBlock(
+  api: ApiClient,
+  input: z.infer<typeof InsertBlockInput>,
+): Promise<ApiResult> {
+  const block = LIBRARY_BLOCKS.find((b) => b.id === input.blockId);
+  if (block === undefined) {
+    return cannot(`E016: Unknown library block "${input.blockId}".`);
+  }
+  if (
+    input.variantId !== undefined &&
+    !(block.variants ?? []).some((v) => v.id === input.variantId)
+  ) {
+    return cannot(`E016: Unknown variant "${input.variantId}" for block "${input.blockId}".`);
+  }
+  const [projectRes, themeRes, resolved] = await Promise.all([
+    api.get('project'),
+    api.get('project/theme'),
+    insertTarget(api, input.target),
+  ]);
+  if (!resolved.ok) return resolved;
+
+  const projectParsed = projectRes.ok
+    ? ProjectSupportWrapSchema.safeParse(projectRes.data)
+    : undefined;
+  const support = projectParsed?.success ? projectParsed.data.support : undefined;
+  const themeParsed = themeRes.ok ? ThemeInfoSchema.safeParse(themeRes.data) : undefined;
+  const stylePreset: LibraryStyle = input.style ?? 'default';
+  const look = lookFromTheme(themeParsed?.success ? themeParsed.data : undefined, stylePreset);
+  const rendered = renderBlock(
+    block,
+    primarySystem(support?.styling),
+    input.lang,
+    look,
+    input.variantId,
+    support?.uiKit,
+  );
+  const rules = rendered.rules.map((r) => ({ selector: r.selector, declarations: r.declarations }));
+  const locFile = input.target.loc.split(':')[0] ?? 'src/App.tsx';
+  const imports = rendered.imports ?? [];
+  return applyEdit(api, {
+    kind: 'insert',
+    target: resolved.value,
+    jsx: rendered.jsx,
+    ...(rules.length > 0 ? { css: { rules } } : {}),
+    ...(imports.length > 0 ? { from: { file: locFile, imports } } : {}),
+  });
+}
 
 const MoveInput = z.strictObject({ locs: LocsSchema, target: TargetSchema });
 const LocsInput = z.strictObject({ locs: LocsSchema });
@@ -83,6 +167,13 @@ const ELEMENT_TOOLS: readonly McpTool[] = [
       const { target, jsx } = InsertJsxInput.parse(args);
       return withTarget(api, target, (resolved) => ({ kind: 'insert', target: resolved, jsx }));
     },
+  },
+  {
+    name: 'kumicraft_insert_block',
+    description:
+      'Insert a KumiCraft Library starter block by blockId (e.g. form.button, composite.card, content.list) styled with the project theme, styling system, and UI kit.',
+    input: InsertBlockInput,
+    run: (api, args) => insertLibraryBlock(api, InsertBlockInput.parse(args)),
   },
   {
     name: 'kumicraft_insert_image',

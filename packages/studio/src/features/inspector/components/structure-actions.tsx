@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { errorText } from '../../../routes/error-text.ts';
 import { ExtractDialog } from '../../components-panel/extract-dialog.tsx';
 import type { InspectorTarget } from '../types.ts';
+import { InspectorListActions } from './inspector-list-actions.tsx';
 import { useStructureActions } from './use-structure-actions.ts';
 import { WrapMenu } from './wrap-menu.tsx';
 
@@ -154,6 +155,10 @@ export function StructureActions({ target }: StructureActionsProps) {
         onExtract={() => {
           setExtractOpen(true);
         }}
+      />
+      <InspectorListActions
+        target={target}
+        disabled={actions.pending || target.loading || target.source?.readonly !== undefined}
       />
       {extractOpen && (
         <ExtractDialog

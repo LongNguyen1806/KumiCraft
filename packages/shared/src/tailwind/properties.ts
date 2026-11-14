@@ -1,5 +1,12 @@
 // Table 8.2 property definitions, matching, and formatting (SPEC-04 section 8).
 import type { ThemeInfo } from '../project.ts';
+import {
+  EXTENDED_PREFIX_PROPERTIES,
+  formatExtendedV4Utility,
+  matchBgUtility,
+  matchObjectUtility,
+  matchShadowUtility,
+} from './effects-motion-props.ts';
 import { PREFIX_MAP, STATIC_STANDALONE } from './property-tables.ts';
 import type { ClassValue, PropertyId } from './types.ts';
 import { v3ToV4Utility, v4ToV3Utility } from './v3-names.ts';
@@ -223,15 +230,13 @@ const PREFIX_PROPERTIES: readonly [string, PropertyId][] = [
   ['font-', 'fontWeight'],
   ['leading-', 'lineHeight'],
   ['tracking-', 'letterSpacing'],
-  ['bg-', 'backgroundColor'],
   ['rounded-', 'borderRadius'],
-  ['shadow-', 'boxShadow'],
   ['blur-', 'blur'],
   ['ring-', 'ringWidth'],
   ['outline-', 'outline'],
   ['opacity-', 'opacity'],
   ['overflow-', 'overflow'],
-  ['object-', 'objectFit'],
+  ...EXTENDED_PREFIX_PROPERTIES,
   ['flex-', 'flex'],
 ];
 
@@ -246,6 +251,11 @@ export function matchProperty(
   if (utility === 'border') return matchBorder('', true, theme);
   if (utility.startsWith('border-')) return matchBorder(utility.slice(7), false, theme);
   if (utility.startsWith('text-')) return matchText(utility.slice(5), theme);
+  if (utility.startsWith('bg-')) return matchBgUtility(utility.slice(3), theme, parseVal);
+  if (utility === 'shadow') return matchShadowUtility('', true, theme, parseVal);
+  if (utility.startsWith('shadow-'))
+    return matchShadowUtility(utility.slice(7), false, theme, parseVal);
+  if (utility.startsWith('object-')) return matchObjectUtility(utility.slice(7), parseVal);
   for (const [prefix, prop] of PREFIX_PROPERTIES) {
     if (utility === prefix) {
       return { property: prop, value: { kind: 'keyword', name: utility } };
@@ -309,7 +319,13 @@ function resolvePrefixValue(
     }
     return { property: 'fontWeight', value: parseVal(rest) };
   }
-  if (prop === 'backgroundColor') {
+  if (
+    prop === 'backgroundColor' ||
+    prop === 'gradientFrom' ||
+    prop === 'gradientVia' ||
+    prop === 'gradientTo' ||
+    prop === 'shadowColor'
+  ) {
     return { property: prop, value: parseVal(rest, theme?.colors) };
   }
   if (prop === 'borderRadius') {
@@ -361,6 +377,8 @@ function formatV4Utility(property: PropertyId, value: ClassValue): string {
   if (property === 'boxShadow') return valStr === 'DEFAULT' ? 'shadow' : `shadow-${valStr}`;
   if (property === 'blur') return valStr === 'DEFAULT' ? 'blur' : `blur-${valStr}`;
   if (property === 'ringWidth') return valStr === 'DEFAULT' ? 'ring' : `ring-${valStr}`;
+  const extended = formatExtendedV4Utility(property, value, valStr);
+  if (extended !== undefined) return extended;
   const prefix = PREFIX_MAP[property];
   return prefix !== undefined ? `${prefix}${valStr}` : `${property}-${valStr}`;
 }

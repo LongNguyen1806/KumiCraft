@@ -21,8 +21,12 @@ import { FreeFrameToggle } from '../free-frame/free-frame-toggle.tsx';
 import { useProjectInfo } from '../project/project-store.ts';
 import { useEditMode } from '../project/use-edit-mode.ts';
 import { useStyleEditable } from '../project/use-style-edit.ts';
+import { AttributesEditorSection } from './components/attributes-editor.tsx';
 import { ElementPath } from './components/element-path.tsx';
 import { InspectorHeader } from './components/inspector-header.tsx';
+import { InspectorIconSection } from './components/inspector-icon-section.tsx';
+import { InspectorImageSection } from './components/inspector-image-section.tsx';
+import { InspectorMotionSection } from './components/inspector-motion-section.tsx';
 import {
   InspectorPropertyGroups,
   isColorProperty,
@@ -37,7 +41,7 @@ import type { InspectorTarget } from './types.ts';
 import { useAttributeEdit } from './use-attribute-edit.ts';
 import type { UseInspectorTargetOptions } from './use-inspector-target.ts';
 import { useInspectorTarget } from './use-inspector-target.ts';
-import { useLiveEdit } from './use-live-edit.ts';
+import { type BatchPropEntry, useLiveEdit } from './use-live-edit.ts';
 import { DEFAULT_THEME } from './use-project-theme.ts';
 
 export { isColorProperty, resolveFieldOptions };
@@ -58,9 +62,11 @@ type ElementSectionsProps = {
   readonly isLocked: boolean;
   readonly rawClassString: string;
   readonly onPropChange: (property: PropertyId, value: ClassValue | undefined) => void;
+  readonly onBatchProps: (entries: readonly BatchPropEntry[]) => void;
   readonly onRawChange: (raw: string) => void;
   readonly isAttrLocked: boolean;
   readonly onAttributeChange: (name: EditableAttr, value: string | undefined) => void;
+  readonly onRefresh: () => void;
 };
 
 function EditorAlert({
@@ -98,25 +104,93 @@ function TagAttributesBlock({
           editor.open(source.loc);
         }}
       />
+      <AttributesEditorSection
+        tag={source.tag}
+        attributes={source.attributes}
+        disabled={disabled}
+        onAttributeChange={onAttributeChange}
+        onOpenInEditor={() => {
+          editor.open(source.loc);
+        }}
+      />
       <EditorAlert errorInfo={editor.errorInfo} />
     </>
   );
 }
 
-function ElementSections({
-  editable,
-  source,
-  tokens,
-  currentScope,
-  frameWidth,
-  ctx,
-  isLocked,
-  isAttrLocked,
-  rawClassString,
-  onPropChange,
-  onRawChange,
-  onAttributeChange,
-}: ElementSectionsProps) {
+function EditablePropertySections(
+  props: Pick<
+    ElementSectionsProps,
+    | 'source'
+    | 'tokens'
+    | 'currentScope'
+    | 'frameWidth'
+    | 'ctx'
+    | 'isLocked'
+    | 'onPropChange'
+    | 'onBatchProps'
+    | 'onRefresh'
+  >,
+) {
+  const {
+    source,
+    tokens,
+    currentScope,
+    frameWidth,
+    ctx,
+    isLocked,
+    onPropChange,
+    onBatchProps,
+    onRefresh,
+  } = props;
+  return (
+    <>
+      <InspectorImageSection
+        tag={source.tag}
+        editable={true}
+        disabled={isLocked}
+        tokens={tokens}
+        currentScope={currentScope}
+        ctx={ctx}
+        onPropChange={onPropChange}
+      />
+      <InspectorPropertyGroups
+        tokens={tokens}
+        currentScope={currentScope}
+        frameWidth={frameWidth}
+        ctx={ctx}
+        isLocked={isLocked}
+        onPropertyValueChange={onPropChange}
+        onBatchProperties={onBatchProps}
+      />
+      <InspectorMotionSection
+        refTarget={{ loc: source.loc, index: 0 }}
+        source={source}
+        editable={true}
+        disabled={isLocked}
+        tokens={tokens}
+        currentScope={currentScope}
+        onPropChange={onPropChange}
+        onBatchProps={onBatchProps}
+        onRefresh={onRefresh}
+      />
+    </>
+  );
+}
+
+function ElementSections(props: ElementSectionsProps) {
+  const {
+    editable,
+    source,
+    tokens,
+    isLocked,
+    isAttrLocked,
+    rawClassString,
+    onPropChange,
+    onRawChange,
+    onAttributeChange,
+    onRefresh,
+  } = props;
   const callStaticRest =
     source.className.kind === 'callStatic' || source.className.kind === 'templateStatic'
       ? source.className.rest
@@ -124,16 +198,16 @@ function ElementSections({
 
   return (
     <div className="flex flex-col">
-      {editable && (
-        <InspectorPropertyGroups
-          tokens={tokens}
-          currentScope={currentScope}
-          frameWidth={frameWidth}
-          ctx={ctx}
-          isLocked={isLocked}
-          onPropertyValueChange={onPropChange}
-        />
-      )}
+      <InspectorIconSection
+        source={source}
+        disabled={isAttrLocked}
+        editable={editable}
+        onTextColorChange={(hex) => {
+          onPropChange('textColor', { kind: 'arbitrary', css: hex });
+        }}
+        onRefresh={onRefresh}
+      />
+      {editable && <EditablePropertySections {...props} />}
       <TagAttributesBlock
         source={source}
         disabled={isAttrLocked}
@@ -230,6 +304,21 @@ function SingleTargetEditableBody({
   const { isLocked, isAttrLocked } = computeTargetLocks(target, attrEdit.isSaving);
   const displayedError = liveEdit.error ?? attrEdit.error ?? target.error;
   const project = useProjectInfo();
+  const onPropChange = (
+    prop: Parameters<typeof liveEdit.mutateProperty>[0],
+    val: Parameters<typeof liveEdit.mutateProperty>[1],
+  ) => {
+    liveEdit.mutateProperty(prop, val);
+    onClassStringChange?.(liveEdit.classString);
+  };
+  const onBatchProps = (entries: Parameters<typeof liveEdit.mutateProperties>[0]) => {
+    liveEdit.mutateProperties(entries);
+    onClassStringChange?.(liveEdit.classString);
+  };
+  const onRawChange = (raw: string) => {
+    liveEdit.mutateRawClass(raw);
+    onClassStringChange?.(raw);
+  };
 
   return (
     <>
@@ -252,15 +341,11 @@ function SingleTargetEditableBody({
             isLocked={isLocked}
             isAttrLocked={isAttrLocked}
             onAttributeChange={attrEdit.setAttribute}
+            onRefresh={target.refresh}
             rawClassString={liveEdit.classString}
-            onPropChange={(prop, val) => {
-              liveEdit.mutateProperty(prop, val);
-              onClassStringChange?.(liveEdit.classString);
-            }}
-            onRawChange={(raw) => {
-              liveEdit.mutateRawClass(raw);
-              onClassStringChange?.(raw);
-            }}
+            onPropChange={onPropChange}
+            onBatchProps={onBatchProps}
+            onRawChange={onRawChange}
           />
         </>
       )}

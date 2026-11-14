@@ -1,9 +1,11 @@
 // Hook for Canvas Direct Text Editing (SPEC-04 section 10 M-TX, R-TX-01..08).
 import {
+  type BridgeTextSelectPayload,
   type EditMode,
   type ElementRef,
   type ElementSource,
   parseLocString,
+  type Rect,
 } from '@kumicraft/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -24,10 +26,20 @@ export type UseCanvasTextEditOptions = {
   readonly activeFrameId?: string;
 };
 
+export type TextSelectionRange = {
+  readonly ref: ElementRef;
+  readonly tag: string;
+  readonly start: number;
+  readonly end: number;
+  readonly rect?: Rect | undefined;
+};
+
 export type UseCanvasTextEditReturn = {
   readonly editingRef: ElementRef | undefined;
   readonly loopCount: number | undefined;
   readonly isEditing: boolean;
+  readonly textSelection: TextSelectionRange | undefined;
+  readonly endEditingSession: () => void;
 };
 
 function findInstanceCount(loc: string): number {
@@ -103,6 +115,7 @@ function useTextEditBridge(
   onRequest: (ref: ElementRef) => Promise<void>,
   onCommit: (ref: ElementRef, text: string) => Promise<void>,
   onCancel: () => void,
+  onSelect: (payload: BridgeTextSelectPayload) => void,
   activeRef: () => ElementRef | undefined,
 ): void {
   useEffect(() => {
@@ -116,9 +129,12 @@ function useTextEditBridge(
       onTextCancel: () => {
         onCancel();
       },
+      onTextSelect: (payload) => {
+        onSelect(payload);
+      },
     };
     return channel.registerTextEditListener(listener);
-  }, [channel, onRequest, onCommit, onCancel]);
+  }, [channel, onRequest, onCommit, onCancel, onSelect]);
 
   useEffect(() => {
     return useSelectionStore.subscribe((state, prev) => {
@@ -136,6 +152,7 @@ function useTextEditBridge(
 function useTextEditState() {
   const [editingRef, setEditingRef] = useState<ElementRef | undefined>(undefined);
   const [loopCount, setLoopCount] = useState<number | undefined>(undefined);
+  const [textSelection, setTextSelection] = useState<TextSelectionRange | undefined>(undefined);
   const activeSessionRef = useRef<{ ref: ElementRef; source: ElementSource } | undefined>(
     undefined,
   );
@@ -144,6 +161,7 @@ function useTextEditState() {
     setEditingRef(undefined);
     activeSessionRef.current = undefined;
     setLoopCount(undefined);
+    setTextSelection(undefined);
   }, []);
 
   return {
@@ -151,6 +169,8 @@ function useTextEditState() {
     setEditingRef,
     loopCount,
     setLoopCount,
+    textSelection,
+    setTextSelection,
     activeSessionRef,
     resetEditing,
   };
@@ -159,7 +179,7 @@ function useTextEditState() {
 type TextEditState = ReturnType<typeof useTextEditState>;
 
 function useTextEditHandlers(channel: BridgeChannel, state: TextEditState, editMode: EditMode) {
-  const { activeSessionRef, resetEditing, setLoopCount, setEditingRef } = state;
+  const { activeSessionRef, resetEditing, setLoopCount, setEditingRef, setTextSelection } = state;
 
   const handleCommit = useCallback(
     async (ref: ElementRef, text: string) => {
@@ -187,26 +207,61 @@ function useTextEditHandlers(channel: BridgeChannel, state: TextEditState, editM
     [channel, activeSessionRef, setEditingRef, setLoopCount, editMode],
   );
 
+  const handleTextSelect = useCallback(
+    (payload: BridgeTextSelectPayload) => {
+      const session = activeSessionRef.current;
+      if (!session || session.ref.loc !== payload.ref.loc || payload.end <= payload.start) {
+        setTextSelection(undefined);
+        return;
+      }
+      setTextSelection({
+        ref: payload.ref,
+        tag: session.source.tag,
+        start: payload.start,
+        end: payload.end,
+        rect: payload.rect,
+      });
+    },
+    [activeSessionRef, setTextSelection],
+  );
+
   const getActiveRef = useCallback(() => activeSessionRef.current?.ref, [activeSessionRef]);
 
-  return { handleCommit, handleRequest, getActiveRef };
+  return { handleCommit, handleRequest, handleTextSelect, getActiveRef };
 }
 
 export function useCanvasTextEdit(options: UseCanvasTextEditOptions = {}): UseCanvasTextEditReturn {
   const channel = options.channel ?? studioBridgeChannel;
   const editMode = useEditMode();
   const state = useTextEditState();
-  const { handleCommit, handleRequest, getActiveRef } = useTextEditHandlers(
+  const { handleCommit, handleRequest, handleTextSelect, getActiveRef } = useTextEditHandlers(
     channel,
     state,
     editMode,
   );
 
-  useTextEditBridge(channel, handleRequest, handleCommit, state.resetEditing, getActiveRef);
+  useTextEditBridge(
+    channel,
+    handleRequest,
+    handleCommit,
+    state.resetEditing,
+    handleTextSelect,
+    getActiveRef,
+  );
+
+  const endEditingSession = useCallback(() => {
+    const cur = getActiveRef();
+    if (cur !== undefined) {
+      channel.endTextEdit(cur);
+    }
+    state.resetEditing();
+  }, [channel, getActiveRef, state]);
 
   return {
     editingRef: state.editingRef,
     loopCount: state.loopCount,
     isEditing: state.editingRef !== undefined,
+    textSelection: state.textSelection,
+    endEditingSession,
   };
 }

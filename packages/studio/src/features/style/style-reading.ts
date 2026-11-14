@@ -1,6 +1,7 @@
 // Reads where the style of the selected element comes from (SPEC-04 M-ST, R-ST-04, R-ST-05).
 import {
   type BridgeStyleProbePayload,
+  COMPOSITE_CSS_PROPERTY_OF,
   CSS_LONGHAND_OF,
   type ElementRef,
   type StyleReading,
@@ -13,7 +14,9 @@ import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 
 export const PROBE_TIMEOUT_MS = 2_000;
-const PROBED_LONGHANDS = [...new Set(Object.values(CSS_LONGHAND_OF))];
+const PROBED_LONGHANDS = [
+  ...new Set([...Object.values(CSS_LONGHAND_OF), ...Object.values(COMPOSITE_CSS_PROPERTY_OF)]),
+];
 
 /** Asks the Bridge for the rules of `ref`; undefined when it does not answer in time. */
 export function requestStyleProbe(

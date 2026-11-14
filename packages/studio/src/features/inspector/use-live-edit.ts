@@ -1,5 +1,5 @@
 // Live edit hook for Inspector (SPEC-04 R-IN-13, R-IN-14, R-IN-20).
-import type { ClassContext, ClassValue, PropertyId } from '@kumicraft/shared';
+import type { ClassContext, ClassValue, PropertyId, Scope } from '@kumicraft/shared';
 import { writeValue } from '@kumicraft/shared';
 import type { TFunction } from 'i18next';
 import { useEffect, useRef, useState } from 'react';
@@ -15,11 +15,18 @@ export type UseLiveEditOptions = {
   readonly throttleMs?: number | undefined;
 };
 
+export type BatchPropEntry = {
+  readonly property: PropertyId;
+  readonly value: ClassValue | undefined;
+  readonly scope?: Scope | undefined;
+};
+
 export type LiveEditState = {
   readonly classString: string;
   readonly isSaving: boolean;
   readonly error?: string | undefined;
   readonly mutateProperty: (property: PropertyId, value: ClassValue | undefined) => void;
+  readonly mutateProperties: (entries: readonly BatchPropEntry[]) => void;
   readonly mutateRawClass: (raw: string) => void;
   readonly flush: () => void;
 };
@@ -365,6 +372,16 @@ export function useLiveEdit({ target, ctx, throttleMs = 100 }: UseLiveEditOption
     mutateProperty: (property, value) => {
       const scope = target.currentScope;
       send((base) => writeValue(base, property, scope, value, ctx), property);
+    },
+    mutateProperties: (entries) => {
+      const defaultScope = target.currentScope;
+      send((base) =>
+        entries.reduce(
+          (cls, entry) =>
+            writeValue(cls, entry.property, entry.scope ?? defaultScope, entry.value, ctx),
+          base,
+        ),
+      );
     },
     mutateRawClass: (raw: string) => {
       send(() => raw);

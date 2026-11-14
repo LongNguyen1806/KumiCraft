@@ -381,6 +381,10 @@
       "colors": "Colors",
       "borders": "Borders",
       "effects": "Effects",
+      "motion": "Motion",
+      "icon": "Icon",
+      "image": "Image",
+      "attributes": "Attributes",
       "visibility": "Visibility",
       "tagAttributes": "Attributes for <{{tag}}>",
       "otherClasses": "Other classes",
@@ -443,7 +447,70 @@
       "opacity": "Opacity",
       "overflow": "Overflow",
       "visibility": "Visibility",
-      "objectFit": "Object fit"
+      "objectFit": "Object fit",
+      "objectPosition": "Object position",
+      "aspectRatio": "Aspect ratio",
+      "shadowColor": "Shadow color",
+      "backdropBlur": "Backdrop blur",
+      "rotate": "Rotate",
+      "scale": "Scale",
+      "translateX": "Move X",
+      "translateY": "Move Y",
+      "skewX": "Skew X",
+      "blur": "Blur",
+      "brightness": "Brightness",
+      "contrast": "Contrast",
+      "grayscale": "Grayscale",
+      "mixBlendMode": "Blend mode",
+      "transitionProperty": "Transition",
+      "duration": "Duration",
+      "ease": "Easing",
+      "delay": "Delay",
+      "animation": "Animation"
+    },
+    "tagSelectLabel": "HTML tag",
+    "linkHrefHint": "Add href",
+    "list": {
+      "addItem": "Add item",
+      "removeItem": "Remove item"
+    },
+    "attrs": {
+      "namePlaceholder": "attr (e.g. aria-label)",
+      "valuePlaceholder": "value",
+      "add": "Add attribute",
+      "remove": "Remove attribute",
+      "blocked": "Unsupported or unsafe attribute name"
+    },
+    "icon": {
+      "change": "Change icon…",
+      "size": "Size",
+      "strokeWidth": "Stroke",
+      "color": "Color"
+    },
+    "effects": {
+      "gradient": "Gradient",
+      "direction": "Direction",
+      "from": "Start color",
+      "to": "End color",
+      "gradientText": "Gradient text",
+      "backdropBlur": "Glass blur",
+      "glow": "Glow",
+      "glowButton": "Glow",
+      "on": "On",
+      "off": "Off"
+    },
+    "motion": {
+      "preview": "Preview",
+      "revealTitle": "Scroll reveal",
+      "revealEffect": "Effect",
+      "revealStagger": "Stagger",
+      "presets": {
+        "hoverLift": "Hover lift",
+        "hoverScale": "Soft scale",
+        "glowBorder": "Glow border",
+        "fadeIn": "Fade in",
+        "slideUp": "Slide up"
+      }
     },
     "path": {
       "label": "Element path",
@@ -475,7 +542,19 @@
     "invalidValue": "Not a valid Tailwind {{major}} value: for example 4, 2.5, 1/2 or [13px]"
   },
   "textEdit": {
-    "loopBanner": "Repeated {{count}} times (edits template)"
+    "loopBanner": "Repeated {{count}} times (edits template)",
+    "inlineBar": {
+      "toolbar": "Inline text formatting",
+      "bold": "Bold",
+      "italic": "Italic",
+      "color": "Text color",
+      "badge": "Badge",
+      "colorPrimary": "Primary",
+      "colorRose": "Rose",
+      "colorAmber": "Amber",
+      "colorEmerald": "Emerald",
+      "colorSky": "Sky"
+    }
   },
   "canvas": {
     "buildError": {

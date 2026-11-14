@@ -21,9 +21,9 @@ describe('searchBlocks [R-LB-13]', () => {
     expect(emptyRes).toHaveLength(0);
   });
 
-  it('returns all 16 blocks when query is empty', () => {
+  it('returns all 19 blocks when query is empty', () => {
     const all = searchBlocks('');
-    expect(all).toHaveLength(16);
+    expect(all).toHaveLength(19);
     expect(all).toEqual(LIBRARY_BLOCKS);
   });
 

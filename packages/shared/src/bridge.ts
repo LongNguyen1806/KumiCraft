@@ -342,3 +342,20 @@ export const BridgeDrawEndPayloadSchema = z.strictObject({
   placement: PlacementSchema.optional(),
 });
 export type BridgeDrawEndPayload = z.infer<typeof BridgeDrawEndPayloadSchema>;
+
+/** Bridge -> Studio, type 'text-select' (TK-3: selection range inside text-edit). */
+export const BridgeTextSelectPayloadSchema = z.strictObject({
+  ref: ElementRefSchema,
+  start: z.number().int().min(0),
+  end: z.number().int().min(0),
+  rect: RectSchema.optional(),
+});
+export type BridgeTextSelectPayload = z.infer<typeof BridgeTextSelectPayloadSchema>;
+
+/** Studio -> Bridge, type 'motion-preview' (TK-22: replay animation once on canvas without editing files). */
+export const StudioMotionPreviewPayloadSchema = z.strictObject({
+  ref: ElementRefSchema,
+  className: z.string().min(1).max(200).optional(),
+  durationMs: z.number().int().min(100).max(5000).optional(),
+});
+export type StudioMotionPreviewPayload = z.infer<typeof StudioMotionPreviewPayloadSchema>;

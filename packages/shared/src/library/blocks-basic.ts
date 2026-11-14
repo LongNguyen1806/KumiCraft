@@ -1,6 +1,6 @@
 // Basic library blocks: layout and content (R-LB-10, R-LB-11, R-LB-12, TK-43, TK-47, TK-48).
 import { NEUTRAL_BLOCKS, SVG_PLACEHOLDER } from './blocks-neutral.ts';
-import { HEADING_VARIANTS } from './blocks-variants.ts';
+import { HEADING_VARIANTS, PLACEHOLDER_IMAGE_VARIANTS } from './blocks-variants.ts';
 import type { LibraryBlock } from './types.ts';
 
 export const BASIC_BLOCKS: readonly LibraryBlock[] = [
@@ -203,5 +203,57 @@ export const BASIC_BLOCKS: readonly LibraryBlock[] = [
 </a>`,
     },
     neutral: NEUTRAL_BLOCKS['content.link'],
+  },
+
+  // 9b. Content: Bullet List
+  {
+    id: 'content.list',
+    category: 'content',
+    labelKey: 'library:blocks.list',
+    keywords: {
+      vi: ['danh sách', 'danh sach', 'liệt kê', 'list', 'ul', 'gạch đầu dòng'],
+      en: ['list', 'bullet', 'ul', 'items'],
+    },
+    icon: 'List',
+    jsx: {
+      vi: `<ul className="list-disc pl-5 space-y-2 text-{text}">\n  <li>Mục thứ nhất</li>\n  <li>Mục thứ hai</li>\n  <li>Mục thứ ba</li>\n</ul>`,
+      en: `<ul className="list-disc pl-5 space-y-2 text-{text}">\n  <li>First item</li>\n  <li>Second item</li>\n  <li>Third item</li>\n</ul>`,
+    },
+    neutral: NEUTRAL_BLOCKS['content.list'],
+  },
+
+  // 9c. Content: Ordered List
+  {
+    id: 'content.list-ordered',
+    category: 'content',
+    labelKey: 'library:blocks.listOrdered',
+    keywords: {
+      vi: ['danh sách số', 'danh sach so', 'thứ tự', 'ol', 'ordered'],
+      en: ['ordered list', 'numbered', 'ol', 'steps'],
+    },
+    icon: 'ListOrdered',
+    jsx: {
+      vi: `<ol className="list-decimal pl-5 space-y-2 text-{text}">\n  <li>Bước thứ nhất</li>\n  <li>Bước thứ hai</li>\n  <li>Bước thứ ba</li>\n</ol>`,
+      en: `<ol className="list-decimal pl-5 space-y-2 text-{text}">\n  <li>First step</li>\n  <li>Second step</li>\n  <li>Third step</li>\n</ol>`,
+    },
+    neutral: NEUTRAL_BLOCKS['content.list-ordered'],
+  },
+
+  // 9d. Content: Placeholder Image
+  {
+    id: 'content.placeholder-image',
+    category: 'content',
+    labelKey: 'library:blocks.placeholderImage',
+    keywords: {
+      vi: ['ảnh giữ chỗ', 'anh giu cho', 'khung ảnh', 'placeholder', 'image'],
+      en: ['placeholder', 'image placeholder', 'aspect', 'frame'],
+    },
+    icon: 'Image',
+    jsx: {
+      vi: `<div className="w-full aspect-video bg-{surface-muted} border border-{border} rounded-{radius} flex items-center justify-center text-{muted}">\n  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">\n    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />\n    <circle cx="9" cy="9" r="2" />\n    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />\n  </svg>\n</div>`,
+      en: `<div className="w-full aspect-video bg-{surface-muted} border border-{border} rounded-{radius} flex items-center justify-center text-{muted}">\n  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">\n    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />\n    <circle cx="9" cy="9" r="2" />\n    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />\n  </svg>\n</div>`,
+    },
+    neutral: NEUTRAL_BLOCKS['content.placeholder-image'],
+    variants: PLACEHOLDER_IMAGE_VARIANTS,
   },
 ];

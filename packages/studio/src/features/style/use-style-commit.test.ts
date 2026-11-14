@@ -62,8 +62,7 @@ describe('useStyleCommit [R-ST-13]', () => {
     );
 
     await act(async () => {
-      result.current.commit('paddingTop', '24px');
-      await Promise.resolve();
+      await result.current.commit('paddingTop', '24px');
     });
 
     // The preview stays until the first read again, so the element does not jump back meanwhile.

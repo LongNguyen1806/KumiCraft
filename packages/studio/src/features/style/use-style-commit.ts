@@ -5,6 +5,7 @@ import {
   type ProjectBreakpoint,
   projectBreakpoints,
   type ResponsiveMode,
+  type StyleApplyRequest,
   type StyleState as StyleInteractionState,
 } from '@kumicraft/shared';
 import { useState } from 'react';
@@ -29,40 +30,54 @@ export type StyleCommitContext = {
 };
 
 /** An empty value removes the declaration. Errors come back as text for the Inspector. */
+function buildStyleChangePayload(
+  ctx: StyleCommitContext,
+  property: string,
+  value: string,
+  stateOverride: StyleInteractionState | undefined,
+  theme: ReturnType<typeof useThemeStore.getState>['theme'],
+): StyleApplyRequest['change'] {
+  const breakpoints = ctx.breakpoints ?? projectBreakpoints(theme);
+  const media = mediaForBreakpoint(ctx.breakpoint, ctx.mode, breakpoints);
+  const effectiveState = stateOverride ?? ctx.interactionState;
+  return {
+    property,
+    target: ctx.target,
+    ...(value === '' ? {} : { value }),
+    ...(media === undefined ? {} : { media }),
+    ...(effectiveState === undefined ? {} : { state: effectiveState }),
+    ...(ctx.breakpoint === 'base' ? {} : { breakpoint: ctx.breakpoint }),
+  };
+}
+
 export function useStyleCommit(ctx: StyleCommitContext): {
-  readonly commit: (property: string, value: string) => void;
+  readonly commit: (
+    property: string,
+    value: string,
+    stateOverride?: StyleInteractionState,
+  ) => Promise<void>;
   readonly error: string | undefined;
 } {
   const { t: tError } = useTranslation('errors');
   const [error, setError] = useState<string>();
   const theme = useThemeStore((s) => s.theme);
 
-  const send = async (property: string, value: string) => {
+  const send = async (property: string, value: string, stateOverride?: StyleInteractionState) => {
     if (ctx.state === undefined) return;
     setError(undefined);
-    const breakpoints = ctx.breakpoints ?? projectBreakpoints(theme);
-    const media = mediaForBreakpoint(ctx.breakpoint, ctx.mode, breakpoints);
     try {
       await applyStyle({
         probe: ctx.state.probe,
         tag: ctx.tag,
-        change: {
-          property,
-          target: ctx.target,
-          ...(value === '' ? {} : { value }),
-          ...(media === undefined ? {} : { media }),
-          ...(ctx.interactionState === undefined ? {} : { state: ctx.interactionState }),
-          ...(ctx.breakpoint === 'base' ? {} : { breakpoint: ctx.breakpoint }),
-        },
+        change: buildStyleChangePayload(ctx, property, value, stateOverride, theme),
       });
       // The page takes the new CSS by HMR a moment later; read again then. The preview stays until
       // that first read, so the element does not jump back meanwhile, and must go before it or the
       // probe would see it as inline style (R-ST-13).
-      const reread = () => {
+      setTimeout(() => {
         studioBridgeChannel.clearStylePreview();
         ctx.refresh();
-      };
-      setTimeout(reread, 300);
+      }, 300);
       setTimeout(ctx.refresh, 1_000);
     } catch (cause) {
       studioBridgeChannel.clearStylePreview();
@@ -72,9 +87,7 @@ export function useStyleCommit(ctx: StyleCommitContext): {
   };
 
   return {
-    commit: (property, value) => {
-      void send(property, value);
-    },
+    commit: (property, value, stateOverride) => send(property, value, stateOverride),
     error,
   };
 }

@@ -9,6 +9,9 @@ import {
   type ElementText,
   ElementTextSchema,
   parseLocString,
+  type RevealRequest,
+  type RevealResult,
+  RevealResultSchema,
   type SourceEdit,
   type StructureEdit,
   type StructureResult,
@@ -60,4 +63,8 @@ export async function editSourceBatch(request: BatchEditRequest): Promise<BatchE
 
 export async function applyStructureEdit(edit: StructureEdit): Promise<StructureResult> {
   return parseResponse(StructureResultSchema, await apiPost('source/edits', { edit }));
+}
+
+export async function revealElement(request: RevealRequest): Promise<RevealResult> {
+  return parseResponse(RevealResultSchema, await apiPost('source/reveal', request));
 }

@@ -1,42 +1,24 @@
 // Block Library Panel (SPEC-04 section 15 M-LB, R-LB-10..15).
 import {
-  type ImageSource,
-  LIBRARY_BLOCKS,
   type LibraryBlock,
   type LibraryBlockCategory,
-  type LibraryStyle,
-  searchBlocks,
   supportsUiKitBlock,
   type UiKitReport,
 } from '@kumicraft/shared';
-import { createElement, useMemo, useState } from 'react';
+import { createElement, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { InsertButton } from '../../components/ui/insert-button.tsx';
 import { resources } from '../../i18n/i18n.ts';
-import { type ErrorInfo } from '../../routes/error-text.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { ImagePickerDialog } from '../draw/image-picker-dialog.tsx';
-import { insertImageFromSelection } from '../draw/insert-image.ts';
-import { useProjectStore } from '../project/project-store.ts';
-import { useEditMode } from '../project/use-edit-mode.ts';
-import { useStyleLayerSupported } from '../project/use-style-edit.ts';
+import { IconPickerDialog } from '../icons/icon-picker.tsx';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
-import { insertBlock } from './insert-block.ts';
 import { getBlockIcon } from './library-icons.ts';
+import { useLibraryPanelState } from './library-panel-state.ts';
 import { LibrarySearchHeader } from './library-search-header.tsx';
-import { getSelectedStyle, setSelectedStyle } from './library-styles.ts';
 import { LibraryVariantMenu } from './library-variant-menu.tsx';
 import { getSelectedVariant, setSelectedVariant } from './library-variants.ts';
-
-const CATEGORIES: readonly LibraryBlockCategory[] = [
-  'layout',
-  'content',
-  'form',
-  'data',
-  'composite',
-];
 
 type BlockKey = keyof (typeof resources.en.library)['blocks'];
 
@@ -170,49 +152,6 @@ function CategorySection({
   );
 }
 
-function useLibraryInsert(hasSelection: boolean) {
-  const { i18n } = useTranslation('library');
-  const [inserting, setInserting] = useState(false);
-  const [errorInfo, setErrorInfo] = useState<ErrorInfo>();
-
-  const handleInsert = async (block: LibraryBlock, variantId?: string) => {
-    if (!hasSelection || inserting) return;
-    setInserting(true);
-    setErrorInfo(undefined);
-    const res = await insertBlock(block, i18n.language, variantId);
-    setInserting(false);
-    if (!res.ok && res.error) setErrorInfo(res.error);
-  };
-
-  const handlePickImage = async (choice: { readonly image: ImageSource; readonly alt: string }) => {
-    if (!hasSelection || inserting) return;
-    setInserting(true);
-    setErrorInfo(undefined);
-    const res = await insertImageFromSelection(choice);
-    setInserting(false);
-    if (!res.ok && res.error) setErrorInfo(res.error);
-  };
-
-  return { inserting, errorInfo, handleInsert, handlePickImage };
-}
-
-function useFilteredLibraryBlocks(query: string): readonly LibraryBlock[] {
-  return useMemo(() => {
-    return searchBlocks(query, (id) => {
-      const block = LIBRARY_BLOCKS.find((b) => b.id === id);
-      if (!block) return { vi: id, en: id };
-      const rawKey = block.labelKey.replace(/^library:blocks\./, '');
-      if (isBlockKey(rawKey)) {
-        return {
-          vi: resources.vi.library.blocks[rawKey],
-          en: resources.en.library.blocks[rawKey],
-        };
-      }
-      return { vi: id, en: id };
-    });
-  }, [query]);
-}
-
 type LibraryCategoriesProps = {
   readonly categories: readonly LibraryBlockCategory[];
   readonly blocks: readonly LibraryBlock[];
@@ -295,49 +234,6 @@ function LibraryContent({
   );
 }
 
-function useLibraryPanelState() {
-  const project = useProjectStore((s) => s.project);
-  const projectId = project?.id;
-  const [query, setQuery] = useState('');
-  const [imagePickerOpen, setImagePickerOpen] = useState(false);
-  const [styleChoice, setStyleChoice] = useState<{
-    readonly projectId: string | undefined;
-    readonly value: LibraryStyle;
-  }>(() => ({ projectId, value: getSelectedStyle(projectId) }));
-  const style =
-    styleChoice.projectId === projectId ? styleChoice.value : getSelectedStyle(projectId);
-  const handleStyleChange = (next: LibraryStyle) => {
-    setSelectedStyle(projectId, next);
-    setStyleChoice({ projectId, value: next });
-  };
-  const editable = useStyleLayerSupported();
-  const editMode = useEditMode();
-  const selectedRefs = useSelectionStore((s) => s.selectedRefs);
-  const hasSelection = selectedRefs.length === 1;
-  const filteredBlocks = useFilteredLibraryBlocks(query);
-  const visibleBlocks = editable ? filteredBlocks : [];
-  const insert = useLibraryInsert(hasSelection);
-  const activeCategories = CATEGORIES.filter((cat) =>
-    visibleBlocks.some((b) => b.category === cat),
-  );
-
-  return {
-    query,
-    setQuery,
-    style,
-    handleStyleChange,
-    uiKit: project?.support.uiKit,
-    imagePickerOpen,
-    setImagePickerOpen,
-    editable,
-    isViewOnly: editMode === 'viewOnly',
-    hasSelection,
-    visibleBlocks,
-    insert,
-    activeCategories,
-  };
-}
-
 export function LibraryPanel() {
   const { t } = useTranslation('library');
   const s = useLibraryPanelState();
@@ -354,6 +250,9 @@ export function LibraryPanel() {
         hasSelection={s.hasSelection && !s.isViewOnly}
         onOpenImagePicker={() => {
           s.setImagePickerOpen(true);
+        }}
+        onOpenIconPicker={() => {
+          s.setIconPickerOpen(true);
         }}
         style={s.style}
         onStyleChange={s.handleStyleChange}
@@ -381,6 +280,16 @@ export function LibraryPanel() {
         }}
         onPick={(c) => {
           void s.insert.handlePickImage(c);
+        }}
+      />
+
+      <IconPickerDialog
+        open={s.iconPickerOpen}
+        onClose={() => {
+          s.setIconPickerOpen(false);
+        }}
+        onPick={(icon) => {
+          void s.insert.handlePickIcon(icon);
         }}
       />
     </aside>

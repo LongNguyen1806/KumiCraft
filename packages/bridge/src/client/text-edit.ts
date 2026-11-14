@@ -1,11 +1,14 @@
 // Canvas Direct Text Editing controller (SPEC-04 section 10 M-TX, R-TX-01..08).
 import type { ElementRef } from '@kumicraft/shared';
 
+import { readSelectionInElement, type SelectionInElement } from './text-select.ts';
+
 export type TextEditCallbacks = {
   readonly onCommit: (ref: ElementRef, text: string) => void;
   readonly onCancel: (ref: ElementRef) => void;
   readonly onStart?: (el: HTMLElement) => void;
   readonly onEnd?: () => void;
+  readonly onSelectRange?: (ref: ElementRef, range: SelectionInElement) => void;
 };
 
 /**
@@ -74,6 +77,7 @@ export class TextEditController {
     element.addEventListener('keydown', this.handleKeyDown, true);
     element.addEventListener('compositionstart', this.handleCompositionStart);
     element.addEventListener('compositionend', this.handleCompositionEnd);
+    element.ownerDocument.addEventListener('selectionchange', this.handleSelectionChange);
     window.addEventListener('pointerdown', this.handleOutsidePointerDown, true);
   }
 
@@ -86,6 +90,10 @@ export class TextEditController {
       this.activeElement.removeEventListener('keydown', this.handleKeyDown, true);
       this.activeElement.removeEventListener('compositionstart', this.handleCompositionStart);
       this.activeElement.removeEventListener('compositionend', this.handleCompositionEnd);
+      this.activeElement.ownerDocument.removeEventListener(
+        'selectionchange',
+        this.handleSelectionChange,
+      );
     }
     window.removeEventListener('pointerdown', this.handleOutsidePointerDown, true);
   }
@@ -173,6 +181,15 @@ export class TextEditController {
 
   private handleCompositionEnd = (): void => {
     this.isComposing = false;
+  };
+
+  private handleSelectionChange = (): void => {
+    if (this.activeElement === undefined || this.activeRef === undefined || this.isComposing)
+      return;
+    const range = readSelectionInElement(this.activeElement);
+    if (range !== undefined) {
+      this.callbacks.onSelectRange?.(this.activeRef, range);
+    }
   };
 
   private handleOutsidePointerDown = (event: PointerEvent): void => {

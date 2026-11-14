@@ -5,6 +5,7 @@ import {
   CARD_NEUTRAL_VARIANTS,
   HEADING_NEUTRAL_VARIANTS,
   HERO_NEUTRAL_VARIANTS,
+  PLACEHOLDER_IMAGE_NEUTRAL_VARIANTS,
 } from './blocks-variants-neutral.ts';
 import type { LibraryBlockVariant } from './types.ts';
 
@@ -98,5 +99,28 @@ export const HERO_VARIANTS: readonly LibraryBlockVariant[] = [
       en: `<section className="py-16 px-4 bg-{surface-muted}">\n  <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-8">\n    <div className="flex-1 basis-60">\n      <h1 className="text-4xl font-extrabold font-{heading} text-{text} mb-4">\n        Welcome to our website\n      </h1>\n      <p className="text-lg text-{muted} mb-8">\n        Modern and swift visual interface design solution.\n      </p>\n      <button type="button" className="px-6 py-3 bg-{primary} text-{on-primary} rounded-{radius} font-semibold hover:bg-{primary}/90">\n        Get Started\n      </button>\n    </div>\n    <div className="flex-1 basis-60">\n      <img src="${SVG_PLACEHOLDER}" alt="Hero illustration" className="w-full max-w-full h-auto rounded-{radius} object-cover" />\n    </div>\n  </div>\n</section>`,
     },
     neutral: HERO_NEUTRAL_VARIANTS.split,
+  },
+];
+
+const PLACEHOLDER_ICON_SVG = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">\n    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />\n    <circle cx="9" cy="9" r="2" />\n    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />\n  </svg>`;
+
+export const PLACEHOLDER_IMAGE_VARIANTS: readonly LibraryBlockVariant[] = [
+  {
+    id: '1-1',
+    labelKey: 'library:variants.ratio11',
+    jsx: {
+      vi: `<div className="w-full aspect-square bg-{surface-muted} border border-{border} rounded-{radius} flex items-center justify-center text-{muted}">\n  ${PLACEHOLDER_ICON_SVG}\n</div>`,
+      en: `<div className="w-full aspect-square bg-{surface-muted} border border-{border} rounded-{radius} flex items-center justify-center text-{muted}">\n  ${PLACEHOLDER_ICON_SVG}\n</div>`,
+    },
+    neutral: PLACEHOLDER_IMAGE_NEUTRAL_VARIANTS.square,
+  },
+  {
+    id: '4-3',
+    labelKey: 'library:variants.ratio43',
+    jsx: {
+      vi: `<div className="w-full aspect-[4/3] bg-{surface-muted} border border-{border} rounded-{radius} flex items-center justify-center text-{muted}">\n  ${PLACEHOLDER_ICON_SVG}\n</div>`,
+      en: `<div className="w-full aspect-[4/3] bg-{surface-muted} border border-{border} rounded-{radius} flex items-center justify-center text-{muted}">\n  ${PLACEHOLDER_ICON_SVG}\n</div>`,
+    },
+    neutral: PLACEHOLDER_IMAGE_NEUTRAL_VARIANTS.ratio43,
   },
 ];

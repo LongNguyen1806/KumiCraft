@@ -5,6 +5,7 @@ import {
   EditRequestSchema,
   issuesToDetails,
   PAGE_TREE_MAX_DEPTH,
+  RevealRequestSchema,
 } from '@kumicraft/shared';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
@@ -12,6 +13,7 @@ import { z } from 'zod';
 import type { HistoryService } from '../../../core/history/history-service.ts';
 import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
 import type { SourceEditorService } from '../../../core/source-editor/source-editor-service.ts';
+import { applyRevealEdit } from '../../../core/source-editor/structure/reveal-service.ts';
 import { validateInsertedJsx } from '../../../core/source-editor/structure/structure-ops.ts';
 import { sendError } from '../send-error.ts';
 
@@ -59,6 +61,12 @@ function buildStructureHistoryLabel(edit: StructureEdit): HistoryLabel {
     return {
       key: 'history:unwrap',
       params: { tag: edit.element.tag, count: '1' },
+    };
+  }
+  if (edit.kind === 'wrapText' || edit.kind === 'replaceSvg') {
+    return {
+      key: `history:${edit.kind}`,
+      params: { tag: edit.tag },
     };
   }
   const tag = edit.elements[0]?.tag ?? 'div';
@@ -137,7 +145,9 @@ async function handleApplyEdit(
     edit.kind === 'duplicate' ||
     edit.kind === 'move' ||
     edit.kind === 'wrap' ||
-    edit.kind === 'unwrap'
+    edit.kind === 'unwrap' ||
+    edit.kind === 'wrapText' ||
+    edit.kind === 'replaceSvg'
   ) {
     const label = buildStructureHistoryLabel(edit);
     const edited = await deps.sourceEditorService.applyStructureEdit(projectRoot, edit, (files) => {
@@ -199,4 +209,31 @@ export function registerSourceRoutes(api: FastifyInstance, deps: SourceRoutesDep
     handleApplyEdit(deps, req, rep),
   );
   api.post('/source/edits/batch', (req, rep) => handleApplyBatchEdit(deps, req, rep));
+  api.post('/source/reveal', async (req, rep) => {
+    const projectRoot = deps.getProjectRoot();
+    if (!projectRoot) return sendError(rep, NO_PROJECT);
+    const parsed = RevealRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return sendError(rep, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
+    }
+    const result = await applyRevealEdit(
+      {
+        fs: deps.fs,
+        onWritten: (files) => {
+          for (const f of files) {
+            deps.historyService.recordInternalWrite(f.path, f.afterHash);
+          }
+          const label: HistoryLabel = {
+            key: `history:${parsed.data.action === 'wrap' ? 'wrap' : 'unwrap'}`,
+            params: { tag: parsed.data.tag },
+          };
+          deps.historyService.push({ label, files });
+        },
+      },
+      projectRoot,
+      parsed.data,
+    );
+    if (!result.ok) return sendError(rep, result.error);
+    return rep.status(200).send({ data: result.value });
+  });
 }

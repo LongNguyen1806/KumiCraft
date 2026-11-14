@@ -2,6 +2,14 @@
   "title": "Library",
   "search": "Search blocks…",
   "insertImage": "Image…",
+  "openIcons": "Icon…",
+  "iconPicker": {
+    "title": "Pick an icon",
+    "search": "Search icons (e.g. heart, arrow, user)…",
+    "loading": "Loading icons…",
+    "empty": "No matching icons found.",
+    "count": "{{shown}} / {{total}}"
+  },
   "hint": "Drag a block onto the Canvas, or select an element and press + on a block to insert it",
   "add": "Insert {{name}} at the selected element",
   "variantMenu": "Choose {{name}} style",
@@ -39,7 +47,10 @@
     "card": "Card",
     "navbar": "Navbar",
     "footer": "Footer",
-    "hero": "Hero"
+    "hero": "Hero",
+    "list": "Bullet List",
+    "listOrdered": "Numbered List",
+    "placeholderImage": "Image Frame"
   },
   "variants": {
     "solid": "Solid",
@@ -54,6 +65,9 @@
     "headingLg": "Large",
     "headingSm": "Small",
     "centered": "Centered",
-    "split": "Split"
+    "split": "Split",
+    "ratio169": "16:9",
+    "ratio11": "1:1",
+    "ratio43": "4:3"
   }
 }

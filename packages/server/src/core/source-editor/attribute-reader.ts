@@ -1,11 +1,10 @@
 // Reading and analyzing JSX attributes (R-SE-03, R-SE-04).
-import type {
-  EditableAttr,
-  ElementAttributes,
-  ElementClassName,
-  StaticOrString,
+import {
+  type ElementAttributes,
+  type ElementClassName,
+  isValidSettableAttrName,
+  type StaticOrString,
 } from '@kumicraft/shared';
-import { EDITABLE_ATTRS } from '@kumicraft/shared';
 
 import type { AstNode } from './ast-helpers.ts';
 import { asAstNode } from './ast-helpers.ts';
@@ -191,29 +190,28 @@ export function readClassName(attributes: readonly unknown[], code: string): Ele
 }
 
 /**
- * Reads editable attributes (href, src, alt, placeholder, type) from opening element.
+ * Reads editable attributes (EDITABLE_ATTRS + id, title, target, rel, role, tabIndex, aria-*, data-*) from opening element.
  */
 export function readEditableAttributes(
   attributes: readonly unknown[],
   code: string,
 ): ElementAttributes {
-  const result: Record<EditableAttr, StaticOrString | undefined> = {
-    href: undefined,
-    src: undefined,
-    alt: undefined,
-    placeholder: undefined,
-    type: undefined,
-  };
+  const result: Record<string, StaticOrString | undefined> = {};
   const astAttrs = attributes
     .map(asAstNode)
     .filter((a): a is AstNode => a !== undefined && a.type === 'JSXAttribute');
 
-  for (const name of EDITABLE_ATTRS) {
-    const matching = astAttrs.filter((a) => {
-      const nameNode = asAstNode(a['name']);
-      return nameNode?.['name'] === name;
-    });
+  const counts = new Map<string, AstNode[]>();
+  for (const attr of astAttrs) {
+    const nameNode = asAstNode(attr['name']);
+    const name = typeof nameNode?.['name'] === 'string' ? nameNode['name'] : undefined;
+    if (name === undefined || !isValidSettableAttrName(name)) continue;
+    const list = counts.get(name) ?? [];
+    list.push(attr);
+    counts.set(name, list);
+  }
 
+  for (const [name, matching] of counts.entries()) {
     if (matching.length === 1 && matching[0]) {
       result[name] = extractStaticOrString(matching[0], code);
     } else if (matching.length > 1) {

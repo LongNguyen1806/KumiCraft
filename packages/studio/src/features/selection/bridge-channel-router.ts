@@ -215,6 +215,12 @@ export class StudioBridgeChannel extends BridgeChannel {
     const active = this.getActiveChannel();
     if (active !== this) active.measureFree(ref);
   }
+
+  override sendMotionPreview(ref: ElementRef, className?: string, durationMs?: number): void {
+    super.sendMotionPreview(ref, className, durationMs);
+    const active = this.getActiveChannel();
+    if (active !== this) active.sendMotionPreview(ref, className, durationMs);
+  }
 }
 
 export const bridgeChannels = new BridgeChannelRegistry();

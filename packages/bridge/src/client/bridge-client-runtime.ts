@@ -13,6 +13,8 @@ import {
   type BridgeRuntimeConfig,
   type HotContext,
   isOverlayHost,
+  revealSelectedElement,
+  shortcutPayload,
 } from './bridge-events.ts';
 import { toBuildError } from './build-error.ts';
 import { getRefForElement, handleElementClick } from './candidate-chain.ts';
@@ -22,6 +24,7 @@ import { computeDragHandleTarget, DragController, resolveElementsByRefs } from '
 import { browserDropEnv } from './drop-target.ts';
 import { shouldForwardShortcut } from './keyboard.ts';
 import { fitsMessageLimit } from './message-size.ts';
+import { triggerMotionPreview } from './motion-preview.ts';
 import { BridgeOverlay } from './overlay.ts';
 import { getBridgeElementAtPoint } from './overlay-focus.ts';
 import { attachRuntimeErrorListeners } from './runtime-errors.ts';
@@ -122,6 +125,9 @@ export class BridgeClientRuntime {
         this.overlay.setTextEditing(undefined);
         this.syncDragHandle();
       },
+      onSelectRange: (ref, range) => {
+        this.sendToStudio('text-select', { ref, ...range });
+      },
     });
   }
 
@@ -185,19 +191,19 @@ export class BridgeClientRuntime {
       handleHighlight: this.handleHighlightMessage,
       handleNavigate: this.handleNavigateMessage,
       handleTextEditStart: this.handleTextEditStartMessage,
+      handleDesignFile: this.setDesignFile,
       commitTextEdit: () => {
         this.textEdit.commit();
       },
-      handleDragOver: (data) => {
-        if (this.mode === 'design' && !this.textEdit.isActive()) this.drag.studioDragOver(data);
+      handleDragOver: (d) => {
+        if (this.mode === 'design' && !this.textEdit.isActive()) this.drag.studioDragOver(d);
       },
-      handleDragEnd: (data) => {
-        this.drag.studioDragEnd(data.drop);
+      handleDragEnd: (d) => {
+        this.drag.studioDragEnd(d.drop);
       },
-      handleDesignFile: this.setDesignFile,
-      handleSetGrid: (data) => {
-        this.tools.setGrid(data.size);
-        this.tools.setSnap(data.snap ?? true, data.scale ?? 1);
+      handleSetGrid: (d) => {
+        this.tools.setGrid(d.size);
+        this.tools.setSnap(d.snap ?? true, d.scale ?? 1);
       },
       handleMeasureFree: (ref) => {
         this.tools.measureFree(ref, document);
@@ -205,14 +211,17 @@ export class BridgeClientRuntime {
       handleSetTool: (tool) => {
         this.tools.setTool(tool);
       },
-      handleStyleProbe: (data) => {
-        this.sendToStudio('style-probe-result', cleanProbe(this.stylePreview, data, document));
+      handleStyleProbe: (d) => {
+        this.sendToStudio('style-probe-result', cleanProbe(this.stylePreview, d, document));
       },
-      handleStylePreview: (data) => {
-        this.stylePreview.applyByRef(data.ref, data.property, data.value, document);
+      handleStylePreview: (d) => {
+        this.stylePreview.applyByRef(d.ref, d.property, d.value, document);
       },
       handleStylePreviewClear: () => {
         this.stylePreview.clearAll();
+      },
+      handleMotionPreview: (d) => {
+        triggerMotionPreview(d, document);
       },
     });
   };
@@ -249,12 +258,7 @@ export class BridgeClientRuntime {
     this.syncDragHandle();
 
     const primary = payload.reveal ? this.selectedRefs.at(-1) : undefined;
-    const el = primary
-      ? document.querySelectorAll(`[data-rc-loc="${primary.loc}"]`)[primary.index]
-      : undefined;
-    if (el && typeof el.scrollIntoView === 'function') {
-      el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    }
+    if (primary !== undefined) revealSelectedElement(primary.loc, primary.index);
     this.scheduleSelectionInfo();
   };
 
@@ -377,13 +381,7 @@ export class BridgeClientRuntime {
     if (!shouldForwardShortcut(event, this.mode, this.textEdit.isActive(), isMac)) return;
 
     event.preventDefault();
-    this.sendToStudio('shortcut', {
-      key: event.key,
-      ctrl: event.ctrlKey,
-      meta: event.metaKey,
-      shift: event.shiftKey,
-      alt: event.altKey,
-    });
+    this.sendToStudio('shortcut', shortcutPayload(event));
   };
 
   private scheduleTreeScan(): void {

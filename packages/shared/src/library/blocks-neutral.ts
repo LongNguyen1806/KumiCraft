@@ -148,6 +148,64 @@ export const NEUTRAL_BLOCKS = {
       root: 'link-primary fw-medium',
     },
   },
+  'content.list': {
+    jsx: {
+      vi: `<ul className="@root">\n  <li>Mục thứ nhất</li>\n  <li>Mục thứ hai</li>\n  <li>Mục thứ ba</li>\n</ul>`,
+      en: `<ul className="@root">\n  <li>First item</li>\n  <li>Second item</li>\n  <li>Third item</li>\n</ul>`,
+    },
+    styles: {
+      root: {
+        'list-style-type': 'disc',
+        'padding-left': '20px',
+        display: 'flex',
+        'flex-direction': 'column',
+        gap: '8px',
+        color: '{text}',
+      },
+    },
+    bootstrap: {
+      root: 'ps-3 d-flex flex-column gap-2',
+    },
+  },
+  'content.list-ordered': {
+    jsx: {
+      vi: `<ol className="@root">\n  <li>Bước thứ nhất</li>\n  <li>Bước thứ hai</li>\n  <li>Bước thứ ba</li>\n</ol>`,
+      en: `<ol className="@root">\n  <li>First step</li>\n  <li>Second step</li>\n  <li>Third step</li>\n</ol>`,
+    },
+    styles: {
+      root: {
+        'list-style-type': 'decimal',
+        'padding-left': '20px',
+        display: 'flex',
+        'flex-direction': 'column',
+        gap: '8px',
+        color: '{text}',
+      },
+    },
+    bootstrap: {
+      root: 'ps-3 d-flex flex-column gap-2',
+    },
+  },
+  'content.placeholder-image': {
+    jsx: {
+      vi: `<div className="@root">\n  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">\n    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />\n    <circle cx="9" cy="9" r="2" />\n    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />\n  </svg>\n</div>`,
+      en: `<div className="@root">\n  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">\n    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />\n    <circle cx="9" cy="9" r="2" />\n    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />\n  </svg>\n</div>`,
+    },
+    styles: {
+      root: {
+        width: '100%',
+        'aspect-ratio': '16 / 9',
+        'background-color': '{surface-muted}',
+        border: '1px solid {border}',
+        'border-radius': '{radius}',
+        display: 'flex',
+        'align-items': 'center',
+        'justify-content': 'center',
+        color: '{muted}',
+      },
+    },
+    bootstrap: {},
+  },
   'form.button': {
     jsx: {
       vi: `<button type="button" className="@root">\n  Bấm vào đây\n</button>`,

@@ -24,6 +24,10 @@ import {
 } from '../../style/style-target-store.ts';
 import { useStyleCommit } from '../../style/use-style-commit.ts';
 import type { InspectorTarget } from '../types.ts';
+import { InspectorEffectsExtra } from './inspector-effects-extra.tsx';
+import { InspectorGroup } from './inspector-group.tsx';
+import { InspectorImageSection } from './inspector-image-section.tsx';
+import { InspectorMotionSection } from './inspector-motion-section.tsx';
 import { InspectorStyleUnsupportedBanner } from './inspector-style-unsupported-banner.tsx';
 
 /** The properties always listed, declared or not; any other declared one is listed too. */
@@ -291,9 +295,62 @@ type CssStyleEditorProps = {
   readonly target: Extract<InspectorTarget, { readonly kind: 'element' }>;
 };
 
-/** The style layer in the Inspector for projects without the Tailwind editor (M-ST). */
-export function CssStyleEditor({ project, target: inspected }: CssStyleEditorProps) {
-  const elementKey = `${inspected.ref.loc}#${String(inspected.ref.index)}`;
+function CssExtraSections({
+  source,
+  reading,
+  refTarget,
+  commit,
+  onRefresh,
+}: {
+  readonly source: NonNullable<CssStyleEditorProps['target']['source']>;
+  readonly reading: StyleReading;
+  readonly refTarget: ElementRef;
+  readonly commit: (property: string, value: string, stateOverride?: StyleState) => Promise<void>;
+  readonly onRefresh: () => void;
+}) {
+  const { t } = useTranslation();
+  const disabled = source.readonly !== undefined;
+  return (
+    <>
+      <InspectorImageSection
+        tag={source.tag}
+        editable={false}
+        disabled={disabled}
+        cssReading={reading}
+        onCssCommit={(prop, val) => {
+          void commit(prop, val);
+        }}
+      />
+      <InspectorGroup id="css-effects" title={t('inspector.groups.effects')} defaultOpen={false}>
+        <InspectorEffectsExtra
+          editable={false}
+          disabled={disabled}
+          cssReading={reading}
+          onCssCommit={commit}
+        />
+      </InspectorGroup>
+      <InspectorMotionSection
+        refTarget={refTarget}
+        source={source}
+        editable={false}
+        disabled={disabled}
+        cssReading={reading}
+        onCssCommit={commit}
+        onRefresh={onRefresh}
+      />
+    </>
+  );
+}
+
+function CssStyleEditorBody({
+  elementKey,
+  project,
+  inspected,
+}: {
+  readonly elementKey: string;
+  readonly project: ProjectInfo | undefined;
+  readonly inspected: Extract<InspectorTarget, { readonly kind: 'element' }>;
+}) {
   const interactionState = useStyleElementState(elementKey);
   const { state, refresh } = useStyleState(true, interactionState);
   const ref = state?.probe.ref ?? inspected.ref;
@@ -309,27 +366,48 @@ export function CssStyleEditor({ project, target: inspected }: CssStyleEditorPro
     target,
     interactionState,
   });
-
   return (
     <>
       {!writable && <InspectorStyleUnsupportedBanner styling={project?.support.styling} />}
       {state !== undefined && (
-        <StyleSourcesSection
-          reading={state.reading}
-          writable={writable}
-          elementRef={ref}
-          interactionState={interactionState}
-          onStateChange={(next) => {
-            useStyleTargetStore.getState().setState(elementKey, next);
-          }}
-          target={target}
-          onTargetChange={(next) => {
-            useStyleTargetStore.getState().setTarget(elementKey, next);
-          }}
-          onCommit={commit}
-          error={error}
-        />
+        <>
+          <StyleSourcesSection
+            reading={state.reading}
+            writable={writable}
+            elementRef={ref}
+            interactionState={interactionState}
+            onStateChange={(next) => {
+              useStyleTargetStore.getState().setState(elementKey, next);
+            }}
+            target={target}
+            onTargetChange={(next) => {
+              useStyleTargetStore.getState().setTarget(elementKey, next);
+            }}
+            onCommit={(prop, val) => {
+              void commit(prop, val);
+            }}
+            error={error}
+          />
+          {writable && inspected.source !== undefined && (
+            <CssExtraSections
+              source={inspected.source}
+              reading={state.reading}
+              refTarget={inspected.ref}
+              commit={commit}
+              onRefresh={() => {
+                refresh();
+                inspected.refresh();
+              }}
+            />
+          )}
+        </>
       )}
     </>
   );
+}
+
+/** The style layer in the Inspector for projects without the Tailwind editor (M-ST). */
+export function CssStyleEditor({ project, target: inspected }: CssStyleEditorProps) {
+  const elementKey = `${inspected.ref.loc}#${String(inspected.ref.index)}`;
+  return <CssStyleEditorBody elementKey={elementKey} project={project} inspected={inspected} />;
 }

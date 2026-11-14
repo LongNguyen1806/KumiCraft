@@ -18,6 +18,8 @@ import {
   BridgeTextCommitPayloadSchema,
   type BridgeTextEditRequestPayload,
   BridgeTextEditRequestPayloadSchema,
+  type BridgeTextSelectPayload,
+  BridgeTextSelectPayloadSchema,
   type DrawTool,
   type ElementRef,
   type StudioDragOverPayload,
@@ -35,6 +37,7 @@ export type BridgeTextEditListener = {
   readonly onTextEditRequest?: (payload: BridgeTextEditRequestPayload) => void;
   readonly onTextCommit?: (payload: BridgeTextCommitPayload) => void;
   readonly onTextCancel?: (payload: BridgeTextCancelPayload) => void;
+  readonly onTextSelect?: (payload: BridgeTextSelectPayload) => void;
 };
 
 export type BridgeFreeFrameListener = {
@@ -183,6 +186,14 @@ export class BridgeChannel {
     this.sendMessage('text-edit-end', { ref });
   }
 
+  sendMotionPreview(ref: ElementRef, className?: string, durationMs?: number): void {
+    this.sendMessage('motion-preview', {
+      ref,
+      ...(className !== undefined ? { className } : {}),
+      ...(durationMs !== undefined ? { durationMs } : {}),
+    });
+  }
+
   dragOver(payload: StudioDragOverPayload): void {
     this.sendMessage('drag-over', payload);
   }
@@ -307,6 +318,9 @@ export class BridgeChannel {
     } else if (type === 'text-cancel') {
       const res = BridgeTextCancelPayloadSchema.safeParse(payload);
       if (res.success) for (const l of this.textEditListeners) l.onTextCancel?.(res.data);
+    } else if (type === 'text-select') {
+      const res = BridgeTextSelectPayloadSchema.safeParse(payload);
+      if (res.success) for (const l of this.textEditListeners) l.onTextSelect?.(res.data);
     }
   }
 

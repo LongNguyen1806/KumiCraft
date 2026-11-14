@@ -381,6 +381,10 @@
       "colors": "Màu sắc",
       "borders": "Viền",
       "effects": "Hiệu ứng",
+      "motion": "Chuyển động",
+      "icon": "Biểu tượng",
+      "image": "Ảnh",
+      "attributes": "Thuộc tính",
       "visibility": "Hiển thị",
       "tagAttributes": "Thuộc tính thẻ <{{tag}}>",
       "otherClasses": "Class khác",
@@ -443,7 +447,70 @@
       "opacity": "Độ mờ đục",
       "overflow": "Tràn ô (overflow)",
       "visibility": "Ẩn/hiện",
-      "objectFit": "Object fit"
+      "objectFit": "Vừa khung (object-fit)",
+      "objectPosition": "Vị trí ảnh",
+      "aspectRatio": "Tỉ lệ khung",
+      "shadowColor": "Màu bóng",
+      "backdropBlur": "Kính mờ",
+      "rotate": "Xoay",
+      "scale": "Phóng to/nhỏ",
+      "translateX": "Dịch ngang",
+      "translateY": "Dịch dọc",
+      "skewX": "Nghiêng",
+      "blur": "Làm mờ",
+      "brightness": "Độ sáng",
+      "contrast": "Tương phản",
+      "grayscale": "Đen trắng",
+      "mixBlendMode": "Hòa trộn",
+      "transitionProperty": "Chuyển tiếp",
+      "duration": "Thời lượng",
+      "ease": "Độ mượt",
+      "delay": "Độ trễ",
+      "animation": "Hoạt ảnh"
+    },
+    "tagSelectLabel": "Loại thẻ HTML",
+    "linkHrefHint": "Thêm href",
+    "list": {
+      "addItem": "Thêm mục",
+      "removeItem": "Bỏ mục"
+    },
+    "attrs": {
+      "namePlaceholder": "tên (vd: aria-label)",
+      "valuePlaceholder": "giá trị",
+      "add": "Thêm thuộc tính",
+      "remove": "Xóa thuộc tính",
+      "blocked": "Thuộc tính không hợp lệ hoặc bị chặn"
+    },
+    "icon": {
+      "change": "Đổi icon…",
+      "size": "Cỡ",
+      "strokeWidth": "Độ dày nét",
+      "color": "Màu"
+    },
+    "effects": {
+      "gradient": "Dải màu (Gradient)",
+      "direction": "Hướng",
+      "from": "Màu đầu",
+      "to": "Màu cuối",
+      "gradientText": "Chữ gradient",
+      "backdropBlur": "Kính mờ",
+      "glow": "Phát sáng",
+      "glowButton": "Phát sáng",
+      "on": "Bật",
+      "off": "Tắt"
+    },
+    "motion": {
+      "preview": "Xem thử",
+      "revealTitle": "Hiện dần khi cuộn tới",
+      "revealEffect": "Kiểu",
+      "revealStagger": "Lần lượt",
+      "presets": {
+        "hoverLift": "Nổi lên khi rê",
+        "hoverScale": "Phóng nhẹ",
+        "glowBorder": "Sáng viền",
+        "fadeIn": "Mờ dần",
+        "slideUp": "Trượt lên"
+      }
     },
     "path": {
       "label": "Đường dẫn phần tử",
@@ -475,7 +542,19 @@
     "invalidValue": "Giá trị không hợp lệ với Tailwind {{major}}: ví dụ 4, 2.5, 1/2 hoặc [13px]"
   },
   "textEdit": {
-    "loopBanner": "Lặp {{count}} lần (sửa mẫu chung)"
+    "loopBanner": "Lặp {{count}} lần (sửa mẫu chung)",
+    "inlineBar": {
+      "toolbar": "Định dạng đoạn chữ",
+      "bold": "Đậm",
+      "italic": "Nghiêng",
+      "color": "Màu chữ",
+      "badge": "Nhãn",
+      "colorPrimary": "Màu chính",
+      "colorRose": "Đỏ hồng",
+      "colorAmber": "Hổ phách",
+      "colorEmerald": "Ngọc lục",
+      "colorSky": "Xanh trời"
+    }
   },
   "canvas": {
     "buildError": {

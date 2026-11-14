@@ -4,14 +4,20 @@ import type {
   SetAttributeEdit,
   SetClassNameEdit,
   SetFlagEdit,
+  SetTagEdit,
   SetTextEdit,
   SourceEdit,
 } from '@kumicraft/shared';
-import { err, ok } from '@kumicraft/shared';
+import {
+  err,
+  HTML_SETTABLE_TAGS,
+  isValidSettableAttrName,
+  ok,
+  VOID_HTML_TAGS,
+} from '@kumicraft/shared';
 import type MagicString from 'magic-string';
 
-import { asAstNode, type AstNode } from './ast-helpers.ts';
-import { parseJsxAst } from './ast-helpers.ts';
+import { asAstNode, type AstNode, getJsxTagName, parseJsxAst } from './ast-helpers.ts';
 import { readClassName, readEditableAttributes } from './attribute-reader.ts';
 import { parseText } from './source-editor-lookup.ts';
 import { mutateAttribute, mutateFlag, mutateText } from './source-mutator.ts';
@@ -48,6 +54,9 @@ export function applyAttributeMutation(
   code: string,
   s: MagicString,
 ): Result<{ unchanged?: boolean }> {
+  if (!isValidSettableAttrName(edit.name)) {
+    return err({ code: 'E023', params: { reason: 'blockedAttribute', name: edit.name } });
+  }
   const attrs = readEditableAttributes(rawAttrs, code);
   const currentAttr = attrs[edit.name];
   if (currentAttr?.kind === 'expression')
@@ -107,6 +116,44 @@ export function applyFlagMutation(
   return ok({});
 }
 
+export function applySetTagMutation(
+  edit: SetTagEdit,
+  targetNode: AstNode,
+  opening: AstNode,
+  s: MagicString,
+): Result<{ unchanged?: boolean }> {
+  const currentTag = getJsxTagName(opening);
+  if (
+    currentTag === undefined ||
+    currentTag === '' ||
+    /^[A-Z]/.test(currentTag) ||
+    /^[A-Z]/.test(edit.after)
+  ) {
+    return err({ code: 'E023', params: { reason: 'componentTag' } });
+  }
+  if (!(HTML_SETTABLE_TAGS as readonly string[]).includes(edit.after)) {
+    return err({ code: 'E023', params: { reason: 'invalidTag' } });
+  }
+  if (VOID_HTML_TAGS.has(currentTag) || VOID_HTML_TAGS.has(edit.after)) {
+    return err({ code: 'E023', params: { reason: 'voidTagMismatch' } });
+  }
+  if (currentTag === edit.after) return ok({ unchanged: true });
+  const openName = asAstNode(opening['name']);
+  if (openName?.start === undefined || openName.end === undefined) {
+    return err({ code: 'E023', params: { reason: 'invalidTagNode' } });
+  }
+  s.overwrite(openName.start, openName.end, edit.after);
+  if (!opening['selfClosing']) {
+    const closingEl = asAstNode(targetNode['closingElement']);
+    const closeName = asAstNode(closingEl?.['name']);
+    if (closeName?.start === undefined || closeName.end === undefined) {
+      return err({ code: 'E023', params: { reason: 'invalidClosingTag' } });
+    }
+    s.overwrite(closeName.start, closeName.end, edit.after);
+  }
+  return ok({});
+}
+
 export function executeEditMutation(
   edit: SourceEdit,
   targetNode: AstNode,
@@ -124,6 +171,9 @@ export function executeEditMutation(
   }
   if (edit.kind === 'setFlag') {
     return applyFlagMutation(edit, rawAttrs, opening, code, s);
+  }
+  if (edit.kind === 'setTag') {
+    return applySetTagMutation(edit, targetNode, opening, s);
   }
   return applyTextMutation(edit, targetNode, opening, code, s, newline);
 }

@@ -179,7 +179,7 @@ export async function finalizeWithCssIfNeeded(
   });
   if (!res.ok || !res.value.changed) return res;
   if (
-    edit.kind === 'insert' &&
+    (edit.kind === 'insert' || edit.kind === 'wrapText') &&
     edit.css !== undefined &&
     edit.css.rules.length > 0 &&
     targetRel !== undefined

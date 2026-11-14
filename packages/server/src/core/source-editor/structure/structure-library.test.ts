@@ -29,8 +29,8 @@ describe('M-SE: Library Blocks in Source Editor [WP-2.03]', () => {
     await cleanupTemp();
   });
 
-  it('#11 validates all 16 library blocks in vi and en [R-LB-10, R-LB-11, R-LB-12]', () => {
-    expect(LIBRARY_BLOCKS).toHaveLength(16);
+  it('#11 validates all 19 library blocks in vi and en [R-LB-10, R-LB-11, R-LB-12]', () => {
+    expect(LIBRARY_BLOCKS).toHaveLength(19);
 
     for (const block of LIBRARY_BLOCKS) {
       for (const locale of ['vi', 'en'] as const) {

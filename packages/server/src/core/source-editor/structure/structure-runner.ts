@@ -122,6 +122,9 @@ function collectGuardsForEdit(edit: StructureEdit): readonly ElementGuard[] {
   if (edit.kind === 'unwrap') {
     return [edit.element];
   }
+  if (edit.kind === 'wrapText' || edit.kind === 'replaceSvg') {
+    return [{ loc: edit.loc, tag: edit.tag }];
+  }
   return edit.elements;
 }
 
@@ -186,6 +189,7 @@ function filterRelevantElements(
       return edit.elements.some((eg) => eg.loc === r.loc) || r.loc === targetLoc;
     }
     if (edit.kind === 'unwrap') return r.loc === edit.element.loc;
+    if (edit.kind === 'wrapText' || edit.kind === 'replaceSvg') return r.loc === edit.loc;
     return edit.elements.some((eg) => eg.loc === r.loc);
   });
 }
@@ -320,6 +324,7 @@ function groupGuardsByFile(guards: readonly GuardWithPosition[]): {
 }
 
 function validateEditInputs(edit: StructureEdit): Result<void> {
+  if (edit.kind === 'wrapText') return validateInsertedCss(edit.css?.rules);
   if (edit.kind !== 'insert') return ok(undefined);
   const jsxCheck = validateInsertedJsx(edit.jsx);
   if (!jsxCheck.ok) return jsxCheck;
@@ -356,7 +361,7 @@ async function executeStandardEdit(
     projectRoot,
     sourceDir,
     edit,
-    targetRel: targetGuard?.rel,
+    targetRel: targetGuard?.rel ?? (edit.kind === 'wrapText' ? validatedGuards[0]?.rel : undefined),
     onWritten,
     styling,
     newCssDir,

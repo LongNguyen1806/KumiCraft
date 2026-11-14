@@ -16,6 +16,7 @@ import { registerFreeFrameCommands } from '../free-frame/free-frame-commands.ts'
 import { useEditMode } from '../project/use-edit-mode.ts';
 import { bridgeChannels } from '../selection/bridge-channel.ts';
 import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
+import { InlineTextBar } from '../text-edit/inline-text-bar.tsx';
 import { useCanvasTextEdit } from '../text-edit/use-canvas-text-edit.ts';
 import { TextEditOverlay } from './canvas-text-edit-overlay.tsx';
 import { useCanvasViewStore } from './canvas-view-store.ts';
@@ -163,6 +164,14 @@ function CanvasAreaOverlays({
     <>
       <CanvasNotices onOpenLoc={onOpenLoc} />
       <TextEditOverlay loopCount={textEdit.loopCount} />
+      {textEdit.textSelection !== undefined && (
+        <div className="absolute top-22 left-1/2 z-40 -translate-x-1/2">
+          <InlineTextBar
+            selection={textEdit.textSelection}
+            onApplied={textEdit.endEditingSession}
+          />
+        </div>
+      )}
       {errorInfo !== undefined && (
         <p role="alert" className="px-4 text-xs text-danger" data-testid="open-editor-error">
           {errorText(tError, errorInfo.code, errorInfo.params)}

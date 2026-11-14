@@ -10,6 +10,7 @@ export const DEFAULT_VARIANT_KEYS: Readonly<Record<string, VariantKey>> = {
   'composite.card': 'bordered',
   'content.heading': 'headingMd',
   'composite.hero': 'centered',
+  'content.placeholder-image': 'ratio169',
 };
 
 export function isVariantKey(key: string): key is VariantKey {

@@ -29,6 +29,23 @@ export function isOverlayHost(target: unknown): boolean {
   return target instanceof Element && target.id === '__rc_overlay_host';
 }
 
+export function shortcutPayload(event: KeyboardEvent) {
+  return {
+    key: event.key,
+    ctrl: event.ctrlKey,
+    meta: event.metaKey,
+    shift: event.shiftKey,
+    alt: event.altKey,
+  };
+}
+
+export function revealSelectedElement(loc: string, index: number): void {
+  const el = document.querySelectorAll(`[data-rc-loc="${loc}"]`)[index];
+  if (el && typeof el.scrollIntoView === 'function') {
+    el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+}
+
 export function addWindowListeners(
   interceptedHandler: (event: Event) => void,
   pointerMoveHandler: (event: PointerEvent) => void,

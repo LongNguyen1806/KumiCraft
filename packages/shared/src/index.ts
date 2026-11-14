@@ -103,6 +103,8 @@ export {
   BridgeTextCommitPayloadSchema,
   type BridgeTextEditRequestPayload,
   BridgeTextEditRequestPayloadSchema,
+  type BridgeTextSelectPayload,
+  BridgeTextSelectPayloadSchema,
   type BridgeTreePayload,
   BridgeTreePayloadSchema,
   DRAW_TOOLS,
@@ -128,6 +130,8 @@ export {
   StudioHighlightPayloadSchema,
   type StudioMeasureFreePayload,
   StudioMeasureFreePayloadSchema,
+  type StudioMotionPreviewPayload,
+  StudioMotionPreviewPayloadSchema,
   type StudioNavigatePayload,
   StudioNavigatePayloadSchema,
   type StudioSelectPayload,
@@ -341,6 +345,7 @@ export {
 } from './shortcuts.ts';
 export * from './source.ts';
 export * from './style.ts';
+export * from './style-composite.ts';
 export * from './tailwind/index.ts';
 export { TAILWIND_COLORS } from './tailwind/palette.generated.ts';
 export {

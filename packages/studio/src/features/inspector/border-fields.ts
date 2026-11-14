@@ -75,11 +75,33 @@ export function resolveBorderFields(
   return [...widthFields, ...radiusFields];
 }
 
+const EXTRA_EFFECT_PROPS: readonly PropertyId[] = [
+  'shadowColor',
+  'backgroundImage',
+  'gradientFrom',
+  'gradientVia',
+  'gradientTo',
+  'backgroundClip',
+  'backdropBlur',
+  'rotate',
+  'scale',
+  'translateX',
+  'translateY',
+  'skewX',
+  'blur',
+  'brightness',
+  'contrast',
+  'grayscale',
+  'mixBlendMode',
+];
+
 /** Every property a group can write, to count how many of them have a value. */
 export function groupProperties(
   groupId: string,
   fields: readonly PropertyFieldDef[],
 ): readonly PropertyId[] {
   const own = fields.map((f) => f.property);
-  return groupId === 'borders' ? [...own, ...SIDE_WIDTHS, ...CORNER_RADII] : own;
+  if (groupId === 'borders') return [...own, ...SIDE_WIDTHS, ...CORNER_RADII];
+  if (groupId === 'effects') return [...own, ...EXTRA_EFFECT_PROPS];
+  return own;
 }

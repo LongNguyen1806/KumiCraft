@@ -13,6 +13,7 @@ import { customAlphabet } from 'nanoid';
 
 import { asAstNode, type AstNode, isAstNode, parseJsxAst } from '../source-editor/ast-helpers.ts';
 import { findNodeAt } from '../source-editor/source-editor-lookup.ts';
+import { ensureKeyframesBlock, resolveMergedCssValue } from './css-composite-apply.ts';
 import {
   appendRule,
   hasStateInSelector,
@@ -197,20 +198,30 @@ export async function applyModulesToRule(
   const located = locateRuleByIndex(css.value, rule.ruleIndex, []);
   if (located === undefined) return err({ code: 'E016', params: { reason: 'ruleNotFound' } });
 
-  const { value, media, state } = change;
+  const { property, value, media, state } = change;
   const inPlaceMedia = media === undefined || rule.media.length > 0;
   const inPlaceState = state === undefined || hasStateInSelector(located.selector, state);
   const inPlace = inPlaceMedia && inPlaceState;
   const effectiveMedia = rule.media[0] ?? media;
   const targetSelector =
     state === undefined ? located.selector : withStateSelector(located.selector, state);
+  const resolvedValue = resolveMergedCssValue(css.value, {
+    propertyId: property,
+    longhand,
+    value,
+    selector: targetSelector,
+    media: effectiveMedia,
+    ruleIndex: inPlace ? rule.ruleIndex : undefined,
+    file,
+  });
 
   const next = inPlace
-    ? setDeclarationAt(css.value, rule.ruleIndex, longhand, value)
-    : upsertRuleDeclaration(css.value, targetSelector, longhand, value, effectiveMedia);
+    ? setDeclarationAt(css.value, rule.ruleIndex, longhand, resolvedValue)
+    : upsertRuleDeclaration(css.value, targetSelector, longhand, resolvedValue, effectiveMedia);
   if (!next.ok) return next;
-  if (next.value === css.value) return ok({ files: [] });
-  const written = await writeFile(deps.fs, root, file, css.value, next.value);
+  const withKeyframes = ensureKeyframesBlock(next.value, property, resolvedValue);
+  if (withKeyframes === css.value) return ok({ files: [] });
+  const written = await writeFile(deps.fs, root, file, css.value, withKeyframes);
   return written.ok ? ok({ files: [written.value] }) : written;
 }
 
@@ -235,7 +246,7 @@ async function applyNewOwnClass(
   longhand: string,
   change: StyleApplyRequest['change'],
 ): Promise<Result<StyleApplied>> {
-  const { value, media, state } = change;
+  const { property, value, media, state } = change;
   if (value === undefined) return ok({ files: [] });
   const { code: jsxCode, jsxFile, parsed } = info;
   const idGen = deps.newId ?? customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 4);
@@ -244,8 +255,23 @@ async function applyNewOwnClass(
 
   const css = await readFile(deps.fs, root, cssFile);
   if (!css.ok) return css;
-  const nextCss = appendRule(css.value, selector, [{ property: longhand, value }], media);
+  const resolvedValue =
+    resolveMergedCssValue(css.value, {
+      propertyId: property,
+      longhand,
+      value,
+      selector,
+      media,
+      file: cssFile,
+    }) ?? value;
+  const nextCss = appendRule(
+    css.value,
+    selector,
+    [{ property: longhand, value: resolvedValue }],
+    media,
+  );
   if (!nextCss.ok) return nextCss;
+  const finalCss = ensureKeyframesBlock(nextCss.value, property, resolvedValue);
 
   const allProps = [...parsed.properties, newClass];
   const templateBody = allProps.map((p) => `\${${memberText(parsed.objectName, p)}}`).join(' ');
@@ -261,7 +287,7 @@ async function applyNewOwnClass(
 
   const writtenJsx = await writeFile(deps.fs, root, jsxFile, jsxCode, nextJsx);
   if (!writtenJsx.ok) return writtenJsx;
-  const writtenCss = await writeFile(deps.fs, root, cssFile, css.value, nextCss.value);
+  const writtenCss = await writeFile(deps.fs, root, cssFile, css.value, finalCss);
   if (!writtenCss.ok) return writtenCss;
 
   return ok({ files: [writtenJsx.value, writtenCss.value], className: newClass });

@@ -2,11 +2,15 @@
 import { z } from 'zod';
 
 import { RelPathSchema } from './rel-path.ts';
+import {
+  EditableAttrSchema,
+  InsertedCssSchema,
+  ReplaceSvgEditSchema,
+  SetTagEditSchema,
+  WrapTextEditSchema,
+} from './source-edits-extra.ts';
 import { PlacementSchema } from './tailwind/free-position.ts';
-
-export const EDITABLE_ATTRS = ['href', 'src', 'alt', 'placeholder', 'type'] as const;
-export type EditableAttr = (typeof EDITABLE_ATTRS)[number];
-export const EditableAttrSchema = z.enum(EDITABLE_ATTRS);
+export * from './source-edits-extra.ts';
 
 export type SourceLoc = {
   readonly file: string;
@@ -90,13 +94,10 @@ export const ElementTextSchema = z.strictObject({
 });
 export type ElementText = z.infer<typeof ElementTextSchema>;
 
-export const ElementAttributesSchema = z.strictObject({
-  href: StaticOrStringSchema.optional(),
-  src: StaticOrStringSchema.optional(),
-  alt: StaticOrStringSchema.optional(),
-  placeholder: StaticOrStringSchema.optional(),
-  type: StaticOrStringSchema.optional(),
-});
+export const ElementAttributesSchema = z.record(
+  EditableAttrSchema,
+  StaticOrStringSchema.optional(),
+);
 export type ElementAttributes = z.infer<typeof ElementAttributesSchema>;
 
 export const ElementSourceSchema = z.strictObject({
@@ -162,6 +163,7 @@ export const SourceEditSchema = z.discriminatedUnion('kind', [
   SetTextEditSchema,
   SetAttributeEditSchema,
   SetFlagEditSchema,
+  SetTagEditSchema,
 ]);
 export type SourceEdit = z.infer<typeof SourceEditSchema>;
 
@@ -209,18 +211,6 @@ export type InsertImageEdit = z.infer<typeof InsertImageEditSchema>;
 /** Largest JSX one insert takes: a Library block or a KumiCraft clipboard paste (S-17). */
 export const INSERT_JSX_MAX_BYTES = 1024 * 1024;
 
-const InsertedCssValueSchema = z
-  .string()
-  .min(1)
-  .max(500)
-  .refine((v) => !/[;{}]/.test(v) && !v.includes('/*'), { message: 'invalidValue' });
-
-export const InsertedCssRuleSchema = z.strictObject({
-  selector: z.string().regex(/^\.kc-[a-z0-9-]+$/),
-  declarations: z.record(z.string().min(1).max(100), InsertedCssValueSchema),
-});
-export type InsertedCssRule = z.infer<typeof InsertedCssRuleSchema>;
-
 export const InsertEditSchema = z.strictObject({
   kind: z.literal('insert'),
   target: InsertTargetSchema,
@@ -231,11 +221,7 @@ export const InsertEditSchema = z.strictObject({
       imports: z.array(z.string().max(2000)).max(50),
     })
     .optional(),
-  css: z
-    .strictObject({
-      rules: z.array(InsertedCssRuleSchema).max(100).readonly(),
-    })
-    .optional(),
+  css: InsertedCssSchema.optional(),
   placement: PlacementSchema.optional(),
   tailwindMajor: z.union([z.literal(3), z.literal(4)]).optional(),
 });
@@ -285,6 +271,8 @@ export const StructureEditSchema = z.discriminatedUnion('kind', [
   MoveEditSchema,
   WrapEditSchema,
   UnwrapEditSchema,
+  WrapTextEditSchema,
+  ReplaceSvgEditSchema,
 ]);
 export type StructureEdit = z.infer<typeof StructureEditSchema>;
 
@@ -293,6 +281,7 @@ export const AnyEditSchema = z.discriminatedUnion('kind', [
   SetTextEditSchema,
   SetAttributeEditSchema,
   SetFlagEditSchema,
+  SetTagEditSchema,
   InsertEditSchema,
   InsertImageEditSchema,
   RemoveEditSchema,
@@ -300,6 +289,8 @@ export const AnyEditSchema = z.discriminatedUnion('kind', [
   MoveEditSchema,
   WrapEditSchema,
   UnwrapEditSchema,
+  WrapTextEditSchema,
+  ReplaceSvgEditSchema,
 ]);
 export type AnyEdit = z.infer<typeof AnyEditSchema>;
 
