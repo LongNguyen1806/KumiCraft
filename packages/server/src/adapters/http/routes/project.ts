@@ -37,6 +37,7 @@ import type { UsageCounter } from '../../../core/source-editor/component-usages.
 import { sendError } from '../send-error.ts';
 import { registerProjectDataRoutes } from './project-data.ts';
 import { registerProjectFilesRoutes } from './project-files.ts';
+import { registerProjectInteractionRoutes } from './project-interaction.ts';
 import { registerRecentProjectRoutes } from './project-recent.ts';
 
 export type ProjectRoutesDeps = {
@@ -381,4 +382,5 @@ export function registerProjectRoutes(api: FastifyInstance, deps: ProjectRoutesD
   registerDraftOpRoutes(api, deps);
   registerThemeRoutes(api, deps);
   registerProjectDataRoutes(api, deps);
+  registerProjectInteractionRoutes(api, deps);
 }

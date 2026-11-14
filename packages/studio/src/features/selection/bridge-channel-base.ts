@@ -24,6 +24,7 @@ import {
   BridgeTextSelectPayloadSchema,
   type DrawTool,
   type ElementRef,
+  type InspectorPreviewState,
   type StudioDragOverPayload,
   type StyleState,
 } from '@kumicraft/shared';
@@ -31,6 +32,7 @@ import {
 import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { useDarkPreviewStore } from '../inspector/dark-preview-store.ts';
 import { dispatchBridgePayload } from './bridge-payload-handlers.ts';
 import { handleCanvasNavigation } from './canvas-navigation-messages.ts';
 import { type CanvasMode, useSelectionStore } from './selection-store.ts';
@@ -155,8 +157,39 @@ export class BridgeChannel {
     this.sendMessage('responsive-audit', { requestId });
   }
 
-  styleProbe(ref: ElementRef, properties: readonly string[], state?: StyleState): void {
-    this.sendMessage('style-probe', { ref, properties, ...(state === undefined ? {} : { state }) });
+  styleProbe(
+    ref: ElementRef,
+    properties: readonly string[],
+    state?: StyleState,
+    dark?: boolean,
+    groupSelector?: string,
+  ): void {
+    this.sendMessage('style-probe', {
+      ref,
+      properties,
+      ...(state === undefined ? {} : { state }),
+      ...(dark === undefined ? {} : { dark }),
+      ...(groupSelector === undefined ? {} : { groupSelector }),
+    });
+  }
+
+  setDarkPreview(dark: boolean): void {
+    this.sendMessage('set-dark-preview', { dark });
+  }
+
+  setStatePreview(ref?: ElementRef, state?: InspectorPreviewState, groupRef?: ElementRef): void {
+    this.sendMessage('set-state-preview', {
+      ...(ref !== undefined ? { ref } : {}),
+      ...(state !== undefined ? { state } : {}),
+      ...(groupRef !== undefined ? { groupRef } : {}),
+    });
+  }
+
+  setSelectPanelPreview(groupRef: ElementRef, activeIndex?: number): void {
+    this.sendMessage('set-select-panel-preview', {
+      groupRef,
+      ...(activeIndex !== undefined ? { activeIndex } : {}),
+    });
   }
 
   sendStylePreview(ref: ElementRef, property: string, value: string): void {
@@ -198,8 +231,8 @@ export class BridgeChannel {
     this.sendMessage('highlight', ref === undefined ? {} : { ref });
   }
 
-  startTextEdit(ref: ElementRef): void {
-    this.sendMessage('text-edit-start', { ref });
+  startTextEdit(ref: ElementRef, runIndex?: number): void {
+    this.sendMessage('text-edit-start', runIndex === undefined ? { ref } : { ref, runIndex });
   }
 
   endTextEdit(ref: ElementRef): void {
@@ -343,6 +376,7 @@ export class BridgeChannel {
       this.sendMessage('design-file', designPayload);
       this.setGrid(useCanvasViewStore.getState().grid);
       this.setTool(useCanvasViewStore.getState().tool);
+      if (useDarkPreviewStore.getState().canvasDark) this.setDarkPreview(true);
     }
     this.handleTextEditMessage(type, payload);
     this.handleFreeFrameMessage(type, payload);

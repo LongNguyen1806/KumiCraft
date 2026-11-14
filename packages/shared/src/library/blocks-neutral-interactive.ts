@@ -161,4 +161,23 @@ export const NEUTRAL_INTERACTIVE_BLOCKS = {
     },
     bootstrap: { root: 'w-100 bg-white border rounded', link: 'nav-link' },
   },
+  'interactive.toast-demo': {
+    jsx: {
+      vi: `<ToastTrigger message="Đã lưu thay đổi" subtext="Cấu hình đã được áp dụng." variant="success">\n  <button type="button" className="@btn">Hiện thông báo</button>\n</ToastTrigger>`,
+      en: `<ToastTrigger message="Changes saved" subtext="Your settings have been updated." variant="success">\n  <button type="button" className="@btn">Show toast</button>\n</ToastTrigger>`,
+    },
+    styles: {
+      btn: {
+        padding: '8px 16px',
+        'font-size': '14px',
+        'font-weight': '500',
+        'background-color': '{primary}',
+        color: '{on-primary}',
+        border: 'none',
+        'border-radius': '{radius}',
+        cursor: 'pointer',
+      },
+    },
+    bootstrap: { btn: 'btn btn-primary btn-sm' },
+  },
 } satisfies Record<string, NeutralBlock>;

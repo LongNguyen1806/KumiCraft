@@ -63,7 +63,7 @@ export async function tryApplyBootstrapChange(
   request: StyleApplyRequest,
 ): Promise<Result<StyleApplied> | undefined> {
   const { change } = request;
-  if (change.state !== undefined) return undefined;
+  if (change.state !== undefined || change.dark === true) return undefined;
   const bpInfo = breakpointFromMedia(change.media);
   if (!bpInfo.supported) return undefined;
 

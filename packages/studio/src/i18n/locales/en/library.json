@@ -86,6 +86,7 @@
     "dropdown": "Dropdown",
     "tooltip": "Tooltip",
     "mobileMenu": "Mobile Menu",
+    "toastDemo": "Toast Notification",
     "table": "Table",
     "card": "Card",
     "navbar": "Navbar",

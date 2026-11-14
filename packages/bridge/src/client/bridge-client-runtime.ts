@@ -25,6 +25,7 @@ import {
 import { buildBridgeMessageHandlers } from './bridge-runtime-handlers.ts';
 import { getRefForElement, handleElementClick } from './candidate-chain.ts';
 import { CanvasTools } from './canvas-tools.ts';
+import { DarkStatePreview } from './dark-state-preview.ts';
 import { scanDomTree } from './dom-scanner.ts';
 import { computeDragHandleTarget, DragController, resolveElementsByRefs } from './drag.ts';
 import { browserDropEnv } from './drop-target.ts';
@@ -37,7 +38,7 @@ import { wrapBrowserHistory } from './runtime-history.ts';
 import { collectSelectionInfo } from './selection-info.ts';
 import { dispatchStudioMessage } from './studio-messages.ts';
 import { StylePreview } from './style-preview.ts';
-import { TextEditController } from './text-edit.ts';
+import { findClickedTextRunIndex, TextEditController } from './text-edit.ts';
 
 export type { BridgeRuntimeConfig, HotContext };
 
@@ -52,6 +53,7 @@ export class BridgeClientRuntime {
   private drag: DragController;
   private tools: CanvasTools;
   private readonly stylePreview = new StylePreview();
+  private readonly darkStatePreview = new DarkStatePreview();
   private selectedRefs: ElementRef[] = [];
   private lastSelectionInfo: ElementInfo[] = [];
   private lastHoverEl: Element | undefined;
@@ -115,11 +117,14 @@ export class BridgeClientRuntime {
 
   private createTextEditController(): TextEditController {
     return new TextEditController({
-      onCommit: (ref, text) => {
-        this.sendToStudio('text-commit', { ref, text });
+      onCommit: (ref, text, runIndex) => {
+        this.sendToStudio(
+          'text-commit',
+          runIndex !== undefined ? { ref, text, runIndex } : { ref, text },
+        );
       },
-      onCancel: (ref) => {
-        this.sendToStudio('text-cancel', { ref });
+      onCancel: (ref, runIndex) => {
+        this.sendToStudio('text-cancel', runIndex !== undefined ? { ref, runIndex } : { ref });
       },
       onStart: (el) => {
         this.overlay.setTextEditing(el);
@@ -217,6 +222,7 @@ export class BridgeClientRuntime {
       tools: this.tools,
       overlay: this.overlay,
       stylePreview: this.stylePreview,
+      darkStatePreview: this.darkStatePreview,
       scheduleTreeScan: () => {
         this.scheduleTreeScan();
       },
@@ -228,6 +234,7 @@ export class BridgeClientRuntime {
 
   private setMode = (mode: 'design' | 'preview'): void => {
     this.stylePreview.clearAll();
+    this.darkStatePreview.clearState(document);
     if (this.mode === 'design' && mode !== 'design') {
       this.textEdit.commit();
       this.drag.cancel();
@@ -253,6 +260,7 @@ export class BridgeClientRuntime {
 
   private handleSelectMessage = (payload: StudioSelectPayload): void => {
     this.stylePreview.clearAll();
+    this.darkStatePreview.clearState(document);
     this.selectedRefs = [...payload.refs];
     this.tools.selectionChanged();
     this.overlay.setSelection(this.selectedRefs);
@@ -275,7 +283,7 @@ export class BridgeClientRuntime {
 
   private handleTextEditStartMessage = (payload: StudioTextEditStartPayload): void => {
     const el = resolveElementsByRefs([payload.ref], document)[0];
-    if (el instanceof HTMLElement) this.textEdit.start(el, payload.ref);
+    if (el instanceof HTMLElement) this.textEdit.start(el, payload.ref, payload.runIndex);
   };
 
   private handleCapturedEvent = (event: Event): void => {
@@ -301,7 +309,13 @@ export class BridgeClientRuntime {
       const mouseEvt = event as MouseEvent;
       const target = this.elementAt(mouseEvt.clientX, mouseEvt.clientY);
       const ref = target ? getRefForElement(target, document) : undefined;
-      if (ref) this.sendToStudio('text-edit-request', { ref });
+      if (ref && target) {
+        const runIndex = findClickedTextRunIndex(target, mouseEvt.clientX, mouseEvt.clientY);
+        this.sendToStudio(
+          'text-edit-request',
+          runIndex !== undefined ? { ref, runIndex } : { ref },
+        );
+      }
       return;
     }
 
@@ -334,6 +348,7 @@ export class BridgeClientRuntime {
     const target = this.elementAt(mouseEvt.clientX, mouseEvt.clientY);
     if (this.focus && !target) return;
     this.stylePreview.clearAll();
+    this.darkStatePreview.clearState(document);
     this.selectedRefs = target
       ? handleElementClick(
           target,
@@ -370,15 +385,8 @@ export class BridgeClientRuntime {
   private handleKeyDown = (event: KeyboardEvent): void => {
     if (event.key === 'Alt') this.syncAltMeasure(true);
     if (runCanvasEscapeAction(event, this.drag, this.tools)) return;
-    if (
-      !shouldForwardShortcut(
-        event,
-        this.mode,
-        this.textEdit.isActive(),
-        navigator.platform.toUpperCase().includes('MAC'),
-      )
-    )
-      return;
+    const isMac = navigator.platform.toUpperCase().includes('MAC');
+    if (!shouldForwardShortcut(event, this.mode, this.textEdit.isActive(), isMac)) return;
     event.preventDefault();
     this.sendToStudio('shortcut', shortcutPayload(event));
   };
@@ -419,6 +427,7 @@ export class BridgeClientRuntime {
   public destroy(): void {
     this.isDestroyed = true;
     this.stylePreview.clearAll();
+    this.darkStatePreview.destroy(document);
     this.drag.destroy();
     this.tools.destroy();
     this.textEdit.destroy();

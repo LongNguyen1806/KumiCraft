@@ -3,6 +3,7 @@ import {
   type ElementRef,
   type ElementSource,
   type Frame,
+  type InspectorPreviewState,
   type InteractionState,
   parseLocString,
   projectBreakpoints,
@@ -13,8 +14,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { createEventsClient, type StudioServerEvent } from '../../api/events-client.ts';
 import { fetchElementSource } from '../../api/source-client.ts';
+import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { useStructureErrorStore } from '../structure/structure-error-store.ts';
+import { useDarkPreviewStore, useElementDarkMode } from './dark-preview-store.ts';
 import type { InspectorLockReason, InspectorTarget, InspectorWarning } from './types.ts';
 import { useMultiInspectorTarget } from './use-multi-inspector-target.ts';
 import { useThemeStore } from './use-project-theme.ts';
@@ -165,6 +168,12 @@ function buildElementTarget(
   interaction: {
     readonly state: InteractionState | undefined;
     readonly setState: (s: InteractionState | undefined) => void;
+    readonly previewState: InspectorPreviewState | undefined;
+    readonly setPreviewState: (s: InspectorPreviewState | undefined) => void;
+    readonly darkMode: boolean;
+    readonly setDarkMode: (dark: boolean) => void;
+    readonly groupRef: ElementRef | undefined;
+    readonly setGroupRef: (ref: ElementRef | undefined) => void;
   },
   refresh: () => void,
 ): InspectorTarget {
@@ -185,7 +194,53 @@ function buildElementTarget(
     writePrefix: scope.writePrefix,
     interactionState: interaction.state,
     setInteractionState: interaction.setState,
+    previewState: interaction.previewState,
+    setPreviewState: interaction.setPreviewState,
+    darkMode: interaction.darkMode,
+    setDarkMode: interaction.setDarkMode,
+    groupRef: interaction.groupRef,
+    setGroupRef: interaction.setGroupRef,
     refresh,
+  };
+}
+
+function useInteractionPreviewControl(singleRef: ElementRef | undefined) {
+  const elementKey =
+    singleRef === undefined ? undefined : `${singleRef.loc}#${String(singleRef.index)}`;
+  const [previewState, setPreviewState] = useState<InspectorPreviewState | undefined>(undefined);
+  const [groupRef, setGroupRef] = useState<ElementRef | undefined>(undefined);
+  const darkMode = useElementDarkMode(elementKey);
+  const interactionState: InteractionState | undefined =
+    previewState === 'loading' ? undefined : previewState;
+
+  const setInteractionState = useCallback((next: InteractionState | undefined) => {
+    setPreviewState(next);
+  }, []);
+
+  const setDarkMode = useCallback(
+    (dark: boolean) => {
+      if (elementKey !== undefined) {
+        useDarkPreviewStore.getState().setInspectorDark(elementKey, dark);
+      }
+      studioBridgeChannel.setDarkPreview(dark);
+    },
+    [elementKey],
+  );
+
+  useEffect(() => {
+    if (singleRef === undefined) return;
+    studioBridgeChannel.setStatePreview(singleRef, previewState, groupRef);
+  }, [singleRef, previewState, groupRef]);
+
+  return {
+    state: interactionState,
+    setState: setInteractionState,
+    previewState,
+    setPreviewState,
+    darkMode,
+    setDarkMode,
+    groupRef,
+    setGroupRef,
   };
 }
 
@@ -195,7 +250,7 @@ function useSingleInspectorTarget(
 ): InspectorTarget {
   const { frame, primaryFrame, responsiveMode = 'desktop-first', enabled = true } = options;
   const selectionInfo = useSelectionStore((s) => s.selectionInfo);
-  const [interactionState, setInteractionState] = useState<InteractionState | undefined>(undefined);
+  const interaction = useInteractionPreviewControl(singleRef);
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const refresh = useCallback(() => {
     setRefreshKey((k) => k + 1);
@@ -212,8 +267,9 @@ function useSingleInspectorTarget(
     frame,
     primaryFrame,
     responsiveMode,
-    interactionState,
+    interaction.state,
     projectBps,
+    interaction.darkMode,
   );
   useServerRefresh(enabled, locParsed?.file, refresh);
   useSyncActiveSource(singleRef, loader.source?.tag);
@@ -230,7 +286,7 @@ function useSingleInspectorTarget(
     loader,
     scope,
     info?.instances ?? 1,
-    { state: interactionState, setState: setInteractionState },
+    interaction,
     refresh,
   );
 }

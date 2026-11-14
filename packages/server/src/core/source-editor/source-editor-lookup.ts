@@ -10,6 +10,7 @@ import { asAstNode, getJsxTagName, parseJsxAst } from './ast-helpers.ts';
 import { readClassName, readEditableAttributes } from './attribute-reader.ts';
 import { checkInLoop, findEnclosingComponent } from './component-analyzer.ts';
 import { decodeHtmlEntities, normalizeJsxWhitespace } from './text-reader.ts';
+import { extractMixedRuns } from './text-run-ops.ts';
 
 type AstCacheEntry = {
   readonly hash: string;
@@ -87,7 +88,7 @@ export function findNodeAt(ast: AstNode, line: number, column: number): AstNode 
   return targetNode;
 }
 
-export function parseText(children: readonly unknown[]): ElementSourceText {
+export function parseText(children: readonly unknown[], code?: string): ElementSourceText {
   if (children.length === 0) return { kind: 'static', value: '' };
 
   const astChildren = children.map(asAstNode).filter((c): c is AstNode => c !== undefined);
@@ -106,7 +107,7 @@ export function parseText(children: readonly unknown[]): ElementSourceText {
     return { kind: 'expression', code: typeof expr?.['name'] === 'string' ? expr['name'] : '' };
   }
 
-  return { kind: 'mixed' as const };
+  return { kind: 'mixed' as const, runs: extractMixedRuns(children, code) };
 }
 
 function readFreeFlag(attributes: readonly unknown[]): boolean {
@@ -142,7 +143,9 @@ export function buildElementSource(
   const rawChildren = Array.isArray(targetNode['children']) ? targetNode['children'] : [];
 
   const className = readClassName(rawAttrs, code);
-  const text: ElementSourceText = isSelfClosing ? { kind: 'selfClosing' } : parseText(rawChildren);
+  const text: ElementSourceText = isSelfClosing
+    ? { kind: 'selfClosing' }
+    : parseText(rawChildren, code);
   const attributes = readEditableAttributes(rawAttrs, code);
   const componentName = findEnclosingComponent(ast, targetNode);
   const inLoop = checkInLoop(ast, targetNode);

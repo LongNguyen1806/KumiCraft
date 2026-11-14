@@ -17,9 +17,11 @@ import {
   SetTagEditSchema,
   WrapTextEditSchema,
 } from './source-edits-extra.ts';
+import { SetTextRunEditSchema, TextRunNodeSchema } from './source-interaction.ts';
 import { PlacementSchema } from './tailwind/free-position.ts';
 export * from './source-data.ts';
 export * from './source-edits-extra.ts';
+export * from './source-interaction.ts';
 
 export type SourceLoc = {
   readonly file: string;
@@ -91,7 +93,10 @@ export const ElementSourceTextSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('static'), value: z.string() }),
   z.strictObject({ kind: z.literal('expression'), code: z.string().max(200) }),
   z.strictObject({ kind: z.literal('none') }),
-  z.strictObject({ kind: z.literal('mixed') }),
+  z.strictObject({
+    kind: z.literal('mixed'),
+    runs: z.array(TextRunNodeSchema).readonly().optional(),
+  }),
   z.strictObject({ kind: z.literal('selfClosing') }),
 ]);
 export type ElementSourceText = z.infer<typeof ElementSourceTextSchema>;
@@ -171,6 +176,7 @@ export type SetFlagEdit = z.infer<typeof SetFlagEditSchema>;
 export const SourceEditSchema = z.discriminatedUnion('kind', [
   SetClassNameEditSchema,
   SetTextEditSchema,
+  SetTextRunEditSchema,
   SetAttributeEditSchema,
   SetFlagEditSchema,
   SetTagEditSchema,
@@ -305,6 +311,7 @@ export type StructureEdit = z.infer<typeof StructureEditSchema>;
 export const AnyEditSchema = z.discriminatedUnion('kind', [
   SetClassNameEditSchema,
   SetTextEditSchema,
+  SetTextRunEditSchema,
   SetAttributeEditSchema,
   SetFlagEditSchema,
   SetTagEditSchema,

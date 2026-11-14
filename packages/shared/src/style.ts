@@ -11,21 +11,21 @@ import {
   isProjectBreakpointList,
   type ProjectBreakpoint,
   type ResponsiveMode,
+  STYLE_SYSTEM_IDS,
+  type StyleSystemId,
+  StyleSystemIdSchema,
 } from './responsive.ts';
 
-export const STYLE_SYSTEM_IDS = [
-  'tailwind4',
-  'tailwind3',
-  'bootstrap5',
-  'cssModules',
-  'css',
-  'sass',
-  'less',
-] as const;
-export const StyleSystemIdSchema = z.enum(STYLE_SYSTEM_IDS);
-export type StyleSystemId = z.infer<typeof StyleSystemIdSchema>;
+export { STYLE_SYSTEM_IDS, type StyleSystemId, StyleSystemIdSchema };
 
-export const STYLE_STATES = ['hover', 'focus', 'disabled'] as const;
+export const STYLE_STATES = [
+  'hover',
+  'active',
+  'focus',
+  'disabled',
+  'selected',
+  'groupHover',
+] as const;
 export const StyleStateSchema = z.enum(STYLE_STATES);
 export type StyleState = z.infer<typeof StyleStateSchema>;
 
@@ -215,6 +215,8 @@ export const StudioStyleProbePayloadSchema = z.strictObject({
   ref: ElementRefSchema,
   properties: z.array(z.string().min(1).max(100)).max(120), // CSS longhands
   state: StyleStateSchema.optional(),
+  dark: z.boolean().optional(),
+  groupSelector: z.string().min(1).max(120).optional(),
 });
 export type StudioStyleProbePayload = z.infer<typeof StudioStyleProbePayloadSchema>;
 
@@ -297,6 +299,8 @@ export const StyleChangeSchema = z.strictObject({
   /** `@media` condition of the frame being edited, absent on the base frame (R-ST-09). */
   media: z.string().min(1).max(200).optional(),
   state: StyleStateSchema.optional(),
+  dark: z.boolean().optional(),
+  groupSelector: z.string().min(1).max(120).optional(),
   breakpoint: BreakpointSchema.optional(),
 });
 export type StyleChange = z.infer<typeof StyleChangeSchema>;

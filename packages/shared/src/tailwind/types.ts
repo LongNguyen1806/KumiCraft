@@ -26,6 +26,7 @@ export type ClassToken = {
 export type Scope = {
   readonly breakpoint: Breakpoint;
   readonly state?: InteractionState | undefined;
+  readonly dark?: boolean | undefined;
 };
 
 export type ClassContext = {

@@ -2,6 +2,7 @@
 import type { ElementRef } from '@kumicraft/shared';
 
 import type { CanvasTools } from './canvas-tools.ts';
+import type { DarkStatePreview } from './dark-state-preview.ts';
 import type { DragController } from './drag.ts';
 import { toggleInteractiveElement } from './interactive-toggle.ts';
 import { triggerMotionPreview } from './motion-preview.ts';
@@ -24,6 +25,7 @@ export type RuntimeHandlerDeps = {
   readonly tools: CanvasTools;
   readonly overlay: BridgeOverlay;
   readonly stylePreview: StylePreview;
+  readonly darkStatePreview: DarkStatePreview;
   readonly scheduleTreeScan: () => void;
   readonly sendToStudio: (type: string, payload: unknown) => void;
 };
@@ -93,10 +95,28 @@ function buildToolAndPreviewHandlers(deps: RuntimeHandlerDeps) {
   };
 }
 
+function buildInteractionPreviewHandlers(deps: RuntimeHandlerDeps) {
+  return {
+    handleSetDarkPreview: (d: { readonly dark: boolean }) => {
+      deps.darkStatePreview.setDarkPreview(document, d.dark);
+    },
+    handleSetStatePreview: (d: Parameters<DarkStatePreview['setStatePreview']>[1]) => {
+      deps.darkStatePreview.setStatePreview(document, d);
+    },
+    handleSetSelectPanelPreview: (d: {
+      readonly groupRef: ElementRef;
+      readonly activeIndex?: number | undefined;
+    }) => {
+      deps.darkStatePreview.setSelectPanelPreview(document, d.groupRef, d.activeIndex);
+    },
+  };
+}
+
 /** Constructs the dispatched Studio-to-Bridge message handlers under 50 lines per helper. */
 export function buildBridgeMessageHandlers(deps: RuntimeHandlerDeps): StudioMessageHandlers {
   return {
     ...buildNavigationAndDragHandlers(deps),
     ...buildToolAndPreviewHandlers(deps),
+    ...buildInteractionPreviewHandlers(deps),
   };
 }

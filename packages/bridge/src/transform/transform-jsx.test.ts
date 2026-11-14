@@ -66,6 +66,24 @@ describe('transformJsx', () => {
     expect(res?.code).toContain('<span data-rc-loc="src/Page.tsx:9:17"');
   });
 
+  it('tags the kit components that render one page element (SelectItem, LoadingButton) [QA K9.8-1]', () => {
+    const code = [
+      'export function Page() {',
+      '  return (',
+      '    <SelectGroup>',
+      '      <SelectItem as="div" value="item-1" className="card">One</SelectItem>',
+      '      <LoadingButton as="button">Pay</LoadingButton>',
+      '    </SelectGroup>',
+      '  );',
+      '}',
+    ].join('\n');
+    const res = transformJsx(code, 'D:/project/src/Page.tsx', defaultOptions);
+    expect(res?.code).toContain('<SelectItem data-rc-loc="src/Page.tsx:4:7"');
+    expect(res?.code).toContain('<LoadingButton data-rc-loc="src/Page.tsx:5:7"');
+    // The group itself renders no element: nothing to select, so no loc.
+    expect(res?.code).not.toContain('<SelectGroup data-rc-loc');
+  });
+
   it('attaches data-rc-loc inside array maps [R-BR-02]', () => {
     const code = 'const list = items.map((item) => <li key={item}>{item}</li>);';
     const res = transformJsx(code, 'D:/project/src/List.tsx', defaultOptions);

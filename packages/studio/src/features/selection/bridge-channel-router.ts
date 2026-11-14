@@ -1,5 +1,11 @@
 // Multi-frame router and registry for BridgeChannel (SPEC-04 M-MF).
-import type { DrawTool, ElementRef, StudioDragOverPayload, StyleState } from '@kumicraft/shared';
+import type {
+  DrawTool,
+  ElementRef,
+  InspectorPreviewState,
+  StudioDragOverPayload,
+  StyleState,
+} from '@kumicraft/shared';
 
 import { type OpenFrame, useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { BridgeChannel, type BridgeListenerSets } from './bridge-channel-base.ts';
@@ -105,6 +111,15 @@ export class BridgeChannelRegistry {
     }
     return count;
   }
+
+  broadcastDarkPreview(dark: boolean): number {
+    let count = 0;
+    for (const ch of this.channels.values()) {
+      ch.setDarkPreview(dark);
+      count += 1;
+    }
+    return count;
+  }
 }
 
 export class StudioBridgeChannel extends BridgeChannel {
@@ -172,10 +187,10 @@ export class StudioBridgeChannel extends BridgeChannel {
     useCanvasViewStore.getState().updateOpenFrame(activeId, { route });
   }
 
-  override startTextEdit(ref: ElementRef): void {
-    super.startTextEdit(ref);
+  override startTextEdit(ref: ElementRef, runIndex?: number): void {
+    super.startTextEdit(ref, runIndex);
     const active = this.getActiveChannel();
-    if (active !== this) active.startTextEdit(ref);
+    if (active !== this) active.startTextEdit(ref, runIndex);
   }
 
   override endTextEdit(ref: ElementRef): void {
@@ -202,10 +217,37 @@ export class StudioBridgeChannel extends BridgeChannel {
     if (active !== this) active.dragEnd(drop);
   }
 
-  override styleProbe(ref: ElementRef, properties: readonly string[], state?: StyleState): void {
-    super.styleProbe(ref, properties, state);
+  override styleProbe(
+    ref: ElementRef,
+    properties: readonly string[],
+    state?: StyleState,
+    dark?: boolean,
+    groupSelector?: string,
+  ): void {
+    super.styleProbe(ref, properties, state, dark, groupSelector);
     const active = this.getActiveChannel();
-    if (active !== this) active.styleProbe(ref, properties, state);
+    if (active !== this) active.styleProbe(ref, properties, state, dark, groupSelector);
+  }
+
+  override setDarkPreview(dark: boolean): void {
+    super.setDarkPreview(dark);
+    bridgeChannels.broadcastDarkPreview(dark);
+  }
+
+  override setStatePreview(
+    ref?: ElementRef,
+    state?: InspectorPreviewState,
+    groupRef?: ElementRef,
+  ): void {
+    super.setStatePreview(ref, state, groupRef);
+    const active = this.getActiveChannel();
+    if (active !== this) active.setStatePreview(ref, state, groupRef);
+  }
+
+  override setSelectPanelPreview(groupRef: ElementRef, activeIndex?: number): void {
+    super.setSelectPanelPreview(groupRef, activeIndex);
+    const active = this.getActiveChannel();
+    if (active !== this) active.setSelectPanelPreview(groupRef, activeIndex);
   }
 
   override sendStylePreview(ref: ElementRef, property: string, value: string): void {

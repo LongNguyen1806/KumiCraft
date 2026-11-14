@@ -72,11 +72,18 @@ function walkAst(node: unknown, visitor: (n: Record<string, unknown>) => void): 
   }
 }
 
+/**
+ * KumiCraft kit components that render one element of the page and pass their props to it
+ * (QA K9.8-1): tagged like HTML elements, so the user can select them on the Canvas and edit their
+ * classes, for example the "Selected" look of a choice.
+ */
+const KIT_ELEMENT_COMPONENTS: ReadonlySet<string> = new Set(['SelectItem', 'LoadingButton']);
+
 function isHtmlOrSvgTag(openingElement: Record<string, unknown>): boolean {
   const nameNode = openingElement['name'] as Record<string, unknown> | undefined;
   if (!nameNode || nameNode['type'] !== 'JSXIdentifier') return false;
   const tagName = typeof nameNode['name'] === 'string' ? nameNode['name'] : '';
-  return /^[a-z]/.test(tagName);
+  return /^[a-z]/.test(tagName) || KIT_ELEMENT_COMPONENTS.has(tagName);
 }
 
 function hasRcLocAttribute(openingElement: Record<string, unknown>): boolean {

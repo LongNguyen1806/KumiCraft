@@ -116,7 +116,9 @@
       "folderTooLarge": "The folder is too large to undo (over 500 files or 20 MB); do this in your code editor.",
       "buildCheckUnsupported": "This framework has no build check yet.",
       "noChildrenTag": "This tag cannot hold child elements (for example <img>, <input>). Place it next to it instead.",
-      "componentIntoItself": "A component cannot be placed inside itself: the page would render itself forever and hang."
+      "componentIntoItself": "A component cannot be placed inside itself: the page would render itself forever and hang.",
+      "invalidLoc": "Element location string is invalid.",
+      "emptyElements": "No elements were selected."
     }
   },
   "E017": {
@@ -125,7 +127,8 @@
     "reasons": {
       "moved": "Element was moved or deleted in the source code.",
       "valueChanged": "Attribute value changed in the source code.",
-      "fileChanged": "File was modified externally."
+      "fileChanged": "File was modified externally.",
+      "invalidLoc": "Element location changed in source code."
     }
   },
   "E018": {
@@ -147,7 +150,8 @@
       "agent": "This AI assistant is not installed.",
       "terminal": "Could not open a terminal window. Please open a terminal and run the agy command manually.",
       "installer": "PowerShell or bash is not available to run the installer.",
-      "styleAdapter": "This project does not support visual styling yet."
+      "styleAdapter": "This project does not support visual styling yet.",
+      "mainCss": "Main CSS file not found in project."
     }
   },
   "E023": {
@@ -172,12 +176,24 @@
       "usesLocalScope": "Element uses local scope variables: {{name}}.",
       "viewOnly": "This project is view-only in KumiCraft (Express + Pug); edit in your editor or ask an AI.",
       "propTypes": "Could not read the types for the new component props: the project needs TypeScript installed and to be trusted. You can ask the AI to extract it.",
-      "propType": "Could not read the type of {{name}} for a prop. You can ask the AI to extract it."
+      "propType": "Could not read the type of {{name}} for a prop. You can ask the AI to extract it.",
+      "notButton": "This action only applies to <button> elements.",
+      "differentFiles": "All selected elements must belong to the same file.",
+      "insideLoop": "Cannot modify elements generated inside a .map() loop.",
+      "differentParents": "Selected elements must share the same parent container.",
+      "noSelectItems": "No SelectItem children found inside SelectGroup.",
+      "missingOpening": "Opening JSX tag is missing.",
+      "blockedAttribute": "Attribute {{name}} cannot be edited here.",
+      "projectToastLibrary": "This project already shows notices with {{library}}; KumiCraft does not add a second system.",
+      "projectToastHost": "This project already has its own notice system in {{file}}; KumiCraft does not add a second system."
     }
   },
   "E024": {
     "title": "Edit Breaks Source",
-    "message": "The change would break the source code, so nothing was written."
+    "message": "The change would break the source code, so nothing was written.",
+    "reasons": {
+      "jsxParse": "Generated JSX could not be parsed cleanly."
+    }
   },
   "E025": {
     "title": "Dev Server Error",

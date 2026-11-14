@@ -260,3 +260,39 @@ export function generatePalette(seedHex: string): SuggestedPalette {
 
   return { seed: primary, tokens, swatches, pairs };
 }
+
+export type DarkColorSuggestion = {
+  readonly backgroundColor: string;
+  readonly textColor: string;
+  readonly borderColor: string;
+  readonly contrastRatio: number;
+};
+
+function resolveAccessibleLightText(hue: number, sat: number, darkBg: string): string {
+  for (let lightness = 96; lightness <= 99; lightness += 1) {
+    const candidate = hslToHex({ h: hue, s: Math.min(sat, 12), l: lightness });
+    if (contrastRatio(candidate, darkBg) >= TARGET_WCAG_CONTRAST) {
+      return candidate;
+    }
+  }
+  return '#f8fafc';
+}
+
+/** Suggests accessible dark-mode surface, text (WCAG >= 4.5:1), and border colors from light colors. */
+export function suggestDarkColors(
+  lightBackground?: string,
+  lightText?: string,
+): DarkColorSuggestion {
+  const refHex = lightBackground ?? lightText;
+  const parsed = refHex ? parseHex(refHex) : undefined;
+  const hsl = parsed ? rgbToHsl(parsed) : { h: 222, s: 20, l: 96 };
+  const bg = hslToHex({ h: hsl.h, s: Math.min(hsl.s, 22), l: 11 });
+  const text = resolveAccessibleLightText(hsl.h, hsl.s, bg);
+  const border = hslToHex({ h: hsl.h, s: Math.min(hsl.s, 18), l: 24 });
+  return {
+    backgroundColor: bg,
+    textColor: text,
+    borderColor: border,
+    contrastRatio: roundRatio(contrastRatio(text, bg)),
+  };
+}

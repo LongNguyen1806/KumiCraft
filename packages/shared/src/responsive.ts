@@ -4,6 +4,18 @@ import { z } from 'zod';
 
 import type { ThemeInfo } from './project.ts';
 
+export const STYLE_SYSTEM_IDS = [
+  'tailwind4',
+  'tailwind3',
+  'bootstrap5',
+  'cssModules',
+  'css',
+  'sass',
+  'less',
+] as const;
+export const StyleSystemIdSchema = z.enum(STYLE_SYSTEM_IDS);
+export type StyleSystemId = z.infer<typeof StyleSystemIdSchema>;
+
 export const RESPONSIVE_KEYS = ['sm', 'md', 'lg', 'xl', '2xl'] as const;
 export const ResponsiveKeySchema = z.string().regex(/^[a-z0-9]{1,10}$/);
 export type ResponsiveKey = string;
@@ -14,8 +26,20 @@ export type Breakpoint = string;
 export const ResponsiveModeSchema = z.enum(['desktop-first', 'mobile-first']);
 export type ResponsiveMode = z.infer<typeof ResponsiveModeSchema>;
 
-export const InteractionStateSchema = z.enum(['hover', 'focus', 'disabled']);
+export const INTERACTION_STATES = [
+  'hover',
+  'active',
+  'focus',
+  'disabled',
+  'selected',
+  'groupHover',
+] as const;
+export const InteractionStateSchema = z.enum(INTERACTION_STATES);
 export type InteractionState = z.infer<typeof InteractionStateSchema>;
+
+export const PREVIEW_ONLY_STATES = ['loading'] as const;
+export const InspectorPreviewStateSchema = z.enum([...INTERACTION_STATES, ...PREVIEW_ONLY_STATES]);
+export type InspectorPreviewState = z.infer<typeof InspectorPreviewStateSchema>;
 
 /** Minimum width of each responsive key: the Tailwind default breakpoints. */
 export const BREAKPOINT_WIDTHS: Readonly<Record<string, number>> = {

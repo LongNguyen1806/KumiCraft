@@ -161,8 +161,8 @@ describe('M-TW Table 8.2 properties & scenarios [SPEC-04 section 8]', () => {
     }
 
     const strangeClasses = [
-      'dark:text-white',
-      'group-hover:flex',
+      'checked:text-white',
+      'open:flex',
       '[&>*]:p-2',
       'cursor-grab',
       'pointer-events-none',

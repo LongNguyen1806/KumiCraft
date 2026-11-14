@@ -35,6 +35,7 @@ function resolveThemeHistoryLabel(
 const HISTORY_KINDS = [
   'setClassName',
   'setText',
+  'setTextRun',
   'setAttribute',
   'setStyle',
   'setFlag',
@@ -62,6 +63,15 @@ const HISTORY_KINDS = [
   'fileCreate',
   'fileRename',
   'fileDelete',
+  'addToastOnClick',
+  'makeLoadingButton',
+  'markActiveNav',
+  'setLinkTarget',
+  'makeSelectGroup',
+  'linkSelectContent',
+  'removeSelectGroup',
+  'enableDarkMode',
+  'applySmoothScroll',
 ] as const;
 type HistoryKind = (typeof HISTORY_KINDS)[number];
 

@@ -31,6 +31,21 @@ Nguyên tắc chung: như K9.8-1 (code dự án là gốc, sinh từ mẫu, Hoà
 
 Mọi nút có `data-testid`, chữ `vi`/`en`, tooltip một câu; dòng không áp dụng hiện mờ kèm lý do.
 
+## 2b. Thư viện của dự án trước, kit sau; không xung đột với code người dùng
+
+Dự án người dùng có thể đang được viết tay song song. Mọi công cụ lượt này phải **dò trước khi sinh** và **không bao giờ tạo bản thứ hai** của thứ dự án đã có:
+
+- **Dùng thư viện của dự án khi có** (dò bằng `package.json` và `uiKit` của TK-44, không cài gì thêm): hộp xác nhận → `alert-dialog` của shadcn; nút gửi đang xử lý → `Button` của dự án; ô mật khẩu → `Input` của dự án; thông báo → thư viện toast đã cài (`sonner`: gọi `toast()`, `<Toaster />`; `react-hot-toast`; `react-toastify`), nếu không có mới dùng kit `Toast` của K9.8-1. Dự án có shadcn nhưng thiếu component cần dùng → dùng kit và Inspector ghi một dòng "Dự án chưa có `alert-dialog`, đang dùng bản của KumiCraft".
+- **Chỗ chứa dùng chung chỉ có một:** trước khi chèn `ToastHost`/`<Toaster />`, nhà cung cấp chủ đề, `theme.ts`, dò trong file vào (`main.tsx`, `App.tsx`, layout) xem đã có chưa; có rồi thì dùng lại, không chèn thêm.
+- **Form đã có thư viện kiểm tra** (`react-hook-form`, `formik`, `@tanstack/react-form`, hoặc `onSubmit` tự viết có `preventDefault`): **không** bọc `ValidatedForm`; dòng "Kiểm tra khi gửi" hiện mờ kèm lý do "Form này đã có kiểm tra bằng react-hook-form".
+- **Không đè hành vi có sẵn:** phần tử đã có `onClick`, `onSubmit`, `onChange` thì giữ nguyên và gọi trước/sau đúng thứ tự (đã áp dụng cho `ToastTrigger`); prop do lập trình viên đặt không bị ghi đè.
+- **Trùng tên:** file đã có biến hoặc import trùng tên với component kit (`Toast`, `Stepper`, `ConfirmDialog`…) → import kèm tên khác (`import { Stepper as KcStepper }`), không đổi code của người dùng.
+- **File kit đã bị sửa tay** (so dấu băm như TK-87) → không ghi đè, báo và hỏi.
+- **File đổi trên đĩa từ lúc đọc** (người dùng vừa lưu trong editor) → từ chối như các sửa hiện có (`before` không khớp), Studio đọc lại rồi mới cho làm.
+- **Không bao giờ** cài hay gỡ gói, không sửa `package.json` của dự án.
+
+Test thêm (nhóm 13 ở mục 4): dự án có `sonner` → thông báo dùng `toast()` của sonner, không có `ToastHost` thứ hai; đã có `<Toaster />` → không chèn thêm; form có `react-hook-form` → công cụ kiểm tra hiện mờ; file có biến `Stepper` sẵn → import đổi tên; dự án shadcn thiếu `alert-dialog` → dùng kit kèm dòng thông báo.
+
 ## 3. Công việc
 
 ### 3.1. TK-81 Form có kiểm tra
@@ -103,6 +118,7 @@ Thêm vào cảnh báo phần tử và tab **Trợ năng** của "Soát trang" (
 10. E2E `e2e/admin-tools.e2e.ts`: chèn `screen.admin-list` → ở Preview tìm kiếm lọc, chọn 2 dòng → Xóa → xác nhận → còn đúng dòng → Hoàn tác → trở lại; "Thêm mới" mở modal form, gửi trống → lỗi dưới ô và tóm tắt.
 11. E2E `e2e/page-audit.e2e.ts`: trang có h1 → h3, nút 16×16, ảnh thiếu kích thước → "Soát trang" báo đủ 3 loại, bấm dòng chọn đúng phần tử, sửa nhanh tiêu đề thì hết báo.
 12. E2E CSS thường (`react-css`): form có kiểm tra và bảng quản trị ra luật CSS, JSX không có class Tailwind.
+13. Không xung đột (mục 2b): dự án có `sonner` → dùng `toast()` của sonner, không thêm `ToastHost`; đã có `<Toaster />` → không chèn thêm; form có `react-hook-form` → "Kiểm tra khi gửi" hiện mờ kèm lý do; file có biến `Stepper` sẵn → import đổi tên; shadcn thiếu `alert-dialog` → dùng kit kèm dòng thông báo; file kit đã sửa tay → không ghi đè.
 
 Kiểm ngược (ghi vào báo cáo): bỏ bẫy focus của `ConfirmDialog` → test 5 hỏng; bỏ kiểm giá trị `loading` → test 7 hỏng.
 
@@ -110,4 +126,4 @@ Kiểm ngược (ghi vào báo cáo): bỏ bẫy focus của `ConfirmDialog` →
 
 `pnpm format`, `pnpm typecheck`, `npx eslint . --ignore-pattern "Mockup/**"` (không thêm cảnh báo `max-lines*`), `pnpm check:i18n`, `pnpm test`, `pnpm build`, `pnpm test:e2e`. Ghi một dòng `docs/construction/spec-log.md` (số tiếp theo).
 
-Báo cáo bằng mục `## BÁO CÁO K9.8-2` (tiếng Việt, ngắn): file đổi/mới, số test mới theo nhóm 1–12, kết quả từng lệnh, kết quả kiểm ngược, chỗ làm khác bản giao việc và lý do.
+Báo cáo bằng mục `## BÁO CÁO K9.8-2` (tiếng Việt, ngắn): file đổi/mới, số test mới theo nhóm 1–13, kết quả từng lệnh, kết quả kiểm ngược, chỗ làm khác bản giao việc và lý do.

@@ -16,7 +16,15 @@ const STANDARD_RESPONSIVE = new Set([
   'max-2xl',
 ]);
 
-const STANDARD_STATES = new Set(['hover', 'focus', 'disabled']);
+const STANDARD_STATES = new Set([
+  'hover',
+  'active',
+  'focus',
+  'disabled',
+  'group-hover',
+  'data-[selected=true]',
+  'dark',
+]);
 
 export function isValidVariant(variant: string, ctx: ClassContext): boolean {
   if (STANDARD_RESPONSIVE.has(variant) || STANDARD_STATES.has(variant)) {

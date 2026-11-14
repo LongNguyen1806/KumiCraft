@@ -4,6 +4,8 @@ import {
   EditableAttrSchema,
   HTML_SETTABLE_TAGS,
   HtmlSettableTagSchema,
+  type InteractionState,
+  InteractionStateSchema,
   isValidSettablePropName,
   SetPropValueSchema,
   VOID_HTML_TAGS,
@@ -26,9 +28,15 @@ const UpdateClassesInput = z.strictObject({
   loc: LocSchema,
   add: z.array(z.string().min(1).max(200)).max(50).default([]),
   remove: z.array(z.string().min(1).max(200)).max(50).default([]),
+  state: InteractionStateSchema.optional(),
+  dark: z.boolean().optional(),
 });
 
-const SetTextInput = z.strictObject({ loc: LocSchema, text: z.string().max(10_000) });
+const SetTextInput = z.strictObject({
+  loc: LocSchema,
+  text: z.string().max(10_000),
+  run: z.number().int().min(0).optional(),
+});
 
 const SetAttributeInput = z.strictObject({
   loc: LocSchema,
@@ -71,21 +79,69 @@ async function setClassName(api: ApiClient, loc: string, next: (current: string)
   });
 }
 
+const STATE_VARIANT_MAP: Readonly<Record<InteractionState, string>> = {
+  hover: 'hover',
+  active: 'active',
+  focus: 'focus',
+  disabled: 'disabled',
+  groupHover: 'group-hover',
+  selected: 'data-[selected=true]',
+};
+
+function scopePrefixFor(state?: InteractionState, dark?: boolean): string {
+  const parts: string[] = [];
+  if (dark === true) parts.push('dark');
+  if (state !== undefined) parts.push(STATE_VARIANT_MAP[state]);
+  return parts.length > 0 ? `${parts.join(':')}:` : '';
+}
+
+function applyScopePrefix(names: readonly string[], prefix: string): string[] {
+  if (prefix === '') return [...names];
+  return names.map((n) => (n.startsWith(prefix) ? n : `${prefix}${n}`));
+}
+
 function updatedClasses(
   current: string,
   add: readonly string[],
   remove: readonly string[],
+  state?: InteractionState,
+  dark?: boolean,
 ): string {
-  const removed = new Set(remove);
+  const prefix = scopePrefixFor(state, dark);
+  const removed = new Set(applyScopePrefix(remove, prefix));
   const kept = current.split(/\s+/).filter((name) => name !== '' && !removed.has(name));
-  for (const name of add) if (!kept.includes(name)) kept.push(name);
+  for (const name of applyScopePrefix(add, prefix)) {
+    if (!kept.includes(name)) kept.push(name);
+  }
   return kept.join(' ');
 }
 
-async function setText(api: ApiClient, loc: string, text: string): Promise<ApiResult> {
+async function setText(
+  api: ApiClient,
+  loc: string,
+  text: string,
+  run?: number,
+): Promise<ApiResult> {
   const element = await readElement(api, loc);
   if (!element.ok) return element;
   const current = element.value.text;
+  if (run !== undefined) {
+    if (current.kind !== 'mixed') {
+      return cannot(`E023: run parameter only applies to mixed-text elements (${current.kind}).`);
+    }
+    const node = (current.runs ?? []).find((r) => r.kind === 'text' && r.runIndex === run);
+    if (node?.kind !== 'text') {
+      return cannot(`E023: editable text run #${String(run)} was not found.`);
+    }
+    return applyEdit(api, {
+      kind: 'setTextRun',
+      loc,
+      tag: element.value.tag,
+      index: run,
+      before: node.value,
+      after: text,
+    });
+  }
   if (current.kind !== 'static') {
     return cannot(
       `E023: the text of this element is not plain text (${current.kind}); change its children with the structure tools instead.`,
@@ -161,20 +217,21 @@ export const EDIT_TOOLS: readonly McpTool[] = [
   },
   {
     name: 'kumicraft_update_classes',
-    description: 'Add and/or remove class names on one element, keeping the others.',
+    description:
+      'Add and/or remove class names on one element (with optional state and dark scope prefix).',
     input: UpdateClassesInput,
     run: (api, args) => {
-      const { loc, add, remove } = UpdateClassesInput.parse(args);
-      return setClassName(api, loc, (current) => updatedClasses(current, add, remove));
+      const { loc, add, remove, state, dark } = UpdateClassesInput.parse(args);
+      return setClassName(api, loc, (current) => updatedClasses(current, add, remove, state, dark));
     },
   },
   {
     name: 'kumicraft_set_text',
-    description: 'Replace the plain text inside one element (no JSX inside).',
+    description: 'Replace the plain text (or indexed mixed text run) inside one element.',
     input: SetTextInput,
     run: (api, args) => {
-      const { loc, text } = SetTextInput.parse(args);
-      return setText(api, loc, text);
+      const { loc, text, run } = SetTextInput.parse(args);
+      return setText(api, loc, text, run);
     },
   },
   {

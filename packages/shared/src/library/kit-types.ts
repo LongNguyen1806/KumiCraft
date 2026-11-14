@@ -13,6 +13,13 @@ export const KIT_COMPONENT_IDS = [
   'Tooltip',
   'MobileMenu',
   'DataTable',
+  'SelectGroup',
+  'SelectItem',
+  'SelectPanel',
+  'ToastHost',
+  'ToastTrigger',
+  'LoadingButton',
+  'ScrollSpy',
 ] as const;
 
 export const KitComponentIdSchema = z.enum(KIT_COMPONENT_IDS);
@@ -35,6 +42,13 @@ const KIT_FILE_MAP: Readonly<Record<KitComponentId, string>> = {
   Tooltip: 'Tooltip',
   MobileMenu: 'MobileMenu',
   DataTable: 'DataTable',
+  SelectGroup: 'SelectGroup',
+  SelectItem: 'SelectGroup',
+  SelectPanel: 'SelectGroup',
+  ToastHost: 'Toast',
+  ToastTrigger: 'Toast',
+  LoadingButton: 'LoadingButton',
+  ScrollSpy: 'ScrollSpy',
 };
 
 export function kitFileNameFor(component: KitComponentId): string {

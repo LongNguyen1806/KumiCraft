@@ -7,6 +7,7 @@ import type {
 } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
+import { useSelectionStore } from '../../selection/selection-store.ts';
 import { useStyleState } from '../../style/style-reading.ts';
 import {
   useStyleElementState,
@@ -19,7 +20,9 @@ import { InspectorEffectsExtra } from './inspector-effects-extra.tsx';
 import { InspectorGroup } from './inspector-group.tsx';
 import { InspectorImageSection } from './inspector-image-section.tsx';
 import { InspectorMotionSection } from './inspector-motion-section.tsx';
+import { canEnableSelectedState, DarkColorSuggestStrip } from './inspector-scope-controls.tsx';
 import { InspectorStyleUnsupportedBanner } from './inspector-style-unsupported-banner.tsx';
+import { InteractionSection } from './interaction/interaction-section.tsx';
 import { StyleSourcesSection } from './style-sources-section.tsx';
 
 /** Systems whose changes the style layer writes so far (plain CSS, CSS Modules, Bootstrap 5, Sass, Less). */
@@ -77,17 +80,44 @@ function CssExtraSections({
   );
 }
 
+/** The parent class a "hover on the parent" style hangs on, when that state is on. */
+function useGroupHoverSelector(
+  inspected: Extract<InspectorTarget, { readonly kind: 'element' }>,
+  interactionState: ReturnType<typeof useStyleElementState>,
+): string | undefined {
+  const selectionInfo = useSelectionStore((s) => s.selectionInfo);
+  const groupRef = inspected.groupRef;
+  if (interactionState !== 'groupHover' || groupRef === undefined) return undefined;
+  const groupInfo = selectionInfo.find(
+    (i) => i.ref.loc === groupRef.loc && i.ref.index === groupRef.index,
+  );
+  const firstGroupClass = groupInfo?.domClass?.trim().split(/\s+/).find(Boolean);
+  return firstGroupClass === undefined ? undefined : `.${firstGroupClass}`;
+}
+
 function useCssStyleEditorController(
   elementKey: string,
   project: ProjectInfo | undefined,
   inspected: Extract<InspectorTarget, { readonly kind: 'element' }>,
 ) {
-  const interactionState = useStyleElementState(elementKey);
-  const { state, refresh } = useStyleState(true, interactionState);
+  const styleState = useStyleElementState(elementKey);
+  const interactionState = inspected.interactionState ?? styleState;
+  const dark = inspected.darkMode === true;
+  const selectionInfo = useSelectionStore((s) => s.selectionInfo);
+  const treeNodes = useSelectionStore((s) => s.treeNodes);
+  const groupSelector = useGroupHoverSelector(inspected, interactionState);
+
+  const { state, refresh } = useStyleState(true, interactionState, dark, groupSelector);
   const ref = state?.probe.ref ?? inspected.ref;
   const target = useStyleTarget(elementKey);
   const primary = state?.reading.primary;
   const writable = primary !== undefined && WRITABLE.includes(primary);
+  const canSelectState = canEnableSelectedState(
+    inspected.source,
+    inspected.ref,
+    selectionInfo,
+    treeNodes,
+  );
   const { commit, error } = useStyleCommit({
     state,
     refresh,
@@ -96,52 +126,123 @@ function useCssStyleEditorController(
     tag: inspected.source?.tag ?? 'div',
     target,
     interactionState,
+    dark,
+    groupSelector,
   });
-  return { interactionState, state, refresh, ref, target, writable, commit, error };
+  return {
+    interactionState,
+    dark,
+    canSelectState,
+    state,
+    refresh,
+    ref,
+    target,
+    writable,
+    commit,
+    error,
+  };
 }
 
-function CssStyleEditorBody({
+function CssDarkColorSuggest({
+  visible,
+  inspected,
+  commit,
+}: {
+  readonly visible: boolean;
+  readonly inspected: Extract<InspectorTarget, { readonly kind: 'element' }>;
+  readonly commit: (prop: string, val: string) => Promise<void>;
+}) {
+  if (!visible) return undefined;
+  return (
+    <DarkColorSuggestStrip
+      target={inspected}
+      onApplyCssColors={async (suggestion) => {
+        await commit('background-color', suggestion.backgroundColor);
+        await commit('color', suggestion.textColor);
+        await commit('border-color', suggestion.borderColor);
+      }}
+    />
+  );
+}
+
+type CssController = ReturnType<typeof useCssStyleEditorController>;
+
+function CssStyleSources({
+  c,
+  reading,
   elementKey,
-  project,
   inspected,
 }: {
+  readonly c: CssController;
+  readonly reading: NonNullable<CssController['state']>['reading'];
+  readonly elementKey: string;
+  readonly inspected: Extract<InspectorTarget, { readonly kind: 'element' }>;
+}) {
+  return (
+    <StyleSourcesSection
+      reading={reading}
+      writable={c.writable}
+      canSelectState={c.canSelectState}
+      elementRef={c.ref}
+      interactionState={c.interactionState}
+      onStateChange={(next) => {
+        useStyleTargetStore.getState().setState(elementKey, next);
+        inspected.setInteractionState(next);
+      }}
+      target={c.target}
+      onTargetChange={(next) => {
+        useStyleTargetStore.getState().setTarget(elementKey, next);
+      }}
+      onCommit={(prop, val) => {
+        void c.commit(prop, val);
+      }}
+      error={c.error}
+    />
+  );
+}
+
+type CssStyleEditorBodyProps = {
   readonly elementKey: string;
   readonly project: ProjectInfo | undefined;
   readonly inspected: Extract<InspectorTarget, { readonly kind: 'element' }>;
-}) {
+};
+
+function CssStyleEditorBody({ elementKey, project, inspected }: CssStyleEditorBodyProps) {
   const c = useCssStyleEditorController(elementKey, project, inspected);
+  const refreshAll = () => {
+    c.refresh();
+    inspected.refresh();
+  };
   return (
     <>
       {!c.writable && <InspectorStyleUnsupportedBanner styling={project?.support.styling} />}
+      <CssDarkColorSuggest
+        visible={c.writable && c.dark && inspected.source !== undefined}
+        inspected={inspected}
+        commit={c.commit}
+      />
       {c.state !== undefined && (
         <>
-          <StyleSourcesSection
+          <CssStyleSources
+            c={c}
             reading={c.state.reading}
-            writable={c.writable}
-            elementRef={c.ref}
-            interactionState={c.interactionState}
-            onStateChange={(next) => {
-              useStyleTargetStore.getState().setState(elementKey, next);
-            }}
-            target={c.target}
-            onTargetChange={(next) => {
-              useStyleTargetStore.getState().setTarget(elementKey, next);
-            }}
-            onCommit={(prop, val) => {
-              void c.commit(prop, val);
-            }}
-            error={c.error}
+            elementKey={elementKey}
+            inspected={inspected}
           />
+          {inspected.source !== undefined && (
+            <InteractionSection
+              source={inspected.source}
+              refTarget={inspected.ref}
+              onDone={refreshAll}
+            />
+          )}
           {c.writable && inspected.source !== undefined && (
             <CssExtraSections
               source={inspected.source}
               reading={c.state.reading}
               refTarget={inspected.ref}
               commit={c.commit}
-              onRefresh={() => {
-                c.refresh();
-                inspected.refresh();
-              }}
+              onRefresh={refreshAll}
             />
           )}
         </>

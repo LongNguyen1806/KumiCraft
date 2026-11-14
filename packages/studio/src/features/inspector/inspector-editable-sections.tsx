@@ -2,6 +2,7 @@ import type {
   ClassContext,
   ClassToken,
   ClassValue,
+  ElementRef,
   ElementSource,
   PropertyId,
   Scope,
@@ -11,9 +12,11 @@ import type { ReactNode } from 'react';
 import { InspectorImageSection } from './components/inspector-image-section.tsx';
 import { InspectorMotionSection } from './components/inspector-motion-section.tsx';
 import { InspectorPropertyGroups } from './components/inspector-property-groups.tsx';
+import { InteractionSection } from './components/interaction/interaction-section.tsx';
 import type { BatchPropEntry, LiveEditState } from './use-live-edit.ts';
 
 export type EditablePropertySectionsProps = {
+  readonly refTarget?: ElementRef | undefined;
   readonly source: ElementSource;
   readonly tokens: readonly ClassToken[];
   readonly currentScope: Scope;
@@ -26,48 +29,42 @@ export type EditablePropertySectionsProps = {
   readonly layoutFooter?: ReactNode | undefined;
 };
 
-export function EditablePropertySections({
-  source,
-  tokens,
-  currentScope,
-  frameWidth,
-  ctx,
-  isLocked,
-  onPropChange,
-  onBatchProps,
-  onRefresh,
-  layoutFooter,
-}: EditablePropertySectionsProps) {
+export function EditablePropertySections(props: EditablePropertySectionsProps) {
+  const { source, isLocked, onPropChange, onRefresh } = props;
+  const effectiveRef = props.refTarget ?? { loc: source.loc, index: 0 };
   return (
     <>
       <InspectorImageSection
         tag={source.tag}
         editable={true}
         disabled={isLocked}
-        tokens={tokens}
-        currentScope={currentScope}
-        ctx={ctx}
+        tokens={props.tokens}
+        currentScope={props.currentScope}
+        ctx={props.ctx}
         onPropChange={onPropChange}
       />
       <InspectorPropertyGroups
-        tokens={tokens}
-        currentScope={currentScope}
-        frameWidth={frameWidth}
-        ctx={ctx}
+        tokens={props.tokens}
+        currentScope={props.currentScope}
+        frameWidth={props.frameWidth}
+        ctx={props.ctx}
         isLocked={isLocked}
         onPropertyValueChange={onPropChange}
-        onBatchProperties={onBatchProps}
-        layoutFooter={layoutFooter}
+        onBatchProperties={props.onBatchProps}
+        layoutFooter={props.layoutFooter}
+        afterLayout={
+          <InteractionSection source={source} refTarget={effectiveRef} onDone={onRefresh} />
+        }
       />
       <InspectorMotionSection
         refTarget={{ loc: source.loc, index: 0 }}
         source={source}
         editable={true}
         disabled={isLocked}
-        tokens={tokens}
-        currentScope={currentScope}
+        tokens={props.tokens}
+        currentScope={props.currentScope}
         onPropChange={onPropChange}
-        onBatchProps={onBatchProps}
+        onBatchProps={props.onBatchProps}
         onRefresh={onRefresh}
       />
     </>

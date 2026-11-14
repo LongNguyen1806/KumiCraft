@@ -4,7 +4,15 @@ import { SPACING_FAMILIES } from './properties.ts';
 import type { ClassContext, ClassToken, ClassValue, PropertyId, Scope } from './types.ts';
 
 const RESPONSIVE_KEYS_LIST = ['sm', 'md', 'lg', 'xl', '2xl'];
-const STATE_KEYS_LIST = ['hover', 'focus', 'disabled'];
+
+const VARIANT_TO_STATE: Readonly<Record<string, InteractionState>> = {
+  hover: 'hover',
+  active: 'active',
+  focus: 'focus',
+  disabled: 'disabled',
+  'group-hover': 'groupHover',
+  'data-[selected=true]': 'selected',
+};
 
 function getThreshold(key: string, ctx: ClassContext): number {
   if (key in ctx.breakpoints) {
@@ -37,26 +45,35 @@ function getVariantsInfo(
 ): {
   readonly resp?: string | undefined;
   readonly state?: InteractionState | undefined;
+  readonly dark: boolean;
 } {
   let resp: string | undefined;
   let state: InteractionState | undefined;
+  let dark = false;
   for (const v of token.variants) {
-    if (STATE_KEYS_LIST.includes(v)) {
-      state = v as InteractionState;
+    if (v === 'dark') {
+      dark = true;
+    } else if (v in VARIANT_TO_STATE) {
+      state = VARIANT_TO_STATE[v];
     } else if (isResponsiveVariant(v, ctx)) {
       resp = v;
     }
   }
-  return { resp, state };
+  return { resp, state, dark };
 }
 
-function appliesToView(
-  token: ClassToken,
-  view: { readonly width: number; readonly state?: InteractionState | undefined },
-  ctx: ClassContext,
-): boolean {
-  const { resp, state } = getVariantsInfo(token, ctx);
+type ReadView = {
+  readonly width: number;
+  readonly state?: InteractionState | undefined;
+  readonly dark?: boolean | undefined;
+};
+
+function appliesToView(token: ClassToken, view: ReadView, ctx: ClassContext): boolean {
+  const { resp, state, dark } = getVariantsInfo(token, ctx);
   if (state !== undefined && state !== view.state) {
+    return false;
+  }
+  if (dark && view.dark !== true) {
     return false;
   }
   if (resp === undefined) {
@@ -75,8 +92,8 @@ function getRank(
   token: ClassToken,
   ctx: ClassContext,
 ): { readonly stateRank: number; readonly respRank: number } {
-  const { resp, state } = getVariantsInfo(token, ctx);
-  const stateRank = state !== undefined ? 1 : 0;
+  const { resp, state, dark } = getVariantsInfo(token, ctx);
+  const stateRank = (state !== undefined ? 2 : 0) + (dark ? 1 : 0);
   if (resp === undefined) {
     return { stateRank, respRank: 0 };
   }
@@ -98,13 +115,13 @@ function getFamilySpec(targetProp: PropertyId, candidateProp: PropertyId): numbe
 }
 
 function extractScope(token: ClassToken, ctx?: ClassContext): Scope {
-  const { resp, state } = getVariantsInfo(token, ctx);
+  const { resp, state, dark } = getVariantsInfo(token, ctx);
   let breakpoint: Breakpoint = 'base';
   if (resp !== undefined) {
     const raw = resp.startsWith('max-') ? resp.slice(4) : resp;
     breakpoint = raw;
   }
-  return { breakpoint, state };
+  return dark ? { breakpoint, state, dark: true } : { breakpoint, state };
 }
 
 function selectBestCandidate(
@@ -149,7 +166,7 @@ function selectBestCandidate(
 export function readValue(
   tokens: readonly ClassToken[],
   property: PropertyId,
-  view: { readonly width: number; readonly state?: InteractionState | undefined },
+  view: ReadView,
   ctx: ClassContext,
 ): {
   readonly value?: ClassValue | undefined;

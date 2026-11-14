@@ -38,6 +38,7 @@ import {
   validateGuards,
 } from './structure-plan.ts';
 import { applyTextEdits, offsetToLoc } from './text-edits.ts';
+import { checkToastKitInsert } from './toast-project-scan.ts';
 
 const MAX_FILE_SIZE = 1024 * 1024;
 
@@ -381,6 +382,9 @@ async function executeStandardEdit(
   const targetGuard =
     edit.kind === 'insert' || edit.kind === 'move' ? validatedGuards.at(-1) : undefined;
   const { byFile, sortedFiles } = groupGuardsByFile(validatedGuards);
+  const kitComponents = edit.kind === 'insert' ? edit.kit?.components : undefined;
+  const toastCheck = await checkToastKitInsert(fs, projectRoot, sourceDir, kitComponents);
+  if (!toastCheck.ok) return toastCheck;
   const kitPlan = await prepareInsertKitWithData(
     fs,
     projectRoot,

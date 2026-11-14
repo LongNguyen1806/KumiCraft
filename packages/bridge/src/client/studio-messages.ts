@@ -17,9 +17,15 @@ import {
   StudioResponsiveAuditPayloadSchema,
   type StudioSelectPayload,
   StudioSelectPayloadSchema,
+  type StudioSetDarkPreviewPayload,
+  StudioSetDarkPreviewPayloadSchema,
   type StudioSetGridPayload,
   StudioSetGridPayloadSchema,
   StudioSetModePayloadSchema,
+  type StudioSetSelectPanelPreviewPayload,
+  StudioSetSelectPanelPreviewPayloadSchema,
+  type StudioSetStatePreviewPayload,
+  StudioSetStatePreviewPayloadSchema,
   StudioSetToolPayloadSchema,
   StudioStylePreviewClearPayloadSchema,
   type StudioStylePreviewPayload,
@@ -51,6 +57,9 @@ export type StudioMessageHandlers = {
   handleMotionPreview?: ((data: StudioMotionPreviewPayload) => void) | undefined;
   handleToggleInteractive?: ((data: StudioToggleInteractivePayload) => void) | undefined;
   handleResponsiveAudit?: ((data: StudioResponsiveAuditPayload) => void) | undefined;
+  handleSetDarkPreview?: ((data: StudioSetDarkPreviewPayload) => void) | undefined;
+  handleSetStatePreview?: ((data: StudioSetStatePreviewPayload) => void) | undefined;
+  handleSetSelectPanelPreview?: ((data: StudioSetSelectPanelPreviewPayload) => void) | undefined;
 };
 
 /** Free frame and drawing tool messages (R-FF-10, R-FF-11, R-DT-10). */
@@ -153,6 +162,29 @@ function dispatchStyleAndNav(
   }
 }
 
+function dispatchInteractionPreview(
+  type: string,
+  payload: unknown,
+  handlers: StudioMessageHandlers,
+): boolean {
+  if (type === 'set-dark-preview') {
+    const parsed = StudioSetDarkPreviewPayloadSchema.safeParse(payload);
+    if (parsed.success) handlers.handleSetDarkPreview?.(parsed.data);
+    return true;
+  }
+  if (type === 'set-state-preview') {
+    const parsed = StudioSetStatePreviewPayloadSchema.safeParse(payload);
+    if (parsed.success) handlers.handleSetStatePreview?.(parsed.data);
+    return true;
+  }
+  if (type === 'set-select-panel-preview') {
+    const parsed = StudioSetSelectPanelPreviewPayloadSchema.safeParse(payload);
+    if (parsed.success) handlers.handleSetSelectPanelPreview?.(parsed.data);
+    return true;
+  }
+  return false;
+}
+
 export function dispatchStudioMessage(
   type: string,
   payload: unknown,
@@ -161,6 +193,7 @@ export function dispatchStudioMessage(
   if (dispatchDragOrEdit(type, payload, handlers)) return;
   if (dispatchFreeFrame(type, payload, handlers)) return;
   if (dispatchStyleAndNav(type, payload, handlers)) return;
+  if (dispatchInteractionPreview(type, payload, handlers)) return;
   switch (type) {
     case 'set-mode': {
       const parsed = StudioSetModePayloadSchema.safeParse(payload);

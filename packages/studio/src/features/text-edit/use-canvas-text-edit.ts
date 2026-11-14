@@ -52,8 +52,10 @@ async function commitSourceText(
   source: ElementSource | undefined,
   ref: ElementRef,
   text: string,
+  runIndex?: number,
 ): Promise<void> {
-  if (source && source.loc === ref.loc && source.text.kind === 'static') {
+  if (!source || source.loc !== ref.loc) return;
+  if (source.text.kind === 'static') {
     await editSource({
       edit: {
         kind: 'setText',
@@ -63,6 +65,22 @@ async function commitSourceText(
         after: text,
       },
     });
+    return;
+  }
+  if (source.text.kind === 'mixed' && runIndex !== undefined) {
+    const run = (source.text.runs ?? []).find((r) => r.kind === 'text' && r.runIndex === runIndex);
+    if (run?.kind === 'text') {
+      await editSource({
+        edit: {
+          kind: 'setTextRun',
+          loc: ref.loc,
+          tag: source.tag,
+          index: runIndex,
+          before: run.value,
+          after: text,
+        },
+      });
+    }
   }
 }
 
@@ -72,8 +90,18 @@ type TextEditStateSetters = {
   readonly setActiveSession: (s: { ref: ElementRef; source: ElementSource }) => void;
 };
 
+function canEditSourceText(source: ElementSource, runIndex?: number): boolean {
+  if (source.readonly !== undefined) return false;
+  if (source.text.kind === 'static') return true;
+  if (source.text.kind === 'mixed' && runIndex !== undefined) {
+    return (source.text.runs ?? []).some((r) => r.kind === 'text' && r.runIndex === runIndex);
+  }
+  return false;
+}
+
 async function processTextEditRequest(
   ref: ElementRef,
+  runIndex: number | undefined,
   channel: BridgeChannel,
   setters: TextEditStateSetters,
 ): Promise<void> {
@@ -96,15 +124,14 @@ async function processTextEditRequest(
 
   try {
     const source = await fetchElementSource(parsed);
-    // Only plain text is edited in place; anything else ignores the double click (spec-log #119):
-    // a notice there got in the way of quick clicks, and Open in editor is in the Inspector.
-    if (source.readonly !== undefined || source.text.kind !== 'static') return;
+    if (!canEditSourceText(source, runIndex)) return;
 
     const instances = findInstanceCount(ref.loc);
     setters.setLoopCount(instances > 1 ? instances : undefined);
     setters.setEditingRef(ref);
     setters.setActiveSession({ ref, source });
-    channel.startTextEdit(ref);
+    if (runIndex !== undefined) channel.startTextEdit(ref, runIndex);
+    else channel.startTextEdit(ref);
   } catch {
     // Ignored
   }
@@ -112,8 +139,8 @@ async function processTextEditRequest(
 
 function useTextEditBridge(
   channel: BridgeChannel,
-  onRequest: (ref: ElementRef) => Promise<void>,
-  onCommit: (ref: ElementRef, text: string) => Promise<void>,
+  onRequest: (ref: ElementRef, runIndex?: number) => Promise<void>,
+  onCommit: (ref: ElementRef, text: string, runIndex?: number) => Promise<void>,
   onCancel: () => void,
   onSelect: (payload: BridgeTextSelectPayload) => void,
   activeRef: () => ElementRef | undefined,
@@ -121,10 +148,10 @@ function useTextEditBridge(
   useEffect(() => {
     const listener: BridgeTextEditListener = {
       onTextEditRequest: (payload) => {
-        void onRequest(payload.ref);
+        void onRequest(payload.ref, payload.runIndex);
       },
       onTextCommit: (payload) => {
-        void onCommit(payload.ref, payload.text);
+        void onCommit(payload.ref, payload.text, payload.runIndex);
       },
       onTextCancel: () => {
         onCancel();
@@ -182,9 +209,9 @@ function useTextEditHandlers(channel: BridgeChannel, state: TextEditState, editM
   const { activeSessionRef, resetEditing, setLoopCount, setEditingRef, setTextSelection } = state;
 
   const handleCommit = useCallback(
-    async (ref: ElementRef, text: string) => {
+    async (ref: ElementRef, text: string, runIndex?: number) => {
       try {
-        await commitSourceText(activeSessionRef.current?.source, ref, text);
+        await commitSourceText(activeSessionRef.current?.source, ref, text, runIndex);
       } catch {
         // Ignored
       }
@@ -194,9 +221,9 @@ function useTextEditHandlers(channel: BridgeChannel, state: TextEditState, editM
   );
 
   const handleRequest = useCallback(
-    async (ref: ElementRef) => {
+    async (ref: ElementRef, runIndex?: number) => {
       if (editMode === 'viewOnly') return;
-      await processTextEditRequest(ref, channel, {
+      await processTextEditRequest(ref, runIndex, channel, {
         setLoopCount,
         setEditingRef,
         setActiveSession: (s) => {

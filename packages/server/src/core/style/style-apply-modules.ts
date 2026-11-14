@@ -16,10 +16,11 @@ import { findNodeAt } from '../source-editor/source-editor-lookup.ts';
 import { ensureKeyframesBlock, resolveMergedCssValue } from './css-composite-apply.ts';
 import {
   appendRule,
-  hasStateInSelector,
+  hasModifiersInSelector,
+  type SelectorModifiers,
   setDeclarationAt,
   upsertRuleDeclaration,
-  withStateSelector,
+  withModifiersSelector,
 } from './css-edit.ts';
 import { locateRuleByIndex } from './css-locate.ts';
 import { readFile, type StyleApplied, type StyleApplyDeps, writeFile } from './style-apply.ts';
@@ -198,13 +199,13 @@ export async function applyModulesToRule(
   const located = locateRuleByIndex(css.value, rule.ruleIndex, []);
   if (located === undefined) return err({ code: 'E016', params: { reason: 'ruleNotFound' } });
 
-  const { property, value, media, state } = change;
+  const { property, value, media, state, dark, groupSelector } = change;
+  const mods: SelectorModifiers = { state, dark, groupSelector, cssModules: true };
   const inPlaceMedia = media === undefined || rule.media.length > 0;
-  const inPlaceState = state === undefined || hasStateInSelector(located.selector, state);
+  const inPlaceState = hasModifiersInSelector(located.selector, mods);
   const inPlace = inPlaceMedia && inPlaceState;
   const effectiveMedia = rule.media[0] ?? media;
-  const targetSelector =
-    state === undefined ? located.selector : withStateSelector(located.selector, state);
+  const targetSelector = withModifiersSelector(located.selector, mods);
   const resolvedValue = resolveMergedCssValue(css.value, {
     propertyId: property,
     longhand,
@@ -238,6 +239,25 @@ function memberText(objectName: string, key: string): string {
     : `${objectName}['${key.replace(/[\\']/g, '\\$&')}']`;
 }
 
+/** The className expression with one more module class appended, still valid JSX. */
+function withModuleClass(
+  jsxCode: string,
+  parsed: JsxElementInfo['parsed'],
+  newClass: string,
+): Result<string> {
+  const allProps = [...parsed.properties, newClass];
+  const templateBody = allProps.map((p) => `\${${memberText(parsed.objectName, p)}}`).join(' ');
+  const replacement = `{\`${templateBody}\`}`;
+  const nextJsx =
+    jsxCode.slice(0, parsed.containerStart) + replacement + jsxCode.slice(parsed.containerEnd);
+  try {
+    parseJsxAst(nextJsx);
+  } catch {
+    return err({ code: 'E024', params: { reason: 'jsxParse' } });
+  }
+  return ok(nextJsx);
+}
+
 async function applyNewOwnClass(
   deps: StyleApplyDeps,
   root: string,
@@ -246,12 +266,17 @@ async function applyNewOwnClass(
   longhand: string,
   change: StyleApplyRequest['change'],
 ): Promise<Result<StyleApplied>> {
-  const { property, value, media, state } = change;
+  const { property, value, media, state, dark, groupSelector } = change;
   if (value === undefined) return ok({ files: [] });
   const { code: jsxCode, jsxFile, parsed } = info;
   const idGen = deps.newId ?? customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 4);
   const newClass = `${identifierBase(parsed.properties[0])}_rc${idGen()}`;
-  const selector = state === undefined ? `.${newClass}` : `.${newClass}:${state}`;
+  const selector = withModifiersSelector(`.${newClass}`, {
+    state,
+    dark,
+    groupSelector,
+    cssModules: true,
+  });
 
   const css = await readFile(deps.fs, root, cssFile);
   if (!css.ok) return css;
@@ -273,19 +298,9 @@ async function applyNewOwnClass(
   if (!nextCss.ok) return nextCss;
   const finalCss = ensureKeyframesBlock(nextCss.value, property, resolvedValue);
 
-  const allProps = [...parsed.properties, newClass];
-  const templateBody = allProps.map((p) => `\${${memberText(parsed.objectName, p)}}`).join(' ');
-  const replacement = `{\`${templateBody}\`}`;
-  const nextJsx =
-    jsxCode.slice(0, parsed.containerStart) + replacement + jsxCode.slice(parsed.containerEnd);
-
-  try {
-    parseJsxAst(nextJsx);
-  } catch {
-    return err({ code: 'E024', params: { reason: 'jsxParse' } });
-  }
-
-  const writtenJsx = await writeFile(deps.fs, root, jsxFile, jsxCode, nextJsx);
+  const nextJsx = withModuleClass(jsxCode, parsed, newClass);
+  if (!nextJsx.ok) return nextJsx;
+  const writtenJsx = await writeFile(deps.fs, root, jsxFile, jsxCode, nextJsx.value);
   if (!writtenJsx.ok) return writtenJsx;
   const writtenCss = await writeFile(deps.fs, root, cssFile, css.value, finalCss);
   if (!writtenCss.ok) return writtenCss;
@@ -306,7 +321,7 @@ async function ownRuleOf(
 ): Promise<MatchedRule | undefined> {
   const css = await readFile(deps.fs, root, cssFile);
   if (!css.ok) return undefined;
-  const re = new RegExp(`^\\.${ownProp}(?::[\\w-]+)*$`);
+  const re = new RegExp(`\\.${ownProp}(?:\\[data-selected=["']?true["']?\\]|:[\\w-]+)*$`);
   return probeRules.find(
     (r) =>
       r.sheet.kind === 'module' &&

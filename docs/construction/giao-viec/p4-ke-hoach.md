@@ -371,6 +371,17 @@ Tốn: **cao** cả khối; từng đợt **vừa** (D1, D4, D6 có thể chia 2
 
 **Không làm ở đây:** trạng thái nghiệp vụ như số lượng giỏ hàng (đó là logic của app, không phải thiết kế).
 
+**Không xung đột với code người dùng (chủ dự án, 2026-11-14):** dự án có thể đang được viết tay song song. Có thư viện của dự án thì dùng (shadcn `sonner`, `alert-dialog`, `Button`; `react-hot-toast`, `react-toastify`), không có mới sinh kit; chỗ chứa dùng chung (`<Toaster />`, nhà cung cấp chủ đề, `theme.ts`) chỉ một; form đã có `react-hook-form`/`formik` thì không bọc thêm; giữ `onClick`/`onSubmit` sẵn có; trùng tên thì import đổi tên; không ghi đè file kit đã sửa tay; không cài gói. Ghi ở bản giao việc K9.8-2 mục 2b. **QA K9.8-1 (Claude) kiểm và sửa các điểm này cho toast, nút đang xử lý, chế độ tối** (dự án đã có `<Toaster />` hoặc `next-themes`/cấu hình `dark` riêng, `@custom-variant dark` đã có, `scroll-behavior` đã có, `id` trùng).
+
+MUI, Chakra, DaisyUI, Bootstrap (phần còn lại của TK-44): một lượt riêng sau K9.8.
+
+**Việc đụng cả dự án → "Nhờ AI làm" (chủ dự án, 2026-11-15):** công cụ chia hai loại.
+
+- **Loại 1, chỉ sửa phần tử đang chọn** (nhóm chọn, sửa chữ có icon, chọn đích liên kết, trạng thái Đang nhấn / Đang chọn / Rê vào khung cha, thông báo khi bấm, nút đang xử lý): làm thành công cụ như thường.
+- **Loại 2, đụng cả dự án** (chế độ tối, cuộn mượt cho cả trang, đánh dấu menu khi dự án đã có `NavLink`/router riêng; sau này đổi bộ chủ đề, thêm thư viện giao diện, i18n): dễ xung đột với code người dùng, càng rối với CSS thường. Công cụ vẫn nằm đúng chỗ trong giao diện nhưng bấm vào thì **mở tab AI với lời nhờ soạn sẵn**: việc cần làm, những gì KumiCraft dò được (ví dụ dự án đã dùng `next-themes`, CSS thường, có biến màu), phần tử đang chọn, ràng buộc (không cài gói, theo đúng cách dự án đang làm, không tạo cách thứ hai). Người dùng đọc, sửa rồi gửi; xem thay đổi và Hoàn tác như mọi lượt AI. Phần **chỉ xem, không ghi file** (nút "Xem tối" trên Canvas khi dự án đã có chế độ tối) vẫn là công cụ.
+- **Thử trước rồi mới chuyển:** chế độ tối, cuộn mượt, đánh dấu menu của K9.8-1 vẫn để Gemini làm xong. QA K9.8-1 thử trên 4 dự án: Test UI (Tailwind 4), dự án shadcn (biến màu), dự án CSS thường, MarketLink. **Đạt** khi cả 4 dự án: bật được, nút Sáng/Tối chạy đúng, không nháy màu khi tải, class `dark:` sẵn có không đổi cách chạy, Hoàn tác trả đúng như cũ. **Hỏng một điều** thì Claude chuyển mục đó sang "Nhờ AI làm" ngay trong QA và ghi lý do vào spec-log.
+- Từ lượt sau (MUI, Chakra…), bản giao việc xếp loại từng công cụ ngay từ đầu.
+
 Tốn: **vừa** mỗi lượt Gemini; QA và bài thử **cao**.
 
 ### K10. Phát hành 1.0 (M-RL)

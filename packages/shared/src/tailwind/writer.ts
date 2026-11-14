@@ -1,7 +1,17 @@
 // writeValue implementation conforming to R-TW-05, R-TW-06, and R-TW-07.
+import type { InteractionState } from '../responsive.ts';
 import { parseClasses } from './parser.ts';
 import { ALL_TO_MEMBERS, formatClassValue } from './properties.ts';
 import type { ClassContext, ClassToken, ClassValue, PropertyId, Scope } from './types.ts';
+
+const STATE_TO_VARIANT: Readonly<Record<InteractionState, string>> = {
+  hover: 'hover',
+  active: 'active',
+  focus: 'focus',
+  disabled: 'disabled',
+  groupHover: 'group-hover',
+  selected: 'data-[selected=true]',
+};
 
 function getTargetVariants(scope: Scope, ctx: ClassContext): string[] {
   const list: string[] = [];
@@ -12,8 +22,11 @@ function getTargetVariants(scope: Scope, ctx: ClassContext): string[] {
       list.push(scope.breakpoint);
     }
   }
+  if (scope.dark === true) {
+    list.push('dark');
+  }
   if (scope.state !== undefined) {
-    list.push(scope.state);
+    list.push(STATE_TO_VARIANT[scope.state]);
   }
   return list;
 }

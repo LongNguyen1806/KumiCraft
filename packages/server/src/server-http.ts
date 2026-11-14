@@ -86,6 +86,23 @@ function buildCheckRouteDeps(ctx: InitializedContext) {
   };
 }
 
+function sourceRouteDeps(ctx: InitializedContext, getProjectRoot: () => string | undefined) {
+  return {
+    sourceEditorService: ctx.sourceEditorService,
+    historyService: ctx.historyService,
+    getProjectRoot,
+    getStyling: () => {
+      const ws = ctx.projectService.state();
+      return ws.status === 'open' ? ws.support.styling : undefined;
+    },
+    getSourceDir: () => {
+      const ws = ctx.projectService.state();
+      return ws.status === 'open' ? ws.file.sourceDir : undefined;
+    },
+    fs: ctx.fs,
+  };
+}
+
 function buildRouteConfigs(
   ctx: InitializedContext,
   getSessionInfo: () => SessionInfo,
@@ -107,20 +124,12 @@ function buildRouteConfigs(
     fsRoutes: { fs: ctx.fs, platform: ctx.platform, homeDir: ctx.homeDir },
     settingsRoutes: { config: ctx.configStore },
     eventRoutes: { eventBus: ctx.eventBus, sessionToken },
-    sourceRoutes: {
-      sourceEditorService: ctx.sourceEditorService,
-      historyService: ctx.historyService,
-      getProjectRoot,
-      fs: ctx.fs,
-    },
+    sourceRoutes: sourceRouteDeps(ctx, getProjectRoot),
     styleRoutes: styleRouteDeps(ctx),
     jobRoutes: { jobService: ctx.jobService },
     buildCheckRoutes: buildCheckRouteDeps(ctx),
     ...agentRouteConfigs(ctx),
-    historyRoutes: {
-      historyService: ctx.historyService,
-      getProjectRoot,
-    },
+    historyRoutes: { historyService: ctx.historyService, getProjectRoot },
     editorRoutes: {
       fs: ctx.fs,
       process: ctx.processPort,

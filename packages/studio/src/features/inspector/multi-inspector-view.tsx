@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { editSourceBatch } from '../../api/source-client.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { ColorField } from './components/color-field.tsx';
+import { MultiInteractionSection } from './components/interaction/interaction-section.tsx';
 import { PropertyField } from './components/property-field.tsx';
 import { isColorProperty, resolveFieldOptions } from './inspector-panel.tsx';
 import { MultiEditQueue } from './multi-edit-queue.ts';
@@ -184,21 +185,26 @@ function MultiPropertyGroups({
   return (
     <>
       {PROPERTY_GROUPS.map((group) => (
-        <div key={group.id} className="-mx-3 flex flex-col gap-1 border-t border-line px-3 py-2">
-          <h3 className="text-xs font-semibold text-ink">{t(group.labelKey)}</h3>
-          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
-            {group.fields.map((field) => (
-              <MultiFieldItem
-                key={field.property}
-                field={field}
-                target={target}
-                ctx={ctx}
-                frameWidth={frameWidth}
-                isLocked={isLocked}
-                onPropChange={onPropChange}
-              />
-            ))}
+        <div key={group.id} className="contents">
+          <div className="-mx-3 flex flex-col gap-1 border-t border-line px-3 py-2">
+            <h3 className="text-xs font-semibold text-ink">{t(group.labelKey)}</h3>
+            <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+              {group.fields.map((field) => (
+                <MultiFieldItem
+                  key={field.property}
+                  field={field}
+                  target={target}
+                  ctx={ctx}
+                  frameWidth={frameWidth}
+                  isLocked={isLocked}
+                  onPropChange={onPropChange}
+                />
+              ))}
+            </div>
           </div>
+          {group.id === 'layout' && (
+            <MultiInteractionSection items={target.items} onDone={target.refresh} />
+          )}
         </div>
       ))}
     </>

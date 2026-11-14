@@ -66,6 +66,7 @@ export type InspectorPropertyGroupsProps = {
   readonly onPropertyValueChange: (property: PropertyId, value: ClassValue | undefined) => void;
   readonly onBatchProperties?: ((entries: readonly BatchPropEntry[]) => void) | undefined;
   readonly layoutFooter?: ReactNode | undefined;
+  readonly afterLayout?: ReactNode | undefined;
 };
 
 /** What every field of the panel gets. */
@@ -290,15 +291,17 @@ export function InspectorPropertyGroups(props: InspectorPropertyGroupsProps) {
       {PROPERTY_GROUPS.map((group) => {
         const setCount = countSet(props.tokens, groupProperties(group.id, group.fields));
         return (
-          <InspectorGroup
-            key={group.id}
-            id={group.id}
-            title={t(group.labelKey)}
-            setCount={setCount}
-            defaultOpen={setCount > 0}
-          >
-            <GroupBody group={group} toggles={toggles} shared={props} />
-          </InspectorGroup>
+          <div key={group.id} className="contents">
+            <InspectorGroup
+              id={group.id}
+              title={t(group.labelKey)}
+              setCount={setCount}
+              defaultOpen={setCount > 0}
+            >
+              <GroupBody group={group} toggles={toggles} shared={props} />
+            </InspectorGroup>
+            {group.id === 'layout' && props.afterLayout}
+          </div>
         );
       })}
     </>

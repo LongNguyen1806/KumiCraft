@@ -116,7 +116,9 @@
       "folderTooLarge": "Thư mục quá lớn để hoàn tác (trên 500 file hoặc 20 MB); hãy làm việc này trong trình soạn thảo code.",
       "buildCheckUnsupported": "Framework này chưa có kiểm tra build.",
       "noChildrenTag": "Thẻ này không chứa được phần tử con (ví dụ <img>, <input>). Hãy đặt bên cạnh nó.",
-      "componentIntoItself": "Không thể đặt một component vào bên trong chính nó: trang sẽ tự lặp vô hạn và bị treo."
+      "componentIntoItself": "Không thể đặt một component vào bên trong chính nó: trang sẽ tự lặp vô hạn và bị treo.",
+      "invalidLoc": "Vị trí phần tử không hợp lệ.",
+      "emptyElements": "Chưa chọn phần tử nào."
     }
   },
   "E017": {
@@ -125,7 +127,8 @@
     "reasons": {
       "moved": "Phần tử đã bị di chuyển hoặc xóa trong mã nguồn.",
       "valueChanged": "Giá trị thuộc tính trong mã nguồn đã thay đổi.",
-      "fileChanged": "File đã bị thay đổi bên ngoài."
+      "fileChanged": "File đã bị thay đổi bên ngoài.",
+      "invalidLoc": "Vị trí phần tử đã thay đổi trong mã nguồn."
     }
   },
   "E018": {
@@ -147,7 +150,8 @@
       "agent": "Trợ lý AI này chưa được cài.",
       "terminal": "Không mở được cửa sổ terminal. Hãy tự mở terminal và chạy lệnh agy.",
       "installer": "Máy chưa có PowerShell/bash để chạy trình cài.",
-      "styleAdapter": "Dự án này chưa hỗ trợ chỉnh kiểu dáng trực quan."
+      "styleAdapter": "Dự án này chưa hỗ trợ chỉnh kiểu dáng trực quan.",
+      "mainCss": "Không tìm thấy file CSS chính của dự án."
     }
   },
   "E023": {
@@ -172,12 +176,24 @@
       "usesLocalScope": "Phần tử sử dụng biến trong phạm vi cục bộ: {{name}}.",
       "viewOnly": "Dự án này KumiCraft chỉ xem được (Express + Pug); sửa trong editor hoặc nhờ AI.",
       "propTypes": "Không đọc được kiểu cho props của component mới: dự án cần TypeScript đã cài và được tin cậy. Có thể nhờ AI tách phần này.",
-      "propType": "Không đọc được kiểu của {{name}} để làm prop. Có thể nhờ AI tách phần này."
+      "propType": "Không đọc được kiểu của {{name}} để làm prop. Có thể nhờ AI tách phần này.",
+      "notButton": "Thao tác này chỉ áp dụng cho thẻ <button>.",
+      "differentFiles": "Các phần tử phải nằm trong cùng một file.",
+      "insideLoop": "Không áp dụng được cho phần tử nằm trong vòng lặp .map().",
+      "differentParents": "Các phần tử đang chọn phải có cùng phần tử cha.",
+      "noSelectItems": "Không tìm thấy SelectItem nào trong SelectGroup.",
+      "missingOpening": "Thiếu thẻ mở JSX.",
+      "blockedAttribute": "Thuộc tính {{name}} không được phép sửa ở đây.",
+      "projectToastLibrary": "Dự án đã dùng {{library}} để hiện thông báo; KumiCraft không thêm hệ thứ hai.",
+      "projectToastHost": "Dự án đã có hệ thông báo riêng ở {{file}}; KumiCraft không thêm hệ thứ hai."
     }
   },
   "E024": {
     "title": "Sửa làm hỏng mã nguồn",
-    "message": "Thay đổi này sẽ làm hỏng mã nguồn nên chưa ghi gì cả."
+    "message": "Thay đổi này sẽ làm hỏng mã nguồn nên chưa ghi gì cả.",
+    "reasons": {
+      "jsxParse": "Mã JSX sinh ra không phân tích được cú pháp."
+    }
   },
   "E025": {
     "title": "Lỗi dev server",

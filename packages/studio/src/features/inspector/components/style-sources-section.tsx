@@ -156,11 +156,13 @@ function StyleRow({ property, writable, elementRef, interactionState, onCommit }
 
 type StateSelectProps = {
   readonly value: StyleState | undefined;
+  readonly canSelect?: boolean | undefined;
   readonly onChange?: ((next: StyleState | undefined) => void) | undefined;
 };
 
-function StateSelect({ value, onChange }: StateSelectProps) {
+function StateSelect({ value, canSelect = true, onChange }: StateSelectProps) {
   const { t } = useTranslation();
+  const reason = t('inspector.stateSelectedReason');
   return (
     <label className="flex items-center gap-2 text-ink-soft">
       <span>{t('inspector.state')}</span>
@@ -175,8 +177,15 @@ function StateSelect({ value, onChange }: StateSelectProps) {
       >
         <option value="">{t('inspector.stateNone')}</option>
         <option value="hover">{t('inspector.stateHover')}</option>
+        <option value="active">{t('inspector.stateActive')}</option>
         <option value="focus">{t('inspector.stateFocus')}</option>
         <option value="disabled">{t('inspector.stateDisabled')}</option>
+        <option value="selected" disabled={!canSelect} title={canSelect ? undefined : reason}>
+          {canSelect
+            ? t('inspector.stateSelected')
+            : `${t('inspector.stateSelected')} (${t('inspector.stateSelectedDisabledHint')})`}
+        </option>
+        <option value="groupHover">{t('inspector.stateGroupHover')}</option>
       </select>
     </label>
   );
@@ -216,6 +225,7 @@ function TargetSwitch({ count, value, onChange }: TargetSwitchProps) {
 type StyleSourcesSectionProps = {
   readonly reading: StyleReading;
   readonly writable?: boolean;
+  readonly canSelectState?: boolean;
   readonly elementRef?: ElementRef | undefined;
   readonly interactionState?: StyleState | undefined;
   readonly onStateChange?: (state: StyleState | undefined) => void;
@@ -228,6 +238,7 @@ type StyleSourcesSectionProps = {
 export function StyleSourcesSection({
   reading,
   writable = false,
+  canSelectState = true,
   elementRef,
   interactionState,
   onStateChange,
@@ -248,7 +259,9 @@ export function StyleSourcesSection({
   return (
     <section data-testid="style-sources" className="space-y-2 pt-2.5 text-xs">
       <h3 className="font-semibold text-ink">{t('inspector.styleSources.title')}</h3>
-      {writable && <StateSelect value={interactionState} onChange={onStateChange} />}
+      {writable && (
+        <StateSelect value={interactionState} canSelect={canSelectState} onChange={onStateChange} />
+      )}
       {writable && shared > 1 && onTargetChange !== undefined && (
         <TargetSwitch count={shared} value={target} onChange={onTargetChange} />
       )}

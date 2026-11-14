@@ -26,15 +26,73 @@ export function findRuleBySelector(
   });
 }
 
-export function hasStateInSelector(selector: string, state: StyleState): boolean {
+export type SelectorModifiers = {
+  readonly state?: StyleState | undefined;
+  readonly dark?: boolean | undefined;
+  readonly groupSelector?: string | undefined;
+  readonly cssModules?: boolean | undefined;
+};
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function hasDarkInSelector(selector: string): boolean {
+  return /(?:^|\s)(?:\.dark|:global\(\.dark\))\s/.test(selector);
+}
+
+export function hasStateInSelector(
+  selector: string,
+  state: StyleState,
+  groupSelector?: string,
+): boolean {
+  if (state === 'selected') {
+    return /\[data-selected=["']?true["']?\]/.test(selector);
+  }
+  if (state === 'groupHover') {
+    const grp = escapeRegex(groupSelector ?? '.group');
+    return new RegExp(`(?:${grp}|:global\\(\\.group\\)):hover\\s`).test(selector);
+  }
   return new RegExp(`(?<!:):${state}(?![\\w-])`).test(selector);
+}
+
+export function hasModifiersInSelector(selector: string, mods: SelectorModifiers): boolean {
+  const stateOk =
+    mods.state === undefined || hasStateInSelector(selector, mods.state, mods.groupSelector);
+  const darkOk = mods.dark !== true || hasDarkInSelector(selector);
+  return stateOk && darkOk;
+}
+
+function applySingleStateToPart(part: string, state: StyleState, mods: SelectorModifiers): string {
+  if (hasStateInSelector(part, state, mods.groupSelector)) return part;
+  if (state === 'selected') return `${part}[data-selected="true"]`;
+  if (state === 'groupHover') {
+    const grp =
+      mods.cssModules && (mods.groupSelector === undefined || mods.groupSelector === '.group')
+        ? ':global(.group)'
+        : (mods.groupSelector ?? '.group');
+    return `${grp}:hover ${part}`;
+  }
+  return `${part}:${state}`;
+}
+
+export function withModifiersSelector(selector: string, mods: SelectorModifiers): string {
+  return splitSelectorList(selector)
+    .map((part) => {
+      const withState =
+        mods.state !== undefined ? applySingleStateToPart(part, mods.state, mods) : part;
+      if (mods.dark === true && !hasDarkInSelector(withState)) {
+        const prefix = mods.cssModules ? ':global(.dark) ' : '.dark ';
+        return `${prefix}${withState}`;
+      }
+      return withState;
+    })
+    .join(', ');
 }
 
 export function withStateSelector(selector: string, state: StyleState): string {
   // Top-level commas only: `:is(.a, .b)` is one part (R-ST-09).
-  return splitSelectorList(selector)
-    .map((part) => (hasStateInSelector(part, state) ? part : `${part}:${state}`))
-    .join(', ');
+  return withModifiersSelector(selector, { state });
 }
 
 function parse(css: string, file?: string): Result<Root> {

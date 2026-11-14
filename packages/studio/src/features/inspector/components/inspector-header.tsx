@@ -1,5 +1,11 @@
 // Header of Inspector: scope badge, interaction state, lock banner, and warnings (SPEC-04 M-IN, R-IN-12..16).
-import { HTML_SETTABLE_TAGS, type HtmlSettableTag, type InteractionState } from '@kumicraft/shared';
+import {
+  HTML_SETTABLE_TAGS,
+  type HtmlSettableTag,
+  type InspectorPreviewState,
+  InspectorPreviewStateSchema,
+  InteractionStateSchema,
+} from '@kumicraft/shared';
 import { ExternalLink, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +15,17 @@ import { errorText } from '../../../routes/error-text.ts';
 import { askAiAboutElement } from '../../chat/ask-ai-about-element.ts';
 import { useOpenInEditor } from '../../editor/use-open-in-editor.ts';
 import { useEditMode } from '../../project/use-edit-mode.ts';
+import { useStyleEditable } from '../../project/use-style-edit.ts';
+import { useSelectionStore } from '../../selection/selection-store.ts';
 import type { InspectorLockReason, InspectorTarget, InspectorWarning } from '../types.ts';
+import {
+  canEnableSelectedState,
+  DarkColorSuggestStrip,
+  DarkModeSetupBanner,
+  DarkModeToggleButton,
+  GroupHoverParentPicker,
+  useDarkModePrompt,
+} from './inspector-scope-controls.tsx';
 import { StructureActions } from './structure-actions.tsx';
 
 function isHtmlSettableTag(tag: string): tag is HtmlSettableTag {
@@ -64,28 +80,41 @@ function WarningsList({ warnings }: { readonly warnings: readonly InspectorWarni
 }
 
 function StateSelect({
-  interactionState,
+  previewState,
+  tag,
+  canSelect,
   onStateChange,
 }: {
-  readonly interactionState?: InteractionState | undefined;
-  readonly onStateChange: (state: InteractionState | undefined) => void;
+  readonly previewState?: InspectorPreviewState | undefined;
+  readonly tag: string;
+  readonly canSelect: boolean;
+  readonly onStateChange: (state: InspectorPreviewState | undefined) => void;
 }) {
   const { t } = useTranslation();
+  const selectedReason = t('inspector.stateSelectedReason');
   return (
     <select
       data-testid="interaction-state-select"
       aria-label={t('inspector.state')}
-      value={interactionState ?? 'none'}
+      value={previewState ?? 'none'}
       onChange={(e) => {
-        const val = e.target.value;
-        onStateChange(val === 'none' ? undefined : (val as InteractionState));
+        const parsed = InspectorPreviewStateSchema.safeParse(e.target.value);
+        onStateChange(parsed.success ? parsed.data : undefined);
       }}
       className="h-[26px] min-w-0 flex-1 rounded-md border border-line bg-card-solid pl-2 text-xs text-ink hover:bg-field"
     >
       <option value="none">{t('inspector.stateNone')}</option>
       <option value="hover">{t('inspector.stateHover')}</option>
+      <option value="active">{t('inspector.stateActive')}</option>
       <option value="focus">{t('inspector.stateFocus')}</option>
       <option value="disabled">{t('inspector.stateDisabled')}</option>
+      <option value="selected" disabled={!canSelect} title={canSelect ? undefined : selectedReason}>
+        {canSelect
+          ? t('inspector.stateSelected')
+          : `${t('inspector.stateSelected')} (${t('inspector.stateSelectedDisabledHint')})`}
+      </option>
+      <option value="groupHover">{t('inspector.stateGroupHover')}</option>
+      {tag === 'LoadingButton' && <option value="loading">{t('inspector.stateLoading')}</option>}
     </select>
   );
 }
@@ -201,28 +230,98 @@ function TargetTitleRow({
   );
 }
 
+function ScopeExtras({
+  target,
+  editable,
+  previewState,
+  darkPrompt,
+}: {
+  readonly target: Extract<InspectorTarget, { readonly kind: 'element' }>;
+  readonly editable: boolean;
+  readonly previewState?: InspectorPreviewState | undefined;
+  readonly darkPrompt: ReturnType<typeof useDarkModePrompt>;
+}) {
+  const darkMode = target.darkMode === true;
+  return (
+    <>
+      {darkPrompt.promptNeeded && <DarkModeSetupBanner onDismiss={darkPrompt.dismiss} />}
+      {darkMode && editable && target.lockReason === undefined && target.source !== undefined && (
+        <DarkColorSuggestStrip target={target} />
+      )}
+      {previewState === 'groupHover' && (
+        <GroupHoverParentPicker
+          target={target}
+          onGroupChange={(ref) => {
+            target.setGroupRef?.(ref);
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+/** The state and Dark switches of the scope row. */
+function useScopeControls(target: Extract<InspectorTarget, { readonly kind: 'element' }>) {
+  const darkPrompt = useDarkModePrompt();
+  const darkMode = target.darkMode === true;
+  const previewState = target.previewState ?? target.interactionState;
+  const handleStateChange = (next: InspectorPreviewState | undefined) => {
+    if (target.setPreviewState !== undefined) {
+      target.setPreviewState(next);
+      return;
+    }
+    const parsed = InteractionStateSchema.safeParse(next);
+    target.setInteractionState(parsed.success ? parsed.data : undefined);
+  };
+  const handleDarkToggle = () => {
+    const nextDark = !darkMode;
+    target.setDarkMode?.(nextDark);
+    if (nextDark) void darkPrompt.checkBeforeDarkUse();
+  };
+  return { darkPrompt, darkMode, previewState, handleStateChange, handleDarkToggle };
+}
+
 /** Where a change is written: the breakpoint of the active frame and the chosen state. */
 function ScopeRow({
-  writePrefix,
-  interactionState,
-  onStateChange,
+  target,
+  tag,
+  editable,
+  canSelect,
 }: {
-  readonly writePrefix: string;
-  readonly interactionState?: InteractionState | undefined;
-  readonly onStateChange: (state: InteractionState | undefined) => void;
+  readonly target: Extract<InspectorTarget, { readonly kind: 'element' }>;
+  readonly tag: string;
+  readonly editable: boolean;
+  readonly canSelect: boolean;
 }) {
   const { t } = useTranslation();
+  const { darkPrompt, darkMode, previewState, handleStateChange, handleDarkToggle } =
+    useScopeControls(target);
+
   return (
-    <div className="flex items-center gap-2">
-      <span className="shrink-0 text-[11px] text-ink-faint">{t('inspector.scope')}</span>
-      <span
-        data-testid="write-prefix-badge"
-        className="shrink-0 rounded-md bg-accent-soft px-2 py-[3px] font-mono text-[11px] font-medium text-accent"
-        title={t('inspector.scope')}
-      >
-        {writePrefix || t('inspector.scopeBase')}
-      </span>
-      <StateSelect interactionState={interactionState} onStateChange={onStateChange} />
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-1.5">
+        <span className="shrink-0 text-[11px] text-ink-faint">{t('inspector.scope')}</span>
+        <span
+          data-testid="write-prefix-badge"
+          className="shrink-0 rounded-md bg-accent-soft px-2 py-[3px] font-mono text-[11px] font-medium text-accent"
+          title={t('inspector.scope')}
+        >
+          {target.writePrefix || t('inspector.scopeBase')}
+        </span>
+        <StateSelect
+          previewState={previewState}
+          tag={tag}
+          canSelect={canSelect}
+          onStateChange={handleStateChange}
+        />
+        <DarkModeToggleButton dark={darkMode} onToggle={handleDarkToggle} />
+      </div>
+      <ScopeExtras
+        target={target}
+        editable={editable}
+        previewState={previewState}
+        darkPrompt={darkPrompt}
+      />
     </div>
   );
 }
@@ -250,6 +349,9 @@ export function InspectorHeader({ target }: InspectorHeaderProps) {
   const { t: tError } = useTranslation('errors');
   const editor = useOpenInEditor();
   const editMode = useEditMode();
+  const editable = useStyleEditable();
+  const selectionInfo = useSelectionStore((s) => s.selectionInfo);
+  const treeNodes = useSelectionStore((s) => s.treeNodes);
   const { changingTag, handleTagChange } = useHeaderTagChange(target);
   const tag = target.source?.tag ?? target.ref.loc.split(':')[0] ?? 'element';
   const canEditTag =
@@ -260,6 +362,7 @@ export function InspectorHeader({ target }: InspectorHeaderProps) {
     !changingTag &&
     isHtmlSettableTag(tag);
   const missingHref = tag === 'a' && target.source?.attributes['href'] === undefined;
+  const canSelect = canEnableSelectedState(target.source, target.ref, selectionInfo, treeNodes);
 
   return (
     <div className="-mx-3 flex flex-col gap-2 border-b border-line px-3 pb-2.5">
@@ -273,11 +376,7 @@ export function InspectorHeader({ target }: InspectorHeaderProps) {
           editor.open(target.ref.loc);
         }}
       />
-      <ScopeRow
-        writePrefix={target.writePrefix}
-        interactionState={target.interactionState}
-        onStateChange={target.setInteractionState}
-      />
+      <ScopeRow target={target} tag={tag} editable={editable} canSelect={canSelect} />
       <StructureActions target={target} />
       {target.lockReason !== undefined && (
         <LockBanner reason={target.lockReason} code={target.lockCode} />

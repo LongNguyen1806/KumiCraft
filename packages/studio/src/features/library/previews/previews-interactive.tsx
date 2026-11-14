@@ -91,4 +91,12 @@ export const PREVIEWS_INTERACTIVE: Readonly<Record<string, PreviewRenderer>> = {
       <WireBar x={20} y={58} w={50} />
     </WireSvg>
   ),
+  'interactive.toast-demo': () => (
+    <WireSvg>
+      <WireBox x={14} y={14} w={40} h={14} rx={3} accent />
+      <WireBox x={42} y={42} w={68} h={24} rx={4} />
+      <WireBar x={48} y={49} w={38} strong />
+      <WireBar x={48} y={57} w={52} />
+    </WireSvg>
+  ),
 };

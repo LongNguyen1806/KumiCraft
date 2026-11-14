@@ -1,8 +1,9 @@
 // Source Editor HTTP endpoints (SPEC-03 section 5.5, SPEC-04 section 6).
-import type { HistoryLabel, StructureEdit } from '@kumicraft/shared';
+import type { HistoryLabel, StructureEdit, StylingReport } from '@kumicraft/shared';
 import {
   BatchEditRequestSchema,
   EditRequestSchema,
+  InteractionActionSchema,
   issuesToDetails,
   PAGE_TREE_MAX_DEPTH,
   RevealRequestSchema,
@@ -13,6 +14,7 @@ import { z } from 'zod';
 import type { HistoryService } from '../../../core/history/history-service.ts';
 import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
 import type { SourceEditorService } from '../../../core/source-editor/source-editor-service.ts';
+import { applyInteractionAction } from '../../../core/source-editor/structure/interaction-ops.ts';
 import { applyRevealEdit } from '../../../core/source-editor/structure/reveal-service.ts';
 import { validateInsertedJsx } from '../../../core/source-editor/structure/structure-ops.ts';
 import { sendError } from '../send-error.ts';
@@ -21,6 +23,8 @@ export type SourceRoutesDeps = {
   readonly sourceEditorService: SourceEditorService;
   readonly historyService: HistoryService;
   readonly getProjectRoot: () => string | undefined;
+  readonly getStyling?: (() => StylingReport | undefined) | undefined;
+  readonly getSourceDir?: (() => string | undefined) | undefined;
   readonly fs: FileSystemPort;
 };
 
@@ -202,6 +206,33 @@ async function handleApplyBatchEdit(
   return reply.status(200).send({ data: edited.value });
 }
 
+async function handlePostInteraction(
+  deps: SourceRoutesDeps,
+  req: FastifyRequest,
+  rep: FastifyReply,
+) {
+  const projectRoot = deps.getProjectRoot();
+  if (!projectRoot) return sendError(rep, NO_PROJECT);
+  const parsed = InteractionActionSchema.safeParse(req.body);
+  if (!parsed.success)
+    return sendError(rep, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
+  const result = await applyInteractionAction(
+    {
+      fs: deps.fs,
+      styling: deps.getStyling?.(),
+      sourceDir: deps.getSourceDir?.(),
+      onWritten: (files, key, tag) => {
+        for (const f of files) deps.historyService.recordInternalWrite(f.path, f.afterHash);
+        deps.historyService.push({ label: { key, params: { tag } }, files });
+      },
+    },
+    projectRoot,
+    parsed.data,
+  );
+  if (!result.ok) return sendError(rep, result.error);
+  return rep.status(200).send({ data: result.value });
+}
+
 export function registerSourceRoutes(api: FastifyInstance, deps: SourceRoutesDeps): void {
   api.get('/source/element', (req, rep) => handleGetElement(deps, req, rep));
   api.get('/source/element-text', (req, rep) => handleGetElementText(deps, req, rep));
@@ -221,16 +252,13 @@ export function registerSourceRoutes(api: FastifyInstance, deps: SourceRoutesDep
     const projectRoot = deps.getProjectRoot();
     if (!projectRoot) return sendError(rep, NO_PROJECT);
     const parsed = RevealRequestSchema.safeParse(req.body);
-    if (!parsed.success) {
+    if (!parsed.success)
       return sendError(rep, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
-    }
     const result = await applyRevealEdit(
       {
         fs: deps.fs,
         onWritten: (files) => {
-          for (const f of files) {
-            deps.historyService.recordInternalWrite(f.path, f.afterHash);
-          }
+          for (const f of files) deps.historyService.recordInternalWrite(f.path, f.afterHash);
           const label: HistoryLabel = {
             key: `history:${parsed.data.action === 'wrap' ? 'wrap' : 'unwrap'}`,
             params: { tag: parsed.data.tag },
@@ -244,4 +272,5 @@ export function registerSourceRoutes(api: FastifyInstance, deps: SourceRoutesDep
     if (!result.ok) return sendError(rep, result.error);
     return rep.status(200).send({ data: result.value });
   });
+  api.post('/source/interaction', (req, rep) => handlePostInteraction(deps, req, rep));
 }

@@ -2,6 +2,7 @@
 import { z } from 'zod';
 
 import { RelPathSchema } from './rel-path.ts';
+import { InspectorPreviewStateSchema } from './responsive.ts';
 import { ElementGuardSchema, InsertTargetSchema } from './source.ts';
 import { PlacementSchema } from './tailwind/free-position.ts';
 
@@ -135,17 +136,20 @@ export type BridgeCanvasPanPayload = z.infer<typeof BridgeCanvasPanPayloadSchema
 
 export const BridgeTextEditRequestPayloadSchema = z.strictObject({
   ref: ElementRefSchema,
+  runIndex: z.number().int().min(0).optional(),
 });
 export type BridgeTextEditRequestPayload = z.infer<typeof BridgeTextEditRequestPayloadSchema>;
 
 export const BridgeTextCommitPayloadSchema = z.strictObject({
   ref: ElementRefSchema,
   text: z.string(),
+  runIndex: z.number().int().min(0).optional(),
 });
 export type BridgeTextCommitPayload = z.infer<typeof BridgeTextCommitPayloadSchema>;
 
 export const BridgeTextCancelPayloadSchema = z.strictObject({
   ref: ElementRefSchema,
+  runIndex: z.number().int().min(0).optional(),
 });
 export type BridgeTextCancelPayload = z.infer<typeof BridgeTextCancelPayloadSchema>;
 
@@ -168,11 +172,13 @@ export type StudioHighlightPayload = z.infer<typeof StudioHighlightPayloadSchema
 
 export const StudioTextEditStartPayloadSchema = z.strictObject({
   ref: ElementRefSchema,
+  runIndex: z.number().int().min(0).optional(),
 });
 export type StudioTextEditStartPayload = z.infer<typeof StudioTextEditStartPayloadSchema>;
 
 export const StudioTextEditEndPayloadSchema = z.strictObject({
   ref: ElementRefSchema,
+  runIndex: z.number().int().min(0).optional(),
 });
 export type StudioTextEditEndPayload = z.infer<typeof StudioTextEditEndPayloadSchema>;
 
@@ -403,4 +409,27 @@ export const BridgeResponsiveAuditResultPayloadSchema = z.strictObject({
 });
 export type BridgeResponsiveAuditResultPayload = z.infer<
   typeof BridgeResponsiveAuditResultPayloadSchema
+>;
+
+/** Studio -> Bridge: toggle dark mode preview class `.dark` on html (TK-75). */
+export const StudioSetDarkPreviewPayloadSchema = z.strictObject({
+  dark: z.boolean(),
+});
+export type StudioSetDarkPreviewPayload = z.infer<typeof StudioSetDarkPreviewPayloadSchema>;
+
+/** Studio -> Bridge: preview interaction state (`hover`/`active`/`focus`/`disabled`/`selected`/`groupHover`/`loading`) on Canvas (TK-74/TK-77). */
+export const StudioSetStatePreviewPayloadSchema = z.strictObject({
+  ref: ElementRefSchema.optional(),
+  state: InspectorPreviewStateSchema.optional(),
+  groupRef: ElementRefSchema.optional(),
+});
+export type StudioSetStatePreviewPayload = z.infer<typeof StudioSetStatePreviewPayloadSchema>;
+
+/** Studio -> Bridge: preview SelectGroup panel tab index on Canvas without editing source (TK-73). */
+export const StudioSetSelectPanelPreviewPayloadSchema = z.strictObject({
+  groupRef: ElementRefSchema,
+  activeIndex: z.number().int().min(0).max(50).optional(),
+});
+export type StudioSetSelectPanelPreviewPayload = z.infer<
+  typeof StudioSetSelectPanelPreviewPayloadSchema
 >;

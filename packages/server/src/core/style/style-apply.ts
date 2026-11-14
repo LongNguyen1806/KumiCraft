@@ -20,11 +20,12 @@ import { computeSha256 } from '../source-editor/source-editor-lookup.ts';
 import type { SourceEditorService, WrittenFile } from '../source-editor/source-editor-service.ts';
 import { ensureKeyframesBlock, resolveMergedCssValue } from './css-composite-apply.ts';
 import {
-  hasStateInSelector,
+  hasModifiersInSelector,
+  type SelectorModifiers,
   setDeclarationAtAnchor,
   setRuleDeclaration,
   upsertRuleDeclaration,
-  withStateSelector,
+  withModifiersSelector,
 } from './css-edit.ts';
 import { findRuleSource } from './css-locate.ts';
 import { locateBySourceMap } from './mapped-source.ts';
@@ -129,13 +130,13 @@ async function applyToRule(
 ): Promise<Result<StyleApplied>> {
   const css = await readFile(deps.fs, root, target.file);
   if (!css.ok) return css;
-  const { value, media, state } = change;
+  const { value, media, state, dark, groupSelector } = change;
+  const mods: SelectorModifiers = { state, dark, groupSelector };
   const inPlace =
     (media === undefined || target.rule.media.length > 0) &&
-    (state === undefined || hasStateInSelector(target.rule.selector, state));
+    hasModifiersInSelector(target.rule.selector, mods);
   const effectiveMedia = target.rule.media[0] ?? media;
-  const targetSelector =
-    state === undefined ? target.rule.selector : withStateSelector(target.rule.selector, state);
+  const targetSelector = withModifiersSelector(target.rule.selector, mods);
   const resolvedVal = resolveMergedCssValue(css.value, {
     propertyId: change.property,
     longhand,
@@ -254,14 +255,17 @@ export async function addClass(
 function elementSelector(
   winner: ProjectRule | undefined,
   newClass: string,
-  state: StyleApplyRequest['change']['state'],
+  mods: SelectorModifiers,
 ): string {
-  const winnerSel =
+  const rawWinner =
     winner !== undefined && !winner.rule.selector.includes(',')
-      ? winner.rule.selector.replace(/(?::[\w-]+)+$/, '')
+      ? winner.rule.selector
+          .replace(/^(?:\.dark|:global\(\.dark\))\s+/, '')
+          .replace(/^[^\s]+:hover\s+/, '')
+          .replace(/(?:\[data-selected=["']?true["']?\]|:[\w-]+)+$/, '')
       : '';
-  const base = `${winnerSel}.${newClass}`;
-  return state === undefined ? base : withStateSelector(base, state);
+  const base = `${rawWinner}.${newClass}`;
+  return withModifiersSelector(base, mods);
 }
 
 async function buildNewElementCss(
@@ -309,6 +313,16 @@ async function buildNewElementCss(
 }
 
 /** "Only this element": a class of its own, kept for the next change (R-ST-06). */
+/** The rule of the element's own class, in any state (`:hover`…) or as the chosen item. */
+function ownRuleOf(
+  rules: StyleApplyRequest['probe']['rules'],
+  own: string | undefined,
+): StyleApplyRequest['probe']['rules'][number] | undefined {
+  if (own === undefined) return undefined;
+  const re = new RegExp(`\\.${own}(?:\\[data-selected=["']?true["']?\\]|:[\\w-]+)*$`);
+  return rules.find((r) => re.test(r.selector));
+}
+
 async function applyToElement(
   deps: StyleApplyDeps,
   root: string,
@@ -320,16 +334,16 @@ async function applyToElement(
   const ctx = await elementContext(deps, root, probe.ref.loc);
   if (!ctx.ok) return ctx;
   const own = ctx.value.classes.find((c) => OWN_CLASS.test(c));
-  const ownRule =
-    own === undefined
-      ? undefined
-      : probe.rules.find((r) => new RegExp(`\\.${own}(?::[\\w-]+)*$`).test(r.selector));
-  const ownTarget = projectRule(root, ownRule);
+  const ownTarget = projectRule(root, ownRuleOf(probe.rules, own));
   if (ownTarget !== undefined) return applyToRule(deps, root, ownTarget, longhand, change);
   if (change.value === undefined) return ok({ files: [] });
 
   const newClass = own ?? newClassName(ctx.value, deps.newId);
-  const selector = elementSelector(winner, newClass, change.state);
+  const selector = elementSelector(winner, newClass, {
+    state: change.state,
+    dark: change.dark,
+    groupSelector: change.groupSelector,
+  });
 
   // Every check happens before the first write, so a refused change leaves no file touched.
   const built = await buildNewElementCss(
@@ -343,17 +357,12 @@ async function applyToElement(
   if (!built.ok) return built;
   const writes: WrittenFile[] = [];
   if (own === undefined) {
-    const nextClasses = [...ctx.value.classes, newClass];
-    const classEdit = await addClass(deps, root, request, ctx.value, nextClasses, writes);
+    const classes = [...ctx.value.classes, newClass];
+    const classEdit = await addClass(deps, root, request, ctx.value, classes, writes);
     if (!classEdit.ok) return classEdit;
   }
-  const written = await writeFile(
-    deps.fs,
-    root,
-    built.value.file,
-    built.value.before,
-    built.value.after,
-  );
+  const { file, before, after } = built.value;
+  const written = await writeFile(deps.fs, root, file, before, after);
   if (!written.ok) return written;
   writes.push(written.value);
   const imported = await addPlannedImport(deps, root, ctx.value.jsxFile, built.value.plan, writes);

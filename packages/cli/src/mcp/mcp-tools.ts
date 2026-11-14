@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import type { ApiClient, ApiResult } from './api-client.ts';
 import { EDIT_TOOLS } from './mcp-edit-tools.ts';
+import { INTERACTION_TOOLS } from './mcp-interaction-tools.ts';
 import { STRUCTURE_TOOLS } from './mcp-structure-tools.ts';
 
 export type McpTool = {
@@ -124,4 +125,9 @@ const READ_TOOLS: readonly McpTool[] = [
   },
 ];
 
-export const MCP_TOOLS: readonly McpTool[] = [...READ_TOOLS, ...EDIT_TOOLS, ...STRUCTURE_TOOLS];
+export const MCP_TOOLS: readonly McpTool[] = [
+  ...READ_TOOLS,
+  ...EDIT_TOOLS,
+  ...STRUCTURE_TOOLS,
+  ...INTERACTION_TOOLS,
+];

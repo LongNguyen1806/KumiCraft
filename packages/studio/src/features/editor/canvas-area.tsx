@@ -4,6 +4,7 @@ import {
   type ProjectInfo,
   tailwindMajorOf,
 } from '@kumicraft/shared';
+import { Moon } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,8 +14,13 @@ import { DesignBar } from '../design/design-bar.tsx';
 import { DndErrorBanner } from '../dnd/dnd-error-banner.tsx';
 import { CanvasImagePicker } from '../draw/draw-toolbar.tsx';
 import { registerFreeFrameCommands } from '../free-frame/free-frame-commands.ts';
+import {
+  DarkModeSetupBanner,
+  useDarkModePrompt,
+} from '../inspector/components/inspector-scope-controls.tsx';
+import { useDarkPreviewStore } from '../inspector/dark-preview-store.ts';
 import { useEditMode } from '../project/use-edit-mode.ts';
-import { bridgeChannels } from '../selection/bridge-channel.ts';
+import { bridgeChannels, studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
 import { InlineTextBar } from '../text-edit/inline-text-bar.tsx';
 import { useCanvasTextEdit } from '../text-edit/use-canvas-text-edit.ts';
@@ -230,11 +236,41 @@ function CanvasViewportWrapper({
   );
 }
 
+function CanvasDarkPromptRow({
+  darkPrompt,
+}: {
+  readonly darkPrompt: ReturnType<typeof useDarkModePrompt>;
+}) {
+  if (!darkPrompt.promptNeeded) return undefined;
+  return (
+    <div
+      className="border-b border-line bg-card-solid px-2.5 py-1.5"
+      data-testid="canvas-dark-mode-prompt"
+    >
+      <DarkModeSetupBanner onDismiss={darkPrompt.dismiss} />
+    </div>
+  );
+}
+
+/** The Canvas "Dark" preview: view only; tells when the project's dark colors would not apply. */
+function useCanvasDarkToggle() {
+  const darkPrompt = useDarkModePrompt();
+  const canvasDark = useDarkPreviewStore((st) => st.canvasDark);
+  const toggle = () => {
+    const next = !canvasDark;
+    useDarkPreviewStore.getState().setCanvasDark(next);
+    studioBridgeChannel.setDarkPreview(next);
+    if (next) void darkPrompt.checkBeforeDarkUse();
+  };
+  return { darkPrompt, canvasDark, toggle };
+}
+
 export function CanvasArea(props: CanvasAreaProps) {
   const { projectInfo, trusted = true, onTrustRequest, onInstallRequest } = props;
   const { t } = useTranslation();
   const s = useCanvasAreaState(projectInfo);
   const audit = useResponsiveAudit();
+  const { darkPrompt, canvasDark, toggle: handleToggleDark } = useCanvasDarkToggle();
 
   return (
     <main
@@ -244,12 +280,15 @@ export function CanvasArea(props: CanvasAreaProps) {
     >
       <CanvasToolbar
         mode={s.mode}
+        canvasDark={canvasDark}
         auditRunning={audit.running}
+        onToggleDark={handleToggleDark}
         onRunAudit={audit.runAudit}
         onToggleMode={() => {
           s.setMode((m) => (m === 'design' ? 'preview' : 'design'));
         }}
       />
+      <CanvasDarkPromptRow darkPrompt={darkPrompt} />
       <ResponsiveAuditResults
         open={audit.open}
         running={audit.running}
@@ -275,12 +314,48 @@ export function CanvasArea(props: CanvasAreaProps) {
 
 type CanvasToolbarProps = {
   readonly mode: CanvasMode;
+  readonly canvasDark: boolean;
   readonly auditRunning: boolean;
+  readonly onToggleDark: () => void;
   readonly onRunAudit: () => void;
   readonly onToggleMode: () => void;
 };
 
-function CanvasToolbar({ mode, auditRunning, onRunAudit, onToggleMode }: CanvasToolbarProps) {
+function CanvasDarkPreviewButton({
+  canvasDark,
+  onToggleDark,
+}: {
+  readonly canvasDark: boolean;
+  readonly onToggleDark: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <button
+      type="button"
+      data-testid="canvas-dark-preview"
+      aria-pressed={canvasDark}
+      title={t('editor.darkPreviewTooltip')}
+      onClick={onToggleDark}
+      className={`flex h-7 shrink-0 items-center gap-1 rounded-md border px-2 font-medium transition-colors ${
+        canvasDark
+          ? 'border-accent bg-accent-soft text-accent'
+          : 'border-line bg-card-solid text-ink hover:bg-field'
+      }`}
+    >
+      <Moon className="size-3.5" aria-hidden />
+      <span>{t('inspector.stateDark')}</span>
+    </button>
+  );
+}
+
+function CanvasToolbar({
+  mode,
+  canvasDark,
+  auditRunning,
+  onToggleDark,
+  onRunAudit,
+  onToggleMode,
+}: CanvasToolbarProps) {
   const { t } = useTranslation();
   const { t: tErrors } = useTranslation('errors');
   const editMode = useEditMode();
@@ -303,6 +378,7 @@ function CanvasToolbar({ mode, auditRunning, onRunAudit, onToggleMode }: CanvasT
         )}
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
+        <CanvasDarkPreviewButton canvasDark={canvasDark} onToggleDark={onToggleDark} />
         <ResponsiveAuditButton running={auditRunning} onClick={onRunAudit} />
         <button
           type="button"

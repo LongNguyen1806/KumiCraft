@@ -3,10 +3,14 @@ import { type KitComponentId, kitFileNameFor } from '@kumicraft/shared';
 import { buildCarouselTemplate } from './carousel.ts';
 import { buildDataTableTemplate } from './data-table.ts';
 import { buildDropdownTemplate, buildTooltipTemplate } from './dropdown-tooltip.ts';
+import { buildLoadingButtonTemplate } from './loading-button.ts';
 import { buildMobileMenuTemplate } from './mobile-menu.ts';
 import { buildDrawerTemplate, buildModalTemplate } from './modal-drawer.ts';
 import { buildRevealTemplate } from './reveal.ts';
+import { buildScrollSpyTemplate } from './scroll-spy.ts';
+import { buildSelectGroupTemplate } from './select-group.ts';
 import { buildTabsTemplate } from './tabs.ts';
+import { buildToastTemplate } from './toast.ts';
 import { buildChoiceTemplate, buildToggleTemplate } from './toggle-choice.ts';
 
 export type KitFilePlan = {
@@ -27,6 +31,13 @@ const KIT_FILE_SPECS: Readonly<Record<string, Omit<KitFilePlan, 'fileBase'>>> = 
   Tooltip: { exportedSymbols: ['Tooltip'], buildCode: buildTooltipTemplate },
   MobileMenu: { exportedSymbols: ['MobileMenu'], buildCode: buildMobileMenuTemplate },
   DataTable: { exportedSymbols: ['DataTable'], buildCode: buildDataTableTemplate },
+  SelectGroup: {
+    exportedSymbols: ['SelectGroup', 'SelectItem', 'SelectPanel'],
+    buildCode: buildSelectGroupTemplate,
+  },
+  Toast: { exportedSymbols: ['ToastHost', 'ToastTrigger'], buildCode: buildToastTemplate },
+  LoadingButton: { exportedSymbols: ['LoadingButton'], buildCode: buildLoadingButtonTemplate },
+  ScrollSpy: { exportedSymbols: ['ScrollSpy'], buildCode: buildScrollSpyTemplate },
 };
 
 export function kitFileNames(): readonly string[] {

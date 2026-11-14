@@ -4,6 +4,7 @@ import type {
   ClassToken,
   ClassValue,
   EditableAttr,
+  ElementRef,
   ElementSource,
   PropertyId,
   Scope,
@@ -24,12 +25,11 @@ import { useEditMode } from '../project/use-edit-mode.ts';
 import { useStyleEditable } from '../project/use-style-edit.ts';
 import { A11yHintsSection } from './components/a11y-hints-section.tsx';
 import { AttributesEditorSection } from './components/attributes-editor.tsx';
-import { ComponentPropsSection } from './components/component-props-section.tsx';
-import { DataGridSection } from './components/data-grid-section.tsx';
+import { ElementContentSections } from './components/element-content-sections.tsx';
 import { ElementPath } from './components/element-path.tsx';
 import { InspectorHeader } from './components/inspector-header.tsx';
-import { InspectorIconSection } from './components/inspector-icon-section.tsx';
 import { isColorProperty, resolveFieldOptions } from './components/inspector-property-groups.tsx';
+import { InteractionSection } from './components/interaction/interaction-section.tsx';
 import { OtherClassesSection } from './components/other-classes-section.tsx';
 import { CssStyleEditor } from './components/style-sources-section.tsx';
 import { TagAttributesSection } from './components/tag-attributes-section.tsx';
@@ -55,6 +55,7 @@ type InspectorPanelProps = {
 };
 
 type ElementSectionsProps = {
+  readonly refTarget?: ElementRef | undefined;
   readonly editable: boolean;
   readonly source: ElementSource;
   readonly tokens: readonly ClassToken[];
@@ -121,37 +122,25 @@ function TagAttributesBlock({
   );
 }
 
-function readCallStaticRest(source: ElementSectionsProps['source']): string | undefined {
-  return source.className.kind === 'callStatic' || source.className.kind === 'templateStatic'
-    ? source.className.rest
-    : undefined;
-}
-
 function ElementSections(props: ElementSectionsProps) {
-  const { editable, source, tokens, isLocked, isAttrLocked, rawClassString } = props;
-  const { onPropChange, onRawChange, onAttributeChange, onRefresh, layoutFooter } = props;
+  const { refTarget, editable, source, tokens, isLocked, isAttrLocked, rawClassString } = props;
+  const { onRawChange, onAttributeChange, onRefresh, layoutFooter } = props;
+  const callStaticRest =
+    source.className.kind === 'callStatic' || source.className.kind === 'templateStatic'
+      ? source.className.rest
+      : undefined;
 
   return (
     <div className="flex flex-col">
-      <ComponentPropsSection
-        loc={source.loc}
-        tag={source.tag}
-        fileHash={source.fileHash}
-        componentName={source.component?.name}
-        disabled={isAttrLocked}
-        onSaved={onRefresh}
-      />
-      <DataGridSection dataContext={source.dataContext} onSaved={onRefresh} />
-      <InspectorIconSection
-        source={source}
-        disabled={isAttrLocked}
-        editable={editable}
-        onTextColorChange={(hex) => {
-          onPropChange('textColor', { kind: 'arbitrary', css: hex });
-        }}
-        onRefresh={onRefresh}
-      />
+      <ElementContentSections {...props} />
       {editable && <EditablePropertySections {...props} layoutFooter={layoutFooter} />}
+      {!editable && (
+        <InteractionSection
+          source={source}
+          refTarget={refTarget ?? { loc: source.loc, index: 0 }}
+          onDone={onRefresh}
+        />
+      )}
       <TagAttributesBlock
         source={source}
         disabled={isAttrLocked}
@@ -163,7 +152,7 @@ function ElementSections(props: ElementSectionsProps) {
           rawClassString={rawClassString}
           onRawClassChange={onRawChange}
           disabled={isLocked}
-          callStaticRest={readCallStaticRest(source)}
+          callStaticRest={callStaticRest}
         />
       )}
     </div>
@@ -286,6 +275,7 @@ function InspectorSourceBody({
       />
       {editable && <FreeFrameGroup source={source} showToggleInline={isDraft} />}
       <ElementSections
+        refTarget={target.ref}
         editable={editable}
         source={source}
         tokens={parseClasses(classString, ctx)}

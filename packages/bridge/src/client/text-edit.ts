@@ -4,12 +4,49 @@ import type { ElementRef } from '@kumicraft/shared';
 import { readSelectionInElement, type SelectionInElement } from './text-select.ts';
 
 export type TextEditCallbacks = {
-  readonly onCommit: (ref: ElementRef, text: string) => void;
-  readonly onCancel: (ref: ElementRef) => void;
+  readonly onCommit: (ref: ElementRef, text: string, runIndex?: number) => void;
+  readonly onCancel: (ref: ElementRef, runIndex?: number) => void;
   readonly onStart?: (el: HTMLElement) => void;
   readonly onEnd?: () => void;
   readonly onSelectRange?: (ref: ElementRef, range: SelectionInElement) => void;
 };
+
+/** Significant direct child text nodes inside an element (matching AST JSXText runs, TK-78). */
+function directTextChildren(el: Element): Text[] {
+  return Array.from(el.childNodes).filter(
+    (n): n is Text => n.nodeType === Node.TEXT_NODE && (n.textContent ?? '').trim().length > 0,
+  );
+}
+
+/** Identifies which mixed-text run index contains `(clientX, clientY)` on double-click (TK-78). */
+export function findClickedTextRunIndex(
+  el: Element,
+  clientX: number,
+  clientY: number,
+): number | undefined {
+  if (el.children.length === 0) return undefined;
+  const textNodes = directTextChildren(el);
+  if (textNodes.length === 0) return undefined;
+  const doc = el.ownerDocument;
+  for (let i = 0; i < textNodes.length; i++) {
+    const t = textNodes[i];
+    if (!t) continue;
+    const range = doc.createRange();
+    range.selectNodeContents(t);
+    const rects = range.getClientRects();
+    for (const rect of rects.length > 0 ? Array.from(rects) : [range.getBoundingClientRect()]) {
+      if (
+        clientX >= rect.left - 4 &&
+        clientX <= rect.right + 4 &&
+        clientY >= rect.top - 4 &&
+        clientY <= rect.bottom + 4
+      ) {
+        return i;
+      }
+    }
+  }
+  return undefined;
+}
 
 /**
  * Normalizes text per R-SE-08 & R-TX-04:
@@ -22,6 +59,8 @@ export function normalizeText(text: string): string {
 export class TextEditController {
   private activeElement: HTMLElement | undefined;
   private activeRef: ElementRef | undefined;
+  private activeRunIndex: number | undefined;
+  private activeTextNode: Text | undefined;
   private originalText: string | undefined;
   private isComposing = false;
   private readonly callbacks: TextEditCallbacks;
@@ -38,14 +77,17 @@ export class TextEditController {
     return this.activeElement;
   }
 
-  public start(element: HTMLElement, ref: ElementRef): void {
+  public start(element: HTMLElement, ref: ElementRef, runIndex?: number): void {
     if (this.activeElement !== undefined) {
       this.commit();
     }
 
+    const textNode = runIndex !== undefined ? directTextChildren(element)[runIndex] : undefined;
     this.activeElement = element;
     this.activeRef = ref;
-    this.originalText = element.textContent;
+    this.activeRunIndex = textNode !== undefined ? runIndex : undefined;
+    this.activeTextNode = textNode;
+    this.originalText = textNode !== undefined ? textNode.data : element.textContent;
     this.isComposing = false;
 
     try {
@@ -58,16 +100,17 @@ export class TextEditController {
     }
 
     element.focus();
-    this.selectAllText(element);
+    this.selectAllText(element, textNode);
     this.attachListeners(element);
     this.callbacks.onStart?.(element);
   }
 
-  private selectAllText(element: HTMLElement): void {
+  private selectAllText(element: HTMLElement, textNode?: Text): void {
     const selection = window.getSelection();
     if (selection) {
       const range = document.createRange();
-      range.selectNodeContents(element);
+      if (textNode !== undefined) range.selectNodeContents(textNode);
+      else range.selectNodeContents(element);
       selection.removeAllRanges();
       selection.addRange(range);
     }
@@ -112,22 +155,29 @@ export class TextEditController {
 
     const el = this.activeElement;
     const ref = this.activeRef;
+    const runIndex = this.activeRunIndex;
+    const textNode = this.activeTextNode;
     const orig = this.originalText ?? '';
     // The source text: innerText would bring CSS in (`uppercase` wrote `BOSE KCQA`, K9.5).
-    const rawText = el.textContent;
+    const rawText =
+      textNode !== undefined ? (textNode.isConnected ? textNode.data : '') : el.textContent;
 
     this.cleanUp();
     this.activeElement = undefined;
     this.activeRef = undefined;
+    this.activeRunIndex = undefined;
+    this.activeTextNode = undefined;
     this.originalText = undefined;
 
     const normalizedNew = normalizeText(rawText);
     const normalizedOld = normalizeText(orig);
 
     if (normalizedNew === normalizedOld) {
-      this.callbacks.onCancel(ref);
+      if (runIndex !== undefined) this.callbacks.onCancel(ref, runIndex);
+      else this.callbacks.onCancel(ref);
     } else {
-      this.callbacks.onCommit(ref, normalizedNew);
+      if (runIndex !== undefined) this.callbacks.onCommit(ref, normalizedNew, runIndex);
+      else this.callbacks.onCommit(ref, normalizedNew);
     }
 
     this.callbacks.onEnd?.();
@@ -140,15 +190,24 @@ export class TextEditController {
 
     const el = this.activeElement;
     const ref = this.activeRef;
+    const runIndex = this.activeRunIndex;
+    const textNode = this.activeTextNode;
     const orig = this.originalText ?? '';
 
     this.cleanUp();
     this.activeElement = undefined;
     this.activeRef = undefined;
+    this.activeRunIndex = undefined;
+    this.activeTextNode = undefined;
     this.originalText = undefined;
 
-    el.textContent = orig;
-    this.callbacks.onCancel(ref);
+    if (textNode !== undefined) {
+      textNode.textContent = orig;
+    } else {
+      el.textContent = orig;
+    }
+    if (runIndex !== undefined) this.callbacks.onCancel(ref, runIndex);
+    else this.callbacks.onCancel(ref);
     this.callbacks.onEnd?.();
   }
 

@@ -28,8 +28,8 @@ describe('M-TW variants, arbitrary values and px', () => {
     );
     const mapped = tokens.map((t) => [t.raw, t.property]);
     expect(mapped).toEqual([
-      ['dark:bg-black', undefined],
-      ['group-hover:p-2', undefined],
+      ['dark:bg-black', 'backgroundColor'],
+      ['group-hover:p-2', 'padding'],
       ['aria-checked:p-1', undefined],
       ['[&>*]:p-2', undefined],
       ['md:p-4', 'padding'],

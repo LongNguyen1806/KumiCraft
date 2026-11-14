@@ -26,6 +26,8 @@ export type StyleCommitContext = {
   readonly tag: string;
   readonly target: StyleTarget;
   readonly interactionState?: StyleInteractionState | undefined;
+  readonly dark?: boolean | undefined;
+  readonly groupSelector?: string | undefined;
   readonly breakpoints?: readonly ProjectBreakpoint[] | undefined;
 };
 
@@ -46,6 +48,8 @@ function buildStyleChangePayload(
     ...(value === '' ? {} : { value }),
     ...(media === undefined ? {} : { media }),
     ...(effectiveState === undefined ? {} : { state: effectiveState }),
+    ...(ctx.dark === true ? { dark: true } : {}),
+    ...(ctx.groupSelector ? { groupSelector: ctx.groupSelector } : {}),
     ...(ctx.breakpoint === 'base' ? {} : { breakpoint: ctx.breakpoint }),
   };
 }

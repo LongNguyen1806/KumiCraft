@@ -22,6 +22,7 @@ import { readClassName, readEditableAttributes } from './attribute-reader.ts';
 import { applySetPropMutation } from './prop-mutator.ts';
 import { parseText } from './source-editor-lookup.ts';
 import { mutateAttribute, mutateFlag, mutateText } from './source-mutator.ts';
+import { applySetTextRunMutation } from './text-run-ops.ts';
 
 export function applyClassNameMutation(
   edit: SetClassNameEdit,
@@ -178,6 +179,9 @@ export function executeEditMutation(
   }
   if (edit.kind === 'setProp') {
     return applySetPropMutation(edit, rawAttrs, opening, code, s);
+  }
+  if (edit.kind === 'setTextRun') {
+    return applySetTextRunMutation(edit, targetNode, opening, code, s);
   }
   return applyTextMutation(edit, targetNode, opening, code, s, newline);
 }

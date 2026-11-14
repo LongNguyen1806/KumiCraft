@@ -22,6 +22,8 @@ const PROBED_LONGHANDS = [
 export function requestStyleProbe(
   ref: ElementRef,
   interactionState?: StyleInteractionState,
+  dark?: boolean,
+  groupSelector?: string,
 ): Promise<BridgeStyleProbePayload | undefined> {
   return new Promise((resolve) => {
     const stop = studioBridgeChannel.registerStyleProbeListener((payload) => {
@@ -34,7 +36,7 @@ export function requestStyleProbe(
       stop();
       resolve(undefined);
     }, PROBE_TIMEOUT_MS);
-    studioBridgeChannel.styleProbe(ref, PROBED_LONGHANDS, interactionState);
+    studioBridgeChannel.styleProbe(ref, PROBED_LONGHANDS, interactionState, dark, groupSelector);
   });
 }
 
@@ -46,8 +48,10 @@ export type StyleState = {
 export async function fetchStyleState(
   ref: ElementRef,
   interactionState?: StyleInteractionState,
+  dark?: boolean,
+  groupSelector?: string,
 ): Promise<StyleState | undefined> {
-  const probe = await requestStyleProbe(ref, interactionState);
+  const probe = await requestStyleProbe(ref, interactionState, dark, groupSelector);
   if (probe?.found !== true) return undefined;
   return { probe, reading: await readStyle(probe) };
 }
@@ -66,6 +70,8 @@ export type UseStyleState = {
 export function useStyleState(
   enabled: boolean,
   interactionState?: StyleInteractionState,
+  dark?: boolean,
+  groupSelector?: string,
 ): UseStyleState {
   const ref = useSelectionStore((s) => s.selectedRefs.at(-1));
   const tree = useSelectionStore((s) => s.treeNodes);
@@ -74,14 +80,16 @@ export function useStyleState(
   const loc = ref?.loc;
   const index = ref?.index;
   const key =
-    loc === undefined ? undefined : `${loc}#${String(index)}#${interactionState ?? 'default'}`;
+    loc === undefined
+      ? undefined
+      : `${loc}#${String(index)}#${interactionState ?? 'default'}#${dark === true ? 'dark' : 'light'}#${groupSelector ?? ''}`;
 
   useEffect(() => {
     if (!enabled || loc === undefined || index === undefined || key === undefined) return;
     let active = true;
     const load = async () => {
       try {
-        const state = await fetchStyleState({ loc, index }, interactionState);
+        const state = await fetchStyleState({ loc, index }, interactionState, dark, groupSelector);
         if (active) setResult({ key, state });
       } catch {
         if (active) setResult({ key });
@@ -91,7 +99,7 @@ export function useStyleState(
     return () => {
       active = false;
     };
-  }, [enabled, loc, index, key, interactionState, tree, version]);
+  }, [enabled, loc, index, key, interactionState, dark, groupSelector, tree, version]);
 
   return {
     state: enabled && result?.key === key ? result?.state : undefined,
