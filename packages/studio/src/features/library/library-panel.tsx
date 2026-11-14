@@ -158,7 +158,7 @@ export function LibraryPanel() {
     <aside
       aria-label={t('title')}
       data-testid="library-panel"
-      className="flex h-full flex-col overflow-hidden text-xs"
+      className="relative flex h-full flex-col overflow-hidden text-xs"
     >
       <LibrarySearchHeader
         query={s.query}
