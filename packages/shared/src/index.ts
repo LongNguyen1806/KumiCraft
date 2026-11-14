@@ -279,6 +279,8 @@ export {
   ThemeTokenSchema,
   type ThemeUsage,
   ThemeUsageSchema,
+  type UiKitReport,
+  UiKitReportSchema,
   UNSUPPORTED_REASONS,
   type UnsupportedReason,
   UnsupportedReasonSchema,

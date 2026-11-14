@@ -1,8 +1,10 @@
-// Search header and status hint for Library Panel (SPEC-04 M-LB).
+// Search header, style preset selector, and status hint for Library Panel (SPEC-04 M-LB, TK-69).
+import { LIBRARY_STYLES, type LibraryStyle } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
 import { type ErrorInfo, errorText } from '../../routes/error-text.ts';
 import { SelectInFileHint } from '../design/select-in-file-hint.tsx';
+import { isLibraryStyle } from './library-styles.ts';
 
 type LibraryStatusHintProps = {
   readonly hasSelection: boolean;
@@ -51,20 +53,63 @@ export type LibrarySearchHeaderProps = {
   readonly onQueryChange: (q: string) => void;
   readonly hasSelection: boolean;
   readonly onOpenImagePicker: () => void;
+  readonly style?: LibraryStyle | undefined;
+  readonly onStyleChange?: ((style: LibraryStyle) => void) | undefined;
   readonly errorInfo?: ErrorInfo | undefined;
 };
+
+function LibraryStyleRow({
+  style,
+  onStyleChange,
+}: {
+  readonly style: LibraryStyle;
+  readonly onStyleChange: (style: LibraryStyle) => void;
+}) {
+  const { t } = useTranslation('library');
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <label
+        htmlFor="library-style-select"
+        className="text-[11px] font-medium whitespace-nowrap text-ink-soft"
+      >
+        {t('styleLabel')}
+      </label>
+      <select
+        id="library-style-select"
+        data-testid="library-style-select"
+        value={style}
+        onChange={(e) => {
+          const next = e.target.value;
+          if (isLibraryStyle(next)) onStyleChange(next);
+        }}
+        className="h-7 min-w-0 flex-1 rounded-md border border-line bg-card-solid px-2 text-xs text-ink"
+      >
+        {LIBRARY_STYLES.map((preset) => (
+          <option key={preset} value={preset}>
+            {t(`styles.${preset}`)}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
 export function LibrarySearchHeader({
   query,
   onQueryChange,
   hasSelection,
   onOpenImagePicker,
+  style = 'default',
+  onStyleChange,
   errorInfo,
 }: LibrarySearchHeaderProps) {
   const { t } = useTranslation('library');
 
   return (
     <div className="space-y-2 pb-2">
+      {onStyleChange !== undefined && (
+        <LibraryStyleRow style={style} onStyleChange={onStyleChange} />
+      )}
       <div className="flex items-center gap-2">
         <input
           type="search"

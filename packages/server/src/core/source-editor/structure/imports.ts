@@ -155,6 +155,78 @@ export function findImportInsertPosition(ast: AstNode, code: string): number {
   return 0;
 }
 
+function appendUniqueImportLine(lines: string[], normalizedCode: string, statement: string): void {
+  const normalized = statement.replace(/"/g, "'");
+  if (!normalizedCode.includes(normalized) && !lines.includes(statement)) {
+    lines.push(statement);
+  }
+}
+
+type NamedGroup = { readonly source: string; readonly isType: boolean; readonly specs: string[] };
+
+function tryAddNamedImport(
+  namedGroups: Map<string, NamedGroup>,
+  tag: string,
+  candidate: ParsedImport,
+  remappedSource: string,
+): boolean {
+  const matching = candidate.namedSpecifiers.find((s) => s.local === tag);
+  if (candidate.defaultSpecifier === tag || candidate.namespaceSpecifier === tag || !matching) {
+    return false;
+  }
+  const spec = matching.imported === matching.local ? tag : `${matching.imported} as ${tag}`;
+  const key = `${candidate.isType ? 'type:' : 'val:'}${remappedSource}`;
+  const group = namedGroups.get(key);
+  if (group !== undefined) {
+    if (!group.specs.includes(spec)) group.specs.push(spec);
+  } else {
+    namedGroups.set(key, { source: remappedSource, isType: candidate.isType, specs: [spec] });
+  }
+  return true;
+}
+
+function planMissingImportLines(
+  missingTags: readonly string[],
+  targetCode: string,
+  targetFile: string,
+  from: { readonly file: string; readonly imports: readonly string[] } | undefined,
+): { readonly newImportLines: readonly string[]; readonly warnings: readonly string[] } {
+  const parsedFromImports = (from?.imports ?? [])
+    .map(parseSingleImportStatement)
+    .filter((p): p is ParsedImport => p !== undefined);
+
+  const newImportLines: string[] = [];
+  const warnings: string[] = [];
+  const normalizedCode = targetCode.replace(/"/g, "'");
+  const namedGroups = new Map<string, NamedGroup>();
+
+  for (const tag of missingTags) {
+    const candidate = parsedFromImports.find(
+      (p) =>
+        p.defaultSpecifier === tag ||
+        p.namespaceSpecifier === tag ||
+        p.namedSpecifiers.some((s) => s.local === tag),
+    );
+    if (!candidate || !from) {
+      warnings.push('missingImport');
+      continue;
+    }
+    const remappedSource = resolveRelativeImportSource(from.file, targetFile, candidate.source);
+    if (!tryAddNamedImport(namedGroups, tag, candidate, remappedSource)) {
+      const stmt = constructImportStatement(tag, candidate, remappedSource);
+      appendUniqueImportLine(newImportLines, normalizedCode, stmt);
+    }
+  }
+
+  for (const group of namedGroups.values()) {
+    const typePrefix = group.isType ? 'type ' : '';
+    const statement = `import ${typePrefix}{ ${group.specs.join(', ')} } from '${group.source}';`;
+    appendUniqueImportLine(newImportLines, normalizedCode, statement);
+  }
+
+  return { newImportLines, warnings };
+}
+
 export function buildMissingImportsEdits(
   targetAst: AstNode,
   targetCode: string,
@@ -169,45 +241,19 @@ export function buildMissingImportsEdits(
     return { edits: [], warnings: [] };
   }
 
-  const parsedFromImports = (from?.imports ?? [])
-    .map(parseSingleImportStatement)
-    .filter((p): p is ParsedImport => p !== undefined);
-
   const insertPos = findImportInsertPosition(targetAst, targetCode);
-  const newImportLines: string[] = [];
-  const warnings: string[] = [];
-
-  for (const tag of missingTags) {
-    const candidate = parsedFromImports.find(
-      (p) =>
-        p.defaultSpecifier === tag ||
-        p.namespaceSpecifier === tag ||
-        p.namedSpecifiers.some((s) => s.local === tag),
-    );
-
-    if (!candidate || !from) {
-      warnings.push('missingImport');
-      continue;
-    }
-
-    const remappedSource = resolveRelativeImportSource(from.file, targetFile, candidate.source);
-    const statement = constructImportStatement(tag, candidate, remappedSource);
-
-    // Only add if not already in file or already planned to add
-    if (!targetCode.includes(statement) && !newImportLines.includes(statement)) {
-      newImportLines.push(statement);
-    }
-  }
-
+  const { newImportLines, warnings } = planMissingImportLines(
+    missingTags,
+    targetCode,
+    targetFile,
+    from,
+  );
   if (newImportLines.length === 0) {
     return { edits: [], warnings };
   }
 
-  const insertText =
-    insertPos === 0 ? `${newImportLines.join(nl)}${nl}` : `${newImportLines.join(nl)}${nl}`;
-
   return {
-    edits: [{ start: insertPos, end: insertPos, text: insertText }],
+    edits: [{ start: insertPos, end: insertPos, text: `${newImportLines.join(nl)}${nl}` }],
     warnings,
   };
 }

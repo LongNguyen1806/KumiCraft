@@ -8,6 +8,8 @@ import {
   type Placement,
   primarySystem,
   type ProjectLook,
+  type RelPath,
+  relPathProblem,
   renderBlock,
 } from '@kumicraft/shared';
 
@@ -18,6 +20,7 @@ import { useThemeStore } from '../inspector/use-project-theme.ts';
 import { useProjectStore } from '../project/project-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
+import { getSelectedStyle } from './library-styles.ts';
 import { getSelectedVariant } from './library-variants.ts';
 
 let themeAttempted = false;
@@ -43,7 +46,14 @@ async function currentLook(): Promise<ProjectLook> {
       // Theme fetch failed; fall back to default role values.
     }
   }
-  return lookFromTheme(useThemeStore.getState().theme);
+  return lookFromTheme(useThemeStore.getState().theme, getSelectedStyle(projectId));
+}
+
+function sourceFileFromTarget(target: InsertTarget): RelPath {
+  const loc = target.kind === 'sibling' ? target.ref.loc : target.parent.loc;
+  const colon = loc.indexOf(':');
+  const raw = colon > 0 ? loc.slice(0, colon) : 'src/App.tsx';
+  return relPathProblem(raw) === undefined ? raw : 'src/App.tsx';
 }
 
 export function determineInsertTarget(ref: ElementRef, tag: string): InsertTarget {
@@ -70,11 +80,19 @@ export function localizedBlockLang(lang: string): 'vi' | 'en' {
 }
 
 export function localizedBlockJsx(block: LibraryBlock, lang: string, variantId?: string): string {
-  const styling = useProjectStore.getState().project?.support.styling;
+  const project = useProjectStore.getState().project;
+  const styling = project?.support.styling;
   const system = styling !== undefined ? primarySystem(styling) : 'tailwind4';
-  const look = lookFromTheme(useThemeStore.getState().theme);
+  const look = lookFromTheme(useThemeStore.getState().theme, getSelectedStyle(project?.id));
   const activeVariant = variantId ?? getSelectedVariant(block.id);
-  return renderBlock(block, system, localizedBlockLang(lang), look, activeVariant).jsx;
+  return renderBlock(
+    block,
+    system,
+    localizedBlockLang(lang),
+    look,
+    activeVariant,
+    project?.support.uiKit,
+  ).jsx;
 }
 
 export async function insertBlockAt(
@@ -85,11 +103,19 @@ export async function insertBlockAt(
   tailwindMajor?: 3 | 4,
   variantId?: string,
 ): Promise<InsertBlockResult> {
-  const styling = useProjectStore.getState().project?.support.styling;
+  const project = useProjectStore.getState().project;
+  const styling = project?.support.styling;
   const system = styling !== undefined ? primarySystem(styling) : 'tailwind4';
   const look = await currentLook();
   const activeVariant = variantId ?? getSelectedVariant(block.id);
-  const rendered = renderBlock(block, system, localizedBlockLang(lang), look, activeVariant);
+  const rendered = renderBlock(
+    block,
+    system,
+    localizedBlockLang(lang),
+    look,
+    activeVariant,
+    project?.support.uiKit,
+  );
   try {
     const res = await applyStructureEdit({
       kind: 'insert',
@@ -98,6 +124,9 @@ export async function insertBlockAt(
       placement,
       tailwindMajor,
       ...(rendered.rules.length > 0 ? { css: { rules: rendered.rules } } : {}),
+      ...(rendered.imports !== undefined && rendered.imports.length > 0
+        ? { from: { file: sourceFileFromTarget(target), imports: [...rendered.imports] } }
+        : {}),
     });
     const newLoc = res.locs[0];
     if (newLoc) {

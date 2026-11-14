@@ -6,6 +6,15 @@
   "add": "Chèn {{name}} tại phần tử đang chọn",
   "variantMenu": "Chọn kiểu {{name}}",
   "variantCheck": "✓",
+  "fromProject": "của dự án",
+  "styleLabel": "Phong cách",
+  "styles": {
+    "default": "Mặc định",
+    "minimal": "Tối giản",
+    "soft": "Mềm",
+    "glass": "Kính mờ",
+    "bold": "Đậm"
+  },
   "unsupportedForSystem": "Mẫu phần tử có sẵn dùng Tailwind chưa hỗ trợ cho hệ này. Dùng tab Thành phần để chèn component của dự án.",
   "categories": {
     "layout": "Bố cục",

@@ -27,6 +27,7 @@ function resolveThemeHistoryLabel(
   const op = label.params?.['op'];
   if (op === 'add') return t('history.themeAdd', { name });
   if (op === 'remove') return t('history.themeRemove', { name });
+  if (op === 'importFont') return t('history.themeImportFont', { name });
   return t('history.themeSet', { name });
 }
 

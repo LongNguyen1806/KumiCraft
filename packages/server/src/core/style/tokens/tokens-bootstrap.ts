@@ -213,7 +213,7 @@ function planSassBootstrap(
   content: string,
   mode: { readonly file: string; readonly importOffset: number },
   def: BootstrapDef,
-  edit: ThemeEdit,
+  edit: Exclude<ThemeEdit, { readonly op: 'importFont' }>,
 ): Result<string> {
   const header = content.slice(0, mode.importOffset);
   const existingVars = listVariables(header, mode.file, 'sass');
@@ -265,7 +265,7 @@ function planCssBootstrap(
   content: string,
   file: string,
   def: BootstrapDef,
-  edit: ThemeEdit,
+  edit: Exclude<ThemeEdit, { readonly op: 'importFont' }>,
 ): Result<string> {
   const varName = `--bs-${def.cssVar}`;
   const isColor = def.kind === 'color';
@@ -323,6 +323,9 @@ export const bootstrapAdapter: TokenAdapter = {
     files: TokenFiles,
     edit: ThemeEdit,
   ): Promise<Result<{ readonly file: RelPath; readonly before: string; readonly after: string }>> {
+    if (edit.op === 'importFont') {
+      return err({ code: 'E016', params: { reason: 'unsupportedOp' } });
+    }
     const def = BOOTSTRAP_TOKENS.find((t) => t.kind === edit.kind && t.name === edit.name);
     if (def === undefined) {
       return err({ code: 'E016', params: { reason: 'unknownToken' } });

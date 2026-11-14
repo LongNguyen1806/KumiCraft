@@ -5,6 +5,7 @@ import type { FileSystemPort } from '../../../ports/file-system-port.ts';
 import { findPackage, findPackageWorkspaceRoot } from '../../workspace-root.ts';
 import type { DetectInput } from '../types.ts';
 import { detectStyling } from './styling.ts';
+import { detectUiKit } from './ui-kit.ts';
 
 const VITE_CONFIG_CANDIDATES = [
   'vite.config.ts',
@@ -209,6 +210,7 @@ export async function detectViteReact(input: DetectInput): Promise<SupportReport
   const language = isTs ? 'ts' : 'js';
   const packageManager = await detectPackageManager(input.fs, input.root, pkg);
   const workspaceRoot = await findPackageWorkspaceRoot(input.fs, input.root);
+  const uiKit = await detectUiKit(input.fs, input.root);
   const supported = reasons.length === 0;
 
   return {
@@ -226,5 +228,6 @@ export async function detectViteReact(input: DetectInput): Promise<SupportReport
     viteConfig,
     tailwindCss,
     styling,
+    ...(uiKit !== undefined ? { uiKit } : {}),
   };
 }

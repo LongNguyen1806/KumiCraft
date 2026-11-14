@@ -90,6 +90,9 @@ export const sassAdapter: TokenAdapter = {
     files: TokenFiles,
     edit: ThemeEdit,
   ): Promise<Result<{ readonly file: RelPath; readonly before: string; readonly after: string }>> {
+    if (edit.op === 'importFont') {
+      return err({ code: 'E016', params: { reason: 'unsupportedOp' } });
+    }
     if (edit.op !== 'remove' && !isValidThemeValue(edit.kind, edit.value)) {
       return err({ code: 'E016', params: { reason: 'invalidValue' } });
     }

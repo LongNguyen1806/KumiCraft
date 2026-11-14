@@ -6,6 +6,15 @@
   "add": "Insert {{name}} at the selected element",
   "variantMenu": "Choose {{name}} style",
   "variantCheck": "✓",
+  "fromProject": "from project",
+  "styleLabel": "Style",
+  "styles": {
+    "default": "Default",
+    "minimal": "Minimal",
+    "soft": "Soft",
+    "glass": "Glass",
+    "bold": "Bold"
+  },
   "unsupportedForSystem": "Tailwind template blocks are not supported for this styling system. Use the Components tab to insert project components.",
   "categories": {
     "layout": "Layout",

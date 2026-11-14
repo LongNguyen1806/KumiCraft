@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { isValidScaleValue } from '../scale-values.ts';
+import { checkSpacingRhythm, prioritizeSpacingSuggestions } from '../spacing-rhythm.ts';
 
 export type ScaleInputProps = {
   readonly property: PropertyId;
@@ -114,6 +115,10 @@ function useScaleField(props: ScaleInputProps) {
     write(next);
     setOpen(false);
   };
+  const snap = (next: string) => {
+    setDraft(undefined);
+    onInput(next);
+  };
   const keys = useSuggestKeys(suggestions, open, setOpen, pick);
   const handlers = {
     onFocus: () => {
@@ -140,42 +145,108 @@ function useScaleField(props: ScaleInputProps) {
     valid: isValidScaleValue(property, shown, suggestions, major),
     highlight: keys.highlight,
     pick,
+    snap,
     handlers,
   };
 }
 
-export function ScaleInput(props: ScaleInputProps) {
-  const { property, suggestions, major, disabled, mixed } = props;
+function SpacingOffbeatDot({
+  property,
+  suggested,
+  title,
+  onSnap,
+}: {
+  readonly property: PropertyId;
+  readonly suggested: string;
+  readonly title: string | undefined;
+  readonly onSnap: (value: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      data-testid={`spacing-offbeat-${property}`}
+      title={title}
+      aria-label={title}
+      onMouseDown={(e) => {
+        e.preventDefault();
+      }}
+      onClick={() => {
+        onSnap(suggested);
+      }}
+      className="absolute top-1/2 right-1.5 z-10 size-2 -translate-y-1/2 rounded-full bg-amber-400 hover:bg-amber-500 cursor-pointer"
+    />
+  );
+}
+
+type ScaleComboBoxProps = {
+  readonly props: ScaleInputProps;
+  readonly field: ReturnType<typeof useScaleField>;
+  readonly listId: string;
+  readonly offbeatTitle: string | undefined;
+  readonly hasOffbeat: boolean;
+};
+
+function ScaleComboBox({ props, field, listId, offbeatTitle, hasOffbeat }: ScaleComboBoxProps) {
   const { t } = useTranslation();
-  const field = useScaleField(props);
+  return (
+    <input
+      id={`field-${props.property}`}
+      data-testid={`input-${props.property}`}
+      type="text"
+      role="combobox"
+      aria-expanded={field.open}
+      aria-controls={listId}
+      aria-autocomplete="list"
+      autoComplete="off"
+      spellCheck={false}
+      aria-label={props.label}
+      aria-invalid={!field.valid}
+      title={
+        field.valid
+          ? (offbeatTitle ?? props.title)
+          : t('inspector.invalidValue', { major: props.major })
+      }
+      disabled={props.disabled}
+      value={field.shown}
+      placeholder={props.mixed === true ? t('inspector.mixed') : '—'}
+      {...field.handlers}
+      className={`${props.className} ${hasOffbeat ? 'pr-4' : ''} aria-[invalid=true]:border-danger aria-[invalid=true]:text-danger`}
+    />
+  );
+}
+
+export function ScaleInput(props: ScaleInputProps) {
+  const { property, disabled, mixed } = props;
+  const orderedSuggestions = prioritizeSpacingSuggestions(property, props.suggestions);
+  const { t } = useTranslation();
+  const field = useScaleField({ ...props, suggestions: orderedSuggestions });
   const listId = `suggest-list-${property}`;
+  const offbeat = field.valid && !mixed ? checkSpacingRhythm(property, field.shown) : undefined;
+  const offbeatTitle =
+    offbeat !== undefined ? t('inspector.offbeatHint', { value: offbeat.suggested }) : undefined;
 
   return (
     <span className="relative block">
-      <input
-        id={`field-${property}`}
-        data-testid={`input-${property}`}
-        type="text"
-        role="combobox"
-        aria-expanded={field.open}
-        aria-controls={listId}
-        aria-autocomplete="list"
-        autoComplete="off"
-        spellCheck={false}
-        aria-label={props.label}
-        aria-invalid={!field.valid}
-        title={field.valid ? props.title : t('inspector.invalidValue', { major })}
-        disabled={disabled}
-        value={field.shown}
-        placeholder={mixed === true ? t('inspector.mixed') : '—'}
-        {...field.handlers}
-        className={`${props.className} aria-[invalid=true]:border-danger aria-[invalid=true]:text-danger`}
+      <ScaleComboBox
+        props={props}
+        field={field}
+        listId={listId}
+        offbeatTitle={offbeatTitle}
+        hasOffbeat={offbeat !== undefined}
       />
+      {offbeat !== undefined && !disabled && (
+        <SpacingOffbeatDot
+          property={property}
+          suggested={offbeat.suggested}
+          title={offbeatTitle}
+          onSnap={field.snap}
+        />
+      )}
       {field.open && (
         <SuggestionList
           id={listId}
           property={property}
-          suggestions={suggestions}
+          suggestions={orderedSuggestions}
           current={field.shown}
           highlight={field.highlight}
           onPick={field.pick}

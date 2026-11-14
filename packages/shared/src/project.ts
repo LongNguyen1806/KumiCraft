@@ -2,6 +2,7 @@
 import { z } from 'zod';
 
 import { FeatureIdSchema } from './features.ts';
+import { ALLOWED_GOOGLE_FONTS } from './library/fonts.ts';
 import { RelPathSchema } from './rel-path.ts';
 import { ResponsiveModeSchema } from './responsive.ts';
 import { AppErrorSchema } from './result.ts';
@@ -77,6 +78,14 @@ export const PACKAGE_MANAGERS = ['pnpm', 'npm', 'yarn'] as const;
 export const PackageManagerSchema = z.enum(PACKAGE_MANAGERS);
 export type PackageManager = z.infer<typeof PackageManagerSchema>;
 
+export const UiKitReportSchema = z.strictObject({
+  kind: z.literal('shadcn'),
+  uiDir: RelPathSchema,
+  importBase: z.string().min(1).max(200),
+  components: z.array(z.string().min(1).max(100)).max(100).readonly(),
+});
+export type UiKitReport = z.infer<typeof UiKitReportSchema>;
+
 export const SupportReportSchema = z.strictObject({
   supported: z.boolean(),
   reasons: z.array(UnsupportedReasonSchema).readonly(),
@@ -97,6 +106,7 @@ export const SupportReportSchema = z.strictObject({
   editMode: z.enum(EDIT_MODES).optional(),
   serverEntry: RelPathSchema.optional(),
   viewsDir: RelPathSchema.optional(),
+  uiKit: UiKitReportSchema.optional(),
 });
 export type SupportReport = z.infer<typeof SupportReportSchema>;
 
@@ -278,6 +288,10 @@ export const ThemeEditSchema = z.discriminatedUnion('op', [
     op: z.literal('remove'),
     kind: ThemeTokenKindSchema,
     name: z.string().regex(THEME_TOKEN_NAME),
+  }),
+  z.strictObject({
+    op: z.literal('importFont'),
+    families: z.array(z.enum(ALLOWED_GOOGLE_FONTS)).min(1).max(4).readonly(),
   }),
 ]);
 export type ThemeEdit = z.infer<typeof ThemeEditSchema>;

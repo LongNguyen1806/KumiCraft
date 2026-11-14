@@ -294,4 +294,30 @@ describe('renderBlock', () => {
       }
     }
   });
+
+  it('18. [TK-44] renderBlock with uiKit uses <Button variant="outline"> + alias import, falls back when card missing', () => {
+    const buttonBlock = LIBRARY_BLOCKS.find((b) => b.id === 'form.button');
+    const cardBlock = LIBRARY_BLOCKS.find((b) => b.id === 'composite.card');
+    expect(buttonBlock).toBeDefined();
+    expect(cardBlock).toBeDefined();
+    if (buttonBlock === undefined || cardBlock === undefined) return;
+
+    const uiKit = {
+      kind: 'shadcn' as const,
+      uiDir: 'src/components/ui',
+      importBase: '@/components/ui',
+      components: ['button'],
+    };
+
+    const btnRendered = renderBlock(buttonBlock, 'tailwind4', 'en', undefined, 'outline', uiKit);
+    expect(btnRendered.usedUiKit).toBe(true);
+    expect(btnRendered.jsx).toContain('<Button variant="outline"');
+    expect(btnRendered.imports).toEqual(["import { Button } from '@/components/ui/button';"]);
+
+    const cardFallback = renderBlock(cardBlock, 'tailwind4', 'en', undefined, undefined, uiKit);
+    expect(cardFallback.usedUiKit).toBeUndefined();
+    expect(cardFallback.imports).toBeUndefined();
+    expect(cardFallback.jsx).toContain('<div ');
+    expect(cardFallback.jsx).not.toContain('<Card');
+  });
 });

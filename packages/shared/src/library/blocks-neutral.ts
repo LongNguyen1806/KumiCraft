@@ -203,6 +203,8 @@ export const NEUTRAL_BLOCKS = {
         'background-color': '{surface}',
         border: '1px solid {border}',
         'border-radius': '{radius}',
+        'box-shadow': '{shadow}',
+        'backdrop-filter': '{effect}',
       },
       group: { display: 'flex', 'flex-direction': 'column', gap: '6px' },
       label: { 'font-size': '14px', 'line-height': '20px', 'font-weight': '500', color: '{text}' },

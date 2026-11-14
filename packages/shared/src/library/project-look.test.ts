@@ -147,4 +147,36 @@ describe('project-look', () => {
       border: '1px solid #e5e7eb',
     });
   });
+
+  it('20. [TK-69] lookFromTheme applies style presets while preserving project primary color', () => {
+    const theme = makeTheme({
+      colors: [{ name: 'brand', value: '#e11d48', variable: '--color-brand' }],
+      radii: [{ name: 'radius', value: '10px', variable: '--radius' }],
+    });
+
+    const glass = lookFromTheme(theme, 'glass');
+    expect(glass.roles.effect?.tailwind).toContain('backdrop-blur-md');
+    expect(glass.roles.primary).toEqual({ tailwind: 'brand', css: 'var(--color-brand)' });
+    expect(
+      resolveCssRoles({ 'background-color': '{surface}', 'backdrop-filter': '{effect}' }, glass),
+    ).toEqual({
+      'backdrop-filter': 'blur(12px)',
+      'background-color': 'rgba(255, 255, 255, 0.6)',
+    });
+
+    const minimal = lookFromTheme(theme, 'minimal');
+    expect(minimal.roles.shadow?.tailwind).toBe('shadow-none');
+    expect(minimal.roles.radius?.tailwind).toBe('sm');
+    expect(minimal.roles.primary).toEqual({ tailwind: 'brand', css: 'var(--color-brand)' });
+    expect(resolveTailwindRoles('bg-{surface} rounded-{radius} {shadow} {effect}', minimal)).toBe(
+      'bg-white rounded-sm shadow-none',
+    );
+
+    const bold = lookFromTheme(theme, 'bold');
+    expect(bold.roles.shadow?.tailwind).toBe('shadow-xl');
+    expect(bold.roles.primary).toEqual({ tailwind: 'brand', css: 'var(--color-brand)' });
+    expect(
+      resolveTailwindRoles('px-4 py-2 bg-{primary} text-{on-primary} hover:bg-{primary}/90', bold),
+    ).toBe('px-4 py-2 bg-gradient-to-r from-brand to-brand/80 text-white hover:opacity-90');
+  });
 });

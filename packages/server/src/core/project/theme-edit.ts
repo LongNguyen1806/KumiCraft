@@ -273,6 +273,9 @@ function removeDeclarationLine(css: string, maskedCss: string, decl: Declaration
 }
 
 export function applyThemeEdit(css: string, edit: ThemeEdit): Result<string> {
+  if (edit.op === 'importFont') {
+    return err({ code: 'E016', params: { reason: 'unsupportedOp' } });
+  }
   if (edit.op !== 'remove' && !isValidThemeValue(edit.kind, edit.value)) {
     return err({ code: 'E016', params: { reason: 'invalidValue' } });
   }

@@ -4,7 +4,10 @@ import {
   LIBRARY_BLOCKS,
   type LibraryBlock,
   type LibraryBlockCategory,
+  type LibraryStyle,
   searchBlocks,
+  supportsUiKitBlock,
+  type UiKitReport,
 } from '@kumicraft/shared';
 import { createElement, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +18,7 @@ import { type ErrorInfo } from '../../routes/error-text.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { ImagePickerDialog } from '../draw/image-picker-dialog.tsx';
 import { insertImageFromSelection } from '../draw/insert-image.ts';
+import { useProjectStore } from '../project/project-store.ts';
 import { useEditMode } from '../project/use-edit-mode.ts';
 import { useStyleLayerSupported } from '../project/use-style-edit.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
@@ -22,6 +26,7 @@ import { useSelectionStore } from '../selection/selection-store.ts';
 import { insertBlock } from './insert-block.ts';
 import { getBlockIcon } from './library-icons.ts';
 import { LibrarySearchHeader } from './library-search-header.tsx';
+import { getSelectedStyle, setSelectedStyle } from './library-styles.ts';
 import { LibraryVariantMenu } from './library-variant-menu.tsx';
 import { getSelectedVariant, setSelectedVariant } from './library-variants.ts';
 
@@ -49,6 +54,7 @@ type BlockItemProps = {
   readonly disabled: boolean;
   /** Drag is disabled (e.g. view-only mode). */
   readonly dragDisabled?: boolean | undefined;
+  readonly uiKit?: UiKitReport | undefined;
   readonly onSelect: (block: LibraryBlock, variantId?: string) => void;
 };
 
@@ -75,13 +81,14 @@ function handleBlockDragEnd() {
  * A block is dragged onto the Canvas; only its + button inserts at the selection (R-LB-14). A click
  * on the block itself does nothing, so picking a block never changes the page by accident.
  */
-function BlockItem({ block, disabled, dragDisabled, onSelect }: BlockItemProps) {
+function BlockItem({ block, disabled, dragDisabled, uiKit, onSelect }: BlockItemProps) {
   const { t } = useTranslation('library');
   const rawKey = block.labelKey.replace(/^library:blocks\./, '');
   const label = isBlockKey(rawKey) ? t(`blocks.${rawKey}`) : block.id;
   const [selectedVariant, setSelectedVariantState] = useState<string | undefined>(() =>
     getSelectedVariant(block.id),
   );
+  const usesKit = supportsUiKitBlock(block.id, uiKit);
 
   const handleSelectVariant = (nextVariant: string | undefined) => {
     setSelectedVariant(block.id, nextVariant);
@@ -106,6 +113,14 @@ function BlockItem({ block, disabled, dragDisabled, onSelect }: BlockItemProps) 
       />
       <BlockIcon name={block.icon} className="size-[18px] text-ink-soft" />
       <span className="max-w-full text-[11px] leading-tight break-words text-ink">{label}</span>
+      {usesKit && (
+        <span
+          data-testid={`library-kit-badge-${block.id}`}
+          className="rounded bg-accent/10 px-1 py-0.5 text-[9px] leading-none font-medium text-accent"
+        >
+          {t('fromProject')}
+        </span>
+      )}
       <InsertButton
         testId={`library-add-${block.id}`}
         label={t('add', { name: label })}
@@ -123,6 +138,7 @@ type CategorySectionProps = {
   readonly blocks: readonly LibraryBlock[];
   readonly disabled: boolean;
   readonly dragDisabled?: boolean | undefined;
+  readonly uiKit?: UiKitReport | undefined;
   readonly onSelect: (block: LibraryBlock, variantId?: string) => void;
 };
 
@@ -131,6 +147,7 @@ function CategorySection({
   blocks,
   disabled,
   dragDisabled,
+  uiKit,
   onSelect,
 }: CategorySectionProps) {
   const { t } = useTranslation('library');
@@ -144,6 +161,7 @@ function CategorySection({
             block={block}
             disabled={disabled}
             dragDisabled={dragDisabled}
+            uiKit={uiKit}
             onSelect={onSelect}
           />
         ))}
@@ -200,6 +218,7 @@ type LibraryCategoriesProps = {
   readonly blocks: readonly LibraryBlock[];
   readonly disabled: boolean;
   readonly dragDisabled?: boolean | undefined;
+  readonly uiKit?: UiKitReport | undefined;
   readonly onSelect: (block: LibraryBlock, variantId?: string) => void;
 };
 
@@ -208,6 +227,7 @@ function LibraryCategories({
   blocks,
   disabled,
   dragDisabled,
+  uiKit,
   onSelect,
 }: LibraryCategoriesProps) {
   return (
@@ -219,6 +239,7 @@ function LibraryCategories({
           blocks={blocks.filter((b) => b.category === cat)}
           disabled={disabled}
           dragDisabled={dragDisabled}
+          uiKit={uiKit}
           onSelect={onSelect}
         />
       ))}
@@ -248,6 +269,7 @@ function LibraryContent({
   inserting,
   disabled,
   dragDisabled,
+  uiKit,
   onSelect,
 }: {
   readonly editable: boolean;
@@ -257,6 +279,7 @@ function LibraryContent({
   readonly inserting: boolean;
   readonly disabled?: boolean | undefined;
   readonly dragDisabled?: boolean | undefined;
+  readonly uiKit?: UiKitReport | undefined;
   readonly onSelect: (block: LibraryBlock, variantId?: string) => void;
 }) {
   if (!editable) return <LibraryUnsupportedNotice />;
@@ -266,14 +289,27 @@ function LibraryContent({
       blocks={visibleBlocks}
       disabled={disabled ?? (!hasSelection || inserting)}
       dragDisabled={dragDisabled}
+      uiKit={uiKit}
       onSelect={onSelect}
     />
   );
 }
 
 function useLibraryPanelState() {
+  const project = useProjectStore((s) => s.project);
+  const projectId = project?.id;
   const [query, setQuery] = useState('');
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const [styleChoice, setStyleChoice] = useState<{
+    readonly projectId: string | undefined;
+    readonly value: LibraryStyle;
+  }>(() => ({ projectId, value: getSelectedStyle(projectId) }));
+  const style =
+    styleChoice.projectId === projectId ? styleChoice.value : getSelectedStyle(projectId);
+  const handleStyleChange = (next: LibraryStyle) => {
+    setSelectedStyle(projectId, next);
+    setStyleChoice({ projectId, value: next });
+  };
   const editable = useStyleLayerSupported();
   const editMode = useEditMode();
   const selectedRefs = useSelectionStore((s) => s.selectedRefs);
@@ -288,6 +324,9 @@ function useLibraryPanelState() {
   return {
     query,
     setQuery,
+    style,
+    handleStyleChange,
+    uiKit: project?.support.uiKit,
     imagePickerOpen,
     setImagePickerOpen,
     editable,
@@ -316,6 +355,8 @@ export function LibraryPanel() {
         onOpenImagePicker={() => {
           s.setImagePickerOpen(true);
         }}
+        style={s.style}
+        onStyleChange={s.handleStyleChange}
         errorInfo={s.insert.errorInfo}
       />
 
@@ -327,6 +368,7 @@ export function LibraryPanel() {
         inserting={s.insert.inserting}
         disabled={!s.hasSelection || s.insert.inserting || s.isViewOnly}
         dragDisabled={s.isViewOnly}
+        uiKit={s.uiKit}
         onSelect={(b, variantId) => {
           void s.insert.handleInsert(b, variantId);
         }}

@@ -1,21 +1,21 @@
 import {
-  type StyleSystemId,
   THEME_TOKEN_NAME,
+  type ThemeEdit,
   type ThemeInfo,
   type ThemeToken,
   type ThemeTokenKind,
-  tokenFileExtensions,
 } from '@kumicraft/shared';
 import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { editTheme, fetchThemeUsage, patchProject } from '../../api/project-client.ts';
+import { editTheme, fetchThemeUsage } from '../../api/project-client.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
-import { FolderPicker } from '../files/folder-picker.tsx';
 import { useHistoryStore } from '../history/history-store.ts';
 import { useProjectTheme, useThemeStore } from '../inspector/use-project-theme.ts';
-import { useProjectInfo, useProjectStore } from '../project/project-store.ts';
+import { BrandFontPairsPanel } from './brand-font-pairs.tsx';
+import { BrandHeader } from './brand-header.tsx';
+import { BrandPalettePanel } from './brand-palette.tsx';
 import { BrandTokenRow } from './brand-token-row.tsx';
 
 function formatBrandError(err: unknown, tErrors: TFunction<'errors'>): string {
@@ -116,6 +116,7 @@ interface BrandGroupSectionProps {
   readonly onCommitValue: (kind: ThemeTokenKind, name: string, value: string) => Promise<boolean>;
   readonly onRequestRemove: (kind: ThemeTokenKind, name: string) => Promise<number | undefined>;
   readonly onConfirmRemove: (kind: ThemeTokenKind, name: string) => Promise<void>;
+  readonly extraAction?: React.ReactNode | undefined;
 }
 
 function BrandGroupSection(props: BrandGroupSectionProps) {
@@ -133,6 +134,7 @@ function BrandGroupSection(props: BrandGroupSectionProps) {
           {t('brand.add')}
         </button>
       </div>
+      {props.extraAction}
       {props.isAdding && (
         <AddTokenForm kind={props.kind} onSubmit={props.onAddToken} onCancel={props.onCancelAdd} />
       )}
@@ -169,20 +171,20 @@ function getGroupConfigs(
   ];
 }
 
-async function runBrandEdit(
+async function applyBrandEdit(
   edit: Parameters<typeof editTheme>[0],
   tErrors: TFunction<'errors'>,
   setErrorMsg: (msg: string | undefined) => void,
-): Promise<boolean> {
+): Promise<ThemeInfo | undefined> {
   try {
     const updated = await editTheme(edit);
     useThemeStore.getState().setTheme(updated);
     void useHistoryStore.getState().load();
     setErrorMsg(undefined);
-    return true;
+    return updated;
   } catch (err) {
     setErrorMsg(formatBrandError(err, tErrors));
-    return false;
+    return undefined;
   }
 }
 
@@ -190,21 +192,24 @@ function useBrandActions(t: TFunction, tErrors: TFunction<'errors'>) {
   const [addingKind, setAddingKind] = useState<ThemeTokenKind | undefined>(undefined);
   const [errorMsg, setErrorMsg] = useState<string | undefined>(undefined);
 
-  const onCommitValue = (kind: ThemeTokenKind, name: string, value: string) =>
-    runBrandEdit({ op: 'set', kind, name, value }, tErrors, setErrorMsg);
+  const onApplyEdit = (edit: Parameters<typeof editTheme>[0]) =>
+    applyBrandEdit(edit, tErrors, setErrorMsg);
+
+  const onCommitValue = async (kind: ThemeTokenKind, name: string, value: string) =>
+    (await onApplyEdit({ op: 'set', kind, name, value })) !== undefined;
 
   const onAddToken = async (kind: ThemeTokenKind, name: string, value: string) => {
     if (!THEME_TOKEN_NAME.test(name)) {
       setErrorMsg(t('brand.invalidName'));
       return false;
     }
-    const ok = await runBrandEdit({ op: 'add', kind, name, value }, tErrors, setErrorMsg);
+    const ok = (await onApplyEdit({ op: 'add', kind, name, value })) !== undefined;
     if (ok) setAddingKind(undefined);
     return ok;
   };
 
   const onConfirmRemove = async (kind: ThemeTokenKind, name: string) => {
-    await runBrandEdit({ op: 'remove', kind, name }, tErrors, setErrorMsg);
+    await onApplyEdit({ op: 'remove', kind, name });
   };
 
   const onRequestRemove = async (kind: ThemeTokenKind, name: string) => {
@@ -223,6 +228,7 @@ function useBrandActions(t: TFunction, tErrors: TFunction<'errors'>) {
     setAddingKind,
     errorMsg,
     setErrorMsg,
+    onApplyEdit,
     onCommitValue,
     onAddToken,
     onConfirmRemove,
@@ -230,111 +236,18 @@ function useBrandActions(t: TFunction, tErrors: TFunction<'errors'>) {
   };
 }
 
-async function updateTokenFile(
-  project: ReturnType<typeof useProjectInfo>,
-  tokenFile: string | undefined,
+function renderGroupExtra(
+  kind: ThemeTokenKind,
+  theme: ThemeInfo,
+  onApplyEdit: (edit: ThemeEdit) => Promise<ThemeInfo | undefined>,
 ) {
-  try {
-    const info = await patchProject({
-      styleFiles: { ...project?.styleFiles, tokenFile },
-    });
-    useProjectStore.getState().setProject(info);
-    void useThemeStore.getState().load();
-  } catch {
-    // Ignore errors
+  if (kind === 'color') {
+    return <BrandPalettePanel existingColors={theme.colors} onApplyEdit={onApplyEdit} />;
   }
-}
-
-function BrandAutoButton({ project }: { readonly project: ReturnType<typeof useProjectInfo> }) {
-  const { t } = useTranslation();
-  return (
-    <button
-      type="button"
-      data-testid="brand-auto-file"
-      onClick={() => {
-        void updateTokenFile(project, undefined);
-      }}
-      className="h-6 rounded-md border border-line bg-card-solid px-1.5 text-[11px] text-ink-soft hover:bg-field hover:text-ink"
-    >
-      {t('brand.autoTokenFile')}
-    </button>
-  );
-}
-
-function BrandFileSelector({
-  system,
-  file,
-  project,
-}: {
-  readonly system: StyleSystemId;
-  readonly file: string;
-  readonly project: ReturnType<typeof useProjectInfo>;
-}) {
-  const { t } = useTranslation();
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const hasCustom = Boolean(project?.styleFiles?.tokenFile);
-  const extensions = tokenFileExtensions(system);
-
-  return (
-    <>
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          data-testid="brand-change-file"
-          onClick={() => {
-            setPickerOpen(true);
-          }}
-          className="h-6 rounded-md border border-line bg-card-solid px-1.5 text-[11px] text-ink hover:bg-field"
-        >
-          {t('brand.changeTokenFile')}
-        </button>
-        {hasCustom && <BrandAutoButton project={project} />}
-      </div>
-      {pickerOpen && (
-        <FolderPicker
-          open={pickerOpen}
-          mode="file"
-          extensions={extensions}
-          initial={file}
-          onPick={(p) => {
-            void updateTokenFile(project, p);
-          }}
-          onClose={() => {
-            setPickerOpen(false);
-          }}
-        />
-      )}
-    </>
-  );
-}
-
-type BrandHeaderProps = {
-  readonly system: StyleSystemId;
-  readonly file: string;
-};
-
-function BrandHeader({ system, file }: BrandHeaderProps) {
-  const { t } = useTranslation();
-  const project = useProjectInfo();
-
-  return (
-    <div
-      data-testid="brand-header"
-      className="flex flex-col gap-1 border-b border-border pb-2 text-xs"
-    >
-      <div className="flex items-center justify-between">
-        <span className="font-semibold text-ink" data-testid="brand-system-name">
-          {t(`brand.system.${system}`, { defaultValue: system })}
-        </span>
-        {system !== 'tailwind3' && (
-          <BrandFileSelector system={system} file={file} project={project} />
-        )}
-      </div>
-      <span className="font-mono text-ink-faint" data-testid="brand-file-path">
-        {file}
-      </span>
-    </div>
-  );
+  if (kind === 'font') {
+    return <BrandFontPairsPanel existingFonts={theme.fonts} onApplyEdit={onApplyEdit} />;
+  }
+  return undefined;
 }
 
 export function BrandPanel() {
@@ -369,6 +282,7 @@ export function BrandPanel() {
           title={group.title}
           tokens={group.tokens}
           isAdding={actions.addingKind === group.kind}
+          extraAction={renderGroupExtra(group.kind, theme, actions.onApplyEdit)}
           onStartAdd={() => {
             actions.setErrorMsg(undefined);
             actions.setAddingKind(group.kind);

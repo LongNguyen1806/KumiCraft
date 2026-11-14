@@ -1,8 +1,10 @@
 // Pure block renderer translating a LibraryBlock into target style system JSX + CSS rules (R-LB-11, R-ST-12, TK-43, TK-47).
+import type { UiKitReport } from '../project.ts';
 import type { StyleSystemId } from '../style.ts';
 import { v4ToV3Classes } from '../tailwind/v3-names.ts';
 import { type ProjectLook, resolveCssRoles, resolveTailwindRoles } from './project-look.ts';
 import type { LibraryBlock, NeutralBlock } from './types.ts';
+import { renderWithUiKit } from './ui-kit-blocks.ts';
 
 export type RenderedCssRule = {
   readonly selector: string;
@@ -13,6 +15,8 @@ export type RenderedBlock = {
   readonly jsx: string;
   /** Rule CSS cần thêm (chỉ hệ CSS thường, CSS Modules, Sass, Less, hoặc fallback của Bootstrap), mỗi rule `.kc-…{…}`. */
   readonly rules: readonly RenderedCssRule[];
+  readonly imports?: readonly string[];
+  readonly usedUiKit?: boolean;
 };
 
 const CLASS_ATTR_RE = /className="([^"]*)"/g;
@@ -83,10 +87,31 @@ export function renderBlock(
   lang: 'vi' | 'en',
   look?: ProjectLook,
   variantId?: string,
+  uiKit?: UiKitReport,
 ): RenderedBlock {
   const activeLook = look ?? EMPTY_LOOK;
   const variant =
     variantId !== undefined ? block.variants?.find((v) => v.id === variantId) : undefined;
+  const isTailwindSystem = system === undefined || system === 'tailwind4' || system === 'tailwind3';
+  if (isTailwindSystem) {
+    const kitRendered = renderWithUiKit(
+      block.id,
+      uiKit,
+      lang,
+      activeLook,
+      variant?.id,
+      system === 'tailwind3',
+    );
+    if (kitRendered !== undefined) {
+      return {
+        jsx: kitRendered.jsx,
+        rules: [],
+        imports: kitRendered.imports,
+        usedUiKit: true,
+      };
+    }
+  }
+
   const rawJsx = variant !== undefined ? variant.jsx[lang] : block.jsx[lang];
   const neutral = variant !== undefined ? variant.neutral : block.neutral;
 

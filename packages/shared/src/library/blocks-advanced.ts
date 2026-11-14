@@ -64,7 +64,7 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
     },
     icon: 'FormInput',
     jsx: {
-      vi: `<form className="space-y-4 p-6 bg-{surface} border border-{border} rounded-{radius} shadow-sm">
+      vi: `<form className="space-y-4 p-6 bg-{surface} border border-{border} rounded-{radius} {shadow} {effect}">
   <div className="flex flex-col gap-1.5">
     <label className="text-sm font-medium text-{text}">
       Email
@@ -75,7 +75,7 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
     Gửi thông tin
   </button>
 </form>`,
-      en: `<form className="space-y-4 p-6 bg-{surface} border border-{border} rounded-{radius} shadow-sm">
+      en: `<form className="space-y-4 p-6 bg-{surface} border border-{border} rounded-{radius} {shadow} {effect}">
   <div className="flex flex-col gap-1.5">
     <label className="text-sm font-medium text-{text}">
       Email
@@ -148,7 +148,7 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
     },
     icon: 'CreditCard',
     jsx: {
-      vi: `<div className="min-w-0 p-6 bg-{surface} border border-{border} rounded-{radius} shadow-sm">
+      vi: `<div className="min-w-0 p-6 bg-{surface} border border-{border} rounded-{radius} {shadow} {effect}">
   <h3 className="text-lg font-semibold font-{heading} text-{text} mb-2">
     Tiêu đề thẻ
   </h3>
@@ -159,7 +159,7 @@ export const ADVANCED_BLOCKS: readonly LibraryBlock[] = [
     Xem chi tiết
   </button>
 </div>`,
-      en: `<div className="min-w-0 p-6 bg-{surface} border border-{border} rounded-{radius} shadow-sm">
+      en: `<div className="min-w-0 p-6 bg-{surface} border border-{border} rounded-{radius} {shadow} {effect}">
   <h3 className="text-lg font-semibold font-{heading} text-{text} mb-2">
     Card Title
   </h3>

@@ -1,5 +1,8 @@
-// Project look roles: maps project ThemeInfo tokens to Tailwind classes and CSS values (TK-43).
+// Pure resolver mapping a project's theme tokens and style preset to library block roles (TK-43, TK-69).
 import type { ThemeInfo, ThemeToken } from '../project.ts';
+
+export const LIBRARY_STYLES = ['default', 'minimal', 'soft', 'glass', 'bold'] as const;
+export type LibraryStyle = (typeof LIBRARY_STYLES)[number];
 
 export const LOOK_ROLES = [
   'primary',
@@ -11,6 +14,8 @@ export const LOOK_ROLES = [
   'border',
   'radius',
   'heading',
+  'shadow',
+  'effect',
 ] as const;
 
 export type LookRole = (typeof LOOK_ROLES)[number];
@@ -22,6 +27,7 @@ export type LookValue = {
 
 export type ProjectLook = {
   readonly roles: Readonly<Partial<Record<LookRole, LookValue>>>;
+  readonly style?: LibraryStyle;
 };
 
 const DEFAULT_VALUES: Readonly<Partial<Record<LookRole, LookValue>>> = {
@@ -33,79 +39,128 @@ const DEFAULT_VALUES: Readonly<Partial<Record<LookRole, LookValue>>> = {
   muted: { tailwind: 'gray-600', css: '#4b5563' },
   border: { tailwind: 'gray-200', css: '#e5e7eb' },
   radius: { tailwind: 'lg', css: '8px' },
+  shadow: { tailwind: 'shadow-sm', css: '0 1px 2px rgba(0, 0, 0, 0.05)' },
 };
+
+const GLASS_EFFECT: LookValue = {
+  tailwind: 'bg-white/60 backdrop-blur-md border-white/40',
+  css: 'blur(12px)',
+};
+
+const GLASS_CSS_BG = 'rgba(255, 255, 255, 0.6)';
+
+const STYLE_OVERRIDES: Readonly<Record<LibraryStyle, Partial<Record<LookRole, LookValue>>>> = {
+  default: {},
+  minimal: {
+    shadow: { tailwind: 'shadow-none', css: 'none' },
+    radius: { tailwind: 'sm', css: '4px' },
+  },
+  soft: {
+    shadow: { tailwind: 'shadow-sm', css: '0 2px 8px rgba(0, 0, 0, 0.08)' },
+    radius: { tailwind: 'xl', css: '16px' },
+  },
+  glass: {
+    shadow: { tailwind: 'shadow-lg', css: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' },
+    radius: { tailwind: 'xl', css: '16px' },
+    effect: GLASS_EFFECT,
+  },
+  bold: {
+    shadow: { tailwind: 'shadow-xl', css: '0 20px 25px -5px rgba(0, 0, 0, 0.15)' },
+    radius: { tailwind: 'lg', css: '8px' },
+  },
+};
+
+type TokenBucket = 'colors' | 'radii' | 'fonts' | 'shadows';
 
 const ROLE_LOOKUP: Readonly<
-  Record<
-    LookRole,
-    { readonly bucket: 'colors' | 'radii' | 'fonts'; readonly names: readonly string[] }
-  >
+  Partial<Record<LookRole, { readonly bucket: TokenBucket; readonly names: readonly string[] }>>
 > = {
-  primary: { bucket: 'colors', names: ['primary', 'brand', 'accent', 'main'] },
+  primary: { bucket: 'colors', names: ['primary', 'brand', 'accent'] },
   'on-primary': {
     bucket: 'colors',
-    names: ['primary-foreground', 'on-primary', 'primary-contrast'],
+    names: ['primary-foreground', 'on-primary', 'brand-foreground'],
   },
-  surface: { bucket: 'colors', names: ['background', 'surface', 'card', 'paper'] },
+  surface: { bucket: 'colors', names: ['surface', 'background', 'bg', 'card'] },
   'surface-muted': {
     bucket: 'colors',
-    names: ['muted', 'secondary', 'surface-muted', 'subtle-bg'],
+    names: ['surface-muted', 'muted', 'secondary', 'subtle'],
   },
-  text: { bucket: 'colors', names: ['foreground', 'text', 'ink', 'body', 'heading'] },
-  muted: {
-    bucket: 'colors',
-    names: ['muted-foreground', 'text-muted', 'subtle', 'secondary-foreground'],
-  },
-  border: { bucket: 'colors', names: ['border', 'line', 'divider', 'outline'] },
-  radius: { bucket: 'radii', names: ['DEFAULT', 'radius', 'md', 'lg', 'base'] },
-  heading: { bucket: 'fonts', names: ['heading', 'display', 'title'] },
+  text: { bucket: 'colors', names: ['foreground', 'text', 'ink'] },
+  muted: { bucket: 'colors', names: ['muted-foreground', 'text-muted', 'muted'] },
+  border: { bucket: 'colors', names: ['border', 'line', 'stroke'] },
+  radius: { bucket: 'radii', names: ['radius', 'md', 'DEFAULT', 'lg'] },
+  heading: { bucket: 'fonts', names: ['heading', 'display', 'sans'] },
+  shadow: { bucket: 'shadows', names: ['card', 'md', 'sm', 'DEFAULT'] },
 };
 
-const ROLE_RE = /\{([a-zA-Z0-9_-]+)\}/g;
+const ROLE_RE = /\{([a-z-]+)\}/g;
 
-export function isLookRole(name: string): name is LookRole {
+function isLookRole(name: string): name is LookRole {
   return (LOOK_ROLES as readonly string[]).includes(name);
 }
 
 function findMatchingToken(
   tokens: readonly ThemeToken[],
   candidates: readonly string[],
-  ownOnly: boolean,
+  ownOnly = false,
 ): ThemeToken | undefined {
-  // A framework's built-in scale (Tailwind 3 `DEFAULT`/`md`, Bootstrap defaults) is not the
-  // project's look: radii must be ones the project set itself, or the default `lg` is lost.
-  const pool = ownOnly ? tokens.filter((t) => t.inherited !== true) : tokens;
-  for (const candidate of candidates) {
-    const target = candidate.toLowerCase();
-    const match = pool.find((t) => t.name.toLowerCase() === target);
+  for (const name of candidates) {
+    const match = tokens.find(
+      (token) => token.name.toLowerCase() === name.toLowerCase() && (!ownOnly || !token.inherited),
+    );
     if (match !== undefined) return match;
   }
   return undefined;
 }
 
 function toLookValue(token: ThemeToken): LookValue {
-  const css =
-    token.variable !== undefined && token.variable.startsWith('--')
-      ? `var(${token.variable})`
-      : token.value;
-  return { tailwind: token.name, css };
+  return {
+    tailwind: token.name,
+    css:
+      token.variable !== undefined && token.variable.length > 0
+        ? `var(${token.variable})`
+        : token.value,
+  };
 }
 
-/** Derives role values from project theme tokens; omitted roles fall back to built-in defaults. */
-export function lookFromTheme(theme: ThemeInfo | undefined): ProjectLook {
-  if (theme === undefined) return { roles: {} };
+/** Builds semantic role values from a project's theme and optional library style preset. */
+export function lookFromTheme(theme: ThemeInfo | undefined, style?: LibraryStyle): ProjectLook {
   const roles: Partial<Record<LookRole, LookValue>> = {};
-  for (const role of LOOK_ROLES) {
-    const spec = ROLE_LOOKUP[role];
-    const token = findMatchingToken(theme[spec.bucket], spec.names, spec.bucket === 'radii');
-    if (token !== undefined) {
-      roles[role] = toLookValue(token);
+  if (theme !== undefined) {
+    for (const role of LOOK_ROLES) {
+      const spec = ROLE_LOOKUP[role];
+      if (spec === undefined) continue;
+      const ownOnly = spec.bucket === 'radii' || spec.bucket === 'shadows';
+      const token = findMatchingToken(theme[spec.bucket], spec.names, ownOnly);
+      if (token !== undefined) {
+        roles[role] = toLookValue(token);
+      }
     }
+  }
+  if (style !== undefined && style !== 'default') {
+    const overrides = STYLE_OVERRIDES[style];
+    for (const role of LOOK_ROLES) {
+      const next = overrides[role];
+      if (next !== undefined) {
+        roles[role] = next;
+      }
+    }
+    return { roles, style };
   }
   return { roles };
 }
 
 function resolveTailwindToken(token: string, look: ProjectLook): string | undefined {
+  if (look.style === 'bold') {
+    const primary = look.roles.primary?.tailwind ?? DEFAULT_VALUES.primary?.tailwind;
+    if (token === 'bg-{primary}' && primary !== undefined) {
+      return `bg-gradient-to-r from-${primary} to-${primary}/80`;
+    }
+    if (token === 'hover:bg-{primary}/90') {
+      return 'hover:opacity-90';
+    }
+  }
+
   const matches = Array.from(token.matchAll(ROLE_RE));
   if (matches.length === 0) return token;
   let replaced = token;
@@ -122,14 +177,19 @@ function resolveTailwindToken(token: string, look: ProjectLook): string | undefi
   return replaced;
 }
 
-/** Replaces `{role}` tokens inside a Tailwind class list; drops `font-{heading}` when unset. */
+/** Replaces `{role}` tokens inside a Tailwind class list; drops unset roles cleanly. */
 export function resolveTailwindRoles(classes: string, look: ProjectLook): string {
-  if (!classes.includes('{')) return classes;
+  const needsBold = look.style === 'bold' && classes.includes('bg-{primary}');
+  if (!classes.includes('{') && !needsBold) return classes;
   const parts = classes.trim().split(/\s+/);
+  const isBoldPrimaryButton =
+    needsBold && parts.includes('bg-{primary}') && parts.includes('hover:bg-{primary}/90');
+  const activeLook = isBoldPrimaryButton ? look : { roles: look.roles };
+
   const out: string[] = [];
   for (const part of parts) {
     if (part.length === 0) continue;
-    const resolved = resolveTailwindToken(part, look);
+    const resolved = resolveTailwindToken(part, activeLook);
     if (resolved !== undefined && resolved.length > 0) {
       out.push(resolved);
     }
@@ -151,7 +211,7 @@ function resolveCssValue(rawValue: string, look: ProjectLook): string | undefine
   return resolved;
 }
 
-/** Replaces `{role}` tokens inside CSS declarations; drops declarations using unset `{heading}`. */
+/** Replaces `{role}` tokens inside CSS declarations; applies translucent bg with `{effect}`. */
 export function resolveCssRoles(
   decls: Readonly<Record<string, string>>,
   look: ProjectLook,
@@ -161,6 +221,13 @@ export function resolveCssRoles(
     const resolved = resolveCssValue(rawValue, look);
     if (resolved !== undefined) {
       result[prop] = resolved;
+      if (
+        prop === 'backdrop-filter' &&
+        rawValue === '{effect}' &&
+        look.roles.effect !== undefined
+      ) {
+        result['background-color'] = GLASS_CSS_BG;
+      }
     }
   }
   return result;

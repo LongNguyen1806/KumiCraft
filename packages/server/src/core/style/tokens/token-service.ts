@@ -10,12 +10,13 @@ import type {
   ThemeTokenKind,
   ThemeUsage,
 } from '@kumicraft/shared';
-import { err, ok } from '@kumicraft/shared';
+import { err, googleFontsImportUrl, ok } from '@kumicraft/shared';
 
 import { computeSha256, type HistoryService } from '../../history/history-service.ts';
 import type { FileSystemPort } from '../../ports/file-system-port.ts';
 import { withFileLocks } from '../../project/page-common.ts';
 import type { ProjectServiceDeps } from '../../project/project-types.ts';
+import { planFontImport } from './font-import.ts';
 import { getBucketForKind } from './token-buckets.ts';
 import { bootstrapAdapter } from './tokens-bootstrap.ts';
 import { cssAdapter } from './tokens-css.ts';
@@ -85,13 +86,15 @@ export function pushThemeHistory(
   if (!isFullHistoryService(history)) return;
   const beforeHash = computeSha256(before);
   const afterHash = computeSha256(after);
+  const labelName = edit.op === 'importFont' ? edit.families.join(', ') : edit.name;
   history.push({
-    label: { key: 'history:theme', params: { op: edit.op, name: edit.name } },
+    label: { key: 'history:theme', params: { op: edit.op, name: labelName } },
     files: [{ path: cssPath, before, beforeHash, after, afterHash }],
   });
 }
 
 function verifyThemeTokens(theme: ThemeInfo, edit: ThemeEdit): boolean {
+  if (edit.op === 'importFont') return true;
   const bucket = getBucketForKind(theme, edit.kind);
   if (edit.op === 'remove') {
     const existing = bucket.find((token) => token.name === edit.name);
@@ -127,26 +130,40 @@ export async function editTokens(
   edit: ThemeEdit,
 ): Promise<Result<ThemeInfo>> {
   const adapter = adapterFor(primary, files);
-  if (adapter === undefined) {
+  if (adapter === undefined && edit.op !== 'importFont') {
     return err({ code: 'E021', params: { missing: 'styleAdapter' } });
   }
 
+  const planOnce = (): ReturnType<TokenAdapter['plan']> => {
+    if (edit.op === 'importFont') {
+      return planFontImport(deps.fs, files, edit);
+    }
+    if (adapter === undefined) {
+      return Promise.resolve(err({ code: 'E021', params: { missing: 'styleAdapter' } }));
+    }
+    return adapter.plan(deps.fs, files, edit);
+  };
+
   // The first plan only names the file to lock; the edit is planned again under the lock so a
   // save from the editor in between is never overwritten (R-TH-11).
-  const located = await adapter.plan(deps.fs, files, edit);
+  const located = await planOnce();
   if (!located.ok) return located;
 
   return withFileLocks(files.root, [located.value.file], async () => {
-    const planned = await adapter.plan(deps.fs, files, edit);
+    const planned = await planOnce();
     if (!planned.ok) return planned;
     const { file: targetFile, before, after } = planned.value;
     if (targetFile !== located.value.file) return err({ code: 'E024' });
+    if (edit.op === 'importFont' && before === after) {
+      return readTokens(deps, files, primary);
+    }
     recordWrite(deps.history, targetFile, after);
     const written = await deps.fs.writeTextAtomic(files.root, targetFile, after);
     if (!written.ok) return written;
 
-    const verified = await adapter.read(deps.fs, files);
-    if (!verified.ok || !verifyThemeTokens(verified.value, edit)) {
+    const verified = await readTokens(deps, files, primary);
+    const fontOk = edit.op !== 'importFont' || after.includes(googleFontsImportUrl(edit.families));
+    if (!verified.ok || !verifyThemeTokens(verified.value, edit) || !fontOk) {
       recordWrite(deps.history, targetFile, before);
       await deps.fs.writeTextAtomic(files.root, targetFile, before);
       return err({ code: 'E024' });

@@ -14,6 +14,8 @@ export const NEUTRAL_COMPOSITE_BLOCKS = {
         'background-color': '{surface}',
         border: '1px solid {border}',
         'border-radius': '{radius}',
+        'box-shadow': '{shadow}',
+        'backdrop-filter': '{effect}',
       },
       title: {
         'font-size': '18px',

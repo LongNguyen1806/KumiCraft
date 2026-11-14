@@ -73,8 +73,8 @@ export const CARD_VARIANTS: readonly LibraryBlockVariant[] = [
     id: 'flat',
     labelKey: 'library:variants.flat',
     jsx: {
-      vi: `<div className="min-w-0 p-6 bg-{surface-muted} rounded-{radius}">\n  <h3 className="text-lg font-semibold font-{heading} text-{text} mb-2">\n    Tiêu đề thẻ\n  </h3>\n  <p className="text-sm text-{muted} mb-4">\n    Nội dung mô tả ngắn gọn giúp người dùng hiểu thông tin chính của thẻ này.\n  </p>\n  <button type="button" className="text-sm font-medium text-{primary} hover:underline">\n    Xem chi tiết\n  </button>\n</div>`,
-      en: `<div className="min-w-0 p-6 bg-{surface-muted} rounded-{radius}">\n  <h3 className="text-lg font-semibold font-{heading} text-{text} mb-2">\n    Card Title\n  </h3>\n  <p className="text-sm text-{muted} mb-4">\n    A short description helping the user understand the primary card details.\n  </p>\n  <button type="button" className="text-sm font-medium text-{primary} hover:underline">\n    View details\n  </button>\n</div>`,
+      vi: `<div className="min-w-0 p-6 bg-{surface-muted} rounded-{radius} {effect}">\n  <h3 className="text-lg font-semibold font-{heading} text-{text} mb-2">\n    Tiêu đề thẻ\n  </h3>\n  <p className="text-sm text-{muted} mb-4">\n    Nội dung mô tả ngắn gọn giúp người dùng hiểu thông tin chính của thẻ này.\n  </p>\n  <button type="button" className="text-sm font-medium text-{primary} hover:underline">\n    Xem chi tiết\n  </button>\n</div>`,
+      en: `<div className="min-w-0 p-6 bg-{surface-muted} rounded-{radius} {effect}">\n  <h3 className="text-lg font-semibold font-{heading} text-{text} mb-2">\n    Card Title\n  </h3>\n  <p className="text-sm text-{muted} mb-4">\n    A short description helping the user understand the primary card details.\n  </p>\n  <button type="button" className="text-sm font-medium text-{primary} hover:underline">\n    View details\n  </button>\n</div>`,
     },
     neutral: CARD_NEUTRAL_VARIANTS.flat,
   },
@@ -82,8 +82,8 @@ export const CARD_VARIANTS: readonly LibraryBlockVariant[] = [
     id: 'elevated',
     labelKey: 'library:variants.elevated',
     jsx: {
-      vi: `<div className="min-w-0 p-6 bg-{surface} border border-{border} rounded-{radius} shadow-md">\n  <h3 className="text-lg font-semibold font-{heading} text-{text} mb-2">\n    Tiêu đề thẻ\n  </h3>\n  <p className="text-sm text-{muted} mb-4">\n    Nội dung mô tả ngắn gọn giúp người dùng hiểu thông tin chính của thẻ này.\n  </p>\n  <button type="button" className="text-sm font-medium text-{primary} hover:underline">\n    Xem chi tiết\n  </button>\n</div>`,
-      en: `<div className="min-w-0 p-6 bg-{surface} border border-{border} rounded-{radius} shadow-md">\n  <h3 className="text-lg font-semibold font-{heading} text-{text} mb-2">\n    Card Title\n  </h3>\n  <p className="text-sm text-{muted} mb-4">\n    A short description helping the user understand the primary card details.\n  </p>\n  <button type="button" className="text-sm font-medium text-{primary} hover:underline">\n    View details\n  </button>\n</div>`,
+      vi: `<div className="min-w-0 p-6 bg-{surface} border border-{border} rounded-{radius} {shadow} {effect}">\n  <h3 className="text-lg font-semibold font-{heading} text-{text} mb-2">\n    Tiêu đề thẻ\n  </h3>\n  <p className="text-sm text-{muted} mb-4">\n    Nội dung mô tả ngắn gọn giúp người dùng hiểu thông tin chính của thẻ này.\n  </p>\n  <button type="button" className="text-sm font-medium text-{primary} hover:underline">\n    Xem chi tiết\n  </button>\n</div>`,
+      en: `<div className="min-w-0 p-6 bg-{surface} border border-{border} rounded-{radius} {shadow} {effect}">\n  <h3 className="text-lg font-semibold font-{heading} text-{text} mb-2">\n    Card Title\n  </h3>\n  <p className="text-sm text-{muted} mb-4">\n    A short description helping the user understand the primary card details.\n  </p>\n  <button type="button" className="text-sm font-medium text-{primary} hover:underline">\n    View details\n  </button>\n</div>`,
     },
     neutral: CARD_NEUTRAL_VARIANTS.elevated,
   },

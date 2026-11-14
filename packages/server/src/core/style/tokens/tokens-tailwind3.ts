@@ -214,6 +214,9 @@ function applyAddToken(
 }
 
 function planParsedEdit(parsed: ParsedConfig, edit: ThemeEdit): Result<string> {
+  if (edit.op === 'importFont') {
+    return err({ code: 'E016', params: { reason: 'unsupportedOp' } });
+  }
   if (!parsed.configObj) {
     return err({ code: 'E021', params: { missing: 'styleAdapter' } });
   }
