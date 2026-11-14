@@ -21,10 +21,18 @@ describe('searchBlocks [R-LB-13]', () => {
     expect(emptyRes).toHaveLength(0);
   });
 
-  it('returns all 19 blocks when query is empty', () => {
+  it('returns all 70 blocks when query is empty', () => {
     const all = searchBlocks('');
-    expect(all).toHaveLength(19);
+    expect(all).toHaveLength(70);
     expect(all).toEqual(LIBRARY_BLOCKS);
+  });
+
+  it('matches accent-normalized queries and synonyms with screen.login and landing.pricing ranked first', () => {
+    expect(searchBlocks('dang nhap')[0]?.id).toBe('screen.login');
+    expect(searchBlocks('đăng nhập')[0]?.id).toBe('screen.login');
+    expect(searchBlocks('login')[0]?.id).toBe('screen.login');
+    expect(searchBlocks('gia')[0]?.id).toBe('landing.pricing');
+    expect(searchBlocks('pricing').map((b) => b.id)).toContain('landing.pricing');
   });
 
   it('normalizes diacritics including đ/Đ correctly', () => {

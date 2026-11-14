@@ -1,11 +1,5 @@
 // Multi-file coordinator for structural JSX edits (SPEC-04 section 14, R-SE-29).
-import type {
-  ElementGuard,
-  InsertEdit,
-  Result,
-  StructureEdit,
-  StructureResult,
-} from '@kumicraft/shared';
+import type { ElementGuard, Result, StructureEdit, StructureResult } from '@kumicraft/shared';
 import { err, ok } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../../ports/file-system-port.ts';
@@ -22,10 +16,17 @@ import {
 import {
   finalizeWithCssIfNeeded,
   type NewCssDirProvider,
+  restoreWrites,
   type StylingProvider,
   validateInsertedCss,
 } from './insert-css.ts';
 import { executeInsertImage } from './insert-image.ts';
+import {
+  commitKitFiles,
+  type KitPlan,
+  prepareEditFormatting,
+  prepareKitPlan,
+} from './kit-service.ts';
 import { type ResolvedElement, validateInsertedJsx } from './structure-ops.ts';
 import {
   type FilePlanResult,
@@ -331,6 +332,44 @@ function validateEditInputs(edit: StructureEdit): Result<void> {
   return validateInsertedCss(edit.css?.rules);
 }
 
+async function runWithOptionalKitFiles(
+  cssCtx: Parameters<typeof finalizeWithCssIfNeeded>[0],
+  sortedFiles: readonly string[],
+  lockedParams: Omit<Parameters<typeof performLockedStructureEdit>[0], 'onWritten'>,
+  kitPlan: KitPlan | undefined,
+  outerOnWritten?: (files: readonly WrittenFile[]) => void,
+): Promise<Result<StructureResult>> {
+  let capturedFiles: readonly WrittenFile[] = [];
+  const hasKitFiles = kitPlan !== undefined && kitPlan.filesToCreate.length > 0;
+  const res = await finalizeWithCssIfNeeded(
+    {
+      ...cssCtx,
+      onWritten: hasKitFiles
+        ? (files) => {
+            capturedFiles = files;
+          }
+        : outerOnWritten,
+    },
+    (onWrittenCb) =>
+      withFileLocks(cssCtx.projectRoot, sortedFiles, () =>
+        performLockedStructureEdit({ ...lockedParams, onWritten: onWrittenCb }),
+      ),
+  );
+  if (!res.ok || kitPlan === undefined || kitPlan.filesToCreate.length === 0) return res;
+  const kitRes = await commitKitFiles(cssCtx.fs, cssCtx.projectRoot, kitPlan.filesToCreate);
+  if (!kitRes.ok) {
+    // The page already imports the kit file: without it the page would not build, so the
+    // insert is put back and nothing is left without history.
+    await restoreWrites(cssCtx.fs, cssCtx.projectRoot, capturedFiles);
+    return kitRes;
+  }
+  outerOnWritten?.([...capturedFiles, ...kitRes.value]);
+  return ok({
+    ...res.value,
+    files: [...res.value.files, ...kitRes.value.map((f) => f.path)],
+  });
+}
+
 async function executeStandardEdit(
   fs: FileSystemPort,
   projectRoot: string,
@@ -348,37 +387,27 @@ async function executeStandardEdit(
   if (!valGuardsRes.ok) return valGuardsRes;
   const validatedGuards = valGuardsRes.value;
   const targetGuard =
-    edit.kind === 'insert' || edit.kind === 'move'
-      ? validatedGuards[validatedGuards.length - 1]
-      : undefined;
+    edit.kind === 'insert' || edit.kind === 'move' ? validatedGuards.at(-1) : undefined;
   const { byFile, sortedFiles } = groupGuardsByFile(validatedGuards);
-  const planned =
-    edit.kind === 'insert' && formatSnippet !== undefined && targetGuard !== undefined
-      ? { ...edit, jsx: await formatSnippet({ projectRoot, file: targetGuard.rel, jsx: edit.jsx }) }
-      : edit;
-  const cssCtx = {
-    fs,
-    projectRoot,
-    sourceDir,
+  const kitPlan =
+    edit.kind === 'insert' && edit.kit !== undefined && targetGuard !== undefined
+      ? await prepareKitPlan(fs, projectRoot, sourceDir, targetGuard.rel, edit.kit.components)
+      : undefined;
+  const planned = await prepareEditFormatting(
     edit,
-    targetRel: targetGuard?.rel ?? (edit.kind === 'wrapText' ? validatedGuards[0]?.rel : undefined),
+    targetGuard?.rel,
+    projectRoot,
+    formatSnippet,
+    kitPlan,
+  );
+  const targetRel =
+    targetGuard?.rel ?? (edit.kind === 'wrapText' ? validatedGuards[0]?.rel : undefined);
+  return runWithOptionalKitFiles(
+    { fs, projectRoot, sourceDir, edit, targetRel, onWritten, styling, newCssDir },
+    sortedFiles,
+    { fs, projectRoot, sortedFiles, byFile, edit: planned, targetGuard, validatedGuards },
+    kitPlan,
     onWritten,
-    styling,
-    newCssDir,
-  };
-  return finalizeWithCssIfNeeded(cssCtx, (onWrittenCb) =>
-    withFileLocks(projectRoot, sortedFiles, () =>
-      performLockedStructureEdit({
-        fs,
-        projectRoot,
-        sortedFiles,
-        byFile,
-        edit: planned,
-        targetGuard,
-        validatedGuards,
-        onWritten: onWrittenCb,
-      }),
-    ),
   );
 }
 
@@ -393,30 +422,18 @@ export async function executeStructureEdit(
   styling?: StylingProvider,
   newCssDir?: NewCssDirProvider,
 ): Promise<Result<StructureResult>> {
-  if (edit.kind === 'insertImage') {
-    const run = (iEdit: InsertEdit, cb?: (f: readonly WrittenFile[]) => void) =>
-      executeStandardEdit(
-        fs,
-        projectRoot,
-        sourceDir,
-        sourceExtensions,
-        iEdit,
-        cb,
-        formatSnippet,
-        styling,
-        newCssDir,
-      );
-    return executeInsertImage(fs, projectRoot, edit, run, onWritten);
-  }
-  return executeStandardEdit(
-    fs,
-    projectRoot,
-    sourceDir,
-    sourceExtensions,
-    edit,
-    onWritten,
-    formatSnippet,
-    styling,
-    newCssDir,
-  );
+  const run = (targetEdit: StructureEdit, cb?: (f: readonly WrittenFile[]) => void) =>
+    executeStandardEdit(
+      fs,
+      projectRoot,
+      sourceDir,
+      sourceExtensions,
+      targetEdit,
+      cb,
+      formatSnippet,
+      styling,
+      newCssDir,
+    );
+  if (edit.kind === 'insertImage') return executeInsertImage(fs, projectRoot, edit, run, onWritten);
+  return run(edit, onWritten);
 }

@@ -11,6 +11,7 @@ import { asAstNode, detectFormat, getJsxTagName, parseJsxAst } from '../ast-help
 import { findNodeAt } from '../source-editor-lookup.ts';
 import type { WrittenFile } from '../source-editor-service.ts';
 import { buildMissingImportsEdits } from './imports.ts';
+import { commitKitFiles, type KitPlan, prepareKitPlan } from './kit-service.ts';
 import { buildRevealComponentCode } from './reveal-template.ts';
 import { findAncestors } from './structure-guard.ts';
 import { fileIndentUnit, indentOf, lineStartOf } from './structure-ops.ts';
@@ -40,18 +41,16 @@ async function resolveRevealPath(
   fs: FileSystemPort,
   root: string,
   targetRel: string,
-): Promise<{ readonly path: string; readonly tsx: boolean; readonly exists: boolean }> {
-  const baseDir = targetRel.startsWith('src/') ? 'src/kumicraft' : 'kumicraft';
-  const tsxCandidate = posix.join(baseDir, 'Reveal.tsx');
-  const jsxCandidate = posix.join(baseDir, 'Reveal.jsx');
-  if (await fs.exists(root, tsxCandidate)) {
-    return { path: tsxCandidate, tsx: true, exists: true };
-  }
-  if (await fs.exists(root, jsxCandidate)) {
-    return { path: jsxCandidate, tsx: false, exists: true };
-  }
-  const isTsx = targetRel.endsWith('.tsx') || (await fs.exists(root, 'tsconfig.json'));
-  return { path: isTsx ? tsxCandidate : jsxCandidate, tsx: isTsx, exists: false };
+): Promise<{
+  readonly path: string;
+  readonly exists: boolean;
+  readonly kitPlan: KitPlan;
+}> {
+  const sourceDir = targetRel.startsWith('src/') ? 'src' : '';
+  const kitPlan = await prepareKitPlan(fs, root, sourceDir, targetRel, ['Reveal']);
+  const relPath = kitPlan.allKitPaths[0] ?? 'src/kumicraft/Reveal.tsx';
+  const exists = kitPlan.filesToCreate.length === 0;
+  return { path: relPath, exists, kitPlan };
 }
 
 function buildRevealPropsText(effect: RevealEffect, delay: number, stagger: number): string {
@@ -162,16 +161,13 @@ function buildUnwrapRevealText(
 async function ensureRevealComponentFile(
   deps: RevealDeps,
   root: string,
-  info: { readonly path: string; readonly tsx: boolean; readonly exists: boolean },
+  info: { readonly path: string; readonly exists: boolean; readonly kitPlan: KitPlan },
 ): Promise<Result<{ readonly created: boolean; readonly written?: WrittenFile }>> {
-  if (info.exists) return ok({ created: false });
-  const content = buildRevealComponentCode(info.tsx);
-  const wRes = await deps.fs.writeTextAtomic(root, info.path, content);
-  if (!wRes.ok) return wRes;
-  return ok({
-    created: true,
-    written: { path: info.path, after: content, afterHash: sha256(content) },
-  });
+  if (info.exists || info.kitPlan.filesToCreate.length === 0) return ok({ created: false });
+  const res = await commitKitFiles(deps.fs, root, info.kitPlan.filesToCreate);
+  if (!res.ok) return res;
+  const written = res.value[0];
+  return ok(written !== undefined ? { created: true, written } : { created: false });
 }
 
 type RevealContext = {
@@ -181,7 +177,11 @@ type RevealContext = {
   readonly beforeCode: string;
   readonly ast: AstNode;
   readonly el: AstNode;
-  readonly revealInfo: { readonly path: string; readonly tsx: boolean; readonly exists: boolean };
+  readonly revealInfo: {
+    readonly path: string;
+    readonly exists: boolean;
+    readonly kitPlan: KitPlan;
+  };
 };
 
 async function applyRevealUnwrap(ctx: RevealContext, tag: string): Promise<Result<RevealResult>> {

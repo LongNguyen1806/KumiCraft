@@ -1,6 +1,21 @@
 // Library block types (SPEC-04 section 15 M-LB, R-LB-10, R-ST-12).
 
-export type LibraryBlockCategory = 'layout' | 'content' | 'form' | 'data' | 'composite';
+import type { KitBlockSpec } from './kit-types.ts';
+
+export const LIBRARY_CATEGORIES = [
+  'layout',
+  'content',
+  'form',
+  'display',
+  'navigation',
+  'interactive',
+  'data',
+  'composite',
+  'landing',
+  'screen',
+] as const;
+
+export type LibraryBlockCategory = (typeof LIBRARY_CATEGORIES)[number];
 
 export type NeutralBlock = {
   /** JSX like `jsx`, with every styled element carrying `className="@<key>"` in place of Tailwind classes. */
@@ -33,4 +48,5 @@ export type LibraryBlock = {
   };
   readonly neutral: NeutralBlock;
   readonly variants?: readonly LibraryBlockVariant[];
+  readonly kit?: KitBlockSpec;
 };

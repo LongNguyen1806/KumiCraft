@@ -2,6 +2,7 @@
 import type { UiKitReport } from '../project.ts';
 import { v4ToV3Classes } from '../tailwind/v3-names.ts';
 import { type ProjectLook, resolveTailwindRoles } from './project-look.ts';
+import { supportsInteractiveUiKit } from './ui-kit-interactive.ts';
 
 export type UiKitRendered = {
   readonly jsx: string;
@@ -18,7 +19,7 @@ export function supportsUiKitBlock(blockId: string, uiKit: UiKitReport | undefin
   if (blockId === 'form.button') return hasComponent(uiKit, 'button');
   if (blockId === 'form.input') return hasComponent(uiKit, 'input');
   if (blockId === 'composite.card') return hasComponent(uiKit, 'card');
-  return false;
+  return supportsInteractiveUiKit(blockId, uiKit);
 }
 
 function resolveClasses(raw: string, look: ProjectLook, isV3: boolean): string {

@@ -177,6 +177,34 @@ function useRevealState(
   return { effect, setEffect, delay, setDelay, stagger, setStagger, busy, isWrapped, sendReveal };
 }
 
+function RevealHeaderRow({
+  isWrapped,
+  disabled,
+  onToggle,
+}: {
+  readonly isWrapped: boolean;
+  readonly disabled: boolean;
+  readonly onToggle: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-[11px] font-medium text-ink-soft">
+        {t('inspector.motion.revealTitle')}
+      </span>
+      <button
+        type="button"
+        data-testid="motion-reveal-toggle"
+        disabled={disabled}
+        onClick={onToggle}
+        className={`rounded px-2 py-0.5 text-[11px] font-medium ${isWrapped ? 'bg-accent text-white' : 'border border-line bg-card-solid text-ink'}`}
+      >
+        {isWrapped ? t('inspector.effects.on') : t('inspector.effects.off')}
+      </button>
+    </div>
+  );
+}
+
 export function RevealControls({
   refTarget,
   source,
@@ -188,7 +216,6 @@ export function RevealControls({
   readonly disabled: boolean;
   readonly onRefresh: () => void;
 }) {
-  const { t } = useTranslation();
   const r = useRevealState(refTarget, source, disabled, onRefresh);
   const toggleAction = r.isWrapped ? 'unwrap' : 'wrap';
   const syncIfWrapped = (next: { effect: RevealEffect; delay: number; stagger: number }) => {
@@ -196,26 +223,17 @@ export function RevealControls({
   };
   return (
     <div className="space-y-1.5 border-t border-line pt-2" data-testid="motion-reveal-controls">
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] font-medium text-ink-soft">
-          {t('inspector.motion.revealTitle')}
-        </span>
-        <button
-          type="button"
-          data-testid="motion-reveal-toggle"
-          disabled={disabled || r.busy}
-          onClick={() => {
-            void r.sendReveal(toggleAction, {
-              effect: r.effect,
-              delay: r.delay,
-              stagger: r.stagger,
-            });
-          }}
-          className={`rounded px-2 py-0.5 text-[11px] font-medium ${r.isWrapped ? 'bg-accent text-white' : 'border border-line bg-card-solid text-ink'}`}
-        >
-          {r.isWrapped ? t('inspector.effects.on') : t('inspector.effects.off')}
-        </button>
-      </div>
+      <RevealHeaderRow
+        isWrapped={r.isWrapped}
+        disabled={disabled || r.busy}
+        onToggle={() => {
+          void r.sendReveal(toggleAction, {
+            effect: r.effect,
+            delay: r.delay,
+            stagger: r.stagger,
+          });
+        }}
+      />
       <RevealSelectRow
         disabled={disabled || r.busy}
         effect={r.effect}

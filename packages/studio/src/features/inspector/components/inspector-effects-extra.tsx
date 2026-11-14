@@ -189,13 +189,45 @@ function CompositeSelectField({
   );
 }
 
-function TransformAndFilterGrid({ shared }: { readonly shared: EffectsCommonProps }) {
+function MixBlendModeField({ shared }: { readonly shared: EffectsCommonProps }) {
   const { t } = useTranslation();
   const scope = shared.currentScope ?? { breakpoint: 'base' };
   const blendVal = shared.editable
     ? readTwTokenStr(shared.tokens ?? [], scope, 'mixBlendMode')
     : readCssPropVal(shared.cssReading, 'mixBlendMode');
 
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-[11px] text-ink-faint">{t('inspector.fields.mixBlendMode')}</span>
+      <select
+        data-testid="effect-field-mixBlendMode"
+        disabled={shared.disabled}
+        value={blendVal}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (shared.editable && shared.onPropChange !== undefined) {
+            shared.onPropChange(
+              'mixBlendMode',
+              v === '' ? undefined : { kind: 'keyword', name: v },
+            );
+          } else {
+            void shared.onCssCommit?.('mixBlendMode', v);
+          }
+        }}
+        className="h-7 rounded border border-line bg-card-solid px-1.5 text-xs text-ink"
+      >
+        <option value="">—</option>
+        {MIX_BLEND_MODES.map((m) => (
+          <option key={m} value={m}>
+            {m}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function TransformAndFilterGrid({ shared }: { readonly shared: EffectsCommonProps }) {
   return (
     <div className="grid grid-cols-2 gap-1.5 border-t border-line pt-2">
       {TRANSFORM_FIELDS.map((f) => (
@@ -216,33 +248,7 @@ function TransformAndFilterGrid({ shared }: { readonly shared: EffectsCommonProp
           items={f.items}
         />
       ))}
-      <label className="flex flex-col gap-1">
-        <span className="text-[11px] text-ink-faint">{t('inspector.fields.mixBlendMode')}</span>
-        <select
-          data-testid="effect-field-mixBlendMode"
-          disabled={shared.disabled}
-          value={blendVal}
-          onChange={(e) => {
-            const v = e.target.value;
-            if (shared.editable && shared.onPropChange !== undefined) {
-              shared.onPropChange(
-                'mixBlendMode',
-                v === '' ? undefined : { kind: 'keyword', name: v },
-              );
-            } else {
-              void shared.onCssCommit?.('mixBlendMode', v);
-            }
-          }}
-          className="h-7 rounded border border-line bg-card-solid px-1.5 text-xs text-ink"
-        >
-          <option value="">—</option>
-          {MIX_BLEND_MODES.map((m) => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </select>
-      </label>
+      <MixBlendModeField shared={shared} />
     </div>
   );
 }

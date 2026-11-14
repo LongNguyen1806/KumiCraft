@@ -146,6 +146,8 @@ export {
   StudioTextEditEndPayloadSchema,
   type StudioTextEditStartPayload,
   StudioTextEditStartPayloadSchema,
+  type StudioToggleInteractivePayload,
+  StudioToggleInteractivePayloadSchema,
   type TreeNode,
   TreeNodeSchema,
 } from './bridge.ts';
@@ -175,6 +177,13 @@ export {
 } from './history.ts';
 export * from './job.ts';
 export * from './library/blocks.ts';
+export {
+  KIT_COMPONENT_IDS,
+  type KitBlockSpec,
+  type KitComponentId,
+  KitComponentIdSchema,
+  kitFileNameFor,
+} from './library/kit-types.ts';
 export { type LibraryBlockLabelsResolver, normalizeText, searchBlocks } from './library/search.ts';
 export { pageNames, type PageNamesResult, toComponentName, toRoutePath } from './page-names.ts';
 export * from './page-tree.ts';
@@ -319,22 +328,7 @@ export {
   ok,
   type Result,
 } from './result.ts';
-export {
-  RUNNER_ERROR_REASONS,
-  RUNNER_STATES,
-  type RunnerErrorReason,
-  RunnerErrorReasonSchema,
-  type RunnerOptions,
-  RunnerOptionsSchema,
-  type RunnerState,
-  RunnerStateSchema,
-  type RunnerStatus,
-  RunnerStatusSchema,
-  type RunnerToChildMessage,
-  RunnerToChildMessageSchema,
-  type RunnerToParentMessage,
-  RunnerToParentMessageSchema,
-} from './runner.ts';
+export * from './runner.ts';
 export {
   type KeyPress,
   matchShortcut,

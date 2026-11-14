@@ -327,23 +327,38 @@ function useSyncLocState(
   }
 }
 
-export function useLiveEdit({ target, ctx, throttleMs = 100 }: UseLiveEditOptions): LiveEditState {
-  const { t } = useTranslation();
+function applyBatchEntries(
+  base: string,
+  entries: readonly BatchPropEntry[],
+  defaultScope: Scope,
+  ctx: ClassContext,
+): string {
+  return entries.reduce(
+    (cls, entry) => writeValue(cls, entry.property, entry.scope ?? defaultScope, entry.value, ctx),
+    base,
+  );
+}
+
+function getTargetMeta(target: Extract<InspectorTarget, { readonly kind: 'element' }>) {
   const serverClass = getStaticClass(target);
   const loc = target.ref.loc;
   const tag = target.source?.tag ?? loc.split(':')[0] ?? 'div';
-
-  const [optimisticClass, setOptimisticClass] = useState(serverClass);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | undefined>(undefined);
-
-  // Each load of the source is a new object: a read that brings back the same class string (Undo
-  // right after an edit) still counts as new (K9.5).
   const server = {
     value: serverClass,
     read: target.source,
     hasSource: target.source !== undefined,
   };
+  return { serverClass, loc, tag, server };
+}
+
+export function useLiveEdit({ target, ctx, throttleMs = 100 }: UseLiveEditOptions): LiveEditState {
+  const { t } = useTranslation();
+  const { serverClass, loc, tag, server } = getTargetMeta(target);
+
+  const [optimisticClass, setOptimisticClass] = useState(serverClass);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | undefined>(undefined);
+
   const deferred = useRef<DeferredChange[]>([]);
   // While the source reloads (after Undo or a save), a change waits for the class it brings.
   const send = (change: DeferredChange, property?: PropertyId) => {
@@ -374,14 +389,8 @@ export function useLiveEdit({ target, ctx, throttleMs = 100 }: UseLiveEditOption
       send((base) => writeValue(base, property, scope, value, ctx), property);
     },
     mutateProperties: (entries) => {
-      const defaultScope = target.currentScope;
-      send((base) =>
-        entries.reduce(
-          (cls, entry) =>
-            writeValue(cls, entry.property, entry.scope ?? defaultScope, entry.value, ctx),
-          base,
-        ),
-      );
+      const scope = target.currentScope;
+      send((base) => applyBatchEntries(base, entries, scope, ctx));
     },
     mutateRawClass: (raw: string) => {
       send(() => raw);

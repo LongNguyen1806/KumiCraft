@@ -194,6 +194,13 @@ export class BridgeChannel {
     });
   }
 
+  toggleInteractive(ref: ElementRef, open?: boolean): void {
+    this.sendMessage('toggle-interactive', {
+      ref,
+      ...(open !== undefined ? { open } : {}),
+    });
+  }
+
   dragOver(payload: StudioDragOverPayload): void {
     this.sendMessage('drag-over', payload);
   }

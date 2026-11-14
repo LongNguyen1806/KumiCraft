@@ -118,6 +118,7 @@ async function insertLibraryBlock(
     jsx: rendered.jsx,
     ...(rules.length > 0 ? { css: { rules } } : {}),
     ...(imports.length > 0 ? { from: { file: locFile, imports } } : {}),
+    ...(rendered.kit !== undefined ? { kit: rendered.kit } : {}),
   });
 }
 

@@ -39,6 +39,15 @@ export function shortcutPayload(event: KeyboardEvent) {
   };
 }
 
+export function navigateCanvasRoute(route: string, mode: 'history' | 'document'): void {
+  if (mode === 'document') {
+    window.location.assign(route);
+    return;
+  }
+  window.history.pushState(undefined, '', route);
+  window.dispatchEvent(new PopStateEvent('popstate'));
+}
+
 export function revealSelectedElement(loc: string, index: number): void {
   const el = document.querySelectorAll(`[data-rc-loc="${loc}"]`)[index];
   if (el && typeof el.scrollIntoView === 'function') {

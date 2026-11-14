@@ -114,7 +114,7 @@ function commitImageProp(
   onCssCommit?.(prop, cssVal);
 }
 
-function ImageFieldsGrid({
+function ImageAspectAndRadiusFields({
   editable,
   disabled,
   readField,
@@ -128,27 +128,7 @@ function ImageFieldsGrid({
   const { t } = useTranslation();
   const aspectVal = readField('aspectRatio');
   return (
-    <div className="grid grid-cols-2 gap-2">
-      <ImageSelectField
-        testId="image-object-fit"
-        label={t('inspector.fields.objectFit')}
-        disabled={disabled}
-        value={readField('objectFit')}
-        options={OBJECT_FIT_OPTIONS.map((v) => ({ value: v, label: v }))}
-        onChange={(v) => {
-          commit('objectFit', v, v);
-        }}
-      />
-      <ImageSelectField
-        testId="image-object-position"
-        label={t('inspector.fields.objectPosition')}
-        disabled={disabled}
-        value={readField('objectPosition')}
-        options={OBJECT_POSITION_OPTIONS.map((v) => ({ value: v, label: v }))}
-        onChange={(v) => {
-          commit('objectPosition', v, v);
-        }}
-      />
+    <>
       <ImageSelectField
         testId="image-aspect-ratio"
         label={t('inspector.fields.aspectRatio')}
@@ -173,6 +153,50 @@ function ImageFieldsGrid({
           const match = RADIUS_OPTIONS.find((r) => r.tw === v || r.css === v);
           commit('borderRadius', match?.tw ?? v, match?.css ?? v);
         }}
+      />
+    </>
+  );
+}
+
+function ImageFieldsGrid({
+  editable,
+  disabled,
+  readField,
+  commit,
+}: {
+  readonly editable: boolean;
+  readonly disabled: boolean;
+  readonly readField: (prop: PropertyId) => string;
+  readonly commit: (prop: PropertyId, twVal: string, cssVal: string) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <ImageSelectField
+        testId="image-object-fit"
+        label={t('inspector.fields.objectFit')}
+        disabled={disabled}
+        value={readField('objectFit')}
+        options={OBJECT_FIT_OPTIONS.map((v) => ({ value: v, label: v }))}
+        onChange={(v) => {
+          commit('objectFit', v, v);
+        }}
+      />
+      <ImageSelectField
+        testId="image-object-position"
+        label={t('inspector.fields.objectPosition')}
+        disabled={disabled}
+        value={readField('objectPosition')}
+        options={OBJECT_POSITION_OPTIONS.map((v) => ({ value: v, label: v }))}
+        onChange={(v) => {
+          commit('objectPosition', v, v);
+        }}
+      />
+      <ImageAspectAndRadiusFields
+        editable={editable}
+        disabled={disabled}
+        readField={readField}
+        commit={commit}
       />
     </div>
   );

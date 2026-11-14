@@ -146,7 +146,7 @@ export async function applyInsertedCssRules(
 }
 
 /** Puts back the files of an insert whose CSS step failed, so no edit is left without history. */
-async function restoreWrites(
+export async function restoreWrites(
   fs: FileSystemPort,
   projectRoot: string,
   files: readonly WrittenFile[],

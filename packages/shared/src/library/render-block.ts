@@ -2,9 +2,11 @@
 import type { UiKitReport } from '../project.ts';
 import type { StyleSystemId } from '../style.ts';
 import { v4ToV3Classes } from '../tailwind/v3-names.ts';
+import type { KitBlockSpec } from './kit-types.ts';
 import { type ProjectLook, resolveCssRoles, resolveTailwindRoles } from './project-look.ts';
 import type { LibraryBlock, NeutralBlock } from './types.ts';
 import { renderWithUiKit } from './ui-kit-blocks.ts';
+import { renderInteractiveUiKit } from './ui-kit-interactive.ts';
 
 export type RenderedCssRule = {
   readonly selector: string;
@@ -17,6 +19,7 @@ export type RenderedBlock = {
   readonly rules: readonly RenderedCssRule[];
   readonly imports?: readonly string[];
   readonly usedUiKit?: boolean;
+  readonly kit?: KitBlockSpec;
 };
 
 const CLASS_ATTR_RE = /className="([^"]*)"/g;
@@ -81,6 +84,37 @@ function renderFromNeutral(
   return { jsx, rules };
 }
 
+function tryRenderUiKitSystem(
+  blockId: string,
+  system: StyleSystemId | undefined,
+  lang: 'vi' | 'en',
+  look: ProjectLook,
+  variantId: string | undefined,
+  uiKit: UiKitReport | undefined,
+): RenderedBlock | undefined {
+  const isTailwind = system === undefined || system === 'tailwind4' || system === 'tailwind3';
+  if (!isTailwind) return undefined;
+  const uiKitInteractive = renderInteractiveUiKit(blockId, lang, uiKit);
+  if (uiKitInteractive !== undefined) {
+    return {
+      jsx: uiKitInteractive.jsx,
+      rules: [],
+      imports: uiKitInteractive.imports,
+      usedUiKit: true,
+    };
+  }
+  const kitRendered = renderWithUiKit(
+    blockId,
+    uiKit,
+    lang,
+    look,
+    variantId,
+    system === 'tailwind3',
+  );
+  if (kitRendered === undefined) return undefined;
+  return { jsx: kitRendered.jsx, rules: [], imports: kitRendered.imports, usedUiKit: true };
+}
+
 export function renderBlock(
   block: LibraryBlock,
   system: StyleSystemId | undefined,
@@ -92,36 +126,23 @@ export function renderBlock(
   const activeLook = look ?? EMPTY_LOOK;
   const variant =
     variantId !== undefined ? block.variants?.find((v) => v.id === variantId) : undefined;
-  const isTailwindSystem = system === undefined || system === 'tailwind4' || system === 'tailwind3';
-  if (isTailwindSystem) {
-    const kitRendered = renderWithUiKit(
-      block.id,
-      uiKit,
-      lang,
-      activeLook,
-      variant?.id,
-      system === 'tailwind3',
-    );
-    if (kitRendered !== undefined) {
-      return {
-        jsx: kitRendered.jsx,
-        rules: [],
-        imports: kitRendered.imports,
-        usedUiKit: true,
-      };
-    }
-  }
+  const uiKitResult = tryRenderUiKitSystem(block.id, system, lang, activeLook, variant?.id, uiKit);
+  if (uiKitResult !== undefined) return uiKitResult;
 
   const rawJsx = variant !== undefined ? variant.jsx[lang] : block.jsx[lang];
   const neutral = variant !== undefined ? variant.neutral : block.neutral;
+  const kitProp = block.kit !== undefined ? { kit: block.kit } : {};
 
   if (system === undefined || system === 'tailwind4') {
-    return renderTailwind(rawJsx, activeLook, false);
+    return { ...renderTailwind(rawJsx, activeLook, false), ...kitProp };
   }
   if (system === 'tailwind3') {
-    return renderTailwind(rawJsx, activeLook, true);
+    return { ...renderTailwind(rawJsx, activeLook, true), ...kitProp };
   }
   const shortId = shortBlockId(block.id);
   const prefix = variant !== undefined ? `${shortId}-${variant.id}` : shortId;
-  return renderFromNeutral(prefix, neutral, lang, system === 'bootstrap5', activeLook);
+  return {
+    ...renderFromNeutral(prefix, neutral, lang, system === 'bootstrap5', activeLook),
+    ...kitProp,
+  };
 }

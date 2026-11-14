@@ -95,6 +95,56 @@ function LibraryStyleRow({
   );
 }
 
+function LibrarySearchRow({
+  query,
+  onQueryChange,
+  hasSelection,
+  onOpenImagePicker,
+  onOpenIconPicker,
+}: {
+  readonly query: string;
+  readonly onQueryChange: (q: string) => void;
+  readonly hasSelection: boolean;
+  readonly onOpenImagePicker: () => void;
+  readonly onOpenIconPicker?: (() => void) | undefined;
+}) {
+  const { t } = useTranslation('library');
+  return (
+    <div className="flex items-center gap-1.5">
+      <input
+        type="search"
+        data-testid="library-search"
+        placeholder={t('search')}
+        value={query}
+        onChange={(e) => {
+          onQueryChange(e.target.value);
+        }}
+        className="h-7 min-w-0 flex-1 rounded-md border border-line bg-card-solid px-2.5 text-xs text-ink placeholder:text-ink-faint"
+      />
+      {onOpenIconPicker !== undefined && (
+        <button
+          type="button"
+          data-testid="library-open-icons"
+          disabled={!hasSelection}
+          onClick={onOpenIconPicker}
+          className="h-7 rounded-md border border-line bg-card-solid px-2 text-xs font-medium whitespace-nowrap text-ink hover:bg-field disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {t('openIcons')}
+        </button>
+      )}
+      <button
+        type="button"
+        data-testid="library-insert-image"
+        disabled={!hasSelection}
+        onClick={onOpenImagePicker}
+        className="h-7 rounded-md border border-line bg-card-solid px-2 text-xs font-medium whitespace-nowrap text-ink hover:bg-field disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {t('insertImage', 'Ảnh…')}
+      </button>
+    </div>
+  );
+}
+
 export function LibrarySearchHeader({
   query,
   onQueryChange,
@@ -105,46 +155,18 @@ export function LibrarySearchHeader({
   onStyleChange,
   errorInfo,
 }: LibrarySearchHeaderProps) {
-  const { t } = useTranslation('library');
-
   return (
     <div className="space-y-2 pb-2">
       {onStyleChange !== undefined && (
         <LibraryStyleRow style={style} onStyleChange={onStyleChange} />
       )}
-      <div className="flex items-center gap-1.5">
-        <input
-          type="search"
-          data-testid="library-search"
-          placeholder={t('search')}
-          value={query}
-          onChange={(e) => {
-            onQueryChange(e.target.value);
-          }}
-          className="h-7 min-w-0 flex-1 rounded-md border border-line bg-card-solid px-2.5 text-xs text-ink placeholder:text-ink-faint"
-        />
-        {onOpenIconPicker !== undefined && (
-          <button
-            type="button"
-            data-testid="library-open-icons"
-            disabled={!hasSelection}
-            onClick={onOpenIconPicker}
-            className="h-7 rounded-md border border-line bg-card-solid px-2 text-xs font-medium whitespace-nowrap text-ink hover:bg-field disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {t('openIcons')}
-          </button>
-        )}
-        <button
-          type="button"
-          data-testid="library-insert-image"
-          disabled={!hasSelection}
-          onClick={onOpenImagePicker}
-          className="h-7 rounded-md border border-line bg-card-solid px-2 text-xs font-medium whitespace-nowrap text-ink hover:bg-field disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {t('insertImage', 'Ảnh…')}
-        </button>
-      </div>
-
+      <LibrarySearchRow
+        query={query}
+        onQueryChange={onQueryChange}
+        hasSelection={hasSelection}
+        onOpenImagePicker={onOpenImagePicker}
+        onOpenIconPicker={onOpenIconPicker}
+      />
       <LibraryStatusHint hasSelection={hasSelection} errorInfo={errorInfo} />
     </div>
   );

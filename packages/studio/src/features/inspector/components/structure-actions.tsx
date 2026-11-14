@@ -1,13 +1,55 @@
 // Structure actions as an icon row (Move, Wrap, Unwrap, Duplicate, Extract, Remove) in the Inspector header (SPEC-04 R-SE-24..28, R-CP-14).
 import type { LucideIcon } from 'lucide-react';
-import { ArrowDown, ArrowUp, Component, Copy, Trash2, Ungroup } from 'lucide-react';
+import { ArrowDown, ArrowUp, Component, Copy, Eye, Trash2, Ungroup } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { errorText } from '../../../routes/error-text.ts';
 import { ExtractDialog } from '../../components-panel/extract-dialog.tsx';
+import { studioBridgeChannel } from '../../selection/bridge-channel.ts';
 import type { InspectorTarget } from '../types.ts';
 import { InspectorListActions } from './inspector-list-actions.tsx';
+
+const INTERACTIVE_PREVIEW_TAGS = new Set([
+  'details',
+  'summary',
+  'Modal',
+  'Drawer',
+  'Dropdown',
+  'MobileMenu',
+  'Tooltip',
+  'Dialog',
+  'DialogTrigger',
+  'Sheet',
+  'SheetTrigger',
+  'DropdownMenu',
+]);
+
+const KIT_PREVIEW_FILE_RE =
+  /(?:^|\/)kumicraft\/(?:Modal|Drawer|Dropdown|MobileMenu|Tooltip)\.(?:tsx|jsx):/;
+
+function isInteractivePreviewTarget(source: ElementTarget['source']): boolean {
+  if (source === undefined) return false;
+  return INTERACTIVE_PREVIEW_TAGS.has(source.tag) || KIT_PREVIEW_FILE_RE.test(source.loc);
+}
+
+function InteractivePreviewButton({ target }: { readonly target: ElementTarget }) {
+  const { t } = useTranslation();
+  if (!isInteractivePreviewTarget(target.source)) return undefined;
+  return (
+    <button
+      type="button"
+      data-testid="inspector-preview-interactive"
+      onClick={() => {
+        studioBridgeChannel.toggleInteractive(target.ref);
+      }}
+      className="border-line bg-field text-ink-soft hover:border-border hover:text-ink inline-flex h-6 cursor-pointer items-center gap-1 self-start rounded border px-2 text-[11px]"
+    >
+      <Eye className="size-3" aria-hidden="true" />
+      <span>{t('inspector.previewInteractive')}</span>
+    </button>
+  );
+}
 import { useStructureActions } from './use-structure-actions.ts';
 import { WrapMenu } from './wrap-menu.tsx';
 
@@ -160,6 +202,7 @@ export function StructureActions({ target }: StructureActionsProps) {
         target={target}
         disabled={actions.pending || target.loading || target.source?.readonly !== undefined}
       />
+      <InteractivePreviewButton target={target} />
       {extractOpen && (
         <ExtractDialog
           open={extractOpen}

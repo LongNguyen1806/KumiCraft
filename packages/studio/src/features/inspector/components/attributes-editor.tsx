@@ -61,6 +61,40 @@ function AttrRowHeader({
   );
 }
 
+function AttrValueInput({
+  name,
+  shownValue,
+  disabled,
+  onDraftChange,
+  onCommit,
+  onCancel,
+}: {
+  readonly name: EditableAttr;
+  readonly shownValue: string;
+  readonly disabled: boolean;
+  readonly onDraftChange: (value: string) => void;
+  readonly onCommit: () => void;
+  readonly onCancel: () => void;
+}) {
+  return (
+    <input
+      type="text"
+      data-testid={`attr-input-${name}`}
+      disabled={disabled}
+      value={shownValue}
+      onChange={(e) => {
+        onDraftChange(e.target.value);
+      }}
+      onBlur={onCommit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur();
+        else if (e.key === 'Escape') onCancel();
+      }}
+      className="h-7 w-full rounded-md border border-line bg-card-solid px-2 font-mono text-xs text-ink hover:bg-field disabled:opacity-50"
+    />
+  );
+}
+
 function AttrEditorRow({
   name,
   attributes,
@@ -95,20 +129,15 @@ function AttrEditorRow({
         }}
         onOpenInEditor={onOpenInEditor}
       />
-      <input
-        type="text"
-        data-testid={`attr-input-${name}`}
+      <AttrValueInput
+        name={name}
+        shownValue={shownValue}
         disabled={disabled || isExpression}
-        value={shownValue}
-        onChange={(e) => {
-          setDraft(e.target.value);
+        onDraftChange={setDraft}
+        onCommit={commit}
+        onCancel={() => {
+          setDraft(undefined);
         }}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') e.currentTarget.blur();
-          else if (e.key === 'Escape') setDraft(undefined);
-        }}
-        className="h-7 w-full rounded-md border border-line bg-card-solid px-2 font-mono text-xs text-ink hover:bg-field disabled:opacity-50"
       />
     </div>
   );

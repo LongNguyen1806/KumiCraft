@@ -270,18 +270,8 @@ function IconControlsBody({
   );
 }
 
-export function InspectorIconSection(props: InspectorIconSectionProps) {
-  const { source, disabled, editable, currentTextColor, onTextColorChange, onRefresh } = props;
-  const { t } = useTranslation();
-  const [pickerOpen, setPickerOpen] = useState(false);
+function useIconActionRunner(disabled: boolean, onRefresh: () => void) {
   const [busy, setBusy] = useState(false);
-
-  const iconName = readAttr(source, 'data-icon');
-  if (source.tag.toLowerCase() !== 'svg' || iconName === undefined) return undefined;
-
-  const activeColor = editable
-    ? (currentTextColor ?? readAttr(source, 'stroke') ?? 'currentColor')
-    : (readAttr(source, 'stroke') ?? 'currentColor');
   const runBusy = (work: () => Promise<unknown>) => {
     if (disabled || busy) return;
     setBusy(true);
@@ -294,6 +284,21 @@ export function InspectorIconSection(props: InspectorIconSectionProps) {
       }
     })();
   };
+  return { busy, runBusy };
+}
+
+export function InspectorIconSection(props: InspectorIconSectionProps) {
+  const { source, disabled, editable, currentTextColor, onTextColorChange, onRefresh } = props;
+  const { t } = useTranslation();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const { busy, runBusy } = useIconActionRunner(disabled, onRefresh);
+
+  const iconName = readAttr(source, 'data-icon');
+  if (source.tag.toLowerCase() !== 'svg' || iconName === undefined) return undefined;
+
+  const activeColor = editable
+    ? (currentTextColor ?? readAttr(source, 'stroke') ?? 'currentColor')
+    : (readAttr(source, 'stroke') ?? 'currentColor');
 
   return (
     <InspectorGroup
@@ -320,13 +325,9 @@ export function InspectorIconSection(props: InspectorIconSectionProps) {
           setPickerOpen(false);
         }}
         onPick={(icon) => {
+          const entry = { name: icon.name, node: [...icon.node] };
           runBusy(() =>
-            applyStructureEdit({
-              kind: 'replaceSvg',
-              loc: source.loc,
-              tag: 'svg',
-              icon: { name: icon.name, node: [...icon.node] },
-            }),
+            applyStructureEdit({ kind: 'replaceSvg', loc: source.loc, tag: 'svg', icon: entry }),
           );
         }}
       />

@@ -26,6 +26,8 @@ import {
   StudioStyleProbePayloadSchema,
   type StudioTextEditStartPayload,
   StudioTextEditStartPayloadSchema,
+  type StudioToggleInteractivePayload,
+  StudioToggleInteractivePayloadSchema,
 } from '@kumicraft/shared';
 
 export type StudioMessageHandlers = {
@@ -45,6 +47,7 @@ export type StudioMessageHandlers = {
   handleStylePreview?: ((data: StudioStylePreviewPayload) => void) | undefined;
   handleStylePreviewClear?: (() => void) | undefined;
   handleMotionPreview?: ((data: StudioMotionPreviewPayload) => void) | undefined;
+  handleToggleInteractive?: ((data: StudioToggleInteractivePayload) => void) | undefined;
 };
 
 /** Free frame and drawing tool messages (R-FF-10, R-FF-11, R-DT-10). */
@@ -130,6 +133,11 @@ function dispatchStyleAndNav(
     case 'motion-preview': {
       const parsed = StudioMotionPreviewPayloadSchema.safeParse(payload);
       if (parsed.success) handlers.handleMotionPreview?.(parsed.data);
+      return true;
+    }
+    case 'toggle-interactive': {
+      const parsed = StudioToggleInteractivePayloadSchema.safeParse(payload);
+      if (parsed.success) handlers.handleToggleInteractive?.(parsed.data);
       return true;
     }
     default:

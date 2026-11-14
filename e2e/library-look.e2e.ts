@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -79,6 +80,9 @@ test('16. Plain CSS project: inserted button emits CSS variables without Tailwin
   expect(tsx).not.toMatch(/\bbg-[a-z]/);
   expect(tsx).not.toMatch(/\brounded-[a-z]/);
 
+  await expect
+    .poll(() => (existsSync(homeCss) ? readFile(homeCss, 'utf8') : ''))
+    .toContain('var(--brand)');
   const css = await readFile(homeCss, 'utf8');
   expect(css).toContain('var(--brand)');
   expect(css).toContain('var(--radius)');

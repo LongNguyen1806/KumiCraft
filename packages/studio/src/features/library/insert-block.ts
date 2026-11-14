@@ -20,6 +20,7 @@ import { useThemeStore } from '../inspector/use-project-theme.ts';
 import { useProjectStore } from '../project/project-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
+import { recordRecentBlock } from './library-favorites.ts';
 import { getSelectedStyle } from './library-styles.ts';
 import { getSelectedVariant } from './library-variants.ts';
 
@@ -127,7 +128,9 @@ export async function insertBlockAt(
       ...(rendered.imports !== undefined && rendered.imports.length > 0
         ? { from: { file: sourceFileFromTarget(target), imports: [...rendered.imports] } }
         : {}),
+      ...(rendered.kit !== undefined ? { kit: rendered.kit } : {}),
     });
+    recordRecentBlock(project?.id, block.id);
     const newLoc = res.locs[0];
     if (newLoc) {
       useSelectionStore.getState().setSelectedRefs([{ loc: newLoc, index: 0 }]);
@@ -143,11 +146,13 @@ export async function insertBlock(
   lang: string,
   variantId?: string,
 ): Promise<InsertBlockResult> {
-  const selectedRefs = useSelectionStore.getState().selectedRefs;
-  if (selectedRefs.length !== 1) {
-    return { ok: false, skipped: true };
-  }
-  const ref = selectedRefs[0];
+  const { selectedRefs, treeNodes } = useSelectionStore.getState();
+  const ref =
+    selectedRefs.length === 1
+      ? selectedRefs[0]
+      : block.category === 'screen' && selectedRefs.length === 0
+        ? treeNodes[0]?.ref
+        : undefined;
   if (!ref) {
     return { ok: false, skipped: true };
   }

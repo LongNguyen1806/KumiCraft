@@ -163,6 +163,51 @@ function countSet(tokens: readonly ClassToken[], properties: readonly PropertyId
   return used.size;
 }
 
+function SpacingGroupBody({
+  fields,
+  shared,
+}: {
+  readonly fields: (typeof PROPERTY_GROUPS)[number]['fields'];
+  readonly shared: Shared;
+}) {
+  const boxShared = {
+    tokens: shared.tokens,
+    currentScope: shared.currentScope,
+    frameWidth: shared.frameWidth,
+    ctx: shared.ctx,
+    onValueChange: shared.onPropertyValueChange,
+    disabled: shared.isLocked,
+  };
+  return (
+    <>
+      <GroupFieldsGrid fields={fields.filter((f) => !isBoxSide(f.property))} shared={shared} />
+      <SpacingBox fields={fields} shared={boxShared} />
+    </>
+  );
+}
+
+function EffectsGroupBody({
+  fields,
+  shared,
+}: {
+  readonly fields: (typeof PROPERTY_GROUPS)[number]['fields'];
+  readonly shared: Shared;
+}) {
+  return (
+    <>
+      <GroupFieldsGrid fields={fields} shared={shared} />
+      <InspectorEffectsExtra
+        editable={true}
+        disabled={shared.isLocked}
+        tokens={shared.tokens}
+        currentScope={shared.currentScope}
+        onPropChange={shared.onPropertyValueChange}
+        onBatchProps={shared.onBatchProperties}
+      />
+    </>
+  );
+}
+
 function GroupBody({
   group,
   toggles,
@@ -183,40 +228,8 @@ function GroupBody({
       </>
     );
   }
-  if (group.id === 'spacing') {
-    const boxShared = {
-      tokens: shared.tokens,
-      currentScope: shared.currentScope,
-      frameWidth: shared.frameWidth,
-      ctx: shared.ctx,
-      onValueChange: shared.onPropertyValueChange,
-      disabled: shared.isLocked,
-    };
-    return (
-      <>
-        <GroupFieldsGrid
-          fields={group.fields.filter((f) => !isBoxSide(f.property))}
-          shared={shared}
-        />
-        <SpacingBox fields={group.fields} shared={boxShared} />
-      </>
-    );
-  }
-  if (group.id === 'effects') {
-    return (
-      <>
-        <GroupFieldsGrid fields={group.fields} shared={shared} />
-        <InspectorEffectsExtra
-          editable={true}
-          disabled={shared.isLocked}
-          tokens={shared.tokens}
-          currentScope={shared.currentScope}
-          onPropChange={shared.onPropertyValueChange}
-          onBatchProps={shared.onBatchProperties}
-        />
-      </>
-    );
-  }
+  if (group.id === 'spacing') return <SpacingGroupBody fields={group.fields} shared={shared} />;
+  if (group.id === 'effects') return <EffectsGroupBody fields={group.fields} shared={shared} />;
   return <GroupFieldsGrid fields={group.fields} shared={shared} />;
 }
 

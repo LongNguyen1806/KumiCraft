@@ -1,6 +1,7 @@
 // Schemas and types for Source Editor (SPEC-03 section 5.5, SPEC-04 section 6).
 import { z } from 'zod';
 
+import { KitComponentIdSchema } from './library/kit-types.ts';
 import { RelPathSchema } from './rel-path.ts';
 import {
   EditableAttrSchema,
@@ -224,6 +225,12 @@ export const InsertEditSchema = z.strictObject({
   css: InsertedCssSchema.optional(),
   placement: PlacementSchema.optional(),
   tailwindMajor: z.union([z.literal(3), z.literal(4)]).optional(),
+  kit: z
+    .strictObject({
+      components: z.array(KitComponentIdSchema).min(1).max(20).readonly(),
+    })
+    .readonly()
+    .optional(),
 });
 export type InsertEdit = z.infer<typeof InsertEditSchema>;
 

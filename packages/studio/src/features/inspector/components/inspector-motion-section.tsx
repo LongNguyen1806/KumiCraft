@@ -45,7 +45,7 @@ export type InspectorMotionSectionProps = {
   readonly onRefresh: () => void;
 };
 
-function TransitionGrid({
+function TransitionTimingSelects({
   editable,
   disabled,
   readVal,
@@ -63,7 +63,45 @@ function TransitionGrid({
     commitProp(prop, v.replace('ms', ''), v === '' || v.endsWith('ms') ? v : formatMs(v));
   };
   return (
-    <div className="grid grid-cols-2 gap-1.5">
+    <>
+      <MotionSelectField
+        testId="motion-duration"
+        label={t('inspector.fields.duration')}
+        disabled={disabled}
+        value={readVal('duration')}
+        options={timeOpts(DURATION_VALUES)}
+        onChange={(v) => {
+          commitMs('duration', v);
+        }}
+      />
+      <MotionSelectField
+        testId="motion-delay"
+        label={t('inspector.fields.delay')}
+        disabled={disabled}
+        value={readVal('delay')}
+        options={timeOpts(DELAY_VALUES)}
+        onChange={(v) => {
+          commitMs('delay', v);
+        }}
+      />
+    </>
+  );
+}
+
+function TransitionCurveSelects({
+  editable,
+  disabled,
+  readVal,
+  commitProp,
+}: {
+  readonly editable: boolean;
+  readonly disabled: boolean;
+  readonly readVal: (prop: PropertyId) => string;
+  readonly commitProp: (prop: PropertyId, twVal: string, cssVal: string) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <>
       <MotionSelectField
         testId="motion-transition-prop"
         label={t('inspector.fields.transitionProperty')}
@@ -75,16 +113,6 @@ function TransitionGrid({
         }))}
         onChange={(v) => {
           commitProp('transitionProperty', v, CSS_TRANSITION_MAP[v] ?? '');
-        }}
-      />
-      <MotionSelectField
-        testId="motion-duration"
-        label={t('inspector.fields.duration')}
-        disabled={disabled}
-        value={readVal('duration')}
-        options={timeOpts(DURATION_VALUES)}
-        onChange={(v) => {
-          commitMs('duration', v);
         }}
       />
       <MotionSelectField
@@ -101,16 +129,20 @@ function TransitionGrid({
           commitProp('ease', tw, CSS_EASE_MAP[v] ?? v);
         }}
       />
-      <MotionSelectField
-        testId="motion-delay"
-        label={t('inspector.fields.delay')}
-        disabled={disabled}
-        value={readVal('delay')}
-        options={timeOpts(DELAY_VALUES)}
-        onChange={(v) => {
-          commitMs('delay', v);
-        }}
-      />
+    </>
+  );
+}
+
+function TransitionGrid(props: {
+  readonly editable: boolean;
+  readonly disabled: boolean;
+  readonly readVal: (prop: PropertyId) => string;
+  readonly commitProp: (prop: PropertyId, twVal: string, cssVal: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-1.5">
+      <TransitionCurveSelects {...props} />
+      <TransitionTimingSelects {...props} />
     </div>
   );
 }
@@ -193,8 +225,7 @@ function MotionPresetButtons({
   );
 }
 
-export function InspectorMotionSection(props: InspectorMotionSectionProps) {
-  const { t } = useTranslation();
+function useMotionSectionHandlers(props: InspectorMotionSectionProps) {
   const scope = props.currentScope ?? { breakpoint: 'base' };
   const tokens = props.tokens ?? [];
   const readVal = (prop: PropertyId) =>
@@ -226,7 +257,14 @@ export function InspectorMotionSection(props: InspectorMotionSectionProps) {
     }
   };
 
+  return { readVal, commitProp, applyPreset };
+}
+
+export function InspectorMotionSection(props: InspectorMotionSectionProps) {
+  const { t } = useTranslation();
+  const { readVal, commitProp, applyPreset } = useMotionSectionHandlers(props);
   const animVal = readVal('animation');
+
   return (
     <InspectorGroup
       id="motion"

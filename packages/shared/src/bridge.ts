@@ -163,6 +163,12 @@ export const StudioTextEditEndPayloadSchema = z.strictObject({
 });
 export type StudioTextEditEndPayload = z.infer<typeof StudioTextEditEndPayloadSchema>;
 
+export const StudioToggleInteractivePayloadSchema = z.strictObject({
+  ref: ElementRefSchema,
+  open: z.boolean().optional(),
+});
+export type StudioToggleInteractivePayload = z.infer<typeof StudioToggleInteractivePayloadSchema>;
+
 export const BridgeBuildErrorPayloadSchema = z.strictObject({
   message: z.string().max(2000),
   /** Relative to the project root (R-BR-17). */

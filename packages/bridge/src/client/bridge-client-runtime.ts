@@ -13,6 +13,7 @@ import {
   type BridgeRuntimeConfig,
   type HotContext,
   isOverlayHost,
+  navigateCanvasRoute,
   revealSelectedElement,
   shortcutPayload,
 } from './bridge-events.ts';
@@ -22,6 +23,7 @@ import { CanvasTools } from './canvas-tools.ts';
 import { scanDomTree } from './dom-scanner.ts';
 import { computeDragHandleTarget, DragController, resolveElementsByRefs } from './drag.ts';
 import { browserDropEnv } from './drop-target.ts';
+import { toggleInteractiveElement } from './interactive-toggle.ts';
 import { shouldForwardShortcut } from './keyboard.ts';
 import { fitsMessageLimit } from './message-size.ts';
 import { triggerMotionPreview } from './motion-preview.ts';
@@ -223,6 +225,11 @@ export class BridgeClientRuntime {
       handleMotionPreview: (d) => {
         triggerMotionPreview(d, document);
       },
+      handleToggleInteractive: (d) => {
+        if (toggleInteractiveElement(d, document)) {
+          this.scheduleTreeScan();
+        }
+      },
     });
   };
 
@@ -269,12 +276,7 @@ export class BridgeClientRuntime {
 
   private handleNavigateMessage = (route: string): void => {
     this.stylePreview.clearAll();
-    if (this.navigation === 'document') {
-      window.location.assign(route);
-      return;
-    }
-    window.history.pushState(undefined, '', route);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigateCanvasRoute(route, this.navigation);
   };
 
   private handleTextEditStartMessage = (payload: StudioTextEditStartPayload): void => {

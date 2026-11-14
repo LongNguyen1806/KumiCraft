@@ -474,6 +474,7 @@
       "addItem": "Add item",
       "removeItem": "Remove item"
     },
+    "previewInteractive": "Preview content",
     "attrs": {
       "namePlaceholder": "attr (e.g. aria-label)",
       "valuePlaceholder": "value",

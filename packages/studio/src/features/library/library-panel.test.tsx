@@ -1,15 +1,17 @@
 // @vitest-environment happy-dom
-import { LIBRARY_BLOCKS } from '@kumicraft/shared';
+import { DEFAULT_DESIGN_DIRS, LIBRARY_BLOCKS, type ProjectInfo } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { useThemeStore } from '../inspector/use-project-theme.ts';
+import { useProjectStore } from '../project/project-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { useStructureErrorStore } from '../structure/structure-error-store.ts';
 import { determineInsertTarget, insertBlock, resetThemeLookAttempt } from './insert-block.ts';
 import { LibraryPanel } from './library-panel.tsx';
+import { hasBlockPreview } from './previews/index.tsx';
 
 describe('Library Panel and Insertion (Scenarios #14, #15)', () => {
   beforeAll(async () => {
@@ -165,5 +167,130 @@ describe('Library Panel and Insertion (Scenarios #14, #15)', () => {
       expect(call.jsx).toContain('border');
       expect(call.jsx).not.toContain('bg-blue-600');
     }
+  });
+
+  it('Test 4: persists favorite star across remount and caps recent blocks to 8', async () => {
+    const project: ProjectInfo = {
+      id: 'proj-fav-test',
+      name: 'Fav Project',
+      root: '/tmp/proj',
+      sourceDir: 'src',
+      support: {
+        supported: true,
+        framework: 'vite-react',
+        versions: { vite: '6.0.0', react: '19.0.0', tailwindcss: '4.1.0' },
+        language: 'ts',
+        styling: {
+          systems: [{ id: 'tailwind', version: '4.1.0' }],
+          editable: true,
+          globalCss: ['src/index.css'],
+          primary: 'tailwind',
+        },
+        reasons: [],
+      },
+      needsInstall: false,
+      responsiveMode: 'desktop-first',
+      frames: [{ id: 'desktop', label: 'Desktop', width: 1440, height: 900 }],
+      primaryFrameId: 'desktop',
+      backends: [],
+      trusted: true,
+      designDirs: DEFAULT_DESIGN_DIRS,
+    };
+    useProjectStore.getState().setProject(project);
+    vi.spyOn(sourceClient, 'applyStructureEdit').mockResolvedValue({
+      changed: true,
+      files: ['src/Home.tsx'],
+      locs: ['src/Home.tsx:25:5'],
+    });
+    useSelectionStore.getState().setSelectedRefs([{ loc: 'src/Home.tsx:10:1', index: 0 }]);
+    useStructureErrorStore.getState().setActiveSource({ loc: 'src/Home.tsx:10:1', tag: 'div' });
+
+    const { unmount } = render(<LibraryPanel />);
+    const starBtn = screen.getByTestId('library-fav-form.button');
+    fireEvent.click(starBtn);
+    expect(screen.getByTestId('library-favorites')).toBeDefined();
+    expect(screen.getByTestId('library-fav-item-form.button')).toBeDefined();
+    unmount();
+
+    render(<LibraryPanel />);
+    expect(screen.getByTestId('library-fav-item-form.button')).toBeDefined();
+    expect(screen.getByTestId('library-fav-form.button').getAttribute('aria-pressed')).toBe('true');
+
+    const idsToInsert = [
+      'form.button',
+      'form.input',
+      'content.heading',
+      'content.paragraph',
+      'layout.row',
+      'layout.column',
+      'layout.grid',
+      'layout.section',
+      'display.badge',
+      'display.avatar',
+    ];
+    for (const id of idsToInsert) {
+      useSelectionStore.getState().setSelectedRefs([{ loc: 'src/Home.tsx:10:1', index: 0 }]);
+      useStructureErrorStore.getState().setActiveSource({ loc: 'src/Home.tsx:10:1', tag: 'div' });
+      fireEvent.click(screen.getByTestId(`library-add-${id}`));
+      await waitFor(() => {
+        expect(screen.getByTestId(`library-recent-item-${id}`)).toBeDefined();
+      });
+    }
+
+    const recentSection = screen.getByTestId('library-recent');
+    const items = recentSection.querySelectorAll('[data-testid^="library-recent-item-"]');
+    expect(items.length).toBe(8);
+    expect(screen.queryByTestId('library-recent-item-form.button')).toBeNull();
+    expect(screen.queryByTestId('library-recent-item-form.input')).toBeNull();
+  }, 15_000);
+
+  it('Test 5: shows static SVG wireframe previews on hover and focus with zero iframes for every block', () => {
+    for (const block of LIBRARY_BLOCKS) {
+      expect(hasBlockPreview(block.id)).toBe(true);
+    }
+
+    useProjectStore.getState().setProject({
+      id: 'proj-preview-test',
+      name: 'Preview Project',
+      root: '/tmp/proj',
+      sourceDir: 'src',
+      support: {
+        supported: true,
+        framework: 'vite-react',
+        versions: { vite: '6.0.0', react: '19.0.0', tailwindcss: '4.1.0' },
+        language: 'ts',
+        styling: {
+          systems: [{ id: 'tailwind', version: '4.1.0' }],
+          editable: true,
+          globalCss: ['src/index.css'],
+          primary: 'tailwind',
+        },
+        reasons: [],
+      },
+      needsInstall: false,
+      responsiveMode: 'desktop-first',
+      frames: [{ id: 'desktop', label: 'Desktop', width: 1440, height: 900 }],
+      primaryFrameId: 'desktop',
+      backends: [],
+      trusted: true,
+      designDirs: DEFAULT_DESIGN_DIRS,
+    });
+    render(<LibraryPanel />);
+
+    const pricingTile = screen.getByTestId('library-block-landing.pricing');
+    fireEvent.mouseEnter(pricingTile);
+    const hoverPreview = screen.getByTestId('library-preview-landing.pricing');
+    expect(hoverPreview.querySelector('svg')).not.toBeNull();
+    expect(hoverPreview.querySelector('iframe')).toBeNull();
+    fireEvent.mouseLeave(pricingTile);
+    expect(screen.queryByTestId('library-preview-landing.pricing')).toBeNull();
+
+    const modalTile = screen.getByTestId('library-block-interactive.modal');
+    fireEvent.focus(modalTile);
+    const focusPreview = screen.getByTestId('library-preview-interactive.modal');
+    expect(focusPreview.querySelector('svg')).not.toBeNull();
+    expect(focusPreview.querySelector('iframe')).toBeNull();
+    fireEvent.blur(modalTile);
+    expect(screen.queryByTestId('library-preview-interactive.modal')).toBeNull();
   });
 });

@@ -20,15 +20,30 @@ import { useEditMode } from '../project/use-edit-mode.ts';
 import { useStyleLayerSupported } from '../project/use-style-edit.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { insertBlock } from './insert-block.ts';
+import { getFavoriteBlocks, getRecentBlocks, toggleFavoriteBlock } from './library-favorites.ts';
 import { getSelectedStyle, setSelectedStyle } from './library-styles.ts';
 
 const CATEGORIES: readonly LibraryBlockCategory[] = [
   'layout',
   'content',
+  'display',
   'form',
+  'navigation',
+  'interactive',
   'data',
   'composite',
+  'landing',
+  'screen',
 ];
+
+function blocksByIds(ids: readonly string[]): readonly LibraryBlock[] {
+  const result: LibraryBlock[] = [];
+  for (const id of ids) {
+    const block = LIBRARY_BLOCKS.find((b) => b.id === id);
+    if (block !== undefined) result.push(block);
+  }
+  return result;
+}
 
 type BlockKey = keyof (typeof resources.en.library)['blocks'];
 
@@ -36,7 +51,7 @@ function isBlockKey(key: string): key is BlockKey {
   return Object.hasOwn(resources.en.library.blocks, key);
 }
 
-export function useLibraryInsert(hasSelection: boolean) {
+export function useLibraryInsert(canInsert: boolean, onSuccess?: () => void) {
   const { i18n } = useTranslation('library');
   const [inserting, setInserting] = useState(false);
   const [errorInfo, setErrorInfo] = useState<ErrorInfo>();
@@ -44,12 +59,13 @@ export function useLibraryInsert(hasSelection: boolean) {
   const runInsert = async (
     action: () => Promise<{ readonly ok: boolean; readonly error?: ErrorInfo | undefined }>,
   ) => {
-    if (!hasSelection || inserting) return;
+    if (!canInsert || inserting) return;
     setInserting(true);
     setErrorInfo(undefined);
     const res = await action();
     setInserting(false);
-    if (!res.ok && res.error) setErrorInfo(res.error);
+    if (res.ok) onSuccess?.();
+    else if (res.error) setErrorInfo(res.error);
   };
 
   const handleInsert = (block: LibraryBlock, variantId?: string) =>
@@ -80,12 +96,41 @@ function useFilteredLibraryBlocks(query: string): readonly LibraryBlock[] {
   }, [query]);
 }
 
-export function useLibraryPanelState() {
-  const project = useProjectStore((s) => s.project);
-  const projectId = project?.id;
-  const [query, setQuery] = useState('');
-  const [imagePickerOpen, setImagePickerOpen] = useState(false);
-  const [iconPickerOpen, setIconPickerOpen] = useState(false);
+function useLibraryQuickState(projectId: string | undefined, editable: boolean, query: string) {
+  const [favChoice, setFavChoice] = useState<{
+    readonly projectId: string | undefined;
+    readonly ids: readonly string[];
+  }>(() => ({ projectId, ids: getFavoriteBlocks(projectId) }));
+  const [recentChoice, setRecentChoice] = useState<{
+    readonly projectId: string | undefined;
+    readonly ids: readonly string[];
+  }>(() => ({ projectId, ids: getRecentBlocks(projectId) }));
+
+  const favoriteIds =
+    favChoice.projectId === projectId ? favChoice.ids : getFavoriteBlocks(projectId);
+  const recentIds =
+    recentChoice.projectId === projectId ? recentChoice.ids : getRecentBlocks(projectId);
+
+  const toggleFavorite = (blockId: string) => {
+    const next = toggleFavoriteBlock(projectId, blockId);
+    setFavChoice({ projectId, ids: next });
+  };
+
+  const refreshRecent = () => {
+    setRecentChoice({ projectId, ids: getRecentBlocks(projectId) });
+  };
+
+  const showQuick = editable && query.trim().length === 0;
+  return {
+    favoriteIds,
+    toggleFavorite,
+    favoriteBlocks: showQuick ? blocksByIds(favoriteIds) : [],
+    recentBlocks: showQuick ? blocksByIds(recentIds) : [],
+    bumpRecent: refreshRecent,
+  };
+}
+
+function useProjectStyleChoice(projectId: string | undefined) {
   const [styleChoice, setStyleChoice] = useState<{
     readonly projectId: string | undefined;
     readonly value: LibraryStyle;
@@ -96,13 +141,28 @@ export function useLibraryPanelState() {
     setSelectedStyle(projectId, next);
     setStyleChoice({ projectId, value: next });
   };
+  return { style, handleStyleChange };
+}
+
+export function useLibraryPanelState() {
+  const project = useProjectStore((s) => s.project);
+  const projectId = project?.id;
+  const [query, setQuery] = useState('');
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
+  const [hoveredPreview, setHoveredPreview] = useState<
+    { readonly block: LibraryBlock; readonly label?: string | undefined } | undefined
+  >();
+  const { style, handleStyleChange } = useProjectStyleChoice(projectId);
   const editable = useStyleLayerSupported();
   const editMode = useEditMode();
   const selectedRefs = useSelectionStore((s) => s.selectedRefs);
+  const hasTreeRoot = useSelectionStore((s) => s.treeNodes.length > 0);
   const hasSelection = selectedRefs.length === 1;
   const filteredBlocks = useFilteredLibraryBlocks(query);
   const visibleBlocks = editable ? filteredBlocks : [];
-  const insert = useLibraryInsert(hasSelection);
+  const quick = useLibraryQuickState(projectId, editable, query);
+  const insert = useLibraryInsert(hasSelection || hasTreeRoot, quick.bumpRecent);
   const activeCategories = CATEGORIES.filter((cat) =>
     visibleBlocks.some((b) => b.category === cat),
   );
@@ -120,8 +180,14 @@ export function useLibraryPanelState() {
     editable,
     isViewOnly: editMode === 'viewOnly',
     hasSelection,
+    hasTreeRoot,
     visibleBlocks,
     insert,
     activeCategories,
+    hoveredPreview,
+    setPreviewBlock: (block: LibraryBlock | undefined, label?: string) => {
+      setHoveredPreview(block !== undefined ? { block, label } : undefined);
+    },
+    ...quick,
   };
 }

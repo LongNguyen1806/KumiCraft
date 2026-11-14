@@ -474,6 +474,7 @@
       "addItem": "Thêm mục",
       "removeItem": "Bỏ mục"
     },
+    "previewInteractive": "Xem nội dung",
     "attrs": {
       "namePlaceholder": "tên (vd: aria-label)",
       "valuePlaceholder": "giá trị",

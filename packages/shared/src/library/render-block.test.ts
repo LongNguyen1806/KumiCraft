@@ -42,8 +42,8 @@ function makeTheme(overrides: Partial<ThemeInfo> = {}): ThemeInfo {
 }
 
 describe('renderBlock', () => {
-  it('1. [R-ST-12] all 19 blocks and variants have matching @key tokens and leave no @ or {role} after rendering in any system', () => {
-    expect(LIBRARY_BLOCKS).toHaveLength(19);
+  it('1. [R-ST-12] all 70 blocks and variants have matching @key tokens and leave no @ or {role} after rendering in any system', () => {
+    expect(LIBRARY_BLOCKS).toHaveLength(70);
 
     for (const block of LIBRARY_BLOCKS) {
       const variants = [undefined, ...(block.variants?.map((v) => v.id) ?? [])];
@@ -319,5 +319,56 @@ describe('renderBlock', () => {
     expect(cardFallback.imports).toBeUndefined();
     expect(cardFallback.jsx).toContain('<div ');
     expect(cardFallback.jsx).not.toContain('<Card');
+  });
+
+  it('19. [K9.7-3] semantic attributes (form htmlFor/id, video title, breadcrumb aria-label) and shadcn interactive tabs', () => {
+    const newFormIds = new Set([
+      'form.textarea',
+      'form.select',
+      'form.checkbox',
+      'form.radio-group',
+      'form.switch',
+      'form.search',
+      'form.date',
+      'form.file',
+    ]);
+    for (const block of LIBRARY_BLOCKS.filter((b) => newFormIds.has(b.id))) {
+      const rendered = renderBlock(block, 'tailwind4', 'vi').jsx;
+      const htmlForId = /htmlFor="([^"]+)"/.exec(rendered)?.[1];
+      expect(htmlForId, `${block.id} missing htmlFor`).toBeDefined();
+      if (htmlForId !== undefined) {
+        expect(rendered, `${block.id} missing matching id`).toContain(`id="${htmlForId}"`);
+      }
+    }
+    const video = LIBRARY_BLOCKS.find((b) => b.id === 'content.video');
+    expect(video).toBeDefined();
+    if (video !== undefined) {
+      expect(renderBlock(video, 'tailwind4', 'en').jsx).toMatch(/<iframe[^>]+title="[^"]+"/);
+    }
+    const crumb = LIBRARY_BLOCKS.find((b) => b.id === 'navigation.breadcrumb');
+    expect(crumb).toBeDefined();
+    if (crumb !== undefined) {
+      expect(renderBlock(crumb, 'tailwind4', 'en').jsx).toMatch(/<nav[^>]+aria-label="[^"]+"/);
+    }
+
+    const tabs = LIBRARY_BLOCKS.find((b) => b.id === 'interactive.tabs');
+    expect(tabs).toBeDefined();
+    if (tabs !== undefined) {
+      const kitResult = renderBlock(tabs, 'tailwind4', 'en');
+      expect(kitResult.kit).toEqual({ components: ['Tabs', 'Tab'] });
+
+      const shadcnResult = renderBlock(tabs, 'tailwind4', 'en', undefined, undefined, {
+        kind: 'shadcn',
+        uiDir: 'src/components/ui',
+        importBase: '@/components/ui',
+        components: ['tabs'],
+      });
+      expect(shadcnResult.usedUiKit).toBe(true);
+      expect(shadcnResult.kit).toBeUndefined();
+      expect(shadcnResult.imports).toEqual([
+        "import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';",
+      ]);
+      expect(shadcnResult.jsx).toContain('<Tabs ');
+    }
   });
 });

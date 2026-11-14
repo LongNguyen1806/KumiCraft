@@ -25,17 +25,15 @@ import { AttributesEditorSection } from './components/attributes-editor.tsx';
 import { ElementPath } from './components/element-path.tsx';
 import { InspectorHeader } from './components/inspector-header.tsx';
 import { InspectorIconSection } from './components/inspector-icon-section.tsx';
-import { InspectorImageSection } from './components/inspector-image-section.tsx';
-import { InspectorMotionSection } from './components/inspector-motion-section.tsx';
-import {
-  InspectorPropertyGroups,
-  isColorProperty,
-  resolveFieldOptions,
-} from './components/inspector-property-groups.tsx';
+import { isColorProperty, resolveFieldOptions } from './components/inspector-property-groups.tsx';
 import { OtherClassesSection } from './components/other-classes-section.tsx';
 import { CssStyleEditor } from './components/style-sources-section.tsx';
 import { TagAttributesSection } from './components/tag-attributes-section.tsx';
 import { ViewOnlyInspector } from './components/view-only-inspector.tsx';
+import {
+  EditablePropertySections,
+  useSingleTargetLiveCallbacks,
+} from './inspector-editable-sections.tsx';
 import { MultiInspectorView } from './multi-inspector-view.tsx';
 import type { InspectorTarget } from './types.ts';
 import { useAttributeEdit } from './use-attribute-edit.ts';
@@ -114,66 +112,6 @@ function TagAttributesBlock({
         }}
       />
       <EditorAlert errorInfo={editor.errorInfo} />
-    </>
-  );
-}
-
-function EditablePropertySections(
-  props: Pick<
-    ElementSectionsProps,
-    | 'source'
-    | 'tokens'
-    | 'currentScope'
-    | 'frameWidth'
-    | 'ctx'
-    | 'isLocked'
-    | 'onPropChange'
-    | 'onBatchProps'
-    | 'onRefresh'
-  >,
-) {
-  const {
-    source,
-    tokens,
-    currentScope,
-    frameWidth,
-    ctx,
-    isLocked,
-    onPropChange,
-    onBatchProps,
-    onRefresh,
-  } = props;
-  return (
-    <>
-      <InspectorImageSection
-        tag={source.tag}
-        editable={true}
-        disabled={isLocked}
-        tokens={tokens}
-        currentScope={currentScope}
-        ctx={ctx}
-        onPropChange={onPropChange}
-      />
-      <InspectorPropertyGroups
-        tokens={tokens}
-        currentScope={currentScope}
-        frameWidth={frameWidth}
-        ctx={ctx}
-        isLocked={isLocked}
-        onPropertyValueChange={onPropChange}
-        onBatchProperties={onBatchProps}
-      />
-      <InspectorMotionSection
-        refTarget={{ loc: source.loc, index: 0 }}
-        source={source}
-        editable={true}
-        disabled={isLocked}
-        tokens={tokens}
-        currentScope={currentScope}
-        onPropChange={onPropChange}
-        onBatchProps={onBatchProps}
-        onRefresh={onRefresh}
-      />
     </>
   );
 }
@@ -304,21 +242,7 @@ function SingleTargetEditableBody({
   const { isLocked, isAttrLocked } = computeTargetLocks(target, attrEdit.isSaving);
   const displayedError = liveEdit.error ?? attrEdit.error ?? target.error;
   const project = useProjectInfo();
-  const onPropChange = (
-    prop: Parameters<typeof liveEdit.mutateProperty>[0],
-    val: Parameters<typeof liveEdit.mutateProperty>[1],
-  ) => {
-    liveEdit.mutateProperty(prop, val);
-    onClassStringChange?.(liveEdit.classString);
-  };
-  const onBatchProps = (entries: Parameters<typeof liveEdit.mutateProperties>[0]) => {
-    liveEdit.mutateProperties(entries);
-    onClassStringChange?.(liveEdit.classString);
-  };
-  const onRawChange = (raw: string) => {
-    liveEdit.mutateRawClass(raw);
-    onClassStringChange?.(raw);
-  };
+  const callbacks = useSingleTargetLiveCallbacks(liveEdit, onClassStringChange);
 
   return (
     <>
@@ -343,9 +267,7 @@ function SingleTargetEditableBody({
             onAttributeChange={attrEdit.setAttribute}
             onRefresh={target.refresh}
             rawClassString={liveEdit.classString}
-            onPropChange={onPropChange}
-            onBatchProps={onBatchProps}
-            onRawChange={onRawChange}
+            {...callbacks}
           />
         </>
       )}

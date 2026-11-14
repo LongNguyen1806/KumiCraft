@@ -3,6 +3,7 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
+import { LIBRARY_BLOCKS, renderBlock } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { directWriteFs } from '../../../workspace/test-support.ts';
@@ -59,5 +60,51 @@ describe('ui-kit detection [TK-44]', () => {
     const report = await detectViteReact({ fs: directWriteFs, root: tmpDir, packageJson: basePkg });
     expect(report.supported).toBe(true);
     expect(report.uiKit).toBeUndefined();
+  });
+
+  it('Test 9: react-shadcn fixture detects tabs, routes interactive.tabs to project component without kit, and falls back for missing modal', async () => {
+    const fixtureRoot = path.resolve(
+      import.meta.dirname,
+      '../../../../../../../fixtures/projects/react-shadcn',
+    );
+    const pkgRaw = await fs.readFile(path.join(fixtureRoot, 'package.json'), 'utf8');
+    const pkg = JSON.parse(pkgRaw) as Record<string, unknown>;
+    const report = await detectViteReact({
+      fs: directWriteFs,
+      root: fixtureRoot,
+      packageJson: pkg,
+    });
+    expect(report.uiKit?.kind).toBe('shadcn');
+    expect(report.uiKit?.components).toContain('tabs');
+    expect(report.uiKit?.components).not.toContain('dialog');
+
+    const tabsBlock = LIBRARY_BLOCKS.find((b) => b.id === 'interactive.tabs');
+    const modalBlock = LIBRARY_BLOCKS.find((b) => b.id === 'interactive.modal');
+    expect(tabsBlock).toBeDefined();
+    expect(modalBlock).toBeDefined();
+    if (tabsBlock === undefined || modalBlock === undefined) return;
+
+    const tabsRendered = renderBlock(
+      tabsBlock,
+      'tailwind4',
+      'en',
+      undefined,
+      undefined,
+      report.uiKit,
+    );
+    expect(tabsRendered.usedUiKit).toBe(true);
+    expect(tabsRendered.kit).toBeUndefined();
+    expect(tabsRendered.imports?.some((line) => line.includes('@/components/ui/tabs'))).toBe(true);
+
+    const modalRendered = renderBlock(
+      modalBlock,
+      'tailwind4',
+      'en',
+      undefined,
+      undefined,
+      report.uiKit,
+    );
+    expect(modalRendered.usedUiKit).toBeUndefined();
+    expect(modalRendered.kit).toEqual({ components: ['Modal'] });
   });
 });
