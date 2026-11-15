@@ -19,18 +19,13 @@ import {
   NameSectionIdControl,
   SECTION_ELIGIBLE_TAGS,
 } from './link-target-controls.tsx';
+import { LOADING_ELIGIBLE_TAGS, LoadingButtonControl } from './loading-button-control.tsx';
 import { ScrollSpyControl } from './scroll-spy-control.tsx';
 import {
   SELECT_CONTAINER_TAGS,
   SelectGroupMultiControls,
   SelectGroupSingleControls,
 } from './select-group-controls.tsx';
-import {
-  LOADING_ELIGIBLE_TAGS,
-  LoadingButtonControl,
-  TOAST_ELIGIBLE_TAGS,
-  ToastOnClickControl,
-} from './toast-loading-controls.tsx';
 
 function useProjectStyleSystem(): StyleSystemId | undefined {
   const project = useProjectInfo();
@@ -54,7 +49,6 @@ export function hasApplicableInteraction(
     SELECT_CONTAINER_TAGS.has(source.tag) ||
     SECTION_ELIGIBLE_TAGS.has(source.tag) ||
     LINK_ELIGIBLE_TAGS.has(source.tag) ||
-    TOAST_ELIGIBLE_TAGS.has(source.tag) ||
     LOADING_ELIGIBLE_TAGS.has(source.tag)
   ) {
     return true;
@@ -92,7 +86,6 @@ export function InteractionSection({
         />
         <NameSectionIdControl source={source} onDone={onDone} />
         <LinkTargetControl source={source} onDone={onDone} />
-        <ToastOnClickControl source={source} onDone={onDone} />
         <LoadingButtonControl source={source} onDone={onDone} />
         <ScrollSpyControl source={source} refTarget={refTarget} onDone={onDone} />
       </div>

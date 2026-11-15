@@ -1,10 +1,5 @@
-// MCP tools for K9.8-1 interactions (SelectGroup, Dark Mode, Toast, LoadingButton, Links, ScrollSpy).
-import {
-  SelectGroupModeSchema,
-  StyleSystemIdSchema,
-  ToastPositionSchema,
-  ToastVariantSchema,
-} from '@kumicraft/shared';
+// MCP tools for K9.8-1 interactions (SelectGroup, Dark Mode, LoadingButton, Links, ScrollSpy).
+import { SelectGroupModeSchema, StyleSystemIdSchema } from '@kumicraft/shared';
 import { z } from 'zod';
 
 import type { ApiClient, ApiResult } from './api-client.ts';
@@ -47,15 +42,6 @@ const RemoveSelectGroupInput = z.strictObject({
 
 const EnableDarkModeInput = z.strictObject({
   checkOnly: z.boolean().optional(),
-});
-
-const AddToastInput = z.strictObject({
-  loc: LocSchema,
-  message: z.string().min(1).max(200),
-  subtext: z.string().max(200).optional(),
-  variant: ToastVariantSchema.optional(),
-  durationMs: z.number().int().min(1000).max(15000).optional(),
-  position: ToastPositionSchema.optional(),
 });
 
 const MakeLoadingButtonInput = z.strictObject({
@@ -111,21 +97,6 @@ async function runRemoveSelectGroup(api: ApiClient, args: unknown): Promise<ApiR
     action: 'removeSelectGroup',
     group: { loc: input.groupLoc, tag: grp.value.tag },
     ...(input.styleSystem !== undefined ? { styleSystem: input.styleSystem } : {}),
-  });
-}
-
-async function runAddToast(api: ApiClient, args: unknown): Promise<ApiResult> {
-  const input = AddToastInput.parse(args);
-  const el = await readElement(api, input.loc);
-  if (!el.ok) return el;
-  return api.post('source/interaction', {
-    action: 'addToastOnClick',
-    element: { loc: input.loc, tag: el.value.tag },
-    message: input.message,
-    ...(input.subtext !== undefined ? { subtext: input.subtext } : {}),
-    ...(input.variant !== undefined ? { variant: input.variant } : {}),
-    ...(input.durationMs !== undefined ? { durationMs: input.durationMs } : {}),
-    ...(input.position !== undefined ? { position: input.position } : {}),
   });
 }
 
@@ -198,12 +169,6 @@ export const INTERACTION_TOOLS: readonly McpTool[] = [
       'Check (checkOnly: true) whether Dark colors apply in the open project. Setting dark mode up is refused (E023 projectWideViaAi): the Studio hands it to the AI tab.',
     input: EnableDarkModeInput,
     run: (api, args) => api.post('project/dark-mode', EnableDarkModeInput.parse(args ?? {})),
-  },
-  {
-    name: 'kumicraft_add_toast_on_click',
-    description: 'Wrap an element in ToastTrigger and ensure ToastHost exists on the page.',
-    input: AddToastInput,
-    run: runAddToast,
   },
   {
     name: 'kumicraft_make_loading_button',

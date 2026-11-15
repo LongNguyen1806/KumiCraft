@@ -154,10 +154,8 @@
     "setStyle": "change style of <{{tag}}>",
     "setFlag": "toggle free position <{{tag}}>",
     "setProp": "set prop <{{tag}}>",
-    "repeatElement": "repeat list <{{tag}}>",
     "setDataArray": "edit data list {{name}}",
     "setTextRun": "edit text segment",
-    "addToastOnClick": "add toast on <{{tag}}>",
     "makeLoadingButton": "convert <{{tag}}> to loading button",
     "markActiveNav": "mark active nav <{{tag}}>",
     "setLinkTarget": "set link target <{{tag}}>",
@@ -920,8 +918,6 @@
     "reload": "Reload page"
   },
   "dataTools": {
-    "repeatButton": "Repeat from list",
-    "repeatDisabledInLoop": "Already inside a .map() loop",
     "gridTitle": "Data table ({{name}})",
     "readonlyBanner": "Data expression is read-only ({{reason}}). Edit in editor.",
     "addRow": "Add row",
@@ -954,15 +950,6 @@
     "ariaLabelPlaceholder": "Accessible label…",
     "applyFix": "Apply"
   },
-  "responsiveAudit": {
-    "button": "Responsive audit",
-    "running": "Auditing…",
-    "title": "Responsive audit",
-    "noIssues": "No horizontal overflow or sibling overlap detected.",
-    "close": "Close",
-    "overflow": "Horizontal overflow",
-    "overlap": "Sibling overlap"
-  },
   "interaction": {
     "fixHintSuffix": "Check the element structure or edit in code editor.",
     "selectModeSingle": "Single choice",
@@ -986,18 +973,10 @@
     "smoothScroll": "Smooth scroll",
     "applyLink": "Apply link target",
     "applyLinkTooltip": "Update this link or button target and optional smooth scrolling.",
-    "toastOnClick": "On click: show toast",
-    "toastOnClickTooltip": "Show a notification banner when this element is clicked.",
-    "toastMessagePlaceholder": "Notification message…",
-    "toastSubtextPlaceholder": "Secondary description (optional)…",
-    "toastSuccess": "Success",
-    "toastError": "Error",
-    "toastInfo": "Info",
     "posBottomRight": "Bottom right",
     "posBottomLeft": "Bottom left",
     "posTopRight": "Top right",
     "posTopCenter": "Top center",
-    "applyToast": "Add toast trigger",
     "externalUrlPlaceholder": "https://...",
     "defaultTopAnchor": "#top",
     "secondsShort": "{{count}}s",
@@ -1020,10 +999,6 @@
       "needNavLinks": "Container needs at least one <a> or <Link> child."
     },
     "askAi": "Ask AI to do it",
-    "askAiHint": "Opens the AI tab with a prepared request; read it, edit it, then send.",
-    "askAiPrompt": {
-      "projectToastLibrary": "This project shows notices with {{library}}. When element {{loc}} is clicked, show the notice \"{{message}}\" with {{library}}, the way the project already uses it. Do not install packages or add a second notice system; if the project has no {{library}} host yet, add one once in a shared place (layout or App).",
-      "projectToastHost": "This project already has its own notice system in {{file}}. When element {{loc}} is clicked, show the notice \"{{message}}\" with that system. Do not install packages or add a second notice system."
-    }
+    "askAiHint": "Opens the AI tab with a prepared request; read it, edit it, then send."
   }
 }

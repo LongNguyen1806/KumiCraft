@@ -1,4 +1,4 @@
-// E2E tests for K9.8-1 Group 11: SelectGroup, Linked Content, Toast, and Mixed Text Edit.
+// E2E tests for K9.8-1 Group 11: SelectGroup, Linked Content, and Mixed Text Edit.
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -100,9 +100,7 @@ test('Group 11a: SelectGroup multi-select wrap, link content panels, and live Pr
   await expect(card3).toHaveAttribute('data-selected', 'true');
 });
 
-test('Group 11b: No dark tools, Toast on click, and Mixed text run edit preserving SVG', async ({
-  page,
-}) => {
+test('Group 11b: No dark tools, and Mixed text run edit preserving SVG', async ({ page }) => {
   folder = await copyFixture('projects/vite8-react19-ts');
   const home = join(folder.path, 'src', 'pages', 'Home.tsx');
   const indexCss = join(folder.path, 'src', 'index.css');
@@ -144,21 +142,7 @@ test('Group 11b: No dark tools, Toast on click, and Mixed text run edit preservi
   expect(await readFile(indexCss, 'utf8')).toBe(cssBefore);
   expect(existsSync(join(folder.path, 'src', 'kumicraft', 'theme.ts'))).toBe(false);
 
-  // Select Đặt hàng button on Canvas, and attach Toast on click
-  await canvas.getByRole('button', { name: 'Đặt hàng' }).click();
-  await page.getByTestId('open-toast-config-btn').click();
-  await page.getByTestId('toast-message-input').fill('Đã thêm vào giỏ');
-  await page.getByTestId('apply-toast-on-click').click();
-  await expect.poll(() => readFile(home, 'utf8')).toContain('<ToastTrigger');
-  await expect.poll(() => readFile(home, 'utf8')).toContain('<ToastHost');
-
-  // Switch to Preview -> clicking Đặt hàng shows the Toast
-  await page.getByTestId('canvas-mode-toggle').click();
-  await canvas.getByRole('button', { name: 'Đặt hàng' }).click();
-  await expect(canvas.getByRole('status')).toContainText('Đã thêm vào giỏ');
-
-  // Switch back to Design -> edit mixed text run on <h3> without removing inline <svg data-icon="battery">
-  await page.getByTestId('canvas-mode-toggle').click();
+  // Edit mixed text run on <h3> without removing inline <svg data-icon="battery">
   await page.getByRole('treeitem', { name: /h3/ }).first().click();
   const runInput = page.getByTestId('text-run-input-0');
   await expect(runInput).toBeVisible({ timeout: 10_000 });
@@ -167,53 +151,4 @@ test('Group 11b: No dark tools, Toast on click, and Mixed text run edit preservi
 
   await expect.poll(() => readFile(home, 'utf8')).toContain('Pin 40 giờ');
   await expect.poll(() => readFile(home, 'utf8')).toContain('<svg data-icon="battery"');
-});
-
-test('Group 11c: a project with its own toast library gets "Ask AI" instead of a second system [QA K9.8-1]', async ({
-  page,
-}) => {
-  folder = await copyFixture('projects/vite8-react19-ts');
-  const home = join(folder.path, 'src', 'pages', 'Home.tsx');
-  const pkgPath = join(folder.path, 'package.json');
-  // Only the dependency list is read: nothing imports sonner, so the page still builds.
-  const pkgText = await readFile(pkgPath, 'utf8');
-  expect(pkgText).toContain('"dependencies": {');
-  await writeFile(
-    pkgPath,
-    pkgText.replace('"dependencies": {', '"dependencies": {\n    "sonner": "2.0.7",'),
-    'utf8',
-  );
-  await writeFile(
-    home,
-    [
-      'export function Home() {',
-      '  return (',
-      '    <main className="p-6">',
-      '      <button type="button" className="px-4 py-2 rounded bg-blue-600 text-white">Đặt hàng</button>',
-      '    </main>',
-      '  );',
-      '}',
-      'export default Home;',
-      '',
-    ].join('\n'),
-    'utf8',
-  );
-  const before = await readFile(home, 'utf8');
-
-  const session = await startCli(folder.path, config.path);
-  sessions.push(session);
-  await page.goto(session.studioUrl);
-  await trustIfAsked(page);
-  const canvas = await getCanvasFrame(page);
-  await canvas.getByRole('button', { name: 'Đặt hàng' }).click({ timeout: 20_000 });
-  await page.getByTestId('open-toast-config-btn').click();
-  await page.getByTestId('toast-message-input').fill('Đã thêm vào giỏ');
-  await page.getByTestId('apply-toast-on-click').click();
-
-  const askAi = page.getByTestId('interaction-ask-ai');
-  await expect(askAi).toBeVisible({ timeout: 10_000 });
-  expect(await readFile(home, 'utf8')).toBe(before);
-  await askAi.click();
-  await expect(page.getByTestId('chat-input')).toHaveValue(/sonner/);
-  await expect(page.getByTestId('chat-input')).toHaveValue(/Đã thêm vào giỏ/);
 });

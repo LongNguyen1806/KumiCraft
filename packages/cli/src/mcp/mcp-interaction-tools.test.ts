@@ -137,15 +137,6 @@ describe('MCP interaction tools & state/dark/run updates (K9.8-1 Group 10)', () 
     expect((await callTool('kumicraft_remove_select_group', api, { groupLoc: grp })).ok).toBe(true);
     expect((await callTool('kumicraft_enable_dark_mode', api, { checkOnly: false })).ok).toBe(true);
     expect(
-      (
-        await callTool('kumicraft_add_toast_on_click', api, {
-          loc: btn,
-          message: 'OK',
-          variant: 'success',
-        })
-      ).ok,
-    ).toBe(true);
-    expect(
       (await callTool('kumicraft_make_loading_button', api, { loc: btn, loadingText: 'Saving...' }))
         .ok,
     ).toBe(true);
@@ -163,6 +154,6 @@ describe('MCP interaction tools & state/dark/run updates (K9.8-1 Group 10)', () 
 
     const posts = sent.filter((s) => s.method === 'POST').map((s) => s.path);
     expect(posts).toContain('project/dark-mode');
-    expect(posts.filter((p) => p === 'source/interaction')).toHaveLength(7);
+    expect(posts.filter((p) => p === 'source/interaction')).toHaveLength(6);
   });
 });

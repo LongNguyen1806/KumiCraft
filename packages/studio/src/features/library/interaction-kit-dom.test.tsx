@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-// Tests for K9.8-1 Groups 1, 2, 4, 5, 6, 9: DOM behavior of generated SelectGroup, Toast, LoadingButton, ScrollSpy kits.
+// Tests for K9.8-1 Groups 1, 2, 4, 5, 6, 9: DOM behavior of generated SelectGroup, LoadingButton, ScrollSpy kits.
 import { runInThisContext } from 'node:vm';
 
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
@@ -15,8 +15,6 @@ interface CompiledKitModule {
   readonly SelectGroup?: GenericComponent;
   readonly SelectItem?: GenericComponent;
   readonly SelectPanel?: GenericComponent;
-  readonly ToastHost?: GenericComponent;
-  readonly ToastTrigger?: GenericComponent;
   readonly LoadingButton?: GenericComponent;
   readonly ScrollSpy?: GenericComponent;
 }
@@ -142,46 +140,6 @@ describe('K9.8-1 generated kit DOM behavior (Groups 1, 2, 4, 5, 6, 9)', () => {
     });
     expect(item1.getAttribute('data-selected')).toBe('true');
     expect(screen.getByText('Content 1')).toBeDefined();
-  });
-
-  it('ToastHost announces aria-live="polite", auto-dismisses, honors prefers-reduced-motion, and ToastTrigger preserves onClick (Group 5)', async () => {
-    vi.useFakeTimers();
-    const matchMock = vi.fn().mockReturnValue({ matches: true });
-    vi.stubGlobal('matchMedia', matchMock);
-
-    const toastSrc = buildKitTemplateCode('Toast', true);
-    if (!toastSrc) throw new Error('Missing Toast');
-    const mod = await compileTsxModule(toastSrc, 'Toast.tsx');
-    const { ToastHost, ToastTrigger } = mod;
-    if (!ToastHost || !ToastTrigger) throw new Error('Missing Toast exports');
-
-    const origClick = vi.fn();
-    render(
-      React.createElement(
-        React.Fragment,
-        {},
-        React.createElement(
-          ToastTrigger,
-          { message: 'Đã thêm vào giỏ', variant: 'success', durationMs: 3000 },
-          React.createElement('button', { type: 'button', onClick: origClick }, 'Thêm'),
-        ),
-        React.createElement(ToastHost, {}),
-      ),
-    );
-
-    const triggerBtn = screen.getByRole('button', { name: 'Thêm' });
-    fireEvent.click(triggerBtn);
-    expect(origClick).toHaveBeenCalledTimes(1);
-
-    const status = screen.getByRole('status');
-    expect(status.textContent).toContain('Đã thêm vào giỏ');
-    expect(status.closest('[aria-live="polite"]')).toBeDefined();
-    expect(status.style.transition).toBe('none');
-
-    act(() => {
-      vi.advanceTimersByTime(3100);
-    });
-    expect(screen.queryAllByRole('status')).toHaveLength(0);
   });
 
   it('LoadingButton locks clicks with aria-busy, preserves width, and auto-resets demo after 1500ms (Group 6)', async () => {

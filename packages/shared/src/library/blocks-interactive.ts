@@ -161,20 +161,4 @@ export const INTERACTIVE_LIBRARY_BLOCKS: readonly LibraryBlock[] = [
     neutral: NEUTRAL_INTERACTIVE_BLOCKS['interactive.mobile-menu'],
     kit: { components: ['MobileMenu'] },
   },
-  {
-    id: 'interactive.toast-demo',
-    category: 'interactive',
-    labelKey: 'library:blocks.toastDemo',
-    keywords: {
-      vi: ['thông báo', 'thong bao', 'toast', 'cảnh báo', 'bấm nút'],
-      en: ['toast', 'notification', 'snackbar', 'alert', 'popup'],
-    },
-    icon: 'Bell',
-    jsx: {
-      vi: `<ToastTrigger message="Đã lưu thay đổi" subtext="Cấu hình đã được áp dụng." variant="success">\n  <button type="button" className="px-4 py-2 text-sm font-medium bg-{primary} text-{on-primary} rounded-{radius}">Hiện thông báo</button>\n</ToastTrigger>`,
-      en: `<ToastTrigger message="Changes saved" subtext="Your settings have been updated." variant="success">\n  <button type="button" className="px-4 py-2 text-sm font-medium bg-{primary} text-{on-primary} rounded-{radius}">Show toast</button>\n</ToastTrigger>`,
-    },
-    neutral: NEUTRAL_INTERACTIVE_BLOCKS['interactive.toast-demo'],
-    kit: { components: ['ToastTrigger'] },
-  },
 ];

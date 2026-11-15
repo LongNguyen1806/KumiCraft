@@ -10,7 +10,6 @@ import { buildRevealTemplate } from './reveal.ts';
 import { buildScrollSpyTemplate } from './scroll-spy.ts';
 import { buildSelectGroupTemplate } from './select-group.ts';
 import { buildTabsTemplate } from './tabs.ts';
-import { buildToastTemplate } from './toast.ts';
 import { buildChoiceTemplate, buildToggleTemplate } from './toggle-choice.ts';
 
 export type KitFilePlan = {
@@ -35,7 +34,6 @@ const KIT_FILE_SPECS: Readonly<Record<string, Omit<KitFilePlan, 'fileBase'>>> = 
     exportedSymbols: ['SelectGroup', 'SelectItem', 'SelectPanel'],
     buildCode: buildSelectGroupTemplate,
   },
-  Toast: { exportedSymbols: ['ToastHost', 'ToastTrigger'], buildCode: buildToastTemplate },
   LoadingButton: { exportedSymbols: ['LoadingButton'], buildCode: buildLoadingButtonTemplate },
   ScrollSpy: { exportedSymbols: ['ScrollSpy'], buildCode: buildScrollSpyTemplate },
 };

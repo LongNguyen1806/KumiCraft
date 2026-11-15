@@ -183,9 +183,7 @@
       "differentParents": "Selected elements must share the same parent container.",
       "noSelectItems": "No SelectItem children found inside SelectGroup.",
       "missingOpening": "Opening JSX tag is missing.",
-      "blockedAttribute": "Attribute {{name}} cannot be edited here.",
-      "projectToastLibrary": "This project already shows notices with {{library}}; KumiCraft does not add a second system.",
-      "projectToastHost": "This project already has its own notice system in {{file}}; KumiCraft does not add a second system."
+      "blockedAttribute": "Attribute {{name}} cannot be edited here."
     }
   },
   "E024": {

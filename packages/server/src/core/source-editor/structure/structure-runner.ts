@@ -8,7 +8,7 @@ import { commitPreparedFiles, type PreparedFileWrite, withFileLocks } from '../f
 import type { SnippetFormatter } from '../snippet-format.ts';
 import { computeSha256, getCachedAst } from '../source-editor-lookup.ts';
 import type { WrittenFile } from '../source-editor-service.ts';
-import { executeRepeatElement, executeSetDataArray } from './data-ops.ts';
+import { executeSetDataArray } from './data-ops.ts';
 import {
   collectComponentTags,
   collectMatchingImportStatements,
@@ -38,7 +38,6 @@ import {
   validateGuards,
 } from './structure-plan.ts';
 import { applyTextEdits, offsetToLoc } from './text-edits.ts';
-import { checkToastKitInsert } from './toast-project-scan.ts';
 
 const MAX_FILE_SIZE = 1024 * 1024;
 
@@ -115,7 +114,7 @@ function collectGuardsForEdit(edit: StructureEdit): readonly ElementGuard[] {
   if (edit.kind === 'wrapText' || edit.kind === 'replaceSvg') {
     return [{ loc: edit.loc, tag: edit.tag }];
   }
-  if (edit.kind === 'repeatElement' || edit.kind === 'setDataArray') {
+  if (edit.kind === 'setDataArray') {
     return [];
   }
   return edit.elements;
@@ -183,7 +182,7 @@ function filterRelevantElements(
     }
     if (edit.kind === 'unwrap') return r.loc === edit.element.loc;
     if (edit.kind === 'wrapText' || edit.kind === 'replaceSvg') return r.loc === edit.loc;
-    if (edit.kind === 'repeatElement' || edit.kind === 'setDataArray') return false;
+    if (edit.kind === 'setDataArray') return false;
     return edit.elements.some((eg) => eg.loc === r.loc);
   });
 }
@@ -382,9 +381,6 @@ async function executeStandardEdit(
   const targetGuard =
     edit.kind === 'insert' || edit.kind === 'move' ? validatedGuards.at(-1) : undefined;
   const { byFile, sortedFiles } = groupGuardsByFile(validatedGuards);
-  const kitComponents = edit.kind === 'insert' ? edit.kit?.components : undefined;
-  const toastCheck = await checkToastKitInsert(fs, projectRoot, sourceDir, kitComponents);
-  if (!toastCheck.ok) return toastCheck;
   const kitPlan = await prepareInsertKitWithData(
     fs,
     projectRoot,
@@ -434,9 +430,6 @@ export async function executeStructureEdit(
       newCssDir,
     );
   if (edit.kind === 'insertImage') return executeInsertImage(fs, projectRoot, edit, run, onWritten);
-  if (edit.kind === 'repeatElement') {
-    return executeRepeatElement(fs, projectRoot, sourceDir, sourceExtensions, edit, onWritten);
-  }
   if (edit.kind === 'setDataArray') {
     return executeSetDataArray(fs, projectRoot, sourceDir, edit, onWritten);
   }

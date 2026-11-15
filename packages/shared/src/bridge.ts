@@ -385,32 +385,6 @@ export const StudioMotionPreviewPayloadSchema = z.strictObject({
 });
 export type StudioMotionPreviewPayload = z.infer<typeof StudioMotionPreviewPayloadSchema>;
 
-/** Studio -> Bridge, type 'responsive-audit' (TK-66: check horizontal overflow and sibling overlap). */
-export const StudioResponsiveAuditPayloadSchema = z.strictObject({
-  requestId: z.string().min(1).max(64),
-});
-export type StudioResponsiveAuditPayload = z.infer<typeof StudioResponsiveAuditPayloadSchema>;
-
-export const ResponsiveAuditIssueSchema = z.strictObject({
-  ref: ElementRefSchema,
-  tag: z.string().min(1),
-  kind: z.enum(['overflow', 'overlap']),
-  detail: z.string().max(200).optional(),
-  frameId: z.string().optional(),
-  frameLabel: z.string().optional(),
-  width: z.number().int().positive().optional(),
-});
-export type ResponsiveAuditIssue = z.infer<typeof ResponsiveAuditIssueSchema>;
-
-/** Bridge -> Studio, type 'responsive-audit-result' (TK-66). */
-export const BridgeResponsiveAuditResultPayloadSchema = z.strictObject({
-  requestId: z.string().min(1).max(64),
-  issues: z.array(ResponsiveAuditIssueSchema).max(200),
-});
-export type BridgeResponsiveAuditResultPayload = z.infer<
-  typeof BridgeResponsiveAuditResultPayloadSchema
->;
-
 /** Studio -> Bridge: toggle dark mode preview class `.dark` on html (TK-75). */
 export const StudioSetDarkPreviewPayloadSchema = z.strictObject({
   dark: z.boolean(),

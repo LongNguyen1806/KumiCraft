@@ -22,9 +22,9 @@ describe('kit-templates (Test 7): strict TypeScript, JS syntax, and security', (
 
   it('compiles every TS template with tsc --strict and checks JS syntax & security', async () => {
     const names = kitFileNames();
-    // 11 existing templates + 4 K9.8-1 templates (SelectGroup, Toast, LoadingButton, ScrollSpy);
-    // the light/dark switch went to the AI tab in QA K9.8-1.
-    expect(names).toHaveLength(15);
+    // 11 existing templates + 3 K9.8-1 templates (SelectGroup, LoadingButton, ScrollSpy); the
+    // light/dark switch went to the AI tab in QA K9.8-1 and Toast was removed (owner, 2026-11-15).
+    expect(names).toHaveLength(14);
 
     const studioTypes = path.resolve(__dirname, '../../../../../studio/node_modules/@types');
     const tsFiles: string[] = [];

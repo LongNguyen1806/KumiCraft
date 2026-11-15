@@ -1,4 +1,4 @@
-// Schemas for K9.8-1 interaction & state edits: text runs, SelectGroup, Dark mode, Toast, LoadingButton, Links, ScrollSpy.
+// Schemas for K9.8-1 interaction & state edits: text runs, SelectGroup, Dark mode, LoadingButton, Links, ScrollSpy.
 import { z } from 'zod';
 
 import { RelPathSchema } from './rel-path.ts';
@@ -64,30 +64,6 @@ export const RemoveSelectGroupActionSchema = z.strictObject({
 });
 export type RemoveSelectGroupAction = z.infer<typeof RemoveSelectGroupActionSchema>;
 
-export const ToastVariantSchema = z.enum(['success', 'error', 'info']);
-export type ToastVariant = z.infer<typeof ToastVariantSchema>;
-
-export const ToastPositionSchema = z.enum([
-  'bottom-right',
-  'bottom-left',
-  'top-right',
-  'top-left',
-  'top-center',
-  'bottom-center',
-]);
-export type ToastPosition = z.infer<typeof ToastPositionSchema>;
-
-export const AddToastOnClickActionSchema = z.strictObject({
-  action: z.literal('addToastOnClick'),
-  element: ElementGuardSchema,
-  message: z.string().min(1).max(200),
-  subtext: z.string().max(200).optional(),
-  variant: ToastVariantSchema.optional(),
-  durationMs: z.number().int().min(1000).max(15000).optional(),
-  position: ToastPositionSchema.optional(),
-});
-export type AddToastOnClickAction = z.infer<typeof AddToastOnClickActionSchema>;
-
 export const MakeLoadingButtonActionSchema = z.strictObject({
   action: z.literal('makeLoadingButton'),
   element: ElementGuardSchema,
@@ -114,7 +90,6 @@ export const InteractionActionSchema = z.discriminatedUnion('action', [
   MakeSelectGroupActionSchema,
   LinkSelectContentActionSchema,
   RemoveSelectGroupActionSchema,
-  AddToastOnClickActionSchema,
   MakeLoadingButtonActionSchema,
   MarkActiveNavActionSchema,
   SetLinkTargetActionSchema,

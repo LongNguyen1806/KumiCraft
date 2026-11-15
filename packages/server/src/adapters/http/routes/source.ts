@@ -67,7 +67,7 @@ function buildStructureHistoryLabel(edit: StructureEdit): HistoryLabel {
       params: { tag: edit.element.tag, count: '1' },
     };
   }
-  if (edit.kind === 'wrapText' || edit.kind === 'replaceSvg' || edit.kind === 'repeatElement') {
+  if (edit.kind === 'wrapText' || edit.kind === 'replaceSvg') {
     return {
       key: `history:${edit.kind}`,
       params: { tag: edit.tag },
@@ -158,7 +158,6 @@ async function handleApplyEdit(
     edit.kind === 'unwrap' ||
     edit.kind === 'wrapText' ||
     edit.kind === 'replaceSvg' ||
-    edit.kind === 'repeatElement' ||
     edit.kind === 'setDataArray'
   ) {
     const label = buildStructureHistoryLabel(edit);

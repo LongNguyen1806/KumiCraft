@@ -58,7 +58,6 @@
     "badge": "Badge",
     "avatar": "Avatar",
     "stat": "Stat",
-    "alert": "Alert",
     "progress": "Progress",
     "button": "Button",
     "input": "Input",
@@ -84,7 +83,6 @@
     "dropdown": "Dropdown",
     "tooltip": "Tooltip",
     "mobileMenu": "Mobile Menu",
-    "toastDemo": "Toast Notification",
     "table": "Table",
     "card": "Card",
     "navbar": "Navbar",
@@ -151,11 +149,7 @@
     "split": "Split",
     "ratio169": "16:9",
     "ratio11": "1:1",
-    "ratio43": "4:3",
-    "info": "Info",
-    "success": "Success",
-    "warn": "Warning",
-    "error": "Error"
+    "ratio43": "4:3"
   },
   "aiTasks": {
     "title": "Done by AI",

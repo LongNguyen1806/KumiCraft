@@ -1,11 +1,6 @@
 // @vitest-environment happy-dom
-// Tests 4, 7, 9, 10, 11-studio: DataGrid, RepeatElement, ComponentProps, FreeFrame Advanced, A11yHints, ResponsiveAudit.
-import {
-  DEFAULT_DESIGN_DIRS,
-  type ElementSource,
-  type Frame,
-  type ResponsiveAuditIssue,
-} from '@kumicraft/shared';
+// Tests 4, 7, 9, 10: DataGrid, ComponentProps, FreeFrame Advanced, A11yHints.
+import { DEFAULT_DESIGN_DIRS, type ElementSource, type Frame } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -14,13 +9,11 @@ import * as projectClient from '../../api/project-client.ts';
 import * as sourceClient from '../../api/source-client.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { ResponsiveAuditResults } from '../editor/responsive-audit.tsx';
 import { useProjectStore } from '../project/project-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { A11yHintsSection } from './components/a11y-hints-section.tsx';
 import { ComponentPropsSection } from './components/component-props-section.tsx';
 import { DataGridSection } from './components/data-grid-section.tsx';
-import { RepeatElementControl } from './components/repeat-element-control.tsx';
 import { InspectorPanel } from './inspector-panel.tsx';
 import type { InspectorTarget } from './types.ts';
 
@@ -112,29 +105,13 @@ describe('Studio K9.7-4 Data & Quality Inspector Controls (Tests 4, 7, 9, 10, 11
     vi.restoreAllMocks();
   });
 
-  it('Test 4: RepeatElementControl extracts card or disables inside loop; DataGrid edits rows and shows readonly banner', async () => {
+  it('Test 4: DataGrid edits rows and shows readonly banner', async () => {
     const structSpy = vi.spyOn(sourceClient, 'applyStructureEdit').mockResolvedValue({
       changed: true,
-      locs: ['src/App.tsx:10:5'],
-      files: ['src/App.tsx', 'src/kumicraft/data/cards.data.ts'],
+      locs: [],
+      files: ['src/kumicraft/data/cards.data.ts'],
     });
     const onDone = vi.fn();
-
-    const { rerender } = render(<RepeatElementControl target={makeTarget(makeSource(), onDone)} />);
-    fireEvent.click(screen.getByTestId('repeat-from-element'));
-    await waitFor(() => {
-      expect(structSpy).toHaveBeenCalledTimes(1);
-    });
-    expect(structSpy.mock.calls[0]?.[0]).toMatchObject({
-      kind: 'repeatElement',
-      loc: 'src/App.tsx:10:5',
-    });
-
-    rerender(<RepeatElementControl target={makeTarget(makeSource({ inLoop: true }), onDone)} />);
-    expect(screen.getByTestId<HTMLButtonElement>('repeat-from-element').disabled).toBe(true);
-
-    cleanup();
-    structSpy.mockClear();
 
     render(
       <DataGridSection
@@ -371,36 +348,5 @@ describe('Studio K9.7-4 Data & Quality Inspector Controls (Tests 4, 7, 9, 10, 11
       name: 'aria-label',
       after: 'Close dialog',
     });
-  });
-
-  it('Test 11 (TK-66 Studio): ResponsiveAuditResults displays issues and jumps to target frame & element', () => {
-    const issues: readonly ResponsiveAuditIssue[] = [
-      {
-        kind: 'overflow',
-        tag: 'div',
-        frameId: 'of-mobile',
-        ref: { loc: 'src/App.tsx:44:5', index: 0 },
-        detail: '600 > 375',
-      },
-      {
-        kind: 'overlap',
-        tag: 'div',
-        frameId: 'of-desktop',
-        ref: { loc: 'src/App.tsx:50:5', index: 0 },
-        detail: '35%',
-      },
-    ];
-    render(
-      <ResponsiveAuditResults open={true} running={false} issues={issues} onClose={vi.fn()} />,
-    );
-
-    expect(screen.getByTestId('responsive-issue-0')).toBeDefined();
-    expect(screen.getByTestId('responsive-issue-1')).toBeDefined();
-
-    fireEvent.click(screen.getByTestId('responsive-issue-0'));
-    expect(useCanvasViewStore.getState().activeOpenFrameId).toBe('of-mobile');
-    expect(useSelectionStore.getState().selectedRefs).toEqual([
-      { loc: 'src/App.tsx:44:5', index: 0 },
-    ]);
   });
 });

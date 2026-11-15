@@ -58,7 +58,6 @@
     "badge": "Nhãn",
     "avatar": "Ảnh đại diện",
     "stat": "Chỉ số",
-    "alert": "Thông báo",
     "progress": "Tiến độ",
     "button": "Nút",
     "input": "Ô nhập",
@@ -84,7 +83,6 @@
     "dropdown": "Menu thả xuống",
     "tooltip": "Gợi ý nổi",
     "mobileMenu": "Menu di động",
-    "toastDemo": "Thông báo Toast",
     "table": "Bảng",
     "card": "Thẻ",
     "navbar": "Thanh điều hướng",
@@ -151,11 +149,7 @@
     "split": "Chia đôi",
     "ratio169": "16:9",
     "ratio11": "1:1",
-    "ratio43": "4:3",
-    "info": "Thông tin",
-    "success": "Thành công",
-    "warn": "Cảnh báo",
-    "error": "Lỗi"
+    "ratio43": "4:3"
   },
   "aiTasks": {
     "title": "Làm bằng AI",

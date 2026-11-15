@@ -16,8 +16,6 @@ export const KIT_COMPONENT_IDS = [
   'SelectGroup',
   'SelectItem',
   'SelectPanel',
-  'ToastHost',
-  'ToastTrigger',
   'LoadingButton',
   'ScrollSpy',
 ] as const;
@@ -45,8 +43,6 @@ const KIT_FILE_MAP: Readonly<Record<KitComponentId, string>> = {
   SelectGroup: 'SelectGroup',
   SelectItem: 'SelectGroup',
   SelectPanel: 'SelectGroup',
-  ToastHost: 'Toast',
-  ToastTrigger: 'Toast',
   LoadingButton: 'LoadingButton',
   ScrollSpy: 'ScrollSpy',
 };

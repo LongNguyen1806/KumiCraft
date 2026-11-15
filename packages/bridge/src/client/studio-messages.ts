@@ -13,8 +13,6 @@ import {
   type StudioMotionPreviewPayload,
   StudioMotionPreviewPayloadSchema,
   StudioNavigatePayloadSchema,
-  type StudioResponsiveAuditPayload,
-  StudioResponsiveAuditPayloadSchema,
   type StudioSelectPayload,
   StudioSelectPayloadSchema,
   type StudioSetDarkPreviewPayload,
@@ -56,7 +54,6 @@ export type StudioMessageHandlers = {
   handleStylePreviewClear?: (() => void) | undefined;
   handleMotionPreview?: ((data: StudioMotionPreviewPayload) => void) | undefined;
   handleToggleInteractive?: ((data: StudioToggleInteractivePayload) => void) | undefined;
-  handleResponsiveAudit?: ((data: StudioResponsiveAuditPayload) => void) | undefined;
   handleSetDarkPreview?: ((data: StudioSetDarkPreviewPayload) => void) | undefined;
   handleSetStatePreview?: ((data: StudioSetStatePreviewPayload) => void) | undefined;
   handleSetSelectPanelPreview?: ((data: StudioSetSelectPanelPreviewPayload) => void) | undefined;
@@ -150,11 +147,6 @@ function dispatchStyleAndNav(
     case 'toggle-interactive': {
       const parsed = StudioToggleInteractivePayloadSchema.safeParse(payload);
       if (parsed.success) handlers.handleToggleInteractive?.(parsed.data);
-      return true;
-    }
-    case 'responsive-audit': {
-      const parsed = StudioResponsiveAuditPayloadSchema.safeParse(payload);
-      if (parsed.success) handlers.handleResponsiveAudit?.(parsed.data);
       return true;
     }
     default:

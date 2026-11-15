@@ -1,4 +1,4 @@
-// E2E Tests 13 & 14: Quality tools (Advanced FreeFrame, A11y hints + 1-click fix, Responsive audit) and multi-system form generation.
+// E2E Tests 13 & 14: Quality tools (Advanced FreeFrame, A11y hints + 1-click fix) and multi-system form generation.
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -37,7 +37,7 @@ test.afterEach(async () => {
   for (const dir of tempDirs.splice(0)) await dir.remove();
 });
 
-test('13. Free-frame Advanced accordion on real page, A11y contrast & 1-click aria-label fix, and Responsive audit jump', async ({
+test('13. Free-frame Advanced accordion on real page, and A11y contrast & 1-click aria-label fix', async ({
   page,
 }) => {
   const root = await openFixture('projects/react-data', 'e2e-quality-tools', page);
@@ -67,12 +67,6 @@ test('13. Free-frame Advanced accordion on real page, A11y contrast & 1-click ar
   await page.getByTestId('a11y-aria-label-input').fill('Settings');
   await page.getByTestId('a11y-fix-aria-label').click();
   await expect.poll(() => readFile(homeTsx, 'utf8')).toContain('aria-label="Settings"');
-
-  // Run responsive audit -> overflow box flagged & clicking issue selects it
-  await page.getByTestId('responsive-audit').click();
-  const firstIssue = page.getByTestId('responsive-issue-0');
-  await expect(firstIssue).toBeVisible({ timeout: 15_000 });
-  await firstIssue.click();
 });
 
 test('14. Generating form from source works cleanly in plain CSS project fixture', async ({

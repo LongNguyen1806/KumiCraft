@@ -62,13 +62,11 @@ describe('Studio interaction UI, mixed text editor, contrast strip & vi/en i18n 
       );
 
       expect(screen.getByTestId('inspector-interaction')).toBeDefined();
-      const toastBtn = screen.getByTestId<HTMLButtonElement>('open-toast-config-btn');
       const loadBtn = screen.getByTestId<HTMLButtonElement>('make-loading-button');
       const linkBtn = screen.getByTestId<HTMLButtonElement>('apply-link-target');
-      expect(toastBtn.disabled).toBe(true);
       expect(loadBtn.disabled).toBe(true);
       expect(linkBtn.disabled).toBe(true);
-      expect(screen.getByTestId('open-toast-config-btn-reason').textContent).toBeTruthy();
+      expect(screen.getByTestId('make-loading-button-reason').textContent).toBeTruthy();
 
       // Anchor <a> gets "only applies to <button>" disabled reason on LoadingButton
       rerender(

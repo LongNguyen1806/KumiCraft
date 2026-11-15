@@ -1,5 +1,5 @@
 // Interaction structure operations: LoadingButton, ScrollSpy, LinkTarget, and the dispatch of every
-// interaction action (K9.8-1 TK-73..80); notices live in toast-ops.ts.
+// interaction action (K9.8-1 TK-73..80).
 import type {
   InteractionAction,
   InteractionResult,
@@ -25,7 +25,6 @@ import {
 import { findAncestors } from './structure-guard.ts';
 import { indentOf } from './structure-ops.ts';
 import type { TextEdit } from './text-edits.ts';
-import { applyAddToastOnClick } from './toast-ops.ts';
 
 /** `<button …>` (or an existing LoadingButton) rewritten as `<LoadingButton as="button" …>`. */
 function loadingButtonEdits(
@@ -194,8 +193,6 @@ export async function applyInteractionAction(
       return applyLinkSelectContent(deps, root, action);
     case 'removeSelectGroup':
       return applyRemoveSelectGroup(deps, root, action);
-    case 'addToastOnClick':
-      return applyAddToastOnClick(deps, root, action);
     case 'makeLoadingButton':
       return applyMakeLoadingButton(deps, root, action);
     case 'markActiveNav':

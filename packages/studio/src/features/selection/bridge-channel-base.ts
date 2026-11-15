@@ -8,8 +8,6 @@ import {
   type BridgeFreeResizePayload,
   BridgeFreeResizePayloadSchema,
   BridgeReadyPayloadSchema,
-  type BridgeResponsiveAuditResultPayload,
-  BridgeResponsiveAuditResultPayloadSchema,
   BridgeRoutePayloadSchema,
   BridgeSelectPayloadSchema,
   type BridgeStyleProbePayload,
@@ -58,7 +56,6 @@ export type BridgeListenerSets = {
   readonly textEdit: Set<BridgeTextEditListener>;
   readonly freeFrame: Set<BridgeFreeFrameListener>;
   readonly styleProbe: Set<(payload: BridgeStyleProbePayload) => void>;
-  readonly responsiveAudit?: Set<(payload: BridgeResponsiveAuditResultPayload) => void> | undefined;
 };
 
 export class BridgeChannel {
@@ -79,9 +76,6 @@ export class BridgeChannel {
   protected readonly textEditListeners: Set<BridgeTextEditListener>;
   protected readonly freeFrameListeners: Set<BridgeFreeFrameListener>;
   protected readonly styleProbeListeners: Set<(payload: BridgeStyleProbePayload) => void>;
-  protected readonly responsiveAuditListeners: Set<
-    (payload: BridgeResponsiveAuditResultPayload) => void
-  >;
   public readonly openFrameId?: string | undefined;
   public onSelectionSync?: SelectionSyncCallback | undefined;
 
@@ -94,7 +88,6 @@ export class BridgeChannel {
     this.textEditListeners = listeners?.textEdit ?? new Set();
     this.freeFrameListeners = listeners?.freeFrame ?? new Set();
     this.styleProbeListeners = listeners?.styleProbe ?? new Set();
-    this.responsiveAuditListeners = listeners?.responsiveAudit ?? new Set();
     this.listener = (e: MessageEvent) => {
       this.handleMessage(e);
     };
@@ -141,19 +134,6 @@ export class BridgeChannel {
     return () => {
       this.styleProbeListeners.delete(listener);
     };
-  }
-
-  registerResponsiveAuditListener(
-    listener: (payload: BridgeResponsiveAuditResultPayload) => void,
-  ): () => void {
-    this.responsiveAuditListeners.add(listener);
-    return () => {
-      this.responsiveAuditListeners.delete(listener);
-    };
-  }
-
-  requestResponsiveAudit(requestId: string): void {
-    this.sendMessage('responsive-audit', { requestId });
   }
 
   styleProbe(
@@ -328,23 +308,6 @@ export class BridgeChannel {
     }
     this.handleTextEditMessage(type, payload);
     this.handleFreeFrameMessage(type, payload);
-    this.handleResponsiveAuditMessage(type, payload);
-  }
-
-  private handleResponsiveAuditMessage(type: string, payload: unknown): void {
-    if (type !== 'responsive-audit-result') return;
-    const res = BridgeResponsiveAuditResultPayloadSchema.safeParse(payload);
-    if (!res.success) return;
-    const enriched: BridgeResponsiveAuditResultPayload = {
-      requestId: res.data.requestId,
-      issues: res.data.issues.map((issue) => ({
-        ...issue,
-        ...(issue.frameId === undefined && this.openFrameId !== undefined
-          ? { frameId: this.openFrameId }
-          : {}),
-      })),
-    };
-    for (const l of this.responsiveAuditListeners) l(enriched);
   }
 
   private handleActiveFrameFollowup(type: string, payload: unknown): void {
@@ -374,7 +337,6 @@ export class BridgeChannel {
     }
     this.handleTextEditMessage(type, payload);
     this.handleFreeFrameMessage(type, payload);
-    this.handleResponsiveAuditMessage(type, payload);
     if (type === 'style-probe-result') {
       const res = BridgeStyleProbePayloadSchema.safeParse(payload);
       if (res.success) for (const l of this.styleProbeListeners) l(res.data);

@@ -24,11 +24,6 @@ import { CanvasViewport } from './canvas-viewport.tsx';
 import { defaultInitialOpenFrames } from './open-frames-storage.ts';
 import { PageSelect } from './page-select.tsx';
 import { PortBusyBanner } from './port-busy-banner.tsx';
-import {
-  ResponsiveAuditButton,
-  ResponsiveAuditResults,
-  useResponsiveAudit,
-} from './responsive-audit.tsx';
 import { readStoredSessionId, useCanvasSession } from './session-select.tsx';
 import { useOpenInEditor } from './use-open-in-editor.ts';
 import { useRunnerStatus } from './use-runner-status.ts';
@@ -234,7 +229,6 @@ export function CanvasArea(props: CanvasAreaProps) {
   const { projectInfo, trusted = true, onTrustRequest, onInstallRequest } = props;
   const { t } = useTranslation();
   const s = useCanvasAreaState(projectInfo);
-  const audit = useResponsiveAudit();
 
   return (
     <main
@@ -244,17 +238,9 @@ export function CanvasArea(props: CanvasAreaProps) {
     >
       <CanvasToolbar
         mode={s.mode}
-        auditRunning={audit.running}
-        onRunAudit={audit.runAudit}
         onToggleMode={() => {
           s.setMode((m) => (m === 'design' ? 'preview' : 'design'));
         }}
-      />
-      <ResponsiveAuditResults
-        open={audit.open}
-        running={audit.running}
-        issues={audit.issues}
-        onClose={audit.close}
       />
       <CanvasAreaOverlays
         textEdit={s.textEdit}
@@ -275,18 +261,16 @@ export function CanvasArea(props: CanvasAreaProps) {
 
 type CanvasToolbarProps = {
   readonly mode: CanvasMode;
-  readonly auditRunning: boolean;
-  readonly onRunAudit: () => void;
   readonly onToggleMode: () => void;
 };
 
-function CanvasToolbar({ mode, auditRunning, onRunAudit, onToggleMode }: CanvasToolbarProps) {
+function CanvasToolbar({ mode, onToggleMode }: CanvasToolbarProps) {
   const { t } = useTranslation();
   const { t: tErrors } = useTranslation('errors');
   const editMode = useEditMode();
 
   return (
-    // One row (P5): page · what is designed (kind, name, file) · view-only · Responsive Audit · Design/Preview.
+    // One row (P5): page · what is designed (kind, name, file) · view-only · Design/Preview.
     <header className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-line bg-card-solid px-2.5 text-xs">
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <PageSelect />
@@ -303,7 +287,6 @@ function CanvasToolbar({ mode, auditRunning, onRunAudit, onToggleMode }: CanvasT
         )}
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
-        <ResponsiveAuditButton running={auditRunning} onClick={onRunAudit} />
         <button
           type="button"
           onClick={onToggleMode}

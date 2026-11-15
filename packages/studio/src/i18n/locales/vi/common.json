@@ -154,10 +154,8 @@
     "setStyle": "đổi kiểu dáng <{{tag}}>",
     "setFlag": "bật/tắt vị trí tự do <{{tag}}>",
     "setProp": "đổi prop <{{tag}}>",
-    "repeatElement": "lặp danh sách <{{tag}}>",
     "setDataArray": "sửa bảng dữ liệu {{name}}",
     "setTextRun": "đổi đoạn chữ",
-    "addToastOnClick": "thêm thông báo khi bấm <{{tag}}>",
     "makeLoadingButton": "chuyển <{{tag}}> thành nút đang xử lý",
     "markActiveNav": "đánh dấu mục đang xem <{{tag}}>",
     "setLinkTarget": "đặt đích liên kết <{{tag}}>",
@@ -920,8 +918,6 @@
     "reload": "Tải lại trang"
   },
   "dataTools": {
-    "repeatButton": "Lặp theo danh sách",
-    "repeatDisabledInLoop": "Đã nằm trong vòng lặp .map()",
     "gridTitle": "Bảng dữ liệu ({{name}})",
     "readonlyBanner": "Biểu thức dữ liệu chỉ đọc ({{reason}}). Sửa trong editor.",
     "addRow": "Thêm dòng",
@@ -954,15 +950,6 @@
     "ariaLabelPlaceholder": "Nhãn trợ năng…",
     "applyFix": "Áp dụng"
   },
-  "responsiveAudit": {
-    "button": "Soát responsive",
-    "running": "Đang soát…",
-    "title": "Kết quả soát responsive",
-    "noIssues": "Không phát hiện tràn ngang hoặc chồng lấn giữa phần tử anh em.",
-    "close": "Đóng",
-    "overflow": "Tràn ngang",
-    "overlap": "Chồng nhau"
-  },
   "interaction": {
     "fixHintSuffix": "Hãy kiểm tra cấu trúc phần tử hoặc mở trong trình soạn thảo code.",
     "selectModeSingle": "Chọn một",
@@ -986,18 +973,10 @@
     "smoothScroll": "Cuộn mượt",
     "applyLink": "Đặt đích liên kết",
     "applyLinkTooltip": "Cập nhật đích liên kết và bật cuộn mượt nếu cần.",
-    "toastOnClick": "Khi bấm: hiện thông báo",
-    "toastOnClickTooltip": "Hiện thông báo nổi (toast) mỗi khi người dùng bấm vào phần tử này.",
-    "toastMessagePlaceholder": "Nội dung thông báo chính…",
-    "toastSubtextPlaceholder": "Chữ phụ (tùy chọn)…",
-    "toastSuccess": "Thành công",
-    "toastError": "Lỗi",
-    "toastInfo": "Thông tin",
     "posBottomRight": "Dưới phải",
     "posBottomLeft": "Dưới trái",
     "posTopRight": "Trên phải",
     "posTopCenter": "Trên giữa",
-    "applyToast": "Gắn thông báo",
     "externalUrlPlaceholder": "https://...",
     "defaultTopAnchor": "#top",
     "secondsShort": "{{count}}s",
@@ -1020,10 +999,6 @@
       "needNavLinks": "Khung menu cần chứa ít nhất một liên kết <a> hoặc <Link>."
     },
     "askAi": "Nhờ AI làm",
-    "askAiHint": "Mở tab AI với lời nhờ soạn sẵn; bạn đọc, sửa rồi gửi.",
-    "askAiPrompt": {
-      "projectToastLibrary": "Dự án đang dùng {{library}} để hiện thông báo. Khi bấm phần tử {{loc}}, hãy hiện thông báo \"{{message}}\" bằng chính {{library}} theo cách dự án đang dùng. Không cài thêm gói, không tạo hệ thông báo thứ hai; nếu dự án chưa đặt chỗ hiện thông báo của {{library}} thì đặt một lần ở chỗ dùng chung (layout hoặc App).",
-      "projectToastHost": "Dự án đã có hệ thông báo riêng ở {{file}}. Khi bấm phần tử {{loc}}, hãy hiện thông báo \"{{message}}\" bằng chính hệ đó. Không cài thêm gói, không tạo hệ thông báo thứ hai."
-    }
+    "askAiHint": "Mở tab AI với lời nhờ soạn sẵn; bạn đọc, sửa rồi gửi."
   }
 }

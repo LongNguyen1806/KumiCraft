@@ -44,15 +44,6 @@ export const DataArrayRowSchema = z.record(
 );
 export type DataArrayRow = z.infer<typeof DataArrayRowSchema>;
 
-export const RepeatElementEditSchema = z.strictObject({
-  kind: z.literal('repeatElement'),
-  loc: z.string().min(1),
-  tag: z.string().min(1),
-  name: z.string().regex(PROP_IDENT_RE).max(48).optional(),
-  count: z.number().int().min(1).max(20).optional(),
-});
-export type RepeatElementEdit = z.infer<typeof RepeatElementEditSchema>;
-
 export const SetDataArrayEditSchema = z.strictObject({
   kind: z.literal('setDataArray'),
   file: RelPathSchema,

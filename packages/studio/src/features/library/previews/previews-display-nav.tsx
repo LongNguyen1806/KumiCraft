@@ -26,14 +26,6 @@ export const PREVIEWS_DISPLAY_NAV: Readonly<Record<string, PreviewRenderer>> = {
       <WireBar x={30} y={49} w={24} />
     </WireSvg>
   ),
-  'display.alert': () => (
-    <WireSvg>
-      <WireBox x={12} y={22} w={96} h={32} accent />
-      <circle cx={24} cy={34} r={4} fill="currentColor" fillOpacity={0.5} />
-      <WireBar x={34} y={31} w={48} strong />
-      <WireBar x={34} y={41} w={62} />
-    </WireSvg>
-  ),
   'display.progress': () => (
     <WireSvg>
       <WireBar x={14} y={26} w={38} strong />

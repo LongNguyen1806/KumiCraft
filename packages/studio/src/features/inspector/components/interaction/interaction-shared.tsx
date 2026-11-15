@@ -5,69 +5,26 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { errorText, toErrorInfo } from '../../../../routes/error-text.ts';
-import { askAiWithDraft } from '../../../chat/ask-ai-about-element.ts';
-
-/**
- * Refusals that touch the whole project: KumiCraft does not add a second system next to the
- * project's own, and offers to hand the job to the AI tab instead (plan K9.8).
- */
-const AI_REASONS = ['projectToastLibrary', 'projectToastHost'] as const;
-type AiReason = (typeof AI_REASONS)[number];
-
-function isAiReason(value: unknown): value is AiReason {
-  return AI_REASONS.some((reason) => reason === value);
-}
-
-/** The string params of an error, to fill the prepared AI request. */
-function stringParams(
-  params: Readonly<Record<string, unknown>> | undefined,
-): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const [key, value] of Object.entries(params ?? {})) {
-    if (typeof value === 'string') out[key] = value;
-  }
-  return out;
-}
 
 export function useInteractionTask(onDone: () => void) {
   const { t: tError } = useTranslation('errors');
-  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-  const [aiPrompt, setAiPrompt] = useState<string>();
 
-  /** `context` fills the prepared AI request when the job is handed to the AI tab. */
-  const run = async (
-    task: () => Promise<unknown>,
-    context?: Readonly<Record<string, string>>,
-  ): Promise<void> => {
+  const run = async (task: () => Promise<unknown>): Promise<void> => {
     setBusy(true);
     setError(undefined);
-    setAiPrompt(undefined);
     try {
       await task();
       onDone();
     } catch (cause) {
       setError(formatApiError(cause, tError));
-      const info = toErrorInfo(cause);
-      const reason = info.params?.['reason'];
-      if (isAiReason(reason)) {
-        const values = { ...stringParams(info.params), ...context };
-        setAiPrompt(
-          t(`interaction.askAiPrompt.${reason}`, {
-            library: values['library'] ?? '',
-            file: values['file'] ?? '',
-            message: values['message'] ?? '',
-            loc: values['loc'] ?? '',
-          }),
-        );
-      }
     } finally {
       setBusy(false);
     }
   };
 
-  return { busy, error, aiPrompt, run };
+  return { busy, error, run };
 }
 
 export type NodeMatch = {
@@ -174,33 +131,9 @@ export function ToolActionButton({
   );
 }
 
-export function InteractionErrorNotice({
-  error,
-  aiPrompt,
-}: {
-  readonly error?: string | undefined;
-  readonly aiPrompt?: string | undefined;
-}) {
+export function InteractionErrorNotice({ error }: { readonly error?: string | undefined }) {
   const { t } = useTranslation();
   if (error === undefined) return undefined;
-  if (aiPrompt !== undefined) {
-    return (
-      <div role="alert" data-testid="interaction-error" className="flex flex-col gap-1.5">
-        <p className="text-[11px] leading-snug text-ink-soft">{error}</p>
-        <button
-          type="button"
-          data-testid="interaction-ask-ai"
-          title={t('interaction.askAiHint')}
-          onClick={() => {
-            askAiWithDraft(aiPrompt);
-          }}
-          className="h-7 self-start rounded-md border border-line bg-card-solid px-2.5 text-xs font-medium text-ink hover:bg-field"
-        >
-          {t('interaction.askAi')}
-        </button>
-      </div>
-    );
-  }
   return (
     <p
       role="alert"

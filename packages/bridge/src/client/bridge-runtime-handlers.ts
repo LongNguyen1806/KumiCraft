@@ -7,7 +7,6 @@ import type { DragController } from './drag.ts';
 import { toggleInteractiveElement } from './interactive-toggle.ts';
 import { triggerMotionPreview } from './motion-preview.ts';
 import type { BridgeOverlay } from './overlay.ts';
-import { runResponsiveAudit } from './responsive-audit.ts';
 import type { StudioMessageHandlers } from './studio-messages.ts';
 import { cleanProbe, type StylePreview } from './style-preview.ts';
 import type { TextEditController } from './text-edit.ts';
@@ -85,12 +84,6 @@ function buildToolAndPreviewHandlers(deps: RuntimeHandlerDeps) {
     },
     handleToggleInteractive: (d: Parameters<typeof toggleInteractiveElement>[0]) => {
       if (toggleInteractiveElement(d, document)) deps.scheduleTreeScan();
-    },
-    handleResponsiveAudit: (d: { readonly requestId: string }) => {
-      deps.sendToStudio('responsive-audit-result', {
-        requestId: d.requestId,
-        issues: runResponsiveAudit(document, window),
-      });
     },
   };
 }

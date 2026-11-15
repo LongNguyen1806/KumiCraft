@@ -6,7 +6,6 @@ import { RelPathSchema } from './rel-path.ts';
 import {
   DataArrayRowSchema,
   ElementDataContextSchema,
-  RepeatElementEditSchema,
   SetDataArrayEditSchema,
   SetPropEditSchema,
 } from './source-data.ts';
@@ -303,7 +302,6 @@ export const StructureEditSchema = z.discriminatedUnion('kind', [
   UnwrapEditSchema,
   WrapTextEditSchema,
   ReplaceSvgEditSchema,
-  RepeatElementEditSchema,
   SetDataArrayEditSchema,
 ]);
 export type StructureEdit = z.infer<typeof StructureEditSchema>;
@@ -325,7 +323,6 @@ export const AnyEditSchema = z.discriminatedUnion('kind', [
   UnwrapEditSchema,
   WrapTextEditSchema,
   ReplaceSvgEditSchema,
-  RepeatElementEditSchema,
   SetDataArrayEditSchema,
 ]);
 export type AnyEdit = z.infer<typeof AnyEditSchema>;

@@ -1,66 +1,5 @@
 import { NEUTRAL_DISPLAY_BLOCKS } from './blocks-neutral-display.ts';
-import type { LibraryBlock, LibraryBlockVariant, NeutralBlock } from './types.ts';
-
-function alertNeutral(bg: string, fg: string, bs: string): NeutralBlock {
-  return {
-    jsx: {
-      vi: `<div role="alert" className="@root">\n  <p className="@title">Thông báo hệ thống</p>\n  <p className="@body">Dữ liệu của bạn đã được đồng bộ an toàn.</p>\n</div>`,
-      en: `<div role="alert" className="@root">\n  <p className="@title">System notice</p>\n  <p className="@body">Your changes have been saved safely.</p>\n</div>`,
-    },
-    styles: {
-      root: {
-        padding: '14px 16px',
-        'background-color': bg,
-        border: `1px solid ${fg}`,
-        'border-radius': '{radius}',
-      },
-      title: { 'font-size': '14px', 'font-weight': '600', color: fg, margin: '0 0 4px 0' },
-      body: { 'font-size': '13px', color: '{text}', margin: '0' },
-    },
-    bootstrap: { root: `alert ${bs}`, title: 'fw-semibold mb-1', body: 'mb-0 small' },
-  };
-}
-
-const ALERT_INFO: LibraryBlockVariant = {
-  id: 'info',
-  labelKey: 'library:variants.info',
-  jsx: {
-    vi: `<div role="alert" className="p-4 rounded-{radius} border border-{primary} bg-{surface-muted}">\n  <p className="text-sm font-semibold text-{primary}">Thông tin</p>\n  <p className="text-sm text-{text} mt-1">Phiên bản mới đã sẵn sàng để cập nhật.</p>\n</div>`,
-    en: `<div role="alert" className="p-4 rounded-{radius} border border-{primary} bg-{surface-muted}">\n  <p className="text-sm font-semibold text-{primary}">Information</p>\n  <p className="text-sm text-{text} mt-1">A new update is ready to install.</p>\n</div>`,
-  },
-  neutral: alertNeutral('{surface-muted}', '{primary}', 'alert-info'),
-};
-
-export const ALERT_VARIANTS: readonly LibraryBlockVariant[] = [
-  ALERT_INFO,
-  {
-    id: 'success',
-    labelKey: 'library:variants.success',
-    jsx: {
-      vi: `<div role="alert" className="p-4 rounded-{radius} border border-emerald-300 bg-emerald-50 text-emerald-900">\n  <p className="text-sm font-semibold">Thành công</p>\n  <p className="text-sm mt-1">Các thay đổi đã được lưu thành công.</p>\n</div>`,
-      en: `<div role="alert" className="p-4 rounded-{radius} border border-emerald-300 bg-emerald-50 text-emerald-900">\n  <p className="text-sm font-semibold">Success</p>\n  <p className="text-sm mt-1">Your changes have been saved successfully.</p>\n</div>`,
-    },
-    neutral: alertNeutral('#ecfdf5', '#065f46', 'alert-success'),
-  },
-  {
-    id: 'warn',
-    labelKey: 'library:variants.warn',
-    jsx: {
-      vi: `<div role="alert" className="p-4 rounded-{radius} border border-amber-300 bg-amber-50 text-amber-900">\n  <p className="text-sm font-semibold">Cảnh báo</p>\n  <p className="text-sm mt-1">Dung lượng lưu trữ sắp đạt giới hạn.</p>\n</div>`,
-      en: `<div role="alert" className="p-4 rounded-{radius} border border-amber-300 bg-amber-50 text-amber-900">\n  <p className="text-sm font-semibold">Warning</p>\n  <p className="text-sm mt-1">Storage capacity is almost full.</p>\n</div>`,
-    },
-    neutral: alertNeutral('#fffbeb', '#92400e', 'alert-warning'),
-  },
-  {
-    id: 'error',
-    labelKey: 'library:variants.error',
-    jsx: {
-      vi: `<div role="alert" className="p-4 rounded-{radius} border border-rose-300 bg-rose-50 text-rose-900">\n  <p className="text-sm font-semibold">Lỗi kết nối</p>\n  <p className="text-sm mt-1">Không thể kết nối máy chủ, vui lòng thử lại.</p>\n</div>`,
-      en: `<div role="alert" className="p-4 rounded-{radius} border border-rose-300 bg-rose-50 text-rose-900">\n  <p className="text-sm font-semibold">Connection error</p>\n  <p className="text-sm mt-1">Could not reach the server. Please try again.</p>\n</div>`,
-    },
-    neutral: alertNeutral('#fff1f2', '#9f1239', 'alert-danger'),
-  },
-];
+import type { LibraryBlock } from './types.ts';
 
 export const CONTENT_DISPLAY_EXTRA_BLOCKS: readonly LibraryBlock[] = [
   {
@@ -167,19 +106,6 @@ export const CONTENT_DISPLAY_EXTRA_BLOCKS: readonly LibraryBlock[] = [
       en: `<div className="min-w-0 p-5 bg-{surface} border border-{border} rounded-{radius} {shadow} {effect}">\n  <p className="text-xs font-medium text-{muted} mb-1">Monthly revenue</p>\n  <p className="text-3xl font-bold font-{heading} text-{text} mb-1">$48,200</p>\n  <p className="text-xs font-semibold text-{primary}">+14.2% vs last month</p>\n</div>`,
     },
     neutral: NEUTRAL_DISPLAY_BLOCKS['display.stat'],
-  },
-  {
-    id: 'display.alert',
-    category: 'display',
-    labelKey: 'library:blocks.alert',
-    keywords: {
-      vi: ['cảnh báo', 'thông báo', 'alert', 'thong bao', 'banner'],
-      en: ['alert', 'notice', 'banner', 'callout', 'warning'],
-    },
-    icon: 'AlertCircle',
-    jsx: ALERT_INFO.jsx,
-    neutral: ALERT_INFO.neutral,
-    variants: ALERT_VARIANTS,
   },
   {
     id: 'display.progress',

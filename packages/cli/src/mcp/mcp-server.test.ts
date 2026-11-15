@@ -61,7 +61,6 @@ describe('kumicraft mcp server [R-AG-19]', () => {
     const { tools } = await client.listTools();
 
     expect(tools.map((tool) => tool.name).sort()).toEqual([
-      'kumicraft_add_toast_on_click',
       'kumicraft_create_page',
       'kumicraft_duplicate_elements',
       'kumicraft_enable_dark_mode',

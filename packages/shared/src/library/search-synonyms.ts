@@ -28,7 +28,6 @@ export const DEFAULT_BLOCK_LABELS: Readonly<Record<string, string>> = {
   'library:blocks.badge': 'Nhãn trạng thái',
   'library:blocks.avatar': 'Ảnh đại diện',
   'library:blocks.stat': 'Chỉ số KPI',
-  'library:blocks.alert': 'Hộp thông báo',
   'library:blocks.progress': 'Thanh tiến độ',
   'library:blocks.breadcrumb': 'Đường dẫn trang',
   'library:blocks.pagination': 'Phân trang',

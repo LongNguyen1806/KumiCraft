@@ -5,7 +5,6 @@ import { measureElementA11y } from './a11y-measure.ts';
 import { computeAltMeasureSegments, renderAltMeasureSegments } from './alt-measure.ts';
 import { BridgeClientRuntime } from './bridge-client-runtime.ts';
 import { FreeOverlay } from './free-frame/free-overlay.ts';
-import { runResponsiveAudit } from './responsive-audit.ts';
 
 function rect(left: number, top: number, width: number, height: number): DOMRect {
   return {
@@ -197,66 +196,5 @@ describe('Bridge TK-65 accessibility hints & contrast', () => {
     expect(measureElementA11y(getEl('email'))?.unlabeledInput).toBe(true);
     expect(measureElementA11y(low)?.contrast).toBeLessThan(4.5);
     expect(measureElementA11y(high)?.contrast).toBeGreaterThan(10);
-  });
-});
-
-describe('Bridge TK-66 responsive audit', () => {
-  it('detects horizontal overflow and sibling overlap > 20%, ignoring absolute/fixed siblings', () => {
-    document.body.innerHTML = `
-      <div id="wide" data-rc-loc="src/App.tsx:2:3">Wide</div>
-      <div id="parent">
-        <div id="sibA" data-rc-loc="src/App.tsx:3:3">A</div>
-        <div id="sibB" data-rc-loc="src/App.tsx:4:3">B</div>
-        <div id="floating" data-rc-loc="src/App.tsx:5:3">Overlay</div>
-      </div>
-    `;
-    Object.defineProperty(document.documentElement, 'clientWidth', {
-      value: 375,
-      configurable: true,
-    });
-    const wide = getEl('wide');
-    const sibA = getEl('sibA');
-    const sibB = getEl('sibB');
-    const floating = getEl('floating');
-
-    wide.getBoundingClientRect = () => rect(0, 0, 480, 40);
-    sibA.getBoundingClientRect = () => rect(0, 50, 100, 100);
-    sibB.getBoundingClientRect = () => rect(70, 50, 100, 100); // 30 x 100 = 30% overlap
-    floating.getBoundingClientRect = () => rect(0, 50, 100, 100);
-
-    vi.spyOn(window, 'getComputedStyle').mockImplementation((el) => {
-      if (el === floating) {
-        return {
-          display: 'block',
-          visibility: 'visible',
-          position: 'absolute',
-          overflowX: 'visible',
-        } as CSSStyleDeclaration;
-      }
-      return {
-        display: 'block',
-        visibility: 'visible',
-        position: 'static',
-        overflowX: 'visible',
-      } as CSSStyleDeclaration;
-    });
-
-    const issues = runResponsiveAudit(document, window);
-    expect(issues).toEqual([
-      {
-        ref: { loc: 'src/App.tsx:2:3', index: 0 },
-        tag: 'div',
-        kind: 'overflow',
-        detail: '480px / 375px',
-        width: 375,
-      },
-      {
-        ref: { loc: 'src/App.tsx:4:3', index: 0 },
-        tag: 'div',
-        kind: 'overlap',
-        detail: 'div ↔ div (30%)',
-        width: 375,
-      },
-    ]);
   });
 });

@@ -1,4 +1,4 @@
-// Tests for K9.8-1 Groups 4, 5, 6 & 8: Dark mode config, smooth scroll + sticky offset, Toast, LoadingButton, Links, ScrollSpy.
+// Tests for K9.8-1 Groups 4, 5, 6 & 8: Dark mode config, smooth scroll + sticky offset, LoadingButton, Links, ScrollSpy.
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -27,7 +27,7 @@ const tw4Styling: StylingReport = {
   globalCss: ['src/index.css'],
 };
 
-describe('Dark mode, smooth scroll, Toast, LoadingButton, Links, ScrollSpy (K9.8-1 Groups 4-8)', () => {
+describe('Dark mode, smooth scroll, LoadingButton, Links, ScrollSpy (K9.8-1 Groups 4-8)', () => {
   let root = '';
 
   beforeEach(async () => {
@@ -162,55 +162,8 @@ describe('Dark mode, smooth scroll, Toast, LoadingButton, Links, ScrollSpy (K9.8
     expect(afterNav).toContain('<ScrollSpy>');
   });
 
-  it('wraps ToastTrigger preserving existing onClick + adds ToastHost once, and converts button to LoadingButton (Groups 5 & 6)', async () => {
-    const file = 'src/Cart.tsx';
-    const code = [
-      'export function Cart() {',
-      '  const addToCart = () => {};',
-      '  return (',
-      '    <div>',
-      '      <button type="button" onClick={addToCart}>Thêm vào giỏ</button>',
-      '      <button type="button">Thanh toán</button>',
-      '    </div>',
-      '  );',
-      '}',
-    ].join('\n');
-    await fs.writeFile(path.join(root, file), code, 'utf8');
+  it('converts a button to LoadingButton (Group 6)', async () => {
     const deps = { fs: nodeFs, styling: tw4Styling, sourceDir: 'src' };
-
-    const toastRes = await applyInteractionAction(deps, root, {
-      action: 'addToastOnClick',
-      element: {
-        loc: locOf(file, code, 'onClick={addToCart}').replace(/:\d+$/, ':7'),
-        tag: 'button',
-      },
-      message: 'Đã thêm vào giỏ',
-      variant: 'success',
-      durationMs: 3000,
-      position: 'bottom-right',
-    });
-    expect(toastRes.ok).toBe(true);
-    const afterToast = await fs.readFile(path.join(root, file), 'utf8');
-    expect(afterToast).toContain('<ToastTrigger message="Đã thêm vào giỏ"');
-    expect(afterToast).toContain('onClick={addToCart}');
-    expect(afterToast.match(/<ToastHost\s*\/>/g)?.length).toBe(1);
-
-    // Second toast trigger on another button must NOT duplicate <ToastHost />
-    const payLoc = locOf(file, afterToast, '<button type="button">Thanh toán');
-    const secondToast = await applyInteractionAction(deps, root, {
-      action: 'addToastOnClick',
-      element: { loc: payLoc, tag: 'button' },
-      message: 'Đã gửi',
-      variant: 'info',
-      durationMs: 4000,
-      position: 'top-center',
-    });
-    expect(secondToast.ok).toBe(true);
-    const afterSecond = await fs.readFile(path.join(root, file), 'utf8');
-    expect(afterSecond.match(/<ToastHost\s*\/>/g)?.length).toBe(1);
-
-    const payLine = afterToast.split('\n').findIndex((l) => l.includes('Thanh toán'));
-    expect(payLine).toBeGreaterThan(-1);
     const loadFile = 'src/Checkout.tsx';
     const loadCode =
       'export function Checkout() {\n  return <button type="button">Thanh toán</button>;\n}\n';
