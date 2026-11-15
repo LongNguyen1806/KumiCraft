@@ -37,3 +37,6 @@ desktop.ini
 
 # Packed CLI for local install (pnpm package)
 artifacts/
+
+# Real-use tour output (screenshots and reports)
+tour/out/

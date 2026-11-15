@@ -249,7 +249,7 @@ export default defineConfig(
 
   // QC-44 targets production functions; a describe() block naturally groups many cases.
   {
-    files: ['**/*.test.{ts,tsx}', '**/*.e2e.ts', '**/*.bench.ts'],
+    files: ['**/*.test.{ts,tsx}', '**/*.e2e.ts', '**/*.tour.ts', '**/*.bench.ts'],
     rules: { 'max-lines-per-function': 'off' },
   },
 
@@ -270,7 +270,13 @@ export default defineConfig(
 
   // Tool configuration files must use a default export (QC-37 exception).
   {
-    files: ['*.config.js', '*.config.ts', 'packages/*/*.config.js', 'packages/*/*.config.ts'],
+    files: [
+      '*.config.js',
+      '*.config.ts',
+      'tour/*.config.js',
+      'packages/*/*.config.js',
+      'packages/*/*.config.ts',
+    ],
     rules: {
       'no-restricted-syntax': ['error', ...RESTRICTED_SYNTAX],
     },
