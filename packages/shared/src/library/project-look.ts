@@ -43,9 +43,13 @@ const DEFAULT_VALUES: Readonly<Partial<Record<LookRole, LookValue>>> = {
 };
 
 const GLASS_EFFECT: LookValue = {
-  tailwind: 'bg-white/60 backdrop-blur-md border-white/40',
+  tailwind: 'backdrop-blur-md',
   css: 'blur(12px)',
 };
+/** Glass makes the block's own surface and border see-through instead of adding a second color. */
+const GLASS_SURFACE_ALPHA = '60';
+const GLASS_BORDER_ALPHA = '40';
+const GLASS_FALLBACK_BG = `bg-white/${GLASS_SURFACE_ALPHA}`;
 
 const GLASS_CSS_BG = 'rgba(255, 255, 255, 0.6)';
 
@@ -177,11 +181,29 @@ function resolveTailwindToken(token: string, look: ProjectLook): string | undefi
   return replaced;
 }
 
+/**
+ * Glass (`{effect}`): one translucent surface and border, so the Inspector sees one background
+ * color and a later color change keeps the see-through look.
+ */
+const GLASS_SURFACES: ReadonlySet<string> = new Set(['bg-{surface}', 'bg-{surface-muted}']);
+
+function applyGlass(parts: readonly string[]): string[] {
+  const out = parts.map((part) => {
+    if (GLASS_SURFACES.has(part)) return `${part}/${GLASS_SURFACE_ALPHA}`;
+    if (part === 'border-{border}') return `${part}/${GLASS_BORDER_ALPHA}`;
+    return part;
+  });
+  const hasSurface = parts.some((part) => GLASS_SURFACES.has(part));
+  return hasSurface ? out : [...out, GLASS_FALLBACK_BG];
+}
+
 /** Replaces `{role}` tokens inside a Tailwind class list; drops unset roles cleanly. */
 export function resolveTailwindRoles(classes: string, look: ProjectLook): string {
   const needsBold = look.style === 'bold' && classes.includes('bg-{primary}');
   if (!classes.includes('{') && !needsBold) return classes;
-  const parts = classes.trim().split(/\s+/);
+  const split = classes.trim().split(/\s+/);
+  const glass = look.roles.effect !== undefined && split.includes('{effect}');
+  const parts = glass ? applyGlass(split) : split;
   const isBoldPrimaryButton =
     needsBold && parts.includes('bg-{primary}') && parts.includes('hover:bg-{primary}/90');
   const activeLook = isBoldPrimaryButton ? look : { roles: look.roles };

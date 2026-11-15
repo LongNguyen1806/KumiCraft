@@ -61,11 +61,41 @@ function buildTokenString(
   variants: readonly string[],
   important: boolean,
   major: 3 | 4 = 4,
+  opacity?: string,
 ): string {
   const util = formatClassValue(property, value, major);
   const imp = important ? '!' : '';
   const prefix = variants.length > 0 ? `${variants.join(':')}:` : '';
-  return `${prefix}${imp}${util}`;
+  const alpha = opacity !== undefined ? `/${opacity}` : '';
+  return `${prefix}${imp}${util}${alpha}`;
+}
+
+const COLOR_PROPERTIES: ReadonlySet<PropertyId> = new Set<PropertyId>([
+  'textColor',
+  'backgroundColor',
+  'borderColor',
+]);
+const NO_ALPHA_COLORS: ReadonlySet<string> = new Set(['transparent', 'current', 'inherit']);
+const PLAIN_HEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+function takesAlpha(value: ClassValue): boolean {
+  if (value.kind === 'theme') return true;
+  if (value.kind === 'scale') return !NO_ALPHA_COLORS.has(value.token);
+  if (value.kind === 'arbitrary') return PLAIN_HEX.test(value.css);
+  return false;
+}
+
+/**
+ * The opacity a new color keeps from the one it replaces (`bg-white/60` → `bg-brand/60`), so a
+ * glass or tinted surface stays translucent when the user only meant to change its hue.
+ */
+function keptColorOpacity(
+  property: PropertyId,
+  value: ClassValue,
+  matched: readonly ClassToken[],
+): string | undefined {
+  if (!COLOR_PROPERTIES.has(property) || !takesAlpha(value)) return undefined;
+  return matched.find((t) => t.property === property && t.opacity !== undefined)?.opacity;
 }
 
 const BORDER_SIDE_PROPS = [
@@ -195,29 +225,35 @@ export function writeValue(
       variantsMatch(t.variants, targetVariants),
   );
 
-  let result: string;
-  if (value === undefined) {
-    result = removeMatchedTokens(workingInput, matched);
-  } else {
-    const exactToken = matched.find((t) => t.property === property);
-    if (exactToken !== undefined) {
-      result = replaceExactToken(workingInput, exactToken, property, value, matched, major);
-    } else if (matched.length > 0 && matched[0] !== undefined) {
-      result = replaceFirstOtherToken(
-        workingInput,
-        matched[0],
-        property,
-        value,
-        targetVariants,
-        matched,
-        major,
-      );
-    } else {
-      result = appendNewToken(workingInput, property, value, targetVariants, major);
-    }
-  }
-
+  const result =
+    value === undefined
+      ? removeMatchedTokens(workingInput, matched)
+      : writeMatched(workingInput, { property, value, targetVariants, matched, major });
   return mergeEqualSidesOrCorners(result, targetVariants, ctx, major);
+}
+
+/** Puts the new value in place of the tokens that set the property in this scope, or appends it. */
+function writeMatched(
+  input: string,
+  w: {
+    readonly property: PropertyId;
+    readonly value: ClassValue;
+    readonly targetVariants: readonly string[];
+    readonly matched: readonly ClassToken[];
+    readonly major: 3 | 4;
+  },
+): string {
+  const { property, value, targetVariants, matched, major } = w;
+  const exactToken = matched.find((t) => t.property === property);
+  if (exactToken !== undefined) {
+    const opacity = keptColorOpacity(property, value, matched);
+    return replaceExactToken(input, exactToken, property, value, matched, major, opacity);
+  }
+  const first = matched[0];
+  if (first !== undefined) {
+    return replaceFirstOtherToken(input, first, property, value, targetVariants, matched, major);
+  }
+  return appendNewToken(input, property, value, targetVariants, major);
 }
 
 function removeMatchedTokens(input: string, matched: readonly ClassToken[]): string {
@@ -236,6 +272,7 @@ function replaceExactToken(
   value: ClassValue,
   allMatched: readonly ClassToken[],
   major: 3 | 4,
+  opacity?: string,
 ): string {
   const newStr = buildTokenString(
     property,
@@ -243,6 +280,7 @@ function replaceExactToken(
     exactToken.variants,
     exactToken.important,
     major,
+    opacity,
   );
   let result = input.slice(0, exactToken.start) + newStr + input.slice(exactToken.end);
   const others = allMatched.filter((t) => t !== exactToken);

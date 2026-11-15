@@ -164,6 +164,19 @@ describe('project-look', () => {
       'background-color': 'rgba(255, 255, 255, 0.6)',
     });
 
+    // One translucent surface and border, no second white color for the Inspector to fight with.
+    expect(
+      resolveTailwindRoles(
+        'p-6 bg-{surface} border border-{border} border-2 border-{primary} rounded-{radius} {effect}',
+        glass,
+      ),
+    ).toBe(
+      'p-6 bg-white/60 border border-gray-200/40 border-2 border-brand rounded-xl backdrop-blur-md',
+    );
+    expect(resolveTailwindRoles('p-6 rounded-{radius} {effect}', glass)).toBe(
+      'p-6 rounded-xl backdrop-blur-md bg-white/60',
+    );
+
     const minimal = lookFromTheme(theme, 'minimal');
     expect(minimal.roles.shadow?.tailwind).toBe('shadow-none');
     expect(minimal.roles.radius?.tailwind).toBe('sm');
