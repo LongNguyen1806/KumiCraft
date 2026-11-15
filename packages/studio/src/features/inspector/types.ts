@@ -1,5 +1,6 @@
 // Types for Inspector (SPEC-04 section 9 M-IN).
 import type {
+  Breakpoint,
   ElementRef,
   ElementSource,
   InspectorPreviewState,
@@ -48,6 +49,8 @@ export type InspectorTarget =
       readonly warnings: readonly InspectorWarning[];
       readonly currentScope: Scope;
       readonly writePrefix: string;
+      /** The active frame's band, used when an edit reaches only that screen (spec-log #141). */
+      readonly frameBreakpoint?: Breakpoint | undefined;
       readonly interactionState?: InteractionState | undefined;
       readonly setInteractionState: (state?: InteractionState) => void;
       readonly previewState?: InspectorPreviewState | undefined;

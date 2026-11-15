@@ -170,8 +170,10 @@ describe('useInspectorTarget and helpers [SPEC-04 section 9 M-IN]', () => {
       });
 
       if (result.current.kind === 'element') {
-        expect(result.current.currentScope.breakpoint).toBe('sm');
-        expect(result.current.writePrefix).toBe('max-sm:');
+        // Edits reach every screen (spec-log #141); the frame's band is kept for "only this screen".
+        expect(result.current.currentScope.breakpoint).toBe('base');
+        expect(result.current.writePrefix).toBe('');
+        expect(result.current.frameBreakpoint).toBe('sm');
 
         const target = result.current;
         act(() => {
@@ -181,7 +183,7 @@ describe('useInspectorTarget and helpers [SPEC-04 section 9 M-IN]', () => {
 
       if (result.current.kind === 'element') {
         expect(result.current.currentScope.state).toBe('hover');
-        expect(result.current.writePrefix).toBe('max-sm:hover:');
+        expect(result.current.writePrefix).toBe('hover:');
       }
     });
 

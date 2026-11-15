@@ -5,8 +5,9 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { PropertyFieldDef } from '../property-groups-config.ts';
+import { useOwnScreen, useScreens } from '../screen-scope.ts';
 import type { PropertyFieldProps } from './property-field.tsx';
-import { formatScopeName, parseInputToClassValue, readField } from './property-field.tsx';
+import { parseInputToClassValue, readField } from './property-field.tsx';
 import { ScaleInput } from './scale-input.tsx';
 
 export type SpacingShared = Pick<
@@ -41,16 +42,16 @@ function SideSelect({
   const { property } = field;
   const read = readField({ ...shared, property });
   const label = t(field.labelKey);
-  const from =
-    read.isInherited && read.fromScope !== undefined
-      ? ` · ${t('inspector.inheritedFrom', { scope: formatScopeName(read.fromScope) })}`
-      : '';
+  const ownScreen = useOwnScreen(shared.tokens, property, shared.currentScope, shared.ctx, false);
+  const frame = useScreens().active?.label ?? '';
+  // A value only this screen has: underlined, and named in the tooltip (spec-log #141).
+  const from = ownScreen ? ` · ${t('inspector.screen.own', { frame })}` : '';
   const tone =
     read.currentValStr === ''
       ? 'text-ink-faint'
-      : read.isInherited
-        ? 'text-ink italic'
-        : 'font-semibold text-accent';
+      : ownScreen
+        ? 'font-semibold text-accent underline decoration-dotted'
+        : 'font-semibold text-ink';
 
   return (
     <span data-testid={`property-field-${property}`} className="grid place-items-center">

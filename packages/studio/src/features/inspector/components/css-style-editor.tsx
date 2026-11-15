@@ -15,6 +15,7 @@ import {
   useStyleTargetStore,
 } from '../../style/style-target-store.ts';
 import { useStyleCommit } from '../../style/use-style-commit.ts';
+import { useScreenEditStore } from '../screen-scope.ts';
 import type { InspectorTarget } from '../types.ts';
 import { InspectorEffectsExtra } from './inspector-effects-extra.tsx';
 import { InspectorGroup } from './inspector-group.tsx';
@@ -105,6 +106,7 @@ function useCssStyleEditorController(
   const selectionInfo = useSelectionStore((s) => s.selectionInfo);
   const treeNodes = useSelectionStore((s) => s.treeNodes);
   const groupSelector = useGroupHoverSelector(inspected, interactionState);
+  const onlyThisScreen = useScreenEditStore((s) => s.onlyKey === inspected.ref.loc);
 
   const { state, refresh } = useStyleState(true, interactionState, undefined, groupSelector);
   const ref = state?.probe.ref ?? inspected.ref;
@@ -120,7 +122,8 @@ function useCssStyleEditorController(
   const { commit, error } = useStyleCommit({
     state,
     refresh,
-    breakpoint: inspected.currentScope.breakpoint,
+    // Every screen unless "only this screen" is on: then a media query for the active frame.
+    breakpoint: onlyThisScreen ? (inspected.frameBreakpoint ?? 'base') : 'base',
     mode: project?.responsiveMode ?? 'desktop-first',
     tag: inspected.source?.tag ?? 'div',
     target,

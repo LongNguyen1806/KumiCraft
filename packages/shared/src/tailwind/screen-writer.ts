@@ -29,14 +29,19 @@ function projectBreakpointList(
   return [...byKey.entries()].map(([key, min]) => ({ key, min })).sort((a, b) => a.min - b.min);
 }
 
+/** Where the usual device sizes end: phones below 768 px, tablets below 1024 px. */
+const DEVICE_LIMITS = [768, 1024];
+
 /**
  * The breakpoint that separates a narrower frame from the next wider one: it must start above the
  * narrow width and at or below the wide one, so `md:` holds on the wide frame only and `max-md:` on
- * the narrow one. The widest such breakpoint is taken, as KumiCraft always has.
+ * the narrow one. Among those, the one where the narrow frame's device size ends is preferred (a
+ * phone frame ends at `md`, a tablet at `lg`), as developers write by hand; else the smallest.
  */
 function boundaryBetween(narrow: number, wide: number, ctx: ClassContext): string | undefined {
   const inside = projectBreakpointList(ctx).filter((bp) => bp.min > narrow && bp.min <= wide);
-  return inside[inside.length - 1]?.key;
+  const deviceEnd = DEVICE_LIMITS.find((limit) => limit > narrow);
+  return (inside.find((bp) => bp.min === deviceEnd) ?? inside[0])?.key;
 }
 
 /** What the property shows on each frame now (no hover/focus/dark state). */

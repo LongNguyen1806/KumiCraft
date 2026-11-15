@@ -13,6 +13,7 @@ import { useOpenInEditor } from '../../editor/use-open-in-editor.ts';
 import { useSelectionStore } from '../../selection/selection-store.ts';
 import type { InspectorLockReason, InspectorTarget, InspectorWarning } from '../types.ts';
 import { canEnableSelectedState, GroupHoverParentPicker } from './inspector-scope-controls.tsx';
+import { ScreenScopeSwitch } from './screen-scope-controls.tsx';
 import { StructureActions } from './structure-actions.tsx';
 
 type InspectorHeaderProps = {
@@ -172,7 +173,7 @@ function useScopeControls(target: Extract<InspectorTarget, { readonly kind: 'ele
   return { previewState, handleStateChange };
 }
 
-/** Where a change is written: the breakpoint of the active frame and the chosen state. */
+/** Where a change is written: every screen or only the active one, and the chosen state. */
 function ScopeRow({
   target,
   tag,
@@ -187,15 +188,12 @@ function ScopeRow({
 
   return (
     <div className="flex flex-col gap-1.5">
+      <ScreenScopeSwitch
+        loc={target.ref.loc}
+        stateActive={target.currentScope.state !== undefined || target.currentScope.dark === true}
+      />
       <div className="flex items-center gap-1.5">
-        <span className="shrink-0 text-[11px] text-ink-faint">{t('inspector.scope')}</span>
-        <span
-          data-testid="write-prefix-badge"
-          className="shrink-0 rounded-md bg-accent-soft px-2 py-[3px] font-mono text-[11px] font-medium text-accent"
-          title={t('inspector.scope')}
-        >
-          {target.writePrefix || t('inspector.scopeBase')}
-        </span>
+        <span className="shrink-0 text-[11px] text-ink-faint">{t('inspector.state')}</span>
         <StateSelect
           previewState={previewState}
           tag={tag}

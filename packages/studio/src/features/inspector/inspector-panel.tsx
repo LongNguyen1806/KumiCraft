@@ -31,6 +31,7 @@ import { InspectorHeader } from './components/inspector-header.tsx';
 import { isColorProperty, resolveFieldOptions } from './components/inspector-property-groups.tsx';
 import { InteractionSection } from './components/interaction/interaction-section.tsx';
 import { OtherClassesSection } from './components/other-classes-section.tsx';
+import { ScreenAskBar } from './components/screen-scope-controls.tsx';
 import { CssStyleEditor } from './components/style-sources-section.tsx';
 import { TagAttributesSection } from './components/tag-attributes-section.tsx';
 import { isLinkMissingHref, TagTypeRow } from './components/tag-type-row.tsx';
@@ -344,6 +345,7 @@ function SingleTargetEditableBody({
           callbacks={callbacks}
         />
       )}
+      {editable && <ScreenAskBar />}
     </>
   );
 }

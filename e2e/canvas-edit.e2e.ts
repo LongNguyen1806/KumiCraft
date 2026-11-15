@@ -404,7 +404,7 @@ test('a page that draws itself forever stops with a message and the Studio keeps
   expect(await readFile(homeFile, 'utf8')).not.toContain('throw new Error');
 });
 
-test('the Inspector writes for the frame being edited: a typed padding on Mobile gets max-sm [AC-04, spec-log #124]', async ({
+test('an edit on the Mobile frame reaches every screen; "Only Mobile" writes for phones only [AC-04, spec-log #141]', async ({
   page,
 }) => {
   const session = await start();
@@ -416,22 +416,29 @@ test('the Inspector writes for the frame being edited: a typed padding on Mobile
   await expect(main).toBeVisible({ timeout: 15_000 });
   await tab.getByTestId('canvas-frame-select').selectOption('mobile');
   await main.click({ position: { x: 5, y: 5 } });
+  const homeFile = join(folder.path, 'src', 'pages', 'Home.tsx');
 
-  // The scope shown is the frame's, not Base.
-  await expect(tab.getByTestId('write-prefix-badge')).toHaveText('max-sm:');
+  // By default the edit reaches every screen: a plain class, no screen prefix.
+  await expect(tab.getByTestId('screen-scope-all')).toHaveAttribute('aria-pressed', 'true');
   const side = tab.getByTestId('input-paddingRight');
   await side.click();
   // Every suggestion shows on click, whatever the field holds.
   await expect(tab.getByTestId('suggest-paddingRight').locator('li')).not.toHaveCount(0);
   await side.fill('50');
   await side.press('Enter');
-
-  const homeFile = join(folder.path, 'src', 'pages', 'Home.tsx');
   await expect
-    .poll(async () => (await readFile(homeFile, 'utf8')).includes('max-sm:pr-50'), {
+    .poll(async () => /\spr-50[\s"]/.test(await readFile(homeFile, 'utf8')), { timeout: 10_000 })
+    .toBe(true);
+  expect(await readFile(homeFile, 'utf8')).not.toMatch(/max-\w+:pr-/);
+
+  // "Only Mobile": phones get their own value; Desktop keeps pr-50.
+  await tab.getByTestId('screen-scope-only').click();
+  await expect(tab.getByTestId('screen-scope-only')).toHaveAttribute('aria-pressed', 'true');
+  await side.fill('20');
+  await side.press('Enter');
+  await expect
+    .poll(async () => (await readFile(homeFile, 'utf8')).includes('pr-50 max-md:pr-20'), {
       timeout: 10_000,
     })
     .toBe(true);
-  // Nothing unprefixed: the desktop layout keeps its padding.
-  expect(await readFile(homeFile, 'utf8')).not.toMatch(/\spr-50/);
 });

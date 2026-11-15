@@ -1,6 +1,5 @@
 // Live edit hook for Inspector (SPEC-04 R-IN-13, R-IN-14, R-IN-20).
 import type { ClassContext, ClassValue, PropertyId, Scope } from '@kumicraft/shared';
-import { writeValue } from '@kumicraft/shared';
 import type { TFunction } from 'i18next';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { ApiError } from '../../api/http.ts';
 import { editSource } from '../../api/source-client.ts';
 import type { InspectorTarget } from './types.ts';
+import { useScreenRun, useScreenSelectionReset } from './use-screen-run.ts';
 
 export type UseLiveEditOptions = {
   readonly target: Extract<InspectorTarget, { readonly kind: 'element' }>;
@@ -327,18 +327,6 @@ function useSyncLocState(
   }
 }
 
-function applyBatchEntries(
-  base: string,
-  entries: readonly BatchPropEntry[],
-  defaultScope: Scope,
-  ctx: ClassContext,
-): string {
-  return entries.reduce(
-    (cls, entry) => writeValue(cls, entry.property, entry.scope ?? defaultScope, entry.value, ctx),
-    base,
-  );
-}
-
 function getTargetMeta(target: Extract<InspectorTarget, { readonly kind: 'element' }>) {
   const serverClass = getStaticClass(target);
   const loc = target.ref.loc;
@@ -371,6 +359,7 @@ export function useLiveEdit({ target, ctx, throttleMs = 100 }: UseLiveEditOption
     queueRef.current?.enqueue({ nextString: next, property });
   };
   useSyncLocState(loc, serverClass, setOptimisticClass, setError);
+  useScreenSelectionReset(loc);
 
   const queueRef = useLiveQueue(
     { loc, tag, prefix: target.writePrefix },
@@ -379,18 +368,17 @@ export function useLiveEdit({ target, ctx, throttleMs = 100 }: UseLiveEditOption
     { target, t, setOptimisticClass, setError, setIsSaving },
     deferred,
   );
+  const { run, only } = useScreenRun({ loc, target, ctx, optimisticClass, send, setError });
 
   return {
     classString: optimisticClass,
     isSaving,
     error,
     mutateProperty: (property, value) => {
-      const scope = target.currentScope;
-      send((base) => writeValue(base, property, scope, value, ctx), property);
+      run([{ property, value }], only ? 'only' : 'auto');
     },
     mutateProperties: (entries) => {
-      const scope = target.currentScope;
-      send((base) => applyBatchEntries(base, entries, scope, ctx));
+      run(entries, only ? 'only' : 'auto');
     },
     mutateRawClass: (raw: string) => {
       send(() => raw);

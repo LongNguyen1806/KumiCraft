@@ -360,8 +360,6 @@
     "selectedMultiple": "Đã chọn {{count}} phần tử",
     "mixed": "Hỗn hợp",
     "multiLocked": "Không sửa chung được: <{{tag}}> ở {{loc}} có class tính bằng biểu thức",
-    "scope": "Phạm vi",
-    "scopeBase": "Cơ sở (base)",
     "state": "Trạng thái",
     "stateNone": "Mặc định",
     "stateHover": "Hover",
@@ -380,8 +378,6 @@
     "textRunInputLabel": "Đoạn chữ {{index}}",
     "textRunElementReadonly": "Phần tử con (không sửa trực tiếp)",
     "textRunExpressionReadonly": "Biểu thức (chỉ đọc)",
-    "inheritedFrom": "kế thừa từ {{scope}}",
-    "removeOverride": "Bỏ ghi đè",
     "openInEditor": "Mở trong editor",
     "askAi": "Nhờ AI sửa phần tử này",
     "moveUp": "Đưa lên",
@@ -592,7 +588,20 @@
     },
     "askAiDraft": "Sửa phần tử này: ",
     "invalidValue": "Giá trị không hợp lệ với Tailwind {{major}}: ví dụ 4, 2.5, 1/2 hoặc [13px]",
-    "darkSetupAiPrompt": "Thêm chế độ tối cho trang {{file}} (đường dẫn {{route}}). Chỉ đổi màu ở file này và các component chỉ nó dùng; không sửa trang khác. Cách làm: nếu dự án đã có cơ chế sáng/tối (store, ThemeProvider, next-themes, data-theme, lớp dark…) thì dùng lại, không tạo cơ chế thứ hai; nếu chưa có thì thêm lớp dark trên <html> (lần đầu theo cài đặt của máy, nhớ lựa chọn của người xem, đoạn chống nháy màu trong index.html). Nếu dự án chưa có nút Sáng/Tối thì đặt một nút trong trang này. Không cài thêm gói."
+    "darkSetupAiPrompt": "Thêm chế độ tối cho trang {{file}} (đường dẫn {{route}}). Chỉ đổi màu ở file này và các component chỉ nó dùng; không sửa trang khác. Cách làm: nếu dự án đã có cơ chế sáng/tối (store, ThemeProvider, next-themes, data-theme, lớp dark…) thì dùng lại, không tạo cơ chế thứ hai; nếu chưa có thì thêm lớp dark trên <html> (lần đầu theo cài đặt của máy, nhớ lựa chọn của người xem, đoạn chống nháy màu trong index.html). Nếu dự án chưa có nút Sáng/Tối thì đặt một nút trong trang này. Không cài thêm gói.",
+    "screen": {
+      "appliesTo": "Áp cho",
+      "all": "Mọi màn hình",
+      "only": "Chỉ {{frame}}",
+      "stateHint": "Trạng thái (hover, focus…) và chế độ tối luôn áp cho mọi màn hình",
+      "ask": "Thuộc tính này đang khác nhau giữa các màn hình. Bạn muốn sửa cho đâu?",
+      "askAll": "Áp cho mọi màn hình",
+      "askOnly": "Chỉ {{frame}}",
+      "askCancel": "Bỏ qua",
+      "cannotSplit": "Không tách được riêng cho màn hình này: khung này quá sát khung bên cạnh, không có mốc màn hình nào ở giữa.",
+      "own": "Giá trị riêng của {{frame}}",
+      "drop": "Bỏ giá trị riêng của {{frame}}"
+    }
   },
   "textEdit": {
     "loopBanner": "Lặp {{count}} lần (sửa mẫu chung)",

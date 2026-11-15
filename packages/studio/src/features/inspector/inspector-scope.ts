@@ -1,5 +1,6 @@
 // Scope and write prefix calculation for Inspector (SPEC-04 section 9 M-IN).
 import {
+  type Breakpoint,
   editBreakpoint,
   type Frame,
   type InteractionState,
@@ -39,19 +40,25 @@ export function useScopeCalculation(
   interactionState: InteractionState | undefined,
   breakpoints?: readonly ProjectBreakpoint[],
   dark?: boolean,
-): { readonly currentScope: Scope; readonly writePrefix: string } {
+): {
+  readonly currentScope: Scope;
+  readonly writePrefix: string;
+  readonly frameBreakpoint: Breakpoint;
+} {
   return useMemo(() => {
     const frameW = frame?.width ?? 1440;
     const primW = primaryFrame?.width ?? 1440;
-    const breakpoint = editBreakpoint(frameW, primW, responsiveMode, breakpoints);
+    // Edits reach every screen (spec-log #141): the frame decides only what "only this screen"
+    // means, which the per-screen writer (Tailwind) or a media query (plain CSS) turns into code.
     const scope: Scope = {
-      breakpoint,
+      breakpoint: 'base',
       state: interactionState,
       ...(dark === true ? { dark: true } : {}),
     };
     return {
       currentScope: scope,
       writePrefix: computeWritePrefix(scope, responsiveMode),
+      frameBreakpoint: editBreakpoint(frameW, primW, responsiveMode, breakpoints),
     };
   }, [frame?.width, primaryFrame?.width, responsiveMode, interactionState, breakpoints, dark]);
 }

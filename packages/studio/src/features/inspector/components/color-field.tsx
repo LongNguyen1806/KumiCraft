@@ -4,6 +4,7 @@ import { readValue, TAILWIND_COLORS } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useOwnScreen } from '../screen-scope.ts';
 import { PropertyHeader } from './property-field.tsx';
 
 export type ColorFieldProps = {
@@ -253,14 +254,9 @@ function useColorFieldState(
   ctx: ClassContext,
 ) {
   const read = readValue(tokens, property, { width: frameWidth, state: currentScope.state }, ctx);
-  const isInherited =
-    read.from !== undefined &&
-    (read.from.breakpoint !== currentScope.breakpoint || read.from.state !== currentScope.state);
-  const canRemoveOverride =
-    !isInherited && currentScope.breakpoint !== 'base' && read.value !== undefined;
   const displayValue = formatColorDisplayValue(read.value);
   const swatchColor = resolveSwatchColor(read.value, ctx.theme.colors);
-  return { read, isInherited, canRemoveOverride, displayValue, swatchColor };
+  return { read, displayValue, swatchColor };
 }
 
 function resolveColorDisplay(
@@ -271,9 +267,6 @@ function resolveColorDisplay(
   return {
     displayValue: mixed ? mixedLabel : state.displayValue,
     swatchColor: mixed ? undefined : state.swatchColor,
-    isInherited: mixed ? false : state.isInherited,
-    canRemoveOverride: mixed ? false : state.canRemoveOverride,
-    fromScope: mixed ? undefined : state.read.from,
   };
 }
 
@@ -292,20 +285,11 @@ export function ColorField({
   const [open, setOpen] = useState(false);
   const state = useColorFieldState(tokens, property, currentScope, frameWidth, ctx);
   const display = resolveColorDisplay(state, mixed, t('inspector.mixed'));
+  const ownScreen = useOwnScreen(tokens, property, currentScope, ctx, mixed);
 
   return (
     <div className="flex flex-col gap-1 py-1" data-testid={`property-field-${property}`}>
-      <PropertyHeader
-        property={property}
-        label={label}
-        isInherited={display.isInherited}
-        canRemoveOverride={display.canRemoveOverride}
-        fromScope={display.fromScope}
-        disabled={disabled}
-        onRemoveOverride={() => {
-          onValueChange(property, undefined);
-        }}
-      />
+      <PropertyHeader property={property} label={label} ownScreen={ownScreen} disabled={disabled} />
       <ColorTriggerButton
         property={property}
         disabled={disabled}

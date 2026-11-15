@@ -5,7 +5,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { isOpenScale } from '../scale-values.ts';
+import { useOwnScreen } from '../screen-scope.ts';
 import { ScaleInput } from './scale-input.tsx';
+import { ScreenOwnButton } from './screen-scope-controls.tsx';
 import { SegmentButtons } from './segment-buttons.tsx';
 
 export type PropertyFieldProps = {
@@ -36,57 +38,30 @@ export function choicesWith(options: readonly string[], current: string): readon
   return current === '' || options.includes(current) ? options : [current, ...options];
 }
 
-export function formatScopeName(scope: Scope): string {
-  if (scope.breakpoint === 'base') {
-    return scope.state ? `base:${scope.state}` : 'base';
-  }
-  return scope.state ? `${scope.breakpoint}:${scope.state}` : scope.breakpoint;
-}
-
+/**
+ * A field's label. When the active screen has a value of its own (spec-log #141) the label turns
+ * blue and a device icon beside it drops that value.
+ */
 export function PropertyHeader({
   property,
   label,
-  isInherited,
-  canRemoveOverride,
-  fromScope,
+  ownScreen,
   disabled,
-  onRemoveOverride,
 }: {
   readonly property: PropertyId;
   readonly label: string;
-  readonly isInherited: boolean;
-  readonly canRemoveOverride: boolean;
-  readonly fromScope?: Scope | undefined;
+  readonly ownScreen: boolean;
   readonly disabled: boolean;
-  readonly onRemoveOverride: () => void;
 }) {
-  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-between gap-1">
-      <label htmlFor={`field-${property}`} className="truncate text-[11px] text-ink-faint">
+      <label
+        htmlFor={`field-${property}`}
+        className={`truncate text-[11px] ${ownScreen ? 'font-medium text-accent' : 'text-ink-faint'}`}
+      >
         {label}
       </label>
-      <div className="flex items-center gap-1">
-        {isInherited && fromScope && (
-          <span
-            data-testid={`inherited-badge-${property}`}
-            className="max-w-[120px] truncate text-[10px] text-ink-faint italic"
-          >
-            {t('inspector.inheritedFrom', { scope: formatScopeName(fromScope) })}
-          </span>
-        )}
-        {canRemoveOverride && (
-          <button
-            type="button"
-            data-testid={`remove-override-${property}`}
-            onClick={onRemoveOverride}
-            disabled={disabled}
-            className="text-[10px] text-accent hover:underline disabled:opacity-40"
-          >
-            {t('inspector.removeOverride')}
-          </button>
-        )}
-      </div>
+      {ownScreen && <ScreenOwnButton property={property} disabled={disabled} />}
     </div>
   );
 }
@@ -217,55 +192,35 @@ export function parseInputToClassValue(rawVal: string): ClassValue | undefined {
   return { kind: 'scale', token: val };
 }
 
-type FieldRead = {
-  readonly isInherited: boolean;
-  readonly canRemoveOverride: boolean;
-  readonly currentValStr: string;
-  readonly fromScope: Scope | undefined;
-};
-
-/** What a field shows for the active frame and state, and where the value comes from. */
+/** What a field shows for the active frame and state. */
 export function readField(
   props: Pick<
     PropertyFieldProps,
     'tokens' | 'property' | 'frameWidth' | 'currentScope' | 'ctx' | 'mixed'
   >,
-): FieldRead {
+): { readonly currentValStr: string } {
   const { tokens, property, frameWidth, currentScope, ctx, mixed = false } = props;
   const read = readValue(tokens, property, { width: frameWidth, state: currentScope.state }, ctx);
-  const isInherited =
-    !mixed &&
-    read.from !== undefined &&
-    (read.from.breakpoint !== currentScope.breakpoint || read.from.state !== currentScope.state);
-  return {
-    isInherited,
-    canRemoveOverride:
-      !mixed && !isInherited && currentScope.breakpoint !== 'base' && read.value !== undefined,
-    currentValStr: mixed ? '' : formatClassValueString(read.value),
-    fromScope: mixed ? undefined : read.from,
-  };
+  return { currentValStr: mixed ? '' : formatClassValueString(read.value) };
 }
 
 export function PropertyField(props: PropertyFieldProps) {
   const { property, label, onValueChange, options, segments, disabled = false, mixed } = props;
   const read = readField(props);
+  const ownScreen = useOwnScreen(
+    props.tokens,
+    property,
+    props.currentScope,
+    props.ctx,
+    mixed === true,
+  );
 
   return (
     <div
       className={`flex flex-col gap-1 py-1 ${segments === undefined ? '' : 'col-span-2'}`}
       data-testid={`property-field-${property}`}
     >
-      <PropertyHeader
-        property={property}
-        label={label}
-        isInherited={read.isInherited}
-        canRemoveOverride={read.canRemoveOverride}
-        fromScope={read.fromScope}
-        disabled={disabled}
-        onRemoveOverride={() => {
-          onValueChange(property, undefined);
-        }}
-      />
+      <PropertyHeader property={property} label={label} ownScreen={ownScreen} disabled={disabled} />
       <PropertyInputControl
         property={property}
         currentValStr={read.currentValStr}

@@ -125,7 +125,7 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
     expect(shadowInput.value).toBe('md');
   });
 
-  it('Scenario 2: Mobile frame desktop-first with p-6 shows "inherited from base" and max-sm: prefix [R-IN-11]', async () => {
+  it('Scenario 2: on the Mobile frame an edit reaches every screen by default [R-IN-11, spec-log #141]', async () => {
     const sampleSource: ElementSource = {
       loc: 'src/App.tsx:25:2',
       tag: 'div',
@@ -153,14 +153,12 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('write-prefix-badge').textContent).toBe('max-sm:');
+      expect(screen.getByTestId('screen-scope-all').getAttribute('aria-pressed')).toBe('true');
     });
-
-    const paddingField = screen.getByTestId('property-field-padding');
-    expect(paddingField).toBeDefined();
-
-    const inheritedBadge = screen.getByTestId('inherited-badge-padding');
-    expect(inheritedBadge.textContent).toContain('base');
+    expect(screen.getByTestId('screen-scope-only').getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByTestId('property-field-padding')).toBeDefined();
+    // p-6 is the same on every screen: no "own value on this screen" mark.
+    expect(screen.queryByTestId('screen-own-padding')).toBeNull();
   });
 
   it('Scenario 5: locks all inputs when className is expression with code preview and open editor button [R-IN-15]', async () => {
@@ -238,7 +236,7 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
     expect(screen.getByTestId('warning-loop').textContent).toContain('3');
   });
 
-  it('writes with the hover prefix after choosing Hover [R-IN-12]', async () => {
+  it('a Hover edit always reaches every screen [R-IN-12, spec-log #141]', async () => {
     const sampleSource: ElementSource = {
       loc: 'src/App.tsx:15:3',
       tag: 'div',
@@ -274,13 +272,17 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
       expect(screen.getByTestId('interaction-state-select')).toBeDefined();
     });
 
-    const badge = screen.getByTestId('write-prefix-badge');
-    expect(badge.textContent).toBe('Base');
+    const only = screen.getByTestId<HTMLButtonElement>('screen-scope-only');
+    expect(only.disabled).toBe(false);
 
     const select = screen.getByTestId('interaction-state-select');
     fireEvent.change(select, { target: { value: 'hover' } });
 
-    expect(badge.textContent).toBe('hover:');
+    // Hover styles are written once for all screens, so "only this screen" cannot be chosen.
+    await waitFor(() => {
+      expect(screen.getByTestId<HTMLButtonElement>('screen-scope-only').disabled).toBe(true);
+    });
+    expect(screen.getByTestId('screen-scope-all').getAttribute('aria-pressed')).toBe('true');
   });
 
   it('lists project font sizes first [R-IN-19]', async () => {

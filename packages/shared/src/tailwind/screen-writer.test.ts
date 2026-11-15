@@ -79,7 +79,7 @@ describe('per-screen writes [spec-log #141]', () => {
       cols('2'),
       mobileFirst,
     );
-    expect(out).toBe('grid grid-cols-3 md:grid-cols-2 xl:grid-cols-3');
+    expect(out).toBe('grid grid-cols-3 md:grid-cols-2 lg:grid-cols-3');
     expect(readScreenValues(out ?? '', 'gridCols', FRAMES, mobileFirst)).toEqual([
       cols('3'),
       cols('3'),
@@ -96,7 +96,7 @@ describe('per-screen writes [spec-log #141]', () => {
       cols('4'),
       mobileFirst,
     );
-    expect(out).toBe('grid-cols-1 md:grid-cols-3 xl:grid-cols-4');
+    expect(out).toBe('grid-cols-1 md:grid-cols-3 lg:grid-cols-4');
   });
 
   it('"all screens" collapses per-screen values, including old KumiCraft leftovers', () => {
@@ -134,7 +134,7 @@ describe('per-screen writes [spec-log #141]', () => {
       cols('1'),
       cols('1'),
     ]);
-    expect(out).toBe('grid-cols-1 xl:grid-cols-3');
+    expect(out).toBe('grid-cols-1 lg:grid-cols-3');
   });
 
   it('keeps a side value right when the shorthand also differs by screen', () => {
@@ -150,6 +150,11 @@ describe('per-screen writes [spec-log #141]', () => {
     expect(readScreenValues(out ?? '', 'paddingRight', FRAMES, mobileFirst)).toEqual(
       readScreenValues(input, 'paddingRight', FRAMES, mobileFirst),
     );
+  });
+
+  it('with only Mobile and Desktop frames, Mobile ends where phones end (md), not at xl', () => {
+    const out = writeOneScreen('pr-4', 'paddingRight', [1440, 375], 1, cols('50'), desktopFirst);
+    expect(out).toBe('pr-4 max-md:pr-50');
   });
 
   it('refuses rather than writing wrong code when two frames have no breakpoint between them', () => {

@@ -1,5 +1,6 @@
 // Hook managing Inspector target selection, source fetching, and scope (SPEC-04 M-IN, R-IN-10..16, R-IN-20).
 import {
+  type Breakpoint,
   type ElementRef,
   type ElementSource,
   type Frame,
@@ -162,7 +163,11 @@ function buildElementTarget(
   locParsed: { readonly file: string; readonly line: number; readonly column: number } | undefined,
   source: ElementSource | undefined,
   loader: { readonly loading: boolean; readonly error?: string | undefined },
-  scope: { readonly currentScope: Scope; readonly writePrefix: string },
+  scope: {
+    readonly currentScope: Scope;
+    readonly writePrefix: string;
+    readonly frameBreakpoint?: Breakpoint | undefined;
+  },
   instances: number,
   interaction: {
     readonly state: InteractionState | undefined;
@@ -189,6 +194,7 @@ function buildElementTarget(
     warnings: deriveWarnings(source, instances),
     currentScope: scope.currentScope,
     writePrefix: scope.writePrefix,
+    frameBreakpoint: scope.frameBreakpoint,
     interactionState: interaction.state,
     setInteractionState: interaction.setState,
     previewState: interaction.previewState,
