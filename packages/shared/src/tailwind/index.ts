@@ -4,6 +4,7 @@ export * from './palette.generated.ts';
 export * from './parser.ts';
 export * from './properties.ts';
 export * from './reader.ts';
+export * from './screen-writer.ts';
 export * from './tokenizer.ts';
 export * from './types.ts';
 export * from './v3-names.ts';
