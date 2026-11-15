@@ -206,9 +206,29 @@
     "loginSessionsHelp": "Shows a \"Sign-in\" picker on the Canvas toolbar. Each session keeps its own sign-in, for apps where you need two roles at once (for example customer and farmer). Off: the Canvas uses one sign-in.",
     "about": "About",
     "aboutPage": {
-      "description": "KumiCraft is a visual design tool for real React + Vite code: click an element on the Canvas to change it, and every change is written straight into your own source files and can be undone.",
+      "description": "A visual design space built right on your real source code. Select an element on the Canvas and edit it directly. Every change is written straight into your source files.",
+      "features": {
+        "edit": {
+          "title": "Visual editing",
+          "body": "Layout, spacing, type, images, effects. Drag-and-drop blocks"
+        },
+        "devices": {
+          "title": "Many devices",
+          "body": "Desktop, Tablet and Mobile at once, sign-in kept"
+        },
+        "ai": {
+          "title": "AI agents",
+          "body": "Work with Claude Code, Antigravity CLI"
+        },
+        "styles": {
+          "title": "Supported styles",
+          "body": "Tailwind 3/4, CSS, CSS Modules, Sass/Less, Bootstrap"
+        }
+      },
+      "platforms": "React + Vite · Express + Pug (view mode) · Runs locally on 127.0.0.1, no account needed",
       "author": "Designed and built by",
-      "copyright": "© {{year}} {{name}}. All rights reserved."
+      "copyright": "© {{year}} {{name}}. All rights reserved.",
+      "tagline": "A more direct way to build interfaces."
     }
   },
   "trust": {

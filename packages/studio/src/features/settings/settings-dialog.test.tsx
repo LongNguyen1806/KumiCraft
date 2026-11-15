@@ -79,7 +79,11 @@ describe('Settings dialog', () => {
     expect(author.textContent).toContain('Long Nguyen');
     expect(author.textContent).toContain('Full Stack Engineer');
     expect(author.textContent).toContain('FPT Aptech');
-    expect(screen.getByTestId('settings-about').textContent).toContain('© 2026 Long Nguyen');
+    const about = screen.getByTestId('settings-about').textContent;
+    expect(about).toContain('© 2026 Long Nguyen');
+    expect(about).toContain('A more direct way to build interfaces.');
+    expect(about).toContain('Express + Pug (view mode)');
+    expect(screen.getByTestId('about-features').querySelectorAll('li')).toHaveLength(4);
   });
 
   it('switches the interface language at once and remembers it', async () => {

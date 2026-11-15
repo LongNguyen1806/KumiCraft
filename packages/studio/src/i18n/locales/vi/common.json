@@ -206,9 +206,29 @@
     "loginSessionsHelp": "Hiện ô \"Đăng nhập\" trên thanh Canvas. Mỗi phiên giữ đăng nhập riêng, dùng cho app cần hai vai trò cùng lúc (ví dụ customer và farmer). Tắt: Canvas dùng một đăng nhập.",
     "about": "Giới thiệu",
     "aboutPage": {
-      "description": "KumiCraft là công cụ thiết kế giao diện trực quan cho mã React + Vite thật: bấm vào phần tử trên Canvas để chỉnh, mọi thay đổi được ghi thẳng vào mã nguồn của bạn và hoàn tác được.",
+      "description": "Không gian thiết kế trực quan đặt ngay trên mã nguồn thật. Chọn phần tử trên Canvas và chỉnh trực tiếp. Mọi thay đổi được ghi thẳng vào file nguồn.",
+      "features": {
+        "edit": {
+          "title": "Chỉnh trực quan",
+          "body": "Bố cục, khoảng cách, kiểu chữ, hình ảnh, hiệu ứng. Bộ công cụ kéo thả khối"
+        },
+        "devices": {
+          "title": "Nhiều thiết bị",
+          "body": "Desktop, Tablet, Mobile cùng lúc, giữ phiên đăng nhập"
+        },
+        "ai": {
+          "title": "AI Agent",
+          "body": "Làm việc cùng Claude Code, Antigravity CLI"
+        },
+        "styles": {
+          "title": "Style hỗ trợ",
+          "body": "Tailwind 3/4, CSS, CSS Modules, Sass/Less, Bootstrap"
+        }
+      },
+      "platforms": "React + Vite · Express + Pug (chế độ xem) · Chạy cục bộ trên 127.0.0.1, không cần tài khoản",
       "author": "Thiết kế và phát triển",
-      "copyright": "© {{year}} {{name}}. Bảo lưu mọi quyền."
+      "copyright": "© {{year}} {{name}}. Bảo lưu mọi quyền.",
+      "tagline": "A more direct way to build interfaces."
     }
   },
   "trust": {
