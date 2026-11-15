@@ -40,7 +40,8 @@ describe('Data Sources readers [TK-33, Test 3]', () => {
 
   afterEach(async () => {
     if (tmpRoot.length > 0) {
-      await fs.rm(tmpRoot, { recursive: true, force: true });
+      // Windows may still hold a file of the TypeScript runner for a moment after it exits.
+      await fs.rm(tmpRoot, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
     }
   });
 
@@ -179,5 +180,7 @@ describe('Data Sources readers [TK-33, Test 3]', () => {
         ]),
       );
     }
-  });
+    // It starts a real TypeScript runner: under a full `pnpm test` the machine is busy and 5 s
+    // (the default) was not always enough.
+  }, 30_000);
 });
