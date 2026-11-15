@@ -11,6 +11,11 @@ export type OpenFrame = {
 };
 
 export const MAX_OPEN_FRAMES = 4;
+
+/** The internal address a draft is shown at; never a page of the app. */
+export function isDraftAddress(route: string): boolean {
+  return route.startsWith('/__kumicraft/');
+}
 export const OPEN_FRAMES_STORAGE_PREFIX = 'kumicraft.openFrames.';
 
 function isValidOpenFrame(obj: unknown): obj is OpenFrame {
@@ -39,7 +44,9 @@ export function getStoredOpenFrames(projectId: string): readonly OpenFrame[] | u
       return undefined;
     }
     const frames = parsed.filter(isValidOpenFrame);
-    return frames.length === parsed.length ? frames : undefined;
+    if (frames.length !== parsed.length) return undefined;
+    // An older Studio kept a draft's address as the route of every frame: such a frame shows home.
+    return frames.map((f) => (isDraftAddress(f.route) ? { ...f, route: '/' } : f));
   } catch {
     return undefined;
   }

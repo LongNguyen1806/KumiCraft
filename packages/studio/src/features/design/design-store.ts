@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { create } from 'zustand';
 
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { isDraftAddress } from '../editor/open-frames-storage.ts';
 import { usePagesData } from '../editor/page-select.tsx';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
@@ -67,9 +68,19 @@ export function useDesignTargetSync(): void {
   const currentRoute = useSelectionStore((s) => s.currentRoute);
   const bridgeReady = useSelectionStore((s) => s.bridgeReady);
   const draftFile = useCanvasViewStore((s) => s.draftFile);
+  const activeOpenFrameId = useCanvasViewStore((s) => s.activeOpenFrameId);
   const lastSentFile = useRef<string | undefined>(undefined);
   const prevReadyRef = useRef<boolean>(false);
   const prevRouteRef = useRef<string>(currentRoute);
+
+  // Another working frame (the 1/2 pager, a click): the panels show its page, not the last
+  // frame's (spec-log #148). A draft frame's page stays its route; its draft is `draftFile`.
+  useEffect(() => {
+    const frame = useCanvasViewStore.getState().openFrames.find((f) => f.id === activeOpenFrameId);
+    if (frame !== undefined && !isDraftAddress(frame.route)) {
+      useSelectionStore.getState().setRoute(frame.route);
+    }
+  }, [activeOpenFrameId]);
 
   useEffect(() => {
     if (prevRouteRef.current !== currentRoute) {

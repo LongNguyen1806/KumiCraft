@@ -3,6 +3,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useCanvasViewStore } from './canvas-view-store.ts';
+import {
+  getStoredOpenFrames,
+  isDraftAddress,
+  OPEN_FRAMES_STORAGE_PREFIX,
+} from './open-frames-storage.ts';
 
 const store = () => useCanvasViewStore.getState();
 const frame = (id: string) => store().openFrames.find((f) => f.id === id);
@@ -46,5 +51,23 @@ describe('drafts per frame', () => {
 
     store().closeDraft(undefined, 'src/drafts');
     expect(frame('default')?.draftFile).toBe(undefined);
+  });
+});
+
+describe('the internal draft address is never a page', () => {
+  it('an older stored frame with a draft address as its route shows home [WP-4.00]', () => {
+    localStorage.setItem(
+      `${OPEN_FRAMES_STORAGE_PREFIX}p1`,
+      JSON.stringify([
+        { id: 'a', frameId: 'desktop', sessionId: 1, route: '/__kumicraft/draft?file=x' },
+      ]),
+    );
+    expect(getStoredOpenFrames('p1')?.[0]?.route).toBe('/');
+    localStorage.removeItem(`${OPEN_FRAMES_STORAGE_PREFIX}p1`);
+  });
+
+  it('knows the draft address [WP-4.00]', () => {
+    expect(isDraftAddress('/__kumicraft/draft?file=src%2Fdrafts%2FA.tsx')).toBe(true);
+    expect(isDraftAddress('/landing')).toBe(false);
   });
 });

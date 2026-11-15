@@ -12,6 +12,7 @@ import { useDrafts } from '../drafts/use-drafts.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { useCanvasViewStore } from './canvas-view-store.ts';
+import { isDraftAddress } from './open-frames-storage.ts';
 
 const CODE_FILE = /\.(tsx|jsx|ts|js)$/;
 
@@ -296,7 +297,10 @@ export function PageSelect() {
           setNewDraftOpen(true);
         }}
       />
-      {current === '' && draftFile === undefined && <RouteText route={route} />}
+      {/* A route the list cannot name; never the internal address a draft is shown at. */}
+      {current === '' && draftFile === undefined && !isDraftAddress(route) && (
+        <RouteText route={route} />
+      )}
       <PageSelectDialogs
         projectId={projectId}
         reload={reload}

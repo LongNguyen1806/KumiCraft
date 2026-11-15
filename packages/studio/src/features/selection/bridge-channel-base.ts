@@ -30,6 +30,7 @@ import {
 import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { isDraftAddress } from '../editor/open-frames-storage.ts';
 import { dispatchBridgePayload } from './bridge-payload-handlers.ts';
 import { handleCanvasNavigation } from './canvas-navigation-messages.ts';
 import { type CanvasMode, useSelectionStore } from './selection-store.ts';
@@ -57,6 +58,16 @@ export type BridgeListenerSets = {
   readonly freeFrame: Set<BridgeFreeFrameListener>;
   readonly styleProbe: Set<(payload: BridgeStyleProbePayload) => void>;
 };
+
+/**
+ * A frame keeps the page it shows as its route. A draft is shown at an internal address
+ * (`/__kumicraft/draft?file=…`, its own `draftFile`): kept as the route, the frame lost its page and
+ * the toolbar printed that address (spec-log #148).
+ */
+function rememberFrameRoute(openFrameId: string, route: string): void {
+  if (isDraftAddress(route)) return;
+  useCanvasViewStore.getState().updateOpenFrame(openFrameId, { route });
+}
 
 export class BridgeChannel {
   protected iframeWindow: Window | undefined;
@@ -310,9 +321,7 @@ export class BridgeChannel {
         type === 'route'
           ? BridgeRoutePayloadSchema.safeParse(payload)
           : BridgeReadyPayloadSchema.safeParse(payload);
-      if (res.success && this.openFrameId) {
-        useCanvasViewStore.getState().updateOpenFrame(this.openFrameId, { route: res.data.route });
-      }
+      if (res.success && this.openFrameId) rememberFrameRoute(this.openFrameId, res.data.route);
     }
     this.handleTextEditMessage(type, payload);
     this.handleFreeFrameMessage(type, payload);
@@ -321,9 +330,7 @@ export class BridgeChannel {
   private handleActiveFrameFollowup(type: string, payload: unknown): void {
     if (type === 'route') {
       const res = BridgeRoutePayloadSchema.safeParse(payload);
-      if (res.success && this.openFrameId) {
-        useCanvasViewStore.getState().updateOpenFrame(this.openFrameId, { route: res.data.route });
-      }
+      if (res.success && this.openFrameId) rememberFrameRoute(this.openFrameId, res.data.route);
     } else if (type === 'select') {
       const res = BridgeSelectPayloadSchema.safeParse(payload);
       if (res.success && this.openFrameId) {
