@@ -721,7 +721,8 @@
     "ignoredWarning": "Thư mục bản nháp đang bị .gitignore bỏ qua. Các thay đổi sẽ không được commit vào Git.",
     "freeWarning": "Bản nháp tự do dùng vị trí tuyệt đối; hãy kiểm tra hiển thị responsive trên điện thoại sau khi chuyển đổi.",
     "providerHint": "Bản nháp chạy ngoài app; component này cần Provider",
-    "loadFailed": "Không tải được danh sách bản nháp."
+    "loadFailed": "Không tải được danh sách bản nháp.",
+    "openOnCanvas": "Mở bản nháp này trên Canvas"
   },
   "components": {
     "title": "Component",

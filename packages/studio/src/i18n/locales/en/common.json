@@ -721,7 +721,8 @@
     "ignoredWarning": "The drafts directory is ignored by .gitignore. Changes will not be committed to Git.",
     "freeWarning": "Freeform drafts use fixed positions; check responsive display on mobile after promoting.",
     "providerHint": "Draft runs outside the app; this component may need a Provider.",
-    "loadFailed": "Could not load the drafts."
+    "loadFailed": "Could not load the drafts.",
+    "openOnCanvas": "Open this draft on the Canvas"
   },
   "components": {
     "title": "Components",

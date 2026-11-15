@@ -5,68 +5,11 @@ import { useTranslation } from 'react-i18next';
 import { deleteDraft, duplicateDraft, renameDraft } from '../../api/project-client.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { useEditMode } from '../project/use-edit-mode.ts';
+import { DraftRowActions } from './draft-row-actions.tsx';
 import { DraftsDialogs } from './drafts-dialogs.tsx';
 import { DraftsNotices, DraftsStatus } from './drafts-empty.tsx';
 import { useDraftsRevision } from './drafts-revision.ts';
 import { useDrafts } from './use-drafts.ts';
-
-type DraftRowActionsProps = {
-  readonly draft: DraftInfo;
-  readonly onStartRename: () => void;
-  readonly onDuplicate: () => void;
-  readonly onDelete: () => void;
-  readonly onPromote: () => void;
-};
-
-function DraftRowActions({
-  draft,
-  onStartRename,
-  onDuplicate,
-  onDelete,
-  onPromote,
-}: DraftRowActionsProps) {
-  const { t } = useTranslation();
-  const editMode = useEditMode();
-  if (editMode === 'viewOnly') return undefined;
-  return (
-    <div className="flex shrink-0 items-center gap-1.5">
-      <button
-        type="button"
-        data-testid={`draft-rename-${draft.file}`}
-        onClick={onStartRename}
-        className="h-6 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-xs text-ink-soft hover:text-ink"
-      >
-        {t('drafts.rename')}
-      </button>
-      <button
-        type="button"
-        data-testid={`draft-duplicate-${draft.file}`}
-        onClick={onDuplicate}
-        className="h-6 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-xs text-ink-soft hover:text-ink"
-      >
-        {t('drafts.duplicate')}
-      </button>
-      <button
-        type="button"
-        data-testid={`draft-promote-${draft.file}`}
-        onClick={onPromote}
-        className="h-6 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-xs text-ink-soft hover:text-ink"
-      >
-        {t('drafts.promote')}
-      </button>
-      <button
-        type="button"
-        data-testid={`draft-delete-${draft.file}`}
-        disabled={draft.inUse}
-        onClick={onDelete}
-        className="h-6 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-xs text-danger hover:bg-danger/10 disabled:opacity-40"
-      >
-        {t('drafts.delete')}
-      </button>
-    </div>
-  );
-}
 
 function DraftRenameForm({
   draft,
@@ -113,6 +56,44 @@ function DraftRenameForm({
   );
 }
 
+/** The draft's name and file; a click opens it on the Canvas. */
+function DraftOpenButton({
+  draft,
+  isOpen,
+}: {
+  readonly draft: DraftInfo;
+  readonly isOpen: boolean;
+}) {
+  const { t } = useTranslation();
+  const openDraft = useCanvasViewStore((st) => st.openDraft);
+  const projectId = useCanvasViewStore((st) => st.currentProjectId);
+  return (
+    <button
+      type="button"
+      data-testid={`draft-open-${draft.file}`}
+      aria-current={isOpen ? 'true' : undefined}
+      title={t('drafts.openOnCanvas')}
+      onClick={() => {
+        openDraft(draft.file, projectId);
+      }}
+      className="flex min-w-0 flex-1 flex-col rounded-md px-1.5 py-1 text-left hover:bg-field"
+    >
+      <span className="flex min-w-0 items-center gap-2">
+        <span className="truncate font-medium text-ink">{draft.name}</span>
+        {draft.inUse && (
+          <span
+            data-testid="draft-in-use"
+            className="rounded bg-sun-soft px-1.5 py-0.5 text-[10px] font-semibold text-ink"
+          >
+            {t('drafts.inUse')}
+          </span>
+        )}
+      </span>
+      <span className="truncate font-mono text-[11px] text-ink-faint">{draft.file}</span>
+    </button>
+  );
+}
+
 function DraftRow({
   draft,
   isRenaming,
@@ -132,26 +113,17 @@ function DraftRow({
   readonly onDelete: () => void;
   readonly onPromote: () => void;
 }) {
-  const { t } = useTranslation();
+  const isOpen = useCanvasViewStore((st) => st.draftFile === draft.file);
   if (isRenaming) {
     return <DraftRenameForm draft={draft} onCancel={onCancelRename} onSave={onSaveRename} />;
   }
   return (
-    <div className="flex items-center justify-between gap-3 rounded-[7px] border border-line bg-card-solid px-2.5 py-2 text-xs">
-      <div className="flex min-w-0 flex-col">
-        <div className="flex items-center gap-2">
-          <span className="truncate font-medium text-ink">{draft.name}</span>
-          {draft.inUse && (
-            <span
-              data-testid="draft-in-use"
-              className="rounded bg-sun-soft px-1.5 py-0.5 text-[10px] font-semibold text-ink"
-            >
-              {t('drafts.inUse')}
-            </span>
-          )}
-        </div>
-        <span className="truncate font-mono text-[11px] text-ink-faint">{draft.file}</span>
-      </div>
+    <div
+      className={`flex items-center gap-1 rounded-[7px] border bg-card-solid py-1 pr-1 pl-1 text-xs ${
+        isOpen ? 'border-accent' : 'border-line'
+      }`}
+    >
+      <DraftOpenButton draft={draft} isOpen={isOpen} />
       <DraftRowActions
         draft={draft}
         onStartRename={onStartRename}
