@@ -1,6 +1,7 @@
 // REST endpoints for agent turns and images (WP-3.03b, R-AG-11, R-AG-15, R-AG-16, R-CH-02).
 import {
   ChatImageUploadSchema,
+  ForgetConversationRequestSchema,
   type ProjectInfo,
   type Result,
   ResumeConversationRequestSchema,
@@ -72,6 +73,14 @@ function registerConversationRoutes(api: FastifyInstance, deps: AgentTurnRoutesD
     const parsed = ResumeConversationRequestSchema.safeParse(request.body);
     if (!parsed.success) return sendError(reply, { code: 'E016' });
     const res = await deps.turnRunner.resume(parsed.data.id);
+    if (!res.ok) return sendError(reply, res.error);
+    return { data: res.value };
+  });
+
+  api.post('/agent/conversation/forget', async (request, reply) => {
+    const parsed = ForgetConversationRequestSchema.safeParse(request.body);
+    if (!parsed.success) return sendError(reply, { code: 'E016' });
+    const res = await deps.turnRunner.forget(parsed.data.id);
     if (!res.ok) return sendError(reply, res.error);
     return { data: res.value };
   });

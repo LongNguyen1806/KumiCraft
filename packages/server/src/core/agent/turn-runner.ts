@@ -3,6 +3,7 @@ import type {
   AgentStatus,
   BackendInfo,
   CurrentConversation,
+  ForgetConversationResult,
   ProjectInfo,
   StartTurnRequest,
   TurnNotice,
@@ -21,6 +22,7 @@ import type { AgentService } from './agent-service.ts';
 import type { AgentAdapter, AgentCommand } from './agent-types.ts';
 import type { ChatImageStore } from './chat-images.ts';
 import { buildPrompt } from './prompt.ts';
+import { forgetInProject, resumeInProject } from './session-forget.ts';
 import type { TurnSnapshotStore } from './snapshot/snapshot-types.ts';
 import { computeAdapterArgs, runningSummary } from './turn-args.ts';
 import { type AgentRun, createReplyCollector, redactEventSecrets } from './turn-events.ts';
@@ -61,6 +63,8 @@ export type TurnRunner = {
   conversation(): Promise<Result<CurrentConversation>>;
   /** Makes an earlier conversation of this project the one "continue" resumes (K9.5). */
   resume(conversationId: string): Promise<Result<CurrentConversation>>;
+  /** Removes a session from KumiCraft's own list, never the agent's files (owner, 2026-11-15). */
+  forget(conversationId: string | undefined): Promise<Result<ForgetConversationResult>>;
   diff(turnId: string, file: string): Promise<Result<string>>;
   revert(turnId: string): Promise<Result<TurnSummary>>;
 };
@@ -397,19 +401,8 @@ export function createTurnRunner(deps: TurnRunnerDeps): TurnRunner {
       return ok((await deps.store.conversation(pRes.value.id)) ?? {});
     },
 
-    async resume(conversationId) {
-      const pRes = deps.project();
-      if (!pRes.ok) return pRes;
-      // Only a conversation KumiCraft itself ran in this project: never an id from elsewhere.
-      const turns = await deps.store.list(pRes.value.id);
-      const owner = turns.find((t) => t.conversation === conversationId);
-      if (owner === undefined) {
-        return err({ code: 'E015', params: { resource: 'conversation', id: conversationId } });
-      }
-      const value = { agent: owner.agent, id: conversationId };
-      const saved = await deps.store.setConversation(pRes.value.id, value);
-      return saved.ok ? ok(value) : saved;
-    },
+    resume: (conversationId) => resumeInProject(deps, conversationId),
+    forget: (conversationId) => forgetInProject(deps, conversationId),
 
     async diff(turnId, file) {
       const pRes = deps.project();

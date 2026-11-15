@@ -117,6 +117,11 @@
     "turns_other": "{{count}} lượt",
     "current": "Đang mở",
     "otherAgent": "của agent khác",
-    "deleteHint": "Muốn xóa phiên: xóa trong Antigravity (mục CLI Project) hoặc trong Claude Code."
+    "deleteHint": "Nút 🗑 chỉ xóa phiên trong KumiCraft. Phiên bên Antigravity hoặc Claude Code thì xóa riêng ở đó.",
+    "delete": "Xóa phiên này khỏi KumiCraft",
+    "deleteConfirm": "Xóa khỏi KumiCraft?",
+    "deleteYes": "Xóa",
+    "cancel": "Hủy",
+    "deleteFailed": "Không xóa được (phiên đang chạy?)"
   }
 }

@@ -6,7 +6,13 @@ import { computeSha256 } from '../../mirror/mirror-manifest.ts';
 import type { FileSystemPort } from '../../ports/file-system-port.ts';
 import type { LoggerPort } from '../../ports/logger-port.ts';
 import { err, ok, type Result } from '../../shared/result.ts';
-import { getLatestManifest, pruneTurns, readManifest, writeManifest } from './snapshot-manifest.ts';
+import {
+  getLatestManifest,
+  pruneTurns,
+  readManifest,
+  removeTurnManifests,
+  writeManifest,
+} from './snapshot-manifest.ts';
 import { readObject, saveObject, SNAPSHOT_READ } from './snapshot-objects.ts';
 import { isBinaryFile, type ScannedFile, scanProject } from './snapshot-scan.ts';
 import {
@@ -337,5 +343,10 @@ export function createTurnSnapshotStore(
     diff: (projectId, turnId, path) => diffSnapshot(deps, projectId, turnId, path),
     revert: (projectId, projectRoot, turnId) =>
       revertSnapshot(deps, projectId, projectRoot, turnId),
+    async forget(projectId, turnIds) {
+      if (!ID_REGEX.test(projectId)) return;
+      const ids = new Set(turnIds.filter((id) => ID_REGEX.test(id)));
+      if (ids.size > 0) await removeTurnManifests(deps.fs, deps.dataDir, projectId, ids);
+    },
   };
 }

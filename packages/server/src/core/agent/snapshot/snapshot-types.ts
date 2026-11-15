@@ -58,6 +58,8 @@ export type TurnSnapshotStore = {
     projectRoot: string,
     turnId: string,
   ): Promise<Result<readonly TurnFile[]>>;
+  /** Deletes the undo snapshots of these turns (a chat session removed from KumiCraft). */
+  forget(projectId: string, turnIds: readonly string[]): Promise<void>;
 };
 
 export type SnapshotStoreDeps = {

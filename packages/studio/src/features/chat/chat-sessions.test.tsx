@@ -105,10 +105,30 @@ describe('ChatSessions card [K9.5]', () => {
     expect(useChatStore.getState().hasConversation).toBe(false);
   });
 
+  it('deletes a session from KumiCraft after a confirm and reads the list again', async () => {
+    const forget = vi.spyOn(agentClient, 'forgetConversation').mockResolvedValue({ removed: 2 });
+    useChatStore.getState().showSession(turnsOfSession(TURNS, 'conv-a'), 'conv-a');
+    render(<ChatSessions agent="agy" onClose={vi.fn()} />);
+    await screen.findAllByTestId('chat-session');
+
+    fireEvent.click(screen.getAllByTestId('chat-session-delete')[0] as HTMLElement);
+    expect(forget).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId('chat-session-delete-confirm'));
+
+    await vi.waitFor(() => {
+      expect(forget).toHaveBeenCalledWith('conv-a');
+    });
+    await vi.waitFor(() => {
+      expect(agentClient.fetchTurns).toHaveBeenCalledTimes(2);
+    });
+    // The chat was showing that session: it starts a new conversation.
+    expect(useChatStore.getState().sessionId).toBeUndefined();
+  });
+
   it('says where to delete sessions and closes with Escape', () => {
     const onClose = vi.fn();
     render(<ChatSessions agent="agy" onClose={onClose} />);
-    expect(screen.getByTestId('chat-sessions-hint').textContent).toContain('Antigravity');
+    expect(screen.getByTestId('chat-sessions-hint').textContent).toContain('KumiCraft');
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalled();
   });

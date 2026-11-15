@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { fetchTurns, resumeConversation } from '../../api/agent-client.ts';
 import { agentDisplayName } from '../agents/agent-card.tsx';
+import { SessionDeleteButton } from './chat-session-delete.tsx';
 import { type ChatSession, groupSessions, turnsOfSession } from './chat-sessions-model.ts';
 import { useChatStore } from './chat-store.ts';
 
@@ -20,8 +21,9 @@ type LoadState =
   | { readonly kind: 'ready'; readonly turns: readonly TurnSummary[] }
   | { readonly kind: 'failed' };
 
-function useTurns(): LoadState {
+function useTurns(): { readonly state: LoadState; readonly reload: () => void } {
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
+  const [version, setVersion] = useState(0);
   useEffect(() => {
     let alive = true;
     const load = async () => {
@@ -36,8 +38,13 @@ function useTurns(): LoadState {
     return () => {
       alive = false;
     };
-  }, []);
-  return state;
+  }, [version]);
+  return {
+    state,
+    reload: () => {
+      setVersion((v) => v + 1);
+    },
+  };
 }
 
 type SessionRowProps = {
@@ -46,9 +53,10 @@ type SessionRowProps = {
   readonly otherAgent: boolean;
   readonly busy: boolean;
   readonly onOpen: () => void;
+  readonly onDeleted: () => void;
 };
 
-function SessionRow({ session, current, otherAgent, busy, onOpen }: SessionRowProps) {
+function SessionRow({ session, current, otherAgent, busy, onOpen, onDeleted }: SessionRowProps) {
   const { t, i18n } = useTranslation('chat');
   const when =
     session.lastAt === ''
@@ -61,14 +69,14 @@ function SessionRow({ session, current, otherAgent, busy, onOpen }: SessionRowPr
         });
   const title = session.id === undefined ? t('sessions.legacy') : session.title;
   return (
-    <li>
+    <li className="flex items-start gap-0.5">
       <button
         type="button"
         data-testid="chat-session"
         aria-current={current ? 'true' : undefined}
         disabled={busy || otherAgent}
         onClick={onOpen}
-        className={`flex w-full flex-col gap-0.5 rounded-lg px-2.5 py-2 text-left cursor-pointer disabled:cursor-default ${
+        className={`flex min-w-0 flex-1 flex-col gap-0.5 rounded-lg px-2.5 py-2 text-left cursor-pointer disabled:cursor-default ${
           current ? 'bg-accent/10' : 'hover:bg-field'
         } ${otherAgent ? 'opacity-50' : ''}`}
       >
@@ -82,6 +90,7 @@ function SessionRow({ session, current, otherAgent, busy, onOpen }: SessionRowPr
           {otherAgent && <span>· {t('sessions.otherAgent')}</span>}
         </span>
       </button>
+      <SessionDeleteButton session={session} onDeleted={onDeleted} />
     </li>
   );
 }
@@ -90,7 +99,8 @@ function SessionList({
   turns,
   agent,
   onClose,
-}: ChatSessionsProps & { turns: readonly TurnSummary[] }) {
+  onDeleted,
+}: ChatSessionsProps & { turns: readonly TurnSummary[]; onDeleted: () => void }) {
   const { t } = useTranslation('chat');
   const currentId = useChatStore((s) => s.sessionId);
   const [busy, setBusy] = useState(false);
@@ -127,6 +137,7 @@ function SessionList({
             otherAgent={session.id !== undefined && agent !== undefined && session.agent !== agent}
             busy={busy}
             onOpen={() => void open(session)}
+            onDeleted={onDeleted}
           />
         ))}
       </ul>
@@ -148,7 +159,7 @@ function useCloseOnEscape(onClose: () => void): void {
 
 export function ChatSessions({ agent, onClose }: ChatSessionsProps) {
   const { t } = useTranslation('chat');
-  const state = useTurns();
+  const { state, reload } = useTurns();
   useCloseOnEscape(onClose);
 
   return (
@@ -180,7 +191,7 @@ export function ChatSessions({ agent, onClose }: ChatSessionsProps) {
           <p className="px-2.5 py-4 text-xs text-danger">{t('sessions.loadFailed')}</p>
         )}
         {state.kind === 'ready' && (
-          <SessionList turns={state.turns} agent={agent} onClose={onClose} />
+          <SessionList turns={state.turns} agent={agent} onClose={onClose} onDeleted={reload} />
         )}
       </div>
       <p

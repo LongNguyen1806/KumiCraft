@@ -121,3 +121,18 @@ export async function pruneTurns(
   const referencedShas = collectReferencedShas(toKeep);
   await pruneOrphanObjects(fs, dataDir, projectId, referencedShas);
 }
+
+/** Removes the undo snapshots of `turnIds` and the stored files no other snapshot still uses. */
+export async function removeTurnManifests(
+  fs: FileSystemPort,
+  dataDir: string,
+  projectId: string,
+  turnIds: ReadonlySet<string>,
+): Promise<void> {
+  const manifests = await listProjectManifests(fs, dataDir, projectId);
+  for (const m of manifests) {
+    if (turnIds.has(m.turnId)) await fs.remove(dataDir, manifestRelPath(projectId, m.turnId));
+  }
+  const kept = manifests.filter((m) => !turnIds.has(m.turnId));
+  await pruneOrphanObjects(fs, dataDir, projectId, collectReferencedShas(kept));
+}

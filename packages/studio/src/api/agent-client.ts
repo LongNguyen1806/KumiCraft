@@ -9,6 +9,8 @@ import {
   ChatImageSchema,
   type CurrentConversation,
   CurrentConversationSchema,
+  type ForgetConversationResult,
+  ForgetConversationResultSchema,
   JobStartedSchema,
   type StartTurnRequest,
   TurnDiffSchema,
@@ -101,6 +103,17 @@ export async function fetchConversation(): Promise<CurrentConversation> {
 /** Makes an earlier conversation of this project the one the chat continues (K9.5). */
 export async function resumeConversation(id: string): Promise<CurrentConversation> {
   return parseResponse(CurrentConversationSchema, await apiPost('agent/conversation', { id }));
+}
+
+/**
+ * Removes a session from KumiCraft's own chat list (`id` absent: the older turns without a
+ * session). The agent's own session files are not touched.
+ */
+export async function forgetConversation(id?: string): Promise<ForgetConversationResult> {
+  return parseResponse(
+    ForgetConversationResultSchema,
+    await apiPost('agent/conversation/forget', id === undefined ? {} : { id }),
+  );
 }
 
 export async function fetchTurns(): Promise<readonly TurnSummary[]> {

@@ -29,6 +29,8 @@ export type TurnStore = {
   list(projectId: string): Promise<readonly TurnSummary[]>;
   get(projectId: string, turnId: string): Promise<TurnSummary | undefined>;
   save(projectId: string, summary: TurnSummary): Promise<Result<void>>;
+  /** Drops these turns from the session list (a chat session removed from KumiCraft). */
+  remove(projectId: string, turnIds: readonly string[]): Promise<Result<void>>;
   conversation(
     projectId: string,
   ): Promise<{ readonly agent: AgentId; readonly id: string } | undefined>;
@@ -118,6 +120,15 @@ export function createTurnStore(deps: TurnStoreDeps, options: TurnStoreOptions =
         .slice(0, keepTurns)
         .map((t, i) => (i >= revertibleTurns && t.revertible ? { ...t, revertible: false } : t));
       const json = JSON.stringify({ version: 1, turns: trimmed }, undefined, 2);
+      await deps.fs.writeTextAtomic(deps.dataDir, summariesRelPath(projectId), json);
+      return ok(undefined);
+    },
+
+    async remove(projectId, turnIds) {
+      const current = await loadSummaries(deps.fs, deps.dataDir, projectId);
+      const drop = new Set(turnIds);
+      const kept = current.filter((t) => !drop.has(t.id));
+      const json = JSON.stringify({ version: 1, turns: kept }, undefined, 2);
       await deps.fs.writeTextAtomic(deps.dataDir, summariesRelPath(projectId), json);
       return ok(undefined);
     },

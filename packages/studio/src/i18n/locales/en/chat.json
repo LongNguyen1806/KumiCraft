@@ -117,6 +117,11 @@
     "turns_other": "{{count}} turns",
     "current": "Open",
     "otherAgent": "another agent's",
-    "deleteHint": "To delete a session, delete it in Antigravity (CLI Project) or in Claude Code."
+    "deleteHint": "🗑 removes a session from KumiCraft only. Delete it in Antigravity or Claude Code separately.",
+    "delete": "Remove this session from KumiCraft",
+    "deleteConfirm": "Remove from KumiCraft?",
+    "deleteYes": "Remove",
+    "cancel": "Cancel",
+    "deleteFailed": "Could not remove it (still running?)"
   }
 }

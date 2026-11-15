@@ -126,6 +126,17 @@ export const ResumeConversationRequestSchema = z.strictObject({
 });
 export type ResumeConversationRequest = z.infer<typeof ResumeConversationRequestSchema>;
 
+/** Removes a session from KumiCraft's own list; `id` absent: the older turns without a session. */
+export const ForgetConversationRequestSchema = z.strictObject({
+  id: z.string().min(1).max(200).optional(),
+});
+export type ForgetConversationRequest = z.infer<typeof ForgetConversationRequestSchema>;
+
+export const ForgetConversationResultSchema = z.strictObject({
+  removed: z.number().int().min(0),
+});
+export type ForgetConversationResult = z.infer<typeof ForgetConversationResultSchema>;
+
 /** Context of a turn (SRS FR-62, R-AG-13). */
 export const TurnContextSchema = z.strictObject({
   element: z
