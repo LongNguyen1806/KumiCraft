@@ -16,7 +16,6 @@ No export step, no generated copy of your app, no lock-in: close KumiCraft and y
 - [Quick start](#quick-start)
 - [Using the Studio](#using-the-studio)
 - [AI assistant](#ai-assistant)
-- [Connecting an external AI agent (MCP)](#connecting-an-external-ai-agent-mcp)
 - [Command-line reference](#command-line-reference)
 - [Keyboard shortcuts](#keyboard-shortcuts)
 - [Updating and uninstalling](#updating-and-uninstalling)
@@ -133,38 +132,21 @@ The assistant edits the page through KumiCraft's own tools, so its changes appea
 
 To give the assistant project-specific guidance, write it in `.kumicraft/agent-guide.md` in your project; it is included in every request.
 
-## Connecting an external AI agent (MCP)
-
-Any agent that supports the Model Context Protocol can drive KumiCraft from outside the Studio: read the page structure, select elements, change styles and text, insert blocks and more.
-
-1. Start KumiCraft on your project (`kumicraft` in the project folder) and keep it running.
-2. Register the MCP server with your agent. For Claude Code:
-
-   ```sh
-   claude mcp add kumicraft -- kumicraft mcp "/path/to/my-app"
-   ```
-
-   For other agents, add a stdio MCP server with the command `kumicraft` and the arguments `mcp /path/to/my-app`.
-
-The project path must be the same project KumiCraft has open.
-
 ## Command-line reference
 
 ```text
 kumicraft [folder] [options]
-kumicraft mcp [project-folder] [--port <n>]
 ```
 
-| Command / option         | Description                                                                           |
-| ------------------------ | ------------------------------------------------------------------------------------- |
-| `kumicraft`              | Open the project in the current folder                                                |
-| `kumicraft <folder>`     | Open the project in another folder                                                    |
-| `--port <n>`             | Use a fixed Studio port (1024–65535). Default: the port used last time, or a free one |
-| `--no-open`              | Do not open the browser; open the link printed in the terminal yourself               |
-| `--log-level <level>`    | `fatal`, `error`, `warn`, `info` (default), `debug`, `trace` or `silent`              |
-| `kumicraft mcp [folder]` | Run the MCP server for an external AI agent (see above)                               |
-| `-h`, `--help`           | Show help                                                                             |
-| `-v`, `--version`        | Show the installed version                                                            |
+| Command / option      | Description                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------- |
+| `kumicraft`           | Open the project in the current folder                                                |
+| `kumicraft <folder>`  | Open the project in another folder                                                    |
+| `--port <n>`          | Use a fixed Studio port (1024–65535). Default: the port used last time, or a free one |
+| `--no-open`           | Do not open the browser; open the link printed in the terminal yourself               |
+| `--log-level <level>` | `fatal`, `error`, `warn`, `info` (default), `debug`, `trace` or `silent`              |
+| `-h`, `--help`        | Show help                                                                             |
+| `-v`, `--version`     | Show the installed version                                                            |
 
 ## Keyboard shortcuts
 

@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { makeTempDir, nodeFs, silentLogger } from '../workspace/test-support.ts';
 import { createToolGapStore, MAX_TOOL_GAPS, TOOL_GAPS_FILE } from './tool-gaps.ts';
+import { TOOL_GAPS_MD_FILE } from './tool-gaps-markdown.ts';
 
 let dir: string;
 let cleanup: () => Promise<void>;
@@ -26,6 +27,21 @@ afterEach(async () => {
 const report = (need: string, why = 'needed it') => ({ need, why, example: 'set color red' });
 
 describe('tool gap store [R-AG-20]', () => {
+  it('writes a Markdown copy, most reported first, with a fence the example cannot close [R-AG-20]', async () => {
+    const gaps = store();
+    await gaps.report(dir, { need: 'Set id', why: 'anchors', example: '' });
+    await gaps.report(dir, { need: 'Svg icon', why: 'icons', example: 'a ``` b' });
+    await gaps.report(dir, { need: 'svg icon', why: 'icons again', example: 'a ``` b' });
+
+    const md = await readFile(join(dir, TOOL_GAPS_MD_FILE), 'utf8');
+    expect(md.startsWith('# KumiCraft tool gaps\n')).toBe(true);
+    expect(md.indexOf('## Svg icon (×2)')).toBeLessThan(md.indexOf('## Set id (×1)'));
+    expect(md).toContain('**Why:** icons again');
+    expect(md).toContain('````\na ``` b\n````');
+    // An empty example adds no Example heading.
+    expect(md.split('**Example:**')).toHaveLength(2);
+  });
+
   it('merges reports of the same need whatever its case or spaces [R-AG-20]', async () => {
     const gaps = store();
     await gaps.report(dir, report('Set text color'));

@@ -63,23 +63,6 @@
   "loginManualDone": "I have signed in — resend",
   "loginReopen": "Reopen window",
   "loginHintClaude": "Claude Code may not be signed in",
-  "toolGaps": {
-    "title": "Missing tools",
-    "help": "When an external agent (Claude Code, Antigravity…) needs an operation KumiCraft does not have yet, it writes it here.",
-    "empty": "Nothing yet.",
-    "connect": "Connect Claude Code to this project (run once in a terminal):",
-    "copy": "Copy command",
-    "copied": "Copied",
-    "count": "×{{count}}",
-    "refresh": "Refresh",
-    "export": "Export Markdown",
-    "showMore": "Show more",
-    "showLess": "Show less",
-    "markdownTitle": "Missing KumiCraft tools",
-    "markdownWhy": "Why",
-    "markdownExample": "Example",
-    "markdownLast": "Last seen"
-  },
   "agentSettings": {
     "title": "AI model and mode",
     "default": "Default",

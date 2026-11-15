@@ -1,5 +1,5 @@
 // Operations external AI agents needed but no KumiCraft tool offered (R-AG-20). Kept per project in
-// `.kumicraft/tool-gaps.json` so the owner sees what to build next.
+// `.kumicraft/tool-gaps.json` (plus a Markdown copy) so the developer sees what to build next.
 import {
   ok,
   type Result,
@@ -11,6 +11,7 @@ import { z } from 'zod';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { LoggerPort } from '../ports/logger-port.ts';
+import { TOOL_GAPS_MD_FILE, toolGapsMarkdown } from './tool-gaps-markdown.ts';
 
 export const TOOL_GAPS_FILE = '.kumicraft/tool-gaps.json';
 /** R-AG-20: past this many entries the one seen longest ago goes. */
@@ -91,9 +92,13 @@ export function createToolGapStore(deps: ToolGapStoreDeps): ToolGapStore {
     report(projectRoot, report) {
       return inTurn(async () => {
         const merged = merge(await load(deps, projectRoot), report, deps.now().toISOString());
-        const text = `${JSON.stringify({ version: 1, gaps: sorted(merged.gaps) }, undefined, 2)}\n`;
+        const gaps = sorted(merged.gaps);
+        const text = `${JSON.stringify({ version: 1, gaps }, undefined, 2)}\n`;
         const written = await deps.fs.writeTextAtomic(projectRoot, TOOL_GAPS_FILE, text);
         if (!written.ok) return written;
+        const markdown = toolGapsMarkdown(gaps);
+        const copied = await deps.fs.writeTextAtomic(projectRoot, TOOL_GAPS_MD_FILE, markdown);
+        if (!copied.ok) return copied;
         return ok(merged.gap);
       });
     },

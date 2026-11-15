@@ -10,8 +10,6 @@ import { errorText } from '../../routes/error-text.ts';
 import { useAgentsStore } from '../../store/agents-store.ts';
 import { useSettingsStore } from '../../store/settings-store.ts';
 import { AgentSection } from '../agents/agent-section.tsx';
-import { ToolGapsSection } from '../agents/tool-gaps-section.tsx';
-import { useProjectInfo } from '../project/project-store.ts';
 import { AboutSection } from './about-section.tsx';
 
 type SettingsDialogProps = { readonly open: boolean; readonly onClose: () => void };
@@ -59,8 +57,6 @@ function SectionNav({
 }
 
 function SectionBody({ id, open }: { readonly id: SectionId; readonly open: boolean }) {
-  const { t: tChat } = useTranslation('chat');
-  const project = useProjectInfo();
   if (id === 'interface') {
     return (
       <>
@@ -79,18 +75,7 @@ function SectionBody({ id, open }: { readonly id: SectionId; readonly open: bool
   }
   if (id === 'canvas') return <LoginSessionsChoice />;
   if (id === 'about') return <AboutSection open={open} />;
-  return (
-    <>
-      <AgentSection />
-      {/* The gaps live in the project, which must be open and trusted (R-AG-20). */}
-      {project?.trusted === true && (
-        <section className="mt-3 border-t border-line pt-3">
-          <h3 className="pb-1 font-medium">{tChat('toolGaps.title')}</h3>
-          <ToolGapsSection open={open} projectRoot={project.root} />
-        </section>
-      )}
-    </>
-  );
+  return <AgentSection />;
 }
 
 /**
