@@ -410,6 +410,7 @@
       "sourceConflict": "Source file was modified externally, reloaded",
       "editFailed": "Failed to update property"
     },
+    "scaleDefault": "default",
     "shadowNames": {
       "none": "None",
       "2xs": "Tiny",

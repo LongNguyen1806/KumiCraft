@@ -24,5 +24,8 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    // Fonts are files, never `data:` URLs: the Studio's CSP allows fonts from itself only (S-11),
+    // and small font subsets inlined by default were blocked and logged in the console.
+    assetsInlineLimit: (file) => (/\.(woff2?|ttf|otf|eot)$/.test(file) ? false : undefined),
   },
 });

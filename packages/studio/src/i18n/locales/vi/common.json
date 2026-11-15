@@ -410,6 +410,7 @@
       "sourceConflict": "Mã nguồn đã thay đổi từ bên ngoài, đã tải lại",
       "editFailed": "Chỉnh sửa thuộc tính thất bại"
     },
+    "scaleDefault": "mặc định",
     "shadowNames": {
       "none": "Không có",
       "2xs": "Rất nhỏ",

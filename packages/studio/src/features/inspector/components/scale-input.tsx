@@ -40,6 +40,8 @@ function SuggestionList({
   readonly highlight: number;
   readonly onPick: (value: string) => void;
 }) {
+  const { t } = useTranslation();
+  const defaultLabel = t('inspector.scaleDefault');
   return (
     <ul
       id={id}
@@ -60,7 +62,7 @@ function SuggestionList({
           }}
           className="cursor-pointer rounded px-2 py-1 font-mono text-[11px] whitespace-nowrap text-ink hover:bg-field aria-selected:font-semibold aria-selected:text-accent data-[highlight=true]:bg-field"
         >
-          {option}
+          {shownToken(option, defaultLabel)}
         </li>
       ))}
     </ul>
@@ -100,19 +102,34 @@ function useSuggestKeys(
   return { highlight, reset, onKeyDown };
 }
 
+/**
+ * The bare class (`rounded`, `border`) is the scale step `DEFAULT`: shown in words ("mặc định"),
+ * as the owner could not tell what DEFAULT meant, and read back from those words when typed.
+ */
+function shownToken(token: string, defaultLabel: string): string {
+  return token === 'DEFAULT' ? defaultLabel : token;
+}
+
+function typedToken(text: string, defaultLabel: string): string {
+  return text.trim().toLowerCase() === defaultLabel.toLowerCase() ? 'DEFAULT' : text;
+}
+
 /** The field's draft, list and handlers: what it shows, and what it writes. */
 function useScaleField(props: ScaleInputProps) {
   const { property, value, suggestions, major, onInput } = props;
+  const { t } = useTranslation();
+  const defaultLabel = t('inspector.scaleDefault');
   // R-IN-20: while the field has focus it shows what the user types.
   const [draft, setDraft] = useState<string>();
   const [open, setOpen] = useState(false);
-  const shown = draft ?? value;
+  const shown = draft ?? shownToken(value, defaultLabel);
   const write = (next: string) => {
     setDraft(next);
-    if (isValidScaleValue(property, next, suggestions, major)) onInput(next.trim());
+    const token = typedToken(next, defaultLabel);
+    if (isValidScaleValue(property, token, suggestions, major)) onInput(token.trim());
   };
   const pick = (next: string) => {
-    write(next);
+    write(shownToken(next, defaultLabel));
     setOpen(false);
   };
   const snap = (next: string) => {
@@ -122,7 +139,7 @@ function useScaleField(props: ScaleInputProps) {
   const keys = useSuggestKeys(suggestions, open, setOpen, pick);
   const handlers = {
     onFocus: () => {
-      setDraft(value);
+      setDraft(shownToken(value, defaultLabel));
       keys.reset(suggestions.indexOf(value));
       setOpen(suggestions.length > 0);
     },
@@ -142,7 +159,7 @@ function useScaleField(props: ScaleInputProps) {
   return {
     shown,
     open,
-    valid: isValidScaleValue(property, shown, suggestions, major),
+    valid: isValidScaleValue(property, typedToken(shown, defaultLabel), suggestions, major),
     highlight: keys.highlight,
     pick,
     snap,
