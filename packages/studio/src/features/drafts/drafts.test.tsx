@@ -134,6 +134,14 @@ describe('Studio Drafts [R-DR-10 .. R-DR-15]', () => {
 
     expect(useCanvasViewStore.getState().draftFile).toBeUndefined();
     const pageIframeSrc = computeIframeSrc('http://127.0.0.1:5173', undefined);
+    // A closed or deleted draft must not reopen from the frame's remembered route.
+    expect(
+      computeIframeSrc(
+        'http://127.0.0.1:5173',
+        undefined,
+        '/__kumicraft/draft?file=src%2Fdrafts%2FX.tsx',
+      ),
+    ).toBe('http://127.0.0.1:5173/');
     expect(pageIframeSrc).toBe('http://127.0.0.1:5173/');
   });
 

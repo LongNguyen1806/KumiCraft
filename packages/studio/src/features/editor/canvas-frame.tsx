@@ -19,10 +19,15 @@ export const IFRAME_SANDBOX =
 /** R-RN-24: a loaded page whose Bridge says nothing for this long gets a warning. */
 export const BRIDGE_READY_TIMEOUT_MS = 10_000;
 
+const DRAFT_ROUTE_PREFIX = '/__kumicraft/draft';
+
 /** R-RN-21: the page the user was on, so a restarted dev server opens the same page. */
 function pageUrl(origin: string, route?: string): string {
   const current = route ?? useSelectionStore.getState().currentRoute;
-  return current.startsWith('/') ? `${origin}${current}` : `${origin}/`;
+  // A closed (or deleted) draft leaves its own address as the frame's route: open the home page
+  // instead of a draft that may no longer exist.
+  if (!current.startsWith('/') || current.startsWith(DRAFT_ROUTE_PREFIX)) return `${origin}/`;
+  return `${origin}${current}`;
 }
 
 export function computeIframeSrc(origin: string, draftFile?: string, route?: string): string {
