@@ -5,7 +5,7 @@ import {
   isValidSettableAttrName,
 } from '@kumicraft/shared';
 import { Plus, X } from 'lucide-react';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { InspectorGroup } from './inspector-group.tsx';
@@ -244,6 +244,10 @@ export type AttributesEditorProps = {
   readonly disabled: boolean;
   readonly onAttributeChange: (name: EditableAttr, value: string | undefined) => void;
   readonly onOpenInEditor?: (() => void) | undefined;
+  /** A row shown first in the group (the tag switcher). */
+  readonly leading?: ReactNode | undefined;
+  /** Opens the group by default even with no extra attributes (e.g. a link without href). */
+  readonly openByDefault?: boolean | undefined;
 };
 
 function isTagPrimaryAttr(tag: string, name: string): boolean {
@@ -293,6 +297,8 @@ export function AttributesEditorSection({
   disabled,
   onAttributeChange,
   onOpenInEditor,
+  leading,
+  openByDefault = false,
 }: AttributesEditorProps) {
   const { t } = useTranslation();
   const presentAttrs = Object.keys(attributes).filter(
@@ -304,10 +310,11 @@ export function AttributesEditorSection({
     <InspectorGroup
       id="attributes"
       title={t('inspector.groups.attributes')}
-      defaultOpen={presentAttrs.length > 0}
+      defaultOpen={openByDefault || presentAttrs.length > 0}
       testId="inspector-attributes"
     >
       <div className="flex flex-col gap-2">
+        {leading}
         {presentAttrs.map((name) => (
           <AttrEditorRow
             key={name}

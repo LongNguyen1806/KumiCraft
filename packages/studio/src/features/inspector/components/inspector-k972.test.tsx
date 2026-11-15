@@ -14,6 +14,7 @@ import { InspectorEffectsExtra } from './inspector-effects-extra.tsx';
 import { InspectorHeader } from './inspector-header.tsx';
 import { InspectorImageSection } from './inspector-image-section.tsx';
 import { InspectorMotionSection } from './inspector-motion-section.tsx';
+import { TagTypeRow } from './tag-type-row.tsx';
 
 function makeElTarget(
   tag: string,
@@ -77,7 +78,12 @@ describe('Inspector K9.7-2 controls (Tests 2, 9, 14, 15)', () => {
     useSelectionStore.setState({ treeNodes: treeOneLi });
 
     const ulTarget = makeElTarget('ul');
-    render(<InspectorHeader target={ulTarget} />);
+    render(
+      <>
+        <InspectorHeader target={ulTarget} />
+        <TagTypeRow target={ulTarget} />
+      </>,
+    );
 
     const removeBtn = screen.getByTestId<HTMLButtonElement>('list-remove-item');
     expect(removeBtn.disabled).toBe(true);
@@ -93,6 +99,32 @@ describe('Inspector K9.7-2 controls (Tests 2, 9, 14, 15)', () => {
       tag: 'ul',
       after: 'section',
     });
+  });
+
+  it('Test 2b: header shows the tag as text; the tag row in Attributes keeps the href hint and lock', () => {
+    const linkTarget = makeElTarget('a');
+    const { unmount } = render(<InspectorHeader target={linkTarget} />);
+    expect(screen.queryByTestId('inspector-tag-select')).toBeNull();
+    expect(screen.queryByTestId('link-href-hint')).toBeNull();
+    expect(screen.getByText('<a>')).toBeDefined();
+    unmount();
+
+    const { unmount: unmountRow } = render(<TagTypeRow target={linkTarget} />);
+    expect(screen.getByTestId<HTMLSelectElement>('inspector-tag-select').disabled).toBe(false);
+    expect(screen.getByTestId('link-href-hint')).toBeDefined();
+    unmountRow();
+
+    const withHref = makeElTarget('a', 'src/App.tsx:10:4', {
+      href: { kind: 'static', value: '/' },
+    });
+    const { unmount: unmountHref } = render(<TagTypeRow target={withHref} />);
+    expect(screen.queryByTestId('link-href-hint')).toBeNull();
+    unmountHref();
+
+    const locked = { ...makeElTarget('a'), lockReason: 'outsideSource' as const };
+    render(<TagTypeRow target={locked} />);
+    expect(screen.getByTestId<HTMLSelectElement>('inspector-tag-select').disabled).toBe(true);
+    expect(screen.queryByTestId('link-href-hint')).toBeNull();
   });
 
   it('Test 4/6 client guard: blocks unsafe attribute names like onClick and data-rc-loc', () => {

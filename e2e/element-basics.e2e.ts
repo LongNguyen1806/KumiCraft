@@ -85,6 +85,7 @@ test('10. Tailwind project: list add/remove, tag change, offline Lucide icon & r
     .getByRole('treeitem', { name: /\bdiv mx-auto/ })
     .first()
     .click();
+  await openGroupIfClosed(page, 'attributes');
   await page.getByTestId('inspector-tag-select').selectOption('section');
   await expect.poll(() => readFile(homeTsx, 'utf8')).toContain('<section className="mx-auto');
 

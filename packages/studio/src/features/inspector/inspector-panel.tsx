@@ -33,6 +33,7 @@ import { InteractionSection } from './components/interaction/interaction-section
 import { OtherClassesSection } from './components/other-classes-section.tsx';
 import { CssStyleEditor } from './components/style-sources-section.tsx';
 import { TagAttributesSection } from './components/tag-attributes-section.tsx';
+import { isLinkMissingHref, TagTypeRow } from './components/tag-type-row.tsx';
 import { ViewOnlyInspector } from './components/view-only-inspector.tsx';
 import {
   EditablePropertySections,
@@ -71,6 +72,8 @@ type ElementSectionsProps = {
   readonly onAttributeChange: (name: EditableAttr, value: string | undefined) => void;
   readonly onRefresh: () => void;
   readonly layoutFooter?: ReactNode | undefined;
+  /** The element being inspected, for the tag switcher in the Attributes group. */
+  readonly elementTarget: Extract<InspectorTarget, { readonly kind: 'element' }>;
 };
 
 function EditorAlert({
@@ -88,10 +91,12 @@ function EditorAlert({
 }
 
 function TagAttributesBlock({
+  target,
   source,
   disabled,
   onAttributeChange,
 }: {
+  readonly target: Extract<InspectorTarget, { readonly kind: 'element' }>;
   readonly source: ElementSource;
   readonly disabled: boolean;
   readonly onAttributeChange: (name: EditableAttr, value: string | undefined) => void;
@@ -116,6 +121,8 @@ function TagAttributesBlock({
         onOpenInEditor={() => {
           editor.open(source.loc);
         }}
+        leading={<TagTypeRow target={target} />}
+        openByDefault={isLinkMissingHref(target)}
       />
       <EditorAlert errorInfo={editor.errorInfo} />
     </>
@@ -142,6 +149,7 @@ function ElementSections(props: ElementSectionsProps) {
         />
       )}
       <TagAttributesBlock
+        target={props.elementTarget}
         source={source}
         disabled={isAttrLocked}
         onAttributeChange={onAttributeChange}
@@ -275,6 +283,7 @@ function InspectorSourceBody({
       />
       {editable && <FreeFrameGroup source={source} showToggleInline={isDraft} />}
       <ElementSections
+        elementTarget={target}
         refTarget={target.ref}
         editable={editable}
         source={source}
