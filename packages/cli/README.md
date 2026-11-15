@@ -29,13 +29,14 @@ No export step, no generated copy of your app, no lock-in: close KumiCraft and y
 
 - **Edits your source code directly.** Tailwind classes, CSS rules, text, images and component props are written into the files they came from, with readable diffs.
 - **Works with the styling you already use.** Tailwind CSS 3 and 4, plain CSS, CSS Modules, Sass/Less and Bootstrap behave the same in the Inspector.
-- **Several screens at once.** Show the same page at desktop, tablet and phone sizes side by side, or focus on one frame and step through them.
+- **Several screens at once.** Show the same page at desktop, tablet and phone sizes side by side, or focus on one frame and step through them. An edit reaches every screen; **Edit for Mobile only** changes one screen and writes the responsive classes (`max-md:…`) for you, with Done and Cancel.
 - **Structure tools.** Layers tree, drag and drop, wrap and unwrap, duplicate, copy and paste between pages.
 - **Pages, components and brand.** Create pages and routes, turn a selection into a reusable component, manage brand colors and fonts as design tokens.
-- **Library.** Drag your project's own components onto the page, or ready-made blocks (rows, grids, buttons, forms, tables, cards, navbar, hero, footer) in Tailwind projects.
+- **Library.** Drag your project's own components onto the page, or ready-made blocks (rows, grids, buttons, forms, tables, cards, navbar, hero, footer, tabs, dialogs and more) written in your project's styling and brand colors.
+- **Drafts and free layout.** Sketch in a draft, place blocks freely with the mouse, then make the draft a page or a component.
 - **Build check.** Run your project's build from the Studio and jump to the file of each error.
 - **Sign-in aware Canvas.** Pages behind a login keep their session; several sign-in sessions can run side by side for apps with more than one role.
-- **Optional AI assistant.** Chat with Claude Code or Antigravity CLI to make larger changes, using the same tools as the Studio.
+- **Optional AI assistant.** Chat with Claude Code or Antigravity CLI to make larger changes; a whole turn can be undone at once.
 - **Local only.** Runs on `127.0.0.1`, needs no account and sends no telemetry.
 
 Express + Pug projects open in view mode (browse and inspect, no editing yet).
@@ -102,11 +103,14 @@ The next time you run KumiCraft in the same folder, the Studio opens at the same
 | **Inspector** (right) | Classes, styles, text, image, layout and props of the selected element, plus the CSS rules that apply to it.  |
 | **Layers** (left)     | The element tree of the page. Select, reorder and nest elements.                                              |
 | **Pages**             | The routes of your app. Open, create and organize pages.                                                      |
-| **Library**           | Your project's components and ready-made blocks to drag onto the page.                                        |
+| **Library**           | Ready-made blocks, icons and images to drag onto the page, in your project's styling.                         |
+| **Components**        | Your project's own components: drag one onto the page, or turn a selection into a new one.                    |
+| **Drafts**            | Sketch freely in a draft, then make it a page or a component. Each frame can show its own draft or page.      |
+| **Brand**             | Your project's colors, fonts and other design tokens.                                                         |
 | **Files**             | The project's files, with "Open in editor" to jump to the exact line in VS Code, Cursor, WebStorm or Zed.     |
 | **Toolbar**           | Undo/Redo, zoom, preview mode, frame sizes, build check and Settings.                                         |
 
-**Settings** (gear icon) holds the interface language (English or Vietnamese), your code editor, the package manager for new projects, the preferred AI assistant and the sign-in sessions option.
+**Settings** (gear icon) holds the interface language (English or Vietnamese), the light or dark theme, your code editor, the package manager for new projects, the preferred AI assistant and the sign-in sessions option.
 
 Every edit goes through the Studio's history: `Ctrl+Z` undoes it in your files as well. Your own Git history is never touched.
 
@@ -128,7 +132,7 @@ Supported assistants:
 
 Already using Claude Code or Antigravity CLI? KumiCraft finds it and uses your existing sign-in.
 
-The assistant edits the page through KumiCraft's own tools, so its changes appear on the Canvas and can be undone like yours. Chat sessions are kept per project.
+The assistant edits your project's files: its changes appear on the Canvas, and a whole turn can be undone at once. Chat sessions are kept per project.
 
 To give the assistant project-specific guidance, write it in `.kumicraft/agent-guide.md` in your project; it is included in every request.
 
@@ -161,6 +165,7 @@ On macOS, use `⌘` where the table says `Ctrl`. Press `Ctrl+/` in the Studio to
 | Wrap in a container / Unwrap           | `Ctrl+G` / `Ctrl+Shift+G`                                      |
 | Move up / down among siblings          | `Ctrl+↑` / `Ctrl+↓`                                            |
 | Select parent                          | `Esc`                                                          |
+| Move in a free layout                  | Arrow keys (one grid step), `Shift`+arrow (1 px)               |
 | Tools: select, frame, text, image, pan | `V`, `F`, `T`, `I`, `H`                                        |
 | Zoom in / out                          | `Ctrl++` / `Ctrl+-`                                            |
 | Zoom to 100% / fit                     | `Shift+0` / `Shift+1`                                          |

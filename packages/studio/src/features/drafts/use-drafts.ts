@@ -36,12 +36,19 @@ function restoreStoredDraft(
   openDraft: (file: string, projectId?: string) => void,
 ): void {
   if (pid === undefined) return;
+  const view = useCanvasViewStore.getState();
+  const exists = (file: string) => drafts.some((d) => d.file === file);
+  // A draft deleted since the last visit is closed in the frames that kept it.
+  for (const frame of view.openFrames) {
+    if (frame.draftFile !== undefined && !exists(frame.draftFile)) {
+      view.closeDraft(pid, frame.draftFile);
+    }
+  }
+  // Each frame keeps its own draft (spec-log #148); an older Studio kept one draft for all frames,
+  // remembered apart: it opens again once, in the active frame, when no frame has one yet.
   const stored = getStoredDraftFile(pid);
-  if (
-    stored !== undefined &&
-    drafts.some((d) => d.file === stored) &&
-    useCanvasViewStore.getState().draftFile === undefined
-  ) {
+  const framesKnowDrafts = view.openFrames.some((f) => f.draftFile !== undefined);
+  if (stored !== undefined && exists(stored) && !framesKnowDrafts && view.draftFile === undefined) {
     openDraft(stored, pid);
   }
 }

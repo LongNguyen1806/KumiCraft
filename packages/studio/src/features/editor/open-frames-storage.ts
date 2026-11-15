@@ -6,6 +6,8 @@ export type OpenFrame = {
   readonly frameId: string;
   readonly sessionId: number;
   readonly route: string;
+  /** The draft this frame shows instead of a page (each frame its own, spec-log #148). */
+  readonly draftFile?: string | undefined;
 };
 
 export const MAX_OPEN_FRAMES = 4;
@@ -23,7 +25,8 @@ function isValidOpenFrame(obj: unknown): obj is OpenFrame {
     Number.isInteger(candidate.sessionId) &&
     candidate.sessionId > 0 &&
     typeof candidate.route === 'string' &&
-    candidate.route.length > 0
+    candidate.route.length > 0 &&
+    (candidate.draftFile === undefined || typeof candidate.draftFile === 'string')
   );
 }
 
@@ -108,6 +111,8 @@ export function initStoredFrames(
     openFrames: initial,
     activeOpenFrameId: initial[0]?.id ?? 'default',
     activeFrameId: initial[0]?.frameId ?? activeId,
+    // The panels start on the first frame: its own draft, if it showed one.
+    draftFile: initial[0]?.draftFile,
   };
 }
 

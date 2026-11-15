@@ -23,7 +23,6 @@ export type CanvasFrameTileProps = {
   readonly runnerOrigin: string;
   readonly nonce?: string | undefined;
   readonly logTail: readonly string[];
-  readonly draftFile?: string | undefined;
   readonly reloadTick?: number | undefined;
   readonly sessions: readonly LoginSession[];
   readonly sessionEnabled: boolean;
@@ -232,14 +231,14 @@ function TileBody(props: CanvasFrameTileProps & { readonly origin: string }) {
     // A frame narrower than the title bar sits in the middle of its tile.
     <div className="flex justify-center overflow-hidden rounded-b-md bg-card-solid">
       <IframeFrame
-        key={`${runnerOrigin}|${props.nonce ?? ''}|${props.draftFile ?? ''}|${String(props.reloadTick ?? 0)}`}
+        key={`${runnerOrigin}|${props.nonce ?? ''}|${openFrame.draftFile ?? ''}|${String(props.reloadTick ?? 0)}`}
         origin={props.origin}
         frame={preset}
         zoom={zoom}
         nonce={props.nonce}
         mode={props.mode}
         logTail={props.logTail}
-        draftFile={props.draftFile}
+        draftFile={openFrame.draftFile}
         openFrameId={openFrame.id}
         route={openFrame.route}
       />

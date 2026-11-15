@@ -65,7 +65,7 @@ export type CanvasViewState = {
   readonly setFrames: (frames: readonly Frame[]) => void;
   readonly selectFrameByIndex: (index: number) => boolean;
   readonly openDraft: (file: string, projectId?: string) => void;
-  readonly closeDraft: (projectId?: string) => void;
+  readonly closeDraft: (projectId?: string, path?: string) => void;
   readonly addOpenFrame: (
     frameId?: string,
     sessionId?: number,
@@ -204,19 +204,35 @@ function createZoomActions(
   };
 }
 
-function createDraftActions(
-  set: (
-    updater: Partial<CanvasViewState> | ((s: CanvasViewState) => Partial<CanvasViewState>),
-  ) => void,
-) {
+/**
+ * Drafts open per frame (spec-log #148): frame 1 can show a draft while frame 2 shows a page.
+ * `draftFile` is the draft of the active frame, the one the Inspector and the panels work on.
+ */
+function createDraftActions(set: StoreSetter, get: () => CanvasViewState) {
   return {
     openDraft: (file: string, projectId?: string) => {
+      const s = get();
+      s.updateOpenFrame(s.activeOpenFrameId, { draftFile: file });
       set({ draftFile: file });
       if (projectId) setStoredDraftFile(projectId, file);
     },
-    closeDraft: (projectId?: string) => {
-      set({ draftFile: undefined });
-      if (projectId) setStoredDraftFile(projectId, undefined);
+    /**
+     * Closes the draft of the active frame; with `path` (a deleted draft or folder), closes it in
+     * every frame that shows it.
+     */
+    closeDraft: (projectId?: string, path?: string) => {
+      const s = get();
+      const shows = (f: OpenFrame) =>
+        path === undefined
+          ? f.id === s.activeOpenFrameId
+          : f.draftFile !== undefined &&
+            (f.draftFile === path || f.draftFile.startsWith(`${path}/`));
+      for (const frame of s.openFrames.filter(shows)) {
+        s.updateOpenFrame(frame.id, { draftFile: undefined });
+      }
+      const active = get().openFrames.find((f) => f.id === s.activeOpenFrameId);
+      set({ draftFile: active?.draftFile });
+      if (projectId) setStoredDraftFile(projectId, active?.draftFile);
     },
   };
 }
@@ -349,7 +365,10 @@ function createOpenFrameActions(set: StoreSetter, get: () => CanvasViewState) {
     closeOpenFrame: createCloseOpenFrame(set, get),
     setActiveOpenFrameId: (id: string) => {
       const match = get().openFrames.find((f) => f.id === id);
-      if (match) set({ activeOpenFrameId: id, activeFrameId: match.frameId });
+      // The panels follow the frame: its own draft, or none when it shows a page.
+      if (match) {
+        set({ activeOpenFrameId: id, activeFrameId: match.frameId, draftFile: match.draftFile });
+      }
     },
     updateOpenFrame: createUpdateOpenFrame(set, get),
   };
@@ -402,5 +421,5 @@ export const useCanvasViewStore = create<CanvasViewState>((set, get) => ({
     return false;
   },
   draftFile: undefined,
-  ...createDraftActions(set),
+  ...createDraftActions(set, get),
 }));

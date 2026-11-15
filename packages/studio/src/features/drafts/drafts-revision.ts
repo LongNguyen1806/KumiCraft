@@ -17,14 +17,12 @@ export const useDraftsRevision = create<DraftsRevisionState>((set) => ({
 }));
 
 /**
- * After `path` (a file or a folder) was deleted: closes the open draft when it was inside, and
+ * After `path` (a file or a folder) was deleted: closes it in every frame that shows it, and
  * refreshes the drafts lists.
  */
 export function afterDraftPathDeleted(path: string): void {
   const view = useCanvasViewStore.getState();
-  const open = view.draftFile;
-  if (open !== undefined && (open === path || open.startsWith(`${path}/`))) {
-    view.closeDraft(view.currentProjectId);
-  }
+  // Every frame that shows it closes it, not only the active one.
+  view.closeDraft(view.currentProjectId, path);
   useDraftsRevision.getState().bump();
 }

@@ -46,7 +46,7 @@ export type CanvasContentProps = {
 };
 
 export function CanvasContent(props: CanvasContentProps) {
-  const draftFile = useCanvasViewStore((s) => s.draftFile);
+  // Each frame shows its own draft (its `OpenFrame.draftFile`), not one shared by all frames.
   const project = useProjectInfo();
   const reloadTick = useExpressPugReload(project);
 
@@ -68,7 +68,6 @@ export function CanvasContent(props: CanvasContentProps) {
         runnerOrigin={props.status.origin}
         nonce={props.status.nonce}
         logTail={props.logTail}
-        draftFile={draftFile}
         reloadTick={reloadTick}
         sessions={props.sessions}
         sessionEnabled={props.sessionEnabled}

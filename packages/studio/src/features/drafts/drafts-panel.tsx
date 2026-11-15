@@ -165,7 +165,8 @@ export function useDraftItemActions({
   const handleDelete = async (file: string) => {
     try {
       await deleteDraft({ file });
-      if (currentDraftFile === file) closeDraft(projectId);
+      // Closed in every frame that shows it.
+      closeDraft(projectId, file);
       useDraftsRevision.getState().bump();
       onReload?.();
     } catch (err) {

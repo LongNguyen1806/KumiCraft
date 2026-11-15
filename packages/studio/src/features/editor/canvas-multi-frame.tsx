@@ -21,7 +21,6 @@ export type CanvasMultiFrameProps = {
   readonly runnerOrigin: string;
   readonly nonce?: string | undefined;
   readonly logTail: readonly string[];
-  readonly draftFile?: string | undefined;
   readonly reloadTick?: number | undefined;
   readonly sessions: readonly LoginSession[];
   readonly sessionEnabled: boolean;
@@ -57,7 +56,6 @@ export function CanvasMultiFrame(props: CanvasMultiFrameProps) {
             runnerOrigin={props.runnerOrigin}
             nonce={props.nonce}
             logTail={props.logTail}
-            draftFile={props.draftFile}
             reloadTick={props.reloadTick}
             sessions={props.sessions}
             sessionEnabled={props.sessionEnabled}
