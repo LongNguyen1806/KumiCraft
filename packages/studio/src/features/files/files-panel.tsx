@@ -11,6 +11,7 @@ import { useBuildCheckStore } from '../build-check/build-check-store.ts';
 import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
 import { type ChatTurnView, useChatStore } from '../chat/chat-store.ts';
 import { useDesignStore } from '../design/design-store.ts';
+import { afterDraftPathDeleted } from '../drafts/drafts-revision.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { usePagesData } from '../editor/page-select.tsx';
 import { isDraftFile } from '../free-frame/free-frame-page-warning.tsx';
@@ -258,6 +259,7 @@ function FilesPanelDialogs({ s, pagesData }: PanelDialogsProps) {
       }}
       onConfirmDelete={async (path) => {
         await deleteProjectFile({ path });
+        afterDraftPathDeleted(path);
         await s.refreshAffected([path]);
       }}
       onCloseRenamePage={() => {

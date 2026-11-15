@@ -5,6 +5,7 @@ import { createEventsClient, type StudioServerEvent } from '../../api/events-cli
 import { isRecord } from '../../api/http.ts';
 import { fetchDrafts, fetchProject } from '../../api/project-client.ts';
 import { getStoredDraftFile, useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { useDraftsRevision } from './drafts-revision.ts';
 
 export type DraftsData = {
   readonly drafts: readonly DraftInfo[];
@@ -100,6 +101,7 @@ export function useDrafts(): DraftsData {
   const [failed, setFailed] = useState(false);
   const [refreshCount, setRefreshCount] = useState(0);
   const openDraft = useCanvasViewStore((s) => s.openDraft);
+  const revision = useDraftsRevision((s) => s.revision);
 
   useEffect(() => {
     let active = true;
@@ -122,7 +124,7 @@ export function useDrafts(): DraftsData {
       active = false;
       client.close();
     };
-  }, [data.dir, openDraft, refreshCount]);
+  }, [data.dir, openDraft, refreshCount, revision]);
 
   return {
     drafts: data.drafts,

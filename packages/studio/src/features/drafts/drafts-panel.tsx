@@ -8,6 +8,7 @@ import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { useEditMode } from '../project/use-edit-mode.ts';
 import { DraftsDialogs } from './drafts-dialogs.tsx';
 import { DraftsNotices, DraftsStatus } from './drafts-empty.tsx';
+import { useDraftsRevision } from './drafts-revision.ts';
 import { useDrafts } from './use-drafts.ts';
 
 type DraftRowActionsProps = {
@@ -193,6 +194,7 @@ export function useDraftItemActions({
     try {
       await deleteDraft({ file });
       if (currentDraftFile === file) closeDraft(projectId);
+      useDraftsRevision.getState().bump();
       onReload?.();
     } catch (err) {
       const info = toErrorInfo(err);
