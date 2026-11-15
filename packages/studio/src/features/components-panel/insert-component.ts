@@ -5,6 +5,8 @@ import { applyStructureEdit } from '../../api/source-client.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';
 import { currentDesignFile } from '../design/design-store.ts';
 import { selectionAnchor } from '../design/selection-anchor.ts';
+import { placementTailwindMajor } from '../editor/canvas-view-store.ts';
+import { freeStackPlacement } from '../free-frame/free-frame-placement.ts';
 import { determineInsertTarget } from '../library/insert-block.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
@@ -67,5 +69,7 @@ export async function insertComponent(component: ProjectComponent): Promise<Inse
 
   const tag = resolveTargetTag(anchor) ?? 'div';
   const target = determineInsertTarget(anchor, tag);
-  return insertComponentAt(component, target);
+  // Into a free frame the component gets a free position, like a Library block (spec-log #143).
+  const placement = await freeStackPlacement(target);
+  return insertComponentAt(component, target, placement, placementTailwindMajor(placement));
 }

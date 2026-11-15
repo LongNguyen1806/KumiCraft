@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import type { ProjectComponent } from '@kumicraft/shared';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import * as eventsClient from '../../api/events-client.ts';
@@ -121,8 +121,22 @@ describe('ComponentsPanel (Scenarios #11, #12) [R-CP-12, R-CP-13]', () => {
     // A click on the item itself inserts nothing; its + button does.
     fireEvent.click(await screen.findByTestId('component-item-ProductCard'));
     expect(spy).not.toHaveBeenCalled();
+    // The section is not a free frame: the component goes into the flow, without a position.
+    const parentLookup = vi.spyOn(sourceClient, 'fetchElementSourceByLoc').mockResolvedValue({
+      loc: 'src/pages/Home.tsx:15:3',
+      tag: 'section',
+      fileHash: 'a'.repeat(64),
+      className: { kind: 'static', value: 'py-12' },
+      text: { kind: 'none' },
+      attributes: {},
+      inLoop: false,
+    });
     fireEvent.click(screen.getByTestId('component-add-ProductCard'));
 
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+    expect(parentLookup).toHaveBeenCalledWith('src/pages/Home.tsx:15:3');
     expect(spy).toHaveBeenCalledWith({
       kind: 'insert',
       target: {

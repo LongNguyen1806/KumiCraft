@@ -16,6 +16,8 @@ import {
 import { applyStructureEdit } from '../../api/source-client.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';
 import { selectionAnchor } from '../design/selection-anchor.ts';
+import { placementTailwindMajor } from '../editor/canvas-view-store.ts';
+import { freeStackPlacement } from '../free-frame/free-frame-placement.ts';
 import { useThemeStore } from '../inspector/use-project-theme.ts';
 import { useProjectStore } from '../project/project-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
@@ -161,5 +163,15 @@ export async function insertBlock(
 
   const tag = resolveTargetTag(anchor) ?? 'div';
   const target = determineInsertTarget(anchor, tag);
-  return insertBlockAt(block, target, lang, undefined, undefined, variantId);
+  // Into a free frame a new block gets a free position too, like a pasted one: a block left in the
+  // flow of a free frame could not be selected, dragged or deleted there (spec-log #143).
+  const placement = await freeStackPlacement(target);
+  return insertBlockAt(
+    block,
+    target,
+    lang,
+    placement,
+    placementTailwindMajor(placement),
+    variantId,
+  );
 }

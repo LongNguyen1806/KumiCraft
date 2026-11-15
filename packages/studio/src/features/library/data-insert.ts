@@ -9,6 +9,8 @@ import {
 
 import { applyStructureEdit } from '../../api/source-client.ts';
 import { selectionAnchor } from '../design/selection-anchor.ts';
+import { placementTailwindMajor } from '../editor/canvas-view-store.ts';
+import { freeStackPlacement } from '../free-frame/free-frame-placement.ts';
 import { useThemeStore } from '../inspector/use-project-theme.ts';
 import { useProjectStore } from '../project/project-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
@@ -103,10 +105,14 @@ export async function submitDataInsert(
   const file = loc.split(':')[0] || 'src/App.tsx';
   const built = buildInsertArgs(mode, sourceName, chosenFields, file, lang);
   const { output } = built;
+  // Into a free frame the block gets a free position, like any other insert (spec-log #143).
+  const placement = await freeStackPlacement(target);
   const res = await applyStructureEdit({
     kind: 'insert',
     target,
     jsx: output.jsx,
+    placement,
+    tailwindMajor: placementTailwindMajor(placement),
     ...(output.rules.length > 0 ? { css: { rules: output.rules } } : {}),
     ...(output.imports !== undefined && output.imports.length > 0
       ? { from: { file, imports: [...output.imports] } }
