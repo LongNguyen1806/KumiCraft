@@ -239,6 +239,29 @@ export class Tour {
     return [...new Set(out)];
   }
 
+  /** What the page shows and logs once a step's action is done; it can only make it worse. */
+  private async afterAction(
+    start: Outcome,
+    notes: string[],
+    expectProblem: boolean,
+  ): Promise<Outcome> {
+    let outcome = start;
+    await this.page.waitForTimeout(250);
+    const problems = await this.visibleProblems();
+    if (problems.length > 0 && !expectProblem) {
+      outcome = 'bug';
+      notes.push(...problems);
+    }
+    const logged = [...new Set(this.consoleErrors)].filter(
+      (e) => !/favicon|ERR_ABORTED|logo\.png/.test(e),
+    );
+    if (logged.length > 0) {
+      if (outcome === 'ok') outcome = 'note';
+      notes.push(...logged.slice(0, 5));
+    }
+    return outcome;
+  }
+
   /**
    * Runs one user step. A thrown error marks it a bug; so does an error the page shows or logs
    * during it. `expectProblem` is for steps meant to show an error (a refused action).
@@ -269,19 +292,7 @@ export class Tour {
       const message = err instanceof Error ? err.message : String(err);
       notes.push(err instanceof Bug ? message : `thao tác hỏng: ${message.split('\n')[0] ?? ''}`);
     }
-    await this.page.waitForTimeout(250);
-    const problems = await this.visibleProblems();
-    if (problems.length > 0 && options.expectProblem !== true) {
-      outcome = 'bug';
-      notes.push(...problems);
-    }
-    const logged = [...new Set(this.consoleErrors)].filter(
-      (e) => !/favicon|ERR_ABORTED|logo\.png/.test(e),
-    );
-    if (logged.length > 0) {
-      if (outcome === 'ok') outcome = 'note';
-      notes.push(...logged.slice(0, 5));
-    }
+    outcome = await this.afterAction(outcome, notes, options.expectProblem === true);
     if (outcome === 'ok' && notes.length > 0) outcome = 'note';
     const shot = `${String(n).padStart(3, '0')}-${slug(name)}.png`;
     await this.page.screenshot({ path: join(this.outDir, shot) }).catch(() => undefined);

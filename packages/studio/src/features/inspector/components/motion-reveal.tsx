@@ -1,5 +1,5 @@
 // Scroll Reveal controls and shared MotionSelectField for Inspector Motion (K9.7-2 TK-18..22).
-import type { ElementRef, ElementSource, RevealEffect } from '@kumicraft/shared';
+import type { ElementRef, ElementSource, RevealEffect, TreeNode } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -133,6 +133,42 @@ function RevealSelectRow(props: {
   );
 }
 
+/**
+ * What the Reveal switch changes: the use of the component when the selected element is the first
+ * element of one (`<Reveal …>` in the page), else the element itself. A lock on the component's
+ * own element (a class written as code in Reveal.tsx) does not stop the use, which is in the page.
+ */
+function useRevealTarget(refTarget: ElementRef, source: ElementSource, disabled: boolean) {
+  const use = useSelectionStore(
+    (s) =>
+      s.selectionInfo.find((i) => i.ref.loc === refTarget.loc && i.ref.index === refTarget.index)
+        ?.use,
+  );
+  return {
+    edited: use ?? { loc: source.loc, tag: source.tag },
+    locked: disabled && use === undefined,
+  };
+}
+
+/** True when the element (or the use it stands for) is already inside a Reveal. */
+function isRevealWrapped(
+  treeNodes: readonly TreeNode[],
+  refTarget: ElementRef,
+  editedTag: string,
+): boolean {
+  const idx = treeNodes.findIndex(
+    (n) => n.ref.loc === refTarget.loc && n.ref.index === refTarget.index,
+  );
+  const parentIdx = idx >= 0 ? treeNodes[idx]?.parent : undefined;
+  const parentNode = parentIdx !== undefined ? treeNodes[parentIdx] : undefined;
+  return (
+    editedTag === 'Reveal' ||
+    parentNode?.tag === 'Reveal' ||
+    parentNode?.label === 'Reveal' ||
+    (parentNode?.ref.loc.includes('Reveal.') ?? false)
+  );
+}
+
 function useRevealState(
   refTarget: ElementRef,
   source: ElementSource,
@@ -140,33 +176,25 @@ function useRevealState(
   onRefresh: () => void,
 ) {
   const treeNodes = useSelectionStore((s) => s.treeNodes);
+  const { edited, locked } = useRevealTarget(refTarget, source, disabled);
   const [effect, setEffect] = useState<RevealEffect>('fade');
   const [delay, setDelay] = useState(0);
   const [stagger, setStagger] = useState(0);
   const [busy, setBusy] = useState(false);
 
-  const idx = treeNodes.findIndex(
-    (n) => n.ref.loc === refTarget.loc && n.ref.index === refTarget.index,
-  );
-  const parentIdx = idx >= 0 ? treeNodes[idx]?.parent : undefined;
-  const parentNode = parentIdx !== undefined ? treeNodes[parentIdx] : undefined;
-  const isWrapped =
-    source.tag === 'Reveal' ||
-    parentNode?.tag === 'Reveal' ||
-    parentNode?.label === 'Reveal' ||
-    (parentNode?.ref.loc.includes('Reveal.') ?? false);
+  const isWrapped = isRevealWrapped(treeNodes, refTarget, edited.tag);
 
   const sendReveal = async (
     action: 'wrap' | 'unwrap',
     next: { effect: RevealEffect; delay: number; stagger: number },
   ) => {
-    if (disabled || busy) return;
+    if (locked || busy) return;
     setBusy(true);
     try {
       await revealElement({
         action,
-        loc: source.loc,
-        tag: source.tag,
+        loc: edited.loc,
+        tag: edited.tag,
         ...(action === 'wrap' ? next : {}),
       });
       onRefresh();
@@ -174,7 +202,18 @@ function useRevealState(
       setBusy(false);
     }
   };
-  return { effect, setEffect, delay, setDelay, stagger, setStagger, busy, isWrapped, sendReveal };
+  return {
+    effect,
+    setEffect,
+    delay,
+    setDelay,
+    stagger,
+    setStagger,
+    busy,
+    isWrapped,
+    locked,
+    sendReveal,
+  };
 }
 
 function RevealHeaderRow({
@@ -225,7 +264,7 @@ export function RevealControls({
     <div className="space-y-1.5 border-t border-line pt-2" data-testid="motion-reveal-controls">
       <RevealHeaderRow
         isWrapped={r.isWrapped}
-        disabled={disabled || r.busy}
+        disabled={r.locked || r.busy}
         onToggle={() => {
           void r.sendReveal(toggleAction, {
             effect: r.effect,
@@ -235,7 +274,7 @@ export function RevealControls({
         }}
       />
       <RevealSelectRow
-        disabled={disabled || r.busy}
+        disabled={r.locked || r.busy}
         effect={r.effect}
         delay={r.delay}
         stagger={r.stagger}

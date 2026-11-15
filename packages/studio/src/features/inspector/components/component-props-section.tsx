@@ -280,16 +280,20 @@ function useBoundaryLoader(
   reloadTick: number,
 ) {
   const selectionInfo = useSelectionStore((s) => s.selectionInfo);
-  const parentLoc = selectionInfo.find((i) => i.ref.loc === loc)?.ancestors?.[0]?.loc;
+  const info = selectionInfo.find((i) => i.ref.loc === loc);
+  // The use the Canvas read from React: its props are read and written right there.
+  const use = info?.use;
+  const parentLoc = info?.ancestors?.[0]?.loc;
   const isBoundary =
+    use === undefined &&
     componentName !== undefined &&
     parentLoc !== undefined &&
     parentLoc.split(':')[0] !== loc.split(':')[0];
-  const isComponentTag = /^[A-Z]/.test(tag) || isBoundary;
+  const isComponentTag = use !== undefined || /^[A-Z]/.test(tag) || isBoundary;
   const loader = useComponentPropsLoader(
     isComponentTag,
-    loc,
-    tag,
+    use?.loc ?? loc,
+    use?.tag ?? tag,
     fileHash,
     isBoundary ? parentLoc : undefined,
     isBoundary ? componentName : undefined,

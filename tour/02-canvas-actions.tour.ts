@@ -6,86 +6,15 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { expect, type Locator, type Page, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
-import { Bug, diffFiles, type StepContext, Tour } from './support/tour.ts';
+import { boxOf, drag, edit, lineWith } from './support/canvas.ts';
+import { CANVAS_PAGE as PAGE } from './support/pages.ts';
+import { Bug, diffFiles, Tour } from './support/tour.ts';
 
 const HOME = 'src/pages/Home.tsx';
 /** Every edit step ends back at its start, even when it failed half-way. */
 const RESTORE = { restore: true } as const;
-
-const PAGE = `export function Home() {
-  return (
-    <main className="min-h-screen bg-slate-50 p-6">
-      <div className="mx-auto max-w-3xl space-y-4">
-        <h1 className="text-3xl font-bold">Tiêu đề chính</h1>
-        <p className="text-slate-600">Đoạn mô tả ngắn gọn.</p>
-        <button type="button" className="rounded bg-blue-600 px-4 py-2 text-white">
-          Nút bấm
-        </button>
-        <div className="flex gap-4">
-          <div className="h-20 w-40 bg-amber-100 p-2">Ô vàng</div>
-          <div className="h-20 w-40 bg-green-100 p-2">Ô xanh</div>
-        </div>
-      </div>
-      <section data-rc-free className="relative mt-8 h-[400px] w-[900px] bg-white">
-        <div className="absolute top-[40px] left-[40px] h-[100px] w-[200px] bg-blue-100 p-2">
-          Hộp A
-        </div>
-        <div className="absolute top-[200px] left-[400px] h-[80px] w-[160px] bg-pink-100 p-2">
-          Hộp B
-        </div>
-      </section>
-    </main>
-  );
-}
-
-export default Home;
-`;
-
-/** The source line that holds `text` (or the opening tag line above it). */
-async function lineWith(tour: Tour, text: string): Promise<string> {
-  const lines = (await tour.file(HOME)).split(/\r?\n/);
-  const i = lines.findIndex((l) => l.includes(text));
-  if (i < 0) return '';
-  const line = lines[i] ?? '';
-  return line.includes('className') ? line.trim() : (lines[i - 1] ?? '').trim();
-}
-
-async function boxOf(locator: Locator): Promise<{ x: number; y: number; w: number; h: number }> {
-  const box = await locator.boundingBox();
-  if (!box) throw new Error('Không thấy phần tử trên Canvas');
-  return { x: box.x, y: box.y, w: box.width, h: box.height };
-}
-
-async function drag(page: Page, from: { x: number; y: number }, by: { x: number; y: number }) {
-  await page.mouse.move(from.x, from.y);
-  await page.mouse.down();
-  await page.mouse.move(from.x + by.x, from.y + by.y, { steps: 15 });
-  await page.mouse.up();
-}
-
-/** One edit: do it, check the file, then Undo back to the exact text. */
-async function edit(
-  tour: Tour,
-  name: string,
-  act: (ctx: StepContext) => Promise<void>,
-  check: (ctx: StepContext & { readonly diff: string }) => Promise<void> | void,
-): Promise<void> {
-  await tour.step(
-    name,
-    async (ctx) => {
-      const before = await tour.files();
-      await act(ctx);
-      const after = await tour.waitChange(before);
-      const diff = diffFiles(before, after, 8).join('\n');
-      ctx.note(diff);
-      await check({ ...ctx, diff });
-      // Undo is checked by `restore`, which also runs when the step failed half-way.
-    },
-    RESTORE,
-  );
-}
 
 test('02 Canvas: select, drag, resize, text, structure, clipboard, undo chain, free frame', async ({
   page,
@@ -165,7 +94,7 @@ test('02 Canvas: select, drag, resize, text, structure, clipboard, undo chain, f
         await drag(page, { x: b.x + b.w - 1, y: b.y + b.h - 1 }, { x: 60, y: 30 });
       },
       async ({ note }) => {
-        const line = await lineWith(tour, 'Ô vàng');
+        const line = await lineWith(tour, HOME, 'Ô vàng');
         note(`Dòng mới: ${line}`);
         if (/\bw-40\b/.test(line) && /\bh-20\b/.test(line)) {
           throw new Bug('Kéo tay nắm mà kích thước không đổi');
@@ -181,7 +110,7 @@ test('02 Canvas: select, drag, resize, text, structure, clipboard, undo chain, f
         await drag(page, { x: b.x + b.w - 1, y: b.y + b.h / 2 }, { x: 50, y: 0 });
       },
       async () => {
-        const line = await lineWith(tour, 'Ô xanh');
+        const line = await lineWith(tour, HOME, 'Ô xanh');
         if (!/\bh-20\b/.test(line)) throw new Bug(`Kéo cạnh phải mà chiều cao đổi: ${line}`);
         if (/\bw-40\b/.test(line)) throw new Bug('Kéo cạnh phải mà chiều rộng không đổi');
       },
@@ -361,7 +290,7 @@ test('02 Canvas: select, drag, resize, text, structure, clipboard, undo chain, f
         await drag(page, { x: a.x + 10, y: a.y + 5 }, { x: 90, y: 40 });
       },
       async ({ note }) => {
-        const line = await lineWith(tour, 'Hộp A');
+        const line = await lineWith(tour, HOME, 'Hộp A');
         note(`Dòng mới: ${line}`);
         if (line.includes('left-[40px]') || line.includes('top-[40px]')) {
           throw new Bug('Kéo xong mà left/top không đổi');
@@ -377,7 +306,7 @@ test('02 Canvas: select, drag, resize, text, structure, clipboard, undo chain, f
         await drag(page, { x: a.x + 1, y: a.y + 1 }, { x: -20, y: -20 });
       },
       async ({ note }) => {
-        const line = await lineWith(tour, 'Hộp A');
+        const line = await lineWith(tour, HOME, 'Hộp A');
         note(`Dòng mới: ${line}`);
         if (line.includes('left-[40px]') || line.includes('w-[200px]')) {
           throw new Bug('Kéo góc trên trái mà vị trí hoặc chiều rộng không đổi');
@@ -395,7 +324,7 @@ test('02 Canvas: select, drag, resize, text, structure, clipboard, undo chain, f
         await page.waitForTimeout(600);
       },
       async ({ note }) => {
-        const line = await lineWith(tour, 'Hộp A');
+        const line = await lineWith(tour, HOME, 'Hộp A');
         note(`Dòng mới: ${line}`);
         if (!/left-(12|\[48px\])\b/.test(line)) throw new Bug(`Mong left 48px: ${line}`);
         if (!/top-\[41px\]/.test(line)) throw new Bug(`Mong top-[41px]: ${line}`);
@@ -411,7 +340,7 @@ test('02 Canvas: select, drag, resize, text, structure, clipboard, undo chain, f
         await x.press('Enter');
       },
       async () => {
-        const line = await lineWith(tour, 'Hộp A');
+        const line = await lineWith(tour, HOME, 'Hộp A');
         if (!/left-(30|\[120px\])\b/.test(line)) throw new Bug(`Mong left 120px: ${line}`);
       },
     );
@@ -424,7 +353,7 @@ test('02 Canvas: select, drag, resize, text, structure, clipboard, undo chain, f
           await page.getByTestId(align).first().click();
         },
         async ({ note }) => {
-          note(`Dòng mới: ${await lineWith(tour, 'Hộp A')}`);
+          note(`Dòng mới: ${await lineWith(tour, HOME, 'Hộp A')}`);
         },
       );
     }
@@ -439,7 +368,7 @@ test('02 Canvas: select, drag, resize, text, structure, clipboard, undo chain, f
         await drag(page, { x: a.x + 10, y: a.y + 5 }, { x: b.x + 3 - a.x, y: 0 });
       },
       async ({ note }) => {
-        note(`Dòng mới: ${await lineWith(tour, 'Hộp A')}`);
+        note(`Dòng mới: ${await lineWith(tour, HOME, 'Hộp A')}`);
         await page.getByTestId('canvas-snap-toggle').click();
       },
     );

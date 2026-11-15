@@ -38,19 +38,43 @@ export type StructureTargetInput = {
 export type CommandTarget = {
   readonly ref: ElementRef;
   readonly tag: string;
+  /**
+   * The JSX that the edit changes when it is not `ref` itself: the selected element is the first
+   * element of a component used in the page, and the use (`<Card …>`) is what moves or goes.
+   */
+  readonly use?: { readonly loc: string; readonly tag: string } | undefined;
 };
 
-function resolveSingleTarget(target?: StructureTargetInput): CommandTarget | undefined {
-  if (target) {
-    const tag = target.tag ?? resolveTargetTag(target.ref);
-    return tag ? { ref: target.ref, tag } : undefined;
+/** The element the source edit names: the component use when there is one. */
+export function editedElement(t: CommandTarget): { readonly loc: string; readonly tag: string } {
+  return t.use ?? { loc: t.ref.loc, tag: t.tag };
+}
+
+/** The use of the component `ref` is the first element of, as the Canvas reported it. */
+function componentUseFor(ref: ElementRef): CommandTarget['use'] {
+  return useSelectionStore
+    .getState()
+    .selectionInfo.find((i) => i.ref.loc === ref.loc && i.ref.index === ref.index)?.use;
+}
+
+/** A new element is selected only when it is a page element; a new use has no element of its own. */
+function selectNew(t: CommandTarget, res: StructureResult): void {
+  const newLoc = res.locs[0];
+  if (newLoc && t.use === undefined) {
+    useSelectionStore.getState().setSelectedRefs([{ loc: newLoc, index: 0 }]);
   }
+}
+
+function resolveSingleTarget(target?: StructureTargetInput): CommandTarget | undefined {
+  const ref = target?.ref ?? soleSelectedRef();
+  if (ref === undefined) return undefined;
+  const tag = target?.tag ?? resolveTargetTag(ref);
+  return tag ? { ref, tag, use: componentUseFor(ref) } : undefined;
+}
+
+function soleSelectedRef(): ElementRef | undefined {
   const selectedRefs = useSelectionStore.getState().selectedRefs;
-  if (selectedRefs.length !== 1) return undefined;
-  const ref = selectedRefs[0];
-  if (!ref) return undefined;
-  const tag = resolveTargetTag(ref);
-  return tag ? { ref, tag } : undefined;
+  return selectedRefs.length === 1 ? selectedRefs[0] : undefined;
 }
 
 export async function runStructureOp(
@@ -76,7 +100,7 @@ export async function executeDuplicate(target?: StructureTargetInput): Promise<b
   if (!t) return false;
   const placement = await freeStackPlacement({
     kind: 'sibling',
-    ref: { loc: t.ref.loc, tag: t.tag },
+    ref: editedElement(t),
     where: 'after',
   });
   return runStructureOp(
@@ -84,13 +108,12 @@ export async function executeDuplicate(target?: StructureTargetInput): Promise<b
     () =>
       applyStructureEdit({
         kind: 'duplicate',
-        elements: [{ loc: t.ref.loc, tag: t.tag }],
+        elements: [editedElement(t)],
         placement,
         tailwindMajor: placementTailwindMajor(placement),
       }),
     (res) => {
-      const newLoc = res.locs[0];
-      if (newLoc) useSelectionStore.getState().setSelectedRefs([{ loc: newLoc, index: 0 }]);
+      selectNew(t, res);
     },
   );
 }
@@ -100,7 +123,7 @@ export async function executeRemove(target?: StructureTargetInput): Promise<bool
   if (!t) return false;
   return runStructureOp(
     t,
-    () => applyStructureEdit({ kind: 'remove', elements: [{ loc: t.ref.loc, tag: t.tag }] }),
+    () => applyStructureEdit({ kind: 'remove', elements: [editedElement(t)] }),
     () => {
       useSelectionStore.getState().clearSelection();
     },
@@ -112,7 +135,7 @@ export async function executeUnwrap(target?: StructureTargetInput): Promise<bool
   if (!t) return false;
   return runStructureOp(
     t,
-    () => applyStructureEdit({ kind: 'unwrap', element: { loc: t.ref.loc, tag: t.tag } }),
+    () => applyStructureEdit({ kind: 'unwrap', element: editedElement(t) }),
     () => {
       useSelectionStore.getState().clearSelection();
     },
@@ -133,12 +156,11 @@ export async function executeMove(
     () =>
       applyStructureEdit({
         kind: 'move',
-        elements: [{ loc: t.ref.loc, tag: t.tag }],
+        elements: [editedElement(t)],
         target: moveTarget,
       }),
     (res) => {
-      const newLoc = res.locs[0];
-      if (newLoc) useSelectionStore.getState().setSelectedRefs([{ loc: newLoc, index: 0 }]);
+      selectNew(t, res);
     },
   );
 }
@@ -154,12 +176,11 @@ export async function executeWrap(
     () =>
       applyStructureEdit({
         kind: 'wrap',
-        elements: [{ loc: t.ref.loc, tag: t.tag }],
+        elements: [editedElement(t)],
         wrapper,
       }),
     (res) => {
-      const newLoc = res.locs[0];
-      if (newLoc) useSelectionStore.getState().setSelectedRefs([{ loc: newLoc, index: 0 }]);
+      selectNew(t, res);
     },
   );
 }

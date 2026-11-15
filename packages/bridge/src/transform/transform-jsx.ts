@@ -86,6 +86,44 @@ function isHtmlOrSvgTag(openingElement: Record<string, unknown>): boolean {
   return /^[a-z]/.test(tagName) || KIT_ELEMENT_COMPONENTS.has(tagName);
 }
 
+/** React's own tags: they take no other props (a Fragment warns about any), so they get no mark. */
+const REACT_BUILTIN_TAGS: ReadonlySet<string> = new Set([
+  'Fragment',
+  'StrictMode',
+  'Suspense',
+  'Profiler',
+  'Activity',
+]);
+
+/**
+ * A component used in the page (`<Card …>`, `<Reveal …>`): it renders no element of its own, so
+ * the line that placed it rides along as a prop, `data-rc-use`, which the Canvas reads back from
+ * React to select that use instead of the inside of the component's file. Only plain names: a
+ * `<Ctx.Provider>` or `<motion.div>` is left alone.
+ */
+function isComponentTag(openingElement: Record<string, unknown>): boolean {
+  const nameNode = openingElement['name'] as Record<string, unknown> | undefined;
+  if (!nameNode || nameNode['type'] !== 'JSXIdentifier') return false;
+  const tagName = typeof nameNode['name'] === 'string' ? nameNode['name'] : '';
+  return (
+    /^[A-Z]/.test(tagName) &&
+    !KIT_ELEMENT_COMPONENTS.has(tagName) &&
+    !REACT_BUILTIN_TAGS.has(tagName)
+  );
+}
+
+function hasAttribute(openingElement: Record<string, unknown>, attrName: string): boolean {
+  const attributes = openingElement['attributes'];
+  if (!Array.isArray(attributes)) return false;
+  return attributes.some((attr: unknown) => {
+    if (!attr || typeof attr !== 'object') return false;
+    const a = attr as Record<string, unknown>;
+    if (a['type'] !== 'JSXAttribute') return false;
+    const name = a['name'] as Record<string, unknown> | undefined;
+    return name?.['name'] === attrName;
+  });
+}
+
 function hasRcLocAttribute(openingElement: Record<string, unknown>): boolean {
   const attributes = openingElement['attributes'];
   if (!Array.isArray(attributes)) return false;
@@ -115,7 +153,9 @@ export function transformJsx(
 
   walkAst(ast, (node) => {
     if (node['type'] !== 'JSXOpeningElement') return;
-    if (!isHtmlOrSvgTag(node) || hasRcLocAttribute(node)) return;
+    const component = isComponentTag(node);
+    if (component ? hasAttribute(node, 'data-rc-use') : !isHtmlOrSvgTag(node)) return;
+    if (!component && hasRcLocAttribute(node)) return;
 
     const loc = node['loc'] as { start: { line: number; column: number } } | undefined;
     const nameNode = node['name'] as { end: number } | undefined;
@@ -128,7 +168,10 @@ export function transformJsx(
     }
 
     const locString = `${relPath}:${String(line)}:${String(column)}`;
-    s.appendLeft(nameNode.end, ` data-rc-loc="${locString}"`);
+    // A use also names its tag as written (`RelativeCard` for `Card as RelativeCard`).
+    const tagName = String((node['name'] as Record<string, unknown>)['name']);
+    const mark = component ? `data-rc-use="${locString}|${tagName}"` : `data-rc-loc="${locString}"`;
+    s.appendLeft(nameNode.end, ` ${mark}`);
   });
   guardSelfRender(ast.program, s, relPath);
 

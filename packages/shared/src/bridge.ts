@@ -45,6 +45,11 @@ export const ElementInfoSchema = z.strictObject({
    */
   ancestors: z.array(ElementRefSchema).max(200).optional(),
   a11y: ElementA11yInfoSchema.optional(),
+  /**
+   * When this element is the first element of a component used in the page (`<Card …>`), the
+   * file:line:column of that use, read from React: actions on the component act there.
+   */
+  use: z.strictObject({ loc: z.string().max(500), tag: z.string().min(1).max(100) }).optional(),
 });
 export type ElementInfo = z.infer<typeof ElementInfoSchema>;
 
