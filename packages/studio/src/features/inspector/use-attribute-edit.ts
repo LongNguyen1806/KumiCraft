@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { ApiError } from '../../api/http.ts';
 import { editSource, editSourceBatch } from '../../api/source-client.ts';
+import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import type { InspectorTarget } from './types.ts';
 
 export type AttributeEditState = {
@@ -56,6 +57,7 @@ export function useAttributeEdit(
   target: Extract<InspectorTarget, { readonly kind: 'element' }>,
 ): AttributeEditState {
   const { t } = useTranslation();
+  const { t: tError } = useTranslation('errors');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
   const { source, refresh } = target;
@@ -73,13 +75,19 @@ export function useAttributeEdit(
         refresh();
       } catch (err) {
         const isConflict = err instanceof ApiError && err.code === 'E017';
-        setError(t(isConflict ? 'inspector.errors.sourceConflict' : 'inspector.errors.editFailed'));
+        // The server's reason, in words, so a refused edit says why (not only "failed").
+        const info = toErrorInfo(err);
+        setError(
+          isConflict
+            ? t('inspector.errors.sourceConflict')
+            : `${t('inspector.errors.editFailed')}: ${errorText(tError, info.code, info.params)}`,
+        );
         if (isConflict) refresh();
       } finally {
         setIsSaving(false);
       }
     },
-    [source, refresh, t],
+    [source, refresh, t, tError],
   );
 
   const setAttribute = useCallback(

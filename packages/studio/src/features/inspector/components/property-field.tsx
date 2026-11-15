@@ -1,6 +1,7 @@
 // Property field control in Inspector: value display, inheritance indicator, and override controls (SPEC-04 M-IN, R-IN-11).
 import type { ClassContext, ClassToken, ClassValue, PropertyId, Scope } from '@kumicraft/shared';
 import { readValue } from '@kumicraft/shared';
+import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -78,6 +79,31 @@ type InputControlProps = {
   readonly major: 3 | 4;
 };
 
+const SHADOW_KEYS = {
+  none: 'inspector.shadowNames.none',
+  '2xs': 'inspector.shadowNames.2xs',
+  xs: 'inspector.shadowNames.xs',
+  sm: 'inspector.shadowNames.sm',
+  DEFAULT: 'inspector.shadowNames.DEFAULT',
+  md: 'inspector.shadowNames.md',
+  lg: 'inspector.shadowNames.lg',
+  xl: 'inspector.shadowNames.xl',
+  '2xl': 'inspector.shadowNames.2xl',
+  inner: 'inspector.shadowNames.inner',
+} as const;
+
+const isShadowStep = (value: string): value is keyof typeof SHADOW_KEYS =>
+  Object.hasOwn(SHADOW_KEYS, value);
+
+/**
+ * What a list shows for an option: the Tailwind shadow steps in words with the class name after
+ * them ("Vừa (md)"), as `DEFAULT` or `sm` alone told the owner nothing; a theme name stays as is.
+ */
+function optionLabel(property: string, opt: string, t: TFunction): string {
+  if (property !== 'boxShadow' || !isShadowStep(opt)) return opt;
+  return `${t(SHADOW_KEYS[opt])} (${opt === 'DEFAULT' ? 'shadow' : opt})`;
+}
+
 function OptionSelect({
   property,
   currentValStr,
@@ -102,7 +128,7 @@ function OptionSelect({
       <option value="">{mixed ? t('inspector.mixed') : '—'}</option>
       {choicesWith(options, currentValStr).map((opt) => (
         <option key={opt} value={opt}>
-          {opt}
+          {optionLabel(property, opt, t)}
         </option>
       ))}
     </select>

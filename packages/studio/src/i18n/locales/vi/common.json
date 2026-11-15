@@ -410,6 +410,18 @@
       "sourceConflict": "Mã nguồn đã thay đổi từ bên ngoài, đã tải lại",
       "editFailed": "Chỉnh sửa thuộc tính thất bại"
     },
+    "shadowNames": {
+      "none": "Không có",
+      "2xs": "Rất nhỏ",
+      "xs": "Rất nhỏ",
+      "sm": "Nhỏ",
+      "DEFAULT": "Mặc định",
+      "md": "Vừa",
+      "lg": "Lớn",
+      "xl": "Rất lớn",
+      "2xl": "Cực lớn",
+      "inner": "Bóng chìm"
+    },
     "color": {
       "project": "Màu của dự án",
       "palette": "Bảng màu Tailwind",

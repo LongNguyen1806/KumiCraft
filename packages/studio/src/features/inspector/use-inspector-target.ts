@@ -248,6 +248,15 @@ function buildElementTarget(
 function useInteractionPreviewControl(singleRef: ElementRef | undefined) {
   const [previewState, setPreviewState] = useState<InspectorPreviewState | undefined>(undefined);
   const [groupRef, setGroupRef] = useState<ElementRef | undefined>(undefined);
+  // Another element starts on "Default": a state kept from the last one sent every edit of the
+  // new one to hover without the owner noticing (hand test 2026-11-15, step 14).
+  const selectionKey = singleRef === undefined ? '' : `${singleRef.loc}#${String(singleRef.index)}`;
+  const [stateFor, setStateFor] = useState(selectionKey);
+  if (stateFor !== selectionKey) {
+    setStateFor(selectionKey);
+    setPreviewState(undefined);
+    setGroupRef(undefined);
+  }
   const interactionState: InteractionState | undefined =
     previewState === 'loading' ? undefined : previewState;
 

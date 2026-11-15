@@ -68,6 +68,11 @@ export function matchShadowUtility(
   if (BOX_SHADOW_SCALES.has(tail)) {
     return { property: 'boxShadow', value: { kind: 'scale', token: tail } };
   }
+  // A shadow of the project's theme (`--shadow-card` → `shadow-card`) is a shadow, not a color:
+  // read as a color, the field showed nothing and each pick added another `shadow-card`.
+  if (theme?.shadows.some((token) => token.name === tail) === true) {
+    return { property: 'boxShadow', value: parseVal(tail, theme.shadows) };
+  }
   if (tail.startsWith('[') && tail.endsWith(']')) {
     const inner = tail.slice(1, -1);
     const isColor = !inner.includes('_') && COLOR_ARBITRARY_RE.test(inner);

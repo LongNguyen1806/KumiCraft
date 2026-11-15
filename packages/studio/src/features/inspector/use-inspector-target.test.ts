@@ -207,6 +207,25 @@ describe('useInspectorTarget and helpers [SPEC-04 section 9 M-IN]', () => {
       expect(result.current.kind === 'element' && result.current.source).toEqual(mockElementSource);
     });
 
+    it('starts another element on Default, not on the state picked for the last one [R-IN-14] (hand test step 14)', async () => {
+      act(() => {
+        useSelectionStore.getState().setSelectedRefs([{ loc: 'src/App.tsx:12:5', index: 0 }]);
+      });
+      const { result } = renderHook(() => useInspectorTarget());
+      act(() => {
+        if (result.current.kind === 'element') result.current.setInteractionState('hover');
+      });
+      expect(result.current.kind === 'element' && result.current.interactionState).toBe('hover');
+      act(() => {
+        useSelectionStore.getState().setSelectedRefs([{ loc: 'src/App.tsx:20:5', index: 0 }]);
+      });
+      await waitFor(() => {
+        expect(result.current.kind === 'element' && result.current.interactionState).toBe(
+          undefined,
+        );
+      });
+    });
+
     it('reads again when the element just moved under it, and shows no error [R-IN-10] (tour 01)', async () => {
       const fetch = vi
         .spyOn(sourceClient, 'fetchElementSource')

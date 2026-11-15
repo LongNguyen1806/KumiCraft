@@ -17,8 +17,13 @@ async function dragMouse(page: Page, from: Locator, to: { x: number; y: number }
   if (!box) throw new Error('Không thấy thứ cần kéo');
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
+  // A hand starts slowly, then rests over the target before letting go: the browser's drag
+  // starts after the first moves and the Canvas finds the drop place on its own frame.
+  await page.mouse.move(box.x + box.width / 2 + 8, box.y + box.height / 2 + 8, { steps: 4 });
+  await page.waitForTimeout(150);
   await page.mouse.move(to.x, to.y, { steps: 20 });
   await page.mouse.move(to.x + 2, to.y + 2, { steps: 3 });
+  await page.waitForTimeout(300);
   await page.mouse.up();
 }
 

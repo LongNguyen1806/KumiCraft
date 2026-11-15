@@ -2,6 +2,7 @@
 import type { ClassToken, ClassValue, PropertyId, Scope, StyleReading } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
+import { useSelectionStore } from '../../selection/selection-store.ts';
 import type { BatchPropEntry } from '../use-live-edit.ts';
 import {
   buildCssLinearGradient,
@@ -58,26 +59,49 @@ function readGradientState(props: EffectsCommonProps): GradientState {
   };
 }
 
-function buildTwGradientBatch(next: GradientState, wasText: boolean): readonly BatchPropEntry[] {
+/**
+ * The text color an element had before "Gradient text" made it transparent, by element, so turning
+ * the gradient text off gives that color back (the owner's white button text came back black).
+ */
+const colorBeforeGradientText = new Map<
+  string,
+  { readonly tw?: ClassValue | undefined; readonly css?: string | undefined }
+>();
+
+const selectedLoc = (): string => useSelectionStore.getState().selectedRefs[0]?.loc ?? '';
+
+/** The text color `textColor` should get: transparent while on, the remembered one once off. */
+function textColorFor(next: GradientState, wasText: boolean, current: ClassValue | undefined) {
+  const loc = selectedLoc();
+  if (next.enabled && next.isText) {
+    if (!wasText) colorBeforeGradientText.set(loc, { tw: current });
+    return { change: true, value: { kind: 'keyword', name: 'transparent' } as const };
+  }
+  if (!wasText) return { change: false, value: undefined };
+  const kept = colorBeforeGradientText.get(loc)?.tw;
+  colorBeforeGradientText.delete(loc);
+  return { change: true, value: kept };
+}
+
+function buildTwGradientBatch(
+  next: GradientState,
+  wasText: boolean,
+  currentColor: ClassValue | undefined,
+): readonly BatchPropEntry[] {
+  const color = textColorFor(next, wasText, currentColor);
+  const textEntries: BatchPropEntry[] = color.change
+    ? [{ property: 'textColor', value: color.value }]
+    : [];
   if (!next.enabled) {
     return [
       { property: 'backgroundImage', value: undefined },
       { property: 'gradientFrom', value: undefined },
       { property: 'gradientVia', value: undefined },
       { property: 'gradientTo', value: undefined },
-      ...(wasText
-        ? [
-            { property: 'backgroundClip' as const, value: undefined },
-            { property: 'textColor' as const, value: undefined },
-          ]
-        : []),
+      ...(wasText ? [{ property: 'backgroundClip' as const, value: undefined }] : []),
+      ...textEntries,
     ];
   }
-  const textEntries: BatchPropEntry[] = next.isText
-    ? [{ property: 'textColor', value: { kind: 'keyword', name: 'transparent' } }]
-    : wasText
-      ? [{ property: 'textColor', value: undefined }]
-      : [];
   return [
     { property: 'backgroundImage', value: { kind: 'keyword', name: next.dir } },
     { property: 'gradientFrom', value: colorToTwValue(next.from) },
@@ -209,26 +233,43 @@ function GradientFields({
   );
 }
 
+/** Plain CSS: the gradient as `background-image`, and the text color kept around gradient text. */
+async function applyCssGradient(
+  shared: EffectsCommonProps,
+  next: GradientState,
+  wasText: boolean,
+): Promise<void> {
+  const gradVal = next.enabled
+    ? buildCssLinearGradient(next.dir, next.from, next.via, next.to)
+    : '';
+  await shared.onCssCommit?.('backgroundImage', gradVal);
+  const textOn = next.enabled && next.isText;
+  if (textOn !== wasText) {
+    const loc = selectedLoc();
+    if (textOn) {
+      const before = readCssPropVal(shared.cssReading, 'textColor');
+      colorBeforeGradientText.set(loc, { css: before });
+    }
+    const back = colorBeforeGradientText.get(loc)?.css ?? '';
+    if (!textOn) colorBeforeGradientText.delete(loc);
+    await shared.onCssCommit?.('backgroundClip', textOn ? 'text' : '');
+    await shared.onCssCommit?.('textColor', textOn ? 'transparent' : back);
+  }
+}
+
 export function GradientControls({ shared }: { readonly shared: EffectsCommonProps }) {
   const { t } = useTranslation();
   const state = readGradientState(shared);
 
   const applyGradient = (next: GradientState) => {
     if (shared.editable && shared.onBatchProps !== undefined) {
-      shared.onBatchProps(buildTwGradientBatch(next, state.isText));
+      const current = (shared.tokens ?? []).find(
+        (tk) => tk.property === 'textColor' && tk.variants.length === 0,
+      )?.value;
+      shared.onBatchProps(buildTwGradientBatch(next, state.isText, current));
       return;
     }
-    const runCss = async () => {
-      const gradVal = next.enabled
-        ? buildCssLinearGradient(next.dir, next.from, next.via, next.to)
-        : '';
-      await shared.onCssCommit?.('backgroundImage', gradVal);
-      if (next.isText !== state.isText) {
-        await shared.onCssCommit?.('backgroundClip', next.isText ? 'text' : '');
-        await shared.onCssCommit?.('textColor', next.isText ? 'transparent' : '');
-      }
-    };
-    void runCss();
+    void applyCssGradient(shared, next, state.isText);
   };
 
   return (

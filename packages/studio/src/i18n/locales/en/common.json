@@ -410,6 +410,18 @@
       "sourceConflict": "Source file was modified externally, reloaded",
       "editFailed": "Failed to update property"
     },
+    "shadowNames": {
+      "none": "None",
+      "2xs": "Tiny",
+      "xs": "Extra small",
+      "sm": "Small",
+      "DEFAULT": "Default",
+      "md": "Medium",
+      "lg": "Large",
+      "xl": "Extra large",
+      "2xl": "Huge",
+      "inner": "Inset"
+    },
     "color": {
       "project": "Project colors",
       "palette": "Tailwind palette",

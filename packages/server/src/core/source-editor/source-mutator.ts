@@ -94,6 +94,12 @@ function modifyStringLiteral(
     const nameEnd = typeof nameNode?.end === 'number' ? nameNode.end : vStart;
     const attrEnd = typeof existingAttr.end === 'number' ? existingAttr.end : vEnd;
     s.overwrite(nameEnd, attrEnd, `={${JSON.stringify(after)}}`);
+  } else if (vEnd - vStart === 2) {
+    // An empty value (`aria-label=""`) has nothing between its quotes to overwrite: magic-string
+    // refuses a zero-length range, so the new text goes in after the opening quote.
+    if (after !== '') s.appendLeft(vStart + 1, after);
+  } else if (after === '') {
+    s.remove(vStart + 1, vEnd - 1);
   } else {
     s.overwrite(vStart + 1, vEnd - 1, after);
   }
