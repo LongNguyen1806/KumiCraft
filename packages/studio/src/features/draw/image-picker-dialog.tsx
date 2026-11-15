@@ -3,9 +3,8 @@ import type { ImageSource } from '@kumicraft/shared';
 import { type ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { fetchAssets } from '../../api/assets-client.ts';
+import { fetchAssets, fetchProjectImage } from '../../api/assets-client.ts';
 import { Dialog } from '../../components/ui/dialog.tsx';
-import { useRunnerStatus } from '../editor/use-runner-status.ts';
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
@@ -31,12 +30,59 @@ export type ImagePickerDialogProps = {
 type ImageGridProps = {
   readonly files: readonly string[];
   readonly selectedSrc: string | undefined;
-  readonly origin: string | undefined;
   readonly onSelectExisting: (file: string) => void;
   readonly emptyLabel: string;
 };
 
-function ImageGrid({ files, selectedSrc, origin, onSelectExisting, emptyLabel }: ImageGridProps) {
+/** A `blob:` URL of the image, or `undefined` when it cannot be read (no thumbnail then). */
+async function thumbUrl(file: string): Promise<string | undefined> {
+  try {
+    return URL.createObjectURL(await fetchProjectImage(file));
+  } catch {
+    return undefined;
+  }
+}
+
+/** A thumbnail of a public/ image, read through the Studio server (S-11): name only until it loads. */
+function ProjectThumb({ file, name }: { readonly file: string; readonly name: string }) {
+  const [url, setUrl] = useState<string>();
+  useEffect(() => {
+    let cancelled = false;
+    let made: string | undefined;
+    const isCancelled = () => cancelled;
+    async function load(): Promise<void> {
+      const next = await thumbUrl(file);
+      if (next === undefined) return;
+      if (isCancelled()) {
+        URL.revokeObjectURL(next);
+        return;
+      }
+      made = next;
+      setUrl(next);
+    }
+    void load();
+    return () => {
+      cancelled = true;
+      if (made !== undefined) URL.revokeObjectURL(made);
+    };
+  }, [file]);
+  if (url === undefined) {
+    return (
+      <div className="flex h-16 w-16 items-center justify-center rounded border border-border bg-field text-xs text-ink-soft">
+        {name}
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={suggestAlt(name)}
+      className="h-16 w-16 rounded border border-border object-cover"
+    />
+  );
+}
+
+function ImageGrid({ files, selectedSrc, onSelectExisting, emptyLabel }: ImageGridProps) {
   if (files.length === 0) {
     return (
       <div className="max-h-56 overflow-y-auto rounded-md border border-border p-2">
@@ -64,17 +110,7 @@ function ImageGrid({ files, selectedSrc, origin, onSelectExisting, emptyLabel }:
                 isSelected ? 'bg-field ring-2 ring-primary' : ''
               }`}
             >
-              {origin ? (
-                <img
-                  src={`${origin}${src}`}
-                  alt={suggestAlt(fileName)}
-                  className="h-16 w-16 rounded border border-border object-cover"
-                />
-              ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded border border-border bg-field text-xs text-ink-soft">
-                  {fileName}
-                </div>
-              )}
+              <ProjectThumb file={file} name={fileName} />
               <span className="max-w-[70px] truncate text-xs text-ink">{fileName}</span>
             </button>
           );
@@ -272,7 +308,6 @@ type FormProps = {
   readonly canInsert: boolean;
   readonly alt: string;
   readonly error?: string | undefined;
-  readonly origin?: string | undefined;
   readonly onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
   readonly onTriggerUpload: () => void;
   readonly onRefChange: (el: HTMLInputElement | undefined) => void;
@@ -296,7 +331,6 @@ function ImagePickerForm(props: FormProps) {
       <ImageGrid
         files={props.files}
         selectedSrc={props.selectedSrc}
-        origin={props.origin}
         onSelectExisting={props.onSelectExisting}
         emptyLabel={t('imagePicker.empty', 'Chưa có ảnh trong public/')}
       />
@@ -320,7 +354,6 @@ function ImagePickerForm(props: FormProps) {
 
 export function ImagePickerDialog({ open, onClose, onPick }: ImagePickerDialogProps) {
   const { t } = useTranslation();
-  const { status } = useRunnerStatus();
   const fileInputRef = useRef<HTMLInputElement | undefined>(undefined);
 
   const { files, selectedImage, alt, error, setAlt, reset, handleFileChange, selectExisting } =
@@ -351,7 +384,6 @@ export function ImagePickerDialog({ open, onClose, onPick }: ImagePickerDialogPr
         canInsert={selectedImage !== undefined && alt.trim().length > 0}
         alt={alt}
         error={error}
-        origin={status.state === 'ready' ? status.origin : undefined}
         onFileChange={handleFileChange}
         onTriggerUpload={() => {
           fileInputRef.current?.click();

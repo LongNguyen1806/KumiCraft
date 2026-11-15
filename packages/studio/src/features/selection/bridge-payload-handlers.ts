@@ -26,7 +26,21 @@ import { handleDrawEnd } from '../draw/draw-commands.ts';
 import { placementTailwindMajor } from '../editor/canvas-view-store.ts';
 import { useLayerMenuStore } from '../layer-menu/layer-menu-store.ts';
 import { runShortcut } from '../shortcuts/shortcut-actions.ts';
+import { isTypingTarget } from '../shortcuts/use-shortcuts.ts';
 import { useSelectionStore } from './selection-store.ts';
+
+/**
+ * A click on the Canvas selects without moving the keyboard focus (the Bridge cancels the press so
+ * the page does not react). A Studio button or tree row clicked before would keep it and swallow
+ * the arrow keys that move the new selection (R-FF-15). It lets go of it; a field being typed in
+ * keeps it, so its value is not committed by surprise.
+ */
+export function releaseStudioFocus(doc: Document = document): void {
+  const active = doc.activeElement;
+  if (!(active instanceof HTMLElement) || active === doc.body) return;
+  if (active.tagName === 'IFRAME' || isTypingTarget(active)) return;
+  active.blur();
+}
 
 function handleBridgeShortcut(payload: unknown): void {
   const res = BridgeShortcutPayloadSchema.safeParse(payload);
@@ -132,7 +146,11 @@ export function dispatchBridgePayload(type: string, payload: unknown): void {
     case 'select': {
       useLayerMenuStore.getState().close();
       const res = BridgeSelectPayloadSchema.safeParse(payload);
-      if (res.success) state.setSelectedRefs(res.data.refs);
+      if (res.success) {
+        // Only a click on the Canvas sends `select`: the keys now belong to that selection.
+        releaseStudioFocus();
+        state.setSelectedRefs(res.data.refs);
+      }
       break;
     }
     case 'selection-info': {

@@ -45,8 +45,8 @@ export const NEUTRAL_DISPLAY_BLOCKS = {
   },
   'content.video': {
     jsx: {
-      vi: `<div className="@root">\n  <iframe src="" title="Trình phát video" className="@frame" />\n</div>`,
-      en: `<div className="@root">\n  <iframe src="" title="Video player" className="@frame" />\n</div>`,
+      vi: `<div className="@root">\n  <iframe src="about:blank" title="Trình phát video" className="@frame" />\n</div>`,
+      en: `<div className="@root">\n  <iframe src="about:blank" title="Video player" className="@frame" />\n</div>`,
     },
     styles: {
       root: {

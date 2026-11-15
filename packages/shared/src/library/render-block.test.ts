@@ -295,6 +295,17 @@ describe('renderBlock', () => {
     }
   });
 
+  it('11. [R-ST-12] no block has an empty src or href: an empty iframe src loads the page into itself (tour 01)', () => {
+    for (const block of LIBRARY_BLOCKS) {
+      for (const system of ['tailwind4', 'css'] as const) {
+        for (const lang of ['vi', 'en'] as const) {
+          const { jsx } = renderBlock(block, system, lang);
+          expect(jsx, `${block.id} (${system}, ${lang})`).not.toMatch(/\s(?:src|href)=""/);
+        }
+      }
+    }
+  });
+
   it('18. [TK-44] renderBlock with uiKit uses <Button variant="outline"> + alias import, falls back when card missing', () => {
     const buttonBlock = LIBRARY_BLOCKS.find((b) => b.id === 'form.button');
     const cardBlock = LIBRARY_BLOCKS.find((b) => b.id === 'composite.card');

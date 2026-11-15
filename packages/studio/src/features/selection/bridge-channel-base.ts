@@ -206,6 +206,14 @@ export class BridgeChannel {
     this.sendMessage('highlight', ref === undefined ? {} : { ref });
   }
 
+  /**
+   * Opens the text editor on `ref` the way a double-click on the Canvas asks for it: the Studio
+   * reads the element's text first, so what is typed can be saved (the Text tool, tour 01).
+   */
+  requestTextEdit(ref: ElementRef): void {
+    for (const l of this.textEditListeners) l.onTextEditRequest?.({ ref });
+  }
+
   startTextEdit(ref: ElementRef, runIndex?: number): void {
     this.sendMessage('text-edit-start', runIndex === undefined ? { ref } : { ref, runIndex });
   }

@@ -34,12 +34,14 @@ export type Files = ReadonlyMap<string, string>;
 const SKIP_DIRS = new Set(['node_modules', '.kumicraft', 'dist', '.git']);
 
 async function readTree(root: string, dir = root, out = new Map<string, string>()) {
-  for (const entry of await readdir(dir, { withFileTypes: true })) {
+  for (const entry of await readdir(dir, { withFileTypes: true }).catch(() => [])) {
     if (SKIP_DIRS.has(entry.name)) continue;
     const path = join(dir, entry.name);
     if (entry.isDirectory()) await readTree(root, path, out);
     else if (/\.(tsx?|jsx?|css|scss|less|html|json)$/.test(entry.name)) {
-      out.set(relative(root, path).replaceAll('\\', '/'), await readFile(path, 'utf8'));
+      // A file the app removes while it is being read (an Undo) is simply not there.
+      const text = await readFile(path, 'utf8').catch(() => undefined);
+      if (text !== undefined) out.set(relative(root, path).replaceAll('\\', '/'), text);
     }
   }
   return out;
@@ -127,8 +129,14 @@ export class Tour {
   }
 
   /** Copies the fixture, starts the CLI and opens the Studio with the page shown. */
-  static async open(page: Page, fixture: string, batch: string): Promise<Tour> {
+  static async open(
+    page: Page,
+    fixture: string,
+    batch: string,
+    prepare?: (root: string) => Promise<void>,
+  ): Promise<Tour> {
     const folder = await copyFixture(fixture);
+    if (prepare !== undefined) await prepare(folder.path);
     const config = await makeTempDir(`tour-${batch}`);
     const session = await startCli(folder.path, config.path);
     await page.setViewportSize({ width: 1600, height: 1000 });
@@ -187,6 +195,13 @@ export class Tour {
     if (left.length > 0) throw new Bug(`Hoàn tác không trả file về như cũ:\n${left.join('\n')}`);
   }
 
+  /** Presses Redo once and waits for a file to change; a Bug when nothing does. */
+  async redo(): Promise<void> {
+    const before = await this.files();
+    await this.page.getByRole('button', { name: /^Làm lại\b.*\(/ }).click();
+    await this.waitChange(before);
+  }
+
   /** True when `locator` shows within `ms`. */
   async appears(locator: Locator, ms: number): Promise<boolean> {
     try {
@@ -231,7 +246,7 @@ export class Tour {
   async step(
     name: string,
     action: (ctx: StepContext) => Promise<void> | void,
-    options: { readonly expectProblem?: boolean } = {},
+    options: { readonly expectProblem?: boolean; readonly restore?: boolean } = {},
   ): Promise<void> {
     const n = this.records.length + 1;
     const notes: string[] = [];
@@ -271,6 +286,16 @@ export class Tour {
     const shot = `${String(n).padStart(3, '0')}-${slug(name)}.png`;
     await this.page.screenshot({ path: join(this.outDir, shot) }).catch(() => undefined);
     const changed = diffFiles(before, await this.files());
+    if (options.restore === true) {
+      await this.page.keyboard.press('Escape');
+      try {
+        await this.undoTo(before, 6);
+      } catch (err) {
+        outcome = 'bug';
+        notes.push(err instanceof Error ? err.message : String(err));
+      }
+      await this.page.waitForTimeout(400);
+    }
     this.records.push({ n, name, outcome, notes, changed, shot, ms: Date.now() - started });
     await this.writeReport();
     // A dialog left open would block the next step.

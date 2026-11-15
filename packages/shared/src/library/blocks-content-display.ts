@@ -57,8 +57,8 @@ export const CONTENT_DISPLAY_EXTRA_BLOCKS: readonly LibraryBlock[] = [
     },
     icon: 'PlayCircle',
     jsx: {
-      vi: `<div className="w-full aspect-video bg-{surface-muted} border border-{border} rounded-{radius} overflow-hidden">\n  <iframe src="" title="Trình phát video" className="w-full h-full border-0" />\n</div>`,
-      en: `<div className="w-full aspect-video bg-{surface-muted} border border-{border} rounded-{radius} overflow-hidden">\n  <iframe src="" title="Video player" className="w-full h-full border-0" />\n</div>`,
+      vi: `<div className="w-full aspect-video bg-{surface-muted} border border-{border} rounded-{radius} overflow-hidden">\n  <iframe src="about:blank" title="Trình phát video" className="w-full h-full border-0" />\n</div>`,
+      en: `<div className="w-full aspect-video bg-{surface-muted} border border-{border} rounded-{radius} overflow-hidden">\n  <iframe src="about:blank" title="Video player" className="w-full h-full border-0" />\n</div>`,
     },
     neutral: NEUTRAL_DISPLAY_BLOCKS['content.video'],
   },

@@ -189,4 +189,31 @@ describe('GET /project/assets [R-DT-13]', () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ data: { files: ['public/a.png', 'public/images/b.svg'] } });
   });
+
+  it('serves a public image to the picker as bytes of its real type [R-DT-13] (tour 01)', async () => {
+    const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+    await fs.writeFile(path.join(tmpDir, 'public/real.png'), png);
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/project/assets/file?path=public%2Freal.png',
+      headers: HEADERS,
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['content-type']).toBe('image/png');
+    expect(Uint8Array.from(res.rawPayload)).toEqual(png);
+  });
+
+  it('refuses what is not a public image: a text file named .png, a path outside public/ [R-DT-13] (tour 01)', async () => {
+    for (const url of [
+      '/api/v1/project/assets/file?path=public%2Fa.png',
+      '/api/v1/project/assets/file?path=public%2F..%2Fsrc%2Fmain.png',
+      '/api/v1/project/assets/file?path=src%2Fa.png',
+      '/api/v1/project/assets/file?path=public%2Fx.txt',
+    ]) {
+      const res = await app.inject({ method: 'GET', url, headers: HEADERS });
+      expect(res.statusCode, url).toBe(400);
+      expect(res.json()).toMatchObject({ error: { code: 'E016' } });
+    }
+  });
 });

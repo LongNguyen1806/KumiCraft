@@ -72,6 +72,15 @@ export async function apiGet(path: string): Promise<unknown> {
   return readResponseData(response);
 }
 
+/** GET `/api/v1/<path>` for a file (an image): its bytes, or the API error it answered with. */
+export async function apiGetBlob(path: string): Promise<Blob> {
+  const response = await fetch(`/api/v1/${path}`, { headers: authHeaders() });
+  if (!response.ok) {
+    await readResponseData(response);
+  }
+  return response.blob();
+}
+
 /** Sends `payload` in JSON format with `method` and returns the `data` member of the response. */
 async function apiSend(
   method: 'POST' | 'PATCH' | 'DELETE',

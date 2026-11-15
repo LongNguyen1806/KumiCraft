@@ -1,9 +1,10 @@
 // Modal dialog for picking a TypeScript/Zod/Django/OpenAPI source and fields (TK-33, TK-35).
 import type { DataField } from '@kumicraft/shared';
-import { ArrowDown, ArrowUp, X } from 'lucide-react';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Dialog } from '../../components/ui/dialog.tsx';
 import { type DataPickerMode, submitDataInsert } from './data-insert.ts';
 import { useDataSourcesLoader, useSourceFieldsLoader } from './data-source-picker-hooks.ts';
 
@@ -164,29 +165,6 @@ function PickerBody({
   );
 }
 
-function PickerDialogHeader({
-  title,
-  onClose,
-}: {
-  readonly title: string;
-  readonly onClose: () => void;
-}) {
-  const { t } = useTranslation('library');
-  return (
-    <div className="flex items-center justify-between">
-      <h2 className="text-sm font-semibold text-ink">{title}</h2>
-      <button
-        type="button"
-        aria-label={t('dataPicker.cancel')}
-        onClick={onClose}
-        className="rounded p-1 text-ink-soft hover:bg-field"
-      >
-        <X className="size-4" aria-hidden />
-      </button>
-    </div>
-  );
-}
-
 function PickerDialogFooter({
   disabled,
   submitLabel,
@@ -238,16 +216,11 @@ function PickerModalCard({
   readonly onClose: () => void;
   readonly onConfirm: () => void;
 }) {
+  const { t } = useTranslation('library');
+  // The shared native dialog: Esc closes it and the keyboard stays inside while it is open.
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-      data-testid="data-source-picker"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-    >
-      <div className="flex w-full max-w-md flex-col gap-3 rounded-lg border border-line bg-card-solid p-4 shadow-xl">
-        <PickerDialogHeader title={title} onClose={onClose} />
+    <Dialog open title={title} closeLabel={t('dataPicker.cancel')} onClose={onClose}>
+      <div data-testid="data-source-picker" className="flex flex-col gap-3">
         <PickerBody sourcesState={sourcesState} fieldsState={fieldsState} />
         <PickerDialogFooter
           disabled={disabled}
@@ -256,7 +229,7 @@ function PickerModalCard({
           onConfirm={onConfirm}
         />
       </div>
-    </div>
+    </Dialog>
   );
 }
 

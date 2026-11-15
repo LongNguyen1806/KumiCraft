@@ -6,11 +6,19 @@ import {
   type StructureResult,
 } from '@kumicraft/shared';
 
-import { apiGet, parseResponse } from './http.ts';
+import { apiGet, apiGetBlob, parseResponse } from './http.ts';
 import { applyStructureEdit } from './source-client.ts';
 
 export async function fetchAssets(): Promise<ProjectAssets> {
   return parseResponse(ProjectAssetsSchema, await apiGet('project/assets'));
+}
+
+/**
+ * One image of public/ for a thumbnail, through the Studio server: the Studio may not load images
+ * from the Canvas port (S-11), but it may show a `blob:` URL.
+ */
+export function fetchProjectImage(file: string): Promise<Blob> {
+  return apiGetBlob(`project/assets/file?path=${encodeURIComponent(file)}`);
 }
 
 export async function insertImage(edit: InsertImageEdit): Promise<StructureResult> {

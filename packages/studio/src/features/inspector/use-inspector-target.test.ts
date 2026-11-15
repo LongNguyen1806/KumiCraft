@@ -4,6 +4,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as eventsClient from '../../api/events-client.ts';
+import { ApiError } from '../../api/http.ts';
 import * as sourceClient from '../../api/source-client.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import {
@@ -204,6 +205,40 @@ describe('useInspectorTarget and helpers [SPEC-04 section 9 M-IN]', () => {
 
       expect(result.current.kind === 'element' && result.current.loading).toBe(true);
       expect(result.current.kind === 'element' && result.current.source).toEqual(mockElementSource);
+    });
+
+    it('reads again when the element just moved under it, and shows no error [R-IN-10] (tour 01)', async () => {
+      const fetch = vi
+        .spyOn(sourceClient, 'fetchElementSource')
+        .mockRejectedValueOnce(new ApiError(409, 'E017', { reason: 'moved' }))
+        .mockResolvedValue(mockElementSource);
+      act(() => {
+        useSelectionStore.getState().setSelectedRefs([{ loc: 'src/App.tsx:12:5', index: 0 }]);
+      });
+      const { result } = renderHook(() => useInspectorTarget());
+      await waitFor(() => {
+        expect(result.current.kind === 'element' && result.current.source).toEqual(
+          mockElementSource,
+        );
+      });
+      expect(result.current.kind === 'element' && result.current.error).toBe(undefined);
+      // The refused read was followed by another one (the hook may read more on re-render).
+      expect(fetch.mock.calls.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('shows a lasting failure in words, not as the raw request error [R-IN-10] (tour 01)', async () => {
+      vi.spyOn(sourceClient, 'fetchElementSource').mockRejectedValue(
+        new ApiError(422, 'E023', { reason: 'tooLarge' }),
+      );
+      act(() => {
+        useSelectionStore.getState().setSelectedRefs([{ loc: 'src/App.tsx:12:5', index: 0 }]);
+      });
+      const { result } = renderHook(() => useInspectorTarget());
+      await waitFor(() => {
+        expect(result.current.kind === 'element' && result.current.error).toMatch(/\(E023\)$/);
+      });
+      const target = result.current;
+      expect(target.kind === 'element' ? target.error : '').not.toContain('API request failed');
     });
   });
 });

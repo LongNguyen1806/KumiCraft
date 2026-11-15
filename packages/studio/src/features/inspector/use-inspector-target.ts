@@ -12,9 +12,11 @@ import {
   type Scope,
 } from '@kumicraft/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { createEventsClient, type StudioServerEvent } from '../../api/events-client.ts';
 import { fetchElementSource } from '../../api/source-client.ts';
+import { type ErrorInfo, errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { useStructureErrorStore } from '../structure/structure-error-store.ts';
@@ -78,26 +80,53 @@ type LoaderState = {
   readonly locKey?: string | undefined;
   readonly refreshKey: number;
   readonly source?: ElementSource | undefined;
-  readonly error?: string | undefined;
+  readonly failure?: ErrorInfo | undefined;
 };
+
+/** Reads of an element whose place just changed under it, before the failure is shown. */
+const MOVED_RETRIES = 3;
+const MOVED_RETRY_MS = 400;
 
 async function queryElementSource(loc: {
   readonly file: string;
   readonly line: number;
   readonly column: number;
-}): Promise<{ readonly source?: ElementSource | undefined; readonly error?: string | undefined }> {
+}): Promise<{
+  readonly source?: ElementSource | undefined;
+  readonly failure?: ErrorInfo | undefined;
+}> {
   try {
     const res = await fetchElementSource({
       file: loc.file,
       line: loc.line,
       column: loc.column,
     });
-    return { source: res, error: undefined };
+    return { source: res };
   } catch (err: unknown) {
-    return {
-      source: undefined,
-      error: err instanceof Error ? err.message : 'Lỗi nạp mã nguồn',
-    };
+    return { failure: toErrorInfo(err) };
+  }
+}
+
+const wait = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+/**
+ * Right after an insert or an Undo the file is rewritten under the selection, and the element is
+ * briefly not where the Canvas said (E017 moved): it is read again before the failure is shown.
+ * `undefined`: the read was cancelled (another element, or the panel closed).
+ */
+async function readElementSettled(
+  loc: { readonly file: string; readonly line: number; readonly column: number },
+  isCancelled: () => boolean,
+): Promise<Awaited<ReturnType<typeof queryElementSource>> | undefined> {
+  for (let attempt = 0; ; attempt += 1) {
+    const result = await queryElementSource(loc);
+    if (isCancelled()) return undefined;
+    if (result.failure?.code !== 'E017' || attempt >= MOVED_RETRIES) return result;
+    await wait(MOVED_RETRY_MS);
+    if (isCancelled()) return undefined;
   }
 }
 
@@ -110,6 +139,7 @@ function useElementSourceLoader(
   readonly loading: boolean;
   readonly error?: string | undefined;
 } {
+  const { t: tError } = useTranslation('errors');
   const [data, setData] = useState<LoaderState>({ refreshKey: 0 });
   const currentLocKey =
     loc !== undefined ? `${loc.file}:${String(loc.line)}:${String(loc.column)}` : undefined;
@@ -120,10 +150,14 @@ function useElementSourceLoader(
     let cancelled = false;
 
     async function load(): Promise<void> {
-      const result = await queryElementSource(activeLoc);
-      if (!cancelled) {
-        setData({ locKey: currentLocKey, refreshKey, source: result.source, error: result.error });
-      }
+      const result = await readElementSettled(activeLoc, () => cancelled);
+      if (result === undefined) return;
+      setData({
+        locKey: currentLocKey,
+        refreshKey,
+        source: result.source,
+        failure: result.failure,
+      });
     }
 
     void load();
@@ -138,24 +172,30 @@ function useElementSourceLoader(
 
   const sameElement = data.locKey === currentLocKey;
   const isUpToDate = sameElement && data.refreshKey === refreshKey;
+  const failure = isUpToDate ? data.failure : undefined;
   // While the same element reloads after a save, keep showing its last source: clearing it would
   // unmount every field and scroll the panel back to the top.
   return {
     source: sameElement ? data.source : undefined,
     loading: !isUpToDate,
-    error: isUpToDate ? data.error : undefined,
+    error: failure === undefined ? undefined : errorText(tError, failure.code, failure.params),
   };
 }
 
-function useSyncActiveSource(singleRef: ElementRef | undefined, tag: string | undefined): void {
+function useSyncActiveSource(singleRef: ElementRef | undefined, source: ElementSource | undefined) {
   const loc = singleRef?.loc;
+  const tag = source?.tag;
+  // Only real words make a text box, where a block put inside would land among them. An empty
+  // box (static ""), `{children}` (a slot for elements) and `mixed` (a box with element children,
+  // such as a free frame) all take a block inside.
+  const textOnly = source?.text.kind === 'static' && source.text.value.trim() !== '';
   useEffect(() => {
     if (loc && tag) {
-      useStructureErrorStore.getState().setActiveSource({ loc, tag });
+      useStructureErrorStore.getState().setActiveSource({ loc, tag, textOnly });
     } else {
       useStructureErrorStore.getState().setActiveSource(undefined);
     }
-  }, [loc, tag]);
+  }, [loc, tag, textOnly]);
 }
 
 function buildElementTarget(
@@ -257,7 +297,7 @@ function useSingleInspectorTarget(
     projectBps,
   );
   useServerRefresh(enabled, locParsed?.file, refresh);
-  useSyncActiveSource(singleRef, loader.source?.tag);
+  useSyncActiveSource(singleRef, loader.source);
 
   if (singleRef === undefined) return { kind: 'empty' };
 

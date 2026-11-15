@@ -1,6 +1,6 @@
 // Image discovery, classification, sanitization and paths (WP-2.09a, R-DT-13, R-DT-14).
 import type { Result } from '@kumicraft/shared';
-import { ok } from '@kumicraft/shared';
+import { err, ok } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 
@@ -147,4 +147,40 @@ export async function listPublicImages(
   await collectImages(fs, root, 'public', images);
   images.sort((a, b) => a.localeCompare(b));
   return ok(images);
+}
+
+const IMAGE_MIME: Readonly<Record<ImageKind, string>> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  webp: 'image/webp',
+  gif: 'image/gif',
+  svg: 'image/svg+xml',
+};
+
+/** A preview is never larger than this (an image picker thumbnail, not a download). */
+const MAX_PREVIEW_BYTES = 5 * 1024 * 1024;
+
+/**
+ * One image of public/, for the image picker's thumbnail (tour 01: the Studio may not load images
+ * from the Canvas port, S-11). Only a real png/jpg/webp/gif or a safe svg under public/ is read;
+ * the type comes from the bytes, not the name.
+ */
+export async function readPublicImage(
+  fs: FileSystemPort,
+  root: string,
+  rel: string,
+): Promise<Result<{ readonly bytes: Uint8Array; readonly mime: string }>> {
+  const ext = rel.split('.').pop()?.toLowerCase() ?? '';
+  const parts = rel.split('/');
+  if (parts[0] !== 'public' || parts.includes('..') || !IMAGE_EXTENSIONS.has(ext)) {
+    return err({ code: 'E016', params: { field: 'path' } });
+  }
+  const read = await fs.readBytes(root, rel, { maxBytes: MAX_PREVIEW_BYTES });
+  if (!read.ok) return read;
+  const kind = detectImageKind(read.value);
+  if (kind === undefined) return err({ code: 'E016', params: { field: 'path' } });
+  if (kind === 'svg' && isUnsafeSvg(new TextDecoder('utf8').decode(read.value))) {
+    return err({ code: 'E016', params: { field: 'path' } });
+  }
+  return ok({ bytes: read.value, mime: IMAGE_MIME[kind] });
 }

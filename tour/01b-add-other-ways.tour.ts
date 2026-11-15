@@ -118,21 +118,51 @@ test('01b Add: styles, variants, icons, images, draw tools, drag, components, dr
     // Draw tools, on the empty right side of the page.
     await addWithStep(tour, 'Công cụ Khung (F): vẽ một khung trên Canvas', async () => {
       await page.getByTestId('draw-tool-frame').click();
+      // A hand takes a moment before drawing; the tool reaches the Canvas by message.
+      await page.waitForTimeout(300);
       const from = await canvasPoint(page, -300, -200);
       await page.mouse.move(from.x, from.y);
       await page.mouse.down();
       await page.mouse.move(from.x + 180, from.y + 120, { steps: 15 });
       await page.mouse.up();
     });
-    await addWithStep(tour, 'Công cụ Chữ (T): bấm lên Canvas rồi gõ chữ', async () => {
-      await page.getByTestId('draw-tool-text').click();
-      const at = await canvasPoint(page, -200, -60);
-      await page.mouse.click(at.x, at.y);
-      await page.keyboard.type('Chữ thử tour');
-      await page.keyboard.press('Escape');
-    });
+    await tour.step(
+      'Công cụ Chữ (T): bấm lên Canvas, chờ ô chữ mở, gõ chữ',
+      async ({ note }) => {
+        const before = await tour.files();
+        await page.getByTestId('draw-tool-text').click();
+        // A hand takes a moment before drawing; the tool reaches the Canvas by message.
+        await page.waitForTimeout(300);
+        const at = await canvasPoint(page, -200, -60);
+        await page.mouse.click(at.x, at.y);
+        // A user types once the new text shows as editable, as the double-click edit does.
+        const editing = tour
+          .canvas()
+          .locator('[contenteditable="true"], [contenteditable="plaintext-only"]');
+        if (!(await tour.appears(editing.first(), 5_000))) {
+          throw new Bug('Đoạn chữ mới không mở sẵn để gõ');
+        }
+        await page.keyboard.type('Chữ thử tour');
+        await page.keyboard.press('Enter');
+        const after = await tour.waitChange(before);
+        note(diffFiles(before, after, 4).join('\n'));
+        const end = Date.now() + 5_000;
+        while (
+          Date.now() < end &&
+          !(await tour.file('src/pages/Home.tsx')).includes('Chữ thử tour')
+        ) {
+          await page.waitForTimeout(200);
+        }
+        if (!(await tour.file('src/pages/Home.tsx')).includes('Chữ thử tour')) {
+          throw new Bug('Chữ gõ vào đoạn mới không được lưu');
+        }
+      },
+      { restore: true },
+    );
     await addWithStep(tour, 'Công cụ Ảnh (I): vẽ khung ảnh rồi chọn ảnh', async () => {
       await page.getByTestId('draw-tool-image').click();
+      // A hand takes a moment before drawing; the tool reaches the Canvas by message.
+      await page.waitForTimeout(300);
       const from = await canvasPoint(page, -300, -200);
       await page.mouse.move(from.x, from.y);
       await page.mouse.down();
@@ -173,7 +203,7 @@ test('01b Add: styles, variants, icons, images, draw tools, drag, components, dr
     });
 
     await tour.step('Tạo component từ danh sách ul, rồi Hoàn tác', async ({ note }) => {
-      await tour.selectLayer(/^ul\b/);
+      await tour.selectLayer(/\bul space-y-2\b/);
       const before = await tour.files();
       await page.getByTestId('structure-extract').click();
       await page.getByTestId('extract-name').fill('DanhSachTour');
@@ -216,6 +246,8 @@ test('01b Add: styles, variants, icons, images, draw tools, drag, components, dr
     }
     await addWithStep(tour, 'Bản nháp tự do: vẽ khung bằng công cụ Khung', async () => {
       await page.getByTestId('draw-tool-frame').click();
+      // A hand takes a moment before drawing; the tool reaches the Canvas by message.
+      await page.waitForTimeout(300);
       const from = await canvasPoint(page, -300, 380);
       await page.mouse.move(from.x, from.y);
       await page.mouse.down();

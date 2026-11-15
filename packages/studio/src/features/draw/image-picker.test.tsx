@@ -31,6 +31,22 @@ describe('Image Picker and Insertion (Scenarios #13, #14, #15) [R-DT-13, R-DT-14
     vi.restoreAllMocks();
   });
 
+  it('shows thumbnails read through the Studio server, not from the Canvas port [R-DT-13] (tour 01)', async () => {
+    vi.spyOn(assetsClient, 'fetchAssets').mockResolvedValue({ files: ['public/a.png'] });
+    const read = vi
+      .spyOn(assetsClient, 'fetchProjectImage')
+      .mockResolvedValue(new Blob(['png'], { type: 'image/png' }));
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:thumb-a');
+
+    render(<ImagePickerDialog open={true} onClose={vi.fn()} onPick={vi.fn()} />);
+
+    const item = await screen.findByTestId('image-picker-item');
+    await waitFor(() => {
+      expect(item.querySelector('img')?.getAttribute('src')).toBe('blob:thumb-a');
+    });
+    expect(read).toHaveBeenCalledWith('public/a.png');
+  });
+
   it('[R-DT-13] Scenario 13: ImagePickerDialog loads assets, selecting item suggests alt, and insert invokes onPick', async () => {
     vi.spyOn(assetsClient, 'fetchAssets').mockResolvedValue({
       files: ['public/images/a.png', 'public/images/b.svg'],

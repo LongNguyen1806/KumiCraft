@@ -11,6 +11,8 @@ export type StructureErrorState = {
 export type ActiveSourceInfo = {
   readonly loc: string;
   readonly tag: string;
+  /** Its content is only text (`<div>Ô vàng</div>`): something added goes after it, not in it. */
+  readonly textOnly?: boolean | undefined;
 };
 
 export type StructureStore = {

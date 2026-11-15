@@ -24,6 +24,12 @@ export function resolveTargetTag(ref: ElementRef): string | undefined {
   return node?.tag;
 }
 
+/** True when the loaded source of `ref` holds only text, so a block cannot go inside it. */
+export function isTextLeaf(ref: ElementRef): boolean {
+  const active = useStructureErrorStore.getState().activeSource;
+  return active !== undefined && active.loc === ref.loc && active.textOnly === true;
+}
+
 export type StructureTargetInput = {
   readonly ref: ElementRef;
   readonly tag?: string | undefined;

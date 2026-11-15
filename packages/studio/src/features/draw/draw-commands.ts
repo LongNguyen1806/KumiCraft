@@ -88,7 +88,7 @@ function buildImageClassName(payload: BridgeDrawEndPayload, tailwindMajor: 3 | 4
 function startTextEditWhenInTree(loc: string): void {
   const ref = { loc, index: 0 };
   if (useSelectionStore.getState().treeNodes.some((n) => n.ref.loc === loc)) {
-    studioBridgeChannel.startTextEdit(ref);
+    studioBridgeChannel.requestTextEdit(ref);
     return;
   }
   let done = false;
@@ -98,7 +98,7 @@ function startTextEditWhenInTree(loc: string): void {
       done = true;
       clearTimeout(timer);
       unsubscribe();
-      studioBridgeChannel.startTextEdit(ref);
+      studioBridgeChannel.requestTextEdit(ref);
     }
   });
   const timer = setTimeout(() => {

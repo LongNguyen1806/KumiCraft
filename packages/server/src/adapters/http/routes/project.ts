@@ -29,7 +29,7 @@ import type { HistoryService } from '../../../core/history/history-service.ts';
 import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
 import type { ProcessPort } from '../../../core/ports/process-port.ts';
 import { listProjectComponents } from '../../../core/project/components-list.ts';
-import { listPublicImages } from '../../../core/project/images.ts';
+import { listPublicImages, readPublicImage } from '../../../core/project/images.ts';
 import type { ProjectService } from '../../../core/project/project-service.ts';
 import type { SessionInfo } from '../../../core/shared/session.ts';
 import type { ConfigStore } from '../../../core/shared/user-config.ts';
@@ -142,6 +142,25 @@ function registerStateRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): voi
   });
 }
 
+/** The image picker's thumbnails come from here, same origin as the Studio (S-11). */
+function registerAssetFileRoute(api: FastifyInstance, deps: ProjectRoutesDeps): void {
+  api.get('/project/assets/file', async (request, reply) => {
+    const infoRes = deps.projectService.getProjectInfo();
+    if (!infoRes.ok) return sendError(reply, infoRes.error);
+    if (!deps.fs) return sendError(reply, { code: 'E021' });
+    const { path } = request.query as { path?: unknown };
+    if (typeof path !== 'string' || path === '') {
+      return sendError(reply, { code: 'E016', params: { field: 'path' } });
+    }
+    const image = await readPublicImage(deps.fs, infoRes.value.root, path);
+    if (!image.ok) return sendError(reply, image.error);
+    return reply
+      .type(image.value.mime)
+      .header('Cache-Control', 'no-store')
+      .send(Buffer.from(image.value.bytes));
+  });
+}
+
 /** What Studio reads from the project's code: its pages and its Tailwind theme. */
 function registerCodeInfoRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): void {
   api.get('/project/pages', async (_request, reply) => {
@@ -164,6 +183,8 @@ function registerCodeInfoRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): 
     if (!listRes.ok) return sendError(reply, listRes.error);
     return { data: { files: listRes.value } };
   });
+
+  registerAssetFileRoute(api, deps);
 
   api.get('/project/components', async (_request, reply) => {
     const infoRes = deps.projectService.getProjectInfo();

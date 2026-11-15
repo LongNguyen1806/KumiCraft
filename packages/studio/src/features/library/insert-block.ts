@@ -21,7 +21,7 @@ import { freeStackPlacement } from '../free-frame/free-frame-placement.ts';
 import { useThemeStore } from '../inspector/use-project-theme.ts';
 import { useProjectStore } from '../project/project-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
-import { resolveTargetTag } from '../structure/structure-commands.ts';
+import { isTextLeaf, resolveTargetTag } from '../structure/structure-commands.ts';
 import { getSelectedStyle } from './library-styles.ts';
 import { getSelectedVariant } from './library-variants.ts';
 
@@ -59,7 +59,9 @@ function sourceFileFromTarget(target: InsertTarget): RelPath {
 }
 
 export function determineInsertTarget(ref: ElementRef, tag: string): InsertTarget {
-  if (isContainerTag(tag)) {
+  // A box that holds only text (`<div>Ô vàng</div>`) would get the block mixed into its words:
+  // it goes after the box instead, as a designer expects (tour 02).
+  if (isContainerTag(tag) && !isTextLeaf(ref)) {
     return {
       kind: 'child',
       parent: { loc: ref.loc, tag },

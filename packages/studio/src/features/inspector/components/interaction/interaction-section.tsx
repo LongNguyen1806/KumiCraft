@@ -40,6 +40,8 @@ export function hasApplicableInteraction(
   if (
     source.tag === 'SelectGroup' ||
     source.component?.name === 'SelectGroup' ||
+    source.tag === 'SelectItem' ||
+    source.component?.name === 'SelectItem' ||
     source.tag === 'nav' ||
     source.tag === 'ScrollSpy'
   ) {

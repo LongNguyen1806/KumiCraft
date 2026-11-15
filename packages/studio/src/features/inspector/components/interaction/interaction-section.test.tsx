@@ -8,7 +8,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { initI18n } from '../../../../i18n/i18n.ts';
 import { MixedTextEditor } from '../mixed-text-editor.tsx';
-import { InteractionSection } from './interaction-section.tsx';
+import { hasApplicableInteraction, InteractionSection } from './interaction-section.tsx';
 
 vi.mock('../../../../api/source-client.ts', () => ({
   editSource: vi.fn().mockResolvedValue({ hash: 'h', content: '' }),
@@ -82,6 +82,20 @@ describe('Studio interaction UI, mixed text editor, contrast strip & vi/en i18n 
       expect(screen.getByTestId('make-loading-button-reason').textContent).toBeTruthy();
       cleanup();
     }
+  });
+
+  it('recognizes SelectItem by tag and component name so selecting a choice opens its group tools', () => {
+    const ref = { loc: 'src/Home.tsx:10:7', index: 0 };
+    expect(hasApplicableInteraction(makeSource('SelectItem'), ref, [])).toBe(true);
+    expect(
+      hasApplicableInteraction(
+        makeSource('span', {
+          component: { name: 'SelectItem', usages: 1 },
+        }),
+        ref,
+        [],
+      ),
+    ).toBe(true);
   });
 
   it('renders MixedTextEditor run inputs and readonly chips and commits setTextRun edit (Group 7)', async () => {

@@ -128,7 +128,7 @@ describe('Canvas drawing tools (Scenarios #10..#15) [R-DT-10..R-DT-15]', () => {
       files: ['src/App.tsx'],
       locs: ['src/App.tsx:10:4'],
     });
-    const startTextEditSpy = vi.spyOn(studioBridgeChannel, 'startTextEdit');
+    const startTextEditSpy = vi.spyOn(studioBridgeChannel, 'requestTextEdit');
 
     await handleDrawEnd({
       tool: 'text',
