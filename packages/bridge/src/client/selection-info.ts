@@ -28,6 +28,7 @@ function resolveFoundInfo(
   el: Element,
   instances: number,
   ancestors: readonly ElementRef[],
+  designFile: string | undefined,
 ): ElementInfo {
   const r = el.getBoundingClientRect();
   const rect = {
@@ -39,7 +40,7 @@ function resolveFoundInfo(
   const rawClass = el.getAttribute('class') ?? undefined;
   const domClass = rawClass !== undefined ? rawClass.slice(0, MAX_DOM_CLASS) : undefined;
   const a11y = measureElementA11y(el);
-  const use = componentUseOf(el);
+  const use = componentUseOf(el, designFile);
 
   return {
     ref,
@@ -73,6 +74,7 @@ export function collectSelectionInfo(
   refs: readonly ElementRef[],
   root: ParentNode,
   previous: readonly ElementInfo[],
+  designFile?: string,
 ): ElementInfo[] {
   const byLoc = new Map<string, Element[]>();
   for (const el of root.querySelectorAll('[data-rc-loc]')) {
@@ -86,7 +88,7 @@ export function collectSelectionInfo(
     const el = matches[ref.index];
     const instances = Math.max(1, matches.length);
     if (el !== undefined) {
-      return resolveFoundInfo(ref, el, instances, ancestorRefs(el, byLoc));
+      return resolveFoundInfo(ref, el, instances, ancestorRefs(el, byLoc), designFile);
     }
     return resolveMissingInfo(ref, instances, previous);
   });

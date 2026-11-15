@@ -190,12 +190,12 @@ export class BridgeClientRuntime {
     this.scheduleTreeScan();
   }
 
-  private sendToStudio(type: string, payload: unknown): void {
+  private sendToStudio = (type: string, payload: unknown): void => {
     if (this.isDestroyed) return;
     const envelope: BridgeEnvelope = { rc: 1, nonce: this.nonce, type, payload };
     if (!fitsMessageLimit(envelope)) return;
     window.parent.postMessage(envelope, this.studioOrigin);
-  }
+  };
 
   /**
    * V-111: a message counts only when it comes from the parent window, from the Studio origin, with
@@ -226,9 +226,7 @@ export class BridgeClientRuntime {
       scheduleTreeScan: () => {
         this.scheduleTreeScan();
       },
-      sendToStudio: (t, p) => {
-        this.sendToStudio(t, p);
-      },
+      sendToStudio: this.sendToStudio,
     });
   }
 
@@ -413,6 +411,7 @@ export class BridgeClientRuntime {
         this.selectedRefs,
         document,
         this.lastSelectionInfo,
+        this.designFile,
       );
       this.sendToStudio('selection-info', { items: this.lastSelectionInfo });
     }, 16);
@@ -422,6 +421,7 @@ export class BridgeClientRuntime {
     this.designFile = file;
     this.focus = focus ?? false;
     this.overlay.setDesignFile(file, focus);
+    if (this.selectedRefs.length > 0) this.scheduleSelectionInfo();
   };
 
   public destroy(): void {

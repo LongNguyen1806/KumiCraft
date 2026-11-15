@@ -31,7 +31,7 @@ function renderCard(use: string) {
   divFiber.child = h3Fiber;
   Reflect.set(div, '__reactFiber$test', divFiber);
   Reflect.set(h3, '__reactFiber$test', h3Fiber);
-  return { div, h3 };
+  return { div, h3, card };
 }
 
 describe('componentUseOf', () => {
@@ -44,6 +44,41 @@ describe('componentUseOf', () => {
     const { h3 } = renderCard('src/pages/Home.tsx:7:7|Card');
     expect(componentUseOf(h3)).toBe(undefined);
     expect(componentUseOf(document.createElement('div'))).toBe(undefined);
+  });
+});
+
+describe('componentUseOf with nested components', () => {
+  /** `<ProductCard>` placed in the page, whose file returns `<Card>`, which renders the div. */
+  function renderProductCard() {
+    const { div, h3, card } = renderCard('src/components/ProductCard.tsx:4:10|Card');
+    const productCard: Fiber = {
+      type: () => undefined,
+      return: undefined,
+      child: card,
+      memoizedProps: { 'data-rc-use': 'src/drafts/Nhap.tsx:9:7|ProductCard' },
+    };
+    card.return = productCard;
+    return { div, h3 };
+  }
+
+  it('gives the use written in the file being designed: the tag the user placed [R-IN-11]', () => {
+    const { div } = renderProductCard();
+    expect(componentUseOf(div, 'src/drafts/Nhap.tsx')).toEqual({
+      loc: 'src/drafts/Nhap.tsx:9:7',
+      tag: 'ProductCard',
+    });
+    // Editing ProductCard itself: its `<Card>` is the tag placed in that file.
+    expect(componentUseOf(div, 'src/components/ProductCard.tsx')).toEqual({
+      loc: 'src/components/ProductCard.tsx:4:10',
+      tag: 'Card',
+    });
+  });
+
+  it('gives the outermost use when none is in the file being designed [R-IN-11]', () => {
+    const { div, h3 } = renderProductCard();
+    expect(componentUseOf(div)?.tag).toBe('ProductCard');
+    expect(componentUseOf(div, 'src/pages/Other.tsx')?.tag).toBe('ProductCard');
+    expect(componentUseOf(h3, 'src/drafts/Nhap.tsx')).toBe(undefined);
   });
 });
 
