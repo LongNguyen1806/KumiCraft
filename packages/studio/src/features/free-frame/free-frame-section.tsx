@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { editSource } from '../../api/source-client.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { scopeCanvasChange } from '../inspector/screen-scope.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { type AlignMode, runAlign, useFreeFrameErrorStore } from './align.ts';
 import { freeFrameOfRef } from './free-context.ts';
@@ -107,11 +108,17 @@ function commitPosition(
         );
 
   if (after === staticClass) return;
-  editSource({ edit: { kind: 'setClassName', loc, tag, before: staticClass, after } }).catch(
-    (e: unknown) => {
-      useFreeFrameErrorStore.getState().setError(toErrorInfo(e));
-    },
-  );
+  // Same screen scope as an Inspector edit (spec-log #144).
+  const scoped = scopeCanvasChange(loc, staticClass, after);
+  if (scoped === undefined) {
+    useFreeFrameErrorStore.getState().setError({ code: 'E023', params: { reason: 'screenSplit' } });
+    return;
+  }
+  editSource({
+    edit: { kind: 'setClassName', loc, tag, before: staticClass, after: scoped },
+  }).catch((e: unknown) => {
+    useFreeFrameErrorStore.getState().setError(toErrorInfo(e));
+  });
 }
 
 function FreeFramePosInput({

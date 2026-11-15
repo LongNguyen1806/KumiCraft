@@ -404,7 +404,7 @@ test('a page that draws itself forever stops with a message and the Studio keeps
   expect(await readFile(homeFile, 'utf8')).not.toContain('throw new Error');
 });
 
-test('an edit on the Mobile frame reaches every screen; "Only Mobile" writes for phones only [AC-04, spec-log #141]', async ({
+test('an edit on the Mobile frame reaches every screen; "Edit for Mobile only" writes for phones only [AC-04] (spec-log #141, #144)', async ({
   page,
 }) => {
   const session = await start();
@@ -419,7 +419,7 @@ test('an edit on the Mobile frame reaches every screen; "Only Mobile" writes for
   const homeFile = join(folder.path, 'src', 'pages', 'Home.tsx');
 
   // By default the edit reaches every screen: a plain class, no screen prefix.
-  await expect(tab.getByTestId('screen-scope-all')).toHaveAttribute('aria-pressed', 'true');
+  await expect(tab.getByTestId('screen-session-start')).toBeVisible();
   const side = tab.getByTestId('input-paddingRight');
   await side.click();
   // Every suggestion shows on click, whatever the field holds.
@@ -431,9 +431,9 @@ test('an edit on the Mobile frame reaches every screen; "Only Mobile" writes for
     .toBe(true);
   expect(await readFile(homeFile, 'utf8')).not.toMatch(/max-\w+:pr-/);
 
-  // "Only Mobile": phones get their own value; Desktop keeps pr-50.
-  await tab.getByTestId('screen-scope-only').click();
-  await expect(tab.getByTestId('screen-scope-only')).toHaveAttribute('aria-pressed', 'true');
+  // "Edit for Mobile only": phones get their own value; Desktop keeps pr-50.
+  await tab.getByTestId('screen-session-start').click();
+  await expect(tab.getByTestId('screen-session-bar')).toBeVisible();
   await side.fill('20');
   await side.press('Enter');
   await expect

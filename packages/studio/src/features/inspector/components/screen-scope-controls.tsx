@@ -1,5 +1,5 @@
-// "Áp cho: Mọi màn hình / Chỉ Mobile" and the question asked when a property already differs by
-// screen (spec-log #141). Both read and set the shared screen-edit store.
+// The question asked when a property already differs by screen, and the field icon that drops a
+// screen's own value (spec-log #141, #144). Both read and set the shared screen-edit store.
 import type { PropertyId } from '@kumicraft/shared';
 import { Monitor, Smartphone, Tablet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -17,89 +17,6 @@ export function ScreenIcon({
   if (width < 640) return <Smartphone className={className} aria-hidden />;
   if (width < 1024) return <Tablet className={className} aria-hidden />;
   return <Monitor className={className} aria-hidden />;
-}
-
-const SEGMENT =
-  'h-[26px] min-w-0 truncate px-2 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50';
-
-function OnlyThisScreenButton({
-  on,
-  disabled,
-  stateActive,
-  className,
-  onPick,
-}: {
-  readonly on: boolean;
-  readonly disabled: boolean;
-  readonly stateActive: boolean;
-  readonly className: string;
-  readonly onPick: () => void;
-}) {
-  const { t } = useTranslation();
-  const active = useScreens().active;
-  return (
-    <button
-      type="button"
-      data-testid="screen-scope-only"
-      aria-pressed={on}
-      disabled={disabled}
-      title={stateActive ? t('inspector.screen.stateHint') : undefined}
-      onClick={onPick}
-      className={`${SEGMENT} flex flex-1 items-center justify-center gap-1 border-l border-line ${className}`}
-    >
-      {active !== undefined && <ScreenIcon width={active.width} className="size-3 shrink-0" />}
-      <span className="truncate">{t('inspector.screen.only', { frame: active?.label ?? '' })}</span>
-    </button>
-  );
-}
-
-/** Every screen by default; "only this screen" holds for the selected element until it changes. */
-export function ScreenScopeSwitch({
-  loc,
-  stateActive,
-}: {
-  readonly loc: string;
-  readonly stateActive: boolean;
-}) {
-  const { t } = useTranslation();
-  const screens = useScreens();
-  const only = useScreenEditStore((s) => s.onlyKey === loc) && !stateActive;
-  const setOnly = useScreenEditStore((s) => s.setOnly);
-  const canSplit = screens.frames.length > 1 && !stateActive;
-  const on = 'bg-ink text-card-solid';
-  const off = 'bg-card-solid text-ink-soft hover:bg-field hover:text-ink';
-
-  return (
-    <div className="flex items-center gap-1.5">
-      <span className="shrink-0 text-[11px] text-ink-faint">{t('inspector.screen.appliesTo')}</span>
-      <div
-        role="group"
-        aria-label={t('inspector.screen.appliesTo')}
-        className="flex min-w-0 flex-1 overflow-hidden rounded-md border border-line"
-      >
-        <button
-          type="button"
-          data-testid="screen-scope-all"
-          aria-pressed={!only}
-          onClick={() => {
-            setOnly(undefined);
-          }}
-          className={`${SEGMENT} flex-1 ${only ? off : on}`}
-        >
-          {t('inspector.screen.all')}
-        </button>
-        <OnlyThisScreenButton
-          on={only}
-          disabled={!canSplit}
-          stateActive={stateActive}
-          className={only ? on : off}
-          onPick={() => {
-            setOnly(loc);
-          }}
-        />
-      </div>
-    </div>
-  );
 }
 
 /** Asks where an edit goes when the property already differs by screen; stays in view while scrolling. */

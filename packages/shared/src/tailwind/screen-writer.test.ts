@@ -157,6 +157,30 @@ describe('per-screen writes [spec-log #141]', () => {
     expect(out).toBe('pr-4 max-md:pr-50');
   });
 
+  it('a value only Mobile has, unset elsewhere, is written from the other end (max-md:)', () => {
+    const out = writeOneScreen(
+      'flex w-[808px]',
+      'flexDirection',
+      FRAMES,
+      MOBILE,
+      { kind: 'keyword', name: 'col' },
+      mobileFirst,
+    );
+    expect(out).toBe('flex w-[808px] max-md:flex-col');
+  });
+
+  it('a field value and the read value of one class count as the same (scale col = keyword col)', () => {
+    const out = writeOneScreen(
+      'flex',
+      'flexDirection',
+      FRAMES,
+      MOBILE,
+      { kind: 'scale', token: 'col' },
+      mobileFirst,
+    );
+    expect(out).toBe('flex max-md:flex-col');
+  });
+
   it('refuses rather than writing wrong code when two frames have no breakpoint between them', () => {
     expect(
       writeOneScreen('grid-cols-3', 'gridCols', [1300, 1440], 0, cols('2'), mobileFirst),

@@ -25,7 +25,7 @@ test.afterEach(async () => {
   await config.remove();
 });
 
-test('a draft in a plain-CSS project has a size, takes a Library block and opens from Files as a draft [R-DR-10, spec-log #130]', async ({
+test('a draft in a plain-CSS project has a size, takes a Library block and opens from Files as a draft [R-DR-10] (spec-log #130)', async ({
   page,
 }) => {
   const session = await startCli(folder.path, config.path);

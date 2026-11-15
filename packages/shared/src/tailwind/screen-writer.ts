@@ -4,7 +4,7 @@
 // shows what was asked. A result that does not read back exactly is never returned.
 import { parseBreakpointValue } from '../responsive.ts';
 import { parseClasses } from './parser.ts';
-import { ALL_TO_MEMBERS } from './properties.ts';
+import { ALL_TO_MEMBERS, formatClassValue } from './properties.ts';
 import { readValue } from './reader.ts';
 import type { ClassContext, ClassToken, ClassValue, PropertyId } from './types.ts';
 import { writeValue } from './writer.ts';
@@ -12,8 +12,17 @@ import { writeValue } from './writer.ts';
 /** The value of one property on each frame, in the order of `widths`. */
 export type ScreenValues = readonly (ClassValue | undefined)[];
 
-function sameValue(a: ClassValue | undefined, b: ClassValue | undefined): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
+/**
+ * Two values are the same when they write the same class: a field may send `{scale: 'col'}` where
+ * the reader gives `{keyword: 'col'}` for `flex-col`, and both mean one thing.
+ */
+function sameValue(
+  property: PropertyId,
+  a: ClassValue | undefined,
+  b: ClassValue | undefined,
+): boolean {
+  if (a === undefined || b === undefined) return a === b;
+  return formatClassValue(property, a) === formatClassValue(property, b);
 }
 
 /** Every breakpoint the project knows, narrowest first. */
@@ -63,7 +72,7 @@ export function differsByScreen(
   ctx: ClassContext,
 ): boolean {
   const values = readScreenValues(input, property, widths, ctx);
-  return values.some((value) => !sameValue(value, values[0]));
+  return values.some((value) => !sameValue(property, value, values[0]));
 }
 
 function isScreenOnlyToken(token: ClassToken, ctx: ClassContext): boolean {
@@ -104,6 +113,26 @@ export function writeScreenValues(
   values: ScreenValues,
   ctx: ClassContext,
 ): string | undefined {
+  // A screen whose value is unset next to one that has a value can only be written from the other
+  // end (Mobile alone `flex-col` → `max-md:flex-col`), as a developer would: try the project's
+  // own direction first, then the other one; both are read back on every frame.
+  const flipped: ClassContext = {
+    ...ctx,
+    mode: ctx.mode === 'desktop-first' ? 'mobile-first' : 'desktop-first',
+  };
+  return (
+    writeScreenValuesOneWay(input, property, widths, values, ctx) ??
+    writeScreenValuesOneWay(input, property, widths, values, flipped)
+  );
+}
+
+function writeScreenValuesOneWay(
+  input: string,
+  property: PropertyId,
+  widths: readonly number[],
+  values: ScreenValues,
+  ctx: ClassContext,
+): string | undefined {
   const frames = widths
     .map((width, i) => ({ width, value: values[i] }))
     .sort((a, b) => (ctx.mode === 'desktop-first' ? b.width - a.width : a.width - b.width));
@@ -114,7 +143,7 @@ export function writeScreenValues(
     const frame = frames[i];
     if (frame === undefined) continue;
     const shown = readValue(parseClasses(out, ctx), property, { width: frame.width }, ctx).value;
-    if (sameValue(shown, frame.value)) continue;
+    if (sameValue(property, shown, frame.value)) continue;
     // An unset value cannot be written: the frame keeps what the others show.
     if (frame.value === undefined) return undefined;
     const prev = frames[i - 1];
@@ -131,7 +160,7 @@ export function writeScreenValues(
   }
 
   const proof = readScreenValues(out, property, widths, ctx);
-  return proof.every((value, i) => sameValue(value, values[i])) ? out : undefined;
+  return proof.every((value, i) => sameValue(property, value, values[i])) ? out : undefined;
 }
 
 /** Sets one frame's value and keeps what the other frames show. */

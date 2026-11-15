@@ -1,9 +1,19 @@
 // Which screens an Inspector edit reaches (spec-log #141): every screen by default, a question when
 // the property already differs by screen, "only this screen" on request, hover always everywhere.
-import { BREAKPOINT_WIDTHS, type ClassContext, type ClassValue } from '@kumicraft/shared';
+import {
+  BREAKPOINT_WIDTHS,
+  type ClassContext,
+  type ClassValue,
+  readScreenValues,
+} from '@kumicraft/shared';
 import { describe, expect, it } from 'vitest';
 
-import { hasOwnScreenValue, sharedValueOfOthers, writeEntries } from './screen-scope.ts';
+import {
+  hasOwnScreenValue,
+  scopeClassChange,
+  sharedValueOfOthers,
+  writeEntries,
+} from './screen-scope.ts';
 
 const ctx: ClassContext = {
   theme: { colors: [], fontSizes: [], radii: [], fonts: [], shadows: [], breakpoints: [] },
@@ -80,5 +90,51 @@ describe('screen scope of Inspector edits [spec-log #141]', () => {
       value: cols('3'),
     });
     expect(hasOwnScreenValue('grid-cols-3', 'gridCols', onMobile, ctx)).toBe(false);
+  });
+
+  describe('Canvas changes (drag, resize, nudge, align, X/Y/W/H) [spec-log #144]', () => {
+    const read = (cls: string, w: number) => readScreenValues(cls, 'width', [w], ctx)[0];
+
+    it('"edit for Mobile only": resizing on Mobile leaves Desktop and Tablet as they were', () => {
+      const out = scopeClassChange('flex w-[808px]', 'flex w-[300px]', ctx, onMobile, true);
+      expect(out).toBeDefined();
+      expect(read(out ?? '', 375)).toEqual({ kind: 'arbitrary', css: '300px' });
+      expect(read(out ?? '', 768)).toEqual({ kind: 'arbitrary', css: '808px' });
+      expect(read(out ?? '', 1440)).toEqual({ kind: 'arbitrary', css: '808px' });
+    });
+
+    it('outside a session a resize reaches every screen, exactly as the Canvas wrote it', () => {
+      expect(scopeClassChange('flex w-[808px]', 'flex w-[300px]', ctx, onMobile, false)).toBe(
+        'flex w-[300px]',
+      );
+    });
+
+    it('outside a session, a width Mobile already has of its own is the one resized there', () => {
+      const own = 'flex w-[300px] md:w-[808px]';
+      const out = scopeClassChange(own, 'flex w-[250px] md:w-[808px]', ctx, onMobile, false);
+      expect(read(out ?? '', 375)).toEqual({ kind: 'arbitrary', css: '250px' });
+      expect(read(out ?? '', 1440)).toEqual({ kind: 'arbitrary', css: '808px' });
+    });
+
+    it('a drag in a session moves only that screen', () => {
+      const out = scopeClassChange(
+        'absolute left-56 top-34',
+        'absolute left-4 top-10',
+        ctx,
+        onMobile,
+        true,
+      );
+      expect(readScreenValues(out ?? '', 'left', widths, ctx)).toEqual([
+        { kind: 'scale', token: '56' },
+        { kind: 'scale', token: '4' },
+        { kind: 'scale', token: '56' },
+      ]);
+    });
+
+    it('refuses a change it cannot keep for one screen instead of writing it everywhere', () => {
+      expect(scopeClassChange('w-[808px]', 'w-[300px] js-card-hook', ctx, onMobile, true)).toBe(
+        undefined,
+      );
+    });
   });
 });

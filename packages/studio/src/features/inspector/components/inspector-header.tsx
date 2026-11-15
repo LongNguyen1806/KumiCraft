@@ -13,7 +13,7 @@ import { useOpenInEditor } from '../../editor/use-open-in-editor.ts';
 import { useSelectionStore } from '../../selection/selection-store.ts';
 import type { InspectorLockReason, InspectorTarget, InspectorWarning } from '../types.ts';
 import { canEnableSelectedState, GroupHoverParentPicker } from './inspector-scope-controls.tsx';
-import { ScreenScopeSwitch } from './screen-scope-controls.tsx';
+import { ScreenSessionBar } from './screen-session-bar.tsx';
 import { StructureActions } from './structure-actions.tsx';
 
 type InspectorHeaderProps = {
@@ -188,7 +188,7 @@ function ScopeRow({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <ScreenScopeSwitch
+      <ScreenSessionBar
         loc={target.ref.loc}
         stateActive={target.currentScope.state !== undefined || target.currentScope.dark === true}
       />

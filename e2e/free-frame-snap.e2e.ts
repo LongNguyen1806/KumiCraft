@@ -74,7 +74,7 @@ async function dragANearB(tab: Page, holdAlt: boolean): Promise<void> {
   if (holdAlt) await tab.keyboard.up('Alt');
 }
 
-test('a drag that ends a few screen pixels from an edge snaps onto it [R-FF-18, spec-log #125]', async ({
+test('a drag that ends a few screen pixels from an edge snaps onto it [R-FF-18] (spec-log #125)', async ({
   page,
 }) => {
   const session = await startCli(folder.path, config.path);

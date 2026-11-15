@@ -7,6 +7,7 @@ import { editSourceBatch } from '../../api/source-client.ts';
 import type { ErrorInfo } from '../../routes/error-text.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { scopeCanvasChange } from '../inspector/screen-scope.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { freeFrameOfRef, requestFreeMeasure } from './free-context.ts';
 import { readStaticClassName } from './free-frame-commands.ts';
@@ -182,11 +183,13 @@ async function buildAlignEdits(
     if (!beforeRes.ok) return { error: beforeRes.error };
 
     const before = beforeRes.value;
-    const after = applyPlacement(
+    // Same screen scope as an Inspector edit (spec-log #144).
+    const after = scopeCanvasChange(
+      loc,
       before,
-      { kind: 'free', left: newPos.left, top: newPos.top },
-      tailwindMajor,
+      applyPlacement(before, { kind: 'free', left: newPos.left, top: newPos.top }, tailwindMajor),
     );
+    if (after === undefined) return { error: { code: 'E023', params: { reason: 'screenSplit' } } };
     if (after !== before) {
       const node = treeNodes.find((n) => n.ref.loc === loc);
       edits.push({ kind: 'setClassName', loc, tag: node?.tag ?? 'div', before, after });

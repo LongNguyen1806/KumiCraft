@@ -183,7 +183,8 @@
       "differentParents": "Selected elements must share the same parent container.",
       "noSelectItems": "No SelectItem children found inside SelectGroup.",
       "missingOpening": "Opening JSX tag is missing.",
-      "blockedAttribute": "Attribute {{name}} cannot be edited here."
+      "blockedAttribute": "Attribute {{name}} cannot be edited here.",
+      "screenSplit": "Can't set this screen on its own: this frame is too close to the next one, with no screen breakpoint between them."
     }
   },
   "E024": {

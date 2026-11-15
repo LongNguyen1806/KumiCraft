@@ -29,7 +29,7 @@ test.afterEach(async () => {
 const mainLine = async (file: string): Promise<string> =>
   (await readFile(file, 'utf8')).split('\n').find((line) => line.includes('<main')) ?? '';
 
-test('a block added into a free draft can be selected, dragged and deleted [R-FF-12, spec-log #143]', async ({
+test('a block added into a free draft can be selected, dragged and deleted [R-FF-12] (spec-log #143)', async ({
   page,
 }) => {
   const session = await startCli(folder.path, config.path);

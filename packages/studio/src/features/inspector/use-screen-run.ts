@@ -9,6 +9,7 @@ import {
   type ScreenMode,
   type Screens,
   sharedValueOfOthers,
+  useInSession,
   useScreenEditStore,
   useScreens,
   writeEntries,
@@ -16,14 +17,21 @@ import {
 import type { InspectorTarget } from './types.ts';
 
 /**
- * "Only this screen" holds for the element it was turned on for: selecting another one turns it
- * off, and a question left open about the previous element is dropped.
+ * An "edit for this screen only" ends by itself (keeping its edits) when another element is
+ * selected or another frame becomes active, so it can never be left on by mistake; a question
+ * left open about the previous element is dropped.
  */
 export function useScreenSelectionReset(loc: string): void {
+  const activeFrameId = useScreens().active?.id;
   useEffect(() => {
     const store = useScreenEditStore.getState();
-    if (store.onlyKey !== undefined && store.onlyKey !== loc) store.setOnly(undefined);
-    store.setPending(undefined);
+    const session = store.session;
+    if (session !== undefined && (session.loc !== loc || session.frameId !== activeFrameId)) {
+      store.setSession(undefined);
+    }
+  }, [loc, activeFrameId]);
+  useEffect(() => {
+    useScreenEditStore.getState().setPending(undefined);
   }, [loc]);
 }
 
@@ -67,7 +75,7 @@ export function useScreenRun(input: ScreenRunInput): {
   const { loc, target, ctx, optimisticClass, send, setError } = input;
   const { t } = useTranslation();
   const screens = useScreens();
-  const only = useScreenEditStore((s) => s.onlyKey === loc);
+  const only = useInSession(loc);
   const runRef = useRef<ScreenRun | undefined>(undefined);
   const classRef = useRef(optimisticClass);
   const run: ScreenRun = (entries, mode) => {

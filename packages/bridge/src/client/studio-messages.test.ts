@@ -56,7 +56,7 @@ describe('studio-messages [R-ST-13]', () => {
   });
 });
 
-describe('studio-messages set-grid [R-FF-11, spec-log #125]', () => {
+describe('studio-messages set-grid [R-FF-11] (spec-log #125)', () => {
   it('passes the grid with the snap switch and the zoom, and drops a bad zoom', () => {
     const handlers = createHandlers();
     dispatchStudioMessage('set-grid', { size: 8, snap: false, scale: 0.5 }, handlers);

@@ -6,8 +6,10 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import * as eventsClient from '../../api/events-client.ts';
 import * as sourceClient from '../../api/source-client.ts';
 import { initI18n } from '../../i18n/i18n.ts';
+import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { InspectorPanel } from './inspector-panel.tsx';
+import { useScreenEditStore } from './screen-scope.ts';
 
 const mockDesktopFrame: Frame = {
   id: 'desktop',
@@ -26,6 +28,15 @@ const mockMobileFrame: Frame = {
 describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
   beforeAll(async () => {
     await initI18n();
+  });
+
+  beforeEach(() => {
+    // The Canvas shows Desktop and Mobile; Desktop is active unless a test picks Mobile.
+    useCanvasViewStore.setState({
+      frames: [mockDesktopFrame, mockMobileFrame],
+      activeFrameId: 'desktop',
+    });
+    useScreenEditStore.setState({ session: undefined, pending: undefined });
   });
 
   beforeEach(() => {
@@ -125,7 +136,7 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
     expect(shadowInput.value).toBe('md');
   });
 
-  it('Scenario 2: on the Mobile frame an edit reaches every screen by default [R-IN-11, spec-log #141]', async () => {
+  it('Scenario 2: on the Mobile frame an edit reaches every screen by default [R-IN-11] (spec-log #141)', async () => {
     const sampleSource: ElementSource = {
       loc: 'src/App.tsx:25:2',
       tag: 'div',
@@ -142,6 +153,7 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
       useSelectionStore.getState().setSelectedRefs([{ loc: 'src/App.tsx:25:2', index: 0 }]);
     });
 
+    useCanvasViewStore.setState({ activeFrameId: 'mobile' });
     render(
       <InspectorPanel
         options={{
@@ -152,10 +164,14 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
       />,
     );
 
-    await waitFor(() => {
-      expect(screen.getByTestId('screen-scope-all').getAttribute('aria-pressed')).toBe('true');
-    });
-    expect(screen.getByTestId('screen-scope-only').getAttribute('aria-pressed')).toBe('false');
+    // On the Mobile frame the line says edits reach every screen and offers "Edit for Mobile only".
+    const start = await screen.findByTestId('screen-session-start');
+    expect(start.textContent).toContain('Mobile');
+    expect(screen.queryByTestId('screen-session-bar')).toBeNull();
+    fireEvent.click(start);
+    expect(screen.getByTestId('screen-session-bar').textContent).toContain('Mobile');
+    fireEvent.click(screen.getByTestId('screen-session-done'));
+    expect(screen.queryByTestId('screen-session-bar')).toBeNull();
     expect(screen.getByTestId('property-field-padding')).toBeDefined();
     // p-6 is the same on every screen: no "own value on this screen" mark.
     expect(screen.queryByTestId('screen-own-padding')).toBeNull();
@@ -236,7 +252,7 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
     expect(screen.getByTestId('warning-loop').textContent).toContain('3');
   });
 
-  it('a Hover edit always reaches every screen [R-IN-12, spec-log #141]', async () => {
+  it('a Hover edit always reaches every screen [R-IN-12] (spec-log #141)', async () => {
     const sampleSource: ElementSource = {
       loc: 'src/App.tsx:15:3',
       tag: 'div',
@@ -272,17 +288,21 @@ describe('InspectorPanel Component [SPEC-04 section 9 M-IN]', () => {
       expect(screen.getByTestId('interaction-state-select')).toBeDefined();
     });
 
-    const only = screen.getByTestId<HTMLButtonElement>('screen-scope-only');
-    expect(only.disabled).toBe(false);
+    // The Desktop frame is where the page is designed: no "only this screen" there.
+    expect(screen.queryByTestId('screen-session-start')).toBeNull();
+    act(() => {
+      useCanvasViewStore.setState({ activeFrameId: 'mobile' });
+    });
+    const start = await screen.findByTestId<HTMLButtonElement>('screen-session-start');
+    expect(start.disabled).toBe(false);
 
     const select = screen.getByTestId('interaction-state-select');
     fireEvent.change(select, { target: { value: 'hover' } });
 
     // Hover styles are written once for all screens, so "only this screen" cannot be chosen.
     await waitFor(() => {
-      expect(screen.getByTestId<HTMLButtonElement>('screen-scope-only').disabled).toBe(true);
+      expect(screen.getByTestId<HTMLButtonElement>('screen-session-start').disabled).toBe(true);
     });
-    expect(screen.getByTestId('screen-scope-all').getAttribute('aria-pressed')).toBe('true');
   });
 
   it('lists project font sizes first [R-IN-19]', async () => {

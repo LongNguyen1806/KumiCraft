@@ -590,9 +590,6 @@
     "invalidValue": "Not a valid Tailwind {{major}} value: for example 4, 2.5, 1/2 or [13px]",
     "darkSetupAiPrompt": "Add dark mode to the page {{file}} (route {{route}}). Change colors only in this file and the components only it uses; do not edit other pages. How: if the project already has a light/dark mechanism (a store, ThemeProvider, next-themes, data-theme, a dark class…), reuse it and do not add a second one; if it has none, use a dark class on <html> (follow the system setting at first, remember the visitor's choice, add a no-flash snippet to index.html). If the project has no light/dark button yet, put one on this page. Do not install packages.",
     "screen": {
-      "appliesTo": "Applies to",
-      "all": "All screens",
-      "only": "Only {{frame}}",
       "stateHint": "States (hover, focus…) and dark mode always apply to all screens",
       "ask": "This property differs between screens. Where should the change go?",
       "askAll": "All screens",
@@ -600,7 +597,12 @@
       "askCancel": "Skip",
       "cannotSplit": "Can't set this screen on its own: this frame is too close to the next one, with no screen breakpoint between them.",
       "own": "{{frame}}'s own value",
-      "drop": "Drop {{frame}}'s own value"
+      "drop": "Drop {{frame}}'s own value",
+      "viewing": "Viewing {{frame}}: changes apply to all screens.",
+      "start": "Edit for {{frame}} only",
+      "editing": "Editing for {{frame}} only",
+      "done": "Done",
+      "cancel": "Cancel"
     }
   },
   "textEdit": {

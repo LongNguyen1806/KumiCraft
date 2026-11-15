@@ -5,6 +5,7 @@ import { editSourceBatch } from '../../api/source-client.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { scopeCanvasChange } from '../inspector/screen-scope.ts';
 import { useSelectionStore } from '../selection/selection-store.ts';
 import { freeFrameOfRef } from './free-context.ts';
 import { readStaticClassName } from './free-frame-commands.ts';
@@ -69,11 +70,17 @@ export async function nudgeSelection(dx: number, dy: number): Promise<boolean> {
     const newLeft = Math.max(0, oldLeft + dx);
     const newTop = Math.max(0, oldTop + dy);
 
-    const after = applyPlacement(
+    const placed = applyPlacement(
       before,
       { kind: 'free', left: newLeft, top: newTop },
       tailwindMajor,
     );
+    // Same screen scope as an Inspector edit (spec-log #144).
+    const after = scopeCanvasChange(ref.loc, before, placed);
+    if (after === undefined) {
+      useDndStore.getState().setError({ code: 'E023', params: { reason: 'screenSplit' } });
+      return false;
+    }
 
     const node = treeNodes.find((n) => n.ref.loc === ref.loc);
     const tag = node?.tag ?? 'div';

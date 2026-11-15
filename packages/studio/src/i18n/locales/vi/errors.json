@@ -183,7 +183,8 @@
       "differentParents": "Các phần tử đang chọn phải có cùng phần tử cha.",
       "noSelectItems": "Không tìm thấy SelectItem nào trong SelectGroup.",
       "missingOpening": "Thiếu thẻ mở JSX.",
-      "blockedAttribute": "Thuộc tính {{name}} không được phép sửa ở đây."
+      "blockedAttribute": "Thuộc tính {{name}} không được phép sửa ở đây.",
+      "screenSplit": "Không tách được riêng cho màn hình này: khung này quá sát khung bên cạnh, không có mốc màn hình nào ở giữa."
     }
   },
   "E024": {

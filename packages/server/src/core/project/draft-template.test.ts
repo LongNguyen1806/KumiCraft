@@ -12,7 +12,7 @@ const report = (systems: StylingReport['systems']): StylingReport => ({
   globalCss: [],
 });
 
-describe('buildDraftContent [R-DR-10, spec-log #130]', () => {
+describe('buildDraftContent [R-DR-10] (spec-log #130)', () => {
   it('Tailwind (and an unknown project) keeps the Tailwind root', () => {
     expect(buildDraftContent('A', false, report([{ id: 'tailwind', version: '4' }]))).toContain(
       'className="min-h-screen bg-white p-8"',

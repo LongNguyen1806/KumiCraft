@@ -90,7 +90,7 @@ describe('useCanvasTextEdit (SPEC-04 section 10 M-TX, R-TX-01..08)', () => {
     expect(result.current.editingRef).toEqual(SAMPLE_REF);
   });
 
-  it('ignores a double click on text that is an expression, with no notice [R-TX-01, spec-log #119]', async () => {
+  it('ignores a double click on text that is an expression, with no notice [R-TX-01] (spec-log #119)', async () => {
     const exprSource: ElementSource = {
       ...STATIC_SOURCE,
       text: { kind: 'expression', code: 'item.title' },
@@ -104,7 +104,7 @@ describe('useCanvasTextEdit (SPEC-04 section 10 M-TX, R-TX-01..08)', () => {
     expect(result.current.isEditing).toBe(false);
   });
 
-  it('ignores a double click on mixed text, with no notice [R-TX-01, spec-log #119]', async () => {
+  it('ignores a double click on mixed text, with no notice [R-TX-01] (spec-log #119)', async () => {
     const mixedSource: ElementSource = {
       ...STATIC_SOURCE,
       text: { kind: 'mixed' },
@@ -118,7 +118,7 @@ describe('useCanvasTextEdit (SPEC-04 section 10 M-TX, R-TX-01..08)', () => {
     expect(result.current.isEditing).toBe(false);
   });
 
-  it('ignores a double click on a read-only element, with no notice [R-TX-01, spec-log #119]', async () => {
+  it('ignores a double click on a read-only element, with no notice [R-TX-01] (spec-log #119)', async () => {
     const readonlySource: ElementSource = {
       ...STATIC_SOURCE,
       readonly: 'outsideSource',

@@ -19,6 +19,7 @@ import { editSource, editSourceBatch, fetchElementSourceByLoc } from '../../api/
 import { toErrorInfo } from '../../routes/error-text.ts';
 import { useDndStore } from '../dnd/dnd-store.ts';
 import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { scopeCanvasChange } from '../inspector/screen-scope.ts';
 import { type BridgeChannel, studioBridgeChannel } from '../selection/bridge-channel.ts';
 
 /** Current static className of an element; `className={…}` cannot be rewritten (E023). */
@@ -41,11 +42,17 @@ export async function handleFreeMove(payload: BridgeFreeMovePayload): Promise<vo
     }
     const before = beforeRes.value;
     // No width/height in the placement: the element keeps its current w-/h- classes.
-    const after = applyPlacement(
+    const placed = applyPlacement(
       before,
       { kind: 'free', left: item.left, top: item.top },
       tailwindMajor,
     );
+    // Same screen scope as an Inspector edit (spec-log #144).
+    const after = scopeCanvasChange(item.ref.loc, before, placed);
+    if (after === undefined) {
+      useDndStore.getState().setError({ code: 'E023', params: { reason: 'screenSplit' } });
+      return;
+    }
     edits.push({ kind: 'setClassName', loc: item.ref.loc, tag: item.tag, before, after });
   }
   await editSourceBatch({ edits });
@@ -75,11 +82,17 @@ export async function handleFreeResize(payload: BridgeFreeResizePayload): Promis
     return;
   }
   const before = beforeRes.value;
-  const after = computeNextClassNameForResize(
+  const resized = computeNextClassNameForResize(
     payload,
     before,
     useCanvasViewStore.getState().tailwindMajor,
   );
+  // Same screen scope as an Inspector edit (spec-log #144).
+  const after = scopeCanvasChange(payload.ref.loc, before, resized);
+  if (after === undefined) {
+    useDndStore.getState().setError({ code: 'E023', params: { reason: 'screenSplit' } });
+    return;
+  }
   await editSource({
     edit: { kind: 'setClassName', loc: payload.ref.loc, tag: payload.tag, before, after },
   });
