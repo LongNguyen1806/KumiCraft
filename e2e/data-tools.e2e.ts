@@ -91,9 +91,10 @@ test('12. Data sources picker (TS/Zod/Django/OpenAPI), DataTable live preview, a
 
   // 3) Edit typed component props on <ActionCard> + Undo
   await selectTreeItem(page, /\bActionCard\b/);
-  const variantSelect = page.getByTestId('prop-input-variant');
-  await expect(variantSelect).toBeVisible({ timeout: 15_000 });
-  await variantSelect.selectOption('outline');
+  // Two choices show as a row of buttons (thiet-ke-component.md §3).
+  const outline = page.getByTestId('prop-option-variant-outline');
+  await expect(outline).toBeVisible({ timeout: 15_000 });
+  await outline.click();
   await expect.poll(() => readFile(homeTsx, 'utf8')).toContain('variant="outline"');
 
   const undoBtn = page.getByRole('button', { name: undoLabel() });

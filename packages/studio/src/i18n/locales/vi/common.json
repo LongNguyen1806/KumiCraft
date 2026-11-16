@@ -976,13 +976,29 @@
     "emptyRows": "Chưa có dòng dữ liệu."
   },
   "componentProps": {
-    "title": "Thuộc tính component ({{tag}})",
-    "loading": "Đang đọc kiểu props…",
-    "empty": "Không phát hiện prop chỉnh sửa trực tiếp.",
-    "editInEditor": "Sửa trong editor",
+    "title": "Tùy chỉnh",
+    "titlePackage": "Tùy chỉnh (chỉ ghi vào trang này)",
+    "loading": "Đang đọc component…",
+    "empty": "Component này giống nhau ở mọi chỗ dùng. Muốn đổi, bấm Sửa component.",
+    "emptyPackage": "Thư viện không mô tả thêm tùy chỉnh nào cho component này.",
     "openEditor": "Mở",
-    "required": "Bắt buộc",
-    "unset": "(chưa đặt)"
+    "fromCode": "lấy từ code",
+    "default": "Mặc định",
+    "advanced": "Nâng cao ({{count}})",
+    "usages_other": "Dùng ở {{count}} chỗ",
+    "edit": "Sửa component",
+    "remove": "Gỡ khỏi trang",
+    "fromPackage": "Từ thư viện, không sửa được bên trong.",
+    "groups": {
+      "content": "Nội dung",
+      "image": "Hình ảnh",
+      "link": "Liên kết",
+      "toggle": "Hiện / ẩn",
+      "style": "Kiểu",
+      "state": "Trạng thái",
+      "behavior": "Hành vi",
+      "data": "Dữ liệu"
+    }
   },
   "a11y": {
     "title": "Gợi ý trợ năng",

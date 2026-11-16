@@ -47,7 +47,7 @@ describe('Component Props & setProp [TK-49, TK-51, Test 7]', () => {
   it('reads typed props for TS component and JS PropTypes, edits string/number/boolean, removes false, and blocks dangerous/expr props', async () => {
     await fs.writeFile(
       path.join(tmpRoot, 'src/components/Badge.tsx'),
-      "export type BadgeProps = {\n  tone?: 'primary' | 'muted';\n  count: number;\n  pill?: boolean;\n  disabled: boolean;\n  onClick?: () => void;\n};\nexport function Badge(_p: BadgeProps) {\n  return <span />;\n}\n",
+      "export type BadgeProps = {\n  tone?: 'primary' | 'muted';\n  count: number;\n  pill?: boolean;\n  disabled: boolean;\n  onClick?: () => void;\n};\nexport function Badge({ tone, count, pill, disabled }: BadgeProps) {\n  return <span className={tone} aria-disabled={disabled}>{count}{pill && <i />}</span>;\n}\n",
       'utf8',
     );
     const appPath = path.join(tmpRoot, 'src/App.tsx');
@@ -97,7 +97,7 @@ describe('Component Props & setProp [TK-49, TK-51, Test 7]', () => {
     // Check PropTypes fallback in JS file
     await fs.writeFile(
       path.join(tmpRoot, 'src/JsCard.jsx'),
-      "export function JsCard() { return <div />; }\nJsCard.propTypes = { size: PropTypes.oneOf(['sm', 'lg']), compact: PropTypes.bool };\nexport function Demo() {\n  return <JsCard size=\"sm\" />;\n}\n",
+      "export function JsCard({ size, compact }) { return <div className={size}>{compact && <b />}</div>; }\nJsCard.propTypes = { size: PropTypes.oneOf(['sm', 'lg']), compact: PropTypes.bool };\nexport function Demo() {\n  return <JsCard size=\"sm\" />;\n}\n",
       'utf8',
     );
     const jsProps = await readComponentProps(

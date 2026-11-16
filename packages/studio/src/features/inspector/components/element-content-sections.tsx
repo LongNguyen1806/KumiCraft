@@ -24,7 +24,6 @@ export function ElementContentSections({
 }: ElementContentSectionsProps) {
   return (
     <>
-      <MixedTextEditor source={source} disabled={isAttrLocked} onSaved={onRefresh} />
       <ComponentPropsSection
         loc={source.loc}
         tag={source.tag}
@@ -33,6 +32,7 @@ export function ElementContentSections({
         disabled={isAttrLocked}
         onSaved={onRefresh}
       />
+      <MixedTextEditor source={source} disabled={isAttrLocked} onSaved={onRefresh} />
       <DataGridSection dataContext={source.dataContext} onSaved={onRefresh} />
       <InspectorIconSection
         source={source}

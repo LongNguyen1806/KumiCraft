@@ -120,6 +120,23 @@ export type DataSourceFieldsResponse = z.infer<typeof DataSourceFieldsResponseSc
 export const ComponentPropKindSchema = z.enum(['union', 'boolean', 'number', 'string', 'complex']);
 export type ComponentPropKind = z.infer<typeof ComponentPropKindSchema>;
 
+/**
+ * What a prop does on screen, read from where the component uses it (thiet-ke-component.md §3):
+ * printed as text, put in `src`, in `href`, as a show/hide condition, as a style lookup…
+ */
+export const ComponentPropRoleSchema = z.enum([
+  'content',
+  'image',
+  'link',
+  'toggle',
+  'style',
+  'state',
+  'behavior',
+  'data',
+  'advanced',
+]);
+export type ComponentPropRole = z.infer<typeof ComponentPropRoleSchema>;
+
 export const ComponentPropSpecSchema = z.strictObject({
   name: z.string().min(1),
   kind: ComponentPropKindSchema,
@@ -128,6 +145,11 @@ export const ComponentPropSpecSchema = z.strictObject({
   value: SetPropValueSchema.optional(),
   hasValue: z.boolean(),
   readonlyExpression: z.boolean(),
+  role: ComponentPropRoleSchema.optional(),
+  /** The default the definition gives (`featured = false`), shown when the use sets nothing. */
+  defaultValue: SetPropValueSchema.optional(),
+  /** The code of a value that is not a constant (`{item.image}`), shown as "from the code". */
+  expression: z.string().max(200).optional(),
 });
 export type ComponentPropSpec = z.infer<typeof ComponentPropSpecSchema>;
 
@@ -144,5 +166,9 @@ export const ComponentPropsResponseSchema = z.strictObject({
   tag: z.string().min(1),
   sourceKind: z.enum(['typescript', 'propTypes', 'attributes', 'unknown']),
   props: z.array(ComponentPropSpecSchema).readonly(),
+  /** The project file that defines the component, when it is one of the project's. */
+  componentFile: RelPathSchema.optional(),
+  /** The package the component comes from (`@mui/material`): its inside cannot be edited. */
+  packageName: z.string().min(1).max(214).optional(),
 });
 export type ComponentPropsResponse = z.infer<typeof ComponentPropsResponseSchema>;

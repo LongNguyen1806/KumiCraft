@@ -12,20 +12,22 @@ import { z } from 'zod';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
 import type { ProcessPort } from '../ports/process-port.ts';
-import {
-  asAstNode,
-  type AstNode,
-  getJsxTagName,
-  parseJsxAst,
-} from '../source-editor/ast-helpers.ts';
+import { asAstNode, type AstNode, parseJsxAst } from '../source-editor/ast-helpers.ts';
 import { readConstantProp } from '../source-editor/prop-mutator.ts';
 import { findNodeAt } from '../source-editor/source-editor-lookup.ts';
+import { resolveBoundaryCallSite } from './component-boundary.ts';
+import {
+  type PropOrigin,
+  resolveComponentOrigin,
+  shapeComponentProps,
+} from './component-props-shape.ts';
 
 type SchemaProp = {
   readonly name: string;
   readonly kind: ComponentPropKind;
   readonly required: boolean;
   readonly options?: readonly string[];
+  readonly origin?: PropOrigin | undefined;
 };
 
 export type ComponentPropsDeps = {
@@ -39,6 +41,7 @@ const TsInspectPropItemSchema = z.object({
   kind: z.string().optional(),
   required: z.boolean().optional(),
   options: z.array(z.string()).optional(),
+  origin: z.enum(['react', 'package', 'project']).optional(),
 });
 const TsInspectPropsOutputSchema = z.object({ props: z.array(TsInspectPropItemSchema) });
 
@@ -55,6 +58,7 @@ function parseTsInspectOutput(lastLine: string): readonly SchemaProp[] | undefin
         kind,
         required: p.required === true,
         ...(p.options && p.options.length > 0 ? { options: p.options } : {}),
+        ...(p.origin !== undefined ? { origin: p.origin } : {}),
       };
     });
   } catch {
@@ -256,19 +260,33 @@ async function resolveSchemaProps(
   return { schemaProps: [], sourceKind: 'unknown' };
 }
 
+type CurrentProp = {
+  readonly state: ReturnType<typeof readConstantProp>;
+  /** The code of a value that is not a constant, cut to what the Inspector shows. */
+  readonly expression?: string | undefined;
+};
+
+function expressionText(state: CurrentProp): { expression?: string } {
+  return state.expression === undefined ? {} : { expression: state.expression };
+}
+
 function mergeComponentProps(
   schemaProps: readonly SchemaProp[],
-  currentMap: ReadonlyMap<string, ReturnType<typeof readConstantProp>>,
+  currentMap: ReadonlyMap<string, CurrentProp>,
   initialSourceKind: ComponentPropsResponse['sourceKind'],
-): { sourceKind: ComponentPropsResponse['sourceKind']; props: readonly ComponentPropSpec[] } {
+): {
+  sourceKind: ComponentPropsResponse['sourceKind'];
+  props: readonly (ComponentPropSpec & { readonly origin?: PropOrigin | undefined })[];
+} {
   let sourceKind = initialSourceKind;
-  const props: ComponentPropSpec[] = [];
+  const props: (ComponentPropSpec & { readonly origin?: PropOrigin | undefined })[] = [];
   const seen = new Set<string>();
 
   for (const sp of schemaProps) {
     if (!isValidSettablePropName(sp.name)) continue;
     seen.add(sp.name);
-    const cur = currentMap.get(sp.name) ?? { kind: 'absent' as const };
+    const current = currentMap.get(sp.name) ?? { state: { kind: 'absent' as const } };
+    const cur = current.state;
     props.push({
       name: sp.name,
       kind: sp.kind,
@@ -277,12 +295,15 @@ function mergeComponentProps(
       ...(cur.kind === 'constant' ? { value: cur.value } : {}),
       hasValue: cur.kind !== 'absent',
       readonlyExpression: cur.kind === 'expression',
+      ...expressionText(current),
+      ...(sp.origin !== undefined ? { origin: sp.origin } : {}),
     });
   }
 
-  for (const [name, cur] of currentMap) {
+  for (const [name, current] of currentMap) {
     if (seen.has(name)) continue;
     if (sourceKind === 'unknown') sourceKind = 'attributes';
+    const cur = current.state;
     props.push({
       name,
       kind: inferKindFromCurrent(cur),
@@ -290,64 +311,64 @@ function mergeComponentProps(
       ...(cur.kind === 'constant' ? { value: cur.value } : {}),
       hasValue: cur.kind !== 'absent',
       readonlyExpression: cur.kind === 'expression',
+      ...expressionText(current),
     });
   }
   return { sourceKind, props };
 }
 
-function findComponentCallInAst(
-  root: AstNode,
-  componentName: string,
-): { readonly line: number; readonly column: number } | undefined {
-  let match: { line: number; column: number } | undefined;
-  const visit = (curr: unknown): void => {
-    if (match !== undefined) return;
-    if (Array.isArray(curr)) {
-      for (const item of curr) visit(item);
-      return;
-    }
-    const n = asAstNode(curr);
-    if (!n) return;
-    if (n.type === 'JSXElement') {
-      const opening = asAstNode(n['openingElement']);
-      if (opening && getJsxTagName(opening) === componentName && n.loc?.start !== undefined) {
-        match = { line: n.loc.start.line, column: n.loc.start.column + 1 };
-        return;
-      }
-    }
-    for (const key of Object.keys(n)) {
-      if (key === 'loc' || key === 'start' || key === 'end') continue;
-      visit(n[key]);
-    }
-  };
-  visit(root);
-  return match;
+/** The props the use writes, with the code of each value that is not a constant. */
+function readCurrentProps(code: string, target: AstNode): Map<string, CurrentProp> {
+  const opening = asAstNode(target['openingElement']);
+  const rawAttrs = Array.isArray(opening?.['attributes']) ? opening['attributes'] : [];
+  const currentMap = new Map<string, CurrentProp>();
+  for (const rawA of rawAttrs) {
+    const a = asAstNode(rawA);
+    if (a?.type !== 'JSXAttribute') continue;
+    const name = asAstNode(a['name'])?.['name'];
+    if (typeof name !== 'string' || !isValidSettablePropName(name)) continue;
+    const state = readConstantProp(a);
+    const expr = asAstNode(asAstNode(a['value'])?.['expression']);
+    const text =
+      state.kind === 'expression' && expr?.start !== undefined && expr.end !== undefined
+        ? code.slice(expr.start, expr.end).replace(/\s+/g, ' ')
+        : undefined;
+    currentMap.set(name, {
+      state,
+      ...(text !== undefined
+        ? { expression: text.length > 200 ? `${text.slice(0, 199)}…` : text }
+        : {}),
+    });
+  }
+  return currentMap;
 }
 
-async function resolveBoundaryCallSite(
-  deps: ComponentPropsDeps,
+/** The file of the use, parsed, and the use's element in it. */
+async function readUse(
+  fs: FileSystemPort,
   projectRoot: string,
-  parentLoc: string,
-  componentName: string,
-): Promise<{ readonly loc: string; readonly tag: string } | undefined> {
-  const parsed = parseLocString(parentLoc);
-  if (!parsed) return undefined;
-  const readRes = await deps.fs.readText(projectRoot, parsed.file, { maxBytes: 1_000_000 });
-  if (!readRes.ok) return undefined;
+  loc: string,
+): Promise<
+  Result<{
+    parsedLoc: NonNullable<ReturnType<typeof parseLocString>>;
+    code: string;
+    ast: AstNode;
+    target: AstNode;
+  }>
+> {
+  const parsedLoc = parseLocString(loc);
+  if (!parsedLoc) return err({ code: 'E016', params: { field: 'loc' } });
+  const readRes = await fs.readText(projectRoot, parsedLoc.file, { maxBytes: 1_000_000 });
+  if (!readRes.ok) return readRes;
   let ast: AstNode;
   try {
     ast = parseJsxAst(readRes.value);
   } catch {
-    return undefined;
+    return err({ code: 'E024', params: { line: 1, column: 1 } });
   }
-  const parentNode = findNodeAt(ast, parsed.line, parsed.column);
-  if (!parentNode) return undefined;
-  const found = findComponentCallInAst(parentNode, componentName);
-  if (!found) return undefined;
-  return {
-    loc: `${parsed.file}:${String(found.line)}:${String(found.column)}`,
-    tag: componentName,
-  };
+  const target = findNodeAt(ast, parsedLoc.line, parsedLoc.column);
+  if (!target) return err({ code: 'E017', params: { loc, reason: 'moved' } });
+  return ok({ parsedLoc, code: readRes.value, ast, target });
 }
 
 export async function readComponentProps(
@@ -363,32 +384,15 @@ export async function readComponentProps(
       : undefined;
   const effectiveLoc = resolved?.loc ?? loc;
   const effectiveTag = resolved?.tag ?? tag;
-
-  const parsedLoc = parseLocString(effectiveLoc);
-  if (!parsedLoc) return err({ code: 'E016', params: { field: 'loc' } });
-  const readRes = await deps.fs.readText(projectRoot, parsedLoc.file, { maxBytes: 1_000_000 });
-  if (!readRes.ok) return readRes;
-
-  let ast: AstNode;
-  try {
-    ast = parseJsxAst(readRes.value);
-  } catch {
-    return err({ code: 'E024', params: { line: 1, column: 1 } });
-  }
-  const target = findNodeAt(ast, parsedLoc.line, parsedLoc.column);
-  if (!target) return err({ code: 'E017', params: { loc: effectiveLoc, reason: 'moved' } });
-
-  const opening = asAstNode(target['openingElement']);
-  const rawAttrs = Array.isArray(opening?.['attributes']) ? opening['attributes'] : [];
-  const currentMap = new Map<string, ReturnType<typeof readConstantProp>>();
-  for (const rawA of rawAttrs) {
-    const a = asAstNode(rawA);
-    if (a?.type !== 'JSXAttribute') continue;
-    const name = asAstNode(a['name'])?.['name'];
-    if (typeof name !== 'string' || !isValidSettablePropName(name)) continue;
-    currentMap.set(name, readConstantProp(a));
+  // A plain element (`<img>`) is no component: its attributes have their own sections.
+  if (!/^[A-Z]/.test(effectiveTag)) {
+    return ok({ loc: effectiveLoc, tag: effectiveTag, sourceKind: 'unknown', props: [] });
   }
 
+  const use = await readUse(deps.fs, projectRoot, effectiveLoc);
+  if (!use.ok) return use;
+  const { parsedLoc, code, ast, target } = use.value;
+  const currentMap = readCurrentProps(code, target);
   const schema = await resolveSchemaProps(
     deps,
     projectRoot,
@@ -396,9 +400,24 @@ export async function readComponentProps(
     parsedLoc.line,
     parsedLoc.column,
     effectiveTag,
-    readRes.value,
+    code,
     ast,
   );
   const merged = mergeComponentProps(schema.schemaProps, currentMap, schema.sourceKind);
-  return ok({ loc: effectiveLoc, tag: effectiveTag, ...merged });
+  const origin = await resolveComponentOrigin(
+    deps.fs,
+    projectRoot,
+    parsedLoc.file,
+    ast,
+    effectiveTag,
+    (spec) => resolveModuleFile(deps.fs, projectRoot, parsedLoc.file, spec),
+  );
+  return ok({
+    loc: effectiveLoc,
+    tag: effectiveTag,
+    sourceKind: merged.sourceKind,
+    props: shapeComponentProps(merged.props, origin),
+    ...(origin.componentFile !== undefined ? { componentFile: origin.componentFile } : {}),
+    ...(origin.packageName !== undefined ? { packageName: origin.packageName } : {}),
+  });
 }

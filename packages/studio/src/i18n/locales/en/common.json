@@ -976,13 +976,30 @@
     "emptyRows": "No rows yet."
   },
   "componentProps": {
-    "title": "Component Props ({{tag}})",
-    "loading": "Inspecting component props…",
-    "empty": "No editable props detected.",
-    "editInEditor": "Edit in editor",
+    "title": "Customize",
+    "titlePackage": "Customize (this page only)",
+    "loading": "Reading the component…",
+    "empty": "This component looks the same wherever it is used. To change it, click Edit component.",
+    "emptyPackage": "The library describes no other options for this component.",
     "openEditor": "Open",
-    "required": "Required",
-    "unset": "(unset)"
+    "fromCode": "from the code",
+    "default": "Default",
+    "advanced": "Advanced ({{count}})",
+    "usages_one": "Used in {{count}} place",
+    "usages_other": "Used in {{count}} places",
+    "edit": "Edit component",
+    "remove": "Remove from page",
+    "fromPackage": "From a library: its inside cannot be edited.",
+    "groups": {
+      "content": "Content",
+      "image": "Image",
+      "link": "Link",
+      "toggle": "Show / hide",
+      "style": "Style",
+      "state": "State",
+      "behavior": "Behavior",
+      "data": "Data"
+    }
   },
   "a11y": {
     "title": "Accessibility hints",

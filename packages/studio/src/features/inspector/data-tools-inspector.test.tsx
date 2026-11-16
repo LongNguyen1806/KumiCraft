@@ -225,13 +225,14 @@ describe('Studio K9.7-4 Data & Quality Inspector Controls (Tests 4, 7, 9, 10, 11
     await waitFor(() => {
       expect(screen.getByTestId('prop-input-variant')).toBeDefined();
     });
-    expect(screen.getByTestId('prop-input-variant').tagName).toBe('SELECT');
+    // Two choices: a row of buttons (thiet-ke-component.md §3), each in plain words.
+    expect(screen.getByTestId('prop-input-variant').getAttribute('role')).toBe('radiogroup');
     expect(screen.getByTestId<HTMLInputElement>('prop-input-disabled').type).toBe('checkbox');
     expect(screen.getByTestId<HTMLInputElement>('prop-input-count').type).toBe('number');
     expect(screen.getByTestId('prop-readonly-renderItem')).toBeDefined();
     expect(screen.queryByTestId('prop-readonly-onClick')).toBeNull();
 
-    fireEvent.change(screen.getByTestId('prop-input-variant'), { target: { value: 'outline' } });
+    fireEvent.click(screen.getByTestId('prop-option-variant-outline'));
     await waitFor(() => {
       expect(editSpy).toHaveBeenCalledTimes(1);
     });

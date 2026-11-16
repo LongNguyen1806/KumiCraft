@@ -35,11 +35,15 @@ type OutField = {
   readonly options?: readonly string[];
 };
 
+/** Where a prop is declared: React's own HTML attributes, a package, or the project. */
+type PropOrigin = 'react' | 'package' | 'project';
+
 type OutProp = {
   readonly name: string;
   readonly kind: 'union' | 'boolean' | 'number' | 'string' | 'complex';
   readonly required: boolean;
   readonly options?: readonly string[];
+  readonly origin: PropOrigin;
 };
 
 type TsSymbol = {
@@ -68,6 +72,7 @@ type TsNode = {
   readonly openingElement?: TsNode;
   getStart(sf?: TsSourceFile): number;
   getEnd(): number;
+  getSourceFile?(): { readonly fileName: string };
   forEachChild(cb: (n: TsNode) => void): void;
 };
 
@@ -331,6 +336,12 @@ function findJsxOpeningAt(
 
 const SKIP_REACT_PROPS = new Set(['children', 'key', 'ref', 'dangerouslySetInnerHTML']);
 
+function originOf(sym: TsSymbol): PropOrigin {
+  const file = sym.declarations?.[0]?.getSourceFile?.().fileName.replaceAll('\\', '/') ?? '';
+  if (file.includes('/node_modules/@types/react/')) return 'react';
+  return file.includes('/node_modules/') ? 'package' : 'project';
+}
+
 function readComponentProps(req: ReadComponentPropsRequest): { props: OutProp[] } {
   const ts = loadTs(req.root);
   const abs = resolve(req.root, req.file);
@@ -366,6 +377,7 @@ function readComponentProps(req: ReadComponentPropsRequest): { props: OutProp[] 
       kind: cls.propKind,
       required,
       ...(cls.options ? { options: cls.options } : {}),
+      origin: originOf(sym),
     });
   }
   return { props };
