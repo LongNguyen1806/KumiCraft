@@ -134,6 +134,8 @@ async function persistComponentProp(
       name: spec.name,
       ...(value !== undefined ? { value } : {}),
       required: spec.required,
+      // Picking a value for a knob written as code replaces that code (Undo brings it back).
+      ...(spec.readonlyExpression ? { replaceExpression: true as const } : {}),
     },
   });
 }

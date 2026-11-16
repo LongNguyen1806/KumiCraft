@@ -837,7 +837,8 @@
     "tooLarge": "Ảnh vượt quá 5 MB",
     "alt": "Mô tả ảnh (alt)",
     "altPlaceholder": "Nhập mô tả ảnh…",
-    "selectedUpload": "Đã chọn tải lên:"
+    "selectedUpload": "Đã chọn tải lên:",
+    "pick": "Chọn"
   },
   "draw": {
     "toolbar": "Công cụ vẽ",
@@ -989,6 +990,13 @@
     "edit": "Sửa component",
     "remove": "Gỡ khỏi trang",
     "fromPackage": "Từ thư viện, không sửa được bên trong.",
+    "pickImage": "Chọn ảnh…",
+    "fixValue": "Đặt giá trị cố định",
+    "partOf_other": "Phần này thuộc component {{name}}. Sửa ở đây sẽ đổi cả {{count}} chỗ dùng.",
+    "partOfUnknown": "Phần này thuộc component {{name}}. Sửa ở đây sẽ đổi mọi chỗ dùng nó.",
+    "partLocked": "Muốn sửa, bấm Sửa component.",
+    "selectWhole": "Chọn cả thẻ",
+    "inside": "nằm trong",
     "groups": {
       "content": "Nội dung",
       "image": "Hình ảnh",

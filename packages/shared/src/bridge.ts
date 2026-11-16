@@ -59,6 +59,10 @@ export const TreeNodeSchema = z.strictObject({
   tag: z.string().min(1),
   label: z.string().max(100).optional(),
   instances: z.number().int().min(1),
+  /** The use of the component this element is the first element of (`<ProductCard …>`). */
+  component: z
+    .strictObject({ loc: z.string().max(500), tag: z.string().min(1).max(100) })
+    .optional(),
 });
 export type TreeNode = z.infer<typeof TreeNodeSchema>;
 

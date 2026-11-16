@@ -837,7 +837,8 @@
     "tooLarge": "Image exceeds 5 MB",
     "alt": "Image description (alt)",
     "altPlaceholder": "Enter image description…",
-    "selectedUpload": "Selected upload:"
+    "selectedUpload": "Selected upload:",
+    "pick": "Choose"
   },
   "draw": {
     "toolbar": "Drawing tools",
@@ -990,6 +991,14 @@
     "edit": "Edit component",
     "remove": "Remove from page",
     "fromPackage": "From a library: its inside cannot be edited.",
+    "pickImage": "Choose image…",
+    "fixValue": "Set a fixed value",
+    "partOf_one": "This part belongs to the component {{name}}. A change here applies to its {{count}} use.",
+    "partOf_other": "This part belongs to the component {{name}}. A change here applies to all {{count}} uses.",
+    "partOfUnknown": "This part belongs to the component {{name}}. A change here applies wherever it is used.",
+    "partLocked": "To change it, click Edit component.",
+    "selectWhole": "Select the whole component",
+    "inside": "inside",
     "groups": {
       "content": "Content",
       "image": "Image",

@@ -1,5 +1,7 @@
 import type { BridgeTreePayload, TreeNode } from '@kumicraft/shared';
 
+import { componentUseOf } from './component-use.ts';
+
 /**
  * Extracts a label from an element according to R-SL-11:
  * - First CSS class without ':'
@@ -88,7 +90,7 @@ export function indexLocElements(root: Element): {
  * - R-SL-11: label from first class without ':' or 24 text chars.
  * - Max 5000 nodes with truncated flag.
  */
-export function scanDomTree(root: Element = document.body): BridgeTreePayload {
+export function scanDomTree(root: Element = document.body, designFile?: string): BridgeTreePayload {
   const { counts, elementIndices } = indexLocElements(root);
   const nodes: TreeNode[] = [];
 
@@ -103,6 +105,7 @@ export function scanDomTree(root: Element = document.body): BridgeTreePayload {
     const instances = counts.get(loc) ?? 1;
     const index = elementIndices.get(el) ?? 0;
     const label = extractElementLabel(el);
+    const component = componentUseOf(el, designFile);
 
     const myIndex = nodes.length;
     const node: TreeNode = {
@@ -111,6 +114,7 @@ export function scanDomTree(root: Element = document.body): BridgeTreePayload {
       instances,
       ...(parentIndex !== undefined ? { parent: parentIndex } : {}),
       ...(label !== undefined ? { label } : {}),
+      ...(component !== undefined ? { component } : {}),
     };
     nodes.push(node);
 

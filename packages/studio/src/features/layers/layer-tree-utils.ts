@@ -28,6 +28,24 @@ export function foldedByDefault(treeNodes: readonly TreeNode[]): ReadonlySet<str
   return new Set(treeNodes.filter((n) => FOLDED_TAGS.has(n.tag)).map((n) => n.ref.loc));
 }
 
+/**
+ * The Canvas names the component the element starts (`ProductCard`, not the `Card` inside it);
+ * without React's record, the file name of a component's root stands in.
+ */
+function componentOfNode(
+  node: TreeNode,
+  nodeFile: string,
+  parentFile: string | undefined,
+): { readonly isBoundary: boolean; readonly componentName?: string | undefined } {
+  // A root row is the page itself: no name on it.
+  if (parentFile === undefined) return { isBoundary: false };
+  const isBoundary = node.component !== undefined || nodeFile !== parentFile;
+  return {
+    isBoundary,
+    componentName: node.component?.tag ?? (isBoundary ? getComponentName(nodeFile) : undefined),
+  };
+}
+
 export function computeVisibleNodes(
   treeNodes: readonly TreeNode[],
   collapsedLocs: ReadonlySet<string>,
@@ -68,8 +86,7 @@ export function computeVisibleNodes(
     const nodeFile = getFileFromLoc(node.ref.loc);
     const parentNode = node.parent !== undefined ? treeNodes[node.parent] : undefined;
     const parentFile = parentNode !== undefined ? getFileFromLoc(parentNode.ref.loc) : undefined;
-    const isBoundary = parentFile !== undefined && nodeFile !== parentFile;
-    const componentName = isBoundary ? getComponentName(nodeFile) : undefined;
+    const { isBoundary, componentName } = componentOfNode(node, nodeFile, parentFile);
 
     result.push({
       node,

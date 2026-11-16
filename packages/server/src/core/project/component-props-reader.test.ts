@@ -187,6 +187,17 @@ describe('Component Props & setProp [TK-49, TK-51, Test 7]', () => {
       value: 5,
     });
     expect(exprErr.ok).toBe(false);
+    // …unless the user asked for a fixed value in its place ("Set a fixed value").
+    const fixed = await editor.applyEdit(tmpRoot, {
+      kind: 'setProp',
+      loc: 'src/App.tsx:3:10',
+      tag: 'Badge',
+      name: 'count',
+      value: 5,
+      replaceExpression: true,
+    });
+    expect(fixed.ok).toBe(true);
+    expect(await fs.readFile(appPath, 'utf8')).toContain('count={5}');
 
     // Block dangerous props both at schema and mutation layers (Test 7 + reverse-check!)
     for (const blocked of [

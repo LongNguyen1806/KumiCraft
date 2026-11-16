@@ -82,7 +82,9 @@ describe('ComponentPropsSection', () => {
     // Set knobs first; the name in words with the code name under it.
     const content = screen.getByTestId('prop-group-content').textContent;
     expect(content.indexOf('Tên')).toBeLessThan(content.indexOf('Giá'));
-    expect(screen.getByTestId('prop-readonly-image').textContent).toBe('item.img');
+    // An image knob picks from the project's images, even over a value written as code.
+    expect(screen.getByTestId('prop-pick-image-image')).toBeDefined();
+    expect(screen.getByTestId('prop-row-image').textContent).toContain('item.img');
     expect(screen.getByTestId<HTMLInputElement>('prop-input-showSale').checked).toBe(true);
     expect(screen.getByTestId('prop-row-showSale').textContent).toContain('Hiện nhãn giảm giá');
     expect(screen.getByTestId('prop-group-advanced').textContent).toContain('sku');
@@ -102,6 +104,36 @@ describe('ComponentPropsSection', () => {
       expect(edit).toHaveBeenCalledTimes(1);
     });
     expect(edit.mock.calls[0]?.[0].edit).toMatchObject({ name: 'price', value: '200k' });
+  });
+
+  it('swaps a value written as code for a fixed one when asked [R-IN-11]', async () => {
+    const edit = renderWith({
+      tag: 'ProductCard',
+      sourceKind: 'typescript',
+      props: [
+        {
+          ...base,
+          name: 'price',
+          kind: 'string',
+          role: 'content',
+          hasValue: true,
+          readonlyExpression: true,
+          expression: 'item.price',
+        },
+      ],
+    });
+    fireEvent.click(await screen.findByTestId('prop-fix-price'));
+    const field = screen.getByTestId<HTMLInputElement>('prop-input-price');
+    fireEvent.change(field, { target: { value: '99k' } });
+    fireEvent.blur(field);
+    await waitFor(() => {
+      expect(edit).toHaveBeenCalledTimes(1);
+    });
+    expect(edit.mock.calls[0]?.[0].edit).toMatchObject({
+      name: 'price',
+      value: '99k',
+      replaceExpression: true,
+    });
   });
 
   it('flags a package component and offers no edit of its inside [R-IN-11]', async () => {

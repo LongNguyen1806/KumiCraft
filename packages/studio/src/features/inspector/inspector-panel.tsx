@@ -25,6 +25,7 @@ import { useEditMode } from '../project/use-edit-mode.ts';
 import { useStyleEditable } from '../project/use-style-edit.ts';
 import { A11yHintsSection } from './components/a11y-hints-section.tsx';
 import { AttributesEditorSection } from './components/attributes-editor.tsx';
+import { ComponentPartGate } from './components/component-part-gate.tsx';
 import { ElementContentSections } from './components/element-content-sections.tsx';
 import { ElementPath } from './components/element-path.tsx';
 import { InspectorHeader } from './components/inspector-header.tsx';
@@ -331,19 +332,21 @@ function SingleTargetEditableBody({
         error={liveEdit.error ?? attrEdit.error ?? target.error}
       />
       {source && (
-        <InspectorSourceBody
-          target={target}
-          source={source}
-          ctx={ctx}
-          frameWidth={frameWidth}
-          editable={editable}
-          isDraft={isDraft}
-          isLocked={isLocked}
-          isAttrLocked={isAttrLocked}
-          classString={liveEdit.classString}
-          onAttributeChange={attrEdit.setAttribute}
-          callbacks={callbacks}
-        />
+        <ComponentPartGate refTarget={target.ref} source={source}>
+          <InspectorSourceBody
+            target={target}
+            source={source}
+            ctx={ctx}
+            frameWidth={frameWidth}
+            editable={editable}
+            isDraft={isDraft}
+            isLocked={isLocked}
+            isAttrLocked={isAttrLocked}
+            classString={liveEdit.classString}
+            onAttributeChange={attrEdit.setAttribute}
+            callbacks={callbacks}
+          />
+        </ComponentPartGate>
       )}
       {editable && <ScreenAskBar />}
     </>

@@ -23,6 +23,11 @@ export function relToSrc(filePath: string): string {
 
 export type ImagePickerDialogProps = {
   readonly open: boolean;
+  /**
+   * Only picks an image already in `public/` (a component's image knob): no upload, no alt, which
+   * the component's own description knob holds.
+   */
+  readonly pickOnly?: boolean | undefined;
   readonly onClose: () => void;
   readonly onPick: (choice: { readonly image: ImageSource; readonly alt: string }) => void;
 };
@@ -44,7 +49,7 @@ async function thumbUrl(file: string): Promise<string | undefined> {
 }
 
 /** A thumbnail of a public/ image, read through the Studio server (S-11): name only until it loads. */
-function ProjectThumb({ file, name }: { readonly file: string; readonly name: string }) {
+export function ProjectThumb({ file, name }: { readonly file: string; readonly name: string }) {
   const [url, setUrl] = useState<string>();
   useEffect(() => {
     let cancelled = false;
@@ -121,18 +126,28 @@ function ImageGrid({ files, selectedSrc, onSelectExisting, emptyLabel }: ImageGr
 }
 
 type HeaderProps = {
+  readonly allowUpload: boolean;
   readonly onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
   readonly onTriggerUpload: () => void;
   readonly onRefChange: (el: HTMLInputElement | undefined) => void;
 };
 
-function ImageUploadHeader({ onFileChange, onTriggerUpload, onRefChange }: HeaderProps) {
+function ImageUploadHeader({
+  allowUpload,
+  onFileChange,
+  onTriggerUpload,
+  onRefChange,
+}: HeaderProps) {
   const { t } = useTranslation();
+  const title = (
+    <span className="text-sm font-medium text-ink-soft">
+      {t('imagePicker.projectImages', 'Ảnh trong dự án')}
+    </span>
+  );
+  if (!allowUpload) return title;
   return (
     <div className="flex items-center justify-between">
-      <span className="text-sm font-medium text-ink-soft">
-        {t('imagePicker.projectImages', 'Ảnh trong dự án')}
-      </span>
+      {title}
       <button
         type="button"
         data-testid="image-picker-upload"
@@ -302,6 +317,7 @@ function ImageSelectedBadge({ name }: { readonly name?: string | undefined }) {
 }
 
 type FormProps = {
+  readonly pickOnly: boolean;
   readonly files: readonly string[];
   readonly selectedSrc?: string | undefined;
   readonly uploadName?: string | undefined;
@@ -323,6 +339,7 @@ function ImagePickerForm(props: FormProps) {
   return (
     <div data-testid="image-picker" className="flex flex-col gap-4">
       <ImageUploadHeader
+        allowUpload={!props.pickOnly}
         onFileChange={props.onFileChange}
         onTriggerUpload={props.onTriggerUpload}
         onRefChange={props.onRefChange}
@@ -335,15 +352,19 @@ function ImagePickerForm(props: FormProps) {
         emptyLabel={t('imagePicker.empty', 'Chưa có ảnh trong public/')}
       />
       <ImageSelectedBadge name={props.uploadName} />
-      <ImageAltInput
-        alt={props.alt}
-        onChange={props.onAltChange}
-        label={t('imagePicker.alt', 'Mô tả ảnh (alt)')}
-        placeholder={t('imagePicker.altPlaceholder', 'Nhập mô tả ảnh…')}
-      />
+      {!props.pickOnly && (
+        <ImageAltInput
+          alt={props.alt}
+          onChange={props.onAltChange}
+          label={t('imagePicker.alt', 'Mô tả ảnh (alt)')}
+          placeholder={t('imagePicker.altPlaceholder', 'Nhập mô tả ảnh…')}
+        />
+      )}
       <ImageDialogActions
         cancelLabel={t('imagePicker.cancel', 'Hủy')}
-        insertLabel={t('imagePicker.insert', 'Chèn')}
+        insertLabel={
+          props.pickOnly ? t('imagePicker.pick', 'Chọn') : t('imagePicker.insert', 'Chèn')
+        }
         canInsert={props.canInsert}
         onClose={props.onClose}
         onInsert={props.onInsert}
@@ -352,7 +373,12 @@ function ImagePickerForm(props: FormProps) {
   );
 }
 
-export function ImagePickerDialog({ open, onClose, onPick }: ImagePickerDialogProps) {
+export function ImagePickerDialog({
+  open,
+  pickOnly = false,
+  onClose,
+  onPick,
+}: ImagePickerDialogProps) {
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement | undefined>(undefined);
 
@@ -365,7 +391,7 @@ export function ImagePickerDialog({ open, onClose, onPick }: ImagePickerDialogPr
   };
 
   const handleInsert = () => {
-    if (selectedImage === undefined || alt.trim().length === 0) return;
+    if (selectedImage === undefined || (!pickOnly && alt.trim().length === 0)) return;
     onPick({ image: selectedImage, alt: alt.trim() });
     handleClose();
   };
@@ -378,10 +404,11 @@ export function ImagePickerDialog({ open, onClose, onPick }: ImagePickerDialogPr
       onClose={handleClose}
     >
       <ImagePickerForm
+        pickOnly={pickOnly}
         files={files}
         selectedSrc={selectedImage?.kind === 'existing' ? selectedImage.src : undefined}
         uploadName={selectedImage?.kind === 'upload' ? selectedImage.name : undefined}
-        canInsert={selectedImage !== undefined && alt.trim().length > 0}
+        canInsert={selectedImage !== undefined && (pickOnly || alt.trim().length > 0)}
         alt={alt}
         error={error}
         onFileChange={handleFileChange}

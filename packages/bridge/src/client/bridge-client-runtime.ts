@@ -392,7 +392,7 @@ export class BridgeClientRuntime {
   private scheduleTreeScan(): void {
     if (this.treeDebounceTimer !== undefined) clearTimeout(this.treeDebounceTimer);
     this.treeDebounceTimer = setTimeout(() => {
-      this.sendToStudio('tree', scanDomTree(document.body));
+      this.sendToStudio('tree', scanDomTree(document.body, this.designFile));
       this.treeDebounceTimer = undefined;
     }, 100);
   }
@@ -421,7 +421,9 @@ export class BridgeClientRuntime {
     this.designFile = file;
     this.focus = focus ?? false;
     this.overlay.setDesignFile(file, focus);
-    if (this.selectedRefs.length > 0) this.scheduleSelectionInfo();
+    // The layers name and the selection's component depend on the file (componentUseOf).
+    this.scheduleTreeScan();
+    this.scheduleSelectionInfo();
   };
 
   public destroy(): void {

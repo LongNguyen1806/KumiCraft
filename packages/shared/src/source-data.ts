@@ -32,6 +32,8 @@ export const SetPropEditSchema = z.strictObject({
   }),
   value: SetPropValueSchema.optional(),
   required: z.boolean().optional(),
+  /** The user chose a fixed value over the code (`image={item.img}` → `image="/a.png"`). */
+  replaceExpression: z.literal(true).optional(),
 });
 export type SetPropEdit = z.infer<typeof SetPropEditSchema>;
 

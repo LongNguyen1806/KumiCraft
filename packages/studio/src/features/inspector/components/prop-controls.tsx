@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { optionLabel, propLabel } from './prop-labels.ts';
+import { ImageField, PageSuggestions } from './prop-pickers.tsx';
 
 export type PropControlProps = {
   readonly spec: ComponentPropSpec;
@@ -37,8 +38,13 @@ export function PropName({ spec }: { readonly spec: ComponentPropSpec }) {
   );
 }
 
-/** A value written as code (`{item.image}`): shown, not edited here. */
-function FromCodeControl({ spec, onOpenEditor }: PropControlProps) {
+/** A value written as code (`{item.image}`): shown, opened, or swapped for a fixed value. */
+function FromCodeControl({
+  spec,
+  disabled,
+  onOpenEditor,
+  onFix,
+}: PropControlProps & { readonly onFix: () => void }) {
   const { t } = useTranslation();
   return (
     <span className="flex min-w-0 flex-col gap-0.5">
@@ -59,7 +65,23 @@ function FromCodeControl({ spec, onOpenEditor }: PropControlProps) {
           {t('componentProps.openEditor')}
         </button>
       </span>
-      <span className="text-[10px] text-ink-faint">{t('componentProps.fromCode')}</span>
+      <span className="flex items-center gap-1 text-[10px] text-ink-faint">
+        {t('componentProps.fromCode')}
+        {spec.kind !== 'complex' && (
+          <>
+            {' · '}
+            <button
+              type="button"
+              data-testid={`prop-fix-${spec.name}`}
+              disabled={disabled}
+              onClick={onFix}
+              className="text-accent hover:underline disabled:opacity-50"
+            >
+              {t('componentProps.fixValue')}
+            </button>
+          </>
+        )}
+      </span>
     </span>
   );
 }
@@ -138,7 +160,12 @@ function ChoiceList({ spec, disabled, onChange }: PropControlProps) {
 }
 
 /** Text and numbers are written when the field is left or Enter is pressed, not on each key. */
-function TypedField({ spec, disabled, onChange }: PropControlProps) {
+function TypedField({
+  spec,
+  disabled,
+  onChange,
+  listId,
+}: PropControlProps & { readonly listId?: string | undefined }) {
   const { t } = useTranslation();
   const isNumber = spec.kind === 'number';
   const saved =
@@ -159,6 +186,7 @@ function TypedField({ spec, disabled, onChange }: PropControlProps) {
       aria-label={spec.name}
       value={text}
       placeholder={defaultHint(spec, t)}
+      list={listId}
       disabled={disabled}
       onChange={(e) => {
         setDraft({ base: saved, text: e.target.value });
@@ -172,12 +200,40 @@ function TypedField({ spec, disabled, onChange }: PropControlProps) {
   );
 }
 
+function LinkField(props: PropControlProps) {
+  const listId = `prop-pages-${props.spec.name}`;
+  return (
+    <>
+      <TypedField {...props} listId={listId} />
+      <PageSuggestions id={listId} />
+    </>
+  );
+}
+
 export function PropControl(props: PropControlProps) {
-  const { spec } = props;
-  if (spec.readonlyExpression || spec.kind === 'complex') return <FromCodeControl {...props} />;
-  if (spec.kind === 'boolean') return <SwitchControl {...props} />;
-  if (spec.kind === 'union' && spec.options !== undefined) {
-    return spec.options.length <= 4 ? <ChoiceRow {...props} /> : <ChoiceList {...props} />;
+  // "Set a fixed value" turns a value from the code into an ordinary field, written over it.
+  const [fixed, setFixed] = useState(false);
+  const spec =
+    fixed && props.spec.readonlyExpression
+      ? { ...props.spec, readonlyExpression: false, value: undefined }
+      : props.spec;
+  const shown = { ...props, spec };
+  const isText = spec.kind === 'string';
+  if (spec.role === 'image' && isText) return <ImageField {...shown} />;
+  if (spec.readonlyExpression || spec.kind === 'complex') {
+    return (
+      <FromCodeControl
+        {...shown}
+        onFix={() => {
+          setFixed(true);
+        }}
+      />
+    );
   }
-  return <TypedField {...props} />;
+  if (spec.role === 'link' && isText) return <LinkField {...shown} />;
+  if (spec.kind === 'boolean') return <SwitchControl {...shown} />;
+  if (spec.kind === 'union' && spec.options !== undefined) {
+    return spec.options.length <= 4 ? <ChoiceRow {...shown} /> : <ChoiceList {...shown} />;
+  }
+  return <TypedField {...shown} />;
 }

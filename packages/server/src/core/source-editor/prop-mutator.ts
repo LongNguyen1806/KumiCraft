@@ -75,7 +75,8 @@ export function applySetPropMutation(
     .map(asAstNode)
     .find((a) => a?.type === 'JSXAttribute' && asAstNode(a['name'])?.['name'] === edit.name);
   const current = readConstantProp(existing);
-  if (current.kind === 'expression') {
+  // A value written as code is replaced only when the user asked for a fixed value.
+  if (current.kind === 'expression' && edit.replaceExpression !== true) {
     return err({ code: 'E023', params: { reason: 'propExpression', name: edit.name } });
   }
 
