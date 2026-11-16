@@ -222,6 +222,18 @@ export function clearSize(classString: string): string {
   }).join(' ');
 }
 
+/**
+ * True when the classes only place an element in a free frame (`absolute left-4 top-4 w-60`): the
+ * class list of the `<div>` the Studio puts around a component that takes no `className`.
+ */
+export function isPlacementOnly(classString: string): boolean {
+  const tokens = parseRawClasses(classString);
+  return (
+    hasFreePosition(classString) &&
+    tokens.every((tok) => tok.variants.length === 0 && isRemovedInFree(tok, true, true))
+  );
+}
+
 /** True when the class string positions the element absolutely with `left`/`top`. */
 export function hasFreePosition(classString: string): boolean {
   const tokens = parseRawClasses(classString).filter((tok) => tok.variants.length === 0);

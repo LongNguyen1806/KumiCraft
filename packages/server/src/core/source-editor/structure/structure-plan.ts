@@ -9,6 +9,7 @@ import { buildMissingImportsEdits } from './imports.ts';
 import { buildReplaceSvgEdits, buildWrapTextInlineEdits } from './inline-svg-ops.ts';
 import { buildSameFileMoveEdits } from './move-ops.ts';
 import { applyPlacementToJsx } from './placement-jsx.ts';
+import { unusedImportEdits, widenToPlaceWrapper } from './remove-cleanup.ts';
 import {
   buildDuplicateTextEdits,
   buildInsertTextEdit,
@@ -311,8 +312,11 @@ export function planFileEdits(
     return planInsert(ast, code, rel, nl, resolved, edit);
   }
   if (edit.kind === 'remove') {
-    const remRes = buildRemoveTextEdits(ast, code, resolved);
-    return remRes.ok ? ok({ edits: remRes.value, locsFromMarks: false }) : remRes;
+    const targets = resolved.map((el) => widenToPlaceWrapper(ast, code, el));
+    const remRes = buildRemoveTextEdits(ast, code, targets);
+    if (!remRes.ok) return remRes;
+    const imports = unusedImportEdits(ast, code, remRes.value);
+    return ok({ edits: [...remRes.value, ...imports], locsFromMarks: false });
   }
   if (edit.kind === 'duplicate') {
     const dupRes = buildDuplicateTextEdits(

@@ -9,15 +9,16 @@ import {
 } from '@kumicraft/shared';
 import MagicString from 'magic-string';
 
-import { asAstNode, type AstNode, parseJsxAst } from '../ast-helpers.ts';
+import { asAstNode, type AstNode, getJsxTagName, parseJsxAst } from '../ast-helpers.ts';
 import { readClassName } from '../attribute-reader.ts';
 import { mutateAttribute } from '../source-mutator.ts';
+import { isComponentTag, placeWrapperChild } from './place-wrapper.ts';
 
 const OPEN = '<>';
 const CLOSE = '</>';
 
-/** Opening elements of the top-level JSX elements in `<>{jsx}</>`, in source order. */
-function rootOpenings(wrapped: string): Result<readonly AstNode[]> {
+/** The top-level JSX elements in `<>{jsx}</>`, in source order. */
+function rootElements(wrapped: string): Result<readonly AstNode[]> {
   let ast: AstNode;
   try {
     ast = parseJsxAst(wrapped);
@@ -29,15 +30,15 @@ function rootOpenings(wrapped: string): Result<readonly AstNode[]> {
   const stmt = asAstNode(body[0]);
   const fragment = stmt?.type === 'ExpressionStatement' ? asAstNode(stmt['expression']) : undefined;
   const children = Array.isArray(fragment?.['children']) ? fragment['children'] : [];
-  const openings = children
+  const elements = children
     .map(asAstNode)
-    .filter((c): c is AstNode => c?.type === 'JSXElement')
-    .map((c) => asAstNode(c['openingElement']))
-    .filter((o): o is AstNode => o !== undefined);
-  if (body.length !== 1 || fragment?.type !== 'JSXFragment' || openings.length === 0) {
+    .filter(
+      (c): c is AstNode => c?.type === 'JSXElement' && asAstNode(c['openingElement']) !== undefined,
+    );
+  if (body.length !== 1 || fragment?.type !== 'JSXFragment' || elements.length === 0) {
     return err({ code: 'E016', params: { reason: 'notJsx' } });
   }
-  return ok(openings);
+  return ok(elements);
 }
 
 /** R-FF-12: the n-th element of a multi-element free placement sits 16 px further right and down. */
@@ -60,24 +61,63 @@ export function applyPlacementToJsx(
   if (!placement) return ok(jsx);
 
   const wrapped = `${OPEN}${jsx}${CLOSE}`;
-  const openingsRes = rootOpenings(wrapped);
-  if (!openingsRes.ok) return openingsRes;
+  const elementsRes = rootElements(wrapped);
+  if (!elementsRes.ok) return elementsRes;
 
   const s = new MagicString(wrapped);
   let index = firstIndex;
-  for (const opening of openingsRes.value) {
-    const rawAttrs = Array.isArray(opening['attributes']) ? opening['attributes'] : [];
-    const current = readClassName(rawAttrs, wrapped);
-    if (current.kind === 'expression') {
-      return err({ code: 'E023', params: { reason: 'classExpression' } });
-    }
-    if (current.kind === 'duplicate') {
-      return err({ code: 'E023', params: { reason: 'duplicateAttr' } });
-    }
-    const before = current.kind === 'static' ? current.value : '';
-    const after = applyPlacement(before, stackedPlacement(placement, index), tailwindMajor);
-    mutateAttribute(s, wrapped, opening, 'className', after);
+  for (const element of elementsRes.value) {
+    const placed = placeElement(
+      s,
+      wrapped,
+      element,
+      stackedPlacement(placement, index),
+      tailwindMajor,
+    );
+    if (!placed.ok) return placed;
     index += 1;
   }
   return ok(s.slice(OPEN.length, wrapped.length - CLOSE.length));
+}
+
+/**
+ * Places one root element. A component that takes no `className` (`<ProductCard name="…" />`)
+ * would get classes it ignores, and a type error in a typed project: it goes into a `<div>` that
+ * carries the place instead; leaving the free frame drops that `<div>` again.
+ */
+function placeElement(
+  s: MagicString,
+  code: string,
+  element: AstNode,
+  placement: Placement,
+  tailwindMajor: 3 | 4 | undefined,
+): Result<void> {
+  const opening = asAstNode(element['openingElement']);
+  if (opening === undefined || element.start === undefined || element.end === undefined) {
+    return ok(undefined);
+  }
+  const inner = placeWrapperChild(element, code);
+  if (inner !== undefined && placement.kind === 'flow') {
+    s.overwrite(element.start, element.end, code.slice(inner.start, inner.end));
+    return ok(undefined);
+  }
+  const rawAttrs = Array.isArray(opening['attributes']) ? opening['attributes'] : [];
+  const current = readClassName(rawAttrs, code);
+  if (current.kind === 'expression') {
+    return err({ code: 'E023', params: { reason: 'classExpression' } });
+  }
+  if (current.kind === 'duplicate') {
+    return err({ code: 'E023', params: { reason: 'duplicateAttr' } });
+  }
+  if (current.kind === 'none' && isComponentTag(getJsxTagName(opening))) {
+    if (placement.kind !== 'flow') {
+      const classes = applyPlacement('', placement, tailwindMajor);
+      s.prependRight(element.start, `<div className="${classes}">`);
+      s.appendLeft(element.end, '</div>');
+    }
+    return ok(undefined);
+  }
+  const before = current.kind === 'static' ? current.value : '';
+  mutateAttribute(s, code, opening, 'className', applyPlacement(before, placement, tailwindMajor));
+  return ok(undefined);
 }
