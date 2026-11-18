@@ -218,6 +218,9 @@ describe('draft page on the dev server [R-DR-12]', () => {
     plugin.configureServer({
       middlewares: { use: (handler) => used.push(handler) },
       transformIndexHtml: (_url, html) => Promise.resolve(html),
+      watcher: { on: () => undefined },
+      moduleGraph: { idToModuleMap: new Map() },
+      reloadModule: () => Promise.resolve(),
     });
     expect(used).toEqual([]);
     expect(

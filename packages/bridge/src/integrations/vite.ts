@@ -1,6 +1,7 @@
 // Vite plugin bridge connecting target project dev server to KumiCraft Studio (SPEC-04 M-BR, R-BR-04, R-BR-05).
 import { BRIDGE_CLIENT_CODE } from '../client/bridge-client.generated.ts';
 import { transformJsx } from '../transform/transform-jsx.ts';
+import { type CssRefreshServer, watchCreatedSources } from './css-refresh.ts';
 import { createDraftPageHooks, type DraftDevServer } from './draft-page.ts';
 
 export type BridgePluginOptions = {
@@ -82,9 +83,11 @@ export function createKumiCraftBridgePlugin(options: BridgePluginOptions) {
       },
     },
 
-    // R-DR-12: the draft preview page at `/__kumicraft/draft`.
-    configureServer(server: DraftDevServer): void {
+    // R-DR-12: the draft preview page at `/__kumicraft/draft`. A source file created while the
+    // Canvas runs (a new draft) gets its CSS like one there at start (css-refresh.ts).
+    configureServer(server: DraftDevServer & CssRefreshServer): void {
       draftPage.configureServer(server);
+      watchCreatedSources(server, options);
     },
 
     resolveId(id: string): string | undefined {
