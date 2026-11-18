@@ -1,12 +1,15 @@
 // The number fields with a slider (owner, 2026-11-18): each value reads back and writes the class
 // Tailwind 3 or 4 (or the CSS) needs, and a typed value is checked before anything is written.
+import { type ClassContext, parseClasses } from '@kumicraft/shared';
 import { describe, expect, it } from 'vitest';
 
+import { readTwTokenStr } from './components/effects-helpers.ts';
 import {
   cssValueOf,
   numberFromCss,
   numberFromTw,
   NUMERIC_FIELDS as F,
+  type NumericField,
   parseTyped,
   previewDeclarations,
   steppedValue,
@@ -46,6 +49,24 @@ describe('numeric fields [R-IN-13]', () => {
     expect(numberFromCss(F.rotate, '45deg')).toBe(45);
     expect(cssValueOf(F.scale, 105)).toBe('1.05');
     expect(cssValueOf(F.rotate, -15)).toBe('-15deg');
+  });
+
+  it('reads a negative class with its sign (owner, 2026-11-18: -100px showed as 100px)', () => {
+    const ctx: ClassContext = {
+      theme: { colors: [], fontSizes: [], radii: [], fonts: [], shadows: [], breakpoints: [] },
+      mode: 'desktop-first',
+      breakpoints: {},
+    };
+    const read = (classes: string, field: NumericField) =>
+      numberFromTw(
+        field,
+        readTwTokenStr(parseClasses(classes, ctx), { breakpoint: 'base' }, field.prop),
+      );
+    expect(read('-translate-x-25', F.translateX)).toBe(-100);
+    expect(read('translate-x-25', F.translateX)).toBe(100);
+    expect(read('-rotate-45', F.rotate)).toBe(-45);
+    expect(read('-skew-x-7', F.skewX)).toBe(-7);
+    expect(read('translate-x-[-15px]', F.translateX)).toBe(-15);
   });
 
   it('takes a typed number with its unit, and says why it refuses one', () => {

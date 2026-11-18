@@ -60,10 +60,12 @@ export function readTwTokenStr(
   ctx: ClassContext = DEFAULT_READ_CTX,
 ): string {
   const width = scope.breakpoint === 'base' ? 1440 : (ctx.breakpoints[scope.breakpoint] ?? 1440);
-  const { value: val } = readValue(tokens, prop, { width, state: scope.state }, ctx);
+  const { value: val, token } = readValue(tokens, prop, { width, state: scope.state }, ctx);
   if (val === undefined) return '';
   if (val.kind === 'keyword') return val.name;
-  if (val.kind === 'scale') return val.token;
+  // `-translate-x-25` keeps its sign: the parser holds it on the token, not in the value (the
+  // owner's report, 2026-11-18: −100px showed as 100px on the slider).
+  if (val.kind === 'scale') return token?.negative === true ? `-${val.token}` : val.token;
   if (val.kind === 'theme') return val.name;
   return `[${val.css}]`;
 }

@@ -46,6 +46,34 @@ test('16 sliders in Effects and Motion', async ({ page }) => {
       if ((tag.match(/rotate-/g) ?? []).length !== 1) throw new Bug('Không có đúng 1 class rotate');
     });
 
+    await tour.step('Kéo Dịch ngang hết về trái (-100px), rồi kéo lại', async ({ note }) => {
+      // The owner's report: at -100px the slider showed full right and the field said 100.
+      const slider = page.getByTestId('effect-field-translateX-slider');
+      await slider.scrollIntoViewIfNeeded();
+      const box = (await slider.boundingBox()) ?? undefined;
+      if (box === undefined) throw new Bug('Không thấy thanh Dịch ngang');
+      const y = box.y + box.height / 2;
+      for (const [label, toX] of [
+        ['-100', box.x - 20],
+        ['khoảng -50', box.x + box.width * 0.25],
+      ] as const) {
+        const before = await tour.files();
+        await page.mouse.move(box.x + box.width / 2, y);
+        await page.mouse.down();
+        await page.mouse.move(toX, y, { steps: 6 });
+        await page.mouse.up();
+        await tour.waitChange(before);
+        await page.waitForTimeout(2500);
+        const input = await page.getByTestId('effect-field-translateX-input').inputValue();
+        const thumb = await slider.inputValue();
+        note(`Kéo tới ${label}: ${await h1Tag()} · ô số ${input}px · thanh ở ${thumb}`);
+        if (!input.startsWith('-') || !thumb.startsWith('-')) throw new Bug('Mất dấu trừ');
+        if (/--translate|translate-x-.*translate-x-/.test(await h1Tag())) {
+          throw new Bug('Class dịch bị lặp hoặc sai dấu');
+        }
+      }
+    });
+
     await tour.step('Gõ sai rồi gõ đúng vào ô Thời lượng', async ({ note }) => {
       const input = page.getByTestId('motion-duration-input');
       await input.scrollIntoViewIfNeeded();
