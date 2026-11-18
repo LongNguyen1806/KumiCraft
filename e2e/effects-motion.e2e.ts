@@ -57,8 +57,14 @@ test('19. Tailwind project: gradient, hover scope motion preset, preview without
 
   // 2. Apply motion preset & hover opacity
   await openGroupIfClosed(page, 'motion');
-  await page.getByTestId('motion-preset-hover-lift').click();
+  await page.getByTestId('motion-preset-select').selectOption('hover-lift');
   await expect.poll(() => readFile(homeTsx, 'utf8')).toContain('transition-all');
+  await expect.poll(() => readFile(homeTsx, 'utf8')).toContain('hover:shadow-lg');
+  // "None" takes the whole effect off, hover parts included; then it goes back on.
+  await page.getByTestId('motion-preset-select').selectOption('none');
+  await expect.poll(() => readFile(homeTsx, 'utf8')).not.toContain('hover:shadow-lg');
+  expect(await readFile(homeTsx, 'utf8')).not.toContain('transition-all');
+  await page.getByTestId('motion-preset-select').selectOption('hover-lift');
   await expect.poll(() => readFile(homeTsx, 'utf8')).toContain('hover:shadow-lg');
 
   await page.getByTestId('interaction-state-select').selectOption('hover');
@@ -85,7 +91,28 @@ test('19. Tailwind project: gradient, hover scope motion preset, preview without
   await openGroupIfClosed(page, 'motion');
   await page.getByTestId('motion-reveal-toggle').click();
   await expect.poll(() => readFile(homeTsx, 'utf8')).not.toContain('<Reveal');
+
+  // 5. Any number can be typed; a wrong one says why and writes nothing (owner, 2026-11-18).
+  await openGroupIfClosed(page, 'effects');
+  const beforeWrong = await readFile(homeTsx, 'utf8');
+  await page.getByTestId('effect-field-rotate-input').fill('abc');
+  await expect(page.getByTestId('effect-field-rotate-error')).toBeVisible();
+  await page.getByTestId('effect-field-rotate-input').fill('999');
+  await expect(page.getByTestId('effect-field-rotate-error')).toContainText('360');
+  await page.getByTestId('effect-field-rotate-input').press('Enter');
+  expect(await readFile(homeTsx, 'utf8')).toBe(beforeWrong);
+  await typeNumber(page, 'effect-field-rotate', '15');
+  await expect.poll(() => readFile(homeTsx, 'utf8')).toContain('rotate-15');
+  await typeNumber(page, 'motion-duration', '400');
+  await expect.poll(() => readFile(homeTsx, 'utf8')).toContain('duration-400');
 });
+
+/** Types a number into a slider field and presses Enter, as a user does. */
+async function typeNumber(page: Page, testId: string, value: string): Promise<void> {
+  const input = page.getByTestId(`${testId}-input`);
+  await input.fill(value);
+  await input.press('Enter');
+}
 
 test('20. Plain CSS project: composite transform/backdrop-filter merge and single @keyframes injection', async ({
   page,
@@ -98,12 +125,13 @@ test('20. Plain CSS project: composite transform/backdrop-filter merge and singl
     .first()
     .click();
   await openGroupIfClosed(page, 'css-effects');
-  await page.getByTestId('effect-backdrop-blur').selectOption('12px');
+  // Numbers are typed (or dragged) now, not picked from a list (owner, 2026-11-18).
+  await typeNumber(page, 'effect-backdrop-blur', '12');
   await expect.poll(() => readFile(indexCss, 'utf8')).toContain('backdrop-filter: blur(12px)');
 
-  await page.getByTestId('effect-field-rotate').selectOption('45deg');
+  await typeNumber(page, 'effect-field-rotate', '45');
   await expect.poll(() => readFile(indexCss, 'utf8')).toContain('rotate(45deg)');
-  await page.getByTestId('effect-field-scale').selectOption('1.05');
+  await typeNumber(page, 'effect-field-scale', '105');
   await expect.poll(() => readFile(indexCss, 'utf8')).toContain('rotate(45deg) scale(1.05)');
 
   await openGroupIfClosed(page, 'motion');

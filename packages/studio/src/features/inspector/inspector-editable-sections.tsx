@@ -63,6 +63,7 @@ export function EditablePropertySections(props: EditablePropertySectionsProps) {
         disabled={isLocked}
         tokens={props.tokens}
         currentScope={props.currentScope}
+        major={props.ctx.major ?? 4}
         onPropChange={onPropChange}
         onBatchProps={props.onBatchProps}
         onRefresh={onRefresh}

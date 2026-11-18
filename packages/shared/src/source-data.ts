@@ -152,6 +152,11 @@ export const ComponentPropSpecSchema = z.strictObject({
   defaultValue: SetPropValueSchema.optional(),
   /** The code of a value that is not a constant (`{item.image}`), shown as "from the code". */
   expression: z.string().max(200).optional(),
+  /**
+   * The component never reads this prop (`image` named but not shown): the page sets it, but a
+   * change shows nothing, so the Inspector offers no control for it (owner, 2026-11-18).
+   */
+  unused: z.literal(true).optional(),
 });
 export type ComponentPropSpec = z.infer<typeof ComponentPropSpecSchema>;
 

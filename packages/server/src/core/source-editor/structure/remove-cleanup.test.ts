@@ -94,6 +94,41 @@ describe('components in a free frame, and what a removal takes along [R-FF-12, R
     expect(code).toContain('<Shared />');
   });
 
+  it('takes the Reveal that shows only the removed element, and its import [R-SE-04]', async () => {
+    await write(
+      [
+        "import { Reveal } from '../kumicraft/Reveal';",
+        'export function Page() {',
+        '  return <div data-rc-free className="relative">',
+        '    <Reveal effect="fade">',
+        '      <main className="absolute left-4 top-4">',
+        '        <h1>Login</h1>',
+        '      </main>',
+        '    </Reveal>',
+        '    <Reveal>',
+        '      <p>One</p>',
+        '      <p>Two</p>',
+        '    </Reveal>',
+        '  </div>;',
+        '}',
+        '',
+      ].join('\n'),
+    );
+    await apply({ kind: 'remove', elements: [{ loc: `${PAGE}:5:7`, tag: 'main' }] });
+    let code = await read();
+    expect(code).not.toContain('<Reveal effect="fade">');
+    expect(code).not.toContain('<main');
+    expect(code).toContain("import { Reveal } from '../kumicraft/Reveal';");
+    // A Reveal that still shows another element stays.
+    await apply({ kind: 'remove', elements: [{ loc: `${PAGE}:5:7`, tag: 'p' }] });
+    code = await read();
+    expect(code).toContain('<Reveal>');
+    expect(code).toContain('<p>Two</p>');
+    await apply({ kind: 'remove', elements: [{ loc: `${PAGE}:5:7`, tag: 'p' }] });
+    code = await read();
+    expect(code).not.toContain('Reveal');
+  });
+
   it('drops the placing div when the component leaves the free frame [R-FF-12]', async () => {
     await write(
       [

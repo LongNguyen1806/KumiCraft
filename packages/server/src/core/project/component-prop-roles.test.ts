@@ -116,4 +116,20 @@ describe('shapeComponentProps', () => {
       }),
     ]);
   });
+
+  it('marks a prop the page sets but the component never shows (owner, 2026-11-18) [R-IN-11]', () => {
+    const definition = readPropDefinition(
+      parseJsxAst('export function ProductCard({ name, image }) { return <h3>{name}</h3>; }'),
+      'ProductCard',
+    );
+    const shown = shapeComponentProps(
+      [
+        { ...spec('name'), hasValue: true, value: 'Lamp', origin: 'project' },
+        { ...spec('image'), hasValue: true, value: '/images/a.jpg', origin: 'project' },
+      ],
+      { componentFile: 'src/ProductCard.tsx', definition },
+    );
+    expect(shown.find((p) => p.name === 'image')).toMatchObject({ unused: true });
+    expect(shown.find((p) => p.name === 'name')).not.toHaveProperty('unused');
+  });
 });

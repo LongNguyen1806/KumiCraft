@@ -197,5 +197,7 @@ export const RevealResultSchema = z.strictObject({
   revealFile: z.string(),
   created: z.boolean(),
   wrapped: z.boolean(),
+  /** Where the selected element is after the wrap or unwrap moved it. */
+  loc: z.string().optional(),
 });
 export type RevealResult = z.infer<typeof RevealResultSchema>;

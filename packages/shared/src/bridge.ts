@@ -386,11 +386,12 @@ export const BridgeTextSelectPayloadSchema = z.strictObject({
 });
 export type BridgeTextSelectPayload = z.infer<typeof BridgeTextSelectPayloadSchema>;
 
-/** Studio -> Bridge, type 'motion-preview' (TK-22: replay animation once on canvas without editing files). */
+/**
+ * Studio -> Bridge, type 'motion-preview' (TK-22): plays the motion the element has once on the
+ * Canvas (its Reveal, animation and hover look), without editing files.
+ */
 export const StudioMotionPreviewPayloadSchema = z.strictObject({
   ref: ElementRefSchema,
-  className: z.string().min(1).max(200).optional(),
-  durationMs: z.number().int().min(100).max(5000).optional(),
 });
 export type StudioMotionPreviewPayload = z.infer<typeof StudioMotionPreviewPayloadSchema>;
 

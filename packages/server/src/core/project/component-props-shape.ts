@@ -147,11 +147,15 @@ export function shapeComponentProps(
   return [...raw, ...extra]
     .filter((p) => isShown(p, origin))
     .map(({ origin: _from, ...p }) => {
-      const fallback = origin.definition?.get(p.name)?.defaultValue;
+      const use = origin.definition?.get(p.name);
+      const fallback = use?.defaultValue;
+      // Shown only because the page sets it: the definition never reads it.
+      const unused = origin.definition !== undefined && use?.used !== true;
       return {
         ...p,
         role: roleOf(p, origin),
         ...(fallback !== undefined ? { defaultValue: fallback } : {}),
+        ...(unused ? { unused: true as const } : {}),
       };
     });
 }

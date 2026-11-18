@@ -1,4 +1,4 @@
-// Bridge tests for inline UTF-16 text selection (Test 5) and motion-preview (Test 18).
+// Bridge tests for inline UTF-16 text selection (Test 5) and motion-preview (Test 18, 18b).
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -39,27 +39,33 @@ describe('Bridge text-select & motion-preview [K9.7-2]', () => {
     expect(res?.end).toBe(13);
   });
 
-  it('Test 18: motion-preview toggles temporary classes and replays animation without mutating DOM attributes long-term', () => {
+  it('Test 18: motion-preview holds the hover look the CSS gives the element, then gives its style back', () => {
     vi.useFakeTimers();
+    const style = document.createElement('style');
+    style.textContent = '.lift:hover { opacity: 0.5; } .other:hover { color: red; }';
+    document.head.appendChild(style);
     const card = document.createElement('div');
     card.setAttribute('data-rc-loc', 'src/App.tsx:5:5');
-    card.className = 'card';
+    card.className = 'lift';
     document.body.appendChild(card);
 
-    const ran = triggerMotionPreview(
-      {
-        ref: { loc: 'src/App.tsx:5:5', index: 0 },
-        className: 'animate-bounce kc-preview',
-        durationMs: 400,
-      },
-      document,
-    );
+    const ran = triggerMotionPreview({ ref: { loc: 'src/App.tsx:5:5', index: 0 } }, document);
     expect(ran).toBe(true);
-    expect(card.classList.contains('animate-bounce')).toBe(true);
-    expect(card.classList.contains('card')).toBe(true);
+    vi.advanceTimersByTime(10);
+    expect(card.style.opacity).toBe('0.5');
+    expect(card.style.color).toBe('');
+    vi.advanceTimersByTime(1000);
+    expect(card.hasAttribute('style')).toBe(false);
+    expect(card.className).toBe('lift');
+    style.remove();
+  });
 
-    vi.advanceTimersByTime(450);
-    expect(card.classList.contains('animate-bounce')).toBe(false);
-    expect(card.classList.contains('card')).toBe(true);
+  it('Test 18b: an element with no motion plays nothing', () => {
+    const plain = document.createElement('p');
+    plain.setAttribute('data-rc-loc', 'src/App.tsx:6:5');
+    document.body.appendChild(plain);
+    expect(triggerMotionPreview({ ref: { loc: 'src/App.tsx:6:5', index: 0 } }, document)).toBe(
+      false,
+    );
   });
 });

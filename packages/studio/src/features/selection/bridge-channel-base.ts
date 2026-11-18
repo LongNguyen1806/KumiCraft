@@ -233,12 +233,8 @@ export class BridgeChannel {
     this.sendMessage('text-edit-end', { ref });
   }
 
-  sendMotionPreview(ref: ElementRef, className?: string, durationMs?: number): void {
-    this.sendMessage('motion-preview', {
-      ref,
-      ...(className !== undefined ? { className } : {}),
-      ...(durationMs !== undefined ? { durationMs } : {}),
-    });
+  sendMotionPreview(ref: ElementRef): void {
+    this.sendMessage('motion-preview', { ref });
   }
 
   toggleInteractive(ref: ElementRef, open?: boolean): void {

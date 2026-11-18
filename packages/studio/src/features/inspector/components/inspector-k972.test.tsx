@@ -1,5 +1,10 @@
 // Component tests for Inspector K9.7-2 features (tag switcher, list actions, attributes, image, effects, motion, reveal) (Tests 2, 9, 14, 15).
-import type { ElementSource, TreeNode } from '@kumicraft/shared';
+import {
+  type ClassContext,
+  type ElementSource,
+  parseClasses,
+  type TreeNode,
+} from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -15,6 +20,12 @@ import { InspectorHeader } from './inspector-header.tsx';
 import { InspectorImageSection } from './inspector-image-section.tsx';
 import { InspectorMotionSection } from './inspector-motion-section.tsx';
 import { TagTypeRow } from './tag-type-row.tsx';
+
+const READ_CTX: ClassContext = {
+  theme: { colors: [], fontSizes: [], radii: [], fonts: [], shadows: [], breakpoints: [] },
+  mode: 'desktop-first',
+  breakpoints: {},
+};
 
 function makeElTarget(
   tag: string,
@@ -212,13 +223,32 @@ describe('Inspector K9.7-2 controls (Tests 2, 9, 14, 15)', () => {
     fireEvent.click(screen.getByTestId('effect-gradient-toggle'));
     expect(onBatchProps).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByTestId('motion-preset-hover-lift'));
+    // One select for the whole effect (owner, 2026-11-18): a preset, or "None" to take it off.
+    fireEvent.change(screen.getByTestId('motion-preset-select'), {
+      target: { value: 'hover-lift' },
+    });
     expect(onBatchProps).toHaveBeenCalledTimes(2);
     const presetEntries = onBatchProps.mock.calls[1]?.[0];
     expect(presetEntries?.length).toBeGreaterThanOrEqual(4);
 
+    // Preview plays what the element has (owner, 2026-11-18): nothing set, nothing to play.
+    expect(screen.getByTestId('motion-preview')).toHaveProperty('disabled', true);
+    cleanup();
+    render(
+      <InspectorMotionSection
+        refTarget={target.ref}
+        source={target.source}
+        editable={true}
+        disabled={false}
+        tokens={parseClasses('transition-all duration-200 hover:shadow-lg', READ_CTX)}
+        currentScope={{ breakpoint: 'base' }}
+        onPropChange={vi.fn()}
+        onBatchProps={onBatchProps}
+        onRefresh={vi.fn()}
+      />,
+    );
     fireEvent.click(screen.getByTestId('motion-preview'));
-    expect(previewSpy).toHaveBeenCalledTimes(1);
+    expect(previewSpy).toHaveBeenCalledWith(target.ref);
     expect(editSpy).not.toHaveBeenCalled();
   });
 });

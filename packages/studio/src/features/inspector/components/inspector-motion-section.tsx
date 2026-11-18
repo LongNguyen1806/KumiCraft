@@ -13,6 +13,7 @@ import { Play } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { studioBridgeChannel } from '../../selection/bridge-channel.ts';
+import { NUMERIC_FIELDS } from '../numeric-fields.ts';
 import type { BatchPropEntry } from '../use-live-edit.ts';
 import { readCssPropVal, readTwTokenStr } from './effects-helpers.ts';
 import { InspectorGroup } from './inspector-group.tsx';
@@ -21,13 +22,17 @@ import {
   CSS_ANIMATION_MAP,
   CSS_EASE_MAP,
   CSS_TRANSITION_MAP,
-  DELAY_VALUES,
-  DURATION_VALUES,
+  cssClearSteps,
   EASE_VALUES,
   MOTION_PRESETS,
+  type MotionPresetId,
+  presetShown,
   TRANSITION_PROPS,
+  twPresetEntries,
 } from './motion-presets.ts';
-import { formatMs, MotionSelectField, RevealControls } from './motion-reveal.tsx';
+import { MotionSelectField, RevealControls, useRevealWrapped } from './motion-reveal.tsx';
+import { SliderNumberField } from './slider-number-field.tsx';
+import { type NumericPropSource, useNumericProp } from './use-numeric-prop.ts';
 
 export type InspectorMotionSectionProps = {
   readonly refTarget: ElementRef;
@@ -43,46 +48,36 @@ export type InspectorMotionSectionProps = {
     | ((property: string, value: string, stateOverride?: StyleState) => Promise<void> | void)
     | undefined;
   readonly onRefresh: () => void;
+  /** Tailwind 3 has fixed durations where Tailwind 4 takes any (`duration-400`). */
+  readonly major?: 3 | 4 | undefined;
 };
 
-function TransitionTimingSelects({
-  editable,
+/** Duration and delay: a slider and a typed value in ms (the owner, 2026-11-18). */
+function TransitionTimingFields({
+  source,
   disabled,
-  readVal,
-  commitProp,
 }: {
-  readonly editable: boolean;
+  readonly source: NumericPropSource;
   readonly disabled: boolean;
-  readonly readVal: (prop: PropertyId) => string;
-  readonly commitProp: (prop: PropertyId, twVal: string, cssVal: string) => void;
 }) {
   const { t } = useTranslation();
-  const timeOpts = (values: readonly string[]) =>
-    values.map((v) => ({ value: editable ? v : formatMs(v), label: formatMs(v) }));
-  const commitMs = (prop: PropertyId, v: string) => {
-    commitProp(prop, v.replace('ms', ''), v === '' || v.endsWith('ms') ? v : formatMs(v));
-  };
+  const duration = useNumericProp(source, NUMERIC_FIELDS.duration);
+  const delay = useNumericProp(source, NUMERIC_FIELDS.delay);
   return (
     <>
-      <MotionSelectField
-        testId="motion-duration"
+      <SliderNumberField
+        field={NUMERIC_FIELDS.duration}
         label={t('inspector.fields.duration')}
+        testId="motion-duration"
         disabled={disabled}
-        value={readVal('duration')}
-        options={timeOpts(DURATION_VALUES)}
-        onChange={(v) => {
-          commitMs('duration', v);
-        }}
+        {...duration}
       />
-      <MotionSelectField
-        testId="motion-delay"
+      <SliderNumberField
+        field={NUMERIC_FIELDS.delay}
         label={t('inspector.fields.delay')}
+        testId="motion-delay"
         disabled={disabled}
-        value={readVal('delay')}
-        options={timeOpts(DELAY_VALUES)}
-        onChange={(v) => {
-          commitMs('delay', v);
-        }}
+        {...delay}
       />
     </>
   );
@@ -138,90 +133,115 @@ function TransitionGrid(props: {
   readonly disabled: boolean;
   readonly readVal: (prop: PropertyId) => string;
   readonly commitProp: (prop: PropertyId, twVal: string, cssVal: string) => void;
+  readonly source: NumericPropSource;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-1.5">
-      <TransitionCurveSelects {...props} />
-      <TransitionTimingSelects {...props} />
+    <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-2 gap-1.5">
+        <TransitionCurveSelects {...props} />
+      </div>
+      <TransitionTimingFields source={props.source} disabled={props.disabled} />
     </div>
   );
 }
 
-function AnimationPreviewRow({
+function AnimationField({
   editable,
   disabled,
   animVal,
-  refTarget,
   onChangeAnim,
 }: {
   readonly editable: boolean;
   readonly disabled: boolean;
   readonly animVal: string;
-  readonly refTarget: ElementRef;
   readonly onChangeAnim: (tw: string, css: string) => void;
 }) {
   const { t } = useTranslation();
   return (
-    <div className="flex items-end gap-1.5">
-      <div className="min-w-0 flex-1">
-        <MotionSelectField
-          testId="motion-animation"
-          label={t('inspector.fields.animation')}
-          disabled={disabled}
-          value={animVal}
-          options={ANIMATION_VALUES.map((v) => ({
-            value: editable ? v : (CSS_ANIMATION_MAP[v] ?? v),
-            label: v,
-          }))}
-          onChange={(v) => {
-            const tw = Object.entries(CSS_ANIMATION_MAP).find(([, c]) => c === v)?.[0] ?? v;
-            onChangeAnim(tw, CSS_ANIMATION_MAP[tw] ?? v);
-          }}
-        />
-      </div>
-      <button
-        type="button"
-        data-testid="motion-preview"
-        onClick={() => {
-          studioBridgeChannel.sendMotionPreview(
-            refTarget,
-            animVal !== '' && editable ? `animate-${animVal}` : undefined,
-          );
-        }}
-        className="flex h-7 items-center gap-1 rounded border border-line bg-card-solid px-2.5 text-xs font-medium text-ink hover:bg-field"
-      >
-        <Play className="size-3" />
-        <span>{t('inspector.motion.preview')}</span>
-      </button>
-    </div>
+    <MotionSelectField
+      testId="motion-animation"
+      label={t('inspector.fields.animation')}
+      disabled={disabled}
+      value={animVal}
+      options={ANIMATION_VALUES.map((v) => ({
+        value: editable ? v : (CSS_ANIMATION_MAP[v] ?? v),
+        label: v,
+      }))}
+      onChange={(v) => {
+        const tw = Object.entries(CSS_ANIMATION_MAP).find(([, c]) => c === v)?.[0] ?? v;
+        onChangeAnim(tw, CSS_ANIMATION_MAP[tw] ?? v);
+      }}
+    />
   );
 }
 
-function MotionPresetButtons({
-  disabled,
-  onPick,
+/**
+ * Plays on the Canvas what the element has: its reveal, animation and hover look (the owner,
+ * 2026-11-18: preview shows what was set, it is not a place to choose). Nothing set, nothing to
+ * play: the button says so.
+ */
+function MotionPreviewButton({
+  refTarget,
+  hasMotion,
 }: {
-  readonly disabled: boolean;
-  readonly onPick: (presetId: (typeof MOTION_PRESETS)[number]['id']) => void;
+  readonly refTarget: ElementRef;
+  readonly hasMotion: boolean;
 }) {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-wrap gap-1">
-      {MOTION_PRESETS.map((preset) => (
-        <button
-          key={preset.id}
-          type="button"
-          data-testid={`motion-preset-${preset.id}`}
-          disabled={disabled}
-          onClick={() => {
-            onPick(preset.id);
-          }}
-          className="rounded border border-line bg-field px-1.5 py-0.5 text-[10px] font-medium text-ink hover:border-accent hover:bg-card-solid disabled:opacity-40"
-        >
-          {t(preset.labelKey)}
-        </button>
-      ))}
-    </div>
+    <button
+      type="button"
+      data-testid="motion-preview"
+      disabled={!hasMotion}
+      title={hasMotion ? undefined : t('inspector.motion.previewNothing')}
+      onClick={() => {
+        studioBridgeChannel.sendMotionPreview(refTarget);
+      }}
+      className="flex h-7 w-full items-center justify-center gap-1 rounded border border-line bg-card-solid px-2.5 text-xs font-medium text-ink hover:bg-field disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <Play className="size-3" />
+      <span>{t('inspector.motion.preview')}</span>
+    </button>
+  );
+}
+
+/** One choice for the whole effect: a preset, "None" to take it off, "Custom" when edited by hand. */
+function MotionPresetSelect({
+  disabled,
+  shown,
+  onPick,
+}: {
+  readonly disabled: boolean;
+  readonly shown: MotionPresetId | 'none' | 'custom';
+  readonly onPick: (presetId: MotionPresetId | 'none') => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-[11px] text-ink-faint">{t('inspector.motion.effect')}</span>
+      <select
+        data-testid="motion-preset-select"
+        disabled={disabled}
+        value={shown}
+        onChange={(e) => {
+          const id = MOTION_PRESETS.find((p) => p.id === e.target.value)?.id;
+          onPick(id ?? 'none');
+        }}
+        className="h-7 rounded border border-line bg-card-solid px-1.5 text-xs text-ink"
+      >
+        <option value="none">{t('inspector.motion.effectNone')}</option>
+        {MOTION_PRESETS.map((preset) => (
+          <option key={preset.id} value={preset.id}>
+            {t(preset.labelKey)}
+          </option>
+        ))}
+        {shown === 'custom' && (
+          <option value="custom" disabled>
+            {t('inspector.motion.effectCustom')}
+          </option>
+        )}
+      </select>
+    </label>
   );
 }
 
@@ -245,14 +265,14 @@ function useMotionSectionHandlers(props: InspectorMotionSectionProps) {
     void props.onCssCommit?.(prop, cssVal);
   };
 
-  const applyPreset = async (presetId: (typeof MOTION_PRESETS)[number]['id']) => {
-    const preset = MOTION_PRESETS.find((p) => p.id === presetId);
-    if (!preset) return;
+  // A new preset first takes the old one off, hover parts included: nothing piles up (TK-16).
+  const applyPreset = async (presetId: MotionPresetId | 'none') => {
     if (props.editable && props.onBatchProps !== undefined) {
-      props.onBatchProps(preset.twEntries(scope));
+      props.onBatchProps(twPresetEntries(presetId, scope));
       return;
     }
-    for (const step of preset.cssSteps) {
+    const preset = MOTION_PRESETS.find((p) => p.id === presetId);
+    for (const step of [...cssClearSteps(), ...(preset?.cssSteps ?? [])]) {
       await props.onCssCommit?.(step.property, step.value, step.state);
     }
   };
@@ -264,6 +284,7 @@ export function InspectorMotionSection(props: InspectorMotionSectionProps) {
   const { t } = useTranslation();
   const { readVal, commitProp, applyPreset } = useMotionSectionHandlers(props);
   const animVal = readVal('animation');
+  const revealed = useRevealWrapped(props.refTarget, props.source);
 
   return (
     <InspectorGroup
@@ -273,8 +294,9 @@ export function InspectorMotionSection(props: InspectorMotionSectionProps) {
       testId="inspector-motion"
     >
       <div className="space-y-2.5">
-        <MotionPresetButtons
+        <MotionPresetSelect
           disabled={props.disabled}
+          shown={presetShown(readVal, props.editable)}
           onPick={(id) => {
             void applyPreset(id);
           }}
@@ -284,12 +306,12 @@ export function InspectorMotionSection(props: InspectorMotionSectionProps) {
           disabled={props.disabled}
           readVal={readVal}
           commitProp={commitProp}
+          source={props}
         />
-        <AnimationPreviewRow
+        <AnimationField
           editable={props.editable}
           disabled={props.disabled}
           animVal={animVal}
-          refTarget={props.refTarget}
           onChangeAnim={(tw, css) => {
             commitProp('animation', tw, css);
           }}
@@ -299,6 +321,10 @@ export function InspectorMotionSection(props: InspectorMotionSectionProps) {
           source={props.source}
           disabled={props.disabled}
           onRefresh={props.onRefresh}
+        />
+        <MotionPreviewButton
+          refTarget={props.refTarget}
+          hasMotion={animVal !== '' || readVal('transitionProperty') !== '' || revealed}
         />
       </div>
     </InspectorGroup>

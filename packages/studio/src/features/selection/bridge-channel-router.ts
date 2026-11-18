@@ -244,10 +244,10 @@ export class StudioBridgeChannel extends BridgeChannel {
     if (active !== this) active.measureFree(ref);
   }
 
-  override sendMotionPreview(ref: ElementRef, className?: string, durationMs?: number): void {
-    super.sendMotionPreview(ref, className, durationMs);
+  override sendMotionPreview(ref: ElementRef): void {
+    super.sendMotionPreview(ref);
     const active = this.getActiveChannel();
-    if (active !== this) active.sendMotionPreview(ref, className, durationMs);
+    if (active !== this) active.sendMotionPreview(ref);
   }
 
   override toggleInteractive(ref: ElementRef, open?: boolean): void {

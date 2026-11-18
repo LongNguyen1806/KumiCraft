@@ -203,6 +203,7 @@ function EffectsGroupBody({
         disabled={shared.isLocked}
         tokens={shared.tokens}
         currentScope={shared.currentScope}
+        major={shared.ctx.major ?? 4}
         onPropChange={shared.onPropertyValueChange}
         onBatchProps={shared.onBatchProperties}
       />

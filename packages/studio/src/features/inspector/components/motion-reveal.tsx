@@ -1,14 +1,15 @@
 // Scroll Reveal controls and shared MotionSelectField for Inspector Motion (K9.7-2 TK-18..22).
 import type { ElementRef, ElementSource, RevealEffect, TreeNode } from '@kumicraft/shared';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { fetchComponentProps } from '../../../api/project-client.ts';
 import { revealElement } from '../../../api/source-client.ts';
 import { useSelectionStore } from '../../selection/selection-store.ts';
+import { REVEAL_FIELDS } from '../numeric-fields.ts';
+import { SliderNumberField } from './slider-number-field.tsx';
 
 const REVEAL_EFFECTS: readonly RevealEffect[] = ['fade', 'slide-up', 'zoom'];
-const REVEAL_DELAYS = ['0', '100', '200', '400'] as const;
-const REVEAL_STAGGERS = ['0', '75', '150'] as const;
 
 export function formatMs(value: string): string {
   return `${value}ms`;
@@ -87,50 +88,110 @@ function SmallSelect({
   );
 }
 
-function RevealSelectRow(props: {
-  readonly disabled: boolean;
+type RevealValues = {
   readonly effect: RevealEffect;
   readonly delay: number;
   readonly stagger: number;
-  readonly onEffect: (val: RevealEffect) => void;
-  readonly onDelay: (val: number) => void;
-  readonly onStagger: (val: number) => void;
+};
+
+const isRevealEffect = (v: unknown): v is RevealEffect =>
+  v === 'fade' || v === 'slide-up' || v === 'zoom';
+
+/** The effect, then delay and stagger as a slider and a typed value (the owner, 2026-11-18). */
+function RevealValueFields(props: {
+  readonly disabled: boolean;
+  readonly values: RevealValues;
+  readonly onChange: (next: RevealValues) => void;
 }) {
   const { t } = useTranslation();
+  const { values, onChange } = props;
   return (
-    <div className="grid grid-cols-3 gap-1">
+    <div className="flex flex-col gap-2">
       <SmallSelect
         testId="motion-reveal-effect"
         ariaLabel={t('inspector.motion.revealEffect')}
         disabled={props.disabled}
-        value={props.effect}
+        value={values.effect}
         options={REVEAL_EFFECTS.map((o) => ({ value: o, label: o }))}
         onChange={(v) => {
-          if (v === 'fade' || v === 'slide-up' || v === 'zoom') props.onEffect(v);
+          if (isRevealEffect(v)) onChange({ ...values, effect: v });
         }}
       />
-      <SmallSelect
+      <SliderNumberField
+        field={REVEAL_FIELDS.delay}
+        label={t('inspector.fields.delay')}
         testId="motion-reveal-delay"
-        ariaLabel={t('inspector.fields.delay')}
         disabled={props.disabled}
-        value={String(props.delay)}
-        options={REVEAL_DELAYS.map((ms) => ({ value: ms, label: formatMs(ms) }))}
-        onChange={(v) => {
-          props.onDelay(Number(v));
+        value={values.delay}
+        onCommit={(n) => {
+          onChange({ ...values, delay: n ?? 0 });
         }}
       />
-      <SmallSelect
+      <SliderNumberField
+        field={REVEAL_FIELDS.stagger}
+        label={t('inspector.motion.revealStagger')}
         testId="motion-reveal-stagger"
-        ariaLabel={t('inspector.motion.revealStagger')}
         disabled={props.disabled}
-        value={String(props.stagger)}
-        options={REVEAL_STAGGERS.map((ms) => ({ value: ms, label: formatMs(ms) }))}
-        onChange={(v) => {
-          props.onStagger(Number(v));
+        value={values.stagger}
+        onCommit={(n) => {
+          onChange({ ...values, stagger: n ?? 0 });
         }}
       />
     </div>
   );
+}
+
+/**
+ * The effect, delay and stagger the `<Reveal …>` in the code has. They were kept in the panel
+ * only, so it showed fade / 0 / 0 whatever the code said.
+ */
+function useRevealProps(useLoc: string | undefined, version: number): RevealValues | undefined {
+  const [read, setRead] = useState<{ readonly key: string; readonly values: RevealValues }>();
+  const key = `${useLoc ?? ''}#${String(version)}`;
+  useEffect(() => {
+    if (useLoc === undefined) return undefined;
+    let live = true;
+    const load = async () => {
+      let res: Awaited<ReturnType<typeof fetchComponentProps>>;
+      try {
+        res = await fetchComponentProps({ loc: useLoc, tag: 'Reveal' });
+      } catch {
+        return; // the panel keeps the values it shows; the next change reads again
+      }
+      if (!live) return;
+      const prop = (name: string) => res.props.find((p) => p.name === name)?.value;
+      const effect = prop('effect');
+      const delay = prop('delay');
+      const stagger = prop('stagger');
+      setRead({
+        key,
+        values: {
+          effect: isRevealEffect(effect) ? effect : 'fade',
+          delay: typeof delay === 'number' ? delay : 0,
+          stagger: typeof stagger === 'number' ? stagger : 0,
+        },
+      });
+    };
+    void load();
+    return () => {
+      live = false;
+    };
+  }, [useLoc, key]);
+  return read?.key === key ? read.values : undefined;
+}
+
+/** Where the `<Reveal …>` around the element is written: the use the Canvas reported. */
+function revealUseLoc(
+  treeNodes: readonly TreeNode[],
+  refTarget: ElementRef,
+  edited: { readonly loc: string; readonly tag: string },
+): string | undefined {
+  if (edited.tag === 'Reveal') return edited.loc;
+  const node = treeNodes.find(
+    (n) => n.ref.loc === refTarget.loc && n.ref.index === refTarget.index,
+  );
+  const parent = node?.parent !== undefined ? treeNodes[node.parent] : undefined;
+  return parent?.component?.tag === 'Reveal' ? parent.component.loc : undefined;
 }
 
 /**
@@ -169,6 +230,13 @@ function isRevealWrapped(
   );
 }
 
+/** True when the selected element (or the use it stands for) shows through a Reveal. */
+export function useRevealWrapped(refTarget: ElementRef, source: ElementSource): boolean {
+  const treeNodes = useSelectionStore((s) => s.treeNodes);
+  const { edited } = useRevealTarget(refTarget, source, false);
+  return isRevealWrapped(treeNodes, refTarget, edited.tag);
+}
+
 function useRevealState(
   refTarget: ElementRef,
   source: ElementSource,
@@ -177,38 +245,43 @@ function useRevealState(
 ) {
   const treeNodes = useSelectionStore((s) => s.treeNodes);
   const { edited, locked } = useRevealTarget(refTarget, source, disabled);
-  const [effect, setEffect] = useState<RevealEffect>('fade');
-  const [delay, setDelay] = useState(0);
-  const [stagger, setStagger] = useState(0);
+  // What to use when the Reveal is turned on; once it is on, the code's values show.
+  const [chosen, setChosen] = useState<RevealValues>({ effect: 'fade', delay: 0, stagger: 0 });
   const [busy, setBusy] = useState(false);
+  const [version, setVersion] = useState(0);
 
   const isWrapped = isRevealWrapped(treeNodes, refTarget, edited.tag);
+  const inCode = useRevealProps(
+    isWrapped ? revealUseLoc(treeNodes, refTarget, edited) : undefined,
+    version,
+  );
+  const values = isWrapped ? (inCode ?? chosen) : chosen;
 
-  const sendReveal = async (
-    action: 'wrap' | 'unwrap',
-    next: { effect: RevealEffect; delay: number; stagger: number },
-  ) => {
+  const sendReveal = async (action: 'wrap' | 'unwrap', next: RevealValues) => {
     if (locked || busy) return;
     setBusy(true);
     try {
-      await revealElement({
+      const res = await revealElement({
         action,
         loc: edited.loc,
         tag: edited.tag,
         ...(action === 'wrap' ? next : {}),
       });
+      // The wrap moved the element a line down and an indent in: select it where it is now
+      // (the owner's report, 2026-11-18: the selection was lost).
+      if (res.loc !== undefined && res.loc !== refTarget.loc) {
+        useSelectionStore.getState().setSelectedRefs([{ loc: res.loc, index: refTarget.index }]);
+      }
+      setChosen(next);
+      setVersion((v) => v + 1);
       onRefresh();
     } finally {
       setBusy(false);
     }
   };
   return {
-    effect,
-    setEffect,
-    delay,
-    setDelay,
-    stagger,
-    setStagger,
+    values,
+    setChosen,
     busy,
     isWrapped,
     locked,
@@ -257,8 +330,9 @@ export function RevealControls({
 }) {
   const r = useRevealState(refTarget, source, disabled, onRefresh);
   const toggleAction = r.isWrapped ? 'unwrap' : 'wrap';
-  const syncIfWrapped = (next: { effect: RevealEffect; delay: number; stagger: number }) => {
+  const change = (next: RevealValues) => {
     if (r.isWrapped) void r.sendReveal('wrap', next);
+    else r.setChosen(next);
   };
   return (
     <div className="space-y-1.5 border-t border-line pt-2" data-testid="motion-reveal-controls">
@@ -266,31 +340,10 @@ export function RevealControls({
         isWrapped={r.isWrapped}
         disabled={r.locked || r.busy}
         onToggle={() => {
-          void r.sendReveal(toggleAction, {
-            effect: r.effect,
-            delay: r.delay,
-            stagger: r.stagger,
-          });
+          void r.sendReveal(toggleAction, r.values);
         }}
       />
-      <RevealSelectRow
-        disabled={r.locked || r.busy}
-        effect={r.effect}
-        delay={r.delay}
-        stagger={r.stagger}
-        onEffect={(v) => {
-          r.setEffect(v);
-          syncIfWrapped({ effect: v, delay: r.delay, stagger: r.stagger });
-        }}
-        onDelay={(n) => {
-          r.setDelay(n);
-          syncIfWrapped({ effect: r.effect, delay: n, stagger: r.stagger });
-        }}
-        onStagger={(n) => {
-          r.setStagger(n);
-          syncIfWrapped({ effect: r.effect, delay: r.delay, stagger: n });
-        }}
-      />
+      <RevealValueFields disabled={r.locked || r.busy} values={r.values} onChange={change} />
     </div>
   );
 }

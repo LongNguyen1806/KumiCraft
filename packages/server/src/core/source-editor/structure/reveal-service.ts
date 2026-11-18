@@ -15,7 +15,7 @@ import { commitKitFiles, type KitPlan, prepareKitPlan } from './kit-service.ts';
 import { buildRevealComponentCode } from './reveal-template.ts';
 import { findAncestors } from './structure-guard.ts';
 import { fileIndentUnit, indentOf, lineStartOf } from './structure-ops.ts';
-import { applyTextEdits, type TextEdit } from './text-edits.ts';
+import { applyTextEdits, offsetToLoc, type TextEdit } from './text-edits.ts';
 
 export { buildRevealComponentCode };
 
@@ -29,6 +29,8 @@ export type RevealResult = {
   readonly revealFile: string;
   readonly created: boolean;
   readonly wrapped: boolean;
+  /** Where the selected element is now: the wrap or unwrap moved it (lines and indent). */
+  readonly loc?: string;
 };
 
 function sha256(text: string): string {
@@ -102,8 +104,15 @@ function buildWrapWithRevealEdit(
   const indented = oldLines.map((ln, idx) =>
     idx === 0 ? `${indent}${unit}${ln}` : ln.trim() === '' ? '' : `${unit}${ln}`,
   );
-  const text = `${indent}<Reveal ${propsText}>${nl}${indented.join(nl)}${nl}${indent}</Reveal>`;
-  return { start: replaceStart, end: el.end, text };
+  const opening = `${indent}<Reveal ${propsText}>${nl}`;
+  const text = `${opening}${indented.join(nl)}${nl}${indent}</Reveal>`;
+  // The mark is where the element starts now, one line down and one indent in.
+  return {
+    start: replaceStart,
+    end: el.end,
+    text,
+    mark: opening.length + indent.length + unit.length,
+  };
 }
 
 function removeUnusedRevealImport(code: string, ast: AstNode, revealBase: string): string {
@@ -127,11 +136,51 @@ function removeUnusedRevealImport(code: string, ast: AstNode, revealBase: string
   return code;
 }
 
+/** Where `offset` of the inner text lands once each line lost the indent `kept` shows. */
+function unindentedOffset(
+  raw: string,
+  lines: readonly string[],
+  kept: readonly string[],
+  offset: number,
+  nl: string,
+): number {
+  const before = raw.slice(0, offset).split(/\r?\n/);
+  const k = before.length - 1;
+  const removed = (lines[k]?.length ?? 0) - (kept[k]?.length ?? 0);
+  let pos = 0;
+  for (let i = 0; i < k; i++) pos += (kept[i]?.length ?? 0) + nl.length;
+  return pos + Math.max(0, (before.at(-1) ?? '').length - removed);
+}
+
+/** The element that shows on the Canvas in place of the `<Reveal>`: `el`, else its first child. */
+function shownElement(revealNode: AstNode, el: AstNode): AstNode | undefined {
+  if (el !== revealNode) return el;
+  const children: unknown[] = Array.isArray(revealNode['children']) ? revealNode['children'] : [];
+  return children.map(asAstNode).find((c) => c?.type === 'JSXElement');
+}
+
+/**
+ * The new loc of a page element (lowercase tag) the Canvas can select again; a component use
+ * (`<Card>`, the `<Reveal>` itself) has no element of its own in the page.
+ */
+function elementLoc(
+  rel: string,
+  code: string,
+  node: AstNode | undefined,
+  mark: number | undefined,
+): { readonly loc?: string } {
+  const opening = node === undefined ? undefined : asAstNode(node['openingElement']);
+  const tag = opening === undefined ? undefined : getJsxTagName(opening);
+  if (mark === undefined || tag === undefined || !/^[a-z]/.test(tag)) return {};
+  return { loc: offsetToLoc(rel, code, mark) };
+}
+
 function buildUnwrapRevealText(
   code: string,
   nl: '\r\n' | '\n',
   revealNode: AstNode,
-): string | undefined {
+  shown: AstNode | undefined,
+): { readonly code: string; readonly mark?: number } | undefined {
   const opening = asAstNode(revealNode['openingElement']);
   const closing = asAstNode(revealNode['closingElement']);
   if (
@@ -145,17 +194,23 @@ function buildUnwrapRevealText(
   const lineNum = asAstNode(asAstNode(revealNode['loc'])?.['start'])?.['line'];
   const line = typeof lineNum === 'number' ? lineNum : 1;
   const unit = fileIndentUnit(code, line);
-  const rawInner = code
-    .slice(opening.end, closing.start)
-    .replace(/^(?:\r?\n)/, '')
-    .replace(/(?:\r?\n)[ \t]*$/, '');
-  const unindented = rawInner
-    .split(/\r?\n/)
-    .map((ln) => (ln.startsWith(unit) ? ln.slice(unit.length) : ln.replace(/^[ \t]{1,2}/, '')));
+  const inner = code.slice(opening.end, closing.start);
+  const lead = /^\r?\n/.exec(inner)?.[0].length ?? 0;
+  const rawInner = inner.slice(lead).replace(/(?:\r?\n)[ \t]*$/, '');
+  const lines = rawInner.split(/\r?\n/);
+  const unindented = lines.map((ln) =>
+    ln.startsWith(unit) ? ln.slice(unit.length) : ln.replace(/^[ \t]{1,2}/, ''),
+  );
   const lineStart = lineStartOf(code, revealNode.start);
   const onlyWsBefore = /^[ \t]*$/.test(code.slice(lineStart, revealNode.start));
   const start = onlyWsBefore ? lineStart : revealNode.start;
-  return code.slice(0, start) + unindented.join(nl) + code.slice(revealNode.end);
+  const unwrapped = code.slice(0, start) + unindented.join(nl) + code.slice(revealNode.end);
+  const offset = shown?.start === undefined ? -1 : shown.start - opening.end - lead;
+  if (offset < 0 || offset > rawInner.length) return { code: unwrapped };
+  return {
+    code: unwrapped,
+    mark: start + unindentedOffset(rawInner, lines, unindented, offset, nl),
+  };
 }
 
 async function ensureRevealComponentFile(
@@ -188,9 +243,15 @@ async function applyRevealUnwrap(ctx: RevealContext, tag: string): Promise<Resul
   const nl = detectFormat(ctx.beforeCode).newline;
   const revealNode = tag === 'Reveal' ? ctx.el : parentRevealNode(ctx.ast, ctx.el);
   if (!revealNode) return err({ code: 'E016', params: { reason: 'notWrappedInReveal' } });
-  const unwrapped = buildUnwrapRevealText(ctx.beforeCode, nl, revealNode);
+  const shown = shownElement(revealNode, ctx.el);
+  const unwrapped = buildUnwrapRevealText(ctx.beforeCode, nl, revealNode, shown);
   if (unwrapped === undefined) return err({ code: 'E016', params: { reason: 'unwrapFailed' } });
-  const cleaned = removeUnusedRevealImport(unwrapped, parseJsxAst(unwrapped), 'Reveal');
+  const cleaned = removeUnusedRevealImport(unwrapped.code, parseJsxAst(unwrapped.code), 'Reveal');
+  // The import goes from above the JSX: the element moves up by what the import took.
+  const mark =
+    unwrapped.mark === undefined
+      ? undefined
+      : unwrapped.mark - (unwrapped.code.length - cleaned.length);
   const wRes = await ctx.deps.fs.writeTextAtomic(ctx.root, ctx.rel, cleaned);
   if (!wRes.ok) return wRes;
   ctx.deps.onWritten?.([
@@ -202,13 +263,17 @@ async function applyRevealUnwrap(ctx: RevealContext, tag: string): Promise<Resul
       afterHash: sha256(cleaned),
     },
   ]);
-  return ok({ files: [ctx.rel], revealFile: ctx.revealInfo.path, created: false, wrapped: false });
+  return ok({
+    files: [ctx.rel],
+    revealFile: ctx.revealInfo.path,
+    created: false,
+    wrapped: false,
+    ...elementLoc(ctx.rel, cleaned, shown, mark),
+  });
 }
 
-async function applyRevealWrap(
-  ctx: RevealContext,
-  request: RevealRequest,
-): Promise<Result<RevealResult>> {
+/** The wrap (or the new props of the Reveal already there) and the import it needs. */
+function wrapEdits(ctx: RevealContext, request: RevealRequest): TextEdit[] | undefined {
   const nl = detectFormat(ctx.beforeCode).newline;
   const propsText = buildRevealPropsText(
     request.effect ?? 'fade',
@@ -219,8 +284,7 @@ async function applyRevealWrap(
   const edit = existingReveal
     ? buildUpdateRevealPropsEdit(ctx.beforeCode, existingReveal, propsText)
     : buildWrapWithRevealEdit(ctx.beforeCode, nl, ctx.el, propsText);
-  if (!edit) return err({ code: 'E016', params: { reason: 'revealWrapFailed' } });
-
+  if (!edit) return undefined;
   const importHolder = posix.join(posix.dirname(ctx.revealInfo.path), 'index.ts');
   const importRes = buildMissingImportsEdits(
     ctx.ast,
@@ -230,7 +294,22 @@ async function applyRevealWrap(
     { file: importHolder, imports: ["import { Reveal } from './Reveal';"] },
     nl,
   );
-  const edited = applyTextEdits(ctx.beforeCode, [...importRes.edits, edit]);
+  // Under an existing Reveal only its opening changes: an empty edit at the element tells where
+  // the element is after (its column moves when it shares the opening's line).
+  const markEdits: TextEdit[] =
+    existingReveal !== undefined && existingReveal !== ctx.el && ctx.el.start !== undefined
+      ? [{ start: ctx.el.start, end: ctx.el.start, text: '', mark: 0 }]
+      : [];
+  return [...importRes.edits, edit, ...markEdits];
+}
+
+async function applyRevealWrap(
+  ctx: RevealContext,
+  request: RevealRequest,
+): Promise<Result<RevealResult>> {
+  const edits = wrapEdits(ctx, request);
+  if (!edits) return err({ code: 'E016', params: { reason: 'revealWrapFailed' } });
+  const edited = applyTextEdits(ctx.beforeCode, edits);
   if (!edited.ok) return edited;
 
   const ensureRes = await ensureRevealComponentFile(ctx.deps, ctx.root, ctx.revealInfo);
@@ -254,6 +333,7 @@ async function applyRevealWrap(
     revealFile: ctx.revealInfo.path,
     created: ensureRes.value.created,
     wrapped: true,
+    ...elementLoc(ctx.rel, edited.value.code, ctx.el, edited.value.marks[0]),
   });
 }
 

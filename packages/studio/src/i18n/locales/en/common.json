@@ -561,7 +561,8 @@
       "off": "Off"
     },
     "motion": {
-      "preview": "Preview",
+      "preview": "Preview the motion",
+      "previewNothing": "This element has no motion yet: pick a style, an animation or the reveal first",
       "revealTitle": "Scroll reveal",
       "revealEffect": "Effect",
       "revealStagger": "Stagger",
@@ -571,7 +572,10 @@
         "glowBorder": "Glow border",
         "fadeIn": "Fade in",
         "slideUp": "Slide up"
-      }
+      },
+      "effect": "Motion style",
+      "effectNone": "None",
+      "effectCustom": "Custom"
     },
     "path": {
       "label": "Element path",
@@ -616,6 +620,13 @@
       "editing": "Editing for {{frame}} only",
       "done": "Done",
       "cancel": "Cancel"
+    },
+    "number": {
+      "clear": "Clear",
+      "notNumber": "Numbers only (unit {{unit}})",
+      "notInteger": "Whole numbers only",
+      "tooSmall": "At least {{limit}}",
+      "tooBig": "At most {{limit}}"
     }
   },
   "textEdit": {
@@ -992,6 +1003,7 @@
     "remove": "Remove from page",
     "fromPackage": "From a library: its inside cannot be edited.",
     "pickImage": "Choose image…",
+    "unused": "The component does not show this value yet, so changing it changes nothing on the page. Use \"Edit component\" above to add it to the component.",
     "fixValue": "Set a fixed value",
     "partOf_one": "This part belongs to the component {{name}}. A change here applies to its {{count}} use.",
     "partOf_other": "This part belongs to the component {{name}}. A change here applies to all {{count}} uses.",

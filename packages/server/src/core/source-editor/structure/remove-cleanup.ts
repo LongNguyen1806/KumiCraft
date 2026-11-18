@@ -1,6 +1,6 @@
 // What a removal takes along (the owner's report of 2026-11-16): the placing `<div>` around a
-// component in a free frame, and the imports only the removed code used. A name still read
-// anywhere else in the file keeps its import.
+// component in a free frame, a `<Reveal>` around the element alone, and the imports only the
+// removed code used. A name still read anywhere else in the file keeps its import.
 import { asAstNode, type AstNode } from '../ast-helpers.ts';
 import { placeWrapperChild } from './place-wrapper.ts';
 import { lineStartOf, type ResolvedElement } from './structure-ops.ts';
@@ -29,27 +29,61 @@ function walk(node: unknown, visit: (n: AstNode, parent: AstNode | undefined) =>
   }
 }
 
-/** The element itself, or the placing `<div>` it is alone in. */
+/** The element a `<Reveal>` holds when it holds that one element and nothing else. */
+function revealChild(parent: AstNode): unknown {
+  const opening = asAstNode(parent['openingElement']);
+  const name = asAstNode(opening?.['name']);
+  if (name?.type !== 'JSXIdentifier' || name['name'] !== 'Reveal') return undefined;
+  const children = Array.isArray(parent['children']) ? parent['children'] : [];
+  const kept = children.filter((c) => {
+    const n = asAstNode(c);
+    return !(n?.type === 'JSXText' && text(n['value']).trim() === '');
+  });
+  return kept.length === 1 ? kept[0] : undefined;
+}
+
+function parentOf(ast: AstNode, node: AstNode): AstNode | undefined {
+  let parent: AstNode | undefined;
+  walk(ast, (n, p) => {
+    if (n === node && p?.type === 'JSXElement') parent = p;
+  });
+  return parent;
+}
+
+/**
+ * The element itself, or the wrapper that exists only for it: the placing `<div>` it is alone in,
+ * the `<Reveal>` that only shows it in (the owner's report, 2026-11-18). An empty wrapper left
+ * behind is a type error (`children` is required) and shows nothing.
+ */
 export function widenToPlaceWrapper(
   ast: AstNode,
   code: string,
   el: ResolvedElement,
 ): ResolvedElement {
-  let parent: AstNode | undefined;
-  walk(ast, (n, p) => {
-    if (n === el.node && p?.type === 'JSXElement') parent = p;
-  });
-  if (parent === undefined || placeWrapperChild(parent, code) !== el.node) return el;
-  const opening = asAstNode(parent['openingElement']);
-  if (opening === undefined || parent.start === undefined || parent.end === undefined) return el;
-  return {
-    ...el,
-    node: parent,
-    opening,
-    start: parent.start,
-    end: parent.end,
-    line: parent.loc?.start?.line ?? el.line,
-  };
+  let current = el;
+  for (;;) {
+    const parent = parentOf(ast, current.node);
+    if (parent === undefined) return current;
+    const onlyFor =
+      placeWrapperChild(parent, code) === current.node || revealChild(parent) === current.node;
+    const opening = asAstNode(parent['openingElement']);
+    if (
+      !onlyFor ||
+      opening === undefined ||
+      parent.start === undefined ||
+      parent.end === undefined
+    ) {
+      return current;
+    }
+    current = {
+      ...current,
+      node: parent,
+      opening,
+      start: parent.start,
+      end: parent.end,
+      line: parent.loc?.start?.line ?? current.line,
+    };
+  }
 }
 
 /** Where each name is read outside the imports: identifiers, JSX tag names, type names. */

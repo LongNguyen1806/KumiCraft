@@ -19,6 +19,8 @@ export type EffectsCommonProps = {
   readonly disabled: boolean;
   readonly tokens?: readonly ClassToken[] | undefined;
   readonly currentScope?: Scope | undefined;
+  /** Tailwind 3 has fixed names where Tailwind 4 takes any number (`rotate-15`). */
+  readonly major?: 3 | 4 | undefined;
   readonly onPropChange?: ((prop: PropertyId, value: ClassValue | undefined) => void) | undefined;
   readonly onBatchProps?: ((entries: readonly BatchPropEntry[]) => void) | undefined;
   readonly cssReading?: StyleReading | undefined;

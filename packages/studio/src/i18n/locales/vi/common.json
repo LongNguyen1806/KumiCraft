@@ -561,7 +561,8 @@
       "off": "Tắt"
     },
     "motion": {
-      "preview": "Xem thử",
+      "preview": "Xem thử chuyển động",
+      "previewNothing": "Phần tử chưa có chuyển động: chọn kiểu chuyển động, hoạt ảnh hoặc hiện dần trước",
       "revealTitle": "Hiện dần khi cuộn tới",
       "revealEffect": "Kiểu",
       "revealStagger": "Lần lượt",
@@ -571,7 +572,10 @@
         "glowBorder": "Sáng viền",
         "fadeIn": "Mờ dần",
         "slideUp": "Trượt lên"
-      }
+      },
+      "effect": "Kiểu chuyển động",
+      "effectNone": "Không có",
+      "effectCustom": "Tùy chỉnh"
     },
     "path": {
       "label": "Đường dẫn phần tử",
@@ -616,6 +620,13 @@
       "editing": "Đang sửa riêng cho {{frame}}",
       "done": "Xong",
       "cancel": "Hủy"
+    },
+    "number": {
+      "clear": "Bỏ",
+      "notNumber": "Chỉ nhập số (đơn vị {{unit}})",
+      "notInteger": "Chỉ nhận số nguyên",
+      "tooSmall": "Tối thiểu {{limit}}",
+      "tooBig": "Tối đa {{limit}}"
     }
   },
   "textEdit": {
@@ -991,6 +1002,7 @@
     "remove": "Gỡ khỏi trang",
     "fromPackage": "Từ thư viện, không sửa được bên trong.",
     "pickImage": "Chọn ảnh…",
+    "unused": "Component chưa hiển thị giá trị này, nên đổi sẽ không thấy gì trên trang. Bấm \"Sửa component\" ở trên để thêm nó vào component.",
     "fixValue": "Đặt giá trị cố định",
     "partOf_other": "Phần này thuộc component {{name}}. Sửa ở đây sẽ đổi cả {{count}} chỗ dùng.",
     "partOfUnknown": "Phần này thuộc component {{name}}. Sửa ở đây sẽ đổi mọi chỗ dùng nó.",
