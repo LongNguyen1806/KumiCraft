@@ -1003,7 +1003,6 @@
     "remove": "Remove from page",
     "fromPackage": "From a library: its inside cannot be edited.",
     "pickImage": "Choose image…",
-    "unused": "The component does not show this value yet, so changing it changes nothing on the page. Use \"Edit component\" above to add it to the component.",
     "fixValue": "Set a fixed value",
     "partOf_one": "This part belongs to the component {{name}}. A change here applies to its {{count}} use.",
     "partOf_other": "This part belongs to the component {{name}}. A change here applies to all {{count}} uses.",

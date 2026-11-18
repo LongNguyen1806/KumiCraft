@@ -1002,7 +1002,6 @@
     "remove": "Gỡ khỏi trang",
     "fromPackage": "Từ thư viện, không sửa được bên trong.",
     "pickImage": "Chọn ảnh…",
-    "unused": "Component chưa hiển thị giá trị này, nên đổi sẽ không thấy gì trên trang. Bấm \"Sửa component\" ở trên để thêm nó vào component.",
     "fixValue": "Đặt giá trị cố định",
     "partOf_other": "Phần này thuộc component {{name}}. Sửa ở đây sẽ đổi cả {{count}} chỗ dùng.",
     "partOfUnknown": "Phần này thuộc component {{name}}. Sửa ở đây sẽ đổi mọi chỗ dùng nó.",

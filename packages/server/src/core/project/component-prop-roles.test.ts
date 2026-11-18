@@ -117,19 +117,24 @@ describe('shapeComponentProps', () => {
     ]);
   });
 
-  it('marks a prop the page sets but the component never shows (owner, 2026-11-18) [R-IN-11]', () => {
+  it('hides a prop the page sets but the component never shows (owner, 2026-11-18) [R-IN-11]', () => {
     const definition = readPropDefinition(
-      parseJsxAst('export function ProductCard({ name, image }) { return <h3>{name}</h3>; }'),
+      parseJsxAst(
+        'export function ProductCard({ name, image, ...rest }) { return <h3 {...rest}>{name}</h3>; }',
+      ),
       'ProductCard',
     );
+    const set = (name: string, value: string) => ({
+      ...spec(name),
+      hasValue: true,
+      value,
+      origin: 'project' as const,
+    });
     const shown = shapeComponentProps(
-      [
-        { ...spec('name'), hasValue: true, value: 'Lamp', origin: 'project' },
-        { ...spec('image'), hasValue: true, value: '/images/a.jpg', origin: 'project' },
-      ],
+      [set('name', 'Lamp'), set('image', '/images/a.jpg'), set('variant', 'dark')],
       { componentFile: 'src/ProductCard.tsx', definition },
     );
-    expect(shown.find((p) => p.name === 'image')).toMatchObject({ unused: true });
-    expect(shown.find((p) => p.name === 'name')).not.toHaveProperty('unused');
+    // `variant` goes on through `...rest`: it is not the definition's to call unused.
+    expect(shown.map((p) => p.name)).toEqual(['name', 'variant']);
   });
 });

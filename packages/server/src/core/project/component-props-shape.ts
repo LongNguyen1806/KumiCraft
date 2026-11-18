@@ -109,6 +109,10 @@ type RawSpec = ComponentPropSpec & { readonly origin?: PropOrigin | undefined };
 
 function isShown(p: RawSpec, origin: ComponentOrigin): boolean {
   if (isHiddenName(p.name)) return false;
+  // Named by the definition and never shown (`{ image }` with no `<img>`): changing it changes
+  // nothing on the page, even when the page sets it, so there is no knob (owner, 2026-11-18).
+  // A prop the definition does not name (passed on by `...rest`) is not this case.
+  if (origin.definition?.get(p.name)?.used === false) return false;
   if (p.hasValue) return true; // what the page already sets is always shown
   if (p.kind === 'complex') return false; // functions, objects, elements: code only
   if (origin.definition !== undefined) return origin.definition.get(p.name)?.used === true;
@@ -147,15 +151,11 @@ export function shapeComponentProps(
   return [...raw, ...extra]
     .filter((p) => isShown(p, origin))
     .map(({ origin: _from, ...p }) => {
-      const use = origin.definition?.get(p.name);
-      const fallback = use?.defaultValue;
-      // Shown only because the page sets it: the definition never reads it.
-      const unused = origin.definition !== undefined && use?.used !== true;
+      const fallback = origin.definition?.get(p.name)?.defaultValue;
       return {
         ...p,
         role: roleOf(p, origin),
         ...(fallback !== undefined ? { defaultValue: fallback } : {}),
-        ...(unused ? { unused: true as const } : {}),
       };
     });
 }

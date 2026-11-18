@@ -101,12 +101,9 @@ function ComponentPropRow({
   readonly onSave: (val: SetPropValue | undefined) => void;
   readonly onOpenEditor: () => void;
 }) {
-  const control =
-    spec.unused === true ? (
-      <UnusedPropNote spec={spec} />
-    ) : (
-      <PropControl spec={spec} disabled={disabled} onChange={onSave} onOpenEditor={onOpenEditor} />
-    );
+  const control = (
+    <PropControl spec={spec} disabled={disabled} onChange={onSave} onOpenEditor={onOpenEditor} />
+  );
   const inline = spec.kind === 'boolean' && !spec.readonlyExpression;
   return (
     <div
@@ -120,25 +117,6 @@ function ComponentPropRow({
       <PropName spec={spec} />
       {control}
     </div>
-  );
-}
-
-/**
- * A prop the page sets but the component never shows (owner, 2026-11-18: an image picked for
- * ProductCard changed nothing): no control that does nothing, the value and why instead.
- */
-function UnusedPropNote({ spec }: { readonly spec: ComponentPropSpec }) {
-  const { t } = useTranslation();
-  const shown = spec.readonlyExpression ? spec.expression : spec.value;
-  return (
-    <span className="flex min-w-0 flex-col gap-0.5" data-testid={`prop-unused-${spec.name}`}>
-      {shown !== undefined && (
-        <span className="truncate font-mono text-[10px] text-ink-faint" title={String(shown)}>
-          {String(shown)}
-        </span>
-      )}
-      <span className="text-[11px] leading-snug text-ink-soft">{t('componentProps.unused')}</span>
-    </span>
   );
 }
 

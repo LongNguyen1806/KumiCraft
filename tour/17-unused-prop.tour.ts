@@ -1,5 +1,5 @@
 // Tour 17 (owner, 2026-11-18): on his Test UI, an image picked for ProductCard changed nothing:
-// the component names `image` but never shows it. The Inspector now says so, with no picker.
+// the component names `image` but never shows it. The Inspector shows no knob for it.
 import { rm } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 
@@ -21,15 +21,17 @@ test('17 a prop the component never shows', async ({ page }) => {
         .getByRole('treeitem', { name: /div rounded.*ProductCard/ })
         .nth(2)
         .click();
-      const unused = page.getByTestId('prop-unused-image');
-      await expect(unused).toBeVisible({ timeout: 10_000 });
-      note(await unused.innerText());
-      if (await page.getByTestId('prop-pick-image-image').isVisible()) {
-        throw new Bug('Vẫn còn nút Chọn ảnh cho prop không dùng');
-      }
-      const name = page.getByTestId('prop-input-name');
-      note(`Ô Tên vẫn sửa được: ${(await name.isEditable()) ? 'có' : 'không'}`);
-      await unused.scrollIntoViewIfNeeded();
+      const nameRow = page.getByTestId('prop-row-name');
+      await expect(nameRow).toBeVisible({ timeout: 10_000 });
+      const rows = await page
+        .locator('[data-testid^="prop-row-"]')
+        .evaluateAll((els) => els.map((el) => el.getAttribute('data-testid')));
+      note(`Các ô trong Tùy chỉnh: ${rows.join(', ')}`);
+      if (rows.includes('prop-row-image')) throw new Bug('Vẫn hiện ô Ảnh mà component không dùng');
+      note(
+        `Ô Tên vẫn sửa được: ${(await page.getByTestId('prop-input-name').isEditable()) ? 'có' : 'không'}`,
+      );
+      await nameRow.scrollIntoViewIfNeeded();
     });
   } finally {
     await tour.close();
