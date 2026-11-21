@@ -21,8 +21,11 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      # The only pnpm on the machine, as on the user's Mac.
-      - run: npm install -g pnpm@12.21.0
+      # The only pnpm on the machine, as on the user's Mac. Run 1 (scripts on) gave a native binary
+      # and a working install. Run 2: the package's own install script (`node install.js`, which
+      # swaps the shell-script launcher for the binary) is blocked, as an npm that refuses
+      # install scripts would do.
+      - run: npm install -g pnpm@12.21.0 --ignore-scripts
 
       - name: The pnpm file a new project gets
         working-directory: ${{ runner.temp }}
@@ -35,6 +38,8 @@ jobs:
           echo "--- first 300 bytes"
           head -c 300 "$(realpath "$PNPM")" | cat -v
           echo
+          echo "--- pnpm -v typed in a shell, as the user did in Terminal"
+          bash -c 'pnpm -v' || echo "shell: pnpm -v failed with $?"
 
       - name: pnpm -v and pnpm install, started as KumiCraft starts them (no shell)
         run: |
@@ -53,6 +58,7 @@ jobs:
               console.log("pnpm -v exit:", version);
               const install = await run(["install"], process.argv[1]);
               console.log("pnpm install exit:", install, install === 127 ? "(KumiCraft shows E021)" : "");
-              process.exit(install);
+              // The job stays green either way: the lines above are the result to read.
+              process.exit(0);
             })();
           ' "$APP"
