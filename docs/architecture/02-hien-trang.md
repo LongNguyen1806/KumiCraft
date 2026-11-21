@@ -149,8 +149,8 @@ Nhận xét:
 
 1. **Không có lõi độc lập với công nghệ.** "Phần tử", "thao tác sửa", "trang", "component" được định nghĩa thẳng bằng JSX. Thêm Vue, Razor hay HTML là phải viết lại bộ sửa, vì không có interface để cắm vào (mục 2.3, 6).
 2. **Adapter framework chỉ gói nửa việc.** Nhận diện và chạy nằm trong adapter, còn sửa code thì nằm ngoài và chỉ biết JSX. `viewOnly` là cách chặn, không phải một bộ sửa khác (mục 2.3).
-3. **Lớp style bị chia hai đường:** Tailwind do Studio tự tính rồi gửi `setClassName`; CSS do Server tính qua `applyStyle`. Cùng một việc (đổi màu) có hai luồng, hai giao diện và hai bộ test (mục 3, 5). Điều này trái với nguyên tắc "mọi hệ style chạy như nhau" và với mục tiêu "AI làm được mọi việc của công cụ": AI không có một thao tác "đổi màu" chung để gọi.
-4. **AI không đi qua các thao tác sửa.** Agent tự viết code tự do. Các thao tác sửa chỉ được bọc cho AI ở MCP, mà MCP chỉ để kiểm thử (mục 5). Vì vậy "mỗi thao tác là một thao tác dùng chung cho công cụ tay và AI" (mục tiêu ở bước 1) **chưa có**.
+3. **Lớp style bị chia hai đường:** Tailwind do Studio tự tính rồi gửi `setClassName`; CSS do Server tính qua `applyStyle`. Cùng một việc (đổi màu) có hai luồng, hai giao diện và hai bộ test (mục 3, 5). Điều này trái với nguyên tắc "mọi hệ style chạy như nhau".
+4. ~~**AI không đi qua các thao tác sửa.**~~ Không phải vấn đề: chủ dự án chốt (2026-11-22) AI tự viết code như hiện nay; các thao tác sửa chỉ dành cho công cụ tay.
 5. **Ranh giới module yếu:**
    - Server: 6 vòng phụ thuộc, 3 chỗ `core` import thẳng `adapters`.
    - Studio: 36 cặp phụ thuộc hai chiều; `editor` dính 23 nhóm.
@@ -165,6 +165,6 @@ Nhận xét:
 1. Mô hình lõi gồm những khái niệm nào ("dự án", "trang", "phần tử", "vị trí trong code", "thao tác sửa", "style"…), định nghĩa sao cho JSX, Pug, Vue, Razor đều diễn đạt được?
 2. Bộ sửa code theo ngôn ngữ giao diện có interface gì, và thao tác nào là bắt buộc / tùy chọn (thiếu thì báo lý do, như E023 hiện nay)?
 3. Lớp style gộp lại thế nào để Tailwind và CSS đi **một đường** trên Server, Studio chỉ gửi ý định ("đổi màu chữ thành X")?
-4. Thao tác sửa dùng chung cho công cụ tay và AI: AI gọi chúng bằng cách nào (MCP chỉ để kiểm thử theo nguyên tắc 6 của bước 1)?
+4. ~~Thao tác dùng chung cho AI~~: đã chốt, AI tự viết code (bỏ câu hỏi).
 5. Nội dung giao diện (thư viện khối, kit) tách khỏi hợp đồng ra sao, và mỗi ngôn ngữ giao diện có nội dung riêng thế nào?
 6. Quy tắc phụ thuộc nào phải được lint kiểm tự động, cho cả Server và Studio?

@@ -9,7 +9,7 @@ Công cụ **thiết kế giao diện web trên code thật**. Người dùng th
 - **Người dùng chính:** dev fullstack mạnh backend, yếu giao diện. Họ ghét chuyển qua lại giữa code và trình duyệt, và không tự làm ra được giao diện đẹp.
 - **Vấn đề giải quyết:** giúp họ làm ra giao diện **đẹp, chỉn chu**, mà code vẫn là code của họ, sửa tay được, nối được với backend của họ.
 - **Tính năng chính:** tạo dự án mới và thiết kế nó. Mở dự án có sẵn để chỉnh là tính năng thứ hai.
-- **Thế mạnh là AI** (chủ dự án, 2026-11-22): AI làm được mọi việc mà các công cụ thiết kế làm được. Người dùng chủ yếu nhờ AI; các công cụ chỉnh tay (Inspector, thư viện khối…) không phải thứ họ dùng thường xuyên. Hệ quả cho kiến trúc: mỗi thao tác sửa là **một thao tác dùng chung**, công cụ chỉnh tay và AI gọi cùng một thao tác đó; không có thao tác nào chỉ công cụ tay làm được mà AI không làm được.
+- **Thế mạnh là AI** (chủ dự án, 2026-11-22): AI làm được mọi việc mà các công cụ thiết kế làm được, theo nghĩa **AI tự viết code** (agent CLI sửa file trực tiếp, như hiện nay). Người dùng chủ yếu nhờ AI; các công cụ chỉnh tay (Inspector, thư viện khối…) không phải thứ họ dùng thường xuyên. Các thao tác sửa của KumiCraft chỉ dành cho công cụ tay; AI không cần gọi chúng. (Ý định cũ cho AI gọi các công cụ qua MCP là để kiểm thử xem công cụ có đúng và đủ không; nay không cần nữa.)
 - **Thước đo:** mỗi tiêu chí phải đạt 9/10 trở lên. Kết quả không đẹp thì không có lý do gì để dùng KumiCraft thay vì nhờ AI viết thẳng.
 
 ## 2. Nguyên tắc đã chốt (không bàn lại khi làm kiến trúc)
