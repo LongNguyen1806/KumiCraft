@@ -1,0 +1,27 @@
+﻿2026-11-21T08:41:50.5310140Z ##[group]Run which -a pnpm
+2026-11-21T08:41:50.5310520Z [36;1mwhich -a pnpm[0m
+2026-11-21T08:41:50.5310750Z [36;1mpnpm -v[0m
+2026-11-21T08:41:50.5311030Z [36;1mPNPM="$(which pnpm)"[0m
+2026-11-21T08:41:50.5311330Z [36;1mls -la "$PNPM"[0m
+2026-11-21T08:41:50.5311600Z [36;1mfile "$PNPM" "$(realpath "$PNPM")"[0m
+2026-11-21T08:41:50.5311840Z [36;1mecho "--- first 300 bytes"[0m
+2026-11-21T08:41:50.5312110Z [36;1mhead -c 300 "$(realpath "$PNPM")" | cat -v[0m
+2026-11-21T08:41:50.5312460Z [36;1mecho[0m
+2026-11-21T08:41:50.5312770Z [36;1mecho "--- pnpm -v typed in a shell, as the user did in Terminal"[0m
+2026-11-21T08:41:50.5313190Z [36;1mbash -c 'pnpm -v' || echo "shell: pnpm -v failed with $?"[0m
+2026-11-21T08:41:50.5351710Z shell: /bin/bash -e {0}
+2026-11-21T08:41:50.5351930Z ##[endgroup]
+2026-11-21T08:41:50.5884090Z /Users/runner/hostedtoolcache/node/24.22.2/arm64/bin/pnpm
+2026-11-21T08:41:50.6673150Z 12.21.0
+2026-11-21T08:41:50.6818260Z lrwxr-xr-x  1 runner  staff  29 Nov 21 08:41 /Users/runner/hostedtoolcache/node/24.22.2/arm64/bin/pnpm -> ../lib/node_modules/pnpm/pnpm
+2026-11-21T08:41:50.7027700Z /Users/runner/hostedtoolcache/node/24.22.2/arm64/bin/pnpm:                   ASCII text
+2026-11-21T08:41:50.7028490Z /Users/runner/hostedtoolcache/node/24.22.2/arm64/lib/node_modules/pnpm/pnpm: ASCII text
+2026-11-21T08:41:50.7030270Z --- first 300 bytes
+2026-11-21T08:41:50.7098810Z # pnpm's native binary replaces this file during installation (see
+2026-11-21T08:41:50.7099610Z # ./install.js). Until then this hands over to ./bin/pnpm.mjs, which finds the
+2026-11-21T08:41:50.7105490Z # installed binary or downloads one and spawns it.
+2026-11-21T08:41:50.7105800Z #
+2026-11-21T08:41:50.7106240Z # Shebang-less on purpose, and therefore an `sh` script: a bin shim generated
+2026-11-21T08:41:50.7106780Z # from a shebang record
+2026-11-21T08:41:50.7107190Z --- pnpm -v typed in a shell, as the user did in Terminal
+2026-11-21T08:41:50.7869180Z 12.21.0

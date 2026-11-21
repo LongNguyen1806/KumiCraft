@@ -1,0 +1,6 @@
+﻿2026-11-21T08:41:48.2711330Z ##[group]Run npm install -g pnpm@12.21.0 --ignore-scripts
+2026-11-21T08:41:48.2711810Z [36;1mnpm install -g pnpm@12.21.0 --ignore-scripts[0m
+2026-11-21T08:41:48.2765890Z shell: /bin/bash -e {0}
+2026-11-21T08:41:48.2766180Z ##[endgroup]
+2026-11-21T08:41:50.4293890Z 
+2026-11-21T08:41:50.4359540Z added 2 packages in 2s

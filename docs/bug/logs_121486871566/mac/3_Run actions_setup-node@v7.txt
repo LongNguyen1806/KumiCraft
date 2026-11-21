@@ -1,0 +1,13 @@
+﻿2026-11-21T08:41:47.0735430Z ##[group]Run actions/setup-node@v7
+2026-11-21T08:41:47.0736320Z with:
+2026-11-21T08:41:47.0736910Z   node-version: 24
+2026-11-21T08:41:47.0737570Z   check-latest: false
+2026-11-21T08:41:47.0745410Z   token: ***
+2026-11-21T08:41:47.0746160Z   package-manager-cache: true
+2026-11-21T08:41:47.0746940Z ##[endgroup]
+2026-11-21T08:41:47.2482780Z Found in cache @ /Users/runner/hostedtoolcache/node/24.22.2/arm64
+2026-11-21T08:41:47.5976590Z ##[group]Environment details
+2026-11-21T08:41:48.2498080Z node: v24.22.2
+2026-11-21T08:41:48.2499990Z npm: 11.19.1
+2026-11-21T08:41:48.2500660Z yarn: 1.22.22
+2026-11-21T08:41:48.2502430Z ##[endgroup]

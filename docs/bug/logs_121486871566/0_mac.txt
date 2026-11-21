@@ -1,0 +1,244 @@
+﻿2026-11-21T08:41:43.1432340Z Current runner version: '2.338.2'
+2026-11-21T08:41:43.1447180Z ##[group]Runner Image Provisioner
+2026-11-21T08:41:43.1447710Z Hosted Compute Agent
+2026-11-21T08:41:43.1448090Z Version: 20261028.624
+2026-11-21T08:41:43.1448510Z Commit: 54898b74c23fde5556c9b3c3a2290865feef0dfe
+2026-11-21T08:41:43.1448990Z Build Date: 2026-10-28T21:51:42Z
+2026-11-21T08:41:43.1449440Z Worker ID: {a8be2b6a-d6ae-488b-a21e-164e32810b84}
+2026-11-21T08:41:43.1449910Z Region: westus
+2026-11-21T08:41:43.1450280Z Cloud: MacCloud
+2026-11-21T08:41:43.1450650Z ##[endgroup]
+2026-11-21T08:41:43.1451470Z ##[group]Operating System
+2026-11-21T08:41:43.1451870Z macOS
+2026-11-21T08:41:43.1452200Z 26.7.2
+2026-11-21T08:41:43.1452520Z 25G332
+2026-11-21T08:41:43.1452840Z ##[endgroup]
+2026-11-21T08:41:43.1453180Z ##[group]Runner Image
+2026-11-21T08:41:43.1453550Z Image: macos-26-arm64
+2026-11-21T08:41:43.1453910Z Version: 20261102.0473.1
+2026-11-21T08:41:43.1454710Z Included Software: https://github.com/actions/runner-images/blob/macos-26-arm64/20261102.0473/images/macos/macos-26-arm64-Readme.md
+2026-11-21T08:41:43.1455840Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-26-arm64%2F20261102.0473
+2026-11-21T08:41:43.1456570Z ##[endgroup]
+2026-11-21T08:41:43.1457270Z ##[group]GITHUB_TOKEN Permissions
+2026-11-21T08:41:43.1458210Z Contents: read
+2026-11-21T08:41:43.1458560Z Metadata: read
+2026-11-21T08:41:43.1458930Z ##[endgroup]
+2026-11-21T08:41:43.1460270Z Secret source: Actions
+2026-11-21T08:41:43.1460810Z Cache mode: write
+2026-11-21T08:41:43.1461240Z Prepare workflow directory
+2026-11-21T08:41:43.1685880Z Prepare all required actions
+2026-11-21T08:41:43.1721540Z Getting action download info
+2026-11-21T08:41:43.5706490Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-11-21T08:41:43.9216540Z Download action repository 'actions/setup-node@v7' (SHA:949feb2413d6458794dcd2491c4babbbce0c15c1)
+2026-11-21T08:41:44.1762540Z Complete job name: mac
+2026-11-21T08:41:44.2394880Z ##[group]Run actions/checkout@v7
+2026-11-21T08:41:44.2395530Z with:
+2026-11-21T08:41:44.2395870Z   repository: LongNguyen1806/KumiCraft
+2026-11-21T08:41:44.2398780Z   token: ***
+2026-11-21T08:41:44.2399100Z   ssh-strict: true
+2026-11-21T08:41:44.2399420Z   ssh-user: git
+2026-11-21T08:41:44.2399780Z   persist-credentials: true
+2026-11-21T08:41:44.2400220Z   clean: true
+2026-11-21T08:41:44.2400560Z   sparse-checkout-cone-mode: true
+2026-11-21T08:41:44.2400940Z   fetch-depth: 1
+2026-11-21T08:41:44.2401330Z   fetch-tags: false
+2026-11-21T08:41:44.2401720Z   show-progress: true
+2026-11-21T08:41:44.2402070Z   lfs: false
+2026-11-21T08:41:44.2402380Z   submodules: false
+2026-11-21T08:41:44.2402710Z   set-safe-directory: true
+2026-11-21T08:41:44.2403100Z   allow-unsafe-pr-checkout: false
+2026-11-21T08:41:44.2403620Z ##[endgroup]
+2026-11-21T08:41:44.9930620Z Syncing repository: LongNguyen1806/KumiCraft
+2026-11-21T08:41:44.9932430Z ##[group]Getting Git version info
+2026-11-21T08:41:44.9933190Z Working directory is '/Users/runner/work/KumiCraft/KumiCraft'
+2026-11-21T08:41:44.9951660Z [command]/opt/homebrew/bin/git version
+2026-11-21T08:41:45.0599180Z git version 2.56.0
+2026-11-21T08:41:45.0613620Z ##[endgroup]
+2026-11-21T08:41:45.0620690Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/c406e547-cc5b-4fc4-8599-0063e134c385/.gitconfig'
+2026-11-21T08:41:45.0629760Z Temporarily overriding HOME='/Users/runner/work/_temp/c406e547-cc5b-4fc4-8599-0063e134c385' before making global git config changes
+2026-11-21T08:41:45.0633030Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-21T08:41:45.0635780Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/KumiCraft/KumiCraft
+2026-11-21T08:41:45.0774580Z Deleting the contents of '/Users/runner/work/KumiCraft/KumiCraft'
+2026-11-21T08:41:45.0778250Z ##[group]Determining repository object format
+2026-11-21T08:41:45.0780960Z ##[endgroup]
+2026-11-21T08:41:45.0783410Z ##[group]Initializing the repository
+2026-11-21T08:41:45.0789390Z [command]/opt/homebrew/bin/git init /Users/runner/work/KumiCraft/KumiCraft
+2026-11-21T08:41:45.1148850Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-21T08:41:45.1150030Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-21T08:41:45.1150960Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-21T08:41:45.1151710Z hint: call:
+2026-11-21T08:41:45.1152340Z hint:
+2026-11-21T08:41:45.1152990Z hint: 	git config --global init.defaultBranch <name>
+2026-11-21T08:41:45.1153690Z hint:
+2026-11-21T08:41:45.1154290Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-21T08:41:45.1171640Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-21T08:41:45.1172270Z hint:
+2026-11-21T08:41:45.1172650Z hint: 	git branch -m <name>
+2026-11-21T08:41:45.1173050Z hint:
+2026-11-21T08:41:45.1173710Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-21T08:41:45.1175140Z Initialized empty Git repository in /Users/runner/work/KumiCraft/KumiCraft/.git/
+2026-11-21T08:41:45.1178150Z [command]/opt/homebrew/bin/git remote add origin https://github.com/LongNguyen1806/KumiCraft
+2026-11-21T08:41:45.1271800Z ##[endgroup]
+2026-11-21T08:41:45.1272840Z ##[group]Disabling automatic garbage collection
+2026-11-21T08:41:45.1274340Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+2026-11-21T08:41:45.1380800Z ##[endgroup]
+2026-11-21T08:41:45.1383140Z ##[group]Setting up auth
+2026-11-21T08:41:45.1384720Z Removing SSH command configuration
+2026-11-21T08:41:45.1391900Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-21T08:41:45.1497970Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-21T08:41:45.2697830Z Removing HTTP extra header
+2026-11-21T08:41:45.2704300Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-21T08:41:45.2786470Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-21T08:41:45.4460350Z Removing includeIf entries pointing to credentials config files
+2026-11-21T08:41:45.4463100Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-21T08:41:45.4470910Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-21T08:41:45.5462530Z [command]/opt/homebrew/bin/git config --file /Users/runner/work/_temp/git-credentials-ea286d08-baa1-4d12-9b8c-42ae514e5330.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-21T08:41:45.5576600Z [command]/opt/homebrew/bin/git config --local includeIf.gitdir:/Users/runner/work/KumiCraft/KumiCraft/.git.path /Users/runner/work/_temp/git-credentials-ea286d08-baa1-4d12-9b8c-42ae514e5330.config
+2026-11-21T08:41:45.5621470Z [command]/opt/homebrew/bin/git config --local includeIf.gitdir:/Users/runner/work/KumiCraft/KumiCraft/.git/worktrees/*.path /Users/runner/work/_temp/git-credentials-ea286d08-baa1-4d12-9b8c-42ae514e5330.config
+2026-11-21T08:41:45.5687040Z [command]/opt/homebrew/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-ea286d08-baa1-4d12-9b8c-42ae514e5330.config
+2026-11-21T08:41:45.5748540Z [command]/opt/homebrew/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-ea286d08-baa1-4d12-9b8c-42ae514e5330.config
+2026-11-21T08:41:45.5811180Z ##[endgroup]
+2026-11-21T08:41:45.5812630Z ##[group]Fetching the repository
+2026-11-21T08:41:45.5814170Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +3514c4904b92c2dff1c8bce4d1ca3e82b33acd88:refs/remotes/origin/mac-check
+2026-11-21T08:41:46.6059980Z From https://github.com/LongNguyen1806/KumiCraft
+2026-11-21T08:41:46.6063120Z  * [new ref]         3514c4904b92c2dff1c8bce4d1ca3e82b33acd88 -> origin/mac-check
+2026-11-21T08:41:46.6068280Z [command]/opt/homebrew/bin/git branch --list --remote origin/mac-check
+2026-11-21T08:41:46.6249870Z   origin/mac-check
+2026-11-21T08:41:46.6263060Z [command]/opt/homebrew/bin/git rev-parse refs/remotes/origin/mac-check
+2026-11-21T08:41:46.6351430Z 3514c4904b92c2dff1c8bce4d1ca3e82b33acd88
+2026-11-21T08:41:46.6354560Z ##[endgroup]
+2026-11-21T08:41:46.6355450Z ##[group]Determining the checkout info
+2026-11-21T08:41:46.6356500Z ##[endgroup]
+2026-11-21T08:41:46.6358670Z [command]/opt/homebrew/bin/git sparse-checkout disable
+2026-11-21T08:41:46.6444680Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-21T08:41:46.6509060Z ##[group]Checking out the ref
+2026-11-21T08:41:46.6518140Z [command]/opt/homebrew/bin/git checkout --progress --force -B mac-check refs/remotes/origin/mac-check
+2026-11-21T08:41:46.9644480Z Switched to a new branch 'mac-check'
+2026-11-21T08:41:46.9750370Z branch 'mac-check' set up to track 'origin/mac-check'.
+2026-11-21T08:41:47.0059910Z ##[endgroup]
+2026-11-21T08:41:47.0288230Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2026-11-21T08:41:47.0310970Z 3514c4904b92c2dff1c8bce4d1ca3e82b33acd88
+2026-11-21T08:41:47.0735440Z ##[group]Run actions/setup-node@v7
+2026-11-21T08:41:47.0736320Z with:
+2026-11-21T08:41:47.0736910Z   node-version: 24
+2026-11-21T08:41:47.0737580Z   check-latest: false
+2026-11-21T08:41:47.0745410Z   token: ***
+2026-11-21T08:41:47.0746160Z   package-manager-cache: true
+2026-11-21T08:41:47.0746940Z ##[endgroup]
+2026-11-21T08:41:47.2482830Z Found in cache @ /Users/runner/hostedtoolcache/node/24.22.2/arm64
+2026-11-21T08:41:47.5976670Z ##[group]Environment details
+2026-11-21T08:41:48.2498180Z node: v24.22.2
+2026-11-21T08:41:48.2500000Z npm: 11.19.1
+2026-11-21T08:41:48.2500670Z yarn: 1.22.22
+2026-11-21T08:41:48.2502430Z ##[endgroup]
+2026-11-21T08:41:48.2711360Z ##[group]Run npm install -g pnpm@12.21.0 --ignore-scripts
+2026-11-21T08:41:48.2711810Z [36;1mnpm install -g pnpm@12.21.0 --ignore-scripts[0m
+2026-11-21T08:41:48.2765910Z shell: /bin/bash -e {0}
+2026-11-21T08:41:48.2766180Z ##[endgroup]
+2026-11-21T08:41:50.4294030Z 
+2026-11-21T08:41:50.4359590Z added 2 packages in 2s
+2026-11-21T08:41:50.5310160Z ##[group]Run which -a pnpm
+2026-11-21T08:41:50.5310520Z [36;1mwhich -a pnpm[0m
+2026-11-21T08:41:50.5310750Z [36;1mpnpm -v[0m
+2026-11-21T08:41:50.5311030Z [36;1mPNPM="$(which pnpm)"[0m
+2026-11-21T08:41:50.5311340Z [36;1mls -la "$PNPM"[0m
+2026-11-21T08:41:50.5311600Z [36;1mfile "$PNPM" "$(realpath "$PNPM")"[0m
+2026-11-21T08:41:50.5311840Z [36;1mecho "--- first 300 bytes"[0m
+2026-11-21T08:41:50.5312110Z [36;1mhead -c 300 "$(realpath "$PNPM")" | cat -v[0m
+2026-11-21T08:41:50.5312460Z [36;1mecho[0m
+2026-11-21T08:41:50.5312770Z [36;1mecho "--- pnpm -v typed in a shell, as the user did in Terminal"[0m
+2026-11-21T08:41:50.5313190Z [36;1mbash -c 'pnpm -v' || echo "shell: pnpm -v failed with $?"[0m
+2026-11-21T08:41:50.5351720Z shell: /bin/bash -e {0}
+2026-11-21T08:41:50.5351930Z ##[endgroup]
+2026-11-21T08:41:50.5884160Z /Users/runner/hostedtoolcache/node/24.22.2/arm64/bin/pnpm
+2026-11-21T08:41:50.6673180Z 12.21.0
+2026-11-21T08:41:50.6818350Z lrwxr-xr-x  1 runner  staff  29 Nov 21 08:41 /Users/runner/hostedtoolcache/node/24.22.2/arm64/bin/pnpm -> ../lib/node_modules/pnpm/pnpm
+2026-11-21T08:41:50.7027730Z /Users/runner/hostedtoolcache/node/24.22.2/arm64/bin/pnpm:                   ASCII text
+2026-11-21T08:41:50.7028490Z /Users/runner/hostedtoolcache/node/24.22.2/arm64/lib/node_modules/pnpm/pnpm: ASCII text
+2026-11-21T08:41:50.7030280Z --- first 300 bytes
+2026-11-21T08:41:50.7098840Z # pnpm's native binary replaces this file during installation (see
+2026-11-21T08:41:50.7099610Z # ./install.js). Until then this hands over to ./bin/pnpm.mjs, which finds the
+2026-11-21T08:41:50.7105500Z # installed binary or downloads one and spawns it.
+2026-11-21T08:41:50.7105800Z #
+2026-11-21T08:41:50.7106300Z # Shebang-less on purpose, and therefore an `sh` script: a bin shim generated
+2026-11-21T08:41:50.7106790Z # from a shebang record
+2026-11-21T08:41:50.7107200Z --- pnpm -v typed in a shell, as the user did in Terminal
+2026-11-21T08:41:50.7869220Z 12.21.0
+2026-11-21T08:41:50.7986860Z ##[group]Run APP="$RUNNER_TEMP/my-app"
+2026-11-21T08:41:50.7987610Z [36;1mAPP="$RUNNER_TEMP/my-app"[0m
+2026-11-21T08:41:50.8044080Z [36;1mcp -R templates/vite-react-ts-tailwind4 "$APP"[0m
+2026-11-21T08:41:50.8044420Z [36;1msed -i '' 's/{{packageName}}/my-app/' "$APP/package.json"[0m
+2026-11-21T08:41:50.8044680Z [36;1mnode -e '[0m
+2026-11-21T08:41:50.8044900Z [36;1m  const { spawn } = require("child_process");[0m
+2026-11-21T08:41:50.8045190Z [36;1m  const run = (args, cwd) => new Promise((done) => {[0m
+2026-11-21T08:41:50.8045570Z [36;1m    const child = spawn("pnpm", args, { cwd, shell: false, stdio: "inherit" });[0m
+2026-11-21T08:41:50.8046040Z [36;1m    child.on("error", (e) => { console.log("SPAWN ERROR:", e.code); done(127); });[0m
+2026-11-21T08:41:50.8046410Z [36;1m    child.on("close", (code) => done(code ?? 1));[0m
+2026-11-21T08:41:50.8046670Z [36;1m  });[0m
+2026-11-21T08:41:50.8046820Z [36;1m  (async () => {[0m
+2026-11-21T08:41:50.8047090Z [36;1m    const version = await run(["-v"], process.argv[1]);[0m
+2026-11-21T08:41:50.8047530Z [36;1m    console.log("pnpm -v exit:", version);[0m
+2026-11-21T08:41:50.8047890Z [36;1m    const install = await run(["install"], process.argv[1]);[0m
+2026-11-21T08:41:50.8048490Z [36;1m    console.log("pnpm install exit:", install, install === 127 ? "(KumiCraft shows E021)" : "");[0m
+2026-11-21T08:41:50.8049050Z [36;1m    // The job stays green either way: the lines above are the result to read.[0m
+2026-11-21T08:41:50.8049380Z [36;1m    process.exit(0);[0m
+2026-11-21T08:41:50.8049550Z [36;1m  })();[0m
+2026-11-21T08:41:50.8049690Z [36;1m' "$APP"[0m
+2026-11-21T08:41:50.8084590Z shell: /bin/bash -e {0}
+2026-11-21T08:41:50.8084800Z ##[endgroup]
+2026-11-21T08:41:50.8947690Z node:internal/child_process:487
+2026-11-21T08:41:50.8948190Z     throw new ErrnoException(err, 'spawn');
+2026-11-21T08:41:50.8948510Z           ^
+2026-11-21T08:41:50.8948650Z 
+2026-11-21T08:41:50.8948770Z Error: spawn ENOEXEC
+2026-11-21T08:41:50.8949240Z     at ChildProcess.spawn (node:internal/child_process:487:11)
+2026-11-21T08:41:50.8949650Z     at spawn (node:child_process:813:9)
+2026-11-21T08:41:50.8949930Z     at [eval]:4:19
+2026-11-21T08:41:50.8950210Z     at new Promise (<anonymous>)
+2026-11-21T08:41:50.8950500Z     at run ([eval]:3:30)
+2026-11-21T08:41:50.8950700Z     at [eval]:9:27
+2026-11-21T08:41:50.8950890Z     at [eval]:15:5
+2026-11-21T08:41:50.8951200Z     at runScriptInThisContext (node:internal/vm:219:10)
+2026-11-21T08:41:50.8951700Z     at node:internal/process/execution:451:12
+2026-11-21T08:41:50.8952050Z     at [eval]-wrapper:6:24 {
+2026-11-21T08:41:50.8952270Z   errno: -8,
+2026-11-21T08:41:50.8952460Z   code: 'ENOEXEC',
+2026-11-21T08:41:50.8952680Z   syscall: 'spawn'
+2026-11-21T08:41:50.8952870Z }
+2026-11-21T08:41:50.8953370Z 
+2026-11-21T08:41:50.8953920Z Node.js v24.22.2
+2026-11-21T08:41:50.8981570Z ##[error]Process completed with exit code 1.
+2026-11-21T08:41:50.9179960Z Post job cleanup.
+2026-11-21T08:41:51.0328290Z [command]/opt/homebrew/bin/git version
+2026-11-21T08:41:51.0434860Z git version 2.56.0
+2026-11-21T08:41:51.0476300Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/48a6a9f7-b274-4eda-a144-99586788ac2f/.gitconfig'
+2026-11-21T08:41:51.0486140Z Temporarily overriding HOME='/Users/runner/work/_temp/48a6a9f7-b274-4eda-a144-99586788ac2f' before making global git config changes
+2026-11-21T08:41:51.0487250Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-21T08:41:51.0494000Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/KumiCraft/KumiCraft
+2026-11-21T08:41:51.0566510Z Removing SSH command configuration
+2026-11-21T08:41:51.0570600Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-21T08:41:51.0663710Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-21T08:41:51.1718010Z Removing HTTP extra header
+2026-11-21T08:41:51.1721560Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-21T08:41:51.1800740Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-21T08:41:51.2754930Z Removing includeIf entries pointing to credentials config files
+2026-11-21T08:41:51.2760260Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-21T08:41:51.2839460Z includeif.gitdir:/Users/runner/work/KumiCraft/KumiCraft/.git.path
+2026-11-21T08:41:51.2840160Z includeif.gitdir:/Users/runner/work/KumiCraft/KumiCraft/.git/worktrees/*.path
+2026-11-21T08:41:51.2840680Z includeif.gitdir:/github/workspace/.git.path
+2026-11-21T08:41:51.2841240Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-21T08:41:51.2854470Z [command]/opt/homebrew/bin/git config --local --get-all includeif.gitdir:/Users/runner/work/KumiCraft/KumiCraft/.git.path
+2026-11-21T08:41:51.2926000Z /Users/runner/work/_temp/git-credentials-ea286d08-baa1-4d12-9b8c-42ae514e5330.config
+2026-11-21T08:41:51.2941310Z [command]/opt/homebrew/bin/git config --local --unset includeif.gitdir:/Users/runner/work/KumiCraft/KumiCraft/.git.path \/Users\/runner\/work\/_temp\/git\-credentials\-ea286d08\-baa1\-4d12\-9b8c\-42ae514e5330\.config
+2026-11-21T08:41:51.3041110Z [command]/opt/homebrew/bin/git config --local --get-all includeif.gitdir:/Users/runner/work/KumiCraft/KumiCraft/.git/worktrees/*.path
+2026-11-21T08:41:51.3158690Z /Users/runner/work/_temp/git-credentials-ea286d08-baa1-4d12-9b8c-42ae514e5330.config
+2026-11-21T08:41:51.3168520Z [command]/opt/homebrew/bin/git config --local --unset includeif.gitdir:/Users/runner/work/KumiCraft/KumiCraft/.git/worktrees/*.path \/Users\/runner\/work\/_temp\/git\-credentials\-ea286d08\-baa1\-4d12\-9b8c\-42ae514e5330\.config
+2026-11-21T08:41:51.3267030Z [command]/opt/homebrew/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-11-21T08:41:51.3326310Z /github/runner_temp/git-credentials-ea286d08-baa1-4d12-9b8c-42ae514e5330.config
+2026-11-21T08:41:51.3334410Z [command]/opt/homebrew/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-ea286d08\-baa1\-4d12\-9b8c\-42ae514e5330\.config
+2026-11-21T08:41:51.3427070Z [command]/opt/homebrew/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-21T08:41:51.3535400Z /github/runner_temp/git-credentials-ea286d08-baa1-4d12-9b8c-42ae514e5330.config
+2026-11-21T08:41:51.3548100Z [command]/opt/homebrew/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-ea286d08\-baa1\-4d12\-9b8c\-42ae514e5330\.config
+2026-11-21T08:41:51.3616000Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-21T08:41:51.4680160Z Removing credentials config '/Users/runner/work/_temp/git-credentials-ea286d08-baa1-4d12-9b8c-42ae514e5330.config'
+2026-11-21T08:41:51.4775640Z Cleaning up orphan processes

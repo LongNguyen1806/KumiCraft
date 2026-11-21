@@ -1,0 +1,8 @@
+2026-11-21T08:41:39.9990000Z Requested labels: macos-latest
+2026-11-21T08:41:39.9990000Z Job defined at: LongNguyen1806/KumiCraft/.github/workflows/mac-pnpm-check.yml@refs/heads/mac-check
+2026-11-21T08:41:39.9990000Z Waiting for a runner to pick up this job...
+2026-11-21T08:41:39.9980000Z Evaluating mac.if
+2026-11-21T08:41:39.9980000Z Evaluating: success()
+2026-11-21T08:41:39.9980000Z Result: true
+2026-11-21T08:41:40.2540000Z Job is waiting for a hosted runner to come online.
+2026-11-21T08:41:40.2550000Z Job is about to start running on the hosted runner: GitHub Actions 1000000551

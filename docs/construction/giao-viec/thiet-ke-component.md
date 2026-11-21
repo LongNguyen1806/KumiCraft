@@ -1,6 +1,6 @@
 # Thiết kế lại phần Component trong Inspector
 
-**Trạng thái:** Đợt 1 xong (spec-log #150, tour 08); Đợt 2 xong (spec-log #151, tour 09); Đợt 3 chưa làm.
+**Trạng thái:** Đợt 1 xong (spec-log #150, tour 08); Đợt 2 xong (spec-log #151, tour 09). Đợt 3 ("+ Thêm tùy chỉnh", mục 6) bỏ theo quyết định của chủ dự án (2026-11-16): thêm prop mới dùng "Nhờ AI làm" hoặc sửa component.
 **Liên quan:** R-IN-11 (thuộc tính component), R-SE-04 (sửa cấu trúc), spec-log #146, #149.
 
 ## 1. Vì sao làm lại

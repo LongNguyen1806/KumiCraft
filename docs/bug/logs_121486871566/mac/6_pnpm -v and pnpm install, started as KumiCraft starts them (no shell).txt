@@ -1,0 +1,44 @@
+﻿2026-11-21T08:41:50.7986830Z ##[group]Run APP="$RUNNER_TEMP/my-app"
+2026-11-21T08:41:50.7987600Z [36;1mAPP="$RUNNER_TEMP/my-app"[0m
+2026-11-21T08:41:50.8044070Z [36;1mcp -R templates/vite-react-ts-tailwind4 "$APP"[0m
+2026-11-21T08:41:50.8044410Z [36;1msed -i '' 's/{{packageName}}/my-app/' "$APP/package.json"[0m
+2026-11-21T08:41:50.8044680Z [36;1mnode -e '[0m
+2026-11-21T08:41:50.8044900Z [36;1m  const { spawn } = require("child_process");[0m
+2026-11-21T08:41:50.8045190Z [36;1m  const run = (args, cwd) => new Promise((done) => {[0m
+2026-11-21T08:41:50.8045570Z [36;1m    const child = spawn("pnpm", args, { cwd, shell: false, stdio: "inherit" });[0m
+2026-11-21T08:41:50.8046040Z [36;1m    child.on("error", (e) => { console.log("SPAWN ERROR:", e.code); done(127); });[0m
+2026-11-21T08:41:50.8046400Z [36;1m    child.on("close", (code) => done(code ?? 1));[0m
+2026-11-21T08:41:50.8046670Z [36;1m  });[0m
+2026-11-21T08:41:50.8046810Z [36;1m  (async () => {[0m
+2026-11-21T08:41:50.8047040Z [36;1m    const version = await run(["-v"], process.argv[1]);[0m
+2026-11-21T08:41:50.8047530Z [36;1m    console.log("pnpm -v exit:", version);[0m
+2026-11-21T08:41:50.8047890Z [36;1m    const install = await run(["install"], process.argv[1]);[0m
+2026-11-21T08:41:50.8048490Z [36;1m    console.log("pnpm install exit:", install, install === 127 ? "(KumiCraft shows E021)" : "");[0m
+2026-11-21T08:41:50.8049050Z [36;1m    // The job stays green either way: the lines above are the result to read.[0m
+2026-11-21T08:41:50.8049380Z [36;1m    process.exit(0);[0m
+2026-11-21T08:41:50.8049550Z [36;1m  })();[0m
+2026-11-21T08:41:50.8049690Z [36;1m' "$APP"[0m
+2026-11-21T08:41:50.8084580Z shell: /bin/bash -e {0}
+2026-11-21T08:41:50.8084800Z ##[endgroup]
+2026-11-21T08:41:50.8947640Z node:internal/child_process:487
+2026-11-21T08:41:50.8948180Z     throw new ErrnoException(err, 'spawn');
+2026-11-21T08:41:50.8948510Z           ^
+2026-11-21T08:41:50.8948650Z 
+2026-11-21T08:41:50.8948770Z Error: spawn ENOEXEC
+2026-11-21T08:41:50.8949170Z     at ChildProcess.spawn (node:internal/child_process:487:11)
+2026-11-21T08:41:50.8949650Z     at spawn (node:child_process:813:9)
+2026-11-21T08:41:50.8949930Z     at [eval]:4:19
+2026-11-21T08:41:50.8950200Z     at new Promise (<anonymous>)
+2026-11-21T08:41:50.8950500Z     at run ([eval]:3:30)
+2026-11-21T08:41:50.8950700Z     at [eval]:9:27
+2026-11-21T08:41:50.8950890Z     at [eval]:15:5
+2026-11-21T08:41:50.8951200Z     at runScriptInThisContext (node:internal/vm:219:10)
+2026-11-21T08:41:50.8951690Z     at node:internal/process/execution:451:12
+2026-11-21T08:41:50.8952050Z     at [eval]-wrapper:6:24 {
+2026-11-21T08:41:50.8952270Z   errno: -8,
+2026-11-21T08:41:50.8952460Z   code: 'ENOEXEC',
+2026-11-21T08:41:50.8952670Z   syscall: 'spawn'
+2026-11-21T08:41:50.8952870Z }
+2026-11-21T08:41:50.8953330Z 
+2026-11-21T08:41:50.8953910Z Node.js v24.22.2
+2026-11-21T08:41:50.8981540Z ##[error]Process completed with exit code 1.
