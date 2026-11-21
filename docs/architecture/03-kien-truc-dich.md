@@ -1,90 +1,108 @@
 # Kiến trúc đích KumiCraft
 
-Bước 3 của việc dựng lại kiến trúc. Dựa trên [01-muc-tieu.md](01-muc-tieu.md) (mục tiêu) và [02-hien-trang.md](02-hien-trang.md) (hiện trạng). Bản nháp ngày 2026-11-22, chờ chủ dự án duyệt.
+Bước 3 của việc dựng lại kiến trúc. Dựa trên [01-muc-tieu.md](01-muc-tieu.md) (mục tiêu), [02-hien-trang.md](02-hien-trang.md) (hiện trạng) và [03a-ket-qua-thu-danh-dau.md](03a-ket-qua-thu-danh-dau.md) (kết quả thử Vue, Next.js, Razor). Bản 2, ngày 2026-11-22, chờ chủ dự án duyệt.
 
-Tài liệu này nói **KumiCraft nên được chia thế nào**, chưa nói làm theo thứ tự nào (thứ tự ở bước 4). Tên trong code (interface, thư mục) viết bằng tiếng Anh như quy ước của repo; đây là bản phác, tên cuối cùng chốt khi làm.
+Tài liệu nói **KumiCraft nên được chia thế nào và vì sao**, chưa nói làm theo thứ tự nào (thứ tự ở bước 4). Tên trong code viết bằng tiếng Anh như quy ước của repo; đây là bản phác, tên cuối cùng chốt khi làm.
 
 ## 1. Ý tưởng chính trong một trang
 
-1. **Một dự án được mô tả bằng một "hồ sơ" (profile) theo 3 trục**: công cụ chạy, ngôn ngữ giao diện, hệ style. Nhận diện chỉ làm một việc: điền hồ sơ này.
-2. **Mỗi trục có một interface riêng**, mỗi công nghệ là một hiện thực cắm vào: `RuntimeAdapter` (Vite, Express, Next…), `ViewLanguage` (JSX, Pug, Vue…), `StyleSystem` (Tailwind, CSS…). Thêm công nghệ mới = thêm một hiện thực, **không sửa lõi**.
-3. **Lõi không biết công nghệ nào.** Lõi chỉ biết: dự án, file, phần tử (qua vị trí `file:dòng:cột`), thao tác sửa, Undo. Mọi thứ cụ thể (node JSX, class Tailwind, plugin Vite) nằm trong hiện thực của từng trục.
-4. **Mọi thao tác sửa đi một đường**: Studio gửi **ý định** ("đổi màu chữ thành X", "chèn khối Y sau phần tử Z") → lõi hỏi hiện thực phù hợp xem phải sửa chữ nào trong file nào → một bộ ghi file duy nhất ghi, kiểm hash, lưu Undo.
-5. **Mỗi ngôn ngữ giao diện khai báo nó làm được thao tác nào** (capability). Studio chỉ hiện công cụ làm được; "chỉ xem" đơn giản là ngôn ngữ chưa khai báo thao tác sửa nào.
-6. **Quy tắc phụ thuộc được máy kiểm**, không chỉ ghi trên giấy.
+1. **Một dự án được mô tả bằng một hồ sơ (`ProjectProfile`) theo 3 trục**: công cụ chạy, ngôn ngữ giao diện, hệ style. Nhận diện chỉ làm một việc: điền hồ sơ này.
+2. **Mỗi trục có một interface**, mỗi công nghệ là một hiện thực cắm vào: `RuntimeAdapter` (Vite, Express, Next…), `ViewLanguage` (JSX, Pug, Vue, Razor…), `StyleSystem` (Tailwind, CSS…). Thêm công nghệ = thêm một hiện thực, **không sửa lõi**.
+3. **Lõi không biết công nghệ nào.** Lõi chỉ biết: dự án, file, phần tử (qua vị trí `file:dòng:cột`), thao tác sửa, Undo.
+4. **Mọi thao tác sửa đi một đường**: Studio gửi **ý định** → lõi hỏi hiện thực phù hợp phải sửa chữ nào trong file nào → **một bộ ghi file duy nhất** ghi, kiểm hash, lưu Undo.
+5. **Mỗi ngôn ngữ giao diện khai báo nó làm được thao tác nào** (capability). Studio chỉ hiện công cụ làm được; "chỉ xem" = ngôn ngữ chưa có bộ sửa.
+6. **Quy tắc phụ thuộc được máy kiểm**, và mỗi interface có **bộ test chung** mà mọi hiện thực phải qua.
+7. AI **tự viết code** (agent CLI), không đi qua các thao tác sửa; lõi chỉ chụp trạng thái file để hoàn tác cả lượt (quyết định của chủ dự án, 2026-11-22).
 
 ## 2. Mô hình lõi (không phụ thuộc công nghệ)
 
-| Khái niệm        | Nghĩa                                                                                                                                               | Hiện nay tương ứng                                 |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| `ProjectProfile` | Hồ sơ dự án: `runtime` (công cụ chạy + phiên bản), `view` (ngôn ngữ giao diện + phiên bản), `styling` (hệ style), `packageManager`, `workspaceRoot` | `SupportReport` + `FrameworkAdapter`               |
-| `SourceLoc`      | Vị trí một phần tử trong code: `file:dòng:cột` (+ số thứ tự khi một dòng code sinh nhiều phần tử)                                                   | `data-rc-loc` + `index` (giữ nguyên)               |
-| `ViewDocument`   | Một file giao diện đã được ngôn ngữ của nó đọc: tìm được phần tử theo `SourceLoc`, biết cha con                                                     | AST Babel (chỉ JSX)                                |
-| `ElementInfo`    | Thông tin một phần tử cho Inspector: thẻ, class, chữ, thuộc tính, có trong vòng lặp không, có sửa được không                                        | `ElementSource` (giữ, bỏ phần riêng JSX)           |
-| `EditIntent`     | Ý định sửa do Studio gửi: đặt class, đặt chữ, đặt thuộc tính, chèn, xóa, di chuyển, bọc, đổi style…                                                 | `SourceEdit`, `StructureEdit`, `StyleApplyRequest` |
-| `TextChange`     | Kết quả cụ thể: thay đoạn chữ từ vị trí A tới B trong file F (kèm hash file lúc đọc)                                                                | magic-string trong từng thao tác                   |
-| `Capability`     | Thao tác nào ngôn ngữ / hệ style của dự án làm được, và lý do nếu không                                                                             | `editMode: viewOnly` + E023 rải rác                |
-| `HistoryStep`    | Một bước Undo: nội dung trước và sau của các file đã ghi                                                                                            | giữ nguyên `core/history`                          |
+| Khái niệm        | Nghĩa                                                                                                                          | Hiện nay tương ứng                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
+| `ProjectProfile` | Hồ sơ dự án: `runtime` (công cụ chạy + phiên bản), `view` (ngôn ngữ + phiên bản), `styling`, `packageManager`, `workspaceRoot` | `SupportReport` + `FrameworkAdapter`               |
+| `SourceLoc`      | Vị trí một phần tử trong code: `file:dòng:cột` (cột tính từ 1), kèm số thứ tự khi một dòng code sinh nhiều phần tử             | `data-rc-loc` + `index` (giữ nguyên)               |
+| `UseLoc`         | Chỗ một component được dùng: `file:dòng:cột\|Tên`                                                                              | `data-rc-use` (giữ nguyên)                         |
+| `ViewDocument`   | Một file giao diện đã được ngôn ngữ của nó đọc: tìm phần tử theo `SourceLoc`, biết cha con                                     | AST Babel (chỉ JSX)                                |
+| `ElementInfo`    | Thông tin một phần tử cho Inspector: thẻ, class (mục 3.5), chữ, thuộc tính, có trong vòng lặp không, thao tác nào làm được     | `ElementSource`                                    |
+| `EditIntent`     | Ý định sửa do Studio gửi: đặt class, đặt chữ, đặt thuộc tính, chèn, xóa, di chuyển, bọc, đổi style…                            | `SourceEdit`, `StructureEdit`, `StyleApplyRequest` |
+| `TextChange`     | Kết quả cụ thể: thay đoạn chữ từ vị trí A tới B trong file F, kèm hash file lúc đọc                                            | magic-string trong từng thao tác                   |
+| `Capability`     | Thao tác nào làm được ở đâu, và lý do nếu không (mục 7)                                                                        | `editMode: viewOnly` + E023 rải rác                |
+| `HistoryStep`    | Một bước Undo: nội dung trước và sau của các file đã ghi                                                                       | giữ nguyên `core/history`                          |
 
-`SourceLoc` là **chỗ nối giữa các trục**: trục chạy và trục ngôn ngữ cùng gắn dấu này lên trang; Bridge, Canvas, Inspector chỉ làm việc với nó. Đây là điểm tốt nhất của kiến trúc hiện nay và được giữ nguyên.
+`SourceLoc` / `UseLoc` là **chỗ nối giữa các trục**. Bản thử ([03a](03a-ket-qua-thu-danh-dau.md)) đã cho thấy JSX, Vue, Next.js và Razor đều ra **cùng định dạng** dấu này, nên Bridge, Canvas, Inspector dùng chung được.
 
 ## 3. Ba trục mở rộng
 
 ### 3.1. Trục A: công cụ chạy (`RuntimeAdapter`)
 
-Việc: chạy trang của dự án lên Canvas và gắn Bridge vào.
+Việc: chạy trang của dự án lên Canvas, gắn Bridge, và cho bộ đánh dấu của ngôn ngữ giao diện một chỗ để cắm.
 
 ```ts
 interface RuntimeAdapter {
   readonly id: RuntimeId; // 'vite' | 'express' | 'next' | 'webpack' | 'aspnet' …
   detect(input: DetectInput): RuntimeMatch | undefined; // phiên bản, lý do không hỗ trợ
-  /** Các ngôn ngữ giao diện chạy được trên runtime này, và cách cắm bộ đánh dấu của chúng. */
-  readonly stampHost: 'buildPlugin' | 'templateHook' | 'htmlProxy';
+  readonly stampHost: StampHost; // kiểu cắm bộ đánh dấu, xem dưới
+  readonly supportedVersions: VersionRange; // ngoài khoảng này: báo rõ, không đoán
   runner(ctx: RunnerContext): RunnerSpec; // tiến trình con, lệnh, cổng, cách gắn Bridge
+  /** Chỉ với stampHost 'shadowCopy': đồng bộ bản sao khi file gốc đổi. */
+  shadow?: ShadowSync;
   restartOn?(relPath: string): boolean;
   buildCheck?(ctx: BuildCheckContext): BuildCheckSpec;
   requiredPackages(profile: ProjectProfile): readonly string[];
 }
 ```
 
-- Vite, webpack, Next gắn Bridge bằng plugin build (`buildPlugin`).
-- Express, ASP.NET, Django, Laravel: KumiCraft đứng trước server của dự án bằng proxy (`htmlProxy`), như Express hiện nay.
-- Pug, Razor… đánh dấu lúc biên dịch template (`templateHook`), khi runtime cho phép.
+**Ba kiểu cắm bộ đánh dấu** (đã thử thật, xem 03a):
+
+| `StampHost`    | Nghĩa                                                                                | Dùng cho                                      |
+| -------------- | ------------------------------------------------------------------------------------ | --------------------------------------------- |
+| `buildPlugin`  | Công cụ build cho cắm transform / loader; KumiCraft cắm vào cấu hình đã có của dự án | Vite (JSX, Vue), Next.js (Turbopack), webpack |
+| `templateHook` | Trình biên dịch template cho cắm hook                                                | Express + Pug                                 |
+| `shadowCopy`   | Không cắm được: chép dự án ra bản sao, đánh dấu bản sao, chạy bản sao                | ASP.NET Razor; dự kiến Blade, Django, Jinja   |
+
+Quy tắc chung của trục A:
+
+- **Không bao giờ sửa file cấu hình của người dùng** (`vite.config`, `next.config`…). Bộ đánh dấu được thêm vào cấu hình lúc chạy, trong tiến trình KumiCraft điều khiển.
+- Khi cách cắm dựa vào **phần nội bộ** của công cụ (Next.js: bọc module cấu hình), runtime phải khai báo `supportedVersions`; có test riêng cho mỗi bản lớn được hỗ trợ; ngoài khoảng đó thì báo "phiên bản chưa hỗ trợ", không chạy thử may rủi.
+- Với `shadowCopy`, `ShadowSync` chịu trách nhiệm: tạo bản sao (bỏ `bin`, `obj`, `node_modules`), đánh dấu lại đúng file vừa đổi, để công cụ watch của dự án (vd. `dotnet watch`) nạp lại. File gốc là nguồn sự thật; bản sao không bao giờ được sửa trực tiếp.
 
 ### 3.2. Trục B: ngôn ngữ giao diện (`ViewLanguage`)
 
-Việc: biết file giao diện viết thế nào, đánh dấu vị trí, đọc phần tử, và biến ý định sửa thành `TextChange`.
+Việc: biết file giao diện viết thế nào, cung cấp bộ đánh dấu, đọc phần tử, biến ý định sửa thành `TextChange`.
 
 ```ts
 interface ViewLanguage {
   readonly id: ViewLanguageId; // 'jsx' | 'pug' | 'vue' | 'razor' | 'html' …
   readonly extensions: readonly string[];
   detect(input: DetectInput): ViewMatch | undefined;
-  /** Bộ đánh dấu `SourceLoc`, theo từng kiểu cắm mà runtime hỗ trợ. */
+  /** Bộ đánh dấu SourceLoc / UseLoc cho từng kiểu cắm mà ngôn ngữ làm được. */
   stamper(host: StampHost): LocStamper | undefined;
   parse(file: string, text: string): Result<ViewDocument>;
-  readonly capabilities: ViewCapabilities; // thao tác nào làm được
+  readonly capabilities: ViewCapabilities;
   readonly editor?: ViewEditor; // vắng = chỉ xem
-  readonly snippets?: SnippetRenderer; // biến khối thư viện thành code của ngôn ngữ này
-  readonly pages?: PagesProvider; // tìm trang / route, nếu ngôn ngữ tự quyết (vd. file-based)
+  readonly snippets?: SnippetRenderer; // khối thư viện → code của ngôn ngữ này (mục 5)
+  readonly pages?: PagesProvider; // khi ngôn ngữ / meta-framework tự quyết trang (file-based)
 }
 
 interface ViewEditor {
-  setClass(doc: ViewDocument, at: SourceLoc, classes: ClassChange): Result<TextChange[]>;
+  readClass(doc: ViewDocument, at: SourceLoc): ClassSlot; // mục 3.5
+  setClass(doc: ViewDocument, at: SourceLoc, change: ClassChange): Result<TextChange[]>;
   setText(doc: ViewDocument, at: SourceLoc, text: string): Result<TextChange[]>;
-  setAttribute(doc: ViewDocument, at: SourceLoc, name: string, value: AttrValue): Result<TextChange[]>;
+  setAttribute(
+    doc: ViewDocument,
+    at: SourceLoc,
+    name: string,
+    value: AttrValue,
+  ): Result<TextChange[]>;
   insert?(doc: ViewDocument, target: InsertTarget, snippet: Snippet): Result<TextChange[]>;
   remove?(doc: ViewDocument, at: SourceLoc): Result<TextChange[]>;
-  move?(…): Result<TextChange[]>;
-  wrap?(…): Result<TextChange[]>;
-  // Thao tác riêng của một ngôn ngữ (component, prop, kit tương tác của React) nằm ở phần mở rộng
-  // của chính ngôn ngữ đó, không nằm trong interface chung.
+  move?(from: ViewDocument, at: SourceLoc, to: InsertTarget): Result<TextChange[]>;
+  wrap?(doc: ViewDocument, at: SourceLoc, wrapper: Snippet): Result<TextChange[]>;
 }
 ```
 
-- **Mọi hàm sửa chỉ trả về `TextChange`**, không tự ghi file. Ghi file, kiểm hash, định dạng code và Undo do lõi làm, một chỗ duy nhất, giống nhau cho mọi ngôn ngữ.
-- Thao tác chung (class, chữ, thuộc tính, chèn, xóa, di chuyển, bọc) có trong interface. Thao tác chỉ một ngôn ngữ có (sửa prop component, kit tương tác React, Reveal) khai báo thêm qua `capabilities` của ngôn ngữ đó.
-- Bộ sửa JSX hiện nay (`core/source-editor`, phần JSX của `core/project`) trở thành hiện thực `ViewLanguage` đầu tiên, `jsx`. Pug thành hiện thực thứ hai, hiện chưa có `editor` (chỉ xem).
+- **Mọi hàm sửa chỉ trả `TextChange`**, không tự ghi file. Ghi, kiểm hash, định dạng, Undo do lõi làm (mục 4).
+- Thao tác chung nằm trong interface. Thao tác chỉ một ngôn ngữ có (sửa prop component, kit tương tác React, Reveal, data repeat) là **phần mở rộng riêng** của ngôn ngữ đó, khai báo qua `capabilities`, không ép mọi ngôn ngữ phải có.
+- Bộ sửa JSX hiện nay trở thành hiện thực `jsx` đầu tiên. Pug là hiện thực thứ hai, chưa có `editor`.
 
 ### 3.3. Trục C: hệ style (`StyleSystem`)
 
@@ -95,54 +113,85 @@ interface StyleSystem {
   readonly id: StyleSystemId; // 'tailwind' | 'css' | 'cssModules' | 'sass' | 'less' | 'bootstrap' …
   detect(input: DetectInput): StylingMatch | undefined;
   read(ctx: StyleContext, at: SourceLoc): Result<StyleReading>; // giá trị theo thuộc tính CSS
-  apply(ctx: StyleContext, at: SourceLoc, intent: StyleIntent): Result<StylePlan>;
-  readonly tokens?: ThemeTokens; // màu, cỡ chữ… của dự án
+  plan(ctx: StyleContext, at: SourceLoc, intent: StyleIntent): Result<StylePlan>;
+  readonly tokens?: ThemeTokens;
 }
 
+type StyleIntent = {
+  property: string; // thuộc tính CSS, vd. 'color'
+  value: string | undefined; // undefined = bỏ
+  state?: 'hover' | 'focus' | 'active' | …;
+  breakpoint?: string;
+  scope: 'onlyThis' | 'allMatching';
+};
+
 type StylePlan =
-  | { kind: 'classes'; change: ClassChange } // lõi chuyển cho ViewEditor.setClass
+  | { kind: 'classes'; change: ClassChange } // lõi đưa cho ViewEditor.setClass
   | { kind: 'stylesheet'; changes: TextChange[] }; // sửa file CSS / Sass / Less
 ```
 
-- **Studio chỉ gửi ý định**: `{ property: 'color', value: '#e11d48', state: 'hover', breakpoint: 'md', scope: 'onlyThis' }`. Studio không còn tự tính class Tailwind.
-- Tailwind trả `classes` (lõi đưa cho `ViewEditor` của ngôn ngữ đang dùng, nên Tailwind chạy được trên JSX, Vue, Razor… như nhau). CSS trả `stylesheet`.
-- Xem trước khi kéo thanh trượt vẫn ở Studio, nhưng chỉ dùng **giá trị CSS** (inline style tạm), không cần biết hệ style. Đây là cách `sendStylePreview` đang làm.
-- Bộ đọc class Tailwind (`shared/src/tailwind`) chuyển vào hiện thực `tailwind`; Studio chỉ dùng phần nào cần cho hiển thị (bảng màu) qua API hoặc một package riêng.
+Tailwind trả `classes` nên chạy được trên mọi ngôn ngữ có `setClass` (JSX, Vue, Razor…). CSS trả `stylesheet`.
+
+**Gộp hai đường style hiện nay: chọn phương án B** (lý do đầy đủ ở ADR-A4, mục 9).
+
+| Phương án                                            | Cách làm                                                                                                                                                                                                                                                                                            | Chi phí                                                 | Tốc độ                                                           | Chọn                                                                          |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| A. Chuyển hết sang Server                            | Studio chỉ gửi ý định và hỏi Server mọi giá trị                                                                                                                                                                                                                                                     | Viết lại phần lớn Inspector (khoảng 13.000 dòng)        | Mỗi lần đọc giá trị phải hỏi Server; nguy cơ vượt PB-02 (500 ms) | Không                                                                         |
+| **B. Một package Tailwind thuần, dùng ở cả hai đầu** | Gom logic Tailwind (`shared/src/tailwind` + phần tính class trong Inspector) thành package `style-tailwind` chỉ gồm hàm thuần. Studio dùng nó để **hiện giá trị và xem trước tức thì**; khi xác nhận, Studio gửi **ý định**, Server chạy **cùng hàm đó** để ra `ClassChange` rồi đi đường sửa chung | Vừa: chuyển code, không viết lại; Inspector đổi chỗ gọi | Như hiện nay                                                     | **Có**                                                                        |
+| C. Giữ nguyên                                        | Studio tự tính class, gửi `setClassName`                                                                                                                                                                                                                                                            | Không                                                   | Như hiện nay                                                     | Không: hai đường, Server không kiểm được ý định, không dùng cho ngôn ngữ khác |
+
+Với B, **chỉ có một bản logic Tailwind**; Server là nơi quyết định cuối cùng; Studio vẫn nhanh. Xem trước khi kéo thanh trượt vẫn dùng inline style tạm (giá trị CSS), như `sendStylePreview` hiện nay.
 
 ### 3.4. Ghép ba trục: hồ sơ và bảng tổ hợp
 
-- Nhận diện chạy theo thứ tự đã chốt ở [nhan-dien-du-an.md](../construction/giao-viec/nhan-dien-du-an.md): meta-framework → framework phía server → công cụ build → ngôn ngữ giao diện → hệ style. Kết quả là một `ProjectProfile`.
-- **Meta-framework** (Next, Nuxt, SvelteKit, Astro) là một gói cấu hình sẵn: nó chọn luôn runtime, ngôn ngữ, và cách tìm trang. Không phải trục thứ tư.
-- Một **bảng tổ hợp** nói tổ hợp nào chạy được (ví dụ: runtime `vite` + ngôn ngữ `jsx` qua `buildPlugin`). Tổ hợp không có trong bảng → báo "chưa hỗ trợ" kèm lý do đúng (không còn báo chung chung "thiếu React").
-- Mức hỗ trợ suy ra từ hồ sơ, không gán tay: có runner + có `editor` → chỉnh được; có runner, không có `editor` → chỉ xem; không có runner → không mở được.
+- Nhận diện theo thứ tự trong [nhan-dien-du-an.md](../construction/giao-viec/nhan-dien-du-an.md): meta-framework → framework phía server → công cụ build → ngôn ngữ giao diện → hệ style. Kết quả là `ProjectProfile`.
+- **Meta-framework** (Next, Nuxt, SvelteKit, Astro) là một **gói cấu hình sẵn**: chọn runtime, ngôn ngữ và cách tìm trang. Không phải trục thứ tư (ADR-A1).
+- **Bảng tổ hợp** nói tổ hợp nào chạy được và qua kiểu cắm nào (vd. `vite + jsx: buildPlugin`, `aspnet + razor: shadowCopy`). Tổ hợp không có trong bảng → báo "chưa hỗ trợ" kèm lý do đúng.
+- Mức hỗ trợ **suy ra** từ hồ sơ, không gán tay: có runner + có `editor` → chỉnh được; có runner, không `editor` → chỉ xem; không runner → không mở được.
+
+### 3.5. Class viết động
+
+Class thường không phải chữ cố định: `className={cn('p-4', isActive && 'ring')}` (React), `class="card" :class="{ on: x }"` (Vue), `class="item @(on ? "on" : "")"` (Razor). Code hiện nay đã phân biệt các trường hợp này cho JSX (`static`, `callStatic`, `templateStatic`, `expression`, `none`, `duplicate`); kiến trúc đích tổng quát hóa nó cho mọi ngôn ngữ:
+
+```ts
+type ClassSlot =
+  | { kind: 'editable'; value: string; kept?: KeptPart } // phần chữ cố định sửa được, phần động giữ nguyên
+  | { kind: 'readonly'; reason: CapabilityReason } // toàn biểu thức, hoặc nhiều chỗ khai báo
+  | { kind: 'absent' }; // chưa có class: setClass sẽ thêm thuộc tính
+```
+
+- `kept` là phần động, **đục** đối với lõi và Studio: chỉ `ViewEditor` của ngôn ngữ đó biết ghép lại khi ghi.
+- Ví dụ: JSX `cn('p-4', rest)` → `editable` "p-4", `kept` = `rest`; Vue `class="card" :class="…"` → `editable` "card", `kept` = binding `:class`; Razor `class="item @(…)"` → `editable` "item", `kept` = `@(…)`; JSX `className={styles}` → `readonly` (`classExpression`).
+- `StyleSystem` (Tailwind) chỉ làm việc với phần `editable`; Inspector cho biết lớp động đang thêm gì khi đọc được từ DOM, nhưng không sửa nó.
 
 ## 4. Một đường cho mọi thao tác sửa
 
 ```
  Studio (Inspector, kéo thả, thư viện…)
-   │  EditIntent  (ý định, không chứa code)
+   │  EditIntent (ý định, không chứa code)
    ▼
  EditService (lõi)
    │ 1. đọc file, ViewLanguage.parse → ViewDocument
-   │ 2. hỏi StyleSystem (nếu là style) → StylePlan
-   │ 3. hỏi ViewEditor → TextChange[]
+   │ 2. nếu là style: StyleSystem.plan → StylePlan
+   │ 3. ViewEditor (hoặc StylePlan 'stylesheet') → TextChange[]
    ▼
  FileWriter (lõi, duy nhất)
-   │ kiểm hash (file vừa bị sửa tay thì từ chối), định dạng, ghi nguyên tử
+   │ kiểm hash (file vừa bị sửa tay → từ chối, E017), định dạng, ghi nguyên tử, hàng đợi theo file
    ▼
- History: lưu bước Undo đúng từng byte  →  sự kiện cho Studio
+ History: lưu bước Undo đúng từng byte → sự kiện cho Studio
 ```
 
-- Thay cho hiện nay: mỗi thao tác tự dùng magic-string rồi tự ghi, và style CSS đi một đường riêng.
-- **Nguyên tắc "không làm hỏng code người dùng" (chất lượng số 1) chỉ phải đúng ở một chỗ:** `FileWriter` + `History`.
-- AI không đi qua đường này: agent tự viết code, lõi chỉ chụp trạng thái file trước và sau lượt để hoàn tác (như hiện nay, quyết định B ở bước 2).
+- Thay cho hiện nay: mỗi thao tác tự dùng magic-string rồi tự ghi; style CSS đi đường riêng.
+- **Chất lượng số 1 (không làm hỏng code người dùng) chỉ phải đảm bảo ở một chỗ**: `FileWriter` + `History`, và có test riêng cho hai phần này.
+- Với runtime `shadowCopy`, sau khi `FileWriter` ghi file gốc, `ShadowSync` cập nhật bản sao. `FileWriter` không biết gì về bản sao.
+- AI không đi qua đường này (mục 1, ý 7).
 
 ## 5. Nội dung giao diện (thư viện khối, kit)
 
-- Khối thư viện hiện là chuỗi JSX + class Tailwind. Đích: mỗi khối mô tả bằng **cây phần tử trung lập** (thẻ, chữ, thuộc tính, ý định style), và `SnippetRenderer` của từng ngôn ngữ biến nó thành code (JSX, Vue, Razor…), còn `StyleSystem` quyết định style viết thành class hay CSS.
-- Kit tương tác (modal, carousel…) là component của một framework cụ thể; mỗi ngôn ngữ giao diện có bộ kit riêng, hoặc không có (thì công cụ đó không hiện).
-- Nội dung ra khỏi `shared` (vốn chỉ để chứa hợp đồng) và vào một package nội dung riêng.
-- Phần này chỉ cần xong **trước khi ngôn ngữ thứ hai được chỉnh sửa** (bước 4 xếp lịch).
+- Khối thư viện hiện là chuỗi JSX + class Tailwind (6.027 dòng trong `shared`). Đích: mỗi khối mô tả bằng **cây phần tử trung lập** (thẻ, chữ, thuộc tính, `StyleIntent`). `SnippetRenderer` của từng ngôn ngữ biến cây thành code; `StyleSystem` quyết định style thành class hay CSS.
+- Kit tương tác (modal, carousel…) là component của một framework; mỗi ngôn ngữ có bộ kit riêng hoặc không có (thì công cụ không hiện).
+- Nội dung ra khỏi `shared` vào package nội dung riêng.
+- Chỉ cần xong **trước khi ngôn ngữ thứ hai được chỉnh sửa**. Rủi ro: cây trung lập có thể làm mất chi tiết làm khối đẹp; phải giữ nguyên ảnh chụp của từng khối khi chuyển đổi (test so ảnh).
 
 ## 6. Chia module và quy tắc phụ thuộc
 
@@ -150,105 +199,173 @@ type StylePlan =
 
 ```
 server/src/
-  kernel/        mô hình lõi (mục 2), interface 3 trục, FileWriter, History, EditService
-  services/      dự án, trang, style, chạy dự án, AI, tác vụ nền — chỉ dùng kernel + ports
-  ports/         file, tiến trình, hệ thống, log, sự kiện, theo dõi file
-  stacks/        hiện thực theo trục
-    runtime/vite, runtime/express-proxy, …
-    view/jsx, view/pug, …
-    style/tailwind, style/css, style/bootstrap, …
-    meta/next, … (sau này)
-  adapters/      http, fs, process, log, watcher (hiện thực ports)
-  index.ts       nơi duy nhất ghép tất cả (đăng ký các hiện thực vào registry)
+  kernel/     mô hình lõi (mục 2), interface 3 trục, EditService, FileWriter, History, Capability
+  services/   dự án, trang, bản nháp, theme, style, chạy dự án, AI, tác vụ nền
+  ports/      file, tiến trình, hệ thống, log, sự kiện, theo dõi file, CSS đã biên dịch
+  stacks/     hiện thực theo trục
+    runtime/vite, runtime/express-proxy, runtime/next, runtime/aspnet …
+    view/jsx, view/pug, view/vue, view/razor …
+    style/tailwind (dùng package style-tailwind), style/css, style/bootstrap …
+    meta/next …
+  adapters/   http, fs, process, log, watcher (hiện thực ports)
+  index.ts    nơi duy nhất ghép tất cả (đăng ký hiện thực vào registry)
 ```
 
-| Module     | Được dùng                                          | Không được dùng                                                                           |
-| ---------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `kernel`   | `shared` (hợp đồng)                                | mọi thứ khác                                                                              |
-| `services` | `kernel`, `ports`, `shared`                        | `stacks`, `adapters`, thư viện của một công nghệ (Babel, postcss…)                        |
-| `stacks/*` | `kernel`, `ports`, `shared`, thư viện của chính nó | `services`, `adapters`, `stacks` khác (trừ khi khai báo, vd. `meta/next` dùng `view/jsx`) |
-| `adapters` | `kernel`, `ports`, `services`, `shared`            | `stacks`                                                                                  |
-| `index.ts` | tất cả                                             | —                                                                                         |
+| Module     | Được dùng                                          | Không được dùng                                                                        |
+| ---------- | -------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `kernel`   | `shared`                                           | mọi thứ khác                                                                           |
+| `services` | `kernel`, `ports`, `shared`                        | `stacks`, `adapters`, thư viện của một công nghệ (Babel, postcss…)                     |
+| `stacks/*` | `kernel`, `ports`, `shared`, thư viện của chính nó | `services`, `adapters`, `stacks` khác (trừ khi khai báo, vd. `meta/next` → `view/jsx`) |
+| `adapters` | `kernel`, `ports`, `services`, `shared`            | `stacks`                                                                               |
+| `index.ts` | tất cả                                             | —                                                                                      |
 
-- Không có vòng phụ thuộc nào giữa các module trên.
-- `core/project` hiện nay được chia: phần nhận diện → `stacks`; phần trang, bản nháp, theme, cài đặt → `services`; phần JSX → `stacks/view/jsx`.
+Không có vòng phụ thuộc. `core/project` hiện nay được chia: nhận diện → `stacks`; trang, bản nháp, theme, cài đặt → `services`; phần JSX → `stacks/view/jsx`.
 
 ### 6.2. Studio
 
 ```
 studio/src/
   app/, routes/   khung ứng dụng
-  core/           trạng thái dùng chung: dự án đang mở, phần tử đang chọn, gửi EditIntent, capability
+  core/           trạng thái và lệnh dùng chung (dưới)
   api/            gọi Server
   components/     thành phần giao diện dùng chung
   features/<x>/   mỗi tính năng; chỉ lộ ra ngoài qua features/<x>/index.ts
 ```
 
-- Tính năng dùng `core`, `api`, `components`, `shared`. Tính năng dùng tính năng khác **chỉ qua `index.ts`** của nó, và **không được có vòng**.
-- Phần `editor` hiện là trung tâm (dính 23 nhóm) được tách: phần trạng thái dùng chung xuống `core/`, phần bố cục màn hình ở lại `features/editor`.
-- Studio đọc `Capability` của dự án để hiện / ẩn công cụ (UX first: không có nút bấm mà không làm gì).
+**`core/` của Studio chứa** những gì nhiều tính năng cùng cần, hiện đang nằm rải trong các tính năng (29 store zustand):
+
+| Trong `core/`                       | Hiện nằm ở                                                                                  |
+| ----------------------------------- | ------------------------------------------------------------------------------------------- |
+| Dự án đang mở, hồ sơ, capability    | `features/project/project-store.ts`                                                         |
+| Phần tử đang chọn                   | `features/selection/selection-store.ts`                                                     |
+| Kênh nói chuyện với Bridge          | `features/selection/bridge-channel.ts`                                                      |
+| Lịch sử Undo                        | `features/history/history-store.ts`                                                         |
+| Gửi `EditIntent` (một hàm duy nhất) | rải trong `api/source-client`, `style-client`, các tính năng                                |
+| Khung màn hình đang xem, breakpoint | `features/editor/canvas-view-store.ts`, `frame-focus-store.ts`, `inspector/screen-scope.ts` |
+| Cài đặt người dùng                  | `store/settings-store.ts`                                                                   |
+
+Quy tắc:
+
+- Tính năng dùng `core`, `api`, `components`, `shared`. Tính năng dùng tính năng khác **chỉ qua `index.ts`** của nó và **không có vòng**.
+- Tính năng không tự gọi API sửa file; mọi sửa đi qua hàm gửi `EditIntent` trong `core`.
+- `features/editor` (hiện dính 23 nhóm) chỉ còn là **bố cục màn hình** ghép các tính năng; trạng thái của nó xuống `core`.
+- Studio đọc `Capability` để hiện / ẩn công cụ, kèm lý do khi người dùng hỏi (UX first).
 
 ### 6.3. Bridge và Shared
 
-- **Bridge client** giữ nguyên nguyên tắc: chỉ biết DOM và `SourceLoc`.
-- Bộ đánh dấu của từng ngôn ngữ (`transform-jsx`, hook Pug) là một phần của hiện thực `ViewLanguage`, đóng gói sao cho runner (tiến trình con) nạp được. Cách gắn vào từng runtime (plugin Vite, proxy) ở `bridge/integrations`.
-- **Shared** chỉ chứa hợp đồng: schema API, sự kiện, thông điệp Bridge, `EditIntent`, `ProjectProfile`, `Capability`. Bộ đọc Tailwind và thư viện khối chuyển ra (mục 3.3, 5).
+- **Bridge client** giữ nguyên nguyên tắc: chỉ biết DOM, `SourceLoc`, `UseLoc`.
+- Bộ đánh dấu (`LocStamper`) thuộc về hiện thực `ViewLanguage`, đóng gói sao cho runner (tiến trình con, hoặc công cụ ngoài như chương trình .NET đánh dấu Razor) nạp được. Cách gắn vào từng runtime (plugin Vite, loader Turbopack, proxy) ở `bridge/integrations`.
+- **Shared** chỉ chứa hợp đồng: schema API, sự kiện, thông điệp Bridge, `EditIntent`, `StyleIntent`, `ProjectProfile`, `Capability`. Bộ đọc Tailwind ra package `style-tailwind`; thư viện khối ra package nội dung.
 
 ### 6.4. Máy kiểm quy tắc
 
-- Một công cụ kiểm phụ thuộc (dependency-cruiser hoặc luật lint tương đương; chọn ở bước 4) chạy trong `pnpm lint` và CI, kiểm mọi quy tắc ở 6.1 và 6.2.
-- Vi phạm cũ được ghi vào một **danh sách nợ** cho phép tạm; vi phạm mới làm lint đỏ. Danh sách nợ chỉ được giảm.
-- **Bộ test chung cho mỗi interface** (contract test): mọi `ViewEditor` phải qua cùng một bộ test (chèn, xóa, di chuyển, giữ định dạng, Undo trả đúng byte). Thêm ngôn ngữ mới = chạy bộ test đó cho nó.
+- Công cụ kiểm phụ thuộc (chọn ở bước 4) chạy trong `pnpm lint` và CI, kiểm mọi quy tắc 6.1 và 6.2. Vi phạm cũ ghi vào **danh sách nợ**, vi phạm mới làm lint đỏ; danh sách nợ chỉ được giảm.
+- **Bộ test chung (contract test) cho mỗi interface**:
+  - mọi `ViewEditor`: chèn, xóa, di chuyển, bọc, giữ định dạng, ghép lại phần `kept` của class, Undo trả đúng byte;
+  - mọi `RuntimeAdapter`: chạy được dự án mẫu, trang có dấu đúng, không sửa file cấu hình của người dùng;
+  - mọi `StyleSystem`: đọc lại đúng giá trị vừa ghi, cho mọi thuộc tính trong danh sách hỗ trợ.
 
-## 7. Thử thiết kế bằng hai ví dụ
+## 7. Báo lỗi và lý do "không làm được"
 
-### 7.1. Thêm Vue (chỉ xem, rồi chỉnh được)
+- Giữ cách hiện nay: mọi lỗi là `Result` với mã `E0xx` (20 mã) và tham số; Studio dịch thành câu dễ hiểu.
+- **Lý do "không làm được" thống nhất thành `CapabilityReason`**, dùng chung cho mọi ngôn ngữ. Các lý do E023 hiện có (`viewOnly`, `classExpression`, `textExpression`, `textMixed`, `componentNotFound`, `differentParents`, `rootElement`…) trở thành danh sách này. Ngôn ngữ mới **dùng lại** lý do có sẵn trước khi thêm lý do mới.
+- Studio biết lý do **trước khi** người dùng bấm (qua `ElementInfo` và `Capability`), nên công cụ không làm được thì ẩn hoặc hiện kèm lý do, không để người dùng bấm rồi mới báo lỗi.
+- Lỗi do môi trường (không khởi chạy được lệnh, sai phiên bản công cụ, không bọc được cấu hình Next) ghi vào file log (`kumicraft.log`) kèm tên lỗi gốc, như đã làm cho lỗi pnpm trên Mac.
 
-1. Viết `stacks/view/vue`: `detect` (gói `vue`), `extensions: ['.vue']`, `stamper('buildPlugin')` (đánh dấu template khi Vite biên dịch). Chưa có `editor`.
-2. Thêm dòng `vite + vue` vào bảng tổ hợp.
-3. Kết quả: mở được dự án Vue + Vite ở chế độ chỉ xem. **Không sửa** lõi, Studio, Bridge client, runtime Vite.
-4. Sau đó viết `editor` cho Vue và cho chạy qua bộ test chung → chỉnh được. Tailwind / CSS chạy ngay vì `StyleSystem` không biết ngôn ngữ.
+## 8. Ngân sách tốc độ
 
-### 7.2. Thêm Next.js
+Giữ ngân sách hiện có trong `spec.md` (PB-01 đến PB-11), thêm hai điểm:
 
-1. Viết `stacks/runtime/next`: chạy dev server của Next, gắn Bridge bằng plugin build của Next.
-2. Viết `stacks/meta/next`: chọn runtime `next` + ngôn ngữ `jsx` + `PagesProvider` theo thư mục `app/` / `pages/`.
-3. Bộ sửa JSX, style, Undo, Studio dùng nguyên.
+- PB-02 (xác nhận ô Inspector → Canvas hiện thay đổi ≤ 500 ms) **áp dụng cho runtime `buildPlugin` và `templateHook`**. Runtime `shadowCopy` (Razor) có ngân sách riêng, đặt sau khi đo (chưa đo trong bản thử).
+- Phương án B của style (mục 3.3) giữ đọc giá trị và xem trước ở Studio, không thêm vòng gọi Server.
 
-Nếu một ví dụ ở trên buộc phải sửa lõi hay Studio, nghĩa là thiết kế còn thiếu; phải sửa thiết kế trước khi làm.
+## 9. Các quyết định kiến trúc (ADR)
 
-## 8. Trả lời các câu hỏi của bước 2
+Mỗi quyết định ghi các phương án đã xét và lý do chọn, để sau này biết quyết định còn đúng không.
 
-| Câu hỏi (02-hien-trang mục 9)          | Trả lời                                                         |
-| -------------------------------------- | --------------------------------------------------------------- |
-| 1. Mô hình lõi                         | Mục 2                                                           |
-| 2. Interface bộ sửa code theo ngôn ngữ | `ViewLanguage` + `ViewEditor` + `Capability` (mục 3.2)          |
-| 3. Gộp hai đường style                 | `StyleSystem` trên Server, Studio chỉ gửi ý định (mục 3.3, 4)   |
-| 4. Thao tác dùng chung cho AI          | Đã bỏ (quyết định B)                                            |
-| 5. Tách nội dung giao diện             | Cây phần tử trung lập + `SnippetRenderer` theo ngôn ngữ (mục 5) |
-| 6. Quy tắc phụ thuộc kiểm bằng máy     | Mục 6.4                                                         |
+**ADR-A1: Hồ sơ dự án theo 3 trục; meta-framework là gói cấu hình sẵn.**
 
-## 9. Đối chiếu hiện tại → đích
+- Phương án đã xét: (a) giữ adapter theo cặp như hiện nay; (b) 3 trục; (c) 4 trục, thêm meta-framework.
+- Chọn (b). (a) tăng theo cấp số nhân và lặp code (02-hien-trang mục 8). (c) thừa: meta-framework không có hành vi riêng ngoài việc chọn sẵn 3 trục và cách tìm trang.
 
-| Hiện tại                                             | Đích                                                               |
-| ---------------------------------------------------- | ------------------------------------------------------------------ |
-| `FrameworkAdapter` (vite-react, express-pug)         | `RuntimeAdapter` (vite, express-proxy) + `ViewLanguage` (jsx, pug) |
-| `SupportReport` + `editMode`                         | `ProjectProfile` + `Capability`                                    |
-| `core/source-editor` + phần JSX của `core/project`   | `stacks/view/jsx`                                                  |
-| Phần còn lại của `core/project`                      | `services` (dự án, trang, bản nháp, theme, cài đặt)                |
-| `core/style` (CSS…) + Tailwind trong Studio          | `stacks/style/*`, một đường qua `EditService`                      |
-| Mỗi thao tác tự ghi file                             | `FileWriter` duy nhất                                              |
-| `transform-jsx` (bridge), `pug-loc-plugin` (runners) | `LocStamper` của từng `ViewLanguage`                               |
-| Thư viện khối trong `shared` (chuỗi JSX)             | Package nội dung, cây trung lập + `SnippetRenderer`                |
-| Kiểm `viewOnly` ở 4 chỗ                              | Một chỗ: `Capability`                                              |
-| 2 quy tắc phụ thuộc được lint kiểm                   | Toàn bộ quy tắc mục 6, có danh sách nợ                             |
+**ADR-A2: Một đường sửa, một `FileWriter`.**
 
-Những phần **giữ nguyên**: `SourceLoc` / `data-rc-loc`, Bridge client, Undo đúng byte, các port của Server, AI agent tự viết code, hợp đồng có schema zod.
+- Phương án: (a) mỗi thao tác tự ghi như hiện nay; (b) mọi thao tác trả `TextChange`, lõi ghi.
+- Chọn (b): chất lượng số 1 chỉ phải đảm bảo một chỗ; ngôn ngữ mới không phải viết lại phần ghi, kiểm hash, Undo.
 
-## 10. Những gì bước 4 phải quyết
+**ADR-A3: Ba kiểu cắm bộ đánh dấu, kể cả bản sao.**
+
+- Phương án: (a) chỉ hỗ trợ công cụ cho cắm plugin; (b) đọc vị trí lúc chạy từ framework (React 19 đã bỏ `_debugSource`, các framework khác không có); (c) thêm kiểu bản sao cho template phía server.
+- Chọn (c): bản thử Razor chạy đúng (03a). (a) loại mất ASP.NET, Django, Laravel, là nhóm người dùng mục tiêu. (b) không có nguồn tin cậy.
+
+**ADR-A4: Gộp style bằng một package Tailwind thuần dùng ở cả Studio và Server (phương án B, mục 3.3).**
+
+- Lý do: một bản logic, Server quyết định cuối, không thêm độ trễ, không viết lại Inspector.
+
+**ADR-A5: `Capability` thay cờ `viewOnly`.**
+
+- Phương án: (a) giữ cờ `viewOnly` + kiểm rải rác; (b) mỗi ngôn ngữ khai báo thao tác làm được.
+- Chọn (b): hỗ trợ được mức "chỉnh được một phần" (vd. đổi class được, chèn khối chưa được), và Studio ẩn đúng công cụ.
+
+**ADR-A6: Quy tắc phụ thuộc kiểm bằng máy, có danh sách nợ.**
+
+- Phương án: (a) chỉ ghi trong tài liệu; (b) kiểm bằng máy, sửa hết vi phạm trước khi bật; (c) kiểm bằng máy, có danh sách nợ.
+- Chọn (c). (a) đã thất bại (160 dòng lệch trong spec-log). (b) chặn mọi việc khác quá lâu.
+
+**ADR-A7: Chỉ "đóng băng" interface sau khi có hiện thực chỉnh được thứ hai.**
+
+- Phương án: (a) chốt interface ngay; (b) chốt sau khi ngôn ngữ thứ hai (dự kiến Vue) chỉnh được và qua bộ test chung.
+- Chọn (b): hiện chỉ có một bộ sửa thật (JSX); interface thiết kế từ một ví dụ dễ lệch. Trước khi đóng băng, interface được phép đổi mà không cần ADR mới.
+
+**ADR-A8: AI tự viết code, không gọi thao tác sửa.**
+
+- Quyết định của chủ dự án (2026-11-22), ghi ở 01-muc-tieu. MCP chỉ để kiểm thử.
+
+## 10. Thử thiết kế bằng ba ví dụ
+
+**Thêm Vue (chỉ xem, rồi chỉnh được).** Viết `stacks/view/vue` với `stamper('buildPlugin')` (cách đã thử: cắm `nodeTransforms` vào plugin Vue có sẵn). Thêm dòng `vite + vue` vào bảng tổ hợp → mở được ở chế độ chỉ xem. Sau đó viết `editor` cho Vue (đọc template bằng `@vue/compiler-sfc`) và cho qua bộ test chung → chỉnh được; Tailwind / CSS chạy ngay. Không sửa lõi, Studio, Bridge client, runtime Vite.
+
+**Thêm Next.js.** Viết `stacks/runtime/next` (chạy Next trong tiến trình KumiCraft, thêm loader Turbopack vào cấu hình lúc nạp; khai báo `supportedVersions`) và `stacks/meta/next` (chọn `next` + `jsx` + `PagesProvider` theo `app/`, `pages/`). Bộ sửa JSX, style, Undo, Studio dùng nguyên.
+
+**Thêm ASP.NET Razor (chỉ xem).** Viết `stacks/runtime/aspnet` với `stampHost: 'shadowCopy'` và `ShadowSync` (chạy `dotnet watch` trên bản sao), và `stacks/view/razor` với bộ đánh dấu dùng trình biên dịch Razor trong SDK của người dùng. Tailwind / CSS đọc được ngay; chỉnh sửa Razor là bước sau.
+
+Nếu một ví dụ buộc phải sửa lõi hay Studio, thiết kế còn thiếu; sửa thiết kế trước khi làm.
+
+## 11. Rủi ro khi chuyển đổi
+
+| Rủi ro                                                     | Cách giảm                                                                                                        |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Chuyển một khối 110.000 dòng làm hỏng tính năng đang chạy  | Chuyển từng bước nhỏ, mỗi bước app vẫn chạy; không viết lại cùng lúc; giữ toàn bộ 392 file test làm lưới an toàn |
+| Đổi đường sửa làm sai Undo hoặc ghi hỏng file              | Làm `FileWriter` + `History` trước, có contract test riêng, rồi mới chuyển từng thao tác sang                    |
+| Interface đầu tiên thiết kế lệch vì chỉ có một ví dụ (JSX) | ADR-A7: cho phép đổi tới khi có ngôn ngữ chỉnh được thứ hai                                                      |
+| Next.js đổi phần nội bộ ở bản sau                          | `supportedVersions`, test theo bản lớn, báo rõ khi không hỗ trợ                                                  |
+| Bản sao (Razor) chậm khi sửa                               | Đo trước khi hứa; ngân sách riêng (mục 8)                                                                        |
+| Khối thư viện xấu đi khi chuyển sang cây trung lập         | Test so ảnh từng khối trước và sau                                                                               |
+| Phạm vi phình ra, làm mãi không xong                       | Bước 4 chia đợt nhỏ, mỗi đợt có điều kiện xong đo được                                                           |
+
+## 12. Đối chiếu hiện tại → đích
+
+| Hiện tại                                             | Đích                                                                     |
+| ---------------------------------------------------- | ------------------------------------------------------------------------ |
+| `FrameworkAdapter` (vite-react, express-pug)         | `RuntimeAdapter` (vite, express-proxy) + `ViewLanguage` (jsx, pug)       |
+| `SupportReport` + `editMode`                         | `ProjectProfile` + `Capability`                                          |
+| `core/source-editor` + phần JSX của `core/project`   | `stacks/view/jsx`                                                        |
+| Phần còn lại của `core/project`                      | `services`                                                               |
+| `core/style` (CSS…) + Tailwind trong Studio          | `stacks/style/*` + package `style-tailwind`, một đường qua `EditService` |
+| `ElementClassName` (riêng JSX)                       | `ClassSlot` (mọi ngôn ngữ)                                               |
+| Mỗi thao tác tự ghi file                             | `FileWriter` duy nhất                                                    |
+| `transform-jsx` (bridge), `pug-loc-plugin` (runners) | `LocStamper` của từng `ViewLanguage`                                     |
+| Thư viện khối trong `shared` (chuỗi JSX)             | Package nội dung, cây trung lập + `SnippetRenderer`                      |
+| Lý do E023 rải rác, kiểm `viewOnly` ở 4 chỗ          | `CapabilityReason` + `Capability`, một chỗ                               |
+| 29 store zustand rải trong các tính năng             | Trạng thái dùng chung ở `studio/src/core`                                |
+| 2 quy tắc phụ thuộc được lint kiểm                   | Toàn bộ quy tắc mục 6, có danh sách nợ, có contract test                 |
+
+**Giữ nguyên**: `SourceLoc` / `UseLoc` (`data-rc-loc`, `data-rc-use`), Bridge client, Undo đúng byte, các port của Server, AI agent tự viết code, hợp đồng có schema zod, mã lỗi `E0xx`.
+
+## 13. Những gì bước 4 phải quyết
 
 1. Thứ tự chuyển đổi, sao cho mỗi bước app vẫn chạy và test cũ vẫn qua.
-2. Chọn công cụ kiểm phụ thuộc, và lập danh sách nợ ban đầu.
-3. Đợt 0 gồm những phần nào của tài liệu này (tối thiểu: mục 2, 3.1, 3.2, 4, 6.1, 6.4).
-4. Khi nào làm gộp style (mục 3.3) và tách nội dung (mục 5).
+2. Chọn công cụ kiểm phụ thuộc và lập danh sách nợ ban đầu.
+3. Đợt 0 gồm những phần nào (tối thiểu: mục 2, 3.1, 3.2, 4, 6.1, 6.4).
+4. Khi nào làm gộp style (3.3), class động cho ngôn ngữ khác (3.5), tách nội dung (5), `core/` của Studio (6.2).
 5. Tài liệu kiến trúc thay phần nào của `spec.md`, và cách giữ nó khớp với code.
