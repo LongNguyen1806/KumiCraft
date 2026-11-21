@@ -6,6 +6,7 @@ import {
   type PackageManager,
   type ProjectInfo,
   type SupportReport,
+  type WorkspaceFile,
 } from '@kumicraft/shared';
 
 import type { Platform } from '../shared/session.ts';
@@ -50,4 +51,20 @@ export function resolveOpenSupport(
   const fromCreated = createdPackageManagers.get(normalizeRoot(root, platform));
   const resolvedPm = fromCreated ?? configSettingPm;
   return resolvedPm !== undefined ? { ...baseSupport, packageManager: resolvedPm } : baseSupport;
+}
+
+/**
+ * The package manager of the lock file, then the one saved when the project was created, then
+ * one the computer has (a project made by an older KumiCraft saved none).
+ */
+export async function withKnownPackageManager(
+  support: SupportReport,
+  file: Pick<WorkspaceFile, 'packageManager'>,
+  deps: {
+    readonly installedPackageManager?: (() => Promise<PackageManager | undefined>) | undefined;
+  },
+): Promise<SupportReport> {
+  const saved = support.packageManager ?? file.packageManager;
+  const packageManager = saved ?? (await deps.installedPackageManager?.());
+  return packageManager === undefined ? support : { ...support, packageManager };
 }

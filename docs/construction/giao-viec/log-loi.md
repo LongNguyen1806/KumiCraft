@@ -1,6 +1,6 @@
-# Sửa lỗi cài dự án trên Mac (E021) và ghi log lỗi ra file (kế hoạch, chưa làm)
+# Sửa lỗi cài dự án trên Mac (E021) và ghi log lỗi ra file
 
-Ghi ngày 2026-11-20, cập nhật 2026-11-21. Chủ dự án chọn hướng: không nhờ người dùng chạy thử. Sửa theo các nguyên nhân có khả năng, ghi log đầy đủ, phát hành bản mới. Nếu người dùng còn lỗi thì họ gửi file log về.
+Ghi ngày 2026-11-20, cập nhật 2026-11-21. **Đã làm 2026-11-21** (spec-log #159), trừ ý 8: lỗi giao diện phía Studio chưa ghi, vì lỗi gọi API đã được ghi ở phía server. Chủ dự án chọn hướng: không nhờ người dùng chạy thử. Sửa theo các nguyên nhân có khả năng, ghi log đầy đủ, phát hành bản mới. Nếu người dùng còn lỗi thì họ gửi file log về.
 
 ## Những gì đã biết
 

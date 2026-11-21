@@ -100,6 +100,11 @@ function finish(store: JobStore, id: string, job: JobRecord, outcome: Result<unk
     bus?.publish('job.completed', { jobId: id, kind, result: outcome.value });
   } else {
     const error = publicError(outcome.error);
+    // The log file is what a user sends back: the reason and the last output lines go there.
+    store.deps.logger.warn(
+      { jobId: id, kind, code: error.code, params: error.params, lastLines: job.lines.slice(-20) },
+      'job failed',
+    );
     job.status = { ...base, state: 'failed', error };
     bus?.publish('job.failed', { jobId: id, kind, error });
   }

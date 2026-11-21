@@ -161,6 +161,7 @@ export function createHttpServer(
 
   return createHttpApp({
     logLevel: options.logLevel ?? 'info',
+    logger: ctx.pino,
     security: { port: options.port, sessionToken, trustedOrigins: options.trustedOrigins ?? [] },
     getSessionInfo,
     ...routes,

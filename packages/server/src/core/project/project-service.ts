@@ -50,7 +50,12 @@ import {
   handlePromoteDraft,
   handleRenameDraft,
 } from './project-draft-ops.ts';
-import { normalizeRoot, projectInfoOf, resolveOpenSupport } from './project-info.ts';
+import {
+  normalizeRoot,
+  projectInfoOf,
+  resolveOpenSupport,
+  withKnownPackageManager,
+} from './project-info.ts';
 import { checkNeedsInstall, startProjectInstall } from './project-install.ts';
 import { editProjectTheme, queryThemeUsage, readProjectTheme } from './project-theme-ops.ts';
 import type { ProjectService, ProjectServiceDeps, WorkspaceState } from './project-types.ts';
@@ -150,7 +155,8 @@ class ProjectServiceImpl implements ProjectService {
       this.deps.eventBus?.publish('session.changed', undefined);
       return fileRes;
     }
-    const info = await this.finishOpen(root, fileRes.value, support);
+    const known = await withKnownPackageManager(support, fileRes.value, this.deps);
+    const info = await this.finishOpen(root, fileRes.value, known);
     const remembered = await this.deps.recents?.rememberProject(root, info.name);
     if (remembered?.ok === false) {
       this.deps.logger.warn({ code: remembered.error.code }, 'cannot remember the recent project');

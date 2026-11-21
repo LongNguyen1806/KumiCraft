@@ -204,6 +204,10 @@ export function normalizeDesignDirs(d: DesignDirs | undefined): ResolvedDesignDi
   };
 }
 
+export const PACKAGE_MANAGERS = ['pnpm', 'npm', 'yarn'] as const;
+export const PackageManagerSchema = z.enum(PACKAGE_MANAGERS);
+export type PackageManager = z.infer<typeof PackageManagerSchema>;
+
 export const WorkspaceFileSchema = z
   .strictObject({
     schemaVersion: z.literal(WORKSPACE_SCHEMA_VERSION),
@@ -222,6 +226,8 @@ export const WorkspaceFileSchema = z
     routing: RoutingSchema.optional(),
     sessions: LoginSessionsSchema.optional(),
     ai: WorkspaceAiSchema.optional(),
+    /** Chosen when the project was created: a new project has no lock file to tell it. */
+    packageManager: PackageManagerSchema.optional(),
   })
   .superRefine((value, ctx) => {
     for (const problem of frameRuleProblems(value)) {
@@ -255,6 +261,7 @@ export type NewWorkspaceInput = {
   readonly responsiveMode: ResponsiveMode;
   readonly framework?: FrameworkId;
   readonly sourceDir?: string;
+  readonly packageManager?: PackageManager | undefined;
 };
 
 /** The content of a new `workspace.json` (R-PJ-08). */
@@ -271,6 +278,7 @@ export function newWorkspaceFile(input: NewWorkspaceInput): WorkspaceFile {
     responsiveMode: input.responsiveMode,
     frames: [...frames],
     primaryFrameId,
+    ...(input.packageManager === undefined ? {} : { packageManager: input.packageManager }),
   };
 }
 

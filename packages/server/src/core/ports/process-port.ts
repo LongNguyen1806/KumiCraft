@@ -5,6 +5,8 @@ export type ProcessOutput = {
   readonly stdout: string;
   readonly stderr: string;
   readonly lines: readonly string[];
+  /** Why the command never started (`ENOENT`, `ENOEXEC`, `EACCES`…); the exit code is then 127. */
+  readonly spawnError?: string | undefined;
 };
 
 export type ChildProcessHandle = {
