@@ -15,6 +15,9 @@ import {
   FrameSchema,
   FRAMEWORK_IDS,
   LoginSessionsSchema,
+  PACKAGE_MANAGERS,
+  type PackageManager,
+  PackageManagerSchema,
   ResolvedDesignDirsSchema,
   StyleFilesSchema,
   WorkspaceAiSchema,
@@ -74,9 +77,7 @@ export const StylingReportSchema = z.strictObject({
 });
 export type StylingReport = z.infer<typeof StylingReportSchema>;
 
-export const PACKAGE_MANAGERS = ['pnpm', 'npm', 'yarn'] as const;
-export const PackageManagerSchema = z.enum(PACKAGE_MANAGERS);
-export type PackageManager = z.infer<typeof PackageManagerSchema>;
+export { PACKAGE_MANAGERS, type PackageManager, PackageManagerSchema };
 
 export const UiKitReportSchema = z.strictObject({
   kind: z.literal('shadcn'),

@@ -78,7 +78,9 @@ export async function runProjectInstall(
       return err({ code: 'E020', params: { timeout: 600 } });
     }
     if (outcome.exitCode === 127) {
-      return err({ code: 'E021', params: { missing: 'packageManager' } });
+      // `spawnError` tells "not found" (ENOENT) from "found but cannot run" (ENOEXEC, EACCES).
+      const why = outcome.spawnError === undefined ? {} : { spawnError: outcome.spawnError };
+      return err({ code: 'E021', params: { missing: 'packageManager', command: exe, ...why } });
     }
     if (outcome.exitCode !== 0) {
       const details = outcome.lines.slice(-200).map((message) => ({ message }));

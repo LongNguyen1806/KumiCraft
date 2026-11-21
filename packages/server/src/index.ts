@@ -7,11 +7,13 @@ import { fileURLToPath } from 'node:url';
 
 import type { AgentId } from '@kumicraft/shared';
 import envPaths from 'env-paths';
+import type { Logger } from 'pino';
 
 import { createNodeFileSystem } from './adapters/fs/node-file-system.ts';
 import type { LogLevel } from './adapters/http/create-http-app.ts';
-import { createServerLogger } from './adapters/log/create-logger.ts';
+import { createAppLog } from './adapters/log/app-log.ts';
 import { type LegacyDirPair, moveLegacyUserDirs } from './adapters/system/legacy-user-dirs.ts';
+import { startMachineProbe } from './adapters/system/machine-info.ts';
 import { createNodeProcess } from './adapters/system/node-process.ts';
 import { createNodeSystem } from './adapters/system/node-system.ts';
 import { createChokidarWatcher } from './adapters/watcher/chokidar-watcher.ts';
@@ -84,6 +86,8 @@ export type StartServerOptions = {
     readonly templateDir?: string;
     readonly homeDir?: string;
     readonly logger?: LoggerPort;
+    /** Folder of `kumicraft.log`; without it a test that gives `configDir` gets no file. */
+    readonly logDir?: string;
     readonly eventBus?: EventBusPort;
     readonly watcher?: WatcherPort;
     readonly runnerScriptPath?: string | undefined;
@@ -119,6 +123,7 @@ export type InitializedContext = CoreServices & {
   /** KumiCraft's cache folder (mirrors, build check output). */
   readonly cacheDir: string;
   readonly logger: LoggerPort;
+  readonly pino?: Logger | undefined;
 };
 
 /**
@@ -191,10 +196,12 @@ function resolveServerPaths(options: StartServerOptions) {
 function resolveCorePorts(options: StartServerOptions, platform: Platform) {
   // KumiCraft's writes reach the dev server too, once the runner exists (K9.5).
   const writes = writeReportingFileSystem(options.deps?.fs ?? createNodeFileSystem(platform));
+  const log = createAppLog({ level: options.logLevel ?? 'info', ...options.deps });
   return {
     fs: writes.fs,
     connectWrites: writes.connect,
-    logger: options.deps?.logger ?? createServerLogger({ level: options.logLevel ?? 'info' }).port,
+    logger: log.port,
+    pino: log.pino,
     system: options.deps?.system ?? createNodeSystem(),
     processPort: options.deps?.process ?? createNodeProcess(),
     eventBus: options.deps?.eventBus ?? createEventBus(),
@@ -241,6 +248,7 @@ async function initServerContext(
       process: processPort,
       ...configDeps(configStore),
       logger,
+      installedPackageManager: machineProbe(options, processPort, logger),
       eventBus,
       port: options.port,
       platform,
@@ -264,18 +272,14 @@ async function initServerContext(
   const autoOpen = await connectAndOpen(ports, services, options.workspaceDir);
   if (!autoOpen.ok) return autoOpen;
 
-  return ok({
-    ...services,
-    configStore,
-    eventBus,
-    fs,
-    processPort,
-    platform,
-    homeDir,
-    configDir,
-    cacheDir,
-    logger,
-  });
+  return ok({ ...services, ...ports, configStore, platform, homeDir, configDir, cacheDir });
+}
+
+/** The real computer only: a test's fake process answers no `--version`. */
+function machineProbe(options: StartServerOptions, processPort: ProcessPort, logger: LoggerPort) {
+  return options.deps?.process === undefined
+    ? startMachineProbe(processPort, logger, options.version)
+    : undefined;
 }
 
 const TEMPLATE_NAME = 'vite-react-ts-tailwind4';

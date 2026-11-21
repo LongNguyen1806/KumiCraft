@@ -5,6 +5,7 @@ import { randomBytes } from 'node:crypto';
 import fastifyStatic from '@fastify/static';
 import fastifyWebsocket from '@fastify/websocket';
 import Fastify, {
+  type FastifyBaseLogger,
   type FastifyError,
   type FastifyInstance,
   type FastifyReply,
@@ -35,6 +36,8 @@ export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' |
 
 export type HttpAppOptions = {
   readonly logLevel: LogLevel;
+  /** The server's logger, so request errors reach the log file too. Omit in tests. */
+  readonly logger?: FastifyBaseLogger | undefined;
   readonly security: SecurityOptions;
   readonly getSessionInfo: () => SessionInfo;
   readonly projectRoutes?: ProjectRoutesDeps;
@@ -165,7 +168,9 @@ async function registerApiRoutes(app: FastifyInstance, options: HttpAppOptions):
 
 export async function createHttpApp(options: HttpAppOptions): Promise<FastifyInstance> {
   const app = Fastify({
-    logger: { level: options.logLevel, redact: REDACTED_PATHS },
+    ...(options.logger === undefined
+      ? { logger: { level: options.logLevel, redact: REDACTED_PATHS } }
+      : { loggerInstance: options.logger }),
     bodyLimit: BODY_LIMIT_BYTES,
     genReqId: createRequestId,
     requestIdHeader: false,

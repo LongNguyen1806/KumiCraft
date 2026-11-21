@@ -124,17 +124,26 @@ function spawnChild(
       });
 }
 
-function setupExitPromise(child: ChildProcess, cancelTimeout: () => void): Promise<number> {
+type Exit = { readonly code: number; readonly spawnError?: string | undefined };
+
+/** The `code` of a spawn error (`ENOENT`, `ENOEXEC`…), kept for the log and the job's error. */
+export function errnoCode(cause: unknown): string {
+  return cause instanceof Error && 'code' in cause && typeof cause.code === 'string'
+    ? cause.code
+    : 'UNKNOWN';
+}
+
+function setupExitPromise(child: ChildProcess, cancelTimeout: () => void): Promise<Exit> {
   let spawnFailed = false;
-  return new Promise<number>((resolve) => {
-    child.on('error', () => {
+  return new Promise<Exit>((resolve) => {
+    child.on('error', (cause) => {
       spawnFailed = true;
       cancelTimeout();
-      resolve(127);
+      resolve({ code: 127, spawnError: errnoCode(cause) });
     });
     child.on('close', (code) => {
       cancelTimeout();
-      if (!spawnFailed) resolve(code ?? 1);
+      if (!spawnFailed) resolve({ code: code ?? 1 });
     });
   });
 }
@@ -172,9 +181,10 @@ function createProcessHandle(
       child.on('message', cb);
     },
     async wait(): Promise<ProcessOutput> {
-      const exitCode = await exitPromise;
+      const exit = await exitPromise;
       return {
-        exitCode: timedOut ? 124 : exitCode,
+        exitCode: timedOut ? 124 : exit.code,
+        spawnError: exit.spawnError,
         stdout: buffer.getStdout(),
         stderr: buffer.getStderr(),
         lines: [...buffer.lines],
@@ -187,13 +197,53 @@ function createProcessHandle(
   };
 }
 
+/** A command that never started: it ends at once with 127, like a shell, and says why. */
+function failedHandle(spawnError: string): ChildProcessHandle {
+  const output: ProcessOutput = { exitCode: 127, stdout: '', stderr: '', lines: [], spawnError };
+  return {
+    onLine: () => undefined,
+    wait: () => Promise.resolve(output),
+    kill: () => Promise.resolve(),
+  };
+}
+
+type Started =
+  | { readonly kind: 'child'; readonly child: ChildProcess }
+  | { readonly kind: 'failed'; readonly spawnError: string };
+
+/**
+ * Node throws (not emits) ENOEXEC for a file without `#!`, as pnpm 12 leaves `pnpm` when its
+ * install script did not run. A shell runs such a file as a script, so the Terminal works; the
+ * same command goes once more through `/bin/sh`, the arguments passed apart, never joined.
+ */
+function startChild(
+  command: string,
+  args: readonly string[],
+  options: SpawnOptions,
+  isWin: boolean,
+): Started {
+  try {
+    return { kind: 'child', child: spawnChild(command, args, options, isWin) };
+  } catch (cause) {
+    const spawnError = errnoCode(cause);
+    if (isWin || spawnError !== 'ENOEXEC') return { kind: 'failed', spawnError };
+    try {
+      const viaShell = ['-c', '"$0" "$@"', command, ...args];
+      return { kind: 'child', child: spawnChild('/bin/sh', viaShell, options, isWin) };
+    } catch (again) {
+      return { kind: 'failed', spawnError: errnoCode(again) };
+    }
+  }
+}
+
 export function createNodeProcess(): ProcessPort {
   return {
     spawn(command: string, args: readonly string[], options: SpawnOptions): ChildProcessHandle {
       const isWin = process.platform === 'win32';
-      const child = spawnChild(command, args, options, isWin);
-      const buffer = setupOutputBuffer(child);
-      return createProcessHandle(child, buffer, options, isWin);
+      const started = startChild(command, args, options, isWin);
+      if (started.kind === 'failed') return failedHandle(started.spawnError);
+      const buffer = setupOutputBuffer(started.child);
+      return createProcessHandle(started.child, buffer, options, isWin);
     },
   };
 }

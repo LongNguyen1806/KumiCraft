@@ -155,6 +155,8 @@ export async function loadOrCreateWorkspaceFile(
     responsiveMode,
     framework: support.framework ?? 'vite-react',
     sourceDir: support.viewsDir ?? 'src',
+    // A new project has no lock file yet: the choice made at creation must survive a restart.
+    packageManager: support.packageManager,
   });
 
   const write = await deps.fs.writeTextAtomic(root, WORKSPACE_FILE, serializeWorkspaceFile(file));

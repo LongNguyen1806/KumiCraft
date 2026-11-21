@@ -61,6 +61,8 @@ export type ProjectServiceDeps = {
   /** R-PJ-25: every opened project goes to the user's recent list. */
   readonly recents?: Pick<ConfigStore, 'rememberProject'> | undefined;
   readonly logger: LoggerPort;
+  /** The first package manager found on the computer, for a project that names none. */
+  readonly installedPackageManager?: (() => Promise<PackageManager | undefined>) | undefined;
   readonly eventBus?: EventBusPort | undefined;
   readonly port: number;
   readonly platform: Platform;

@@ -22,6 +22,9 @@ app.get('/refused', (_request, reply) =>
   sendError(reply, { code: 'E012', params: { path: 'C:/Windows', reason: 'systemFolder' } }),
 );
 app.get('/missing', (_request, reply) => sendError(reply, { code: 'E015' }));
+app.get('/install', (_request, reply) =>
+  sendError(reply, { code: 'E021', params: { missing: 'packageManager' } }),
+);
 
 afterEach(() => {
   lines.length = 0;
@@ -50,5 +53,20 @@ describe('sendError', () => {
 
     expect(res.statusCode).toBe(404);
     expect(lines).toHaveLength(0);
+  });
+
+  it('logs what a refused request told the user, for the log file of a bug report', async () => {
+    const res = await app.inject({ method: 'GET', url: '/install' });
+
+    expect(res.statusCode).toBeLessThan(500);
+    const warning = lines.map((line) => JSON.parse(line) as Record<string, unknown>);
+    expect(warning).toHaveLength(1);
+    expect(warning[0]).toMatchObject({
+      level: 40,
+      code: 'E021',
+      params: { missing: 'packageManager' },
+      url: '/install',
+      msg: 'request refused',
+    });
   });
 });

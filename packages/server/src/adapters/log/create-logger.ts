@@ -77,7 +77,8 @@ export function createServerLogger(options: LoggerOptions): ServerLogger {
       ? 'info'
       : options.level;
   const logger = pino(
-    { level, redact: { paths: REDACTED_PATHS, censor: '[redacted]' } },
+    // No `hostname`: a computer's name is often its owner's, and the file is sent with bug reports.
+    { level, base: { pid: process.pid }, redact: { paths: REDACTED_PATHS, censor: '[redacted]' } },
     pino.multistream(streams),
   );
   return { pino: logger, port: toLoggerPort(logger), close: () => file?.close() };
