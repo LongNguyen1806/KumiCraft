@@ -1,7 +1,7 @@
 # A Mac user (Apple Silicon, pnpm 12.21.0) could not install a new project: E021, while `pnpm -v`
-# works in their Terminal (2026-11-20). This checks only that, on a GitHub Mac: the pnpm a new
-# project gets, and `pnpm install` of the KumiCraft template started the way KumiCraft starts it
-# (Node spawn, no shell). Push to the branch `mac-check` to run it; ci.yml does not run there.
+# works in their Terminal (2026-11-20). Run 2 showed why a pnpm 12 whose install script did not
+# run cannot be started by Node without a shell (ENOEXEC). This run checks the fix with
+# KumiCraft's own code on such a pnpm. Push to the branch `mac-check` to run it.
 name: mac-pnpm-check
 
 on:
@@ -15,50 +15,43 @@ permissions:
 jobs:
   mac:
     runs-on: macos-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      # The only pnpm on the machine, as on the user's Mac. Run 1 (scripts on) gave a native binary
-      # and a working install. Run 2: the package's own install script (`node install.js`, which
-      # swaps the shell-script launcher for the binary) is blocked, as an npm that refuses
-      # install scripts would do.
+      # The repository's own pnpm through npx, so the pnpm on the PATH stays the user's one.
+      - run: npx --yes pnpm@10.34.6 install --frozen-lockfile
+
+      # The user's pnpm, half installed: its install script (which swaps the launcher script
+      # without `#!` for the native binary) is blocked, as in run 2.
       - run: npm install -g pnpm@12.21.0 --ignore-scripts
-
-      - name: The pnpm file a new project gets
-        working-directory: ${{ runner.temp }}
+      - name: The pnpm on the PATH is the script without `#!`
         run: |
-          which -a pnpm
-          pnpm -v
-          PNPM="$(which pnpm)"
-          ls -la "$PNPM"
-          file "$PNPM" "$(realpath "$PNPM")"
-          echo "--- first 300 bytes"
-          head -c 300 "$(realpath "$PNPM")" | cat -v
-          echo
-          echo "--- pnpm -v typed in a shell, as the user did in Terminal"
-          bash -c 'pnpm -v' || echo "shell: pnpm -v failed with $?"
+          file "$(realpath "$(which pnpm)")"
+          bash -c 'pnpm -v'
 
-      - name: pnpm -v and pnpm install, started as KumiCraft starts them (no shell)
+      - name: Unit tests of the fix
+        working-directory: packages/server
+        run: >-
+          npx vitest run src/adapters/system/spawn-failure.test.ts
+          src/core/project/install-package-manager.test.ts
+
+      - name: pnpm install of the KumiCraft template, started by KumiCraft's code
         run: |
           APP="$RUNNER_TEMP/my-app"
           cp -R templates/vite-react-ts-tailwind4 "$APP"
           sed -i '' 's/{{packageName}}/my-app/' "$APP/package.json"
-          node -e '
-            const { spawn } = require("child_process");
-            const run = (args, cwd) => new Promise((done) => {
-              const child = spawn("pnpm", args, { cwd, shell: false, stdio: "inherit" });
-              child.on("error", (e) => { console.log("SPAWN ERROR:", e.code); done(127); });
-              child.on("close", (code) => done(code ?? 1));
-            });
-            (async () => {
-              const version = await run(["-v"], process.argv[1]);
-              console.log("pnpm -v exit:", version);
-              const install = await run(["install"], process.argv[1]);
-              console.log("pnpm install exit:", install, install === 127 ? "(KumiCraft shows E021)" : "");
-              // The job stays green either way: the lines above are the result to read.
-              process.exit(0);
-            })();
+          node --input-type=module -e '
+            import { createNodeProcess } from "./packages/server/src/adapters/system/node-process.ts";
+            import { probeMachine } from "./packages/server/src/adapters/system/machine-info.ts";
+            const proc = createNodeProcess();
+            console.log("machine line of the log:", JSON.stringify(await probeMachine(proc), null, 2));
+            const handle = proc.spawn("pnpm", ["install"], { cwd: process.argv[1] });
+            handle.onLine((line) => console.log("  ", line));
+            const out = await handle.wait();
+            console.log("pnpm install exit:", out.exitCode, out.spawnError ?? "");
+            process.exit(out.exitCode === 0 ? 0 : 1);
           ' "$APP"
+          test -d "$APP/node_modules/vite"
