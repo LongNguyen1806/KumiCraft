@@ -68,5 +68,5 @@ docs/       yêu cầu, đặc tả và nhật ký thi công
 1. Tăng `version` trong `packages/cli/package.json`.
 2. `pnpm release:check`
 3. Thử gói vừa tạo: `npm install -g ./artifacts/kumicraft-<phiên bản>.tgz` rồi `node scripts/smoke-installed.mjs`.
-4. `npm publish artifacts/kumicraft-<phiên bản>.tgz`
+4. `npm publish ./artifacts/kumicraft-<phiên bản>.tgz` (phải có `./`: không có thì npm hiểu là repo GitHub `artifacts/...`)
 5. `git tag v<phiên bản>` và `git push --tags`.
