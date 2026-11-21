@@ -1,0 +1,58 @@
+# A Mac user (Apple Silicon, pnpm 12.21.0) could not install a new project: E021, while `pnpm -v`
+# works in their Terminal (2026-11-20). This checks only that, on a GitHub Mac: the pnpm a new
+# project gets, and `pnpm install` of the KumiCraft template started the way KumiCraft starts it
+# (Node spawn, no shell). Push to the branch `mac-check` to run it; ci.yml does not run there.
+name: mac-pnpm-check
+
+on:
+  push:
+    branches: [mac-check]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # The only pnpm on the machine, as on the user's Mac.
+      - run: npm install -g pnpm@12.21.0
+
+      - name: The pnpm file a new project gets
+        working-directory: ${{ runner.temp }}
+        run: |
+          which -a pnpm
+          pnpm -v
+          PNPM="$(which pnpm)"
+          ls -la "$PNPM"
+          file "$PNPM" "$(realpath "$PNPM")"
+          echo "--- first 300 bytes"
+          head -c 300 "$(realpath "$PNPM")" | cat -v
+          echo
+
+      - name: pnpm -v and pnpm install, started as KumiCraft starts them (no shell)
+        run: |
+          APP="$RUNNER_TEMP/my-app"
+          cp -R templates/vite-react-ts-tailwind4 "$APP"
+          sed -i '' 's/{{packageName}}/my-app/' "$APP/package.json"
+          node -e '
+            const { spawn } = require("child_process");
+            const run = (args, cwd) => new Promise((done) => {
+              const child = spawn("pnpm", args, { cwd, shell: false, stdio: "inherit" });
+              child.on("error", (e) => { console.log("SPAWN ERROR:", e.code); done(127); });
+              child.on("close", (code) => done(code ?? 1));
+            });
+            (async () => {
+              const version = await run(["-v"], process.argv[1]);
+              console.log("pnpm -v exit:", version);
+              const install = await run(["install"], process.argv[1]);
+              console.log("pnpm install exit:", install, install === 127 ? "(KumiCraft shows E021)" : "");
+              process.exit(install);
+            })();
+          ' "$APP"
