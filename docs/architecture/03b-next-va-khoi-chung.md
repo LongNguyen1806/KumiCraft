@@ -32,7 +32,7 @@ Hệ quả cho 03: bỏ luật "`supportedVersions`, ngoài khoảng thì báo c
 
 - Runner nạp `next` **của dự án** (tìm từ thư mục dự án), chạy `next({ dev: true, dir })` và một máy chủ HTTP trên cổng trong; proxy đứng trước trên cổng runner.
 - **Không sửa `next.config` của người dùng.** Như bản thử: khi Node nạp module cấu hình của Next (`next/dist/server/config.js`), runner bọc hàm đọc cấu hình để thêm vào cấu hình của người dùng:
-  - `turbopack.rules`: `*.jsx`, `*.tsx` (và `.js` có JSX) chạy qua loader đánh dấu. Dùng khi Next chạy Turbopack (mặc định từ Next 16).
+  - `turbopack.rules`: `*.jsx`, `*.tsx` và `*.js` chạy qua loader đánh dấu; luật `*.js` có điều kiện `{ not: 'foreign' }` để bỏ qua `node_modules` (`create-next-app` bản JavaScript viết trang bằng `.js`). Dùng khi Next chạy Turbopack (mặc định từ Next 16).
   - `webpack`: một rule `enforce: 'pre'` với cùng loader, nối sau hàm `webpack` của người dùng nếu có. Dùng khi Next chạy webpack (mặc định ở Next 14, 15).
 - Thêm cả hai luôn; Next chỉ dùng cái khớp với chế độ đang chạy. Không cần biết phiên bản.
 - Không bọc được (Next đổi tên file nội bộ): runner báo lỗi thật kèm tên file, ghi log; trang vẫn chạy nhưng không chọn được phần tử, Studio báo rõ.

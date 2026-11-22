@@ -28,6 +28,8 @@ describe('Next.js config with the stamping loader [03b section 1.2]', () => {
           '*.svg': { loaders: ['@svgr/webpack'], as: '*.js' },
           '*.tsx': { loaders: [LOADER] },
           '*.jsx': { loaders: [LOADER] },
+          // create-next-app's JavaScript pages are .js; the packages are left out.
+          '*.js': { condition: { not: 'foreign' }, loaders: [LOADER] },
         },
       },
     });

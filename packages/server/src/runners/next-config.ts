@@ -7,11 +7,18 @@ type Rec = Record<string, unknown>;
 
 const isRecord = (value: unknown): value is Rec => typeof value === 'object' && Boolean(value);
 
-/** The files Turbopack runs through the loader (it has no "except node_modules" for `.js`). */
-const TURBOPACK_GLOBS = ['*.tsx', '*.jsx'] as const;
+/**
+ * The files Turbopack runs through the loader. `.js` (what create-next-app writes for JavaScript)
+ * skips the packages (`foreign` is node_modules), so they do not all go through the loader.
+ */
+const TURBOPACK_RULES = {
+  '*.tsx': {},
+  '*.jsx': {},
+  '*.js': { condition: { not: 'foreign' } },
+} as const;
 
-function turbopackRule(existing: unknown, loader: string): unknown {
-  if (existing === undefined) return { loaders: [loader] };
+function turbopackRule(existing: unknown, loader: string, extra: object): unknown {
+  if (existing === undefined) return { ...extra, loaders: [loader] };
   // A user rule for the same files: ours runs first on the source (last in the list, as webpack).
   if (Array.isArray(existing)) {
     const list: unknown[] = existing;
@@ -29,7 +36,10 @@ function withTurbopack(config: Rec, loader: string): Rec {
   const turbopack = isRecord(config['turbopack']) ? config['turbopack'] : {};
   const rules = isRecord(turbopack['rules']) ? turbopack['rules'] : {};
   const added = Object.fromEntries(
-    TURBOPACK_GLOBS.map((g) => [g, turbopackRule(rules[g], loader)]),
+    Object.entries(TURBOPACK_RULES).map(([g, extra]) => [
+      g,
+      turbopackRule(rules[g], loader, extra),
+    ]),
   );
   return { ...turbopack, rules: { ...rules, ...added } };
 }

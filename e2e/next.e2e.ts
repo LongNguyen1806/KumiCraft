@@ -11,7 +11,8 @@ import { copyFixture, makeTempDir, type TempDir } from './support/copy-fixture.t
 import { getCanvasFrame, trustIfAsked } from './support/trust.ts';
 
 const SAMPLES = [
-  { major: 16, page: 'app/page.jsx' },
+  // Next 16 runs Turbopack; its pages are .js like create-next-app writes them.
+  { major: 16, page: 'app/page.js' },
   { major: 15, page: 'src/app/page.jsx' },
 ] as const;
 

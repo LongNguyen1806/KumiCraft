@@ -55,6 +55,19 @@ async function linkPackages(sourceModules: string, target: string): Promise<void
 }
 
 /**
+ * Files a run leaves in a fixture opened in a developer's own KumiCraft (`pnpm dev`): its packages,
+ * the Next.js cache and the session lock. Copying the lock makes the test's session refuse to open.
+ */
+function isLeftByARun(source: string): boolean {
+  const parts = source.split(/[\\/]/);
+  return (
+    parts.includes('node_modules') ||
+    parts.includes('.next') ||
+    (parts.at(-2) === '.kumicraft' && parts.at(-1) === 'lock')
+  );
+}
+
+/**
  * Copies `fixtures/<name>` (for example `projects/vite8-react19-ts`) into a new temporary
  * folder and returns that copy (R-QA-01).
  *
@@ -70,7 +83,7 @@ export async function copyFixture(
   const target = await makeTempDir(name.replaceAll(/[\\/]/g, '-'), parent);
   await cp(join(FIXTURES_DIR, name), target.path, {
     recursive: true,
-    filter: (source) => !source.includes('node_modules'),
+    filter: (source) => !isLeftByARun(source),
   });
   const fixtureModules = join(FIXTURES_DIR, name, 'node_modules');
   const sourceModules = existsSync(fixtureModules) ? fixtureModules : STUDIO_NODE_MODULES;

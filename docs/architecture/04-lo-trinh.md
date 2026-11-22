@@ -108,7 +108,7 @@ Bảng trên viết lại theo chủ dự án (2026-11-22): mọi loại dự á
 - Lỗi thật tìm được khi chạy thử: bộ sửa luôn dùng `src` thay vì thư mục nguồn của dự án (`editor-mutations.ts`); đã sửa.
 - Thư viện khối: 305 / 305 mẫu (mọi khối, biến thể, vi / en, bản Tailwind và bản `neutral`): HTML, JSX và Pug viết từ cây cho đúng trang React dựng từ JSX gốc (`content/src/tree/tree.test.ts`).
 - Bỏ chặn phiên bản Vite / React (`supportedMajors` của Đợt 1 bị bỏ).
-- Chưa làm: trang nháp cho Next (Studio ghi rõ "chưa dùng được với Next.js"); kiểm build cho Next; Turbopack chưa đánh dấu file `.js` (chỉ `.jsx`, `.tsx`), webpack thì có.
+- Chưa làm: trang nháp cho Next (Studio ghi rõ "chưa dùng được với Next.js"); kiểm build cho Next. Turbopack đánh dấu cả file `.js` từ spec-log #165 (trước đó chỉ `.jsx`, `.tsx`, nên dự án Next 16 bản JavaScript mặc định không chọn được phần tử).
 - E2E toàn bộ: 93 qua; `element-basics` số 10 vẫn hỏng khi máy bận như trước (đã chứng minh có từ trước Đợt S).
 
 Từ Đợt 1, mỗi đợt làm **trọn một lần**, không chia thành các phần nhỏ để duyệt riêng (chủ dự án, 2026-11-22).
