@@ -19,10 +19,11 @@ export function resolveSourcePaths(deps: SourceEditorDeps, config: SourceEditorC
   return {
     getSourceDir: () => {
       if (config.sourceDir !== undefined) return config.sourceDir;
-      // A view-only project (Express + Pug) keeps its markup in its own views folder.
+      // The project's own source folder: `src`, the views folder of an Express + Pug project, or
+      // the root of a Next.js project made without src/ (03b section 1.3).
       const view = deps.getView?.();
       const viewOnly = view !== undefined && !view.capability.edit;
-      return viewOnly ? (deps.getProjectSourceDir?.() ?? 'views') : 'src';
+      return deps.getProjectSourceDir?.() ?? (viewOnly ? 'views' : 'src');
     },
     getMarkupExtensions: () => {
       const view = deps.getView?.();

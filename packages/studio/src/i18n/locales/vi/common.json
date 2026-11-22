@@ -286,6 +286,8 @@
       "noViteConfig": "Không tìm thấy file cấu hình vite.config.*",
       "noTailwindCss": "Không tìm thấy file CSS chứa @import \"tailwindcss\"",
       "craUnsupported": "Create React App đã bị React ngừng phát triển (2025). KumiCraft 1.0 hỗ trợ React + Vite; chuyển dự án sang Vite là cách được React khuyên.",
+      "noNext": "Dự án không có Next.js trong dependencies",
+      "noNextPages": "Không thấy thư mục app/ hoặc pages/ (Next.js đặt trang ở đó)",
       "nextUnsupported": "Next.js chưa có ở KumiCraft 1.0, dự kiến bản 1.1.",
       "webpackUnsupported": "Dự án React chạy webpack tự cấu hình chưa được hỗ trợ; KumiCraft 1.0 hỗ trợ React + Vite."
     },
@@ -759,6 +761,7 @@
   "drafts": {
     "title": "Bản nháp",
     "new": "Bản nháp mới…",
+    "unavailableNext": "Trang nháp chưa dùng được với dự án Next.js",
     "loading": "Đang tải bản nháp…",
     "empty": "Chưa có bản nháp nào",
     "blank": "Trắng",

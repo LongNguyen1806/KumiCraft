@@ -22,3 +22,31 @@ export const RelPathSchema = z.string().refine((value) => relPathProblem(value) 
 });
 
 export type RelPath = z.infer<typeof RelPathSchema>;
+
+/**
+ * The project root as the source folder: a Next.js project made without `src/` keeps `app/`,
+ * `components/`… at the root (03b section 1.3).
+ */
+export const ROOT_SOURCE_DIR = '.';
+
+/** The source folder of a project: a project-relative folder, or the root (`.`). */
+export const SourceDirSchema = z.union([RelPathSchema, z.literal(ROOT_SOURCE_DIR)]);
+
+const sourcePrefix = (sourceDir: string): string =>
+  sourceDir
+    .replaceAll('\\', '/')
+    .replace(/^\/+|\/+$/g, '')
+    .replace(/^\.$/, '');
+
+/** True when the project-relative `file` is inside the source folder (never node_modules). */
+export function isInSourceDir(file: string, sourceDir: string): boolean {
+  if (file.split('/').includes('node_modules') || file.startsWith('../')) return false;
+  const dir = sourcePrefix(sourceDir);
+  return dir === '' || file.startsWith(`${dir}/`);
+}
+
+/** A project-relative path inside the source folder: `src/x`, or `x` when it is the root. */
+export function inSourceDir(sourceDir: string, rel: string): string {
+  const dir = sourcePrefix(sourceDir);
+  return dir === '' ? rel : `${dir}/${rel}`;
+}

@@ -33,7 +33,7 @@ describe('error-text [V-80]', () => {
   it('includes both reason sentences for multiple reasons array [V-80]', () => {
     const tError = getT();
     const result = errorText(tError, 'E001', { reasons: ['noVite', 'noTailwind'] });
-    expect(result).toContain('This project is not supported.');
+    expect(result).toContain('KumiCraft cannot open this project yet.');
     expect(result).toContain('Vite is not installed.');
     expect(result).toContain('Tailwind CSS is not installed.');
     expect(result.endsWith('(E001)')).toBe(true);

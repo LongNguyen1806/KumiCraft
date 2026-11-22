@@ -3,7 +3,7 @@ import * as path from 'node:path';
 
 import { type RelPath, relPathProblem, type UiKitReport } from '@kumicraft/shared';
 
-import type { FileSystemPort } from '../../../ports/file-system-port.ts';
+import type { FileSystemPort } from '../ports/file-system-port.ts';
 
 const COMPONENT_FILE_RE = /\.(tsx|jsx|ts|js)$/i;
 const IGNORED_STEM_RE = /(?:\.test|\.spec|\.stories|\.d)$/i;

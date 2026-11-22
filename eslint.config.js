@@ -349,6 +349,8 @@ export default defineConfig(
       'tour/*.config.js',
       'packages/*/*.config.js',
       'packages/*/*.config.ts',
+      // 03b section 1.2: webpack and Turbopack call a loader module's default export.
+      'packages/server/src/runners/next-loader.ts',
     ],
     rules: {
       'no-restricted-syntax': ['error', ...RESTRICTED_SYNTAX],

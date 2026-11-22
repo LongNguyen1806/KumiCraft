@@ -75,7 +75,7 @@ export const RunnerToParentMessageSchema = z.discriminatedUnion('type', [
   }),
   z.strictObject({
     type: z.literal('error'),
-    reason: z.enum(['viteNotFound', 'config', 'entryNotFound', 'noListen']),
+    reason: z.enum(['viteNotFound', 'nextNotFound', 'config', 'entryNotFound', 'noListen']),
     message: z.string().optional(),
     file: z.string().optional(),
     line: z.number().int().optional(),

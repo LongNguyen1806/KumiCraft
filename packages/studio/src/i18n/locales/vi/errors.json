@@ -1,7 +1,7 @@
 {
   "E001": {
     "title": "Dự án không được hỗ trợ",
-    "message": "Dự án này chưa được hỗ trợ. KumiCraft cần Vite 7 hoặc 8, React 18 hoặc 19 và Tailwind CSS 4.",
+    "message": "KumiCraft chưa mở được dự án này.",
     "reasons": {
       "noPackageJson": "Không tìm thấy file package.json.",
       "noVite": "Dự án chưa cài Vite.",
@@ -16,6 +16,8 @@
       "noPug": "Dự án chưa cài Pug.",
       "noServerEntry": "Không tìm thấy file khởi động server (app.js, bin/www, ...).",
       "craUnsupported": "Create React App đã bị React ngừng phát triển (2025). KumiCraft 1.0 hỗ trợ React + Vite; chuyển dự án sang Vite là cách được React khuyên.",
+      "noNext": "Dự án chưa cài Next.js.",
+      "noNextPages": "Không thấy thư mục app/ hoặc pages/.",
       "nextUnsupported": "Next.js chưa có ở KumiCraft 1.0, dự kiến bản 1.1.",
       "webpackUnsupported": "Dự án React chạy webpack tự cấu hình chưa được hỗ trợ; KumiCraft 1.0 hỗ trợ React + Vite."
     }
@@ -199,6 +201,7 @@
     "message": "Dev server của dự án không khởi động được hoặc đã dừng.",
     "reasons": {
       "notInstalled": "Dự án chưa cài dependencies.",
+      "nextNotFound": "Không tìm thấy Next.js trong node_modules của dự án.",
       "viteNotFound": "Không tìm thấy binary của Vite.",
       "config": "Lỗi trong file cấu hình dev server.",
       "portInUse": "Cổng mạng của dev server đang bị ứng dụng khác sử dụng.",

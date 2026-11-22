@@ -47,6 +47,7 @@ import {
   withKnownPackageManager,
 } from './project-info.ts';
 import { checkNeedsInstall, startProjectInstall } from './project-install.ts';
+import { readStackPages } from './project-pages.ts';
 import { editProjectTheme, queryThemeUsage, readProjectTheme } from './project-theme-ops.ts';
 import type { ProjectService, ProjectServiceDeps, WorkspaceState } from './project-types.ts';
 import {
@@ -305,23 +306,7 @@ class ProjectServiceImpl implements ProjectService {
   async pages(): Promise<Result<PagesInfo>> {
     if (this.current.status !== 'open')
       return err({ code: 'E021', params: { missing: 'project' } });
-    if (this.currentStack.runtime.pages !== undefined) {
-      return ok(
-        await this.currentStack.runtime.pages({
-          fs: this.deps.fs,
-          root: this.current.root,
-          support: this.current.support,
-          sourceDir: this.current.file.sourceDir,
-          serverEntry: this.current.support.serverEntry,
-          viewsDir: this.current.support.viewsDir,
-        }),
-      );
-    }
-    const features = this.currentStack.view.features?.project;
-    if (features === undefined) return err({ code: 'E023', params: { reason: 'viewOnly' } });
-    return ok(
-      await features.readPages(this.deps.fs, this.current.root, this.current.file.sourceDir),
-    );
+    return readStackPages(this.currentStack, this.current, this.deps.fs);
   }
 
   /** The page, draft and component tools of the open project's view language (ADR-A5). */
@@ -336,19 +321,32 @@ class ProjectServiceImpl implements ProjectService {
     return deps.ok ? ok({ deps: deps.value, features }) : deps;
   }
 
+  // A meta-framework's pages (Next.js files) first, else the view language's route list.
   async addPage(input: AddPageInput): Promise<Result<StructureResult>> {
     const tools = this.projectTools();
-    return tools.ok ? tools.value.features.addPage(tools.value.deps, input) : tools;
+    if (!tools.ok) return tools;
+    const pages = this.currentStack.pages;
+    return pages
+      ? pages.add(tools.value.deps, input)
+      : tools.value.features.addPage(tools.value.deps, input);
   }
 
   async renamePage(input: RenamePageInput): Promise<Result<StructureResult>> {
     const tools = this.projectTools();
-    return tools.ok ? tools.value.features.renamePage(tools.value.deps, input) : tools;
+    if (!tools.ok) return tools;
+    const pages = this.currentStack.pages;
+    return pages
+      ? pages.rename(tools.value.deps, input)
+      : tools.value.features.renamePage(tools.value.deps, input);
   }
 
   async deletePage(input: DeletePageInput): Promise<Result<StructureResult>> {
     const tools = this.projectTools();
-    return tools.ok ? tools.value.features.deletePage(tools.value.deps, input) : tools;
+    if (!tools.ok) return tools;
+    const pages = this.currentStack.pages;
+    return pages
+      ? pages.remove(tools.value.deps, input)
+      : tools.value.features.deletePage(tools.value.deps, input);
   }
 
   async extractComponent(input: ExtractComponent): Promise<Result<StructureResult>> {

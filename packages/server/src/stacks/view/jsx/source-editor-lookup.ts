@@ -3,7 +3,14 @@ import { createHash } from 'node:crypto';
 import * as path from 'node:path';
 
 import type { ElementSource, ElementSourceText } from '@kumicraft/shared';
-import { err, ok, parseLocString, relPathProblem, type Result } from '@kumicraft/shared';
+import {
+  err,
+  isInSourceDir,
+  ok,
+  parseLocString,
+  relPathProblem,
+  type Result,
+} from '@kumicraft/shared';
 
 import type { AstNode } from '../../../lib/ast-helpers.ts';
 import { findNodeAt } from '../../../lib/ast-helpers.ts';
@@ -158,8 +165,7 @@ export function validateLocAndExt(
     return err({ code: 'E023', params: { file, reason: 'notJsxFile' } });
   }
 
-  const normalizedSourceDir = sourceDir.replaceAll('\\', '/').replace(/\/+$/, '');
-  if (!file.startsWith(`${normalizedSourceDir}/`) || file.includes('node_modules/')) {
+  if (!isInSourceDir(file, sourceDir)) {
     return err({ code: 'E023', params: { file, reason: 'outsideSource' } });
   }
 

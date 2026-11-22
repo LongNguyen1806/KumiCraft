@@ -155,7 +155,7 @@ export async function loadOrCreateWorkspaceFile(
     createdAt: deps.system.now().toISOString(),
     responsiveMode,
     framework: support.framework ?? 'vite-react',
-    sourceDir: support.viewsDir ?? 'src',
+    sourceDir: support.sourceDir ?? support.viewsDir ?? 'src',
     // A new project has no lock file yet: the choice made at creation must survive a restart.
     packageManager: support.packageManager,
   });

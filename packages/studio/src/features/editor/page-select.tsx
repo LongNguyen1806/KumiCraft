@@ -10,6 +10,7 @@ import { fetchPages } from '../../api/project-client.ts';
 import { studioBridgeChannel } from '../../core/bridge-channel.ts';
 import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
 import { isDraftAddress } from '../../core/open-frames-storage.ts';
+import { useProjectInfo } from '../../core/project-store.ts';
 import { useSelectionStore } from '../../core/selection-store.ts';
 import { NewDraftDialog } from '../drafts/new-draft-dialog.tsx';
 import { useDrafts } from '../drafts/use-drafts.ts';
@@ -116,6 +117,17 @@ function ParamInput({
 
 function DraftSelectOptGroup({ drafts }: { readonly drafts: readonly DraftInfo[] }) {
   const { t } = useTranslation();
+  const project = useProjectInfo();
+  // A Next.js project has no draft page yet (03b section 1.5): say so instead of offering one.
+  if (project?.support.framework === 'next-react') {
+    return (
+      <optgroup label={t('drafts.title')}>
+        <option value="draft:unavailable" disabled>
+          {t('drafts.unavailableNext')}
+        </option>
+      </optgroup>
+    );
+  }
   return (
     <optgroup label={t('drafts.title')}>
       <option value="draft:new">{t('drafts.new')}</option>

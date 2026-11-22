@@ -23,7 +23,7 @@ test.afterEach(async () => {
   await config.remove();
 });
 
-test('a repo root lists its apps; the Vite app opens with hoisted packages, the others say why not [K5]', async ({
+test('a repo root lists its apps; the Vite and Next apps can be opened, the others say why not [K5]', async ({
   page,
 }) => {
   const session = await startCli(folder.path, config.path);
@@ -41,8 +41,8 @@ test('a repo root lists its apps; the Vite app opens with hoisted packages, the 
   // Apps KumiCraft 1.0 does not run are listed with the reason and no Open button.
   await expect(page.getByTestId('app-candidate-legacy-cra')).toContainText('Create React App');
   await expect(page.getByTestId('app-candidate-open-legacy-cra')).toHaveCount(0);
-  await expect(page.getByTestId('app-candidate-next-site')).toContainText('Next.js');
-  await expect(page.getByTestId('app-candidate-open-next-site')).toHaveCount(0);
+  // Next.js is opened since round 2 (03b section 1): it gets an Open button like the Vite app.
+  await expect(page.getByTestId('app-candidate-open-next-site')).toBeVisible();
   // A backend with no web framework is not an app to design.
   await expect(page.getByTestId('app-candidate-backend')).toHaveCount(0);
 

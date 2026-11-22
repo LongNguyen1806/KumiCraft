@@ -123,8 +123,9 @@ describe('M-FW: Framework detection', () => {
     );
 
     expect(result.report.supported).toBe(false);
-    expect(result.report.reasons).toContain('viteVersion');
-    expect(result.report.reasons).toContain('reactVersion');
+    // No version is refused (03b section 0): an old Vite or React is not a reason.
+    expect(result.report.reasons).not.toContain('viteVersion');
+    expect(result.report.reasons).not.toContain('reactVersion');
     expect(result.report.reasons).toContain('noViteConfig');
   });
 
@@ -155,26 +156,25 @@ describe('M-FW: Framework detection', () => {
     expect(result.report.versions.vite).toBe('8.0.2');
   });
 
-  it.each([
-    ['5.4.21', true],
-    ['6.4.5', true],
-    ['4.5.14', false],
-  ])('Vite %s installed: supported is %s [round 1, R-PJ-03]', async (version, supported) => {
-    const pkg = {
-      devDependencies: { vite: `^${version}`, tailwindcss: '^4.0.0' },
-      dependencies: { react: '^18.3.1' },
-    };
-    await writeFile(join(dir, 'package.json'), JSON.stringify(pkg));
-    await mkdir(join(dir, 'node_modules/vite'), { recursive: true });
-    await writeFile(join(dir, 'node_modules/vite/package.json'), JSON.stringify({ version }));
-    await writeFile(join(dir, 'vite.config.js'), 'export default {}');
-    await mkdir(join(dir, 'src'), { recursive: true });
-    await writeFile(join(dir, 'src/index.css'), '@import "tailwindcss";');
+  it.each(['4.5.14', '5.4.21', '6.4.5'])(
+    'Vite %s installed: opened, no version is refused [03b section 0]',
+    async (version) => {
+      const pkg = {
+        devDependencies: { vite: `^${version}`, tailwindcss: '^4.0.0' },
+        dependencies: { react: '^18.3.1' },
+      };
+      await writeFile(join(dir, 'package.json'), JSON.stringify(pkg));
+      await mkdir(join(dir, 'node_modules/vite'), { recursive: true });
+      await writeFile(join(dir, 'node_modules/vite/package.json'), JSON.stringify({ version }));
+      await writeFile(join(dir, 'vite.config.js'), 'export default {}');
+      await mkdir(join(dir, 'src'), { recursive: true });
+      await writeFile(join(dir, 'src/index.css'), '@import "tailwindcss";');
 
-    const result = await detectStack({ root: dir, fs: nodeFs, packageJson: pkg }, STACKS);
+      const result = await detectStack({ root: dir, fs: nodeFs, packageJson: pkg }, STACKS);
 
-    expect(result.report.reasons.includes('viteVersion')).toBe(!supported);
-  });
+      expect(result.report.supported).toBe(true);
+    },
+  );
 
   it('detects package manager in order [R-PJ-05]', async () => {
     // 1. packageManager field

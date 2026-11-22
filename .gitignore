@@ -8,6 +8,8 @@ dist/
 # Test and benchmark output
 coverage/
 test-results/
+.e2e-tmp/
+.next/
 playwright-report/
 bench-results/
 

@@ -2,3 +2,4 @@
 export * from './blocks.ts';
 export { contrastRatio, type DarkColorSuggestion, suggestDarkColors } from './palette.ts';
 export { type LibraryBlockLabelsResolver, normalizeText, searchBlocks } from './search.ts';
+export * from './tree/index.ts';

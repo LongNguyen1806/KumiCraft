@@ -3,6 +3,8 @@
 // tsconfig.json), under whatever local name the import gives it.
 import { createHash } from 'node:crypto';
 
+import { inSourceDir } from '@kumicraft/shared';
+
 import type { UsageCounter } from '../../../kernel/features.ts';
 import { asAstNode, type AstNode, parseJsxAst } from '../../../lib/ast-helpers.ts';
 import type { FileSystemPort } from '../../../ports/file-system-port.ts';
@@ -172,7 +174,7 @@ export async function listSourceFiles(
     const entries = await fs.readDir(root, dir);
     if (!entries.ok) continue;
     for (const entry of entries.value) {
-      const path = `${dir}/${entry.name}`;
+      const path = inSourceDir(dir, entry.name);
       if (
         entry.kind === 'directory' &&
         entry.name !== 'node_modules' &&

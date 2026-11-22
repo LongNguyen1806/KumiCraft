@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import type { KitComponentId, Result, StructureEdit } from '@kumicraft/shared';
-import { ok } from '@kumicraft/shared';
+import { inSourceDir, ok } from '@kumicraft/shared';
 
 import type { WrittenFile } from '../../../../kernel/editing.ts';
 import { commitFileChanges } from '../../../../kernel/file-writer.ts';
@@ -58,8 +58,7 @@ export async function prepareKitPlan(
   components: readonly KitComponentId[],
 ): Promise<KitPlan> {
   const typescript = targetRel.endsWith('.tsx') || (await fs.exists(projectRoot, 'tsconfig.json'));
-  const normalizedSrc = sourceDir.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
-  const kitDir = normalizedSrc.length > 0 ? `${normalizedSrc}/kumicraft` : 'kumicraft';
+  const kitDir = inSourceDir(sourceDir, 'kumicraft');
   const plans = groupKitComponentsByFile(components);
   const imports: string[] = [];
   const filesToCreate: PendingKitFile[] = [];

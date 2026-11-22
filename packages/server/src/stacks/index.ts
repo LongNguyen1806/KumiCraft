@@ -2,7 +2,9 @@
 // language. The first row is the default for a folder that is not a project yet. Only the
 // composition root (index.ts, server-services.ts) imports this file.
 import type { ProjectStack, StackTable } from '../kernel/stacks.ts';
+import { nextPages } from './meta/next/index.ts';
 import { expressRuntime } from './runtime/express/index.ts';
+import { nextRuntime } from './runtime/next/index.ts';
 import { viteRuntime } from './runtime/vite/index.ts';
 import { jsxView } from './view/jsx/view.ts';
 import { pugView } from './view/pug/view.ts';
@@ -18,4 +20,12 @@ export const expressPugStack: ProjectStack = {
   view: pugView,
 };
 
-export const STACKS: StackTable = [viteReactStack, expressPugStack];
+/** Next.js (03b section 1): its own runtime, the JSX editor, and pages read from its folders. */
+export const nextReactStack: ProjectStack = {
+  id: 'next-react',
+  runtime: nextRuntime,
+  view: jsxView,
+  pages: nextPages,
+};
+
+export const STACKS: StackTable = [viteReactStack, expressPugStack, nextReactStack];

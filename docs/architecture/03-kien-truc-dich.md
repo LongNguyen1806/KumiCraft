@@ -41,7 +41,6 @@ interface RuntimeAdapter {
   readonly id: RuntimeId; // 'vite' | 'express' | 'next' | 'webpack' | 'aspnet' …
   detect(input: DetectInput): RuntimeMatch | undefined; // phiên bản, lý do không hỗ trợ
   readonly stampHost: StampHost; // kiểu cắm bộ đánh dấu, xem dưới
-  readonly supportedVersions: VersionRange; // ngoài khoảng này: báo rõ, không đoán
   runner(ctx: RunnerContext): RunnerSpec; // tiến trình con, lệnh, cổng, cách gắn Bridge
   /** Chỉ với stampHost 'shadowCopy': đồng bộ bản sao khi file gốc đổi. */
   shadow?: ShadowSync;
@@ -62,7 +61,7 @@ interface RuntimeAdapter {
 Quy tắc chung của trục A:
 
 - **Không bao giờ sửa file cấu hình của người dùng** (`vite.config`, `next.config`…). Bộ đánh dấu được thêm vào cấu hình lúc chạy, trong tiến trình KumiCraft điều khiển.
-- Khi cách cắm dựa vào **phần nội bộ** của công cụ (Next.js: bọc module cấu hình), runtime phải khai báo `supportedVersions`; có test riêng cho mỗi bản lớn được hỗ trợ; ngoài khoảng đó thì báo "phiên bản chưa hỗ trợ", không chạy thử may rủi.
+- **Không chặn theo số phiên bản** (chủ dự án, 2026-11-22; [03b](03b-next-va-khoi-chung.md) mục 0). Khi cách cắm dựa vào **phần nội bộ** của công cụ (Next.js: bọc module cấu hình) mà bản sau đổi, runtime báo đúng lỗi thật (không bọc được, file nào), ghi log; dự án mẫu của vài bản phổ biến chạy trong E2E.
 - Với `shadowCopy`, `ShadowSync` chịu trách nhiệm: tạo bản sao (bỏ `bin`, `obj`, `node_modules`), đánh dấu lại đúng file vừa đổi, để công cụ watch của dự án (vd. `dotnet watch`) nạp lại. File gốc là nguồn sự thật; bản sao không bao giờ được sửa trực tiếp.
 
 ### 3.2. Trục B: ngôn ngữ giao diện (`ViewLanguage`)
@@ -342,7 +341,7 @@ Mỗi quyết định ghi các phương án đã xét và lý do chọn, để s
 
 **Thêm Vue (chỉ xem, rồi chỉnh được).** Viết `stacks/view/vue` với `stamper('buildPlugin')` (cách đã thử: cắm `nodeTransforms` vào plugin Vue có sẵn). Thêm dòng `vite + vue` vào bảng tổ hợp → mở được ở chế độ chỉ xem. Sau đó viết `editor` cho Vue (đọc template bằng `@vue/compiler-sfc`) và cho qua bộ test chung → chỉnh được; Tailwind / CSS chạy ngay. Không sửa lõi, Studio, Bridge client, runtime Vite.
 
-**Thêm Next.js.** Viết `stacks/runtime/next` (chạy Next trong tiến trình KumiCraft, thêm loader Turbopack vào cấu hình lúc nạp; khai báo `supportedVersions`) và `stacks/meta/next` (chọn `next` + `jsx` + `PagesProvider` theo `app/`, `pages/`). Bộ sửa JSX, style, Undo, Studio dùng nguyên.
+**Thêm Next.js.** Viết `stacks/runtime/next` (chạy Next trong tiến trình KumiCraft, thêm loader Turbopack và webpack vào cấu hình lúc nạp) và `stacks/meta/next` (chọn `next` + `jsx` + `PagesProvider` theo `app/`, `pages/`). Bộ sửa JSX, style, Undo, Studio dùng nguyên.
 
 **Thêm ASP.NET Razor (chỉ xem).** Viết `stacks/runtime/aspnet` với `stampHost: 'shadowCopy'` và `ShadowSync` (chạy `dotnet watch` trên bản sao), và `stacks/view/razor` với bộ đánh dấu dùng trình biên dịch Razor trong SDK của người dùng. Tailwind / CSS đọc được ngay; chỉnh sửa Razor là bước sau.
 
@@ -355,7 +354,7 @@ Nếu một ví dụ buộc phải sửa lõi hay Studio, thiết kế còn thi�
 | Chuyển một khối 110.000 dòng làm hỏng tính năng đang chạy  | Chuyển từng bước nhỏ, mỗi bước app vẫn chạy; không viết lại cùng lúc; giữ toàn bộ 392 file test làm lưới an toàn |
 | Đổi đường sửa làm sai Undo hoặc ghi hỏng file              | Làm `FileWriter` + `History` trước, có contract test riêng, rồi mới chuyển từng thao tác sang                    |
 | Interface đầu tiên thiết kế lệch vì chỉ có một ví dụ (JSX) | ADR-A7: cho phép đổi tới khi có ngôn ngữ chỉnh được thứ hai                                                      |
-| Next.js đổi phần nội bộ ở bản sau                          | `supportedVersions`, test theo bản lớn, báo rõ khi không hỗ trợ                                                  |
+| Next.js đổi phần nội bộ ở bản sau                          | Báo đúng lỗi thật khi không bọc được cấu hình; E2E trên dự án mẫu Next 15 và 16                                  |
 | Bản sao (Razor) chậm khi sửa                               | Đo trước khi hứa; ngân sách riêng (mục 8)                                                                        |
 | Khối thư viện xấu đi khi chuyển sang cây trung lập         | Test so ảnh từng khối trước và sau                                                                               |
 | Phạm vi phình ra, làm mãi không xong                       | Bước 4 chia đợt nhỏ, mỗi đợt có điều kiện xong đo được                                                           |

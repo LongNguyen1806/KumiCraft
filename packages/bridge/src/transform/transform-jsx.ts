@@ -2,6 +2,7 @@
 import { isAbsolute, normalize, relative } from 'node:path';
 
 import { parse } from '@babel/parser';
+import { isInSourceDir } from '@kumicraft/shared';
 import MagicString from 'magic-string';
 
 import { guardSelfRender } from './self-render-guard.ts';
@@ -38,8 +39,7 @@ export function shouldTransform(id: string, options: TransformJsxOptions): boole
   const rel = normalizeSeparators(relative(normalizedRoot, normalizedId));
   if (rel.startsWith('..') || isAbsolute(rel)) return false;
 
-  const normalizedSrc = normalizeSeparators(options.sourceDir).replace(/^\/+|\/+$/g, '');
-  return rel === normalizedSrc || rel.startsWith(`${normalizedSrc}/`);
+  return isInSourceDir(rel, options.sourceDir);
 }
 
 function parseAst(code: string) {

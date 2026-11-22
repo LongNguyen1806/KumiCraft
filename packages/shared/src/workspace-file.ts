@@ -2,7 +2,7 @@
 // project besides its source code. The source code itself is never copied here (C-02).
 import { z } from 'zod';
 
-import { RelPathSchema } from './rel-path.ts';
+import { RelPathSchema, SourceDirSchema } from './rel-path.ts';
 import { type ResponsiveMode, ResponsiveModeSchema } from './responsive.ts';
 import { type AppError, err, ok, type Result } from './result.ts';
 
@@ -30,7 +30,7 @@ export type BackendLink = z.infer<typeof BackendLinkSchema>;
 /** A port the user picks for the project's dev server in the Canvas (SPEC-04 R-RN-04). */
 export const DevPortSchema = z.int().min(1024).max(65535);
 
-export const FRAMEWORK_IDS = ['vite-react', 'express-pug'] as const;
+export const FRAMEWORK_IDS = ['vite-react', 'express-pug', 'next-react'] as const;
 export type FrameworkId = (typeof FRAMEWORK_IDS)[number];
 
 type FrameRules = {
@@ -215,7 +215,7 @@ export const WorkspaceFileSchema = z
     name: z.string().min(1).max(64),
     createdAt: z.iso.datetime(),
     framework: z.enum(FRAMEWORK_IDS),
-    sourceDir: RelPathSchema,
+    sourceDir: SourceDirSchema,
     backends: z.array(BackendLinkSchema).max(10),
     responsiveMode: ResponsiveModeSchema,
     frames: z.array(FrameSchema).min(1).max(8),

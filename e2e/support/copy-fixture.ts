@@ -31,8 +31,9 @@ export type TempDir = {
  * retries while Windows still holds a file: a stopped session's runner closes Vite on its own
  * after the CLI is gone, which can take a moment.
  */
-export async function makeTempDir(label: string): Promise<TempDir> {
-  const path = await mkdtemp(join(tmpdir(), `kumicraft-${label}-`));
+export async function makeTempDir(label: string, parent: string = tmpdir()): Promise<TempDir> {
+  await mkdir(parent, { recursive: true });
+  const path = await mkdtemp(join(parent, `kumicraft-${label}-`));
   return {
     path,
     remove: () => rm(path, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }),
@@ -56,9 +57,17 @@ async function linkPackages(sourceModules: string, target: string): Promise<void
 /**
  * Copies `fixtures/<name>` (for example `projects/vite8-react19-ts`) into a new temporary
  * folder and returns that copy (R-QA-01).
+ *
+ * `insideRepo`: the copy goes under `<repo>/.e2e-tmp/`. Next.js needs its packages inside the
+ * project's workspace root (found from the nearest lockfile) and on the same drive: in the system
+ * temp folder its links point outside both, as in no real project (03b section 1.6).
  */
-export async function copyFixture(name: string): Promise<TempDir> {
-  const target = await makeTempDir(name.replaceAll(/[\\/]/g, '-'));
+export async function copyFixture(
+  name: string,
+  options: { readonly insideRepo?: boolean } = {},
+): Promise<TempDir> {
+  const parent = options.insideRepo === true ? join(REPO_ROOT, '.e2e-tmp') : tmpdir();
+  const target = await makeTempDir(name.replaceAll(/[\\/]/g, '-'), parent);
   await cp(join(FIXTURES_DIR, name), target.path, {
     recursive: true,
     filter: (source) => !source.includes('node_modules'),

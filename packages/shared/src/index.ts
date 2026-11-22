@@ -312,7 +312,15 @@ export {
   UnsupportedReasonSchema,
 } from './project.ts';
 export * from './recent-project.ts';
-export { type RelPath, relPathProblem, RelPathSchema } from './rel-path.ts';
+export {
+  inSourceDir,
+  isInSourceDir,
+  type RelPath,
+  relPathProblem,
+  RelPathSchema,
+  ROOT_SOURCE_DIR,
+  SourceDirSchema,
+} from './rel-path.ts';
 export {
   bandOf,
   type Breakpoint,

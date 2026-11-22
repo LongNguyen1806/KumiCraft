@@ -1,6 +1,6 @@
 // Styling detection for Vite + React projects (Phase 3 Round S1, R-PJ-02).
 import type { RelPath, StylingReport, StylingSystem, StylingSystemId } from '@kumicraft/shared';
-import { STYLING_SYSTEMS } from '@kumicraft/shared';
+import { inSourceDir, STYLING_SYSTEMS } from '@kumicraft/shared';
 
 import { parseMajorVersion, resolvePackageVersion } from '../../lib/package-version.ts';
 import type { FileSystemPort } from '../../ports/file-system-port.ts';
@@ -97,7 +97,7 @@ async function findEntryFile(
   sourceDir: string,
 ): Promise<string | undefined> {
   for (const candidate of ENTRY_CANDIDATES) {
-    const fullPath = `${sourceDir}/${candidate}`;
+    const fullPath = inSourceDir(sourceDir, candidate);
     if (await fs.exists(root, fullPath)) {
       return fullPath;
     }

@@ -151,12 +151,12 @@ describe('opening a project', () => {
     expect(runnerStarts).toBe(0);
   });
 
-  it('refuses an unsupported Vite version even when workspace.json exists [R-PJ-07]', async () => {
+  it('refuses a project that is not supported even when workspace.json exists [R-PJ-07]', async () => {
     await writeSupportedProject(dir);
     const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8')) as {
-      devDependencies: Record<string, string>;
+      dependencies: Record<string, string>;
     };
-    pkg.devDependencies['vite'] = '^4.5.0';
+    delete pkg.dependencies['react'];
     await writeFile(join(dir, 'package.json'), JSON.stringify(pkg));
     await writeWorkspace();
 
@@ -164,7 +164,7 @@ describe('opening a project', () => {
 
     expect(opened).toMatchObject({
       ok: false,
-      error: { code: 'E001', params: { reasons: ['viteVersion'] } },
+      error: { code: 'E001', params: { reasons: ['noReact'] } },
     });
   });
 

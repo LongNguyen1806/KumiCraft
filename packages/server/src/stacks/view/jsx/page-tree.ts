@@ -2,6 +2,7 @@
 // same `file:line:column` the Bridge puts on the element, so it works with the other source tools.
 import {
   err,
+  isInSourceDir,
   ok,
   PAGE_TREE_MAX_DEPTH,
   PAGE_TREE_MAX_NODES,
@@ -133,8 +134,7 @@ function checkFile(file: string, options: PageTreeOptions): Result<string> {
   if (!options.sourceExtensions.some((ext) => file.endsWith(ext))) {
     return err({ code: 'E023', params: { file, reason: 'notJsxFile' } });
   }
-  const sourceDir = options.sourceDir.replaceAll('\\', '/').replace(/\/+$/, '');
-  if (!file.startsWith(`${sourceDir}/`) || file.includes('node_modules/')) {
+  if (!isInSourceDir(file, options.sourceDir)) {
     return err({ code: 'E023', params: { file, reason: 'outsideSource' } });
   }
   return ok(file);

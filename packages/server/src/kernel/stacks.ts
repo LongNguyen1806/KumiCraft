@@ -7,12 +7,20 @@ import type {
   FrameworkId,
   PagesInfo,
   RelPath,
+  Result,
   RunnerOptions,
+  StructureResult,
   SupportReport,
 } from '@kumicraft/shared';
 
 import type { FileSystemPort } from '../ports/file-system-port.ts';
-import type { ViewFeatures } from './features.ts';
+import type {
+  AddPageInput,
+  DeletePageInput,
+  PageEditDeps,
+  RenamePageInput,
+  ViewFeatures,
+} from './features.ts';
 
 export type DetectInput = {
   readonly root: string;
@@ -53,14 +61,9 @@ export type StampHost = 'buildPlugin' | 'templateHook';
 
 /** Axis A: runs the project's page on the Canvas with the Bridge in it. */
 export interface RuntimeAdapter {
-  readonly id: 'vite' | 'express';
+  readonly id: 'vite' | 'express' | 'next';
   /** Package that names this runtime in a project, to pick the right "unsupported" reason. */
   readonly primaryDependency: string;
-  /**
-   * Major versions of `primaryDependency` this runtime is tested with (03 section 3.1). A project
-   * on another major is refused with a clear reason instead of failing later. Absent: any.
-   */
-  readonly supportedMajors?: readonly number[] | undefined;
   readonly stampHost: StampHost;
   /** Read-only look at the project's files; says whether this runtime (and its view) fits. */
   detect(input: DetectInput): Promise<SupportReport>;
@@ -101,12 +104,25 @@ export interface ViewLanguage {
   readonly features?: ViewFeatures | undefined;
 }
 
+/**
+ * How a meta-framework finds and changes pages (ADR-A1, 03b section 1.4): Next.js pages are files
+ * in folders, not a route list in code.
+ */
+export interface PagesProvider {
+  read(ctx: PagesContext): Promise<PagesInfo>;
+  add(deps: PageEditDeps, input: AddPageInput): Promise<Result<StructureResult>>;
+  rename(deps: PageEditDeps, input: RenamePageInput): Promise<Result<StructureResult>>;
+  remove(deps: PageEditDeps, input: DeletePageInput): Promise<Result<StructureResult>>;
+}
+
 /** One row of the combination table: a runtime and the view language it runs. */
 export type ProjectStack = {
   /** The id saved in workspace.json and shown by the API (kept from 1.0). */
   readonly id: FrameworkId;
   readonly runtime: RuntimeAdapter;
   readonly view: ViewLanguage;
+  /** Pages of a meta-framework (Next.js); absent: the runtime's or the view language's. */
+  readonly pages?: PagesProvider | undefined;
 };
 
 export function canEdit(stack: ProjectStack): boolean {

@@ -3,6 +3,8 @@ packages:
   - fixtures/projects/vite5-react18-js
   - fixtures/projects/vite6-react18-js
   - fixtures/projects/vite7-react18-js
+  - fixtures/projects/next15-react19-js
+  - fixtures/projects/next16-react19-js
 
 # Pin exact versions when adding dependencies (SPEC-01.1 section 13.3).
 saveExact: true

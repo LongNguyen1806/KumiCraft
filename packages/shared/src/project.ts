@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { FeatureIdSchema } from './features.ts';
 import { ALLOWED_GOOGLE_FONTS } from './fonts.ts';
-import { RelPathSchema } from './rel-path.ts';
+import { RelPathSchema, SourceDirSchema } from './rel-path.ts';
 import { ResponsiveModeSchema } from './responsive.ts';
 import { AppErrorSchema } from './result.ts';
 import { StyleSystemIdSchema } from './style.ts';
@@ -40,6 +40,8 @@ export const UNSUPPORTED_REASONS = [
   'craUnsupported',
   'nextUnsupported',
   'webpackUnsupported',
+  'noNext',
+  'noNextPages',
 ] as const;
 export const UnsupportedReasonSchema = z.enum(UNSUPPORTED_REASONS);
 export type UnsupportedReason = z.infer<typeof UnsupportedReasonSchema>;
@@ -98,6 +100,7 @@ export const SupportReportSchema = z.strictObject({
     tailwindcss: z.string().optional(),
     express: z.string().optional(),
     pug: z.string().optional(),
+    next: z.string().optional(),
   }),
   language: z.enum(['ts', 'js']),
   packageManager: PackageManagerSchema.optional(),
@@ -107,6 +110,8 @@ export const SupportReportSchema = z.strictObject({
   editMode: z.enum(EDIT_MODES).optional(),
   serverEntry: RelPathSchema.optional(),
   viewsDir: RelPathSchema.optional(),
+  /** Where the views are when it is not `src`: a Next.js project may keep them at the root. */
+  sourceDir: SourceDirSchema.optional(),
   uiKit: UiKitReportSchema.optional(),
 });
 export type SupportReport = z.infer<typeof SupportReportSchema>;

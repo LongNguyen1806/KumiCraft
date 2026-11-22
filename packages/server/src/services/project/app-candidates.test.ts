@@ -54,10 +54,11 @@ describe('app-candidates & probe apps [WP-4.00]', () => {
     expect(craApp?.supported).toBe(false);
     expect(craApp?.reasons).toContain('craUnsupported');
 
+    // Next.js is opened since round 2 (03b section 1): its app/ folder makes it a project.
     const nextApp = apps.find((a) => a.path === 'next-site');
     expect(nextApp?.kind).toBe('next');
-    expect(nextApp?.supported).toBe(false);
-    expect(nextApp?.reasons).toContain('nextUnsupported');
+    expect(nextApp?.framework).toBe('next-react');
+    expect(nextApp?.supported).toBe(true);
   });
 
   it('Test M2 [WP-4.00]: Temp directory without package.json finds web app, but returns other for directory with only miscellaneous files', async () => {

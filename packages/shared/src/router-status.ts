@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 import { RelPathSchema } from './rel-path.ts';
 
-export const RouterKindSchema = z.enum(['dataRouter', 'jsxRoutes', 'express']);
+/** `fileSystem`: pages are files in folders (Next.js `app/`, `pages/`), no route list to edit. */
+export const RouterKindSchema = z.enum(['dataRouter', 'jsxRoutes', 'express', 'fileSystem']);
 export type RouterKind = z.infer<typeof RouterKindSchema>;
 
 export const RouterStatusSchema = z.discriminatedUnion('status', [
