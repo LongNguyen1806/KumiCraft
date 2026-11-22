@@ -10,8 +10,8 @@ import {
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
-import type { ChatImageStore } from '../../../core/agent/chat-images.ts';
-import type { TurnRunner } from '../../../core/agent/turn-runner.ts';
+import type { ChatImageStore } from '../../../services/agent/chat-images.ts';
+import type { TurnRunner } from '../../../services/agent/turn-runner.ts';
 import { sendError } from '../send-error.ts';
 
 export type AgentTurnRoutesDeps = {

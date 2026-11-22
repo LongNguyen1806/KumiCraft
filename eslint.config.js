@@ -159,11 +159,11 @@ export default defineConfig(
 
   // SPEC-01 section 3.2 rule 1 and QC-63: the server core talks to the outside through ports.
   {
-    files: ['packages/server/src/core/**/*.ts'],
+    files: ['packages/server/src/{kernel,lib,ports,services,stacks}/**/*.ts'],
     // Integration tests of core services use the real adapters and fixtures.
     ignores: [
-      'packages/server/src/core/**/*.test.ts',
-      'packages/server/src/core/**/test-support.ts',
+      'packages/server/src/{kernel,lib,ports,services,stacks}/**/*.test.ts',
+      'packages/server/src/{kernel,lib,ports,services,stacks}/**/test-support.ts',
     ],
     rules: {
       'no-restricted-imports': [
@@ -172,22 +172,34 @@ export default defineConfig(
           paths: [
             {
               name: 'fastify',
-              message: 'core/ must not depend on Fastify (SPEC-01 section 3.2).',
+              message:
+                'kernel, services and stacks must not depend on Fastify (SPEC-01 section 3.2).',
             },
             {
               name: 'chokidar',
-              message: 'core/ must use FileWatcherPort (SPEC-01 section 3.2).',
+              message:
+                'kernel, services and stacks must use FileWatcherPort (SPEC-01 section 3.2).',
             },
-            { name: 'node:fs', message: 'core/ must use FileSystemPort (QC-63).' },
-            { name: 'node:fs/promises', message: 'core/ must use FileSystemPort (QC-63).' },
-            { name: 'fs', message: 'core/ must use FileSystemPort (QC-63).' },
-            { name: 'fs/promises', message: 'core/ must use FileSystemPort (QC-63).' },
+            {
+              name: 'node:fs',
+              message: 'kernel, services and stacks must use FileSystemPort (QC-63).',
+            },
+            {
+              name: 'node:fs/promises',
+              message: 'kernel, services and stacks must use FileSystemPort (QC-63).',
+            },
+            { name: 'fs', message: 'kernel, services and stacks must use FileSystemPort (QC-63).' },
+            {
+              name: 'fs/promises',
+              message: 'kernel, services and stacks must use FileSystemPort (QC-63).',
+            },
           ],
           patterns: [
             NO_DEEP_PACKAGE_IMPORT,
             {
               group: ['**/adapters', '**/adapters/**', '@fastify/*'],
-              message: 'core/ must not import adapters (SPEC-01 section 3.2).',
+              message:
+                'kernel, services and stacks must not import adapters (SPEC-01 section 3.2).',
             },
           ],
         },

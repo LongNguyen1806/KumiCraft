@@ -3,8 +3,8 @@ import type { RecentProject } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
-import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
-import type { ConfigStore } from '../../../core/shared/user-config.ts';
+import type { FileSystemPort } from '../../../ports/file-system-port.ts';
+import type { ConfigStore } from '../../../services/config/user-config.ts';
 import { sendError } from '../send-error.ts';
 
 const ForgetRecentSchema = z.strictObject({ path: z.string().min(1).max(4096) });

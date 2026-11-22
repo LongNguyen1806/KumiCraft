@@ -18,15 +18,15 @@ import { setTimeout as sleep } from 'node:timers/promises';
 
 import writeFileAtomic from 'write-file-atomic';
 
+import { checkPathSyntax, isInside } from '../../kernel/paths.ts';
+import { type AppError, err, ok, type Result } from '../../kernel/result.ts';
+import type { Platform } from '../../kernel/session.ts';
 import type {
   DirectoryEntry,
   FileStat,
   FileSystemPort,
   ReadOptions,
-} from '../../core/ports/file-system-port.ts';
-import { checkPathSyntax, isInside } from '../../core/shared/paths.ts';
-import { type AppError, err, ok, type Result } from '../../core/shared/result.ts';
-import type { Platform } from '../../core/shared/session.ts';
+} from '../../ports/file-system-port.ts';
 
 const DEFAULT_MAX_BYTES = 20 * 1024 * 1024; // S-29
 const RETRY_CODES = new Set(['EPERM', 'EBUSY', 'EACCES']);

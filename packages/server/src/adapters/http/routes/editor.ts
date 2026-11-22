@@ -3,7 +3,7 @@ import { issuesToDetails } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
-import { openInEditor, type OpenInEditorDeps } from '../../../core/project/open-in-editor.ts';
+import { openInEditor, type OpenInEditorDeps } from '../../../services/project/open-in-editor.ts';
 import { sendError } from '../send-error.ts';
 
 export type EditorRoutesDeps = OpenInEditorDeps & {

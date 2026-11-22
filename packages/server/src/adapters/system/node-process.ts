@@ -13,7 +13,7 @@ import type {
   ProcessOutput,
   ProcessPort,
   SpawnOptions,
-} from '../../core/ports/process-port.ts';
+} from '../../ports/process-port.ts';
 
 /** S-53: Strip KUMICRAFT_* env vars. Agent auth tokens (e.g. GH_TOKEN) are preserved. */
 export function sanitizeEnvironment(

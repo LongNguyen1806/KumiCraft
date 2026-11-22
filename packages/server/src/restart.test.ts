@@ -7,8 +7,12 @@ import { join } from 'node:path';
 import { newWorkspaceFile, serializeWorkspaceFile, WORKSPACE_FILE } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { makeTempDir, silentLogger, writeSupportedProject } from './core/workspace/test-support.ts';
 import { type RunningServer, startServer } from './index.ts';
+import {
+  makeTempDir,
+  silentLogger,
+  writeSupportedProject,
+} from './services/workspace/test-support.ts';
 
 let workspace: { dir: string; cleanup: () => Promise<void> };
 let config: { dir: string; cleanup: () => Promise<void> };

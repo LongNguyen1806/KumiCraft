@@ -13,7 +13,7 @@ import Fastify, {
   LogController,
 } from 'fastify';
 
-import type { SessionInfo } from '../../core/shared/session.ts';
+import type { SessionInfo } from '../../kernel/session.ts';
 import { type AgentTurnRoutesDeps, registerAgentTurnRoutes } from './routes/agent-turns.ts';
 import { type AgentRoutesDeps, registerAgentRoutes } from './routes/agents.ts';
 import { type BuildCheckRoutesDeps, registerBuildCheckRoutes } from './routes/build-check.ts';

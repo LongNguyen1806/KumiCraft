@@ -5,7 +5,7 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { makeTempDir, silentLogger } from '../../core/workspace/test-support.ts';
+import { makeTempDir, silentLogger } from '../../services/workspace/test-support.ts';
 import { moveLegacyUserDirs } from './legacy-user-dirs.ts';
 
 describe('moveLegacyUserDirs [R-PJ-26]', () => {

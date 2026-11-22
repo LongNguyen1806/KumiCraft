@@ -2,7 +2,7 @@
 // (S-88). Secrets and tokens are redacted wherever they appear in an entry's fields (S-89).
 import pino, { type Logger } from 'pino';
 
-import type { LoggerPort } from '../../core/ports/logger-port.ts';
+import type { LoggerPort } from '../../ports/logger-port.ts';
 import type { LogLevel } from '../http/create-http-app.ts';
 import { createRotatingFile, type RotatingFile } from './rotating-file.ts';
 

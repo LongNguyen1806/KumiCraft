@@ -1,7 +1,7 @@
 // History HTTP endpoints (SPEC-03 section 5.6, SPEC-04 section 7).
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
-import type { HistoryService } from '../../../core/history/history-service.ts';
+import type { HistoryService } from '../../../kernel/history/history-service.ts';
 import { sendError } from '../send-error.ts';
 
 export type HistoryRoutesDeps = {

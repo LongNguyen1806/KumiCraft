@@ -6,13 +6,14 @@ import type { ProjectInfo } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { makeTestProjectInfo } from '../../../core/agent/test-support.ts';
-import { createToolGapStore } from '../../../core/agent/tool-gaps.ts';
-import { createHistoryService } from '../../../core/history/history-service.ts';
-import { err, ok, type Result } from '../../../core/shared/result.ts';
-import { createSessionInfoProvider } from '../../../core/shared/session.ts';
-import { createSourceEditorService } from '../../../core/source-editor/source-editor-service.ts';
-import { makeTempDir, nodeFs, silentLogger } from '../../../core/workspace/test-support.ts';
+import { createHistoryService } from '../../../kernel/history/history-service.ts';
+import { err, ok, type Result } from '../../../kernel/result.ts';
+import { createSessionInfoProvider } from '../../../kernel/session.ts';
+import { makeTestProjectInfo } from '../../../services/agent/test-support.ts';
+import { createToolGapStore } from '../../../services/agent/tool-gaps.ts';
+import { makeTempDir, nodeFs, silentLogger } from '../../../services/workspace/test-support.ts';
+import { jsxFeatures } from '../../../stacks/view/jsx/features.ts';
+import { createSourceEditorService } from '../../../stacks/view/jsx/source-editor-service.ts';
 import { createHttpApp } from '../create-http-app.ts';
 
 const PORT = 50311;
@@ -50,6 +51,7 @@ beforeEach(async () => {
       sourceEditorService: createSourceEditorService({ fs: nodeFs }),
       historyService: createHistoryService({ fs: nodeFs }),
       getProjectRoot: () => projectRoot,
+      getViewFeatures: () => jsxFeatures,
       fs: nodeFs,
     },
   });

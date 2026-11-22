@@ -7,6 +7,8 @@ import type { ProjectInfo, TurnSummary } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { err, ok, type Result } from '../../../kernel/result.ts';
+import { createSessionInfoProvider } from '../../../kernel/session.ts';
 import {
   makeTestProjectInfo,
   SCRIPTS_DIR,
@@ -14,9 +16,7 @@ import {
   type TestTurnEnv,
   waitForJobEnd,
   writeTestProjectFiles,
-} from '../../../core/agent/test-support.ts';
-import { err, ok, type Result } from '../../../core/shared/result.ts';
-import { createSessionInfoProvider } from '../../../core/shared/session.ts';
+} from '../../../services/agent/test-support.ts';
 import { createHttpApp } from '../create-http-app.ts';
 
 const PORT = 50298;

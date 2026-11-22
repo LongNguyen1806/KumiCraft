@@ -1,0 +1,362 @@
+// Extracting a JSX element into a new component (SPEC-04 section 18A, R-CP-14, spec-log #24).
+import {
+  err,
+  type ExtractComponent,
+  ok,
+  pageNames,
+  parseLocString,
+  type Result,
+  type StructureResult,
+} from '@kumicraft/shared';
+
+import { commitFileChanges } from '../../../../kernel/file-writer.ts';
+import { writeOwnFile } from '../../../../kernel/own-files.ts';
+import {
+  asAstNode,
+  type AstNode,
+  detectFormat,
+  getJsxTagName,
+  parseJsxAst,
+} from '../../../../lib/ast-helpers.ts';
+import { readAliasPrefix } from '../component-usages.ts';
+import { findNodeAt } from '../source-editor-lookup.ts';
+import { collectMatchingImportStatements } from '../structure/element-text.ts';
+import { findImportInsertPosition, getTopLevelIdentifiers } from '../structure/imports.ts';
+import { isElementLoopRoot } from '../structure/structure-guard.ts';
+import { indentOf } from '../structure/structure-ops.ts';
+import { applyTextEdits } from '../structure/text-edits.ts';
+import { planProps, type PropsPlan } from './component-props.ts';
+import { checkScopeUsage, remapImportStatement, type ScopeUsage } from './component-scope.ts';
+import { buildImportSource } from './components-list.ts';
+import { type PageEditDeps, validateDirectory, withFileLocks } from './page-common.ts';
+
+type ValidatedInput = {
+  readonly name: string;
+  readonly newFileRel: string;
+  readonly sourceRel: string;
+  readonly line: number;
+  readonly column: number;
+};
+
+async function validateExtractInput(
+  deps: PageEditDeps,
+  input: ExtractComponent,
+): Promise<Result<ValidatedInput>> {
+  const names = pageNames(input.name, deps.language);
+  const name = names.component;
+  const targetDir = input.dir ?? deps.designDirs.components[0] ?? 'src/components';
+  const dirCheck = validateDirectory(targetDir, deps.sourceDir, deps.platform);
+  if (!dirCheck.ok) return dirCheck;
+
+  const fileName = input.fileName ?? `${name}.${deps.language === 'ts' ? 'tsx' : 'jsx'}`;
+  if (!/^[A-Za-z0-9_-]+\.(tsx|jsx)$/.test(fileName)) {
+    return err({ code: 'E016', params: { reason: 'invalidFileName' } });
+  }
+  const newFileRel = `${targetDir}/${fileName}`;
+  if (await deps.fs.exists(deps.projectRoot, newFileRel)) {
+    return err({ code: 'E016', params: { reason: 'fileExists' } });
+  }
+
+  const parsedLoc = parseLocString(input.loc);
+  if (!parsedLoc) return err({ code: 'E017', params: { loc: input.loc, reason: 'moved' } });
+
+  return ok({
+    name,
+    newFileRel,
+    sourceRel: parsedLoc.file,
+    line: parsedLoc.line,
+    column: parsedLoc.column,
+  });
+}
+
+function resolveTargetNode(
+  sourceAst: AstNode,
+  line: number,
+  column: number,
+  expectedTag: string,
+  loc: string,
+): Result<AstNode> {
+  const targetNode = findNodeAt(sourceAst, line, column);
+  if (!targetNode || targetNode.start === undefined || targetNode.end === undefined) {
+    return err({ code: 'E017', params: { loc, reason: 'moved' } });
+  }
+
+  const opening = asAstNode(targetNode['openingElement']);
+  const actualTag = opening ? getJsxTagName(opening) : undefined;
+  if (actualTag !== expectedTag) {
+    return err({ code: 'E017', params: { loc, reason: 'moved' } });
+  }
+
+  if (isElementLoopRoot(sourceAst, targetNode)) {
+    return err({ code: 'E023', params: { reason: 'loopRoot', loc } });
+  }
+  return ok(targetNode);
+}
+
+function buildNewFileContent(
+  name: string,
+  rawJsx: string,
+  baseIndent: string,
+  imports: readonly string[],
+  nl: '\r\n' | '\n',
+  props: PropsPlan,
+): string {
+  const lines = rawJsx.split(/\r?\n/);
+  const indented = lines.map((line, idx) => {
+    if (line.trim() === '') return '';
+    if (idx === 0) return `    ${line}`;
+    const stripped = line.startsWith(baseIndent) ? line.slice(baseIndent.length) : line.trimStart();
+    return `    ${stripped}`;
+  });
+
+  const parts: string[] = [];
+  if (imports.length > 0) {
+    parts.push(...imports);
+    parts.push('');
+  }
+  if (props.typeDecl !== undefined) parts.push(...props.typeDecl.split('\n'), '');
+  parts.push(
+    `export function ${name}(${props.signature}) {`,
+    '  return (',
+    ...indented,
+    '  );',
+    '}',
+    '',
+  );
+  return parts.join(nl);
+}
+
+function computeLocFromOffset(code: string, offset: number, file: string): string {
+  let line = 1;
+  let col = 1;
+  for (let i = 0; i < offset; i++) {
+    if (code[i] === '\n') {
+      line++;
+      col = 1;
+    } else {
+      col++;
+    }
+  }
+  return `${file}:${String(line)}:${String(col)}`;
+}
+
+type PlannedEdits = {
+  readonly newSourceCode: string;
+  readonly newFileContent: string;
+  readonly newLoc: string;
+};
+
+/** FR-72: the old component's names the selection uses, as props of the new one. */
+function propsOf(
+  deps: PageEditDeps,
+  sourceAst: AstNode,
+  sourceCode: string,
+  targetNode: AstNode,
+  validated: ValidatedInput,
+  scope: ScopeUsage,
+): Promise<Result<PropsPlan>> {
+  return planProps(
+    {
+      name: validated.name,
+      sourceAst,
+      sourceCode,
+      sourceRel: validated.sourceRel,
+      newFileRel: validated.newFileRel,
+      targetNode,
+      props: scope.props,
+      typescript: /\.tsx?$/.test(validated.newFileRel),
+    },
+    deps.propTypes,
+  );
+}
+
+async function planExtractedEdits(
+  deps: PageEditDeps,
+  sourceAst: AstNode,
+  sourceCode: string,
+  targetNode: AstNode,
+  validated: ValidatedInput,
+  scope: ScopeUsage,
+): Promise<Result<PlannedEdits>> {
+  const { name, newFileRel, sourceRel } = validated;
+  const rawImports = collectMatchingImportStatements(sourceAst, sourceCode, [...scope.needed]);
+  const props = await propsOf(deps, sourceAst, sourceCode, targetNode, validated, scope);
+  if (!props.ok) return props;
+  const imports = new Set([
+    ...rawImports.map((stmt) => remapImportStatement(stmt, sourceRel, newFileRel)),
+    ...props.value.typeImports,
+  ]);
+  const nl = detectFormat(sourceCode).newline;
+  const baseIndent = indentOf(sourceCode, targetNode.start ?? 0);
+  const rawJsx = sourceCode.slice(targetNode.start ?? 0, targetNode.end ?? 0);
+  const newFileContent = buildNewFileContent(
+    name,
+    rawJsx,
+    baseIndent,
+    [...imports],
+    nl,
+    props.value,
+  );
+
+  const alias = await readAliasPrefix(deps.fs, deps.projectRoot);
+  const importStmt = `import { ${name} } from '${buildImportSource(newFileRel, alias, sourceRel)}';`;
+
+  const insertPos = findImportInsertPosition(sourceAst, sourceCode);
+  const applied = applyTextEdits(sourceCode, [
+    { start: insertPos, end: insertPos, text: `${importStmt}${nl}` },
+
+    ...props.value.exportAt.map((at) => ({ start: at, end: at, text: 'export ' })),
+    {
+      start: targetNode.start ?? 0,
+      end: targetNode.end ?? 0,
+      text: `<${name}${props.value.usage} />`,
+      mark: 0,
+    },
+  ]);
+  if (!applied.ok) return applied;
+
+  try {
+    parseJsxAst(applied.value.code);
+  } catch {
+    return err({ code: 'E024', params: { line: 1 } });
+  }
+
+  const mark = applied.value.marks[0] ?? targetNode.start ?? 0;
+  const newLoc = computeLocFromOffset(applied.value.code, mark, sourceRel);
+  return ok({ newSourceCode: applied.value.code, newFileContent, newLoc });
+}
+
+export async function updateConfigComponents(
+  deps: PageEditDeps,
+  newFileRel: string,
+): Promise<void> {
+  const inComponents = deps.designDirs.components.some((d) => newFileRel.startsWith(`${d}/`));
+  const inLayouts = deps.designDirs.layouts.some((d) => newFileRel.startsWith(`${d}/`));
+  if (inComponents || inLayouts) return;
+
+  const configPath = '.kumicraft/components.json';
+  let files: string[] = [];
+  const read = await deps.fs.readText(deps.projectRoot, configPath);
+  if (read.ok) {
+    try {
+      const parsed = JSON.parse(read.value) as { files?: string[] };
+      if (Array.isArray(parsed.files)) files = parsed.files.filter((f) => typeof f === 'string');
+    } catch {
+      files = [];
+    }
+  }
+  if (!files.includes(newFileRel)) {
+    files.push(newFileRel);
+    await writeOwnFile(
+      deps.fs,
+      deps.projectRoot,
+      configPath,
+      `${JSON.stringify({ files }, undefined, 2)}\n`,
+    );
+  }
+}
+
+type PreparedExtraction = {
+  readonly name: string;
+  readonly newFileRel: string;
+  readonly newFileContent: string;
+  readonly sourceRel: string;
+  readonly sourceCode: string;
+  readonly newSourceCode: string;
+  readonly newLoc: string;
+};
+
+async function loadSourceAst(
+  deps: PageEditDeps,
+  sourceRel: string,
+): Promise<Result<{ readonly sourceCode: string; readonly sourceAst: AstNode }>> {
+  const read = await deps.fs.readText(deps.projectRoot, sourceRel, { keepBom: true });
+  if (!read.ok) return read;
+  try {
+    const sourceAst = parseJsxAst(read.value);
+    return ok({ sourceCode: read.value, sourceAst });
+  } catch {
+    return err({ code: 'E024', params: { line: 1 } });
+  }
+}
+
+async function prepareExtract(
+  deps: PageEditDeps,
+  input: ExtractComponent,
+): Promise<Result<PreparedExtraction>> {
+  const valRes = await validateExtractInput(deps, input);
+  if (!valRes.ok) return valRes;
+  const validated = valRes.value;
+
+  const loaded = await loadSourceAst(deps, validated.sourceRel);
+  if (!loaded.ok) return loaded;
+  const { sourceCode, sourceAst } = loaded.value;
+
+  const targetRes = resolveTargetNode(
+    sourceAst,
+    validated.line,
+    validated.column,
+    input.tag,
+    input.loc,
+  );
+  if (!targetRes.ok) return targetRes;
+  const targetNode = targetRes.value;
+
+  if (getTopLevelIdentifiers(sourceAst).has(validated.name)) {
+    return err({ code: 'E016', params: { reason: 'nameExists' } });
+  }
+
+  const scopeRes = checkScopeUsage(targetNode, sourceAst);
+  if (!scopeRes.ok) return scopeRes;
+
+  const planned = await planExtractedEdits(
+    deps,
+    sourceAst,
+    sourceCode,
+    targetNode,
+    validated,
+    scopeRes.value,
+  );
+  if (!planned.ok) return planned;
+
+  return ok({
+    name: validated.name,
+    newFileRel: validated.newFileRel,
+    newFileContent: planned.value.newFileContent,
+    sourceRel: validated.sourceRel,
+    sourceCode,
+    newSourceCode: planned.value.newSourceCode,
+    newLoc: planned.value.newLoc,
+  });
+}
+
+export async function extractComponent(
+  deps: PageEditDeps,
+  input: ExtractComponent,
+): Promise<Result<StructureResult>> {
+  const prep = await prepareExtract(deps, input);
+  if (!prep.ok) return prep;
+  const { name, newFileRel, newFileContent, sourceRel, sourceCode, newSourceCode, newLoc } =
+    prep.value;
+
+  return withFileLocks(deps.projectRoot, [sourceRel, newFileRel], async () => {
+    const committed = await commitFileChanges(
+      deps,
+      deps.projectRoot,
+      [
+        { path: newFileRel, before: undefined, after: newFileContent },
+        { path: sourceRel, before: sourceCode, after: newSourceCode },
+      ],
+      { label: { key: 'history:extract', params: { name } } },
+    );
+    if (!committed.ok) return committed;
+
+    await updateConfigComponents(deps, newFileRel);
+
+    return ok({
+      changed: true,
+      files: [sourceRel, newFileRel],
+      locs: [newLoc],
+    });
+  });
+}

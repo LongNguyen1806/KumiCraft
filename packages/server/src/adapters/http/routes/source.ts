@@ -11,13 +11,12 @@ import {
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
-import type { HistoryService } from '../../../core/history/history-service.ts';
-import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
-import type { SourceEditorService } from '../../../core/source-editor/source-editor-service.ts';
-import { applyInteractionAction } from '../../../core/source-editor/structure/interaction-ops.ts';
-import { applyRevealEdit } from '../../../core/source-editor/structure/reveal-service.ts';
-import { validateInsertedJsx } from '../../../core/source-editor/structure/structure-ops.ts';
+import type { SourceEditorService } from '../../../kernel/editing.ts';
+import type { ViewFeatures } from '../../../kernel/features.ts';
+import type { HistoryService } from '../../../kernel/history/history-service.ts';
+import type { FileSystemPort } from '../../../ports/file-system-port.ts';
 import { sendError } from '../send-error.ts';
+import { VIEW_ONLY } from '../view-features.ts';
 
 export type SourceRoutesDeps = {
   readonly sourceEditorService: SourceEditorService;
@@ -26,8 +25,11 @@ export type SourceRoutesDeps = {
   readonly getStyling?: (() => StylingReport | undefined) | undefined;
   readonly getSourceDir?: (() => string | undefined) | undefined;
   readonly fs: FileSystemPort;
+  /** Tools of the open project's view language (03 section 3.2). */
+  readonly getViewFeatures: () => ViewFeatures | undefined;
 };
 
+const VIEW_ONLY_RESULT = { ok: false, error: VIEW_ONLY } as const;
 const NO_PROJECT = { code: 'E021', params: { missing: 'project' } } as const;
 
 async function handleGetElement(
@@ -48,9 +50,12 @@ async function handleGetElement(
   return reply.status(200).send({ data: result.value });
 }
 
-function buildStructureHistoryLabel(edit: StructureEdit): HistoryLabel {
+function buildStructureHistoryLabel(
+  edit: StructureEdit,
+  features: ViewFeatures | undefined,
+): HistoryLabel {
   if (edit.kind === 'insert') {
-    const jsxRes = validateInsertedJsx(edit.jsx);
+    const jsxRes = features?.validateInsertedMarkup(edit.jsx) ?? VIEW_ONLY_RESULT;
     const fallbackTag =
       edit.target.kind === 'sibling' ? edit.target.ref.tag : edit.target.parent.tag;
     const tag = jsxRes.ok ? jsxRes.value.firstTag : fallbackTag;
@@ -160,7 +165,7 @@ async function handleApplyEdit(
     edit.kind === 'replaceSvg' ||
     edit.kind === 'setDataArray'
   ) {
-    const label = buildStructureHistoryLabel(edit);
+    const label = buildStructureHistoryLabel(edit, deps.getViewFeatures());
     const edited = await deps.sourceEditorService.applyStructureEdit(projectRoot, edit, (files) => {
       for (const f of files) {
         deps.historyService.recordInternalWrite(f.path, f.afterHash);
@@ -215,7 +220,9 @@ async function handlePostInteraction(
   const parsed = InteractionActionSchema.safeParse(req.body);
   if (!parsed.success)
     return sendError(rep, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
-  const result = await applyInteractionAction(
+  const features = deps.getViewFeatures();
+  if (!features) return sendError(rep, VIEW_ONLY);
+  const result = await features.applyInteraction(
     {
       fs: deps.fs,
       styling: deps.getStyling?.(),
@@ -253,7 +260,9 @@ export function registerSourceRoutes(api: FastifyInstance, deps: SourceRoutesDep
     const parsed = RevealRequestSchema.safeParse(req.body);
     if (!parsed.success)
       return sendError(rep, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
-    const result = await applyRevealEdit(
+    const features = deps.getViewFeatures();
+    if (!features) return sendError(rep, VIEW_ONLY);
+    const result = await features.applyReveal(
       {
         fs: deps.fs,
         onWritten: (files) => {

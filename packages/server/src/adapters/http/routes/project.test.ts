@@ -2,10 +2,10 @@ import type { ProjectInfo, ProjectProbe, ThemeInfo, WorkspaceFile } from '@kumic
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { viteReactAdapter } from '../../../core/project/frameworks/vite-react/index.ts';
-import type { ProjectService } from '../../../core/project/project-service.ts';
-import { err, ok } from '../../../core/shared/result.ts';
-import { createSessionInfoProvider } from '../../../core/shared/session.ts';
+import { err, ok } from '../../../kernel/result.ts';
+import { createSessionInfoProvider } from '../../../kernel/session.ts';
+import type { ProjectService } from '../../../services/project/project-service.ts';
+import { viteReactStack } from '../../../stacks/index.ts';
 import { createHttpApp } from '../create-http-app.ts';
 
 const PORT = 50236;
@@ -82,7 +82,7 @@ const defaultPages = {
 };
 
 const mockProjectService: ProjectService = {
-  getAdapter: () => viteReactAdapter,
+  getStack: () => viteReactStack,
   state: () =>
     isOpen
       ? {

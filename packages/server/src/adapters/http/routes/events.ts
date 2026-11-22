@@ -2,7 +2,7 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { WebSocket } from 'ws';
 
-import type { EventBusPort } from '../../../core/ports/event-bus-port.ts';
+import type { EventBusPort } from '../../../ports/event-bus-port.ts';
 import { isTokenValid } from '../security.ts';
 
 const TOKEN_PROTOCOL_PREFIX = 'kumicraft.token.';

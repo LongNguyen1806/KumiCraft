@@ -123,6 +123,8 @@ Chốt kiến trúc runtime, cách tổ chức mã nguồn và **toàn bộ côn
 
 ## 3. KIẾN TRÚC RUNTIME
 
+> **Đã thay (2026-11-22, Đợt 0):** kiến trúc lấy theo `docs/architecture/` (03-kien-truc-dich.md mục 6); phần dưới đây chỉ còn để tra cứu lịch sử.
+
 ### 3.1. Sơ đồ tiến trình
 
 ```text
@@ -503,6 +505,8 @@ Phần giải thích đầy đủ của các ADR này có trong bản 0.18; dư�
 **Hệ quả:** thêm `postcss`, `postcss-scss`, `postcss-less` vào `server` (bảng mục 4). Bridge có thêm thông điệp `style-probe` (SPEC-03 mục 7, viết ở lượt đầu của khối K2). ADR-FE-06 giữ nguyên cho phần Tailwind, nằm sau interface.
 
 ### ADR-BE-36 — Adapter framework ghép từng phần
+
+> **Đã thay (2026-11-22, Đợt 0):** kiến trúc lấy theo `docs/architecture/` (03-kien-truc-dich.md mục 3 và ADR-A1); phần dưới đây chỉ còn để tra cứu lịch sử.
 
 **Trạng thái:** Proposed — chi tiết ở đầu đợt 4 của Phase 4 (bổ sung 2026-10-24 theo chủ dự án)
 
@@ -1510,6 +1514,8 @@ Mã theo SRS v5.0 mục 13. **Đã bỏ (1.0), không dùng lại:** E004, E005,
 ---
 
 ## 1. M-FW — BỘ CHUYỂN ĐỔI FRAMEWORK
+
+> **Đã thay (2026-11-22, Đợt 0):** kiến trúc lấy theo `docs/architecture/` (03-kien-truc-dich.md mục 3.1, 3.2, 3.4); phần dưới đây chỉ còn để tra cứu lịch sử.
 
 **Mục đích:** gom mọi chỗ phụ thuộc framework vào một chỗ, để thêm Next.js (hoặc framework khác) sau này bằng **một module mới**, không sửa Source Editor, lịch sử, mô hình Tailwind, Inspector, Bridge client.
 

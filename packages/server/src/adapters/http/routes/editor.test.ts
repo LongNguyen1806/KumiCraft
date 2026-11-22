@@ -5,10 +5,10 @@ import { join } from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { ProcessPort } from '../../../core/ports/process-port.ts';
-import type { Editor } from '../../../core/project/open-in-editor.ts';
-import { createSessionInfoProvider } from '../../../core/shared/session.ts';
-import { makeTempDir, nodeFs } from '../../../core/workspace/test-support.ts';
+import { createSessionInfoProvider } from '../../../kernel/session.ts';
+import type { ProcessPort } from '../../../ports/process-port.ts';
+import type { Editor } from '../../../services/project/open-in-editor.ts';
+import { makeTempDir, nodeFs } from '../../../services/workspace/test-support.ts';
 import { createHttpApp } from '../create-http-app.ts';
 
 const PORT = 50241;

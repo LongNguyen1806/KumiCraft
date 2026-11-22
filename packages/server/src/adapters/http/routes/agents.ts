@@ -3,8 +3,8 @@ import { AgentIdSchema, AgentInstallRequestSchema } from '@kumicraft/shared';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
-import type { AgentService } from '../../../core/agent/agent-service.ts';
-import type { AgentSetupService } from '../../../core/agent/agent-setup-service.ts';
+import type { AgentService } from '../../../services/agent/agent-service.ts';
+import type { AgentSetupService } from '../../../services/agent/agent-setup-service.ts';
 import { sendError } from '../send-error.ts';
 
 export type AgentRoutesDeps = {

@@ -2,21 +2,21 @@
 import type { AgentId, AgentStatus } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 
-import type { AgentService } from '../../../core/agent/agent-service.ts';
-import {
-  type AgentSetupService,
-  createAgentSetupService,
-} from '../../../core/agent/agent-setup-service.ts';
-import type { AgentCommand } from '../../../core/agent/agent-types.ts';
-import { createJobService, type JobService } from '../../../core/jobs/job-service.ts';
-import { createEventBus, type EventBusPort } from '../../../core/ports/event-bus-port.ts';
+import { createSessionInfoProvider } from '../../../kernel/session.ts';
+import { createEventBus, type EventBusPort } from '../../../ports/event-bus-port.ts';
 import type {
   ChildProcessHandle,
   ProcessOutput,
   ProcessPort,
-} from '../../../core/ports/process-port.ts';
-import { createSessionInfoProvider } from '../../../core/shared/session.ts';
-import { platform, silentLogger } from '../../../core/workspace/test-support.ts';
+} from '../../../ports/process-port.ts';
+import type { AgentService } from '../../../services/agent/agent-service.ts';
+import {
+  type AgentSetupService,
+  createAgentSetupService,
+} from '../../../services/agent/agent-setup-service.ts';
+import type { AgentCommand } from '../../../services/agent/agent-types.ts';
+import { createJobService, type JobService } from '../../../services/jobs/job-service.ts';
+import { platform, silentLogger } from '../../../services/workspace/test-support.ts';
 import { createHttpApp } from '../create-http-app.ts';
 
 export const PORT = 50240;

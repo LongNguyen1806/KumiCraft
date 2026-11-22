@@ -10,13 +10,12 @@ import {
 } from '@kumicraft/shared';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 
-import type { HistoryService } from '../../../core/history/history-service.ts';
-import type { CompiledCssPort } from '../../../core/ports/compiled-css-port.ts';
-import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
-import type { ProjectService } from '../../../core/project/project-service.ts';
-import type { SourceEditorService } from '../../../core/source-editor/source-editor-service.ts';
-import { applyStyleChange } from '../../../core/style/style-apply.ts';
-import type { StyleService } from '../../../core/style/style-service.ts';
+import type { SourceEditorService } from '../../../kernel/editing.ts';
+import type { StyleService } from '../../../kernel/features.ts';
+import type { HistoryService } from '../../../kernel/history/history-service.ts';
+import type { CompiledCssPort } from '../../../ports/compiled-css-port.ts';
+import type { FileSystemPort } from '../../../ports/file-system-port.ts';
+import type { ProjectService } from '../../../services/project/project-service.ts';
 import { sendError } from '../send-error.ts';
 
 export type StyleRoutesDeps = {
@@ -39,7 +38,7 @@ async function handleStyleApply(
 ) {
   const themeRes = await deps.projectService.theme?.();
   const theme = themeRes?.ok ? themeRes.value : undefined;
-  const applied = await applyStyleChange(
+  const applied = await deps.styleService.apply(
     {
       fs: deps.fs,
       sourceEditor: deps.sourceEditorService,

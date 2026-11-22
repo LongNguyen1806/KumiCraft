@@ -6,8 +6,8 @@ import { delimiter, join } from 'node:path';
 
 import type { PackageManager } from '@kumicraft/shared';
 
-import type { LoggerPort } from '../../core/ports/logger-port.ts';
-import type { ProcessPort } from '../../core/ports/process-port.ts';
+import type { LoggerPort } from '../../ports/logger-port.ts';
+import type { ProcessPort } from '../../ports/process-port.ts';
 
 const PROBED = ['pnpm', 'npm', 'yarn', 'bun'] as const;
 /** The order a project without a lock file falls back to (the create dialog's order). */

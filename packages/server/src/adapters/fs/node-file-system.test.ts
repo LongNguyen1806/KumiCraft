@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { toSupportedPlatform } from '../../core/shared/session.ts';
+import { toSupportedPlatform } from '../../kernel/session.ts';
 import { createNodeFileSystem } from './node-file-system.ts';
 
 const platform = toSupportedPlatform(process.platform) ?? 'linux';

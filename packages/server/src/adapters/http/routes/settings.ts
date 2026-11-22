@@ -2,7 +2,7 @@
 import { issuesToDetails } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 
-import { type ConfigStore, SettingsPatchSchema } from '../../../core/shared/user-config.ts';
+import { type ConfigStore, SettingsPatchSchema } from '../../../services/config/user-config.ts';
 import { sendError } from '../send-error.ts';
 
 export type SettingsRoutesDeps = {

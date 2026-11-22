@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 
 import { createNodeFileSystem } from '../../packages/server/src/adapters/fs/node-file-system.ts';
-import { createSourceEditorService } from '../../packages/server/src/core/source-editor/source-editor-service.ts';
+import { createSourceEditorService } from '../../packages/server/src/stacks/view/jsx/source-editor-service.ts';
 
 const SAMPLE_TEMPLATES = [
   // 1: standard 2-space tsx (div at 3:5)

@@ -10,6 +10,10 @@ pre-commit:
     lint:
       glob: '*.{ts,tsx}'
       run: node scripts/run-staged.mjs lint
+    # docs/architecture/03 section 6.4: the dependency rules, with the list of old violations.
+    deps:
+      glob: 'packages/{server,studio}/src/**/*.{ts,tsx}'
+      run: pnpm run lint:deps
 commit-msg:
   commands:
     commitlint:

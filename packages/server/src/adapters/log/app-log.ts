@@ -3,7 +3,7 @@
 import envPaths from 'env-paths';
 import type { Logger } from 'pino';
 
-import type { LoggerPort } from '../../core/ports/logger-port.ts';
+import type { LoggerPort } from '../../ports/logger-port.ts';
 import type { LogLevel } from '../http/create-http-app.ts';
 import { createServerLogger } from './create-logger.ts';
 

@@ -2,7 +2,7 @@
 // (S-80, QA K9.7-4). An untrusted project is read from its source text alone.
 import { describe, expect, it } from 'vitest';
 
-import { nodeFs } from '../../../core/workspace/test-support.ts';
+import { nodeFs } from '../../../services/workspace/test-support.ts';
 import { readerDeps } from './project-data.ts';
 
 const spawned: string[] = [];

@@ -2,7 +2,7 @@
 import { createConnection } from 'node:net';
 import { hostname } from 'node:os';
 
-import type { SystemPort } from '../../core/ports/system-port.ts';
+import type { SystemPort } from '../../ports/system-port.ts';
 
 const PROBE_TIMEOUT_MS = 1000;
 

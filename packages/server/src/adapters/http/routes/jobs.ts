@@ -2,7 +2,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
-import type { JobService } from '../../../core/jobs/job-service.ts';
+import type { JobService } from '../../../services/jobs/job-service.ts';
 import { sendError } from '../send-error.ts';
 
 export type JobRoutesDeps = {

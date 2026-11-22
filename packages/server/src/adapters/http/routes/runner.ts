@@ -1,7 +1,7 @@
 // Runner dev server endpoints (SPEC-03 section 5.4, R-RN-01 to R-RN-09).
 import type { FastifyInstance } from 'fastify';
 
-import type { RunnerService } from '../../../core/runner/runner-service.ts';
+import type { RunnerService } from '../../../services/runner/runner-service.ts';
 import { sendError } from '../send-error.ts';
 
 export type RunnerRoutesDeps = {

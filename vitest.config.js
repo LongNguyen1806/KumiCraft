@@ -54,7 +54,7 @@ export default defineConfig({
       thresholds: {
         lines: 70,
         'packages/shared/src/**': { lines: 90 },
-        'packages/server/src/core/**': { lines: 80 },
+        'packages/server/src/{kernel,lib,services,stacks}/**': { lines: 80 },
         'packages/studio/src/store/**': { lines: 80 },
       },
     },

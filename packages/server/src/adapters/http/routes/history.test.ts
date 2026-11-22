@@ -7,9 +7,9 @@ import * as path from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createHistoryService } from '../../../core/history/history-service.ts';
-import { createSessionInfoProvider } from '../../../core/shared/session.ts';
-import { nodeFs } from '../../../core/workspace/test-support.ts';
+import { createHistoryService } from '../../../kernel/history/history-service.ts';
+import { createSessionInfoProvider } from '../../../kernel/session.ts';
+import { nodeFs } from '../../../services/workspace/test-support.ts';
 import { createHttpApp } from '../create-http-app.ts';
 
 const PORT = 50241;

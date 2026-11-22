@@ -2,9 +2,9 @@
 import type { DirectoryListing, DirectoryListingEntry } from '@kumicraft/shared';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
-import type { DirectoryEntry, FileSystemPort } from '../../../core/ports/file-system-port.ts';
-import { checkPathSyntax, parentPath } from '../../../core/shared/paths.ts';
-import type { Platform } from '../../../core/shared/session.ts';
+import { checkPathSyntax, parentPath } from '../../../kernel/paths.ts';
+import type { Platform } from '../../../kernel/session.ts';
+import type { DirectoryEntry, FileSystemPort } from '../../../ports/file-system-port.ts';
 import { sendError } from '../send-error.ts';
 
 export type FsRoutesDeps = {

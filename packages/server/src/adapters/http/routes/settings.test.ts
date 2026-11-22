@@ -4,14 +4,14 @@ import { join } from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createSessionInfoProvider } from '../../../core/shared/session.ts';
-import { CONFIG_FILE, createConfigStore } from '../../../core/shared/user-config.ts';
+import { createSessionInfoProvider } from '../../../kernel/session.ts';
+import { CONFIG_FILE, createConfigStore } from '../../../services/config/user-config.ts';
 import {
   makeTempDir,
   nodeFs,
   platform,
   silentLogger,
-} from '../../../core/workspace/test-support.ts';
+} from '../../../services/workspace/test-support.ts';
 import { createHttpApp } from '../create-http-app.ts';
 
 const PORT = 50235;

@@ -5,96 +5,60 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { AgentId } from '@kumicraft/shared';
 import envPaths from 'env-paths';
-import type { Logger } from 'pino';
 
 import { createNodeFileSystem } from './adapters/fs/node-file-system.ts';
-import type { LogLevel } from './adapters/http/create-http-app.ts';
 import { createAppLog } from './adapters/log/app-log.ts';
 import { type LegacyDirPair, moveLegacyUserDirs } from './adapters/system/legacy-user-dirs.ts';
 import { startMachineProbe } from './adapters/system/machine-info.ts';
 import { createNodeProcess } from './adapters/system/node-process.ts';
 import { createNodeSystem } from './adapters/system/node-system.ts';
 import { createChokidarWatcher } from './adapters/watcher/chokidar-watcher.ts';
-import type { AgentService } from './core/agent/agent-service.ts';
-import type { AgentCommand } from './core/agent/agent-types.ts';
-import type { TurnSnapshotStore } from './core/agent/snapshot/index.ts';
-import type { TurnRunner } from './core/agent/turn-runner.ts';
-import type { HistoryService } from './core/history/history-service.ts';
-import type { JobService } from './core/jobs/job-service.ts';
-import { createEventBus, type EventBusPort } from './core/ports/event-bus-port.ts';
-import type { FileSystemPort } from './core/ports/file-system-port.ts';
-import type { LoggerPort } from './core/ports/logger-port.ts';
-import type { ProcessPort } from './core/ports/process-port.ts';
-import type { SystemPort } from './core/ports/system-port.ts';
-import type { WatcherPort } from './core/ports/watcher-port.ts';
-import { viteReactAdapter } from './core/project/frameworks/vite-react/index.ts';
-import type { ProjectService } from './core/project/project-service.ts';
-import type { RunnerService } from './core/runner/runner-service.ts';
-import { writeReportingFileSystem } from './core/runner/write-notifier.ts';
-import { err, ok, type Result } from './core/shared/result.ts';
-import { type Platform, toSupportedPlatform } from './core/shared/session.ts';
-import { loadSessionToken } from './core/shared/session-token-store.ts';
-import { type ConfigStore, createConfigStore } from './core/shared/user-config.ts';
-import type { SourceEditorService } from './core/source-editor/source-editor-service.ts';
-import { readRememberedPort } from './core/workspace/studio-port.ts';
+import type { HistoryService } from './kernel/history/history-service.ts';
+import { err, ok, type Result } from './kernel/result.ts';
+import { type Platform, toSupportedPlatform } from './kernel/session.ts';
+import { createEventBus, type EventBusPort } from './ports/event-bus-port.ts';
+import type { LoggerPort } from './ports/logger-port.ts';
+import type { ProcessPort } from './ports/process-port.ts';
+import {
+  type InitializedContext,
+  resolveRunnerScript,
+  type StartServerOptions,
+} from './server-config.ts';
 import { autoOpenProject, createHttpServer } from './server-http.ts';
 import { type CoreServices, createServices } from './server-services.ts';
+import type { AgentService } from './services/agent/agent-service.ts';
+import type { TurnSnapshotStore } from './services/agent/snapshot/index.ts';
+import type { TurnRunner } from './services/agent/turn-runner.ts';
+import { loadSessionToken } from './services/config/session-token-store.ts';
+import { type ConfigStore, createConfigStore } from './services/config/user-config.ts';
+import type { JobService } from './services/jobs/job-service.ts';
+import type { ProjectService } from './services/project/project-service.ts';
+import type { RunnerService } from './services/runner/runner-service.ts';
+import { writeReportingFileSystem } from './services/runner/write-notifier.ts';
+import { readRememberedPort } from './services/workspace/studio-port.ts';
+import { STACKS } from './stacks/index.ts';
+import { styleThemeTokens } from './stacks/style/index.ts';
+import type { SourceEditorService } from './stacks/view/jsx/source-editor-service.ts';
 
 export type { LogLevel } from './adapters/http/create-http-app.ts';
-export type { AgentService } from './core/agent/agent-service.ts';
-export type { AgentCommand } from './core/agent/agent-types.ts';
-export type { TurnSnapshotStore } from './core/agent/snapshot/index.ts';
-export type { TurnRunner } from './core/agent/turn-runner.ts';
-export type { TurnStore } from './core/agent/turn-store.ts';
-export type { HistoryService } from './core/history/history-service.ts';
-export type { EventBusPort, ServerEvent } from './core/ports/event-bus-port.ts';
-export type { ProjectService } from './core/project/project-service.ts';
-export type { RunnerService } from './core/runner/runner-service.ts';
-export type { AppError, ErrorCode, Result } from './core/shared/result.ts';
-export type { Platform, ProjectState, SessionInfo } from './core/shared/session.ts';
-export { parseSessionToken, SESSION_FILE } from './core/shared/session-token-store.ts';
-export type { SourceEditorService } from './core/source-editor/source-editor-service.ts';
-export { LOCK_FILE, type LockInfo, parseLock } from './core/workspace/lock.ts';
+export type { HistoryService } from './kernel/history/history-service.ts';
+export type { AppError, ErrorCode, Result } from './kernel/result.ts';
+export type { Platform, ProjectState, SessionInfo } from './kernel/session.ts';
+export type { EventBusPort, ServerEvent } from './ports/event-bus-port.ts';
+export type { AgentService } from './services/agent/agent-service.ts';
+export type { AgentCommand } from './services/agent/agent-types.ts';
+export type { TurnSnapshotStore } from './services/agent/snapshot/index.ts';
+export type { TurnRunner } from './services/agent/turn-runner.ts';
+export type { TurnStore } from './services/agent/turn-store.ts';
+export { parseSessionToken, SESSION_FILE } from './services/config/session-token-store.ts';
+export type { ProjectService } from './services/project/project-service.ts';
+export type { RunnerService } from './services/runner/runner-service.ts';
+export { LOCK_FILE, type LockInfo, parseLock } from './services/workspace/lock.ts';
+export type { SourceEditorService } from './stacks/view/jsx/source-editor-service.ts';
 
 /** ADR-BE-03: the server never listens on another interface. */
 export const HOST = '127.0.0.1';
-
-export type StartServerOptions = {
-  /** Version of the published `kumicraft` package, shown by the Studio. */
-  readonly version: string;
-  /** Port chosen by the CLI (S-02). */
-  readonly port: number;
-  /** Absolute path of the folder given to the CLI. */
-  readonly workspaceDir: string;
-  /** Absolute path of the built Studio. Omit to serve the API only (Studio dev server). */
-  readonly studioDir?: string;
-  readonly logLevel?: LogLevel;
-  /** Value of `KUMICRAFT_FEATURES`. */
-  readonly featureOverride?: string;
-  /** Origins trusted like the server's own: only the Vite dev server of `pnpm dev`. */
-  readonly trustedOrigins?: readonly string[];
-  /** Optional dependency overrides for testing. */
-  readonly deps?: {
-    readonly fs?: FileSystemPort;
-    readonly system?: SystemPort;
-    readonly process?: ProcessPort;
-    readonly configDir?: string;
-    readonly cacheDir?: string;
-    readonly dataDir?: string;
-    readonly templateDir?: string;
-    readonly homeDir?: string;
-    readonly logger?: LoggerPort;
-    /** Folder of `kumicraft.log`; without it a test that gives `configDir` gets no file. */
-    readonly logDir?: string;
-    readonly eventBus?: EventBusPort;
-    readonly watcher?: WatcherPort;
-    readonly runnerScriptPath?: string | undefined;
-    /** R-QA-12: E2E tests point the agents at `fake-agent.mjs` here, never via user env vars. */
-    readonly agentCommands?: Partial<Record<AgentId, AgentCommand>> | undefined;
-  };
-};
 
 export type RunningServer = {
   readonly url: string;
@@ -110,20 +74,6 @@ export type RunningServer = {
   readonly turnSnapshotStore: TurnSnapshotStore;
   readonly turnRunner: TurnRunner;
   readonly close: () => Promise<void>;
-};
-
-export type InitializedContext = CoreServices & {
-  readonly configStore: ConfigStore;
-  readonly eventBus: EventBusPort;
-  readonly fs: FileSystemPort;
-  readonly processPort: ProcessPort;
-  readonly platform: Platform;
-  readonly homeDir: string;
-  readonly configDir: string;
-  /** KumiCraft's cache folder (mirrors, build check output). */
-  readonly cacheDir: string;
-  readonly logger: LoggerPort;
-  readonly pino?: Logger | undefined;
 };
 
 /**
@@ -255,6 +205,8 @@ async function initServerContext(
       homeDir,
       templateDir,
       initialRoot: options.workspaceDir,
+      stacks: STACKS,
+      themeTokens: styleThemeTokens,
       cacheDir,
       dataDir,
       ...childScriptDeps(options),
@@ -265,7 +217,6 @@ async function initServerContext(
     fs,
     options.deps?.watcher ?? createChokidarWatcher(),
     resolveRunnerScript(options.deps?.runnerScriptPath),
-    viteReactAdapter,
     (entry: string) => resolveRunnerScript(undefined, entry),
   );
 
@@ -294,30 +245,6 @@ export function resolveTemplateDir(): string {
     new URL(`../../../templates/${TEMPLATE_NAME}`, import.meta.url),
   ].map((url) => fileURLToPath(url));
   return candidates.find((dir) => existsSync(join(dir, 'package.json'))) ?? candidates[0] ?? '';
-}
-
-/**
- * A child-process script of `runners/` (`vite-react`, `format-snippet`): next to the bundled CLI
- * (`dist/runners/*.js`), or the TypeScript source when the server runs from the repository.
- */
-export function resolveRunnerScript(customPath?: string, name = 'vite-react'): string {
-  if (customPath && existsSync(customPath)) return customPath;
-  const cleanName = name.replace(/^runners[/\\]/, '').replace(/\.[jt]s$/, '');
-  const rels = [
-    `./runners/${cleanName}.js`,
-    `./runners/${cleanName}.ts`,
-    `../runners/${cleanName}.js`,
-    `../runners/${cleanName}.ts`,
-    `../../runners/${cleanName}.js`,
-    `../../runners/${cleanName}.ts`,
-    `../../../server/src/runners/${cleanName}.ts`,
-    `../../../../packages/server/src/runners/${cleanName}.ts`,
-  ];
-  for (const rel of rels) {
-    const p = fileURLToPath(new URL(rel, import.meta.url));
-    if (existsSync(p)) return p;
-  }
-  return fileURLToPath(new URL(`./runners/${cleanName}.js`, import.meta.url));
 }
 
 /**
@@ -410,3 +337,5 @@ export async function lastStudioPort(workspaceDir: string): Promise<number | und
   if (platform === undefined) return undefined;
   return readRememberedPort(createNodeFileSystem(platform), workspaceDir);
 }
+
+export { type InitializedContext, resolveRunnerScript, type StartServerOptions };

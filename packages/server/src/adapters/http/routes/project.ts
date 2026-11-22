@@ -25,31 +25,14 @@ import {
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
-import type { HistoryService } from '../../../core/history/history-service.ts';
-import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
-import type { ProcessPort } from '../../../core/ports/process-port.ts';
-import { listProjectComponents } from '../../../core/project/components-list.ts';
-import { listPublicImages, readPublicImage } from '../../../core/project/images.ts';
-import type { ProjectService } from '../../../core/project/project-service.ts';
-import type { SessionInfo } from '../../../core/shared/session.ts';
-import type { ConfigStore } from '../../../core/shared/user-config.ts';
-import type { UsageCounter } from '../../../core/source-editor/component-usages.ts';
+import { listPublicImages, readPublicImage } from '../../../lib/images.ts';
 import { sendError } from '../send-error.ts';
+import { viewFeaturesOf } from '../view-features.ts';
 import { registerProjectDataRoutes } from './project-data.ts';
+import { type ProjectRoutesDeps } from './project-deps.ts';
 import { registerProjectFilesRoutes } from './project-files.ts';
 import { registerProjectInteractionRoutes } from './project-interaction.ts';
 import { registerRecentProjectRoutes } from './project-recent.ts';
-
-export type ProjectRoutesDeps = {
-  readonly projectService: ProjectService;
-  readonly getSessionInfo: () => SessionInfo;
-  readonly fs?: FileSystemPort | undefined;
-  readonly process?: ProcessPort | undefined;
-  readonly tsInspectScript?: string | undefined;
-  readonly usageCounter?: UsageCounter | undefined;
-  readonly recents?: Pick<ConfigStore, 'recentProjects' | 'forgetProject'> | undefined;
-  readonly historyService?: HistoryService | undefined;
-};
 
 const OpenSchema = z.strictObject({ path: z.string().min(1) });
 const CreateSchema = z.strictObject({
@@ -190,7 +173,9 @@ function registerCodeInfoRoutes(api: FastifyInstance, deps: ProjectRoutesDeps): 
     const infoRes = deps.projectService.getProjectInfo();
     if (!infoRes.ok) return sendError(reply, infoRes.error);
     if (!deps.fs) return sendError(reply, { code: 'E021' });
-    const components = await listProjectComponents(
+    const features = viewFeaturesOf(deps.projectService);
+    if (!features) return { data: { components: [] } };
+    const components = await features.listComponents(
       { fs: deps.fs, usageCounter: deps.usageCounter },
       infoRes.value.root,
       infoRes.value,
@@ -405,3 +390,5 @@ export function registerProjectRoutes(api: FastifyInstance, deps: ProjectRoutesD
   registerProjectDataRoutes(api, deps);
   registerProjectInteractionRoutes(api, deps);
 }
+
+export { type ProjectRoutesDeps };

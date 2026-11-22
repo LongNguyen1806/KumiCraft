@@ -1,7 +1,7 @@
 // GET /api/v1/session (SPEC-03 section 5.1).
 import type { FastifyInstance } from 'fastify';
 
-import type { SessionInfo } from '../../../core/shared/session.ts';
+import type { SessionInfo } from '../../../kernel/session.ts';
 
 export function registerSessionRoutes(
   api: FastifyInstance,

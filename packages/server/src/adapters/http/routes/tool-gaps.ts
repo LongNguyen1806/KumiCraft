@@ -7,7 +7,7 @@ import {
 } from '@kumicraft/shared';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 
-import type { ToolGapStore } from '../../../core/agent/tool-gaps.ts';
+import type { ToolGapStore } from '../../../services/agent/tool-gaps.ts';
 import { sendError } from '../send-error.ts';
 
 export type ToolGapRoutesDeps = {

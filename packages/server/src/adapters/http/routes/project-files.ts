@@ -9,13 +9,17 @@ import {
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
-import type { HistoryService } from '../../../core/history/history-service.ts';
-import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
-import { findFileImporters } from '../../../core/project/file-importers.ts';
-import { createFile, deleteFileOrDir, renameFileOrDir } from '../../../core/project/file-ops.ts';
-import { listFileTree } from '../../../core/project/file-tree.ts';
-import type { ProjectService } from '../../../core/project/project-service.ts';
+import type { HistoryService } from '../../../kernel/history/history-service.ts';
+import { listFileTree } from '../../../lib/file-tree.ts';
+import type { FileSystemPort } from '../../../ports/file-system-port.ts';
+import {
+  createFile,
+  deleteFileOrDir,
+  renameFileOrDir,
+} from '../../../services/project/file-ops.ts';
+import type { ProjectService } from '../../../services/project/project-service.ts';
 import { sendError } from '../send-error.ts';
+import { VIEW_ONLY, viewFeaturesOf } from '../view-features.ts';
 
 export type ProjectFilesRoutesDeps = {
   readonly projectService: ProjectService;
@@ -58,7 +62,9 @@ function registerTreeAndImportersRoutes(api: FastifyInstance, deps: ProjectFiles
       return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
     }
 
-    const res = await findFileImporters(
+    const features = viewFeaturesOf(deps.projectService);
+    if (!features) return sendError(reply, VIEW_ONLY);
+    const res = await features.findFileImporters(
       deps.fs,
       infoRes.value.root,
       infoRes.value.sourceDir,

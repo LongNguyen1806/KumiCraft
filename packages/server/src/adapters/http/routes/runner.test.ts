@@ -2,9 +2,9 @@ import type { RunnerStatus } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { RunnerService } from '../../../core/runner/runner-service.ts';
-import { err, ok } from '../../../core/shared/result.ts';
-import { createSessionInfoProvider } from '../../../core/shared/session.ts';
+import { err, ok } from '../../../kernel/result.ts';
+import { createSessionInfoProvider } from '../../../kernel/session.ts';
+import type { RunnerService } from '../../../services/runner/runner-service.ts';
 import { createHttpApp } from '../create-http-app.ts';
 
 const PORT = 50238;

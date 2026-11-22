@@ -6,8 +6,8 @@ import { join } from 'node:path';
 import Fastify from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { ok } from '../../../core/shared/result.ts';
-import { nodeFs } from '../../../core/workspace/test-support.ts';
+import { ok } from '../../../kernel/result.ts';
+import { nodeFs } from '../../../services/workspace/test-support.ts';
 import { registerRecentProjectRoutes } from './project-recent.ts';
 
 describe('GET /project/recent [R-PJ-25]', () => {

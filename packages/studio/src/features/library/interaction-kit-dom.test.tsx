@@ -7,7 +7,7 @@ import React from 'react';
 import { transformWithOxc } from 'vite';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { buildKitTemplateCode } from '../../../../server/src/core/source-editor/structure/kit-templates/index.ts';
+import { buildKitTemplateCode } from '../../../../server/src/stacks/view/jsx/structure/kit-templates/index.ts';
 
 type GenericComponent = React.ComponentType<{ readonly [k: string]: unknown }>;
 

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { makeTempDir, silentLogger } from './core/workspace/test-support.ts';
 import { createServerClose, startServer, studioOriginOf } from './index.ts';
+import { makeTempDir, silentLogger } from './services/workspace/test-support.ts';
 
 /** Never the settings folder of the machine running the tests. */
 let config: { dir: string; cleanup: () => Promise<void> };

@@ -6,11 +6,10 @@ import {
 } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 
-import { enableProjectDarkMode } from '../../../core/project/dark-mode-service.ts';
-import { applyProjectSmoothScroll } from '../../../core/project/smooth-scroll-service.ts';
-import type { WrittenFile } from '../../../core/source-editor/source-editor-service.ts';
+import type { WrittenFile } from '../../../kernel/editing.ts';
 import { sendError } from '../send-error.ts';
-import type { ProjectRoutesDeps } from './project.ts';
+import { VIEW_ONLY, viewFeaturesOf } from '../view-features.ts';
+import type { ProjectRoutesDeps } from './project-deps.ts';
 
 function darkModeDeps(deps: ProjectRoutesDeps) {
   const ws = deps.projectService.state();
@@ -42,7 +41,9 @@ export function registerProjectInteractionRoutes(
     }
     const ctx = darkModeDeps(deps);
     if (!ctx) return sendError(reply, { code: 'E021', params: { missing: 'project' } });
-    const res = await enableProjectDarkMode(ctx.deps, ctx.root, parsed.data.checkOnly === true);
+    const features = viewFeaturesOf(deps.projectService);
+    if (!features) return sendError(reply, VIEW_ONLY);
+    const res = await features.enableDarkMode(ctx.deps, ctx.root, parsed.data.checkOnly === true);
     if (!res.ok) return sendError(reply, res.error);
     return { data: res.value };
   });
@@ -54,7 +55,9 @@ export function registerProjectInteractionRoutes(
     }
     const ctx = darkModeDeps(deps);
     if (!ctx) return sendError(reply, { code: 'E021', params: { missing: 'project' } });
-    const res = await applyProjectSmoothScroll(ctx.deps, ctx.root, parsed.data);
+    const features = viewFeaturesOf(deps.projectService);
+    if (!features) return sendError(reply, VIEW_ONLY);
+    const res = await features.applySmoothScroll(ctx.deps, ctx.root, parsed.data);
     if (!res.ok) return sendError(reply, res.error);
     return { data: res.value };
   });

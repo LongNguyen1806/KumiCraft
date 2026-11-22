@@ -3,9 +3,9 @@ import { ok } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createJobService, type JobService } from '../../../core/jobs/job-service.ts';
-import { createSessionInfoProvider } from '../../../core/shared/session.ts';
-import { silentLogger } from '../../../core/workspace/test-support.ts';
+import { createSessionInfoProvider } from '../../../kernel/session.ts';
+import { createJobService, type JobService } from '../../../services/jobs/job-service.ts';
+import { silentLogger } from '../../../services/workspace/test-support.ts';
 import { createHttpApp } from '../create-http-app.ts';
 
 const PORT = 50237;

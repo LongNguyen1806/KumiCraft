@@ -8,15 +8,15 @@ import {
 } from '@kumicraft/shared';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 
-import type { FileSystemPort } from '../../../core/ports/file-system-port.ts';
-import type { ProcessPort } from '../../../core/ports/process-port.ts';
-import { readComponentProps } from '../../../core/project/component-props-reader.ts';
+import type { FileSystemPort } from '../../../ports/file-system-port.ts';
+import type { ProcessPort } from '../../../ports/process-port.ts';
 import {
   listProjectDataSources,
   readProjectDataSourceFields,
-} from '../../../core/project/data-sources/data-sources-service.ts';
-import type { ProjectService } from '../../../core/project/project-service.ts';
+} from '../../../services/data-sources/data-sources-service.ts';
+import type { ProjectService } from '../../../services/project/project-service.ts';
 import { sendError } from '../send-error.ts';
+import { VIEW_ONLY, viewFeaturesOf } from '../view-features.ts';
 
 export type ProjectDataRoutesDeps = {
   readonly projectService: ProjectService;
@@ -51,7 +51,9 @@ async function handleComponentPropsPost(
   if (!parsed.success) {
     return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
   }
-  const result = await readComponentProps(
+  const features = viewFeaturesOf(deps.projectService);
+  if (!features) return sendError(reply, VIEW_ONLY);
+  const result = await features.readComponentProps(
     readerDeps(deps.fs, deps, trusted),
     root,
     parsed.data.loc,

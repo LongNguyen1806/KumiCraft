@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, rename } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
-import type { LoggerPort } from '../../core/ports/logger-port.ts';
+import type { LoggerPort } from '../../ports/logger-port.ts';
 
 export type LegacyDirPair = { readonly from: string; readonly to: string };
 

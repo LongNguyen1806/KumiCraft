@@ -7,7 +7,7 @@ import { join, resolve } from 'node:path';
 import type { RunnerToChildMessage, RunnerToParentMessage } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { makeTempDir } from '../core/workspace/test-support.ts';
+import { makeTempDir } from '../services/workspace/test-support.ts';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..', '..', '..');
 const RUNNER_PATH = join(import.meta.dirname, 'express-pug.ts');

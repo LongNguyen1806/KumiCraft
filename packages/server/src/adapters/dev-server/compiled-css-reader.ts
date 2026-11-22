@@ -1,6 +1,6 @@
 // Reads a stylesheet as the project's Vite dev server compiles it (`?direct`), source map included
 // since the Bridge plugin turns on `css.devSourcemap` (R-ST-04).
-import type { CompiledCssPort } from '../../core/ports/compiled-css-port.ts';
+import type { CompiledCssPort } from '../../ports/compiled-css-port.ts';
 
 const TIMEOUT_MS = 2_000;
 const MAX_BYTES = 8 * 1024 * 1024;

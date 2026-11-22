@@ -4,7 +4,7 @@ import { relative } from 'node:path';
 
 import { watch } from 'chokidar';
 
-import type { WatchHandle } from '../../core/ports/watcher-port.ts';
+import type { WatchHandle } from '../../ports/watcher-port.ts';
 
 export const WATCH_BATCH_MS = 300;
 

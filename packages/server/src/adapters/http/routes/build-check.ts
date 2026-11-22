@@ -2,7 +2,7 @@
 // the job (GET /jobs/{id}, `job.completed`).
 import type { FastifyInstance } from 'fastify';
 
-import type { Result } from '../../../core/shared/result.ts';
+import type { Result } from '../../../kernel/result.ts';
 import { sendError } from '../send-error.ts';
 
 export type BuildCheckRoutesDeps = {

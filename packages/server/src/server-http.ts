@@ -4,18 +4,22 @@ import type { FastifyInstance } from 'fastify';
 
 import { createCompiledCssReader } from './adapters/dev-server/compiled-css-reader.ts';
 import { createHttpApp } from './adapters/http/create-http-app.ts';
-import type { FileSystemPort } from './core/ports/file-system-port.ts';
-import { startBuildCheck } from './core/project/build-check/build-check.ts';
-import type { ProjectService } from './core/project/project-service.ts';
-import { ok, type Result } from './core/shared/result.ts';
+import { ok, type Result } from './kernel/result.ts';
 import {
   createSessionInfoProvider,
   type SessionInfo,
   toSupportedPlatform,
-} from './core/shared/session.ts';
-import { createStyleService } from './core/style/style-service.ts';
-import { createProjectReader } from './core/workspace/project-reader.ts';
-import { type InitializedContext, resolveRunnerScript, type StartServerOptions } from './index.ts';
+} from './kernel/session.ts';
+import type { FileSystemPort } from './ports/file-system-port.ts';
+import {
+  type InitializedContext,
+  resolveRunnerScript,
+  type StartServerOptions,
+} from './server-config.ts';
+import { startBuildCheck } from './services/build-check/build-check.ts';
+import type { ProjectService } from './services/project/project-service.ts';
+import { createProjectReader } from './services/workspace/project-reader.ts';
+import { createStyleStack } from './stacks/style/index.ts';
 
 export async function autoOpenProject(
   fs: FileSystemPort,
@@ -60,7 +64,7 @@ function styleRouteDeps(ctx: InitializedContext) {
     return status.state === 'ready' ? status.origin : undefined;
   });
   return {
-    styleService: createStyleService({ fs: ctx.fs, compiledCss }),
+    styleService: createStyleStack({ fs: ctx.fs, compiledCss }),
     projectService: ctx.projectService,
     fs: ctx.fs,
     sourceEditorService: ctx.sourceEditorService,
@@ -81,7 +85,7 @@ function buildCheckRouteDeps(ctx: InitializedContext) {
         cacheDir: ctx.cacheDir,
         pugCheckScript,
         state: () => ctx.projectService.state(),
-        adapter: () => ctx.projectService.getAdapter(),
+        runtime: () => ctx.projectService.getStack().runtime,
       }),
   };
 }
@@ -99,6 +103,7 @@ function sourceRouteDeps(ctx: InitializedContext, getProjectRoot: () => string |
       const ws = ctx.projectService.state();
       return ws.status === 'open' ? ws.file.sourceDir : undefined;
     },
+    getViewFeatures: () => ctx.projectService.getStack().view.features,
     fs: ctx.fs,
   };
 }

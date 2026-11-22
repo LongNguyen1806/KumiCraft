@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { makeTempDir } from '../../core/workspace/test-support.ts';
+import { makeTempDir } from '../../services/workspace/test-support.ts';
 import { createChokidarWatcher, isIgnoredPath } from './chokidar-watcher.ts';
 
 describe('chokidar watcher [ADR-BE-20]', () => {

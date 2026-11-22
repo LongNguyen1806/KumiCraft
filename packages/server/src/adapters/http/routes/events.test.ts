@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createEventBus, type EventBusPort } from '../../../core/ports/event-bus-port.ts';
+import { createEventBus, type EventBusPort } from '../../../ports/event-bus-port.ts';
 import { createHttpApp } from '../create-http-app.ts';
 
 const PORT = 50345;

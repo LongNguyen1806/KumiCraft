@@ -4,7 +4,7 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 
-import type { AppError } from '../../core/shared/result.ts';
+import type { AppError } from '../../kernel/result.ts';
 import { sendError } from './send-error.ts';
 
 export type SecurityOptions = {

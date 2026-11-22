@@ -8,43 +8,45 @@ import {
   type SetupEnvironment,
   terminalCommand,
 } from './adapters/system/agent-setup-plans.ts';
-import { agyAdapter } from './core/agent/adapters/agy.ts';
-import { claudeAdapter } from './core/agent/adapters/claude.ts';
-import { type AgentService, createAgentService } from './core/agent/agent-service.ts';
+import { createHistoryService, type HistoryService } from './kernel/history/history-service.ts';
+import { ok } from './kernel/result.ts';
+import type { EventBusPort } from './ports/event-bus-port.ts';
+import type { FileSystemPort } from './ports/file-system-port.ts';
+import type { ProcessPort } from './ports/process-port.ts';
+import type { WatcherPort } from './ports/watcher-port.ts';
+import { agyAdapter } from './services/agent/adapters/agy.ts';
+import { claudeAdapter } from './services/agent/adapters/claude.ts';
+import { type AgentService, createAgentService } from './services/agent/agent-service.ts';
 import {
   type AgentSetupService,
   createAgentSetupService,
-} from './core/agent/agent-setup-service.ts';
-import type { AgentCommand } from './core/agent/agent-types.ts';
-import { type ChatImageStore, createChatImageStore } from './core/agent/chat-images.ts';
-import { createTurnSnapshotStore, type TurnSnapshotStore } from './core/agent/snapshot/index.ts';
-import { createToolGapStore, type ToolGapStore } from './core/agent/tool-gaps.ts';
-import { createTurnRunner, type TurnRunner } from './core/agent/turn-runner.ts';
-import { createTurnStore, type TurnStore } from './core/agent/turn-store.ts';
-import { createHistoryService, type HistoryService } from './core/history/history-service.ts';
-import { createJobService, type JobService } from './core/jobs/job-service.ts';
-import { createMirrorService } from './core/mirror/mirror-service.ts';
-import type { MirrorService } from './core/mirror/mirror-types.ts';
-import type { EventBusPort } from './core/ports/event-bus-port.ts';
-import type { FileSystemPort } from './core/ports/file-system-port.ts';
-import type { ProcessPort } from './core/ports/process-port.ts';
-import type { WatcherPort } from './core/ports/watcher-port.ts';
-import type { FrameworkAdapter } from './core/project/frameworks/types.ts';
+} from './services/agent/agent-setup-service.ts';
+import type { AgentCommand } from './services/agent/agent-types.ts';
+import { type ChatImageStore, createChatImageStore } from './services/agent/chat-images.ts';
+import {
+  createTurnSnapshotStore,
+  type TurnSnapshotStore,
+} from './services/agent/snapshot/index.ts';
+import { createToolGapStore, type ToolGapStore } from './services/agent/tool-gaps.ts';
+import { createTurnRunner, type TurnRunner } from './services/agent/turn-runner.ts';
+import { createTurnStore, type TurnStore } from './services/agent/turn-store.ts';
+import { createJobService, type JobService } from './services/jobs/job-service.ts';
+import { createMirrorService } from './services/mirror/mirror-service.ts';
+import type { MirrorService } from './services/mirror/mirror-types.ts';
 import {
   createProjectService,
   type ProjectService,
   type ProjectServiceDeps,
-} from './core/project/project-service.ts';
-import { createProjectWatch, type ProjectWatch } from './core/project/project-watch.ts';
-import { attachAutoRestart } from './core/runner/runner-restart.ts';
-import { createRunnerService, type RunnerService } from './core/runner/runner-service.ts';
-import { ok } from './core/shared/result.ts';
-import { createUsageCounter, type UsageCounter } from './core/source-editor/component-usages.ts';
-import { createSnippetFormatter } from './core/source-editor/snippet-format.ts';
+} from './services/project/project-service.ts';
+import { createProjectWatch, type ProjectWatch } from './services/project/project-watch.ts';
+import { attachAutoRestart } from './services/runner/runner-restart.ts';
+import { createRunnerService, type RunnerService } from './services/runner/runner-service.ts';
+import { createUsageCounter, type UsageCounter } from './stacks/view/jsx/component-usages.ts';
+import { createSnippetFormatter } from './stacks/view/jsx/snippet-format.ts';
 import {
   createSourceEditorService,
   type SourceEditorService,
-} from './core/source-editor/source-editor-service.ts';
+} from './stacks/view/jsx/source-editor-service.ts';
 
 export type ServiceDeps = Omit<ProjectServiceDeps, 'runnerService'> & {
   readonly runnerScriptPath?: string | undefined;
@@ -101,7 +103,6 @@ function createProjectRunner(
   processPort: ProcessPort,
   eventBus: EventBusPort,
   studioOrigin: string,
-  adapter?: FrameworkAdapter,
   resolveRunnerScript?: (entry: string) => string,
 ): RunnerService {
   return createRunnerService({
@@ -111,8 +112,7 @@ function createProjectRunner(
     logger: deps.logger,
     eventBus,
     studioOrigin,
-    ...(adapter !== undefined ? { adapter } : {}),
-    getAdapter: () => projectService.getAdapter(),
+    getRuntime: () => projectService.getStack().runtime,
     runnerScriptPath: runnerScript,
     resolveRunnerScript,
   });
@@ -187,7 +187,7 @@ function createAuxiliaryServices(
       const info = projectService.getProjectInfo();
       return info.ok ? info.value.styleFiles?.newCssDir : undefined;
     },
-    getAdapter: () => projectService.getAdapter(),
+    getView: () => projectService.getStack().view,
     getProjectSourceDir: () => {
       const info = projectService.getProjectInfo();
       return info.ok ? info.value.sourceDir : undefined;
@@ -272,7 +272,6 @@ function createRunnersAndAuxiliary(
   eventBus: EventBusPort,
   fs: FileSystemPort,
   runnerScript: string,
-  adapter: FrameworkAdapter | undefined,
   projectService: ProjectService,
   runnerHolder: { current?: RunnerService | undefined },
   resolveRunnerScript?: (entry: string) => string,
@@ -284,7 +283,6 @@ function createRunnersAndAuxiliary(
     processPort,
     eventBus,
     studioOrigin,
-    adapter,
     resolveRunnerScript,
   );
   runnerHolder.current = runnerService;
@@ -342,7 +340,6 @@ export function createServices(
   fs: FileSystemPort,
   watcher: WatcherPort,
   runnerScript: string,
-  adapter?: FrameworkAdapter,
   resolveRunnerScript?: (entry: string) => string,
 ): CoreServices {
   const runnerHolder: { current?: RunnerService | undefined } = {};
@@ -355,7 +352,6 @@ export function createServices(
     eventBus,
     fs,
     runnerScript,
-    adapter,
     projectServices.projectService,
     runnerHolder,
     resolveRunnerScript,

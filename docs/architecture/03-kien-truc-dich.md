@@ -1,6 +1,6 @@
 # Kiến trúc đích KumiCraft
 
-Bước 3 của việc dựng lại kiến trúc. Dựa trên [01-muc-tieu.md](01-muc-tieu.md) (mục tiêu), [02-hien-trang.md](02-hien-trang.md) (hiện trạng) và [03a-ket-qua-thu-danh-dau.md](03a-ket-qua-thu-danh-dau.md) (kết quả thử Vue, Next.js, Razor). Bản 2, ngày 2026-11-22, chờ chủ dự án duyệt.
+Bước 3 của việc dựng lại kiến trúc. Dựa trên [01-muc-tieu.md](01-muc-tieu.md) (mục tiêu), [02-hien-trang.md](02-hien-trang.md) (hiện trạng) và [03a-ket-qua-thu-danh-dau.md](03a-ket-qua-thu-danh-dau.md) (kết quả thử Vue, Next.js, Razor). Bản 2, ngày 2026-11-22; chủ dự án duyệt. Mục 6.1 cập nhật theo code sau Đợt 0.
 
 Tài liệu nói **KumiCraft nên được chia thế nào và vì sao**, chưa nói làm theo thứ tự nào (thứ tự ở bước 4). Tên trong code viết bằng tiếng Anh như quy ước của repo; đây là bản phác, tên cuối cùng chốt khi làm.
 
@@ -197,29 +197,41 @@ type ClassSlot =
 
 ### 6.1. Server
 
+Cấu trúc này **đã có từ Đợt 0** (2026-11-22); quy tắc ở bảng được máy kiểm (`pnpm lint:deps`, mục 6.4).
+
 ```
 server/src/
-  kernel/     mô hình lõi (mục 2), interface 3 trục, EditService, FileWriter, History, Capability
-  services/   dự án, trang, bản nháp, theme, style, chạy dự án, AI, tác vụ nền
+  kernel/     mô hình lõi (model.ts), interface các trục (stacks.ts), tính năng theo ngôn ngữ
+              (features.ts), interface bộ sửa (editing.ts), FileWriter, History, Result, đường dẫn
   ports/      file, tiến trình, hệ thống, log, sự kiện, theo dõi file, CSS đã biên dịch
+  lib/        tiện ích trung lập: đọc JS/TS (Babel), phiên bản gói, cây file, ảnh, workspace root
+  services/   dự án (mở, tạo, nhận diện theo bảng tổ hợp, cài đặt), runner, AI, mirror, tác vụ nền,
+              cấu hình người dùng, khóa workspace, kiểm build, đọc dữ liệu backend
   stacks/     hiện thực theo trục
-    runtime/vite, runtime/express-proxy, runtime/next, runtime/aspnet …
-    view/jsx, view/pug, view/vue, view/razor …
-    style/tailwind (dùng package style-tailwind), style/css, style/bootstrap …
-    meta/next …
+    index.ts           bảng tổ hợp (vite + jsx, express + pug)
+    runtime/vite, runtime/express (… runtime/next, runtime/aspnet)
+    view/jsx (bộ sửa JSX + tính năng riêng của JSX), view/pug (… view/vue, view/razor)
+    style (CSS, CSS Modules, Sass, Less, Bootstrap, token theme; tách theo hệ ở Đợt S)
   adapters/   http, fs, process, log, watcher (hiện thực ports)
-  index.ts    nơi duy nhất ghép tất cả (đăng ký hiện thực vào registry)
+  runners/    tiến trình con chạy dev server, định dạng code, đọc kiểu prop
+  index.ts, server-config.ts, server-services.ts, server-http.ts
+              nơi ghép tất cả (composition root): chỉ ở đây mới nhắc tên hiện thực cụ thể
 ```
 
-| Module     | Được dùng                                          | Không được dùng                                                                        |
-| ---------- | -------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `kernel`   | `shared`                                           | mọi thứ khác                                                                           |
-| `services` | `kernel`, `ports`, `shared`                        | `stacks`, `adapters`, thư viện của một công nghệ (Babel, postcss…)                     |
-| `stacks/*` | `kernel`, `ports`, `shared`, thư viện của chính nó | `services`, `adapters`, `stacks` khác (trừ khi khai báo, vd. `meta/next` → `view/jsx`) |
-| `adapters` | `kernel`, `ports`, `services`, `shared`            | `stacks`                                                                               |
-| `index.ts` | tất cả                                             | —                                                                                      |
+| Module     | Được dùng                                                 | Không được dùng                                                        |
+| ---------- | --------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `kernel`   | `shared`, `ports`                                         | mọi thứ khác                                                           |
+| `ports`    | `kernel` (kiểu)                                           | mọi thứ khác                                                           |
+| `lib`      | `kernel`, `ports`, `shared`, thư viện trung lập (Babel)   | `services`, `stacks`, `adapters`                                       |
+| `services` | `kernel`, `ports`, `lib`, `shared`                        | `stacks`, `adapters`                                                   |
+| `stacks/*` | `kernel`, `ports`, `lib`, `shared`, thư viện của chính nó | `services`, `adapters`, `stacks` khác (trừ `stacks/style`, dùng chung) |
+| `adapters` | `kernel`, `ports`, `services`, `shared`                   | `stacks`                                                               |
+| ghép nối   | tất cả                                                    | —                                                                      |
 
-Không có vòng phụ thuộc. `core/project` hiện nay được chia: nhận diện → `stacks`; trang, bản nháp, theme, cài đặt → `services`; phần JSX → `stacks/view/jsx`.
+- Không có vòng phụ thuộc.
+- Service và route HTTP gọi phần riêng của một ngôn ngữ giao diện qua `ProjectStack.view.features` (interface `ViewFeatures` / `ProjectFeatures` trong `kernel/features.ts`); ngôn ngữ không có (Pug) thì trả "chỉ xem" (E023).
+- Phần style tới service và route qua `StyleService` và `ThemeTokens` (cũng trong `kernel/features.ts`), được ghép ở `index.ts` / `server-http.ts`.
+- Mọi lần ghi file của một thao tác sửa đi qua `kernel/file-writer.ts` (mục 4); file riêng của KumiCraft (`.kumicraft/…`) đi qua `kernel/own-files.ts`. Test kiến trúc `architecture.test.ts` kiểm điều này.
 
 ### 6.2. Studio
 
