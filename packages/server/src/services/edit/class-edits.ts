@@ -38,7 +38,8 @@ const NO_THEME: ThemeInfo = {
 
 export function createClassEditResolver(deps: ClassEditDeps): ClassEditResolver {
   return {
-    async resolve(edit: SetClassesEdit): Promise<Result<SetClassNameEdit>> {
+    // The theme is read once for all the edits of a request, not once per element.
+    async resolve(edits: readonly SetClassesEdit[]): Promise<Result<SetClassNameEdit[]>> {
       const info = deps.project();
       if (!info.ok) return info;
       const theme = await deps.theme();
@@ -47,15 +48,19 @@ export function createClassEditResolver(deps: ClassEditDeps): ClassEditResolver 
         info.value.responsiveMode ?? 'desktop-first',
         info.value.styling,
       );
-      const out = applyClassSteps(edit.before, edit.steps, ctx);
-      if (!out.ok) return err({ code: 'E023', params: { reason: out.reason } });
-      return ok({
-        kind: 'setClassName',
-        loc: edit.loc,
-        tag: edit.tag,
-        before: edit.before,
-        after: out.value,
-      });
+      const resolved: SetClassNameEdit[] = [];
+      for (const edit of edits) {
+        const out = applyClassSteps(edit.before, edit.steps, ctx);
+        if (!out.ok) return err({ code: 'E023', params: { reason: out.reason } });
+        resolved.push({
+          kind: 'setClassName',
+          loc: edit.loc,
+          tag: edit.tag,
+          before: edit.before,
+          after: out.value,
+        });
+      }
+      return ok(resolved);
     },
   };
 }

@@ -62,5 +62,5 @@ export interface SourceEditorService {
  * resolve it before the view editor runs, so no editor has to know about intents.
  */
 export interface ClassEditResolver {
-  resolve(edit: SetClassesEdit): Promise<Result<SetClassNameEdit>>;
+  resolve(edits: readonly SetClassesEdit[]): Promise<Result<SetClassNameEdit[]>>;
 }

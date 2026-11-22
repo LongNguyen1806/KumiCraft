@@ -86,15 +86,13 @@ const tailwind: System = {
       value: value === undefined ? undefined : (c.tailwind ?? { kind: 'arbitrary', css: value }),
     };
     const before = await staticClass(root);
-    const resolved = await classEdits.resolve({
-      kind: 'setClasses',
-      loc: LOC,
-      tag: 'article',
-      before,
-      steps: [step],
-    });
+    const resolved = await classEdits.resolve([
+      { kind: 'setClasses', loc: LOC, tag: 'article', before, steps: [step] },
+    ]);
     if (!resolved.ok) throw new Error(resolved.error.code);
-    const written = await sourceEditor.applyEdit(root, resolved.value);
+    const [edit] = resolved.value;
+    if (edit === undefined) throw new Error('no edit');
+    const written = await sourceEditor.applyEdit(root, edit);
     if (!written.ok) throw new Error(written.error.code);
   },
   async read(root, c) {

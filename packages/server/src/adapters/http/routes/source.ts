@@ -1,13 +1,18 @@
 // Source Editor HTTP endpoints (SPEC-03 section 5.5, SPEC-04 section 6).
 import type {
   AttributeLevelEdit,
+  BatchEdit,
   HistoryLabel,
+  Result,
+  SetClassesEdit,
+  SetClassNameEdit,
   StructureEdit,
   StylingReport,
 } from '@kumicraft/shared';
 import {
   BatchEditRequestSchema,
   EditRequestSchema,
+  err,
   InteractionActionSchema,
   issuesToDetails,
   ok,
@@ -147,6 +152,41 @@ async function handleGetElementText(
  * One edit, recorded in the history from inside the queue of the file (R-SE-13, R-HI-01): the
  * entry holds exactly the bytes this edit replaced, even when edits of the same file overlap.
  */
+const RESOLVE_FAILED = { code: 'E016', params: { field: 'edits' } } as const;
+
+/** One class edit sent as intents, as the setClassName edit it writes. */
+async function resolveOne(
+  classEdits: ClassEditResolver,
+  edit: SetClassesEdit,
+): Promise<Result<SetClassNameEdit>> {
+  const out = await classEdits.resolve([edit]);
+  if (!out.ok) return out;
+  const [first] = out.value;
+  return first === undefined ? err(RESOLVE_FAILED) : ok(first);
+}
+
+/** The edits of a batch, class intents resolved together (the theme is read once), in order. */
+async function resolveBatch(
+  classEdits: ClassEditResolver,
+  edits: readonly BatchEdit[],
+): Promise<Result<AttributeLevelEdit[]>> {
+  const intents = edits.filter((e): e is SetClassesEdit => e.kind === 'setClasses');
+  const resolved = intents.length > 0 ? await classEdits.resolve(intents) : ok([]);
+  if (!resolved.ok) return resolved;
+  const queue = [...resolved.value];
+  const out: AttributeLevelEdit[] = [];
+  for (const edit of edits) {
+    if (edit.kind !== 'setClasses') {
+      out.push(edit);
+      continue;
+    }
+    const next = queue.shift();
+    if (next === undefined) return err(RESOLVE_FAILED);
+    out.push(next);
+  }
+  return ok(out);
+}
+
 async function handleApplyEdit(
   deps: SourceRoutesDeps,
   request: FastifyRequest,
@@ -184,7 +224,7 @@ async function handleApplyEdit(
     return reply.status(200).send({ data: edited.value });
   }
 
-  const resolved = edit.kind === 'setClasses' ? await deps.classEdits.resolve(edit) : ok(edit);
+  const resolved = edit.kind === 'setClasses' ? await resolveOne(deps.classEdits, edit) : ok(edit);
   if (!resolved.ok) return sendError(reply, resolved.error);
   const sourceEdit = resolved.value;
   const label: HistoryLabel = {
@@ -212,20 +252,20 @@ async function handleApplyBatchEdit(
   }
 
   const { coalesceKey } = parsed.data;
-  const edits: AttributeLevelEdit[] = [];
-  for (const edit of parsed.data.edits) {
-    const resolved = edit.kind === 'setClasses' ? await deps.classEdits.resolve(edit) : ok(edit);
-    if (!resolved.ok) return sendError(reply, resolved.error);
-    edits.push(resolved.value);
-  }
+  const edits = await resolveBatch(deps.classEdits, parsed.data.edits);
+  if (!edits.ok) return sendError(reply, edits.error);
   const label: HistoryLabel = {
     key: 'history:batch',
-    params: { count: String(edits.length) },
+    params: { count: String(edits.value.length) },
   };
 
-  const edited = await deps.sourceEditorService.applyEditBatch(projectRoot, edits, (files) => {
-    deps.historyService.push({ label, coalesceKey, files });
-  });
+  const edited = await deps.sourceEditorService.applyEditBatch(
+    projectRoot,
+    edits.value,
+    (files) => {
+      deps.historyService.push({ label, coalesceKey, files });
+    },
+  );
   if (!edited.ok) return sendError(reply, edited.error);
   return reply.status(200).send({ data: edited.value });
 }

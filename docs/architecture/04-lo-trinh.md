@@ -113,7 +113,7 @@ Chưa làm, ghi lại để không quên:
 - CSS vẫn đi `/style/apply` với ý định theo thuộc tính CSS; chưa gộp với Tailwind thành một `StyleSystem.plan` trong kernel. Hai đường đã có chung bộ test ở trên.
 - Cài đặt người dùng vẫn ở `store/settings-store.ts` (không gây vòng nên chưa chuyển).
 - Quy tắc "tính năng chỉ lộ ra qua `index.ts`" chưa áp dụng.
-- Bộ E2E chưa chạy cho Đợt S (chờ chủ dự án cho chạy).
+- E2E (2026-11-22): 87/88 qua. Test hỏng (chat AI tạo trang từ API backend) cũng hỏng 6/6 trên bản Đợt 0 khi chạy 6 luồng song song, chạy riêng thì qua: lỗi có từ trước, không do Đợt S. Lần chạy E2E đầu tìm ra một chỗ chậm của Đợt S: Server đọc theme của dự án một lần cho mỗi phần tử trong một lần sửa nhiều phần tử. Đã sửa: một lần đọc cho cả yêu cầu. Thử tải nặng (8 luồng × 4 lần) test khung tự do: trước khi sửa hỏng 22/32 và 8/32, sau khi sửa 0/64.
 
 ## 5. Điều kiện để kiến trúc đạt 9/10
 

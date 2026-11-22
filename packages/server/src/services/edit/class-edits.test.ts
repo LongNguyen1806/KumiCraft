@@ -47,17 +47,43 @@ describe('class edit resolver [ADR-A4]', () => {
       project: () => ok({ responsiveMode: 'desktop-first', styling: tailwind('4.1.0') }),
     });
 
-    const out = await resolver.resolve(brandText);
+    const out = await resolver.resolve([brandText]);
 
     expect(out).toEqual(
-      ok({
-        kind: 'setClassName',
-        loc: brandText.loc,
-        tag: 'p',
-        before: 'mt-2',
-        after: 'mt-2 text-brand',
-      }),
+      ok([
+        {
+          kind: 'setClassName',
+          loc: brandText.loc,
+          tag: 'p',
+          before: 'mt-2',
+          after: 'mt-2 text-brand',
+        },
+      ]),
     );
+  });
+
+  it('reads the theme once for all the edits of a request, and keeps their order', async () => {
+    let reads = 0;
+    const resolver = createClassEditResolver({
+      theme: () => {
+        reads += 1;
+        return Promise.resolve(ok(EMPTY_THEME));
+      },
+      project: () => ok({ styling: tailwind('4.1.0') }),
+    });
+
+    const out = await resolver.resolve([
+      { ...brandText, loc: 'src/App.tsx:3:5', steps: [{ kind: 'raw', className: 'a' }] },
+      { ...brandText, loc: 'src/App.tsx:4:5', steps: [{ kind: 'raw', className: 'b' }] },
+      { ...brandText, loc: 'src/App.tsx:5:5', steps: [{ kind: 'raw', className: 'c' }] },
+    ]);
+
+    expect(reads).toBe(1);
+    expect(out.ok && out.value.map((e) => [e.loc, e.after])).toEqual([
+      ['src/App.tsx:3:5', 'a'],
+      ['src/App.tsx:4:5', 'b'],
+      ['src/App.tsx:5:5', 'c'],
+    ]);
   });
 
   it('writes Tailwind 3 classes in a Tailwind 3 project', async () => {
@@ -66,13 +92,15 @@ describe('class edit resolver [ADR-A4]', () => {
       project: () => ok({ styling: tailwind('3.4.17') }),
     });
 
-    const out = await resolver.resolve({
-      ...brandText,
-      before: 'p-4',
-      steps: [{ kind: 'place', placement: { kind: 'free', left: 16, top: 40 } }],
-    });
+    const out = await resolver.resolve([
+      {
+        ...brandText,
+        before: 'p-4',
+        steps: [{ kind: 'place', placement: { kind: 'free', left: 16, top: 40 } }],
+      },
+    ]);
 
-    expect(out.ok && out.value.after).toBe('p-4 absolute left-[16px] top-[40px]');
+    expect(out.ok && out.value[0]?.after).toBe('p-4 absolute left-[16px] top-[40px]');
   });
 
   it('a theme that cannot be read is the empty theme the Studio also falls back to', async () => {
@@ -81,12 +109,11 @@ describe('class edit resolver [ADR-A4]', () => {
       project: () => ok({ styling: tailwind('4.1.0') }),
     });
 
-    const out = await resolver.resolve({
-      ...brandText,
-      steps: [{ kind: 'raw', className: 'p-2' }],
-    });
+    const out = await resolver.resolve([
+      { ...brandText, steps: [{ kind: 'raw', className: 'p-2' }] },
+    ]);
 
-    expect(out.ok && out.value.after).toBe('p-2');
+    expect(out.ok && out.value[0]?.after).toBe('p-2');
   });
 
   it('no open project: the error is passed on', async () => {
@@ -95,7 +122,7 @@ describe('class edit resolver [ADR-A4]', () => {
       project: () => err({ code: 'E021', params: { missing: 'project' } }),
     });
 
-    expect(await resolver.resolve(brandText)).toEqual(
+    expect(await resolver.resolve([brandText])).toEqual(
       err({ code: 'E021', params: { missing: 'project' } }),
     );
   });
