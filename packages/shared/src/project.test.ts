@@ -130,6 +130,9 @@ describe('ProjectInfoSchema', () => {
       designDirs: DEFAULT_DESIGN_DIRS,
     };
     expect(ProjectInfoSchema.safeParse(info).success).toBe(true);
+    // A Next.js project without src/ has its sources at the root.
+    expect(ProjectInfoSchema.safeParse({ ...info, sourceDir: '.' }).success).toBe(true);
+    expect(ProjectInfoSchema.safeParse({ ...info, sourceDir: '../x' }).success).toBe(false);
   });
 });
 

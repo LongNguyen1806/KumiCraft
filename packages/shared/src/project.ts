@@ -165,7 +165,8 @@ export const ProjectInfoSchema = z.strictObject({
   id: z.string().regex(/^[A-Za-z0-9_-]{10}$/),
   name: z.string().min(1).max(64),
   root: z.string().min(1),
-  sourceDir: RelPathSchema,
+  // `.` when the sources sit at the project root (a Next.js app/ without src/, 03b section 1.4).
+  sourceDir: SourceDirSchema,
   support: SupportReportSchema,
   needsInstall: z.boolean(),
   installCommand: z.array(z.string()).readonly().optional(),
