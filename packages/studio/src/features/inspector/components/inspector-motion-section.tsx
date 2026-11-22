@@ -1,18 +1,10 @@
 // Inspector Motion & Scroll Reveal section (transition, animation, presets, preview, Reveal.tsx) (K9.7-2 TK-16..22).
-import type {
-  ClassToken,
-  ClassValue,
-  ElementRef,
-  ElementSource,
-  PropertyId,
-  Scope,
-  StyleReading,
-  StyleState,
-} from '@kumicraft/shared';
+import type { ElementRef, ElementSource, StyleReading, StyleState } from '@kumicraft/shared';
+import type { ClassToken, ClassValue, PropertyId, Scope } from '@kumicraft/style-tailwind';
 import { Play } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { studioBridgeChannel } from '../../selection/bridge-channel.ts';
+import { studioBridgeChannel } from '../../../core/bridge-channel.ts';
 import { NUMERIC_FIELDS } from '../numeric-fields.ts';
 import type { BatchPropEntry } from '../use-live-edit.ts';
 import { readCssPropVal, readTwTokenStr } from './effects-helpers.ts';

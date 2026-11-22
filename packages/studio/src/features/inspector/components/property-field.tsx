@@ -1,6 +1,12 @@
 // Property field control in Inspector: value display, inheritance indicator, and override controls (SPEC-04 M-IN, R-IN-11).
-import type { ClassContext, ClassToken, ClassValue, PropertyId, Scope } from '@kumicraft/shared';
-import { readValue } from '@kumicraft/shared';
+import type {
+  ClassContext,
+  ClassToken,
+  ClassValue,
+  PropertyId,
+  Scope,
+} from '@kumicraft/style-tailwind';
+import { readValue } from '@kumicraft/style-tailwind';
 import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

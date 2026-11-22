@@ -6,14 +6,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as eventsClient from '../../api/events-client.ts';
 import * as sourceClient from '../../api/source-client.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useProjectStore } from '../../core/project-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { DrawToolbar } from '../draw/draw-toolbar.tsx';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { StatusBar } from '../editor/status-bar.tsx';
 import { InspectorPanel } from '../inspector/inspector-panel.tsx';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { ActivityBar } from '../shell/activity-bar.tsx';
-import { useProjectStore } from './project-store.ts';
 
 const CSS_PROJECT: ProjectInfo = {
   id: 'proj000001',

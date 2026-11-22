@@ -1,12 +1,12 @@
 // Shared structure commands for Inspector and keyboard shortcuts (SPEC-04 R-SE-24..28, R-KB-12).
 import type { ElementRef, StructureResult, TreeNode } from '@kumicraft/shared';
 
-import { applyStructureEdit } from '../../api/source-client.ts';
+import { placementTailwindMajor } from '../../core/canvas-view-store.ts';
+import { sendStructureEdit } from '../../core/edits.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';
-import { placementTailwindMajor } from '../editor/canvas-view-store.ts';
 import { freeStackPlacement } from '../free-frame/free-frame-placement.ts';
 import { siblingMoveTarget } from '../inspector/sibling-move.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { useStructureErrorStore } from './structure-error-store.ts';
 
 function findTreeNodeByLoc(nodes: readonly TreeNode[], loc: string): TreeNode | undefined {
@@ -106,7 +106,7 @@ export async function executeDuplicate(target?: StructureTargetInput): Promise<b
   return runStructureOp(
     t,
     () =>
-      applyStructureEdit({
+      sendStructureEdit({
         kind: 'duplicate',
         elements: [editedElement(t)],
         placement,
@@ -123,7 +123,7 @@ export async function executeRemove(target?: StructureTargetInput): Promise<bool
   if (!t) return false;
   return runStructureOp(
     t,
-    () => applyStructureEdit({ kind: 'remove', elements: [editedElement(t)] }),
+    () => sendStructureEdit({ kind: 'remove', elements: [editedElement(t)] }),
     () => {
       useSelectionStore.getState().clearSelection();
     },
@@ -135,7 +135,7 @@ export async function executeUnwrap(target?: StructureTargetInput): Promise<bool
   if (!t) return false;
   return runStructureOp(
     t,
-    () => applyStructureEdit({ kind: 'unwrap', element: editedElement(t) }),
+    () => sendStructureEdit({ kind: 'unwrap', element: editedElement(t) }),
     () => {
       useSelectionStore.getState().clearSelection();
     },
@@ -154,7 +154,7 @@ export async function executeMove(
   return runStructureOp(
     t,
     () =>
-      applyStructureEdit({
+      sendStructureEdit({
         kind: 'move',
         elements: [editedElement(t)],
         target: moveTarget,
@@ -174,7 +174,7 @@ export async function executeWrap(
   return runStructureOp(
     t,
     () =>
-      applyStructureEdit({
+      sendStructureEdit({
         kind: 'wrap',
         elements: [editedElement(t)],
         wrapper,

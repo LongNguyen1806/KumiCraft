@@ -4,11 +4,13 @@ import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as projectClient from '../../api/project-client.ts';
+import { setBridgePayloadDispatcher } from '../../core/bridge-channel.ts';
+import { BridgeChannel } from '../../core/bridge-channel.ts';
+import { useProjectStore } from '../../core/project-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { useSettingsStore } from '../../store/settings-store.ts';
-import { useProjectStore } from '../project/project-store.ts';
-import { BridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { dispatchBridgePayload } from '../selection/bridge-payload-handlers.ts';
 import { CanvasArea } from './canvas-area.tsx';
 import { resetSessionProbeCache } from './session-select.tsx';
 
@@ -58,6 +60,9 @@ function enableLoginSessions() {
     settings: { editor: 'vscode', agent: { preferred: 'auto' }, loginSessions: true },
   });
 }
+
+// What the app does at start (main.tsx): the features handle the Bridge messages.
+setBridgePayloadDispatcher(dispatchBridgePayload);
 
 describe('CanvasArea', () => {
   beforeAll(async () => {

@@ -10,17 +10,19 @@ import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as projectClient from '../../api/project-client.ts';
-import { initI18n } from '../../i18n/i18n.ts';
-import { useSettingsStore } from '../../store/settings-store.ts';
-import { bridgeChannels, studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
-import { CanvasArea } from './canvas-area.tsx';
-import { useCanvasViewStore } from './canvas-view-store.ts';
+import { setBridgePayloadDispatcher } from '../../core/bridge-channel.ts';
+import { bridgeChannels, studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
 import {
   defaultInitialOpenFrames,
   type OpenFrame,
   setStoredOpenFrames,
-} from './open-frames-storage.ts';
+} from '../../core/open-frames-storage.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
+import { initI18n } from '../../i18n/i18n.ts';
+import { useSettingsStore } from '../../store/settings-store.ts';
+import { dispatchBridgePayload } from '../selection/bridge-payload-handlers.ts';
+import { CanvasArea } from './canvas-area.tsx';
 import { resetSessionProbeCache } from './session-select.tsx';
 import { StatusBar } from './status-bar.tsx';
 
@@ -86,6 +88,9 @@ function resetTestStores() {
     activeOpenFrameId: 'default',
   });
 }
+
+// What the app does at start (main.tsx): the features handle the Bridge messages.
+setBridgePayloadDispatcher(dispatchBridgePayload);
 
 describe('CanvasMultiFrame [WP-4.00]', () => {
   beforeAll(async () => {

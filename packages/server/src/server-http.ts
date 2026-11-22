@@ -17,6 +17,7 @@ import {
   type StartServerOptions,
 } from './server-config.ts';
 import { startBuildCheck } from './services/build-check/build-check.ts';
+import { createClassEditResolver } from './services/edit/class-edits.ts';
 import type { ProjectService } from './services/project/project-service.ts';
 import { createProjectReader } from './services/workspace/project-reader.ts';
 import { createStyleStack } from './stacks/style/index.ts';
@@ -93,6 +94,15 @@ function buildCheckRouteDeps(ctx: InitializedContext) {
 function sourceRouteDeps(ctx: InitializedContext, getProjectRoot: () => string | undefined) {
   return {
     sourceEditorService: ctx.sourceEditorService,
+    classEdits: createClassEditResolver({
+      theme: () => ctx.projectService.theme(),
+      project: () => {
+        const info = ctx.projectService.getProjectInfo();
+        return info.ok
+          ? ok({ responsiveMode: info.value.responsiveMode, styling: info.value.support.styling })
+          : info;
+      },
+    }),
     historyService: ctx.historyService,
     getProjectRoot,
     getStyling: () => {

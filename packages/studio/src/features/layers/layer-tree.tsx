@@ -3,8 +3,8 @@ import type { ElementRef, TreeNode } from '@kumicraft/shared';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { LayerTreeRow } from './layer-tree-row.tsx';
 import { computeVisibleNodes, foldedByDefault, type VisibleNodeMeta } from './layer-tree-utils.ts';
 import { useLayerTreeSelection } from './use-layer-tree-selection.ts';

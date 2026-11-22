@@ -1,6 +1,6 @@
 // The margin / padding box (P5): the four sides of each drawn around the element, one small
 // typed field per side with the usual values as suggestions (spec-log #123). The "all sides" fields stay as ordinary fields above the box.
-import type { PropertyId } from '@kumicraft/shared';
+import type { PropertyId } from '@kumicraft/style-tailwind';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 

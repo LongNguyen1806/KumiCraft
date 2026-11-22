@@ -3,8 +3,8 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { applyStyle } from '../../api/style-client.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
 import { initI18n } from '../../i18n/i18n.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useStyleCommit } from './use-style-commit.ts';
 
 vi.mock('../../api/style-client.ts', () => ({

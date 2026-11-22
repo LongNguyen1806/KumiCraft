@@ -2,8 +2,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
-import { useCanvasViewStore } from './canvas-view-store.ts';
 import {
   CanvasZoomSlider,
   fitZoomForFocus,

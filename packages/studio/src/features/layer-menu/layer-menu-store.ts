@@ -2,7 +2,7 @@
 import type { BridgeLayerMenuPayload } from '@kumicraft/shared';
 import { create } from 'zustand';
 
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
 
 export type LayerMenuState = {
   readonly menu?: BridgeLayerMenuPayload | undefined;

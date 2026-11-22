@@ -1,31 +1,30 @@
 // Main Inspector Panel component (SPEC-04 section 9 M-IN, R-IN-10..20).
+import type { EditableAttr, ElementRef, ElementSource, ThemeInfo } from '@kumicraft/shared';
+import { parseLocString, primarySystem, projectBreakpoints } from '@kumicraft/shared';
 import type {
   ClassContext,
   ClassToken,
   ClassValue,
-  EditableAttr,
-  ElementRef,
-  ElementSource,
   PropertyId,
   Scope,
-  ThemeInfo,
-} from '@kumicraft/shared';
-import { parseClasses, parseLocString, primarySystem, projectBreakpoints } from '@kumicraft/shared';
+} from '@kumicraft/style-tailwind';
+import { parseClasses } from '@kumicraft/style-tailwind';
 import { type ReactNode, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useProjectInfo } from '../../core/project-store.ts';
 import { errorText } from '../../routes/error-text.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { useOpenInEditor } from '../editor/use-open-in-editor.ts';
 import { FreeFramePageWarning, isDraftFile } from '../free-frame/free-frame-page-warning.tsx';
 import { FreeFrameSection } from '../free-frame/free-frame-section.tsx';
 import { FreeFrameToggle } from '../free-frame/free-frame-toggle.tsx';
-import { useProjectInfo } from '../project/project-store.ts';
 import { useEditMode } from '../project/use-edit-mode.ts';
 import { useStyleEditable } from '../project/use-style-edit.ts';
 import { A11yHintsSection } from './components/a11y-hints-section.tsx';
 import { AttributesEditorSection } from './components/attributes-editor.tsx';
 import { ComponentPartGate } from './components/component-part-gate.tsx';
+import { CssStyleEditor } from './components/css-style-editor.tsx';
 import { ElementContentSections } from './components/element-content-sections.tsx';
 import { ElementPath } from './components/element-path.tsx';
 import { InspectorHeader } from './components/inspector-header.tsx';
@@ -33,7 +32,6 @@ import { isColorProperty, resolveFieldOptions } from './components/inspector-pro
 import { InteractionSection } from './components/interaction/interaction-section.tsx';
 import { OtherClassesSection } from './components/other-classes-section.tsx';
 import { ScreenAskBar } from './components/screen-scope-controls.tsx';
-import { CssStyleEditor } from './components/style-sources-section.tsx';
 import { TagAttributesSection } from './components/tag-attributes-section.tsx';
 import { isLinkMissingHref, TagTypeRow } from './components/tag-type-row.tsx';
 import { ViewOnlyInspector } from './components/view-only-inspector.tsx';
@@ -43,8 +41,8 @@ import {
 } from './inspector-editable-sections.tsx';
 import { MultiInspectorView } from './multi-inspector-view.tsx';
 import type { InspectorTarget } from './types.ts';
+import type { UseInspectorTargetOptions } from './types.ts';
 import { useAttributeEdit } from './use-attribute-edit.ts';
-import type { UseInspectorTargetOptions } from './use-inspector-target.ts';
 import { useInspectorTarget } from './use-inspector-target.ts';
 import { type BatchPropEntry, useLiveEdit } from './use-live-edit.ts';
 import { DEFAULT_THEME } from './use-project-theme.ts';

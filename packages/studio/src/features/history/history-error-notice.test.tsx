@@ -3,9 +3,9 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
+import { useHistoryStore } from '../../core/history-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { HistoryErrorNotice } from './history-error-notice.tsx';
-import { useHistoryStore } from './history-store.ts';
 
 describe('HistoryErrorNotice [R-HI-10]', () => {
   beforeAll(async () => {

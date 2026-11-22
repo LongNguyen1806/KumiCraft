@@ -1,12 +1,6 @@
 // Applies Tailwind placement rules to the root JSX elements of a snippet (R-FF-11, R-FF-12).
-import {
-  applyPlacement,
-  err,
-  FREE_STACK_OFFSET_PX,
-  ok,
-  type Placement,
-  type Result,
-} from '@kumicraft/shared';
+import { err, ok, type Placement, type Result } from '@kumicraft/shared';
+import { applyPlacement, FREE_STACK_OFFSET_PX } from '@kumicraft/style-tailwind';
 import MagicString from 'magic-string';
 
 import {

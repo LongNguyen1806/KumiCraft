@@ -11,10 +11,10 @@ import {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { applyStyle } from '../../api/style-client.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { sendStyleChange } from '../../core/edits.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { useThemeStore } from '../inspector/use-project-theme.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import type { StyleState } from './style-reading.ts';
 import type { StyleTarget } from './style-target-store.ts';
 
@@ -70,7 +70,7 @@ export function useStyleCommit(ctx: StyleCommitContext): {
     if (ctx.state === undefined) return;
     setError(undefined);
     try {
-      await applyStyle({
+      await sendStyleChange({
         probe: ctx.state.probe,
         tag: ctx.tag,
         change: buildStyleChangePayload(ctx, property, value, stateOverride, theme),

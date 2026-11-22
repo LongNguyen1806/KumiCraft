@@ -1,6 +1,7 @@
 // The parts of the Inspector above an element's styles: text runs, component props, data rows and
 // icon (split from inspector-panel.tsx in QA K9.8-1).
-import type { ClassValue, ElementSource, PropertyId } from '@kumicraft/shared';
+import type { ElementSource } from '@kumicraft/shared';
+import type { ClassValue, PropertyId } from '@kumicraft/style-tailwind';
 
 import { ComponentPropsSection } from './component-props-section.tsx';
 import { DataGridSection } from './data-grid-section.tsx';

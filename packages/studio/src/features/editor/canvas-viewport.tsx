@@ -1,11 +1,12 @@
 import { type Frame, type LoginSession, type RunnerStatus } from '@kumicraft/shared';
 import { useEffect, useMemo, useRef } from 'react';
 
+import { useCanvasNavigation } from '../../core/canvas-navigation.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useProjectInfo } from '../../core/project-store.ts';
+import type { CanvasMode } from '../../core/selection-store.ts';
 import { RuntimeErrorList } from '../canvas-errors/runtime-error-list.tsx';
-import { useProjectInfo } from '../project/project-store.ts';
-import type { CanvasMode } from '../selection/selection-store.ts';
 import { CanvasMultiFrame } from './canvas-multi-frame.tsx';
-import { useCanvasNavigation } from './canvas-navigation.ts';
 import { CanvasPanSurface, PannedContent } from './canvas-pan.tsx';
 import {
   ErrorView,
@@ -14,13 +15,12 @@ import {
   StoppedView,
   UntrustedPrompt,
 } from './canvas-prompts.tsx';
-import { useCanvasViewStore } from './canvas-view-store.ts';
 import { fitZoomForFocus, fitZoomForFrames, useElementSize, type Zoom } from './canvas-zoom.tsx';
 
 const FALLBACK_FRAME = { id: 'desktop', label: 'Desktop', width: 1280, height: 800 };
+import { useFrameFocusActive, useFrameFocusStore } from '../../core/frame-focus-store.ts';
+import type { OpenFrame } from '../../core/open-frames-storage.ts';
 import { FrameFocusControls } from './frame-focus-controls.tsx';
-import { useFrameFocusActive, useFrameFocusStore } from './frame-focus-store.ts';
-import type { OpenFrame } from './open-frames-storage.ts';
 import { useExpressPugReload } from './use-express-pug-reload.ts';
 
 export type CanvasContentProps = {

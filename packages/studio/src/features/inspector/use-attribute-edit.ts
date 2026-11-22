@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ApiError } from '../../api/http.ts';
-import { editSource, editSourceBatch } from '../../api/source-client.ts';
+import { sendEdit, sendEdits } from '../../core/edits.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import type { InspectorTarget } from './types.ts';
 
@@ -69,8 +69,8 @@ export function useAttributeEdit(
       if (edits === undefined) return;
       setIsSaving(true);
       try {
-        if (edits.length === 1 && edits[0] !== undefined) await editSource({ edit: edits[0] });
-        else await editSourceBatch({ edits });
+        if (edits.length === 1 && edits[0] !== undefined) await sendEdit({ edit: edits[0] });
+        else await sendEdits({ edits });
         setError(undefined);
         refresh();
       } catch (err) {

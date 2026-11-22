@@ -1,13 +1,15 @@
 // MCP tools that change the element structure, pages, theme and history (R-AG-19, round 7b). Edits
 // go through the same API as the Studio, so each is one history step the Studio can undo.
 import {
-  AddPageSchema,
   LIBRARY_BLOCKS,
   LIBRARY_STYLES,
   type LibraryStyle,
   lookFromTheme,
-  primarySystem,
   renderBlock,
+} from '@kumicraft/content';
+import {
+  AddPageSchema,
+  primarySystem,
   StylingReportSchema,
   ThemeEditSchema,
   ThemeInfoSchema,

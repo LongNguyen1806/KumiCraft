@@ -2,7 +2,7 @@
 import { z } from 'zod';
 
 import { FeatureIdSchema } from './features.ts';
-import { ALLOWED_GOOGLE_FONTS } from './library/fonts.ts';
+import { ALLOWED_GOOGLE_FONTS } from './fonts.ts';
 import { RelPathSchema } from './rel-path.ts';
 import { ResponsiveModeSchema } from './responsive.ts';
 import { AppErrorSchema } from './result.ts';

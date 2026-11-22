@@ -5,7 +5,8 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { LIBRARY_BLOCKS, renderBlock, type StructureEdit } from '@kumicraft/shared';
+import { LIBRARY_BLOCKS, renderBlock } from '@kumicraft/content';
+import { type StructureEdit } from '@kumicraft/shared';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -13,6 +14,7 @@ import { createHttpApp } from '../../../../adapters/http/create-http-app.ts';
 import { resolveTemplateDir } from '../../../../index.ts';
 import { createHistoryService } from '../../../../kernel/history/history-service.ts';
 import { createSessionInfoProvider } from '../../../../kernel/session.ts';
+import { testClassEdits } from '../../../../services/edit/class-edits-test-support.ts';
 import { nodeFs } from '../../../../services/workspace/test-support.ts';
 import { jsxFeatures } from '../features.ts';
 import { createSourceEditorService } from '../source-editor-service.ts';
@@ -59,6 +61,7 @@ describe('AC-05: Library Card, move, duplicate, remove on the template [AC-05]',
       }),
       sourceRoutes: {
         sourceEditorService: createSourceEditorService({ fs: nodeFs }, { sourceDir: 'src' }),
+        classEdits: testClassEdits(),
         historyService,
         getProjectRoot: () => tmpDir,
         getViewFeatures: () => jsxFeatures,

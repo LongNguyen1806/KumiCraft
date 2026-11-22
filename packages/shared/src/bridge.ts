@@ -1,10 +1,10 @@
 // Schemas and types for Bridge protocol (SPEC-03 section 7, V-110..114).
 import { z } from 'zod';
 
+import { PlacementSchema } from './placement.ts';
 import { RelPathSchema } from './rel-path.ts';
 import { InspectorPreviewStateSchema } from './responsive.ts';
 import { ElementGuardSchema, InsertTargetSchema } from './source.ts';
-import { PlacementSchema } from './tailwind/free-position.ts';
 
 export const ElementRefSchema = z.strictObject({
   loc: z.string().min(1),

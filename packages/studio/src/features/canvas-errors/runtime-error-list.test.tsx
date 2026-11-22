@@ -2,8 +2,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { useCanvasErrorStore } from '../../core/canvas-error-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
-import { useCanvasErrorStore } from './canvas-error-store.ts';
 import { RuntimeErrorList } from './runtime-error-list.tsx';
 
 beforeAll(async () => {

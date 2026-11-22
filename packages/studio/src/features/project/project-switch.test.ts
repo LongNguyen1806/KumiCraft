@@ -2,11 +2,11 @@
 import type { ProjectInfo } from '@kumicraft/shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { useHistoryStore } from '../../core/history-store.ts';
+import { useProjectStore } from '../../core/project-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { useChatStore } from '../chat/chat-store.ts';
 import { useFilesStore } from '../files/files-store.ts';
-import { useHistoryStore } from '../history/history-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
-import { useProjectStore } from './project-store.ts';
 import { watchProjectSwitch } from './project-switch.ts';
 
 const project = (id: string): ProjectInfo => ({

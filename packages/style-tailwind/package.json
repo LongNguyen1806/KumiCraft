@@ -1,0 +1,14 @@
+{
+  "name": "@kumicraft/style-tailwind",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The Tailwind class model as pure functions, used by the Studio (read, preview) and the server (the class an edit writes)",
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@kumicraft/shared": "workspace:*"
+  }
+}

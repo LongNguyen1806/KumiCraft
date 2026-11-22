@@ -1,7 +1,7 @@
 // Structure action custom hook (SPEC-04 R-SE-24..28).
 import { useState } from 'react';
 
-import { useSelectionStore } from '../../selection/selection-store.ts';
+import { useSelectionStore } from '../../../core/selection-store.ts';
 import {
   executeDuplicate,
   executeMove,

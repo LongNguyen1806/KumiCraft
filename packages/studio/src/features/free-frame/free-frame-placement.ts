@@ -1,6 +1,6 @@
 // Placement for duplicate and paste landing inside a free frame (R-FF-12).
 import type { InsertTarget, Placement } from '@kumicraft/shared';
-import { FREE_STACK_OFFSET_PX, readClassPx } from '@kumicraft/shared';
+import { FREE_STACK_OFFSET_PX, readClassPx } from '@kumicraft/style-tailwind';
 
 import { fetchElementSourceByLoc } from '../../api/source-client.ts';
 import { freeFrameOfRef } from './free-context.ts';

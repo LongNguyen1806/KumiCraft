@@ -1,11 +1,6 @@
 // Color palette suggestion drawer/panel in Brand colors group (TK-70).
-import {
-  generatePalette,
-  type PaletteSwatch,
-  type ThemeEdit,
-  type ThemeInfo,
-  type ThemeToken,
-} from '@kumicraft/shared';
+import { generatePalette, type PaletteSwatch } from '@kumicraft/content';
+import { type ThemeEdit, type ThemeInfo, type ThemeToken } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

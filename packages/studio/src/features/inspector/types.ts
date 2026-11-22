@@ -3,10 +3,12 @@ import type {
   Breakpoint,
   ElementRef,
   ElementSource,
+  Frame,
   InspectorPreviewState,
   InteractionState,
-  Scope,
+  ResponsiveMode,
 } from '@kumicraft/shared';
+import type { Scope } from '@kumicraft/style-tailwind';
 
 export type InspectorLockReason =
   'classExpression' | 'classDuplicate' | 'outsideSource' | 'tooLarge';
@@ -59,3 +61,10 @@ export type InspectorTarget =
       readonly setGroupRef?: ((ref?: ElementRef) => void) | undefined;
       readonly refresh: () => void;
     };
+
+export type UseInspectorTargetOptions = {
+  readonly frame?: Frame | undefined;
+  readonly primaryFrame?: Frame | undefined;
+  readonly responsiveMode?: ResponsiveMode | undefined;
+  readonly enabled?: boolean | undefined;
+};

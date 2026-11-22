@@ -3,10 +3,10 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { editSource, fetchElementSource } from '../../api/source-client.ts';
+import { BridgeChannel } from '../../core/bridge-channel.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { useComponentsStore } from '../components-panel/use-project-components.ts';
 import { useDesignStore } from '../design/design-store.ts';
-import { BridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { useCanvasTextEdit } from './use-canvas-text-edit.ts';
 
 vi.mock('../../api/source-client.ts', () => ({

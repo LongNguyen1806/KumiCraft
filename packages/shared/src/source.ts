@@ -1,7 +1,9 @@
 // Schemas and types for Source Editor (SPEC-03 section 5.5, SPEC-04 section 6).
 import { z } from 'zod';
 
-import { KitComponentIdSchema } from './library/kit-types.ts';
+import { SetClassesEditSchema } from './class-intent.ts';
+import { KitComponentIdSchema } from './kit-types.ts';
+import { PlacementSchema } from './placement.ts';
 import { RelPathSchema } from './rel-path.ts';
 import {
   DataArrayRowSchema,
@@ -17,7 +19,6 @@ import {
   WrapTextEditSchema,
 } from './source-edits-extra.ts';
 import { SetTextRunEditSchema, TextRunNodeSchema } from './source-interaction.ts';
-import { PlacementSchema } from './tailwind/free-position.ts';
 export * from './source-data.ts';
 export * from './source-edits-extra.ts';
 export * from './source-interaction.ts';
@@ -324,6 +325,7 @@ export const AnyEditSchema = z.discriminatedUnion('kind', [
   WrapTextEditSchema,
   ReplaceSvgEditSchema,
   SetDataArrayEditSchema,
+  SetClassesEditSchema,
 ]);
 export type AnyEdit = z.infer<typeof AnyEditSchema>;
 
@@ -360,8 +362,15 @@ export const AttributeLevelEditSchema = z.discriminatedUnion('kind', [
 ]);
 export type AttributeLevelEdit = z.infer<typeof AttributeLevelEditSchema>;
 
+/** An edit of a batch: attribute level, or classes sent as intents (resolved by the server). */
+export const BatchEditSchema = z.discriminatedUnion('kind', [
+  ...AttributeLevelEditSchema.options,
+  SetClassesEditSchema,
+]);
+export type BatchEdit = z.infer<typeof BatchEditSchema>;
+
 export const BatchEditRequestSchema = z.strictObject({
-  edits: z.array(AttributeLevelEditSchema).min(1).max(50),
+  edits: z.array(BatchEditSchema).min(1).max(50),
   coalesceKey: z.string().max(200).optional(),
 });
 export type BatchEditRequest = z.infer<typeof BatchEditRequestSchema>;

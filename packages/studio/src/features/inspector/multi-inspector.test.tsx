@@ -1,11 +1,13 @@
 // Tests for MultiInspectorView (SPEC-04 M-IN, Scenarios #13..#15 [R-CB-15]).
-import type { ClassContext, ElementRef, ElementSource } from '@kumicraft/shared';
+import type { ElementRef, ElementSource } from '@kumicraft/shared';
 import { BREAKPOINT_WIDTHS } from '@kumicraft/shared';
+import type { ClassContext } from '@kumicraft/style-tailwind';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';
+import { writtenClass } from '../../api/written-class-test-support.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { MultiInspectorView } from './multi-inspector-view.tsx';
 import type { MultiTarget } from './types.ts';
@@ -126,13 +128,13 @@ describe('MultiInspectorView (Scenarios #13..#15) [R-CB-15]', () => {
     expect(callArg?.edits).toHaveLength(3);
     expect(callArg?.edits[0]?.loc).toBe(ref1.loc);
     expect(callArg?.edits[0]?.before).toBe('p-4 bg-white');
-    expect(callArg?.edits[0]?.after).toContain('p-6');
+    expect(writtenClass(callArg?.edits[0])).toContain('p-6');
     expect(callArg?.edits[1]?.loc).toBe(ref2.loc);
     expect(callArg?.edits[1]?.before).toBe('p-4 bg-white');
-    expect(callArg?.edits[1]?.after).toContain('p-6');
+    expect(writtenClass(callArg?.edits[1])).toContain('p-6');
     expect(callArg?.edits[2]?.loc).toBe(ref3.loc);
     expect(callArg?.edits[2]?.before).toBe('p-2 bg-white');
-    expect(callArg?.edits[2]?.after).toContain('p-6');
+    expect(writtenClass(callArg?.edits[2])).toContain('p-6');
   });
 
   it('Scenario 15: 1 element with className expression renders inspector-multi-locked and disables inputs [R-CB-15]', () => {

@@ -3,9 +3,9 @@ import type { Frame } from '@kumicraft/shared';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { BRIDGE_READY_TIMEOUT_MS, IframeFrame } from './canvas-frame.tsx';
 
 const ORIGIN = 'http://127.0.0.1:5173';

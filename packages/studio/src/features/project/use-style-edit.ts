@@ -1,7 +1,7 @@
 // Hook to determine if visual style editing is available (SPEC-04 Round S1, R-PJ-02).
 import { primarySystem, type ProjectInfo } from '@kumicraft/shared';
 
-import { useProjectStore } from './project-store.ts';
+import { useProjectStore } from '../../core/project-store.ts';
 
 export function isStyleEditable(project?: ProjectInfo): boolean {
   if (project === undefined) return true;

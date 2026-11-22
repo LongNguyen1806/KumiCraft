@@ -6,9 +6,9 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import * as eventsClient from '../../api/events-client.ts';
 import * as projectClient from '../../api/project-client.ts';
 import * as sourceClient from '../../api/source-client.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { useDesignStore } from '../design/design-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { ComponentsPanel } from './components-panel.tsx';
 import { useComponentsStore } from './use-project-components.ts';
 

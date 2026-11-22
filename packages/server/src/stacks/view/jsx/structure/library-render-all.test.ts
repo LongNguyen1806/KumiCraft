@@ -1,5 +1,6 @@
 // Exhaustive validation of all blocks x all variants x 7 style systems (Test 9, TK-43, TK-47).
-import { LIBRARY_BLOCKS, lookFromTheme, renderBlock, STYLE_SYSTEM_IDS } from '@kumicraft/shared';
+import { LIBRARY_BLOCKS, lookFromTheme, renderBlock } from '@kumicraft/content';
+import { STYLE_SYSTEM_IDS } from '@kumicraft/shared';
 import { describe, expect, it } from 'vitest';
 
 import { parseJsxAst } from '../../../../lib/ast-helpers.ts';

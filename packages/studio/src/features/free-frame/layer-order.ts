@@ -6,8 +6,8 @@ import {
   type TreeNode,
 } from '@kumicraft/shared';
 
-import { applyStructureEdit } from '../../api/source-client.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { sendStructureEdit } from '../../core/edits.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { type CommandTarget, runStructureOp } from '../structure/structure-commands.ts';
 
 export type LayerOrderCommand = 'front' | 'forward' | 'backward' | 'back';
@@ -92,7 +92,7 @@ export async function runLayerOrder(
   const commandTarget: CommandTarget = { ref, tag };
   return runStructureOp(
     commandTarget,
-    () => applyStructureEdit({ kind: 'move', elements: [{ loc: ref.loc, tag }], target }),
+    () => sendStructureEdit({ kind: 'move', elements: [{ loc: ref.loc, tag }], target }),
     (res) => {
       const newLoc = res.locs[0];
       if (newLoc) {

@@ -3,8 +3,8 @@ import { ListMinus, ListPlus } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { applyStructureEdit } from '../../../api/source-client.ts';
-import { useSelectionStore } from '../../selection/selection-store.ts';
+import { sendStructureEdit } from '../../../core/edits.ts';
+import { useSelectionStore } from '../../../core/selection-store.ts';
 import type { InspectorTarget } from '../types.ts';
 import { findListContext, type ItemContext } from './list-context.ts';
 
@@ -12,7 +12,7 @@ async function addListItem(ctx: ItemContext, isVi: boolean): Promise<void> {
   const jsx = ctx.newItemJsx(isVi);
   const res =
     ctx.itemTargetRef !== undefined
-      ? await applyStructureEdit({
+      ? await sendStructureEdit({
           kind: 'insert',
           target: {
             kind: 'sibling',
@@ -22,7 +22,7 @@ async function addListItem(ctx: ItemContext, isVi: boolean): Promise<void> {
           jsx,
         })
       : ctx.listParentRef !== undefined
-        ? await applyStructureEdit({
+        ? await sendStructureEdit({
             kind: 'insert',
             target: {
               kind: 'child',
@@ -111,7 +111,7 @@ export function InspectorListActions({
         const item = ctx.itemTargetRef;
         if (item === undefined) return;
         void runAction(async () => {
-          await applyStructureEdit({
+          await sendStructureEdit({
             kind: 'remove',
             elements: [{ loc: item.loc, tag: ctx.itemTag }],
           });

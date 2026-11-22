@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 // Unit tests for Inspector spacing rhythm offbeat dot and suggestion ordering (TK-72, test 23).
-import type { ClassContext, Scope } from '@kumicraft/shared';
-import { BREAKPOINT_WIDTHS, parseClasses } from '@kumicraft/shared';
+import { BREAKPOINT_WIDTHS } from '@kumicraft/shared';
+import type { ClassContext, Scope } from '@kumicraft/style-tailwind';
+import { parseClasses } from '@kumicraft/style-tailwind';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 

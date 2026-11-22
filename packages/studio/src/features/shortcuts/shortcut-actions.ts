@@ -2,19 +2,19 @@
 import type { ShortcutAction } from '@kumicraft/shared';
 
 import { openInEditor } from '../../api/editor-client.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { exitFrameFocus, stepFrame, toggleFrameFocus } from '../../core/frame-focus-store.ts';
+import { useHistoryStore } from '../../core/history-store.ts';
+import { useProjectStore } from '../../core/project-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { copySelection, cutSelection, pasteClipboard } from '../clipboard/clipboard-actions.ts';
 import { useDesignStore } from '../design/design-store.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { exitFrameFocus, stepFrame, toggleFrameFocus } from '../editor/frame-focus-store.ts';
 import { usePanelLayoutStore } from '../editor/use-panel-layout.ts';
 import { nudgeDelta, nudgeSelection } from '../free-frame/free-nudge.ts';
-import { useHistoryStore } from '../history/history-store.ts';
 import { siblingMoveTarget } from '../inspector/sibling-move.ts';
 import { useLayerMenuStore } from '../layer-menu/layer-menu-store.ts';
-import { useProjectStore } from '../project/project-store.ts';
 import { isStyleEditable } from '../project/use-style-edit.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import {
   executeDuplicate,
   executeMove,

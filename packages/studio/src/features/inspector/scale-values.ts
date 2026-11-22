@@ -1,7 +1,7 @@
 // Properties whose value is an open scale (spec-log #123): the Inspector lets the user type any
 // value Tailwind accepts (`mb-13`, `w-1/3`, `p-[13px]`), with the usual values as suggestions,
 // instead of a select of a few. A value Tailwind would ignore is not written.
-import type { PropertyId } from '@kumicraft/shared';
+import type { PropertyId } from '@kumicraft/style-tailwind';
 
 type ScaleKind = 'spacing' | 'size' | 'border' | 'zIndex' | 'gridCols' | 'opacity' | 'named';
 

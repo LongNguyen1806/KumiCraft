@@ -2,8 +2,8 @@
 import type { BridgeFreeMeasurePayload, ElementRef } from '@kumicraft/shared';
 
 import { fetchElementSourceByLoc } from '../../api/source-client.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 
 const MEASURE_TIMEOUT_MS = 2000;
 

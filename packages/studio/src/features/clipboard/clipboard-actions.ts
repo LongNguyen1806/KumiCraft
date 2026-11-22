@@ -1,11 +1,12 @@
 import { type ElementRef, INSERT_JSX_MAX_BYTES, type TreeNode } from '@kumicraft/shared';
 
-import { applyStructureEdit, fetchElementText } from '../../api/source-client.ts';
+import { fetchElementText } from '../../api/source-client.ts';
+import { placementTailwindMajor } from '../../core/canvas-view-store.ts';
+import { sendStructureEdit } from '../../core/edits.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';
-import { placementTailwindMajor } from '../editor/canvas-view-store.ts';
 import { freeStackPlacement } from '../free-frame/free-frame-placement.ts';
 import { determineInsertTarget } from '../library/insert-block.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag, runStructureOp } from '../structure/structure-commands.ts';
 import { useStructureErrorStore } from '../structure/structure-error-store.ts';
 import { type ClipboardEntry, useClipboardStore } from './clipboard-store.ts';
@@ -104,7 +105,7 @@ export async function cutSelection(): Promise<boolean> {
 
   return runStructureOp(
     { ref: primaryRef, tag },
-    () => applyStructureEdit({ kind: 'remove', elements }),
+    () => sendStructureEdit({ kind: 'remove', elements }),
     () => {
       useSelectionStore.getState().clearSelection();
     },
@@ -167,7 +168,7 @@ export async function pasteClipboard(): Promise<boolean> {
   const tailwindMajor = placementTailwindMajor(placement);
   return runStructureOp(
     { ref: primaryRef, tag },
-    () => applyStructureEdit({ kind: 'insert', target, jsx: text, from, placement, tailwindMajor }),
+    () => sendStructureEdit({ kind: 'insert', target, jsx: text, from, placement, tailwindMajor }),
     (res) => {
       // Every pasted element has a loc of its own, so each is the first instance of it.
       const newRefs = res.locs.map((loc) => ({ loc, index: 0 }));

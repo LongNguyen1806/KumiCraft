@@ -2,12 +2,12 @@
 // while session 2 had to show the landing page, but the draft was one for all frames.
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useCanvasViewStore } from './canvas-view-store.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
 import {
   getStoredOpenFrames,
   isDraftAddress,
   OPEN_FRAMES_STORAGE_PREFIX,
-} from './open-frames-storage.ts';
+} from '../../core/open-frames-storage.ts';
 
 const store = () => useCanvasViewStore.getState();
 const frame = (id: string) => store().openFrames.find((f) => f.id === id);

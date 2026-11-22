@@ -93,6 +93,28 @@ Làm **trọn trong một đợt** (chủ dự án, 2026-11-22), không tách du
 
 Thứ tự Đợt 1 – 4 giữ như đã chốt trong nhan-dien-du-an.md (Vite cũ → Next → template phía server → Vue / Angular), thêm Đợt S trước Đợt 1 vì nó dọn đường sửa chung mà mọi ngôn ngữ mới cần.
 
+Từ Đợt 1, mỗi đợt làm **trọn một lần**, không chia thành các phần nhỏ để duyệt riêng (chủ dự án, 2026-11-22).
+
+**Kết quả Đợt S (2026-11-22, spec-log #162):**
+
+| Xong khi                                      | Kết quả                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Studio không còn gọi `setClassName` cho style | Đạt. Các nơi sau gửi edit `setClasses` (danh sách bước ý định, `shared/src/class-intent.ts`): Inspector (một và nhiều phần tử), kéo, đổi cỡ, dịch bằng phím, căn hàng, ô X/Y/W/H, bật / tắt khung tự do, ô gõ class, nút `group`. Server tính class bằng chính các hàm của `@kumicraft/style-tailwind` (`services/edit/class-edits.ts`), rồi ghi qua bộ sửa JSX như cũ (kiểm E017, một bước Undo). Studio chỉ còn nhắc `setClassName` ở nhãn lịch sử |
+| Một bộ test style chạy cho cả Tailwind và CSS | Đạt. `stacks/style/style-systems.contract.test.ts`: 17 ca (khoảng cách, cỡ, chữ, màu, viền, độ mờ, từ khóa) chạy cho cả hai hệ trên dự án thật: ghi, đọc lại đúng giá trị, bỏ giá trị thì đọc lại trống                                                                                                                                                                                                                                              |
+| Danh sách nợ Studio giảm                      | Đạt. Vòng phụ thuộc của Studio: 69 → 0; danh sách nợ (`.dependency-cruiser-known-violations.json`) rỗng. Thêm quy tắc `studio-core-not-features` và luật lint "tính năng gửi sửa qua `core/edits.ts`"                                                                                                                                                                                                                                                |
+
+Đã làm trong đợt:
+
+- Package `@kumicraft/style-tailwind` (từ `shared/src/tailwind`, cộng phần tính class theo màn hình chuyển từ Studio) và `@kumicraft/content` (thư viện khối). Thư viện khối phải tách ngay vì nó dùng Tailwind: để trong `shared` thì `shared` và `style-tailwind` phụ thuộc vòng. Việc đổi khối sang cây trung lập vẫn ở Đợt 4b.
+- `studio/src/core`: dự án, phần tử chọn, kênh Bridge, khung Canvas, Undo, lỗi Canvas, kéo thả, `edits.ts`. Kênh Bridge không import tính năng: `main.tsx` đăng ký hàm xử lý tin nhắn (`setBridgePayloadDispatcher`); store khung Canvas gửi công cụ qua `setToolSink`.
+
+Chưa làm, ghi lại để không quên:
+
+- CSS vẫn đi `/style/apply` với ý định theo thuộc tính CSS; chưa gộp với Tailwind thành một `StyleSystem.plan` trong kernel. Hai đường đã có chung bộ test ở trên.
+- Cài đặt người dùng vẫn ở `store/settings-store.ts` (không gây vòng nên chưa chuyển).
+- Quy tắc "tính năng chỉ lộ ra qua `index.ts`" chưa áp dụng.
+- Bộ E2E chưa chạy cho Đợt S (chờ chủ dự án cho chạy).
+
 ## 5. Điều kiện để kiến trúc đạt 9/10
 
 Hai điểm bản thử chưa trả lời được (03 mục 11) trở thành điều kiện có số đo:

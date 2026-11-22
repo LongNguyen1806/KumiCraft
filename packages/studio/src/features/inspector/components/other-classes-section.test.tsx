@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
-import type { ClassContext } from '@kumicraft/shared';
-import { BREAKPOINT_WIDTHS, parseClasses } from '@kumicraft/shared';
+import { BREAKPOINT_WIDTHS } from '@kumicraft/shared';
+import type { ClassContext } from '@kumicraft/style-tailwind';
+import { parseClasses } from '@kumicraft/style-tailwind';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 

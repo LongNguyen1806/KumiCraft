@@ -1,7 +1,7 @@
 // Pan tool: dragging the Canvas moves the view, the page gets no click (R-DT-16).
 import { type PointerEvent, type ReactNode, useRef, useState } from 'react';
 
-import { useCanvasViewStore } from './canvas-view-store.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
 
 type Point = { readonly x: number; readonly y: number };
 

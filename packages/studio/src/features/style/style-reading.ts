@@ -10,8 +10,8 @@ import {
 import { useEffect, useState } from 'react';
 
 import { readStyle } from '../../api/style-client.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 
 export const PROBE_TIMEOUT_MS = 2_000;
 const PROBED_LONGHANDS = [

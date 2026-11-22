@@ -1,13 +1,14 @@
 // Interactive tile item in Library Panel (variant picker, favorite star, hover/focus SVG preview, + insert).
-import type { LibraryBlock, UiKitReport } from '@kumicraft/shared';
-import { supportsUiKitBlock } from '@kumicraft/shared';
+import type { LibraryBlock } from '@kumicraft/content';
+import { supportsUiKitBlock } from '@kumicraft/content';
+import type { UiKitReport } from '@kumicraft/shared';
 import { Plus, Star } from 'lucide-react';
 import { createElement, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useDndStore } from '../../core/dnd-store.ts';
 import { resources } from '../../i18n/i18n.ts';
-import { useDndStore } from '../dnd/dnd-store.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { getBlockIcon } from './library-icons.ts';
 import { previewAnchorOf, type PreviewHandler } from './library-preview-card.tsx';
 import { LibraryVariantMenu } from './library-variant-menu.tsx';

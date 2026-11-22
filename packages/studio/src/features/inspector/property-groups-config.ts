@@ -1,4 +1,4 @@
-import type { PropertyId } from '@kumicraft/shared';
+import type { PropertyId } from '@kumicraft/style-tailwind';
 import type { ParseKeys } from 'i18next';
 
 export type PropertyFieldDef = {

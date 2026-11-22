@@ -9,6 +9,8 @@ import type {
   ElementText,
   PageTree,
   Result,
+  SetClassesEdit,
+  SetClassNameEdit,
   SourceEdit,
   StructureEdit,
   StructureResult,
@@ -53,4 +55,12 @@ export interface SourceEditorService {
     edits: readonly AttributeLevelEdit[],
     onWritten?: (files: readonly WrittenFile[]) => void,
   ): Promise<Result<BatchEditResult>>;
+}
+
+/**
+ * Turns a class edit sent as intents into the classes it writes (03 section 4, ADR-A4). The routes
+ * resolve it before the view editor runs, so no editor has to know about intents.
+ */
+export interface ClassEditResolver {
+  resolve(edit: SetClassesEdit): Promise<Result<SetClassNameEdit>>;
 }

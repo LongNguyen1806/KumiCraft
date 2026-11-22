@@ -4,9 +4,9 @@ import { parseLocString } from '@kumicraft/shared';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { useLayerMenuStore } from './layer-menu-store.ts';
 
 export function fileComponentLabel(loc: string): string {

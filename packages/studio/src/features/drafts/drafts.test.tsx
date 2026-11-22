@@ -5,14 +5,14 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import * as eventsClient from '../../api/events-client.ts';
 import * as projectClient from '../../api/project-client.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { DesignBar } from '../design/design-bar.tsx';
 import { useDesignStore, useDesignTargetSync } from '../design/design-store.ts';
 import { computeIframeSrc } from '../editor/canvas-frame.tsx';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { PageSelect } from '../editor/page-select.tsx';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { DraftsPanel } from './drafts-panel.tsx';
 import { PromoteDraftDialog } from './promote-draft-dialog.tsx';
 

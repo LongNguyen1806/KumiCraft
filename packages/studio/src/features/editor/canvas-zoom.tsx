@@ -2,7 +2,7 @@
 import { type ChangeEvent, type RefObject, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { MAX_ZOOM, MIN_ZOOM, useCanvasViewStore } from './canvas-view-store.ts';
+import { MAX_ZOOM, MIN_ZOOM, useCanvasViewStore } from '../../core/canvas-view-store.ts';
 
 export type Zoom = number | 'fit';
 

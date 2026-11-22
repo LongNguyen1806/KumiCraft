@@ -1,19 +1,14 @@
 // Source insertion builder for form-from-source and table-from-source library blocks (TK-33..35).
-import {
-  type DataField,
-  generateFormFromFields,
-  generateTableFromFields,
-  lookFromTheme,
-  primarySystem,
-} from '@kumicraft/shared';
+import { generateFormFromFields, generateTableFromFields, lookFromTheme } from '@kumicraft/content';
+import { type DataField, primarySystem } from '@kumicraft/shared';
 
-import { applyStructureEdit } from '../../api/source-client.ts';
+import { placementTailwindMajor } from '../../core/canvas-view-store.ts';
+import { sendStructureEdit } from '../../core/edits.ts';
+import { useProjectStore } from '../../core/project-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { selectionAnchor } from '../design/selection-anchor.ts';
-import { placementTailwindMajor } from '../editor/canvas-view-store.ts';
 import { freeStackPlacement } from '../free-frame/free-frame-placement.ts';
 import { useThemeStore } from '../inspector/use-project-theme.ts';
-import { useProjectStore } from '../project/project-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
 import { determineInsertTarget, localizedBlockLang } from './insert-block.ts';
 import { getSelectedStyle } from './library-styles.ts';
@@ -107,7 +102,7 @@ export async function submitDataInsert(
   const { output } = built;
   // Into a free frame the block gets a free position, like any other insert (spec-log #143).
   const placement = await freeStackPlacement(target);
-  const res = await applyStructureEdit({
+  const res = await sendStructureEdit({
     kind: 'insert',
     target,
     jsx: output.jsx,

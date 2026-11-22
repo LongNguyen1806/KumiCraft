@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 // Turning a free frame off gives back what turning it on replaced, except what was moved or edited
 // since (spec-log #126).
-import type { AttributeLevelEdit } from '@kumicraft/shared';
+import type { BatchEdit } from '@kumicraft/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
@@ -30,9 +30,8 @@ const SNAPSHOT: FreeSnapshot = {
 const frame: CurrentElement = { loc: FRAME, tag: 'div', className: SNAPSHOT.frameAfter };
 const el = (loc: string, className: string): CurrentElement => ({ loc, tag: 'div', className });
 
-const classOf = (edits: readonly AttributeLevelEdit[], loc: string): string | undefined => {
-  const edit = edits.find((e) => e.kind === 'setClassName' && e.loc === loc);
-  return edit?.kind === 'setClassName' ? edit.after : undefined;
+const classOf = (edits: readonly BatchEdit[], loc: string): string | undefined => {
+  return writtenClass(edits.find((e) => e.kind === 'setClasses' && e.loc === loc));
 };
 
 describe('planFreeRestore [spec-log #126]', () => {
@@ -140,3 +139,4 @@ describe('free frame records [spec-log #126]', () => {
     expect(findFreeSnapshot('p1', FRAME, '')).toBeUndefined();
   });
 });
+import { writtenClass } from '../../api/written-class-test-support.ts';

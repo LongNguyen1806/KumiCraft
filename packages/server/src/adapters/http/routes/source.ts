@@ -1,17 +1,23 @@
 // Source Editor HTTP endpoints (SPEC-03 section 5.5, SPEC-04 section 6).
-import type { HistoryLabel, StructureEdit, StylingReport } from '@kumicraft/shared';
+import type {
+  AttributeLevelEdit,
+  HistoryLabel,
+  StructureEdit,
+  StylingReport,
+} from '@kumicraft/shared';
 import {
   BatchEditRequestSchema,
   EditRequestSchema,
   InteractionActionSchema,
   issuesToDetails,
+  ok,
   PAGE_TREE_MAX_DEPTH,
   RevealRequestSchema,
 } from '@kumicraft/shared';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
-import type { SourceEditorService } from '../../../kernel/editing.ts';
+import type { ClassEditResolver, SourceEditorService } from '../../../kernel/editing.ts';
 import type { ViewFeatures } from '../../../kernel/features.ts';
 import type { HistoryService } from '../../../kernel/history/history-service.ts';
 import type { FileSystemPort } from '../../../ports/file-system-port.ts';
@@ -20,6 +26,8 @@ import { VIEW_ONLY } from '../view-features.ts';
 
 export type SourceRoutesDeps = {
   readonly sourceEditorService: SourceEditorService;
+  /** Class edits sent as intents become the classes they write (03 section 4). */
+  readonly classEdits: ClassEditResolver;
   readonly historyService: HistoryService;
   readonly getProjectRoot: () => string | undefined;
   readonly getStyling?: (() => StylingReport | undefined) | undefined;
@@ -176,8 +184,14 @@ async function handleApplyEdit(
     return reply.status(200).send({ data: edited.value });
   }
 
-  const label: HistoryLabel = { key: `history:${edit.kind}`, params: { tag: edit.tag } };
-  const edited = await deps.sourceEditorService.applyEdit(projectRoot, edit, (file) => {
+  const resolved = edit.kind === 'setClasses' ? await deps.classEdits.resolve(edit) : ok(edit);
+  if (!resolved.ok) return sendError(reply, resolved.error);
+  const sourceEdit = resolved.value;
+  const label: HistoryLabel = {
+    key: `history:${sourceEdit.kind}`,
+    params: { tag: sourceEdit.tag },
+  };
+  const edited = await deps.sourceEditorService.applyEdit(projectRoot, sourceEdit, (file) => {
     deps.historyService.push({ label, coalesceKey, files: [file] });
   });
   if (!edited.ok) return sendError(reply, edited.error);
@@ -197,7 +211,13 @@ async function handleApplyBatchEdit(
     return sendError(reply, { code: 'E016', details: issuesToDetails(parsed.error.issues) });
   }
 
-  const { edits, coalesceKey } = parsed.data;
+  const { coalesceKey } = parsed.data;
+  const edits: AttributeLevelEdit[] = [];
+  for (const edit of parsed.data.edits) {
+    const resolved = edit.kind === 'setClasses' ? await deps.classEdits.resolve(edit) : ok(edit);
+    if (!resolved.ok) return sendError(reply, resolved.error);
+    edits.push(resolved.value);
+  }
   const label: HistoryLabel = {
     key: 'history:batch',
     params: { count: String(edits.length) },

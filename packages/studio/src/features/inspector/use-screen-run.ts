@@ -1,19 +1,18 @@
 // Inspector edits reach every screen, or only the active one (spec-log #141): the live-edit side of
 // the screen-edit store (question bar, "only this screen", the field icons that drop a value).
-import type { ClassContext, PropertyId } from '@kumicraft/shared';
+import type { ClassStep } from '@kumicraft/shared';
+import {
+  type ClassContext,
+  type PropertyId,
+  type ScreenEntry,
+  type ScreenMode,
+  sharedValueOfOthers,
+  writeEntries,
+} from '@kumicraft/style-tailwind';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import {
-  type ScreenEntry,
-  type ScreenMode,
-  type Screens,
-  sharedValueOfOthers,
-  useInSession,
-  useScreenEditStore,
-  useScreens,
-  writeEntries,
-} from './screen-scope.ts';
+import { type Screens, useInSession, useScreenEditStore, useScreens } from './screen-scope.ts';
 import type { InspectorTarget } from './types.ts';
 
 /**
@@ -60,7 +59,7 @@ type ScreenRunInput = {
   readonly target: Extract<InspectorTarget, { readonly kind: 'element' }>;
   readonly ctx: ClassContext;
   readonly optimisticClass: string;
-  readonly send: (change: (base: string) => string, property?: PropertyId) => void;
+  readonly send: (steps: readonly ClassStep[], property?: PropertyId) => void;
   readonly setError: (msg: string | undefined) => void;
 };
 
@@ -96,13 +95,14 @@ export function useScreenRun(input: ScreenRunInput): {
       return;
     }
     const final: ScreenMode = mode === 'auto' ? 'all' : mode;
-    send(
-      (base) => {
-        const out = writeEntries(base, entries, scope, ctx, screens, final);
-        return out.kind === 'write' ? out.next : base;
-      },
-      entries.length === 1 ? entries[0]?.property : undefined,
-    );
+    const step: ClassStep = {
+      kind: 'set',
+      entries: [...entries],
+      scope,
+      screens: { widths: [...screens.widths], activeIndex: screens.activeIndex },
+      mode: final,
+    };
+    send([step], entries.length === 1 ? entries[0]?.property : undefined);
   };
   useEffect(() => {
     runRef.current = run;

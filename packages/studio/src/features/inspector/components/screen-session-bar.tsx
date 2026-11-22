@@ -1,12 +1,13 @@
 // "Edit for Mobile only" (spec-log #144). On the widest frame (where the page is designed) nothing
 // shows: every edit reaches all screens. On a narrower frame a line says so and offers a button that
 // starts an edit for that screen only; while it runs an accent bar shows Done and Cancel.
+import { isDesignFrame } from '@kumicraft/style-tailwind';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { fetchHistoryState, undoHistory } from '../../../api/history-client.ts';
-import { useHistoryStore } from '../../history/history-store.ts';
-import { isDesignFrame, useInSession, useScreenEditStore, useScreens } from '../screen-scope.ts';
+import { useHistoryStore } from '../../../core/history-store.ts';
+import { useInSession, useScreenEditStore, useScreens } from '../screen-scope.ts';
 import { ScreenIcon } from './screen-scope-controls.tsx';
 
 /** Undoes every edit made since the session started, then ends it. */

@@ -9,16 +9,17 @@ import {
 } from '@kumicraft/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { editSource, fetchElementSource } from '../../api/source-client.ts';
-import { useComponentsStore } from '../components-panel/use-project-components.ts';
-import { useDesignStore } from '../design/design-store.ts';
-import { useEditMode } from '../project/use-edit-mode.ts';
+import { fetchElementSource } from '../../api/source-client.ts';
 import {
   type BridgeChannel,
   type BridgeTextEditListener,
   studioBridgeChannel,
-} from '../selection/bridge-channel.ts';
-import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
+} from '../../core/bridge-channel.ts';
+import { sendEdit } from '../../core/edits.ts';
+import { type CanvasMode, useSelectionStore } from '../../core/selection-store.ts';
+import { useComponentsStore } from '../components-panel/use-project-components.ts';
+import { useDesignStore } from '../design/design-store.ts';
+import { useEditMode } from '../project/use-edit-mode.ts';
 
 export type UseCanvasTextEditOptions = {
   readonly channel?: BridgeChannel;
@@ -56,7 +57,7 @@ async function commitSourceText(
 ): Promise<void> {
   if (!source || source.loc !== ref.loc) return;
   if (source.text.kind === 'static') {
-    await editSource({
+    await sendEdit({
       edit: {
         kind: 'setText',
         loc: ref.loc,
@@ -70,7 +71,7 @@ async function commitSourceText(
   if (source.text.kind === 'mixed' && runIndex !== undefined) {
     const run = (source.text.runs ?? []).find((r) => r.kind === 'text' && r.runIndex === runIndex);
     if (run?.kind === 'text') {
-      await editSource({
+      await sendEdit({
         edit: {
           kind: 'setTextRun',
           loc: ref.loc,

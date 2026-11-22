@@ -1,8 +1,8 @@
 // Why the last Undo/Redo failed (R-HI-10), next to the Undo/Redo buttons.
 import { useTranslation } from 'react-i18next';
 
+import { useHistoryStore } from '../../core/history-store.ts';
 import { errorText } from '../../routes/error-text.ts';
-import { useHistoryStore } from './history-store.ts';
 
 export function HistoryErrorNotice() {
   const { t } = useTranslation();

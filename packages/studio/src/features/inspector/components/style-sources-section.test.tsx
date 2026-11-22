@@ -4,7 +4,8 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { initI18n } from '../../../i18n/i18n.ts';
 import { useStyleState } from '../../style/style-reading.ts';
-import { CssStyleEditor, StyleSourcesSection } from './style-sources-section.tsx';
+import { CssStyleEditor } from './css-style-editor.tsx';
+import { StyleSourcesSection } from './style-sources-section.tsx';
 
 vi.mock('../../style/style-reading.ts', () => ({
   useStyleState: vi.fn(),

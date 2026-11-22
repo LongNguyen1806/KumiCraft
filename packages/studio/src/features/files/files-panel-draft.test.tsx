@@ -5,9 +5,9 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import * as filesClient from '../../api/files-client.ts';
 import * as projectClient from '../../api/project-client.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { useDesignStore } from '../design/design-store.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { FilesPanel } from './files-panel.tsx';
 import { useFilesStore } from './files-store.ts';
 

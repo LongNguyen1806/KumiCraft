@@ -4,9 +4,9 @@ import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { isApplePlatform, shortcutLabel } from '../../app/platform.ts';
+import { useHistoryStore } from '../../core/history-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { EditorScreen } from '../../routes/editor-screen.tsx';
-import { useHistoryStore } from '../history/history-store.ts';
 import { clampWidth, readLayout, usePanelLayoutStore } from './use-panel-layout.ts';
 
 vi.mock('./use-runner-status.ts', () => ({

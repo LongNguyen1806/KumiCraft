@@ -1,8 +1,14 @@
 // Unit tests for useLiveEdit hook (SPEC-04 R-IN-13, R-IN-14, R-IN-20, Scenarios 3 & 4).
-import type { ClassContext, EditResult, ElementSource, SourceEdit } from '@kumicraft/shared';
+import type { EditResult, ElementSource, SetClassesEdit, SourceEdit } from '@kumicraft/shared';
+import type { ClassContext } from '@kumicraft/style-tailwind';
 
-function readEditAfter(edit: SourceEdit | undefined): string {
-  return edit !== undefined && 'after' in edit ? (edit.after ?? '') : '';
+/** The edit as the server writes it (a class edit sent as steps becomes its classes). */
+function asWrittenOf(edit: SourceEdit | SetClassesEdit | undefined) {
+  return edit === undefined ? undefined : asWritten(edit);
+}
+
+function readEditAfter(edit: SourceEdit | SetClassesEdit | undefined): string {
+  return writtenClass(edit) ?? '';
 }
 import { BREAKPOINT_WIDTHS } from '@kumicraft/shared';
 import { act, renderHook } from '@testing-library/react';
@@ -10,6 +16,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { ApiError } from '../../api/http.ts';
 import * as sourceClient from '../../api/source-client.ts';
+import { asWritten, writtenClass } from '../../api/written-class-test-support.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import type { InspectorTarget } from './types.ts';
 import { useLiveEdit } from './use-live-edit.ts';
@@ -243,7 +250,10 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
     });
 
     expect(editSpy).toHaveBeenCalledTimes(2);
-    expect(editSpy.mock.calls[1]?.[0].edit).toMatchObject({ before: 'p-4 a', after: 'p-4 a b' });
+    expect(asWrittenOf(editSpy.mock.calls[1]?.[0].edit)).toMatchObject({
+      before: 'p-4 a',
+      after: 'p-4 a b',
+    });
   });
 
   it('a stale source read while an edit waits does not reset before to the older class [WP-4.00]', async () => {
@@ -270,7 +280,10 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
     act(() => {
       vi.advanceTimersByTime(100);
     });
-    expect(editSpy.mock.calls[1]?.[0].edit).toMatchObject({ before: 'p-4 a', after: 'p-4 a b' });
+    expect(asWrittenOf(editSpy.mock.calls[1]?.[0].edit)).toMatchObject({
+      before: 'p-4 a',
+      after: 'p-4 a b',
+    });
   });
 
   it('after Undo puts the old class back, the next field change starts from that class [WP-4.00, K9.5]', async () => {
@@ -300,7 +313,10 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
       result.current.mutateRawClass('p-4 text-xs');
       vi.advanceTimersByTime(100);
     });
-    expect(editSpy.mock.calls[1]?.[0].edit).toMatchObject({ before: 'p-4', after: 'p-4 text-xs' });
+    expect(asWrittenOf(editSpy.mock.calls[1]?.[0].edit)).toMatchObject({
+      before: 'p-4',
+      after: 'p-4 text-xs',
+    });
   });
 
   it('a new read of the file with the same class still drops the undone value shown [WP-4.00, K9.5]', async () => {
@@ -341,7 +357,10 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(editSpy.mock.calls[0]?.[0].edit).toMatchObject({ before: 'p-4', after: 'p-4 pt-0' });
+    expect(asWrittenOf(editSpy.mock.calls[0]?.[0].edit)).toMatchObject({
+      before: 'p-4',
+      after: 'p-4 pt-0',
+    });
     // Undo: the file is back to `p-4`, the Inspector is reading it again (loading).
     target = { ...target, loading: true };
     rerender();
@@ -357,6 +376,9 @@ describe('useLiveEdit [R-IN-13, R-IN-14, R-IN-20]', () => {
       vi.advanceTimersByTime(100);
     });
     expect(editSpy).toHaveBeenCalledTimes(2);
-    expect(editSpy.mock.calls[1]?.[0].edit).toMatchObject({ before: 'p-4', after: 'p-4 text-xs' });
+    expect(asWrittenOf(editSpy.mock.calls[1]?.[0].edit)).toMatchObject({
+      before: 'p-4',
+      after: 'p-4 text-xs',
+    });
   });
 });

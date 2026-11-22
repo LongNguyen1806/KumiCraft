@@ -3,6 +3,7 @@ import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ErrorBoundary } from '../../components/ui/error-boundary.tsx';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
 import { BrandPanel } from '../brand/brand-panel.tsx';
 import { ChatPanel } from '../chat/chat-panel.tsx';
 import { ComponentsPanel } from '../components-panel/components-panel.tsx';
@@ -13,7 +14,6 @@ import { useProjectTheme } from '../inspector/use-project-theme.ts';
 import { LayerTree } from '../layers/layer-tree.tsx';
 import { LibraryPanel } from '../library/library-panel.tsx';
 import { PagesPanel } from '../pages/pages-panel.tsx';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { useShownActivity } from '../shell/activity-store.ts';
 import { PanelHeaderContext } from './panel-header-context.ts';
 import { type RightPanelTab, useRightPanelTab } from './right-panel-store.ts';

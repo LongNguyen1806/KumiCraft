@@ -2,9 +2,9 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { useComponentsStore } from '../components-panel/use-project-components.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { useDesignStore } from './design-store.ts';
 import { SelectInFileHint } from './select-in-file-hint.tsx';
 import { selectionAnchor } from './selection-anchor.ts';

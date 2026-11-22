@@ -1,20 +1,13 @@
 // One control per kind of knob (thiet-ke-component.md §3): a field for text, a switch on the same
 // row for yes/no, a row of buttons for two to four choices, a list for more, the code of a value
 // that comes from the code with a button to open it.
-import type { ComponentPropSpec, SetPropValue } from '@kumicraft/shared';
+import type { ComponentPropSpec } from '@kumicraft/shared';
 import { ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { optionLabel, propLabel } from './prop-labels.ts';
-import { ImageField, PageSuggestions } from './prop-pickers.tsx';
-
-export type PropControlProps = {
-  readonly spec: ComponentPropSpec;
-  readonly disabled: boolean;
-  readonly onChange: (val: SetPropValue | undefined) => void;
-  readonly onOpenEditor: () => void;
-};
+import { ImageField, PageSuggestions, type PropControlProps } from './prop-pickers.tsx';
 
 const FIELD = 'h-7 w-full min-w-0 rounded-md border border-line bg-field px-2 text-xs text-ink';
 

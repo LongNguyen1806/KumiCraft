@@ -6,10 +6,10 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { useSelectionStore } from '../../../core/selection-store.ts';
 import { initI18n } from '../../../i18n/i18n.ts';
 import { useDesignStore } from '../../design/design-store.ts';
 import { computeVisibleNodes } from '../../layers/layer-tree-utils.ts';
-import { useSelectionStore } from '../../selection/selection-store.ts';
 import { ComponentPartGate } from './component-part-gate.tsx';
 
 const PAGE = 'src/pages/Home.tsx';

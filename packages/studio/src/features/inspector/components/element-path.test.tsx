@@ -3,9 +3,9 @@ import type { ElementRef, TreeNode } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { studioBridgeChannel } from '../../../core/bridge-channel.ts';
+import { useSelectionStore } from '../../../core/selection-store.ts';
 import { initI18n } from '../../../i18n/i18n.ts';
-import { studioBridgeChannel } from '../../selection/bridge-channel.ts';
-import { useSelectionStore } from '../../selection/selection-store.ts';
 import { buildElementPath, collapsePath, ElementPath } from './element-path.tsx';
 
 function makeNode(tag: string, loc: string, index = 0, parent?: number, label?: string): TreeNode {

@@ -3,7 +3,7 @@ import { HTML_SETTABLE_TAGS, type HtmlSettableTag } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { editSource } from '../../../api/source-client.ts';
+import { sendEdit } from '../../../core/edits.ts';
 import { useEditMode } from '../../project/use-edit-mode.ts';
 import type { InspectorTarget } from '../types.ts';
 
@@ -26,7 +26,7 @@ function useTagChange(target: ElementTarget) {
     setChangingTag(true);
     const run = async () => {
       try {
-        await editSource({ edit: { kind: 'setTag', loc: src.loc, tag: src.tag, after } });
+        await sendEdit({ edit: { kind: 'setTag', loc: src.loc, tag: src.tag, after } });
         target.refresh();
       } finally {
         setChangingTag(false);

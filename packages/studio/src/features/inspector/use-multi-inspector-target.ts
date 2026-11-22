@@ -4,10 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { createEventsClient } from '../../api/events-client.ts';
 import { fetchElementSource } from '../../api/source-client.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { useScopeCalculation } from './inspector-scope.ts';
 import type { MultiTarget, MultiTargetItem } from './types.ts';
-import type { UseInspectorTargetOptions } from './use-inspector-target.ts';
+import type { UseInspectorTargetOptions } from './types.ts';
 import { useThemeStore } from './use-project-theme.ts';
 
 export function deriveMultiLock(

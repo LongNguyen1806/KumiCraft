@@ -157,6 +157,46 @@ export default defineConfig(
     },
   },
 
+  // 03 section 3.3 and 5: pure packages; they run in Node and in the browser, without I/O.
+  {
+    files: ['packages/style-tailwind/src/**/*.ts'],
+    ignores: ['packages/style-tailwind/src/**/*.test.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            NO_DEEP_PACKAGE_IMPORT,
+            {
+              regex: '^(?!@kumicraft/shared$|\\.{1,2}/).*',
+              message:
+                '@kumicraft/style-tailwind may import only @kumicraft/shared and its own files (03 section 3.3).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['packages/content/src/**/*.ts'],
+    ignores: ['packages/content/src/**/*.test.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            NO_DEEP_PACKAGE_IMPORT,
+            {
+              regex: '^(?!@kumicraft/(shared|style-tailwind)$|\\.{1,2}/).*',
+              message:
+                '@kumicraft/content may import only @kumicraft/shared, @kumicraft/style-tailwind and its own files (03 section 5).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // SPEC-01 section 3.2 rule 1 and QC-63: the server core talks to the outside through ports.
   {
     files: ['packages/server/src/{kernel,lib,ports,services,stacks}/**/*.ts'],
@@ -254,6 +294,27 @@ export default defineConfig(
         {
           name: 'fetch',
           message: 'Call the backend through src/api/ only (SPEC-01 section 3.2).',
+        },
+      ],
+    },
+  },
+
+  // 03 section 6.2: a feature sends an edit only through core/edits.ts, never the endpoints itself.
+  {
+    files: ['packages/studio/src/features/**/*.{ts,tsx}'],
+    ignores: ['packages/studio/src/**/*.test.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            NO_DEEP_PACKAGE_IMPORT,
+            {
+              group: ['**/api/source-client.ts', '**/api/style-client.ts'],
+              importNames: ['editSource', 'editSourceBatch', 'applyStructureEdit', 'applyStyle'],
+              message: 'Send edits through core/edits.ts (03 section 6.2).',
+            },
+          ],
         },
       ],
     },

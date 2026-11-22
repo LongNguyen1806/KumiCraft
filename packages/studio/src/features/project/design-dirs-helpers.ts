@@ -2,8 +2,8 @@ import { DEFAULT_DESIGN_DIRS, type DesignDirs, type StyleFiles } from '@kumicraf
 import type { TFunction } from 'i18next';
 
 import { saveDesignDirs } from '../../api/project-client.ts';
+import { useProjectStore } from '../../core/project-store.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
-import { useProjectStore } from './project-store.ts';
 
 export type DirsKind = 'pages' | 'layouts' | 'components';
 

@@ -3,8 +3,9 @@ import type { ElementSource } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { writtenClass } from '../../api/written-class-test-support.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { nudgeDelta, nudgeSelection } from './free-nudge.ts';
 
 const FRAME = 'src/pages/Home.tsx:1:1';
@@ -73,8 +74,8 @@ describe('Free frame nudge [R-FF-15]', () => {
 
     const callArg = batchSpy.mock.calls[0]?.[0];
     expect(callArg?.edits).toHaveLength(2);
-    expect(callArg?.edits[0]?.after).toBe('w-40 absolute left-6 top-2');
-    expect(callArg?.edits[1]?.after).toBe('p-2 absolute left-[18px] top-0');
+    expect(writtenClass(callArg?.edits[0])).toBe('w-40 absolute left-6 top-2');
+    expect(writtenClass(callArg?.edits[1])).toBe('p-2 absolute left-[18px] top-0');
     expect(callArg?.coalesceKey?.startsWith('nudge:')).toBe(true);
   });
 
@@ -101,7 +102,7 @@ describe('Free frame nudge [R-FF-15]', () => {
     const ok = await nudgeSelection(-8, 0);
     expect(ok).toBe(true);
     expect(batchSpy).toHaveBeenCalledTimes(1);
-    expect(batchSpy.mock.calls[0]?.[0].edits[0]?.after).toBe('absolute left-0 top-0');
+    expect(writtenClass(batchSpy.mock.calls[0]?.[0].edits[0])).toBe('absolute left-0 top-0');
 
     // Outside free frame
     vi.spyOn(sourceClient, 'fetchElementSourceByLoc').mockImplementation((loc) =>

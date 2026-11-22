@@ -10,8 +10,8 @@ import {
   projectBreakpoints,
   type StylingReport,
   type ThemeInfo,
-  writeValue,
 } from '@kumicraft/shared';
+import { writeValue } from '@kumicraft/style-tailwind';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createHistoryService } from '../../kernel/history/history-service.ts';

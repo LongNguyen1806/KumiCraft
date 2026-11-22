@@ -7,7 +7,7 @@ import type {
 } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
-import { useSelectionStore } from '../../selection/selection-store.ts';
+import { useSelectionStore } from '../../../core/selection-store.ts';
 import { useStyleState } from '../../style/style-reading.ts';
 import {
   useStyleElementState,

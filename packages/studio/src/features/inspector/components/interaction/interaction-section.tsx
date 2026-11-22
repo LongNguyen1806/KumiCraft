@@ -8,19 +8,15 @@ import {
 } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
-import { useProjectInfo } from '../../../project/project-store.ts';
-import { useSelectionStore } from '../../../selection/selection-store.ts';
+import { useProjectInfo } from '../../../../core/project-store.ts';
+import { useSelectionStore } from '../../../../core/selection-store.ts';
 import type { MultiTargetItem } from '../../types.ts';
 import { InspectorGroup } from '../inspector-group.tsx';
 import { collectDescendants } from './interaction-shared.tsx';
-import {
-  LINK_ELIGIBLE_TAGS,
-  LinkTargetControl,
-  NameSectionIdControl,
-  SECTION_ELIGIBLE_TAGS,
-} from './link-target-controls.tsx';
+import { LINK_ELIGIBLE_TAGS, LinkTargetControl } from './link-target-controls.tsx';
 import { LOADING_ELIGIBLE_TAGS, LoadingButtonControl } from './loading-button-control.tsx';
 import { ScrollSpyControl } from './scroll-spy-control.tsx';
+import { NameSectionIdControl, SECTION_ELIGIBLE_TAGS } from './section-id-controls.tsx';
 import {
   SELECT_CONTAINER_TAGS,
   SelectGroupMultiControls,

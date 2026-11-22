@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as eventsClient from '../../api/events-client.ts';
 import { ApiError } from '../../api/http.ts';
 import * as sourceClient from '../../api/source-client.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import {
   computeWritePrefix,
   deriveLockReason,

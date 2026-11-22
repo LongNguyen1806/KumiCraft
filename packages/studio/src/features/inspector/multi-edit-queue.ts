@@ -1,13 +1,12 @@
 // Batch edit queue of the multi-element Inspector (SPEC-04 R-CB-15).
-import type {
-  BatchEditRequest,
-  ClassContext,
-  ClassValue,
-  PropertyId,
-  Scope,
-  SetClassNameEdit,
-} from '@kumicraft/shared';
-import { writeValue } from '@kumicraft/shared';
+import type { BatchEditRequest, ClassStep, SetClassesEdit } from '@kumicraft/shared';
+import {
+  applyClassSteps,
+  type ClassContext,
+  type ClassValue,
+  type PropertyId,
+  type Scope,
+} from '@kumicraft/style-tailwind';
 
 import type { MultiTargetItem } from './types.ts';
 
@@ -17,6 +16,9 @@ export type MultiMutation = {
   readonly scope: Scope;
   readonly writePrefix: string;
 };
+
+/** One element's edit, sent as intents, and the class the Studio expects it to write. */
+export type MultiEdit = { readonly edit: SetClassesEdit; readonly after: string };
 
 export type MultiEditQueueDeps = {
   readonly getItems: () => readonly MultiTargetItem[];
@@ -34,16 +36,24 @@ export function buildMultiEdits(
   confirmed: ReadonlyMap<string, string>,
   mutations: readonly MultiMutation[],
   ctx: ClassContext,
-): SetClassNameEdit[] {
-  const edits: SetClassNameEdit[] = [];
+): MultiEdit[] {
+  const steps: ClassStep[] = mutations.map((m) => ({
+    kind: 'value',
+    property: m.property,
+    scope: m.scope,
+    value: m.value,
+  }));
+  const edits: MultiEdit[] = [];
   for (const item of items) {
     const src = item.source;
     if (!src || src.className.kind !== 'static') continue;
     const before = confirmed.get(item.ref.loc) ?? src.className.value;
-    let after = before;
-    for (const m of mutations) after = writeValue(after, m.property, m.scope, m.value, ctx);
-    if (after !== before) {
-      edits.push({ kind: 'setClassName', loc: item.ref.loc, tag: src.tag, before, after });
+    const out = applyClassSteps(before, steps, ctx);
+    if (out.ok && out.value !== before) {
+      edits.push({
+        edit: { kind: 'setClasses', loc: item.ref.loc, tag: src.tag, before, steps },
+        after: out.value,
+      });
     }
   }
   return edits;
@@ -98,7 +108,8 @@ export class MultiEditQueue {
     const mutations = this.pending;
     this.pending = [];
     const items = deps.getItems();
-    const edits = buildMultiEdits(items, this.confirmed, mutations, deps.ctx());
+    const built = buildMultiEdits(items, this.confirmed, mutations, deps.ctx());
+    const edits = built.map((b) => b.edit);
     if (edits.length > 0) {
       this.inFlight = true;
       const locs = items.map((i) => i.ref.loc).join(',');
@@ -109,7 +120,7 @@ export class MultiEditQueue {
           : undefined;
       try {
         await deps.send(coalesceKey === undefined ? { edits } : { edits, coalesceKey });
-        for (const e of edits) this.confirmed.set(e.loc, e.after);
+        for (const b of built) this.confirmed.set(b.edit.loc, b.after);
       } catch {
         this.confirmed = new Map();
       } finally {

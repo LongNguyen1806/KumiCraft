@@ -4,9 +4,9 @@
 import type { Frame } from '@kumicraft/shared';
 import { useMemo } from 'react';
 
-import type { UseInspectorTargetOptions } from '../inspector/use-inspector-target.ts';
-import { useProjectInfo } from '../project/project-store.ts';
-import { useCanvasViewStore } from './canvas-view-store.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useProjectInfo } from '../../core/project-store.ts';
+import type { UseInspectorTargetOptions } from '../inspector/types.ts';
 
 const pick = (frames: readonly Frame[], id: string | undefined): Frame | undefined =>
   frames.find((f) => f.id === id) ?? frames[0];

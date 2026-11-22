@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { deleteDraft, duplicateDraft, renameDraft } from '../../api/project-client.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { DraftRowActions } from './draft-row-actions.tsx';
 import { DraftsDialogs } from './drafts-dialogs.tsx';
 import { DraftsNotices, DraftsStatus } from './drafts-empty.tsx';

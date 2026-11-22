@@ -1,23 +1,22 @@
 // Multi-element Inspector view (SPEC-04 M-IN, R-CB-15).
+import type { BatchEditRequest, ElementSource } from '@kumicraft/shared';
 import type {
-  BatchEditRequest,
   ClassContext,
   ClassToken,
   ClassValue,
-  ElementSource,
   PropertyId,
   Scope,
-} from '@kumicraft/shared';
-import { parseClasses, readValue } from '@kumicraft/shared';
+} from '@kumicraft/style-tailwind';
+import { parseClasses, readValue } from '@kumicraft/style-tailwind';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { editSourceBatch } from '../../api/source-client.ts';
+import { sendEdits } from '../../core/edits.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { ColorField } from './components/color-field.tsx';
+import { isColorProperty, resolveFieldOptions } from './components/inspector-property-groups.tsx';
 import { MultiInteractionSection } from './components/interaction/interaction-section.tsx';
 import { PropertyField } from './components/property-field.tsx';
-import { isColorProperty, resolveFieldOptions } from './inspector-panel.tsx';
 import { MultiEditQueue } from './multi-edit-queue.ts';
 import { PROPERTY_GROUPS, type PropertyFieldDef } from './property-groups-config.ts';
 import type { MultiTarget, MultiTargetItem } from './types.ts';
@@ -122,7 +121,7 @@ export function MultiInspectorView({ target, ctx, frameWidth }: MultiInspectorVi
   const handleBatch = useCallback(
     async (req: BatchEditRequest) => {
       try {
-        await editSourceBatch(req);
+        await sendEdits(req);
         setError(undefined);
         target.refresh();
       } catch (err) {

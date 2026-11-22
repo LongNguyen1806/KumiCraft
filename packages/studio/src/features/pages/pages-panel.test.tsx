@@ -6,9 +6,9 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import * as eventsClient from '../../api/events-client.ts';
 import * as jobsClient from '../../api/jobs-client.ts';
 import * as projectClient from '../../api/project-client.ts';
+import { useProjectStore } from '../../core/project-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { FilesContextMenu } from '../files/files-context-menu.tsx';
-import { useProjectStore } from '../project/project-store.ts';
 import { AddPageForm } from './add-page-form.tsx';
 import { PagesPanel } from './pages-panel.tsx';
 

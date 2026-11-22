@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createHistoryService } from '../../../kernel/history/history-service.ts';
 import { createSessionInfoProvider } from '../../../kernel/session.ts';
+import { testClassEdits } from '../../../services/edit/class-edits-test-support.ts';
 import { nodeFs } from '../../../services/workspace/test-support.ts';
 import { jsxFeatures } from '../../../stacks/view/jsx/features.ts';
 import { createSourceEditorService } from '../../../stacks/view/jsx/source-editor-service.ts';
@@ -47,6 +48,7 @@ describe('Source HTTP routes [SPEC-03 section 5.5]', () => {
       getSessionInfo,
       sourceRoutes: {
         sourceEditorService,
+        classEdits: testClassEdits(),
         historyService,
         getProjectRoot: () => activeRoot,
         getViewFeatures: () => jsxFeatures,

@@ -1,10 +1,10 @@
 // Multi-frame layout component for Canvas (SPEC-04 M-MF).
 import type { Frame, LoginSession } from '@kumicraft/shared';
 
-import type { CanvasMode } from '../selection/selection-store.ts';
+import { useFrameFocusActive } from '../../core/frame-focus-store.ts';
+import type { OpenFrame } from '../../core/open-frames-storage.ts';
+import type { CanvasMode } from '../../core/selection-store.ts';
 import { CanvasFrameTile } from './canvas-frame-tile.tsx';
-import { useFrameFocusActive } from './frame-focus-store.ts';
-import type { OpenFrame } from './open-frames-storage.ts';
 
 const FALLBACK_FRAME: Frame = { id: 'desktop', label: 'Desktop', width: 1280, height: 800 };
 

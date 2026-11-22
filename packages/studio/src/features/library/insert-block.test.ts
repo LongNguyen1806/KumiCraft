@@ -1,11 +1,12 @@
-import { LIBRARY_BLOCKS, type ProjectInfo, type TreeNode } from '@kumicraft/shared';
+import { LIBRARY_BLOCKS } from '@kumicraft/content';
+import { type ProjectInfo, type TreeNode } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';
+import { useProjectStore } from '../../core/project-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { useDesignStore } from '../design/design-store.ts';
 import { DEFAULT_THEME, useThemeStore } from '../inspector/use-project-theme.ts';
-import { useProjectStore } from '../project/project-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { insertBlock, resetThemeLookAttempt } from './insert-block.ts';
 
 function makeProject(

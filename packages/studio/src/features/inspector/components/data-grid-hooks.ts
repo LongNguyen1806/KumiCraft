@@ -2,7 +2,7 @@
 import type { DataArrayRow, DataPrimitiveValue, ElementDataContext } from '@kumicraft/shared';
 import { useState } from 'react';
 
-import { applyStructureEdit } from '../../../api/source-client.ts';
+import { sendStructureEdit } from '../../../core/edits.ts';
 
 function coerceCellInput(
   raw: string,
@@ -53,7 +53,7 @@ export function useDataGridState(ctx: ElementDataContext, onSaved: () => void) {
     if (saving) return;
     setSaving(true);
     try {
-      await applyStructureEdit({
+      await sendStructureEdit({
         kind: 'setDataArray',
         file: ctx.file,
         exportName: ctx.exportName,

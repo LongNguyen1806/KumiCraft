@@ -2,11 +2,11 @@
 import { useEffect, useRef } from 'react';
 import { create } from 'zustand';
 
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { isDraftAddress } from '../editor/open-frames-storage.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { isDraftAddress } from '../../core/open-frames-storage.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { usePagesData } from '../editor/page-select.tsx';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { type DesignTarget, designTargetOf } from './design-target.ts';
 
 export type ComponentMode = {

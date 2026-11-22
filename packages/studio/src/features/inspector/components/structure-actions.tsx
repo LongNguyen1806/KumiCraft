@@ -4,9 +4,9 @@ import { ArrowDown, ArrowUp, Component, Copy, Eye, Trash2, Ungroup } from 'lucid
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { studioBridgeChannel } from '../../../core/bridge-channel.ts';
 import { errorText } from '../../../routes/error-text.ts';
 import { ExtractDialog } from '../../components-panel/extract-dialog.tsx';
-import { studioBridgeChannel } from '../../selection/bridge-channel.ts';
 import type { InspectorTarget } from '../types.ts';
 import { InspectorListActions } from './inspector-list-actions.tsx';
 

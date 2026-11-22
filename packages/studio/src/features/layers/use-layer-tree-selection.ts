@@ -2,8 +2,8 @@
 import type { ElementRef, TreeNode } from '@kumicraft/shared';
 import { useEffect, useRef } from 'react';
 
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 
 function findAncestorLocsToExpand(
   treeNodes: readonly TreeNode[],

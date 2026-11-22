@@ -1,11 +1,11 @@
 // Insert an offline Lucide <svg> icon at the current Canvas selection (K9.7-2 TK-6).
 import type { Placement } from '@kumicraft/shared';
 
-import { applyStructureEdit } from '../../api/source-client.ts';
+import { sendStructureEdit } from '../../core/edits.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';
 import { selectionAnchor } from '../design/selection-anchor.ts';
 import { determineInsertTarget } from '../library/insert-block.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
 import { buildIconJsx, type IconEntry } from './icon-svg.ts';
 
@@ -31,7 +31,7 @@ export async function insertIconFromSelection(
   const jsx = buildIconJsx(icon);
 
   try {
-    const res = await applyStructureEdit({
+    const res = await sendStructureEdit({
       kind: 'insert',
       target,
       jsx,

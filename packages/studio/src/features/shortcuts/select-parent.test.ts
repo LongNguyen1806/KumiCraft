@@ -2,9 +2,9 @@
 // selection, so the Canvas kept the child and its size handles and free moves acted on the child.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { selectParentNode } from './shortcut-actions.ts';
 
 const card = { loc: 'src/pages/Home.tsx:4:7', index: 0 };

@@ -1,7 +1,7 @@
 // Mouse move and resize of elements on the Canvas, with a live preview and one write on release
 // (SPEC-04 section 18E, R-FF-13, R-FF-14).
 import type { BridgeFreeMovePayload, BridgeFreeResizePayload } from '@kumicraft/shared';
-import { snap } from '@kumicraft/shared';
+import { snap } from '@kumicraft/style-tailwind';
 
 import { getRefForElement } from '../candidate-chain.ts';
 import {

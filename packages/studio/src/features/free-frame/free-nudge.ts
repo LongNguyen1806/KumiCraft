@@ -1,12 +1,12 @@
-import type { AttributeLevelEdit, ElementRef, ShortcutAction } from '@kumicraft/shared';
-import { applyPlacement, readClassPx } from '@kumicraft/shared';
+import type { BatchEdit, ElementRef, ShortcutAction } from '@kumicraft/shared';
+import { readClassPx } from '@kumicraft/style-tailwind';
 
-import { editSourceBatch } from '../../api/source-client.ts';
+import { useDndStore } from '../../core/dnd-store.ts';
+import { sendEdits } from '../../core/edits.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';
-import { useDndStore } from '../dnd/dnd-store.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { scopeCanvasChange } from '../inspector/screen-scope.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { canvasScope } from '../inspector/screen-scope.ts';
+import { planClassEdit } from './class-edit.ts';
 import { freeFrameOfRef } from './free-context.ts';
 import { readStaticClassName } from './free-frame-commands.ts';
 
@@ -54,8 +54,7 @@ export async function nudgeSelection(dx: number, dy: number): Promise<boolean> {
 
   if (validRefs.length === 0) return false;
 
-  const { tailwindMajor } = useCanvasViewStore.getState();
-  const edits: AttributeLevelEdit[] = [];
+  const edits: BatchEdit[] = [];
 
   for (const ref of validRefs) {
     const beforeRes = await readStaticClassName(ref.loc);
@@ -70,26 +69,25 @@ export async function nudgeSelection(dx: number, dy: number): Promise<boolean> {
     const newLeft = Math.max(0, oldLeft + dx);
     const newTop = Math.max(0, oldTop + dy);
 
-    const placed = applyPlacement(
-      before,
-      { kind: 'free', left: newLeft, top: newTop },
-      tailwindMajor,
-    );
+    const node = treeNodes.find((n) => n.ref.loc === ref.loc);
     // Same screen scope as an Inspector edit (spec-log #144).
-    const after = scopeCanvasChange(ref.loc, before, placed);
-    if (after === undefined) {
-      useDndStore.getState().setError({ code: 'E023', params: { reason: 'screenSplit' } });
+    const planned = planClassEdit({ loc: ref.loc, tag: node?.tag ?? 'div' }, before, [
+      {
+        kind: 'place',
+        placement: { kind: 'free', left: newLeft, top: newTop },
+        canvas: canvasScope(ref.loc),
+      },
+    ]);
+    if (!planned.ok) {
+      useDndStore.getState().setError(planned.error);
       return false;
     }
-
-    const node = treeNodes.find((n) => n.ref.loc === ref.loc);
-    const tag = node?.tag ?? 'div';
-    edits.push({ kind: 'setClassName', loc: ref.loc, tag, before, after });
+    edits.push(planned.value.edit);
   }
 
   try {
     const coalesceKey = `nudge:${Array.from(seenLocs).join(',')}`;
-    await editSourceBatch({ edits, coalesceKey });
+    await sendEdits({ edits, coalesceKey });
     return true;
   } catch (err) {
     useDndStore.getState().setError(toErrorInfo(err));

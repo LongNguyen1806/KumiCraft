@@ -3,11 +3,11 @@ import { useEffect, useState } from 'react';
 
 import { fetchProject } from '../../api/project-client.ts';
 import { ErrorBoundary } from '../../components/ui/error-boundary.tsx';
+import { useHistorySync } from '../../core/history-store.ts';
+import { useProjectStore } from '../../core/project-store.ts';
 import { useDesignTargetSync } from '../design/design-store.ts';
-import { useHistorySync } from '../history/history-store.ts';
 import { InstallDialog } from '../project/install-dialog.tsx';
 import { ProjectDialog } from '../project/project-dialog.tsx';
-import { useProjectStore } from '../project/project-store.ts';
 import { ActivityBar } from '../shell/activity-bar.tsx';
 import { ShortcutHelp } from '../shortcuts/shortcut-help.tsx';
 import { useShortcuts } from '../shortcuts/use-shortcuts.ts';

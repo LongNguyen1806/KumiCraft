@@ -1,11 +1,18 @@
 // Live edit hook for Inspector (SPEC-04 R-IN-13, R-IN-14, R-IN-20).
-import type { ClassContext, ClassValue, PropertyId, Scope } from '@kumicraft/shared';
+import type { ClassStep } from '@kumicraft/shared';
+import {
+  applyClassSteps,
+  type ClassContext,
+  type ClassValue,
+  type PropertyId,
+  type Scope,
+} from '@kumicraft/style-tailwind';
 import type { TFunction } from 'i18next';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ApiError } from '../../api/http.ts';
-import { editSource } from '../../api/source-client.ts';
+import { sendEdit } from '../../core/edits.ts';
 import type { InspectorTarget } from './types.ts';
 import { useScreenRun, useScreenSelectionReset } from './use-screen-run.ts';
 
@@ -31,10 +38,25 @@ export type LiveEditState = {
   readonly flush: () => void;
 };
 
+/**
+ * A change waiting to be sent: its steps (the server works out the classes from them, 03 section
+ * 3.3) and the class the Studio shows meanwhile, worked out with the same functions.
+ */
 type QueuedMutation = {
-  readonly nextString: string;
+  readonly steps: readonly ClassStep[];
+  readonly preview: string;
   readonly property?: PropertyId | undefined;
 };
+
+/** Two changes sent as one: every step kept, in order; one coalesce key only for one field. */
+function merge(first: QueuedMutation | undefined, next: QueuedMutation): QueuedMutation {
+  if (first === undefined) return next;
+  return {
+    steps: [...first.steps, ...next.steps],
+    preview: next.preview,
+    property: first.property === next.property ? next.property : undefined,
+  };
+}
 
 type QueueCallbacks = {
   readonly onConfirmed: (val: string) => void;
@@ -103,7 +125,7 @@ export class LiveEditQueue {
   }
 
   enqueue(mutation: QueuedMutation): void {
-    this.scheduled = mutation;
+    this.scheduled = merge(this.scheduled, mutation);
     if (this.timer !== undefined) {
       clearTimeout(this.timer);
     }
@@ -131,7 +153,7 @@ export class LiveEditQueue {
 
   private async dispatch(mutation: QueuedMutation): Promise<void> {
     if (this.inFlight) {
-      this.pending = mutation;
+      this.pending = merge(this.pending, mutation);
       return;
     }
     this.inFlight = true;
@@ -143,18 +165,18 @@ export class LiveEditQueue {
         : undefined;
 
     try {
-      const res = await editSource({
+      const res = await sendEdit({
         edit: {
-          kind: 'setClassName',
+          kind: 'setClasses',
           loc: this.loc,
           tag: this.tag,
           before: beforeVal,
-          after: mutation.nextString,
+          steps: [...mutation.steps],
         },
         coalesceKey,
       });
       const confirmedVal =
-        res.element.className.kind === 'static' ? res.element.className.value : mutation.nextString;
+        res.element.className.kind === 'static' ? res.element.className.value : mutation.preview;
       this.confirmed = confirmedVal;
       this.callbacks.onConfirmed(confirmedVal);
     } catch (err) {
@@ -237,7 +259,13 @@ function queueCallbacks(queue: () => LiveEditQueue | undefined, owner: QueueOwne
  * came in (found by PB-02, K9 C). Leaving the element still saves its last edit.
  */
 /** A change made while the source reloads: applied to the class the reload brings (K9.5). */
-type DeferredChange = (base: string) => string;
+type DeferredChange = readonly ClassStep[];
+
+/** The class the steps make, shown before the server answers; the base when one cannot be made. */
+export function previewSteps(base: string, steps: readonly ClassStep[], ctx: ClassContext): string {
+  const out = applyClassSteps(base, steps, ctx);
+  return out.ok ? out.value : base;
+}
 
 /**
  * Changes made while the source reloads (right after Undo): built on the class the file holds
@@ -248,15 +276,17 @@ function applyDeferred(
   deferred: DeferredChange[],
   server: { readonly value: string; readonly hasSource: boolean },
   setOptimisticClass: (val: string) => void,
+  ctx: ClassContext,
 ): boolean {
   if (deferred.length === 0) return false;
   const changes = deferred.splice(0);
   // No source came back (a read error): drop them, the fields show the file again.
   if (!server.hasSource) return false;
   queue.syncServer(server.value);
-  const next = changes.reduce((cls, change) => change(cls), queue.getConfirmed());
+  const steps = changes.flat();
+  const next = previewSteps(queue.getConfirmed(), steps, ctx);
   setOptimisticClass(next);
-  queue.enqueue({ nextString: next });
+  queue.enqueue({ steps, preview: next });
   return true;
 }
 
@@ -266,6 +296,7 @@ function useLiveQueue(
   server: { readonly value: string; readonly read: unknown; readonly hasSource: boolean },
   owner: QueueOwner,
   deferred: React.RefObject<DeferredChange[]>,
+  ctx: ClassContext,
 ): React.RefObject<LiveEditQueue | undefined> {
   const serverClass = server.value;
   const queueRef = useRef<LiveEditQueue | undefined>(undefined);
@@ -281,7 +312,7 @@ function useLiveQueue(
     queue.setCallbacks(queueCallbacks(() => queue, owner));
     // Only a new read from the server (file hash or class): the old one stays until it lands.
     if (!changed) return;
-    if (applyDeferred(queue, deferred.current, server, owner.setOptimisticClass)) return;
+    if (applyDeferred(queue, deferred.current, server, owner.setOptimisticClass, ctx)) return;
     // Nothing waits to be saved: the fields show what the file holds now, also when it is the
     // class read before (the undone value would stay on screen otherwise).
     if (queue.isIdle()) owner.setOptimisticClass(serverClass);
@@ -349,14 +380,14 @@ export function useLiveEdit({ target, ctx, throttleMs = 100 }: UseLiveEditOption
 
   const deferred = useRef<DeferredChange[]>([]);
   // While the source reloads (after Undo or a save), a change waits for the class it brings.
-  const send = (change: DeferredChange, property?: PropertyId) => {
-    const next = change(optimisticClass);
+  const send = (steps: readonly ClassStep[], property?: PropertyId) => {
+    const next = previewSteps(optimisticClass, steps, ctx);
     setOptimisticClass(next);
     if (target.loading) {
-      deferred.current.push(change);
+      deferred.current.push(steps);
       return;
     }
-    queueRef.current?.enqueue({ nextString: next, property });
+    queueRef.current?.enqueue({ steps, preview: next, property });
   };
   useSyncLocState(loc, serverClass, setOptimisticClass, setError);
   useScreenSelectionReset(loc);
@@ -367,6 +398,7 @@ export function useLiveEdit({ target, ctx, throttleMs = 100 }: UseLiveEditOption
     server,
     { target, t, setOptimisticClass, setError, setIsSaving },
     deferred,
+    ctx,
   );
   const { run, only } = useScreenRun({ loc, target, ctx, optimisticClass, send, setError });
 
@@ -381,7 +413,7 @@ export function useLiveEdit({ target, ctx, throttleMs = 100 }: UseLiveEditOption
       run(entries, only ? 'only' : 'auto');
     },
     mutateRawClass: (raw: string) => {
-      send(() => raw);
+      send([{ kind: 'raw', className: raw }]);
     },
     flush: () => {
       queueRef.current?.flush();

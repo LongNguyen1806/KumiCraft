@@ -1,5 +1,5 @@
 // Search header, style preset selector, and insert notices for Library Panel (SPEC-04 M-LB, TK-69).
-import { LIBRARY_STYLES, type LibraryStyle } from '@kumicraft/shared';
+import { LIBRARY_STYLES, type LibraryStyle } from '@kumicraft/content';
 import { useTranslation } from 'react-i18next';
 
 import { type ErrorInfo, errorText } from '../../routes/error-text.ts';

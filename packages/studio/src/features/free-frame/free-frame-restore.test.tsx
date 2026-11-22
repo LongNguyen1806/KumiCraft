@@ -1,18 +1,15 @@
 // Round trip through the real switch (spec-log #126): turning a frame on and off again gives the
 // code back as it was; a child moved in between keeps its new place; with no record (turned on
 // by an older version) the switch still asks and puts children in the flow.
-import type {
-  AttributeLevelEdit,
-  BridgeFreeMeasurePayload,
-  ElementSource,
-} from '@kumicraft/shared';
+import type { BatchEdit, BridgeFreeMeasurePayload, ElementSource } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';
+import { asWritten } from '../../api/written-class-test-support.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { executeEnableFreeFrame } from './free-frame-ops.ts';
 import { saveFreeSnapshot } from './free-frame-snapshot.ts';
 import { FreeFrameToggle } from './free-frame-toggle.tsx';
@@ -43,13 +40,14 @@ function sourceOf(loc: string): ElementSource {
   };
 }
 
-function apply(edits: readonly AttributeLevelEdit[]): void {
+function apply(edits: readonly BatchEdit[]): void {
   for (const edit of edits) {
     if (edit.kind === 'setFlag') free = edit.on;
-    if (edit.kind === 'setClassName') {
+    const written = asWritten(edit);
+    if (written.kind === 'setClassName') {
       // The server refuses an edit made against classes that are no longer there.
-      expect(code.get(edit.loc)).toBe(edit.before);
-      code.set(edit.loc, edit.after);
+      expect(code.get(written.loc)).toBe(written.before);
+      code.set(written.loc, written.after);
     }
   }
 }
@@ -71,7 +69,6 @@ async function turnOn(): Promise<void> {
     tag: 'div',
     currentClassName: code.get(FRAME) ?? '',
     grid: 8,
-    tailwindMajor: 4,
     measurePayload: measure,
     remember: (snapshot) => {
       saveFreeSnapshot('p1', snapshot);

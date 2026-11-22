@@ -5,12 +5,12 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import * as filesClient from '../../api/files-client.ts';
 import * as projectClient from '../../api/project-client.ts';
+import { useProjectStore } from '../../core/project-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { ExtractDialog } from '../components-panel/extract-dialog.tsx';
 import { PromoteDraftDialog } from '../drafts/promote-draft-dialog.tsx';
 import type { InspectorTarget } from '../inspector/types.ts';
 import { AddPageForm } from '../pages/add-page-form.tsx';
-import { useProjectStore } from '../project/project-store.ts';
 
 const mockTarget: Extract<InspectorTarget, { readonly kind: 'element' }> = {
   kind: 'element',

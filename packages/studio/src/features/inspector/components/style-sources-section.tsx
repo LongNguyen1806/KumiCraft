@@ -12,7 +12,7 @@ import {
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { studioBridgeChannel } from '../../selection/bridge-channel.ts';
+import { studioBridgeChannel } from '../../../core/bridge-channel.ts';
 import type { StyleTarget } from '../../style/style-target-store.ts';
 
 /** The properties always listed, declared or not; any other declared one is listed too. */
@@ -285,5 +285,3 @@ export function StyleSourcesSection({
     </section>
   );
 }
-
-export { CssStyleEditor } from './css-style-editor.tsx';

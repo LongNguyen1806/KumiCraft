@@ -1,6 +1,6 @@
 // Joined buttons for the few most used values of a property (P5); the select beside them keeps
 // every value.
-import type { PropertyId } from '@kumicraft/shared';
+import type { PropertyId } from '@kumicraft/style-tailwind';
 import type { LucideIcon } from 'lucide-react';
 import {
   AlignCenter,

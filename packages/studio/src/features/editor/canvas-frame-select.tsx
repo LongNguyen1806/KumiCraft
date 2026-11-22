@@ -3,7 +3,7 @@ import type { Frame } from '@kumicraft/shared';
 import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useCanvasViewStore } from './canvas-view-store.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
 
 export type FrameSelectProps = {
   readonly frames?: readonly Frame[] | undefined;

@@ -1,11 +1,6 @@
 // Geometry of free frames: which elements are free, where they sit, how to measure them (R-FF-10..14).
-import {
-  type BridgeFreeMeasurePayload,
-  matchProperty,
-  parseRawClasses,
-  type Placement,
-  snap,
-} from '@kumicraft/shared';
+import { type BridgeFreeMeasurePayload, type Placement } from '@kumicraft/shared';
+import { matchProperty, parseRawClasses, snap } from '@kumicraft/style-tailwind';
 
 import { getRefForElement } from '../candidate-chain.ts';
 

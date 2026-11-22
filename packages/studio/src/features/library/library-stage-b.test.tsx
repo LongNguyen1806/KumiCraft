@@ -1,14 +1,15 @@
 // @vitest-environment happy-dom
 // Unit tests for Library style selector persistence, project uiKit badges, and block insertion (TK-44, TK-69).
-import { LIBRARY_BLOCKS, type ProjectInfo } from '@kumicraft/shared';
+import { LIBRARY_BLOCKS } from '@kumicraft/content';
+import { type ProjectInfo } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';
+import { useProjectStore } from '../../core/project-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { useThemeStore } from '../inspector/use-project-theme.ts';
-import { useProjectStore } from '../project/project-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { insertBlockAt, resetThemeLookAttempt } from './insert-block.ts';
 import { LibraryPanel } from './library-panel.tsx';
 

@@ -1,11 +1,13 @@
 // Floating inline text formatting toolbar during Canvas text selection (K9.7-2 TK-3).
 import {
-  type InsertedCss,
   lookFromTheme,
-  primarySystem,
   type ProjectLook,
   resolveCssRoles,
   resolveTailwindRoles,
+} from '@kumicraft/content';
+import {
+  type InsertedCss,
+  primarySystem,
   type StyleSystemId,
   type WrapTextEdit,
 } from '@kumicraft/shared';
@@ -13,9 +15,9 @@ import { Bold, Italic, Palette, Tag } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { applyStructureEdit } from '../../api/source-client.ts';
+import { sendStructureEdit } from '../../core/edits.ts';
+import { useProjectStore } from '../../core/project-store.ts';
 import { useThemeStore } from '../inspector/use-project-theme.ts';
-import { useProjectStore } from '../project/project-store.ts';
 import type { TextSelectionRange } from './use-canvas-text-edit.ts';
 
 type InlineColorOption = {
@@ -309,7 +311,7 @@ function useInlineWrapAction(onApplied: () => void) {
     if (busy) return;
     setBusy(true);
     try {
-      await applyStructureEdit(edit);
+      await sendStructureEdit(edit);
       setShowColors(false);
       onApplied();
     } finally {

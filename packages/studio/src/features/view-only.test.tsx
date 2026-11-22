@@ -7,6 +7,9 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import * as editorClient from '../api/editor-client.ts';
 import * as eventsClient from '../api/events-client.ts';
 import * as sourceClient from '../api/source-client.ts';
+import { BridgeChannel } from '../core/bridge-channel.ts';
+import { useProjectStore } from '../core/project-store.ts';
+import { useSelectionStore } from '../core/selection-store.ts';
 import { initI18n } from '../i18n/i18n.ts';
 import { useChatStore } from './chat/chat-store.ts';
 import { CanvasArea } from './editor/canvas-area.tsx';
@@ -15,9 +18,6 @@ import { ViewOnlyInspector } from './inspector/components/view-only-inspector.ts
 import { InspectorPanel } from './inspector/inspector-panel.tsx';
 import type { InspectorTarget } from './inspector/types.ts';
 import { PagesPanel } from './pages/pages-panel.tsx';
-import { useProjectStore } from './project/project-store.ts';
-import { BridgeChannel } from './selection/bridge-channel.ts';
-import { useSelectionStore } from './selection/selection-store.ts';
 import { useCanvasTextEdit } from './text-edit/use-canvas-text-edit.ts';
 
 const VIEW_ONLY_PROJECT: ProjectInfo = {

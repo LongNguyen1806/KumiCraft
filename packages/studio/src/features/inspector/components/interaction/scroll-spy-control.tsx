@@ -3,7 +3,7 @@ import type { ElementRef, ElementSource } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
 import { applyInteraction } from '../../../../api/interaction-client.ts';
-import { useSelectionStore } from '../../../selection/selection-store.ts';
+import { useSelectionStore } from '../../../../core/selection-store.ts';
 import {
   collectDescendants,
   interactionDisableReason,

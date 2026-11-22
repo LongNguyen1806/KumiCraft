@@ -1,12 +1,12 @@
 // Property groups rendering for Inspector (SPEC-04 M-IN, R-IN-10..15).
+import type { ThemeInfo } from '@kumicraft/shared';
 import type {
   ClassContext,
   ClassToken,
   ClassValue,
   PropertyId,
   Scope,
-  ThemeInfo,
-} from '@kumicraft/shared';
+} from '@kumicraft/style-tailwind';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

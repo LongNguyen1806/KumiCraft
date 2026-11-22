@@ -1,6 +1,6 @@
 // The question asked when a property already differs by screen, and the field icon that drops a
 // screen's own value (spec-log #141, #144). Both read and set the shared screen-edit store.
-import type { PropertyId } from '@kumicraft/shared';
+import type { PropertyId } from '@kumicraft/style-tailwind';
 import { Monitor, Smartphone, Tablet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 

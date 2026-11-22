@@ -1,26 +1,28 @@
 // Block insertion logic (SPEC-04 R-LB-14, R-LB-15, TK-43, TK-47).
 import {
-  type ElementRef,
-  type InsertTarget,
-  isContainerTag,
   type LibraryBlock,
   lookFromTheme,
+  type ProjectLook,
+  renderBlock,
+} from '@kumicraft/content';
+import {
+  type ElementRef,
+  type InsertTarget,
   type Placement,
   primarySystem,
-  type ProjectLook,
   type RelPath,
   relPathProblem,
-  renderBlock,
 } from '@kumicraft/shared';
+import { isContainerTag } from '@kumicraft/style-tailwind';
 
-import { applyStructureEdit } from '../../api/source-client.ts';
+import { placementTailwindMajor } from '../../core/canvas-view-store.ts';
+import { sendStructureEdit } from '../../core/edits.ts';
+import { useProjectStore } from '../../core/project-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';
 import { selectionAnchor } from '../design/selection-anchor.ts';
-import { placementTailwindMajor } from '../editor/canvas-view-store.ts';
 import { freeStackPlacement } from '../free-frame/free-frame-placement.ts';
 import { useThemeStore } from '../inspector/use-project-theme.ts';
-import { useProjectStore } from '../project/project-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { isTextLeaf, resolveTargetTag } from '../structure/structure-commands.ts';
 import { getSelectedStyle } from './library-styles.ts';
 import { getSelectedVariant } from './library-variants.ts';
@@ -121,7 +123,7 @@ export async function insertBlockAt(
     project?.support.uiKit,
   );
   try {
-    const res = await applyStructureEdit({
+    const res = await sendStructureEdit({
       kind: 'insert',
       target,
       jsx: rendered.jsx,

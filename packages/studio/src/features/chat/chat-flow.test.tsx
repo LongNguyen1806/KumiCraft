@@ -8,8 +8,8 @@ import * as agentClient from '../../api/agent-client.ts';
 import { ApiError } from '../../api/http.ts';
 import * as jobsClient from '../../api/jobs-client.ts';
 import * as projectClient from '../../api/project-client.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { ChatPanel } from './chat-panel.tsx';
 import { useChatStore } from './chat-store.ts';
 

@@ -2,9 +2,9 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useCanvasErrorStore } from '../../core/canvas-error-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { BuildErrorBanner } from './build-error-banner.tsx';
-import { useCanvasErrorStore } from './canvas-error-store.ts';
 
 beforeAll(async () => {
   await initI18n();

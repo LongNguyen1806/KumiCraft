@@ -3,7 +3,7 @@ import type { ElementSource, TextRunNode } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { editSource } from '../../../api/source-client.ts';
+import { sendEdit } from '../../../core/edits.ts';
 import { errorText, toErrorInfo } from '../../../routes/error-text.ts';
 
 async function saveTextRunChange(
@@ -17,7 +17,7 @@ async function saveTextRunChange(
   if (draft === run.value) return;
   onError(undefined);
   try {
-    await editSource({
+    await sendEdit({
       edit: {
         kind: 'setTextRun',
         loc: source.loc,

@@ -1,7 +1,7 @@
 // Unit tests for Canvas error store (SPEC-04 M-RN, R-RN-25).
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { MAX_RUNTIME_ERRORS, useCanvasErrorStore } from './canvas-error-store.ts';
+import { MAX_RUNTIME_ERRORS, useCanvasErrorStore } from '../../core/canvas-error-store.ts';
 
 describe('useCanvasErrorStore [R-RN-25]', () => {
   beforeEach(() => {

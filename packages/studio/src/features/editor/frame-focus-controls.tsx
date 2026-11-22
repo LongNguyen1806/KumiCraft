@@ -11,10 +11,15 @@ import { ChevronLeft, ChevronRight, LayoutGrid, Square } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { isApplePlatform } from '../../app/platform.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import {
+  exitFrameFocus,
+  focusFrame,
+  stepFrame,
+  useFrameFocusActive,
+} from '../../core/frame-focus-store.ts';
+import { useProjectInfo } from '../../core/project-store.ts';
 import { useSettingsStore } from '../../store/settings-store.ts';
-import { useProjectInfo } from '../project/project-store.ts';
-import { useCanvasViewStore } from './canvas-view-store.ts';
-import { exitFrameFocus, focusFrame, stepFrame, useFrameFocusActive } from './frame-focus-store.ts';
 import { sessionLabel } from './session-popover.tsx';
 
 type FrameFocusControlsProps = {

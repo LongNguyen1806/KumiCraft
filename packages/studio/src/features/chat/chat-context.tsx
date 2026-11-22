@@ -2,8 +2,8 @@
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
 import { useChatStore } from './chat-store.ts';
 

@@ -1,5 +1,5 @@
 // Spacing rhythm detection and nearest-step snapping for Inspector (TK-72).
-import type { PropertyId } from '@kumicraft/shared';
+import type { PropertyId } from '@kumicraft/style-tailwind';
 
 export const TAILWIND_RHYTHM_STEPS: readonly number[] = [0, 1, 2, 3, 4, 6, 8, 10, 12, 16, 20, 24];
 const TAILWIND_RHYTHM_SET = new Set<number>(TAILWIND_RHYTHM_STEPS);

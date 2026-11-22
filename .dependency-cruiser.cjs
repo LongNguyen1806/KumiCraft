@@ -2,6 +2,7 @@
 // checked by machine on every `pnpm lint`. Violations that existed when a rule was turned on are
 // listed in .dependency-cruiser-known-violations.json; that list may only shrink.
 const SERVER = '^packages/server/src/';
+const STUDIO = '^packages/studio/src/';
 
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
@@ -74,6 +75,16 @@ module.exports = {
       severity: 'error',
       from: { path: `${SERVER}adapters/` },
       to: { path: `${SERVER}stacks/` },
+    },
+    {
+      name: 'studio-core-not-features',
+      comment:
+        'Studio core holds what many features share (project, selection, Bridge channel, Undo, ' +
+        'Canvas view); it never uses a feature: features register with it (03 section 6.2).',
+      severity: 'error',
+      from: { path: `${STUDIO}core/` },
+      // The error text helper is shared by the whole Studio and uses no feature.
+      to: { path: `${STUDIO}(features|routes|app)/`, pathNot: `${STUDIO}routes/error-text\\.ts$` },
     },
   ],
   options: {

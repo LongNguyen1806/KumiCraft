@@ -1,5 +1,6 @@
 // Motion quick presets and Tailwind/CSS mappings (K9.7-2 TK-16, TK-17, TK-22).
-import type { Scope, StyleState } from '@kumicraft/shared';
+import type { StyleState } from '@kumicraft/shared';
+import type { Scope } from '@kumicraft/style-tailwind';
 
 import type { BatchPropEntry } from '../use-live-edit.ts';
 

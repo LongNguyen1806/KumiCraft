@@ -1,9 +1,11 @@
 // Operations for enabling and disabling free frame mode (R-FF-10, WP-2.12a).
-import type { AttributeLevelEdit, BridgeFreeMeasurePayload, TreeNode } from '@kumicraft/shared';
-import { applyPlacement, parseLocString, snap } from '@kumicraft/shared';
+import type { BatchEdit, BridgeFreeMeasurePayload, TreeNode } from '@kumicraft/shared';
+import { parseLocString } from '@kumicraft/shared';
+import { snap } from '@kumicraft/style-tailwind';
 
-import { editSourceBatch } from '../../api/source-client.ts';
+import { sendEdits } from '../../core/edits.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';
+import { planClassEdit } from './class-edit.ts';
 import { readStaticClassName } from './free-frame-commands.ts';
 import {
   type CurrentElement,
@@ -17,53 +19,39 @@ export type EnableFreeFrameParams = {
   readonly tag: string;
   readonly currentClassName: string;
   readonly grid: 1 | 4 | 8 | 16;
-  readonly tailwindMajor: 3 | 4;
   readonly measurePayload: BridgeFreeMeasurePayload;
   /** Called once the batch is written, with what it replaced (spec-log #126). */
   readonly remember?: ((snapshot: FreeSnapshot) => void) | undefined;
 };
 
-/** Unprefixed position classes that already make the frame the parent of absolute children. */
-const POSITIONED: ReadonlySet<string> = new Set(['relative', 'absolute', 'fixed', 'sticky']);
-
-async function sendBatch(edits: readonly AttributeLevelEdit[]): Promise<ErrorInfo | undefined> {
+async function sendBatch(edits: readonly BatchEdit[]): Promise<ErrorInfo | undefined> {
   try {
-    await editSourceBatch({ edits: [...edits] });
+    await sendEdits({ edits: [...edits] });
     return undefined;
   } catch (e) {
     return toErrorInfo(e);
   }
 }
 
-function withoutClass(classString: string, name: string): string {
-  return classString
-    .split(/\s+/)
-    .filter((c) => c !== '' && c !== name)
-    .join(' ');
-}
-
 /** Turns the frame on in one batch (one Undo step). Returns the error to show, if any. */
 export async function executeEnableFreeFrame(
   params: EnableFreeFrameParams,
 ): Promise<ErrorInfo | undefined> {
-  const { loc, tag, currentClassName, grid, tailwindMajor, measurePayload } = params;
+  const { loc, tag, currentClassName, grid, measurePayload } = params;
 
-  const frameClasses = currentClassName.split(/\s+/).filter(Boolean);
-  // Children are placed from the frame's corner, so the frame must be positioned. One that already
-  // is (a free child is `absolute`) keeps its own: adding `relative` beside `absolute` let
-  // `relative` win and dropped the frame out of its place (spec-log #127).
-  if (!frameClasses.some((c) => POSITIONED.has(c))) frameClasses.push('relative');
-  // A frame sized by its content keeps its width, or it shrinks to nothing (spec-log #129).
-  if (measurePayload.keepWidth === true) {
-    frameClasses.push(`w-[${String(Math.round(measurePayload.width))}px]`);
-  }
-  if (!measurePayload.hasHeight) {
-    frameClasses.push(`h-[${String(Math.round(measurePayload.height))}px]`);
-  }
-
-  const edits: AttributeLevelEdit[] = [
+  // Children are placed from the frame's corner, so the frame is positioned; a frame sized by its
+  // content keeps the size it shows (spec-log #127, #129).
+  const frame = planClassEdit({ loc, tag }, currentClassName, [
+    {
+      kind: 'frameOn',
+      width: measurePayload.keepWidth === true ? measurePayload.width : undefined,
+      height: measurePayload.hasHeight ? undefined : measurePayload.height,
+    },
+  ]);
+  if (!frame.ok) return frame.error;
+  const edits: BatchEdit[] = [
     { kind: 'setFlag', loc, tag, name: 'data-rc-free', on: true },
-    { kind: 'setClassName', loc, tag, before: currentClassName, after: frameClasses.join(' ') },
+    frame.value.edit,
   ];
 
   const remembered: FreeSnapshotChild[] = [];
@@ -81,9 +69,12 @@ export async function executeEnableFreeFrame(
       left: snap(child.left, grid),
       top: snap(child.top, grid),
     };
-    const after = applyPlacement(before, placement, tailwindMajor);
-    edits.push({ kind: 'setClassName', loc: child.ref.loc, tag: child.tag, before, after });
-    remembered.push({ loc: child.ref.loc, before, after });
+    const placed = planClassEdit({ loc: child.ref.loc, tag: child.tag }, before, [
+      { kind: 'place', placement },
+    ]);
+    if (!placed.ok) return placed.error;
+    edits.push(placed.value.edit);
+    remembered.push({ loc: child.ref.loc, before, after: placed.value.after });
   }
 
   const error = await sendBatch(edits);
@@ -91,7 +82,7 @@ export async function executeEnableFreeFrame(
     params.remember?.({
       loc,
       frameBefore: currentClassName,
-      frameAfter: frameClasses.join(' '),
+      frameAfter: frame.value.after,
       children: remembered,
     });
   }
@@ -152,14 +143,14 @@ export async function executeDisableFreeFrame(
   const { loc, tag, currentClassName, treeNodes } = params;
   const children = frameChildren(loc, treeNodes);
 
-  const edits: AttributeLevelEdit[] = [
+  const edits: BatchEdit[] = [
     { kind: 'setFlag', loc, tag, name: 'data-rc-free', on: false },
     {
-      kind: 'setClassName',
+      kind: 'setClasses',
       loc,
       tag,
       before: currentClassName,
-      after: withoutClass(currentClassName, 'relative'),
+      steps: [{ kind: 'frameOff' }],
     },
   ];
 
@@ -168,11 +159,11 @@ export async function executeDisableFreeFrame(
     if (!beforeRes.ok) return beforeRes.error;
     const before = beforeRes.value;
     edits.push({
-      kind: 'setClassName',
+      kind: 'setClasses',
       loc: child.ref.loc,
       tag: child.tag,
       before,
-      after: applyPlacement(before, { kind: 'flow' }),
+      steps: [{ kind: 'place', placement: { kind: 'flow' } }],
     });
   }
 

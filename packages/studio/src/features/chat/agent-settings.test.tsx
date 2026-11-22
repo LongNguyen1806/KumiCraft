@@ -6,7 +6,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import * as agentClient from '../../api/agent-client.ts';
 import * as projectClient from '../../api/project-client.ts';
-import { useProjectStore } from '../project/project-store.ts';
+import { useProjectStore } from '../../core/project-store.ts';
 import { AgentSettings } from './agent-settings.tsx';
 import { useChatStore } from './chat-store.ts';
 import { useUsageStore } from './usage-store.ts';

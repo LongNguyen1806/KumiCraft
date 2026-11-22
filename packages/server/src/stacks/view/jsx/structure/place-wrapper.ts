@@ -1,7 +1,7 @@
 // The `<div className="absolute left-4 top-4">` the Studio puts around a component placed in a free
 // frame when the component takes no `className` (placement-jsx.ts). It is found again by its shape,
 // with no marker in the user's code: a `<div>` with only placing classes around one element.
-import { isPlacementOnly } from '@kumicraft/shared';
+import { isPlacementOnly } from '@kumicraft/style-tailwind';
 
 import { asAstNode, type AstNode, getJsxTagName } from '../../../../lib/ast-helpers.ts';
 import { readClassName } from '../attribute-reader.ts';

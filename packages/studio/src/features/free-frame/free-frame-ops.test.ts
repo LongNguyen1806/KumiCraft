@@ -1,13 +1,11 @@
 // Studio-side tests for turning a free frame on and for duplicate/paste placement (R-FF-10, R-FF-12).
-import type {
-  AttributeLevelEdit,
-  BridgeFreeMeasurePayload,
-  ElementSource,
-} from '@kumicraft/shared';
+import type { BatchEdit, BridgeFreeMeasurePayload, ElementSource } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { asWritten } from '../../api/written-class-test-support.ts';
+import { useProjectStore } from '../../core/project-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { executeEnableFreeFrame } from './free-frame-ops.ts';
 import { freeStackPlacement } from './free-frame-placement.ts';
 
@@ -50,8 +48,8 @@ function mockSources(byLoc: Readonly<Record<string, ElementSource['className'] |
   });
 }
 
-function batchEdits(spy: { mock: { calls: { edits: AttributeLevelEdit[] }[][] } }) {
-  return spy.mock.calls[0]?.[0]?.edits ?? [];
+function batchEdits(spy: { mock: { calls: { edits: BatchEdit[] }[][] } }) {
+  return (spy.mock.calls[0]?.[0]?.edits ?? []).map(asWritten);
 }
 
 describe('Free frame on: Studio batch [R-FF-10]', () => {
@@ -77,7 +75,6 @@ describe('Free frame on: Studio batch [R-FF-10]', () => {
       tag: 'div',
       currentClassName: 'grid gap-4',
       grid: 8,
-      tailwindMajor: 4,
       measurePayload: measure([
         ['src/pages/Home.tsx:4:7', 0, 3],
         ['src/pages/Home.tsx:5:7', 0, 117],
@@ -139,7 +136,6 @@ describe('Free frame on: Studio batch [R-FF-10]', () => {
         tag: 'div',
         currentClassName: before,
         grid: 8,
-        tailwindMajor: 4,
         measurePayload: measure([]),
       });
 
@@ -164,7 +160,6 @@ describe('Free frame on: Studio batch [R-FF-10]', () => {
       tag: 'div',
       currentClassName: 'p-6 absolute left-4 top-0',
       grid: 8,
-      tailwindMajor: 4,
       measurePayload: { ...measure([]), width: 376.4, keepWidth: true },
     });
 
@@ -174,6 +169,35 @@ describe('Free frame on: Studio batch [R-FF-10]', () => {
   });
 
   it('Scenario 9b: Tailwind v3 writes arbitrary px', async () => {
+    // The Tailwind major comes from the open project, as on the server (03 section 3.3).
+    useProjectStore.setState({
+      project: {
+        id: 'v3-app',
+        name: 'v3-app',
+        root: '/tmp/v3-app',
+        sourceDir: 'src',
+        support: {
+          supported: true,
+          framework: 'vite-react',
+          versions: {},
+          language: 'ts',
+          styling: {
+            systems: [{ id: 'tailwind', version: '3.4.17' }],
+            primary: 'tailwind',
+            editable: true,
+            globalCss: [],
+          },
+          reasons: [],
+        },
+        needsInstall: false,
+        responsiveMode: 'desktop-first',
+        frames: [{ id: 'desktop', label: 'Desktop', width: 1440, height: 900 }],
+        primaryFrameId: 'desktop',
+        backends: [],
+        trusted: true,
+        designDirs: { pages: ['src/pages'], layouts: [], components: [], drafts: 'src/drafts' },
+      },
+    });
     const batchSpy = vi
       .spyOn(sourceClient, 'editSourceBatch')
       .mockResolvedValue({ changed: true, files: ['src/pages/Home.tsx'] });
@@ -184,13 +208,13 @@ describe('Free frame on: Studio batch [R-FF-10]', () => {
       tag: 'div',
       currentClassName: 'relative h-40',
       grid: 8,
-      tailwindMajor: 3,
       measurePayload: { ...measure([['src/pages/Home.tsx:4:7', 16, 40]]), hasHeight: true },
     });
 
     const edits = batchEdits(batchSpy);
     expect(edits[1]).toMatchObject({ after: 'relative h-40' });
     expect(edits[2]).toMatchObject({ after: 'p-4 absolute left-[16px] top-[40px]' });
+    useProjectStore.setState({ project: undefined });
   });
 
   it('Scenario 10: a child with className={…} stops with E023 and writes nothing', async () => {
@@ -205,7 +229,6 @@ describe('Free frame on: Studio batch [R-FF-10]', () => {
       tag: 'div',
       currentClassName: '',
       grid: 8,
-      tailwindMajor: 4,
       measurePayload: measure([
         ['src/pages/Home.tsx:4:7', 0, 0],
         ['src/pages/Home.tsx:5:7', 0, 80],
@@ -228,7 +251,6 @@ describe('Free frame on: Studio batch [R-FF-10]', () => {
       tag: 'div',
       currentClassName: '',
       grid: 8,
-      tailwindMajor: 4,
       measurePayload: measure([
         ['src/pages/Home.tsx:4:7', 0, 0],
         ['src/pages/Home.tsx:5:7', 0, 80],

@@ -7,10 +7,10 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import { useProjectInfo } from '../../core/project-store.ts';
 import { errorText } from '../../routes/error-text.ts';
 import { useOpenInEditor } from '../editor/use-open-in-editor.ts';
 import { failureOf, useJobFollower } from '../jobs/use-job-follower.ts';
-import { useProjectInfo } from '../project/project-store.ts';
 import { useBuildCheckStore } from './build-check-store.ts';
 
 /** `src/x.tsx:3:7`, the position "open in editor" takes. */

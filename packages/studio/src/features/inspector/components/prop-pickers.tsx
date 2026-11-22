@@ -1,12 +1,19 @@
 // The image and link knobs of a component (thiet-ke-component.md §3, Đợt 2): an image is picked
 // from the project's images with a thumbnail; a link is typed or picked from the project's pages.
-import type { ComponentPropSpec } from '@kumicraft/shared';
+import type { ComponentPropSpec, SetPropValue } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ImagePickerDialog, ProjectThumb } from '../../draw/image-picker-dialog.tsx';
 import { usePagesData } from '../../editor/page-select.tsx';
-import type { PropControlProps } from './prop-controls.tsx';
+
+/** What every prop control takes (prop-controls.tsx and the pickers here). */
+export type PropControlProps = {
+  readonly spec: ComponentPropSpec;
+  readonly disabled: boolean;
+  readonly onChange: (val: SetPropValue | undefined) => void;
+  readonly onOpenEditor: () => void;
+};
 
 const SMALL_BUTTON =
   'shrink-0 rounded-md border border-line bg-field px-2 py-1 text-[11px] font-medium text-ink hover:bg-wash-cool disabled:opacity-50';

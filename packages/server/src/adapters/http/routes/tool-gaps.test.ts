@@ -11,6 +11,7 @@ import { err, ok, type Result } from '../../../kernel/result.ts';
 import { createSessionInfoProvider } from '../../../kernel/session.ts';
 import { makeTestProjectInfo } from '../../../services/agent/test-support.ts';
 import { createToolGapStore } from '../../../services/agent/tool-gaps.ts';
+import { testClassEdits } from '../../../services/edit/class-edits-test-support.ts';
 import { makeTempDir, nodeFs, silentLogger } from '../../../services/workspace/test-support.ts';
 import { jsxFeatures } from '../../../stacks/view/jsx/features.ts';
 import { createSourceEditorService } from '../../../stacks/view/jsx/source-editor-service.ts';
@@ -49,6 +50,7 @@ beforeEach(async () => {
     },
     sourceRoutes: {
       sourceEditorService: createSourceEditorService({ fs: nodeFs }),
+      classEdits: testClassEdits(),
       historyService: createHistoryService({ fs: nodeFs }),
       getProjectRoot: () => projectRoot,
       getViewFeatures: () => jsxFeatures,

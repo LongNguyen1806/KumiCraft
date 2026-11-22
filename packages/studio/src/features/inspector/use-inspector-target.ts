@@ -3,35 +3,30 @@ import {
   type Breakpoint,
   type ElementRef,
   type ElementSource,
-  type Frame,
   type InspectorPreviewState,
   type InteractionState,
   parseLocString,
   projectBreakpoints,
-  type ResponsiveMode,
-  type Scope,
 } from '@kumicraft/shared';
+import { type Scope } from '@kumicraft/style-tailwind';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { createEventsClient, type StudioServerEvent } from '../../api/events-client.ts';
 import { fetchElementSource } from '../../api/source-client.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { type ErrorInfo, errorText, toErrorInfo } from '../../routes/error-text.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { useStructureErrorStore } from '../structure/structure-error-store.ts';
-import type { InspectorLockReason, InspectorTarget, InspectorWarning } from './types.ts';
+import { computeWritePrefix, useScopeCalculation } from './inspector-scope.ts';
+import type {
+  InspectorLockReason,
+  InspectorTarget,
+  InspectorWarning,
+  UseInspectorTargetOptions,
+} from './types.ts';
 import { useMultiInspectorTarget } from './use-multi-inspector-target.ts';
 import { useThemeStore } from './use-project-theme.ts';
-
-export type UseInspectorTargetOptions = {
-  readonly frame?: Frame | undefined;
-  readonly primaryFrame?: Frame | undefined;
-  readonly responsiveMode?: ResponsiveMode | undefined;
-  readonly enabled?: boolean | undefined;
-};
-
-import { computeWritePrefix, useScopeCalculation } from './inspector-scope.ts';
 export { computeWritePrefix, useScopeCalculation };
 
 export function deriveLockReason(source: ElementSource | undefined): {

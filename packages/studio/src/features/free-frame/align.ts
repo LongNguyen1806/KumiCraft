@@ -1,14 +1,13 @@
 // Align and distribute operations for elements in a free frame (SPEC-04 section 18E, R-FF-17, WP-2.12b).
-import type { AttributeLevelEdit, ElementRef } from '@kumicraft/shared';
-import { applyPlacement } from '@kumicraft/shared';
+import type { BatchEdit, ElementRef } from '@kumicraft/shared';
 import { create } from 'zustand';
 
-import { editSourceBatch } from '../../api/source-client.ts';
+import { sendEdits } from '../../core/edits.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import type { ErrorInfo } from '../../routes/error-text.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { scopeCanvasChange } from '../inspector/screen-scope.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { canvasScope } from '../inspector/screen-scope.ts';
+import { planClassEdit } from './class-edit.ts';
 import { freeFrameOfRef, requestFreeMeasure } from './free-context.ts';
 import { readStaticClassName } from './free-frame-commands.ts';
 
@@ -169,10 +168,9 @@ function calculateNewPositions(
 async function buildAlignEdits(
   boxes: readonly FreeItemBox[],
   newPositions: Map<string, { left: number; top: number }>,
-  tailwindMajor: 3 | 4,
-): Promise<{ readonly edits?: AttributeLevelEdit[]; readonly error?: ErrorInfo }> {
+): Promise<{ readonly edits?: BatchEdit[]; readonly error?: ErrorInfo }> {
   const { treeNodes } = useSelectionStore.getState();
-  const edits: AttributeLevelEdit[] = [];
+  const edits: BatchEdit[] = [];
 
   for (const box of boxes) {
     const newPos = newPositions.get(box.key);
@@ -183,17 +181,17 @@ async function buildAlignEdits(
     if (!beforeRes.ok) return { error: beforeRes.error };
 
     const before = beforeRes.value;
+    const node = treeNodes.find((n) => n.ref.loc === loc);
     // Same screen scope as an Inspector edit (spec-log #144).
-    const after = scopeCanvasChange(
-      loc,
-      before,
-      applyPlacement(before, { kind: 'free', left: newPos.left, top: newPos.top }, tailwindMajor),
-    );
-    if (after === undefined) return { error: { code: 'E023', params: { reason: 'screenSplit' } } };
-    if (after !== before) {
-      const node = treeNodes.find((n) => n.ref.loc === loc);
-      edits.push({ kind: 'setClassName', loc, tag: node?.tag ?? 'div', before, after });
-    }
+    const planned = planClassEdit({ loc, tag: node?.tag ?? 'div' }, before, [
+      {
+        kind: 'place',
+        placement: { kind: 'free', left: newPos.left, top: newPos.top },
+        canvas: canvasScope(loc),
+      },
+    ]);
+    if (!planned.ok) return { error: planned.error };
+    if (planned.value.after !== before) edits.push(planned.value.edit);
   }
   return { edits };
 }
@@ -231,8 +229,7 @@ export async function runAlign(mode: AlignMode | 'distributeX' | 'distributeY'):
     height: measurePayload.height,
   });
 
-  const { tailwindMajor } = useCanvasViewStore.getState();
-  const built = await buildAlignEdits(boxes, newPositions, tailwindMajor);
+  const built = await buildAlignEdits(boxes, newPositions);
   if (built.error) {
     useFreeFrameErrorStore.getState().setError(built.error);
     return false;
@@ -240,7 +237,7 @@ export async function runAlign(mode: AlignMode | 'distributeX' | 'distributeY'):
   if (!built.edits || built.edits.length === 0) return true;
 
   try {
-    await editSourceBatch({ edits: built.edits });
+    await sendEdits({ edits: built.edits });
     useFreeFrameErrorStore.getState().setError(undefined);
     return true;
   } catch (err) {

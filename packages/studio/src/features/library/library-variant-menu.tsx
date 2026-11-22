@@ -1,5 +1,5 @@
 // Variant picker button and dropdown menu on Library BlockItem (TK-47).
-import type { LibraryBlock, LibraryBlockVariant } from '@kumicraft/shared';
+import type { LibraryBlock, LibraryBlockVariant } from '@kumicraft/content';
 import { ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

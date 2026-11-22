@@ -2,7 +2,7 @@ import { promises as fs } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { LIBRARY_BLOCKS, renderBlock } from '@kumicraft/shared';
+import { LIBRARY_BLOCKS, renderBlock } from '@kumicraft/content';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createHistoryService } from '../../../../kernel/history/history-service.ts';

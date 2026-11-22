@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { useCanvasErrorStore } from './canvas-error-store.ts';
+import { useCanvasErrorStore } from '../../core/canvas-error-store.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
 
 type RuntimeErrorItemsProps = {
   readonly errors: readonly { readonly message: string; readonly count: number }[];

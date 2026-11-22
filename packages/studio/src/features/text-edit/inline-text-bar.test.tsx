@@ -3,8 +3,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';
+import { useProjectStore } from '../../core/project-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
-import { useProjectStore } from '../project/project-store.ts';
 import { InlineTextBar } from './inline-text-bar.tsx';
 
 afterEach(() => {

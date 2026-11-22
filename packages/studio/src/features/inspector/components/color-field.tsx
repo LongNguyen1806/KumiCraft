@@ -1,6 +1,12 @@
 // Color field control in Inspector: project colors, Tailwind palette, and custom color picker (R-IN-19).
-import type { ClassContext, ClassToken, ClassValue, PropertyId, Scope } from '@kumicraft/shared';
-import { readValue, TAILWIND_COLORS } from '@kumicraft/shared';
+import type {
+  ClassContext,
+  ClassToken,
+  ClassValue,
+  PropertyId,
+  Scope,
+} from '@kumicraft/style-tailwind';
+import { readValue, TAILWIND_COLORS } from '@kumicraft/style-tailwind';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

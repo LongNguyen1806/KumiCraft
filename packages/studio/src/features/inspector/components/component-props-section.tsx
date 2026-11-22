@@ -9,9 +9,9 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { fetchComponentProps } from '../../../api/project-client.ts';
-import { editSource } from '../../../api/source-client.ts';
+import { sendEdit } from '../../../core/edits.ts';
+import { useSelectionStore } from '../../../core/selection-store.ts';
 import { useOpenInEditor } from '../../editor/use-open-in-editor.ts';
-import { useSelectionStore } from '../../selection/selection-store.ts';
 import { ComponentCard } from './component-card.tsx';
 import { InspectorGroup } from './inspector-group.tsx';
 import { PropControl, PropName } from './prop-controls.tsx';
@@ -126,7 +126,7 @@ async function persistComponentProp(
   spec: ComponentPropSpec,
   value: SetPropValue | undefined,
 ): Promise<void> {
-  await editSource({
+  await sendEdit({
     edit: {
       kind: 'setProp',
       loc,

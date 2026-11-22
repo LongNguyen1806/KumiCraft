@@ -36,9 +36,11 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@kumicraft/content": "workspace:*",
     "@kumicraft/server": "workspace:*",
     "@kumicraft/shared": "workspace:*",
     "@kumicraft/studio": "workspace:*",
+    "@kumicraft/style-tailwind": "workspace:*",
     "@types/node": "22.20.5",
     "tsdown": "0.23.1"
   },

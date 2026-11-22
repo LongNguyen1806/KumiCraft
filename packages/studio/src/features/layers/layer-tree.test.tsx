@@ -2,7 +2,7 @@ import type { TreeNode } from '@kumicraft/shared';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { LayerTree } from './layer-tree.tsx';
 
 describe('LayerTree', () => {

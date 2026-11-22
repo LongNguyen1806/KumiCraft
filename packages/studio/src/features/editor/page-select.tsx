@@ -7,12 +7,12 @@ import { useTranslation } from 'react-i18next';
 import { createEventsClient } from '../../api/events-client.ts';
 import { isRecord } from '../../api/http.ts';
 import { fetchPages } from '../../api/project-client.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { isDraftAddress } from '../../core/open-frames-storage.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { NewDraftDialog } from '../drafts/new-draft-dialog.tsx';
 import { useDrafts } from '../drafts/use-drafts.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
-import { useCanvasViewStore } from './canvas-view-store.ts';
-import { isDraftAddress } from './open-frames-storage.ts';
 
 const CODE_FILE = /\.(tsx|jsx|ts|js)$/;
 

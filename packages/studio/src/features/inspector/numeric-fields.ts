@@ -1,7 +1,7 @@
 // The Inspector's number fields with a slider (the owner, 2026-11-18: a list of a few values let
 // nobody set 15° or 400ms). Each field has the slider's range, the limits a typed value may reach,
 // its unit, and how its value reads from and writes to Tailwind 3, Tailwind 4 and plain CSS.
-import type { ClassValue, PropertyId } from '@kumicraft/shared';
+import type { ClassValue, PropertyId } from '@kumicraft/style-tailwind';
 
 export type NumberUnit = 'deg' | '%' | 'px' | 'ms';
 

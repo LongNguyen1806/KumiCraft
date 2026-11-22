@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { patchProject } from '../../api/project-client.ts';
+import { useProjectInfo, useProjectStore } from '../../core/project-store.ts';
 import { FolderPicker } from '../files/folder-picker.tsx';
 import { useThemeStore } from '../inspector/use-project-theme.ts';
-import { useProjectInfo, useProjectStore } from '../project/project-store.ts';
 
 async function updateTokenFile(
   project: ReturnType<typeof useProjectInfo>,

@@ -9,7 +9,7 @@ import {
   type StylingSystemId,
   type ThemeInfo,
 } from '@kumicraft/shared';
-import { type ClassContext, parseClasses, readValue, writeValue } from '@kumicraft/shared/tailwind';
+import { type ClassContext, parseClasses, readValue, writeValue } from '@kumicraft/style-tailwind';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { nodeFs } from '../../services/workspace/test-support.ts';

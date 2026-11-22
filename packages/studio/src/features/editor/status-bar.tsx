@@ -4,15 +4,15 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { MAX_OPEN_FRAMES } from '../../core/open-frames-storage.ts';
+import { useProjectInfo } from '../../core/project-store.ts';
 import { BuildCheckButton } from '../build-check/build-check-button.tsx';
 import { DrawToolbar } from '../draw/draw-toolbar.tsx';
-import { useProjectInfo } from '../project/project-store.ts';
 import { stylingLabel } from '../project/styling-label.ts';
 import { FrameSelect } from './canvas-frame-select.tsx';
 import { GridSelect } from './canvas-grid-select.tsx';
-import { useCanvasViewStore } from './canvas-view-store.ts';
 import { CanvasZoomSlider } from './canvas-zoom.tsx';
-import { MAX_OPEN_FRAMES } from './open-frames-storage.ts';
 
 type StatusBarProps = {
   /** S-81: whether the project runs, or stays in restricted mode. */

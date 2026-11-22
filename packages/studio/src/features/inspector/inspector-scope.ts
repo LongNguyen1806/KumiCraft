@@ -6,8 +6,8 @@ import {
   type InteractionState,
   type ProjectBreakpoint,
   type ResponsiveMode,
-  type Scope,
 } from '@kumicraft/shared';
+import { type Scope } from '@kumicraft/style-tailwind';
 import { useMemo } from 'react';
 
 const STATE_VARIANT: Readonly<Record<InteractionState, string>> = {

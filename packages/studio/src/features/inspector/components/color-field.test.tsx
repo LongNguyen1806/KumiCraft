@@ -1,5 +1,6 @@
-import type { ClassContext, ThemeInfo } from '@kumicraft/shared';
-import { parseClasses } from '@kumicraft/shared';
+import type { ThemeInfo } from '@kumicraft/shared';
+import type { ClassContext } from '@kumicraft/style-tailwind';
+import { parseClasses } from '@kumicraft/style-tailwind';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 

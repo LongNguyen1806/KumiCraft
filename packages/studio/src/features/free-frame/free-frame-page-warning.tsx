@@ -2,8 +2,8 @@ import { type ElementRef, type ElementSource, parseLocString } from '@kumicraft/
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { freeFrameOfRef } from './free-context.ts';
 
 export function isDraftFile(filePath: string, draftsDir: string): boolean {

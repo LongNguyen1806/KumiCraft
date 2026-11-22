@@ -4,15 +4,15 @@ import { useTranslation } from 'react-i18next';
 
 import { promoteDraft } from '../../api/project-client.ts';
 import { Dialog } from '../../components/ui/dialog.tsx';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useProjectInfo } from '../../core/project-store.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import {
   PageDirAndFileFields,
   PageNameAndPathFields,
   useDirSuggestions,
 } from '../pages/add-page-form.tsx';
-import { useProjectInfo } from '../project/project-store.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 
 export type PromoteDraftDialogProps = {
   readonly open: boolean;

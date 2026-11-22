@@ -2,7 +2,7 @@
 // are not reported as changed files, so the Page select and the Canvas would keep the deleted draft.
 import { create } from 'zustand';
 
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
 
 type DraftsRevisionState = {
   readonly revision: number;

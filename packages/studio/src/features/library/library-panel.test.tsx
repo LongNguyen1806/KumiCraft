@@ -1,13 +1,14 @@
 // @vitest-environment happy-dom
-import { DEFAULT_DESIGN_DIRS, LIBRARY_BLOCKS, type ProjectInfo } from '@kumicraft/shared';
+import { LIBRARY_BLOCKS } from '@kumicraft/content';
+import { DEFAULT_DESIGN_DIRS, type ProjectInfo } from '@kumicraft/shared';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';
+import { useProjectStore } from '../../core/project-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { useThemeStore } from '../inspector/use-project-theme.ts';
-import { useProjectStore } from '../project/project-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { useStructureErrorStore } from '../structure/structure-error-store.ts';
 import { determineInsertTarget, insertBlock, resetThemeLookAttempt } from './insert-block.ts';
 import { LibraryPanel } from './library-panel.tsx';

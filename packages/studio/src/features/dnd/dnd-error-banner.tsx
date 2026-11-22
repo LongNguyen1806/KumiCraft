@@ -1,8 +1,8 @@
 // Error banner on Canvas when a drop operation is rejected (SPEC-04 M-DD, R-DD-14).
 import { useTranslation } from 'react-i18next';
 
+import { useDndStore } from '../../core/dnd-store.ts';
 import { errorText } from '../../routes/error-text.ts';
-import { useDndStore } from './dnd-store.ts';
 
 export function DndErrorBanner() {
   const { t } = useTranslation();

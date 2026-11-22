@@ -1,8 +1,9 @@
 // Gradient background & gradient text Inspector controls (K9.7-2 TK-10).
-import type { ClassToken, ClassValue, PropertyId, Scope, StyleReading } from '@kumicraft/shared';
+import type { StyleReading } from '@kumicraft/shared';
+import type { ClassToken, ClassValue, PropertyId, Scope } from '@kumicraft/style-tailwind';
 import { useTranslation } from 'react-i18next';
 
-import { useSelectionStore } from '../../selection/selection-store.ts';
+import { useSelectionStore } from '../../../core/selection-store.ts';
 import type { BatchPropEntry } from '../use-live-edit.ts';
 import {
   buildCssLinearGradient,

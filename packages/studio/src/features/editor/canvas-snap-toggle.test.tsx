@@ -4,10 +4,10 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { getStoredSnap, useCanvasViewStore } from '../../core/canvas-view-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
 import { GridSelect } from './canvas-grid-select.tsx';
-import { getStoredSnap, useCanvasViewStore } from './canvas-view-store.ts';
 
 beforeAll(async () => {
   await initI18n();

@@ -1,19 +1,14 @@
-import type {
-  ElementGuard,
-  InsertTarget,
-  LibraryBlock,
-  Placement,
-  ProjectComponent,
-} from '@kumicraft/shared';
+import type { LibraryBlock } from '@kumicraft/content';
+import type { ElementGuard, InsertTarget, Placement, ProjectComponent } from '@kumicraft/shared';
 import i18next from 'i18next';
 
-import { applyStructureEdit } from '../../api/source-client.ts';
+import { placementTailwindMajor } from '../../core/canvas-view-store.ts';
+import { useDndStore } from '../../core/dnd-store.ts';
+import { sendStructureEdit } from '../../core/edits.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';
 import { insertComponentAt } from '../components-panel/insert-component.ts';
-import { placementTailwindMajor } from '../editor/canvas-view-store.ts';
 import { insertBlockAt } from '../library/insert-block.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
-import { useDndStore } from './dnd-store.ts';
 
 export async function executeDropMove(
   refs: readonly ElementGuard[],
@@ -23,7 +18,7 @@ export async function executeDropMove(
 ): Promise<boolean> {
   useDndStore.getState().setError(undefined);
   try {
-    const res = await applyStructureEdit({
+    const res = await sendStructureEdit({
       kind: 'move',
       elements: [...refs],
       target,

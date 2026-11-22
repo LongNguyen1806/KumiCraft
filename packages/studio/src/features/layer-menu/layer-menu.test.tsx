@@ -7,10 +7,12 @@ import {
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { setBridgePayloadDispatcher } from '../../core/bridge-channel.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { dispatchBridgePayload } from '../selection/bridge-payload-handlers.ts';
 import { selectParentNode } from '../shortcuts/shortcut-actions.ts';
 import { LayerMenu } from './layer-menu.tsx';
 import { useLayerMenuStore } from './layer-menu-store.ts';
@@ -40,6 +42,9 @@ function dispatchBridgeMessage(type: string, payload: unknown, fakeWindow: Windo
     }),
   );
 }
+
+// What the app does at start (main.tsx): the features handle the Bridge messages.
+setBridgePayloadDispatcher(dispatchBridgePayload);
 
 describe('Studio: LayerMenu [R-SL-13]', () => {
   beforeAll(async () => {

@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createHttpApp } from '../../../adapters/http/create-http-app.ts';
 import { createHistoryService } from '../../../kernel/history/history-service.ts';
 import { createSessionInfoProvider } from '../../../kernel/session.ts';
+import { testClassEdits } from '../../../services/edit/class-edits-test-support.ts';
 import { nodeFs } from '../../../services/workspace/test-support.ts';
 import { jsxFeatures } from './features.ts';
 import { createSourceEditorService } from './source-editor-service.ts';
@@ -47,6 +48,7 @@ describe('M-SE: Batch Edits (Scenarios #1..#7) [R-CB-14, R-CB-15]', () => {
       getSessionInfo,
       sourceRoutes: {
         sourceEditorService: service,
+        classEdits: testClassEdits(),
         historyService,
         getProjectRoot: () => tmpDir,
         getViewFeatures: () => jsxFeatures,

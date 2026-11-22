@@ -4,8 +4,8 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useProjectStore } from '../../core/project-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
-import { useProjectStore } from '../project/project-store.ts';
 import { useActivityStore } from '../shell/activity-store.ts';
 import { LeftPanel, RightPanel } from './side-panels.tsx';
 

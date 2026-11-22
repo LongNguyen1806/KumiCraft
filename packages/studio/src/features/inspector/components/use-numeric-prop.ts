@@ -1,11 +1,12 @@
 // What a number field with a slider reads, writes and previews (the owner, 2026-11-18): the value
 // the code holds (Tailwind or plain CSS), the write once the drag ends, and the look on the
 // Canvas while dragging, taken off when the written value comes back.
-import type { ClassToken, ClassValue, PropertyId, Scope, StyleReading } from '@kumicraft/shared';
+import type { StyleReading } from '@kumicraft/shared';
+import type { ClassToken, ClassValue, PropertyId, Scope } from '@kumicraft/style-tailwind';
 import { useEffect, useRef } from 'react';
 
-import { studioBridgeChannel } from '../../selection/bridge-channel.ts';
-import { useSelectionStore } from '../../selection/selection-store.ts';
+import { studioBridgeChannel } from '../../../core/bridge-channel.ts';
+import { useSelectionStore } from '../../../core/selection-store.ts';
 import {
   cssValueOf,
   numberFromCss,

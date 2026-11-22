@@ -1,5 +1,5 @@
 // Persistent library style preset per project (TK-69).
-import { LIBRARY_STYLES, type LibraryStyle } from '@kumicraft/shared';
+import { LIBRARY_STYLES, type LibraryStyle } from '@kumicraft/content';
 
 const STORAGE_PREFIX = 'kumicraft.libraryStyle.';
 

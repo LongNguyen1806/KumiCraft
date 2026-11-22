@@ -1,12 +1,12 @@
 // Dedicated Inspector group for <img> elements: object-fit, object-position, aspect-ratio, border-radius (K9.7-2 TK-9).
+import type { StyleReading } from '@kumicraft/shared';
 import type {
   ClassContext,
   ClassToken,
   ClassValue,
   PropertyId,
   Scope,
-  StyleReading,
-} from '@kumicraft/shared';
+} from '@kumicraft/style-tailwind';
 import { useTranslation } from 'react-i18next';
 
 import { readTwTokenStr } from './effects-helpers.ts';

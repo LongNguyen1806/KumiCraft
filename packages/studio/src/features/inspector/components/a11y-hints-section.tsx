@@ -4,14 +4,14 @@ import { AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { editSource } from '../../../api/source-client.ts';
-import { useSelectionStore } from '../../selection/selection-store.ts';
+import { sendEdit } from '../../../core/edits.ts';
+import { useSelectionStore } from '../../../core/selection-store.ts';
 import type { InspectorTarget } from '../types.ts';
 
 async function saveAriaLabel(source: ElementSource, value: string): Promise<void> {
   const current = source.attributes['aria-label'];
   const before = current?.kind === 'static' ? current.value : undefined;
-  await editSource({
+  await sendEdit({
     edit: {
       kind: 'setAttribute',
       loc: source.loc,

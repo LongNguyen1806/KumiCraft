@@ -12,8 +12,8 @@ import { useTranslation } from 'react-i18next';
 
 import { applyInteraction } from '../../../../api/interaction-client.ts';
 import { fetchComponentProps } from '../../../../api/project-client.ts';
-import { studioBridgeChannel } from '../../../selection/bridge-channel.ts';
-import { useSelectionStore } from '../../../selection/selection-store.ts';
+import { studioBridgeChannel } from '../../../../core/bridge-channel.ts';
+import { useSelectionStore } from '../../../../core/selection-store.ts';
 import type { MultiTargetItem } from '../../types.ts';
 import {
   directChildrenOf,

@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const themePath = resolve('packages/studio/node_modules/tailwindcss/theme.css');
-const outputPath = resolve('packages/shared/src/tailwind/palette.generated.ts');
+const outputPath = resolve('packages/style-tailwind/src/palette.generated.ts');
 
 const content = readFileSync(themePath, 'utf8');
 const lines = content.split(/\r?\n/);

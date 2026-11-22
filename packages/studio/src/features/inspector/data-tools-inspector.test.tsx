@@ -7,10 +7,10 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import * as eventsClient from '../../api/events-client.ts';
 import * as projectClient from '../../api/project-client.ts';
 import * as sourceClient from '../../api/source-client.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useProjectStore } from '../../core/project-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { useProjectStore } from '../project/project-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { A11yHintsSection } from './components/a11y-hints-section.tsx';
 import { ComponentPropsSection } from './components/component-props-section.tsx';
 import { DataGridSection } from './components/data-grid-section.tsx';

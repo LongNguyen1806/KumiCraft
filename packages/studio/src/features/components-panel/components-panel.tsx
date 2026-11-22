@@ -1,17 +1,18 @@
 // Project Components Panel (SPEC-04 R-CP-11..13, spec-log #23).
-import { normalizeText, type ProjectComponent } from '@kumicraft/shared';
+import { normalizeText } from '@kumicraft/content';
+import { type ProjectComponent } from '@kumicraft/shared';
 import { Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { InsertButton } from '../../components/ui/insert-button.tsx';
 import { LoadFailed } from '../../components/ui/load-failed.tsx';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useDndStore } from '../../core/dnd-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { type ErrorInfo, errorText } from '../../routes/error-text.ts';
 import { useDesignStore } from '../design/design-store.ts';
 import { SelectInFileHint } from '../design/select-in-file-hint.tsx';
-import { useDndStore } from '../dnd/dnd-store.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { insertComponent } from './insert-component.ts';
 import { useComponentsStore, useProjectComponents } from './use-project-components.ts';
 

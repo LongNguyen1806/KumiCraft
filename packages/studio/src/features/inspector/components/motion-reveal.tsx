@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { fetchComponentProps } from '../../../api/project-client.ts';
 import { revealElement } from '../../../api/source-client.ts';
-import { useSelectionStore } from '../../selection/selection-store.ts';
+import { useSelectionStore } from '../../../core/selection-store.ts';
 import { REVEAL_FIELDS } from '../numeric-fields.ts';
 import { SliderNumberField } from './slider-number-field.tsx';
 

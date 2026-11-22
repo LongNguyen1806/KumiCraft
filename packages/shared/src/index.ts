@@ -164,6 +164,7 @@ export {
   TreeNodeSchema,
 } from './bridge.ts';
 export * from './build-check.ts';
+export * from './class-intent.ts';
 export {
   FEATURE_IDS,
   type FeatureId,
@@ -173,6 +174,7 @@ export {
   resolveEnabledFeatures,
 } from './features.ts';
 export * from './files.ts';
+export * from './fonts.ts';
 export {
   type DirectoryListing,
   type DirectoryListingEntry,
@@ -188,18 +190,16 @@ export {
   HistoryStepSchema,
 } from './history.ts';
 export * from './job.ts';
-export * from './library/blocks.ts';
 export {
   KIT_COMPONENT_IDS,
   type KitBlockSpec,
   type KitComponentId,
   KitComponentIdSchema,
   kitFileNameFor,
-} from './library/kit-types.ts';
-export { contrastRatio, type DarkColorSuggestion, suggestDarkColors } from './library/palette.ts';
-export { type LibraryBlockLabelsResolver, normalizeText, searchBlocks } from './library/search.ts';
+} from './kit-types.ts';
 export { pageNames, type PageNamesResult, toComponentName, toRoutePath } from './page-names.ts';
 export * from './page-tree.ts';
+export * from './placement.ts';
 export {
   type AddPage,
   AddPageSchema,
@@ -358,6 +358,4 @@ export * from './source.ts';
 export * from './source-data.ts';
 export * from './style.ts';
 export * from './style-composite.ts';
-export * from './tailwind/index.ts';
-export { TAILWIND_COLORS } from './tailwind/palette.generated.ts';
 export * from './workspace-exports.ts';

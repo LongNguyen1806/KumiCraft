@@ -12,8 +12,8 @@ import { useTranslation } from 'react-i18next';
 
 import { fetchAgentModels } from '../../api/agent-client.ts';
 import { patchProject } from '../../api/project-client.ts';
+import { useProjectStore } from '../../core/project-store.ts';
 import { AgentBadge } from '../agents/agent-badge.tsx';
-import { useProjectStore } from '../project/project-store.ts';
 import { SettingsChip } from './agent-settings-chip.tsx';
 import { UsageSection } from './agent-usage.tsx';
 import { useModelHint } from './model-hint.ts';

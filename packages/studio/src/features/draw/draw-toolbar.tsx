@@ -3,7 +3,7 @@ import type { DrawTool } from '@kumicraft/shared';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
 import { useEditMode } from '../project/use-edit-mode.ts';
 import { useStyleEditable } from '../project/use-style-edit.ts';
 import { useImagePickerStore } from './draw-commands.ts';

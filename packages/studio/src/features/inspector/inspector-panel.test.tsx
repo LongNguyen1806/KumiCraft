@@ -5,9 +5,9 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import * as eventsClient from '../../api/events-client.ts';
 import * as sourceClient from '../../api/source-client.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { InspectorPanel } from './inspector-panel.tsx';
 import { useScreenEditStore } from './screen-scope.ts';
 

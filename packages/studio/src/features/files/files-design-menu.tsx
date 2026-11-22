@@ -10,12 +10,12 @@ import { FileCode, FilePlus, FolderMinus, FolderPlus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { patchProject } from '../../api/project-client.ts';
+import { useProjectStore } from '../../core/project-store.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { useAddPageIntent } from '../pages/add-page-intent.ts';
-import { useProjectStore } from '../project/project-store.ts';
 import { activate } from '../shell/activity-store.ts';
-import { MenuItem } from './files-context-menu.tsx';
 import { useFilesStore } from './files-store.ts';
+import { MenuItem } from './menu-item.tsx';
 
 async function patchProjectStyleOrDesign(patch: Parameters<typeof patchProject>[0]) {
   useFilesStore.getState().setActionError(undefined);

@@ -4,11 +4,11 @@ import { Maximize2, Minimize2, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { CanvasMode } from '../selection/selection-store.ts';
+import { exitFrameFocus, focusFrame, useFrameFocusStore } from '../../core/frame-focus-store.ts';
+import type { OpenFrame } from '../../core/open-frames-storage.ts';
+import type { CanvasMode } from '../../core/selection-store.ts';
 import { IframeFrame } from './canvas-frame.tsx';
 import { frameTileWidth } from './canvas-zoom.tsx';
-import { exitFrameFocus, focusFrame, useFrameFocusStore } from './frame-focus-store.ts';
-import type { OpenFrame } from './open-frames-storage.ts';
 import { SessionSelect } from './session-select.tsx';
 
 export type CanvasFrameTileProps = {

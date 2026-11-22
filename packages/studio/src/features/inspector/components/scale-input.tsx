@@ -3,7 +3,7 @@
 // value to pick (a native datalist filtered them by what the field held, so it showed nothing).
 // Like every Inspector field it writes as the user types (R-IN-13, R-IN-14), but only a valid
 // value: `abc` or a half-typed `[13` turns the field red and writes nothing.
-import type { PropertyId } from '@kumicraft/shared';
+import type { PropertyId } from '@kumicraft/style-tailwind';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

@@ -1,6 +1,6 @@
 // The number fields with a slider (owner, 2026-11-18): each value reads back and writes the class
 // Tailwind 3 or 4 (or the CSS) needs, and a typed value is checked before anything is written.
-import { type ClassContext, parseClasses } from '@kumicraft/shared';
+import { type ClassContext, parseClasses } from '@kumicraft/style-tailwind';
 import { describe, expect, it } from 'vitest';
 
 import { readTwTokenStr } from './components/effects-helpers.ts';

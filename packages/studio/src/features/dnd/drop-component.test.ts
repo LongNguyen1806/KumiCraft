@@ -2,8 +2,8 @@ import type { InsertTarget, ProjectComponent } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
-import { useDndStore } from './dnd-store.ts';
+import { useDndStore } from '../../core/dnd-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { handleDrop } from './drop-actions.ts';
 
 describe('handleDrop with component source (Scenario #14) [R-CP-13, R-DD-14]', () => {

@@ -3,8 +3,8 @@ import type { TreeNode } from '@kumicraft/shared';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useDndStore } from '../dnd/dnd-store.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useDndStore } from '../../core/dnd-store.ts';
 import type { VisibleNodeMeta } from './layer-tree-utils.ts';
 
 const CHEVRON_EXPANDED = '▾';

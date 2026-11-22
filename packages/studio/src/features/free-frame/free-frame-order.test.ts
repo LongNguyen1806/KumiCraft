@@ -3,7 +3,7 @@ import type { ElementRef, TreeNode } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { layerOrderTarget, runLayerOrder } from './layer-order.ts';
 
 const FRAME = 'src/pages/Home.tsx:1:1';

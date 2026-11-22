@@ -1,7 +1,7 @@
 // Banner displayed on top of Canvas when project fails to build (SPEC-04 M-RN, R-RN-25).
 import { useTranslation } from 'react-i18next';
 
-import { useCanvasErrorStore } from './canvas-error-store.ts';
+import { useCanvasErrorStore } from '../../core/canvas-error-store.ts';
 
 export type BuildErrorBannerProps = {
   readonly onOpenLoc: (loc: string) => void;

@@ -1,17 +1,30 @@
 // Unit tests for Free Frame Studio features (Scenarios 12–16, R-FF-10..19).
-import type { ElementSource } from '@kumicraft/shared';
+import type { BridgeFreeResizePayload, ElementSource } from '@kumicraft/shared';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';
+import { writtenClass } from '../../api/written-class-test-support.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { GridSelect } from '../editor/canvas-grid-select.tsx';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
-import { computeNextClassNameForResize, handleFreeMove } from './free-frame-commands.ts';
+import { handleFreeMove, resizeSteps } from './free-frame-commands.ts';
 import { FreeFramePageWarning } from './free-frame-page-warning.tsx';
 import { FreeFrameToggle } from './free-frame-toggle.tsx';
+
+/** The class a Canvas resize writes, on a page shown on one screen. */
+function computeNextClassNameForResize(payload: BridgeFreeResizePayload, before: string) {
+  const canvas = { screens: { widths: [1280], activeIndex: 0 }, onlyThisScreen: false };
+  return writtenClass({
+    kind: 'setClasses',
+    loc: payload.ref.loc,
+    tag: payload.tag,
+    before,
+    steps: resizeSteps(payload, before, canvas),
+  });
+}
 
 function createMockSource(partial: Partial<ElementSource>): ElementSource {
   return {

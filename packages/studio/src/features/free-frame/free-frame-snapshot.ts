@@ -4,7 +4,7 @@
 // put them. The frame stays their positioning parent while any of them is still placed absolutely.
 // Children are matched by their classes, so an edit above the frame that shifts lines changes
 // nothing; a child edited by hand no longer matches and is left alone.
-import type { AttributeLevelEdit } from '@kumicraft/shared';
+import type { BatchEdit } from '@kumicraft/shared';
 
 export type FreeSnapshotChild = {
   readonly loc: string;
@@ -28,7 +28,7 @@ export type CurrentElement = {
 };
 
 export type RestorePlan = {
-  readonly edits: readonly AttributeLevelEdit[];
+  readonly edits: readonly BatchEdit[];
   readonly restored: number;
   readonly kept: number;
 };
@@ -135,7 +135,7 @@ export function planFreeRestore(
   children: readonly CurrentElement[],
 ): RestorePlan {
   const unused = [...snapshot.children];
-  const childEdits: AttributeLevelEdit[] = [];
+  const childEdits: BatchEdit[] = [];
   let kept = 0;
   let keepsAbsolute = false;
   for (const child of children) {
@@ -145,25 +145,25 @@ export function planFreeRestore(
       if (tokens(child.className).includes('absolute')) keepsAbsolute = true;
     } else if (match.before !== child.className) {
       childEdits.push({
-        kind: 'setClassName',
+        kind: 'setClasses',
         loc: child.loc,
         tag: child.tag,
         before: child.className,
-        after: match.before,
+        steps: [{ kind: 'raw', className: match.before }],
       });
     }
   }
-  const edits: AttributeLevelEdit[] = [
+  const edits: BatchEdit[] = [
     { kind: 'setFlag', loc: frame.loc, tag: frame.tag, name: 'data-rc-free', on: false },
   ];
   const frameAfter = frameClassAfter(snapshot, frame, keepsAbsolute);
   if (frameAfter !== frame.className) {
     edits.push({
-      kind: 'setClassName',
+      kind: 'setClasses',
       loc: frame.loc,
       tag: frame.tag,
       before: frame.className,
-      after: frameAfter,
+      steps: [{ kind: 'raw', className: frameAfter }],
     });
   }
   return { edits: [...edits, ...childEdits], restored: children.length - kept, kept };

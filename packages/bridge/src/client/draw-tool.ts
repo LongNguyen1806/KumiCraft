@@ -5,8 +5,8 @@ import {
   type ElementGuard,
   type InsertTarget,
   parseLocString,
-  snap,
 } from '@kumicraft/shared';
+import { snap } from '@kumicraft/style-tailwind';
 
 import { getCandidateChain } from './candidate-chain.ts';
 import { canContain, type DropRect } from './drop-target.ts';

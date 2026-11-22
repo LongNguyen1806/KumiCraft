@@ -1,24 +1,24 @@
 // State hooks for LibraryPanel (block search, style, image & icon insertion).
 import {
-  type ImageSource,
   LIBRARY_BLOCKS,
   type LibraryBlock,
   type LibraryBlockCategory,
   type LibraryStyle,
   searchBlocks,
-} from '@kumicraft/shared';
+} from '@kumicraft/content';
+import { type ImageSource } from '@kumicraft/shared';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useProjectStore } from '../../core/project-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { resources } from '../../i18n/i18n.ts';
 import { type ErrorInfo } from '../../routes/error-text.ts';
 import { insertImageFromSelection } from '../draw/insert-image.ts';
 import { type IconEntry } from '../icons/icon-svg.ts';
 import { insertIconFromSelection } from '../icons/insert-icon.ts';
-import { useProjectStore } from '../project/project-store.ts';
 import { useEditMode } from '../project/use-edit-mode.ts';
 import { useStyleLayerSupported } from '../project/use-style-edit.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import {
   dataGeneratorMode,
   type DataPickerMode,

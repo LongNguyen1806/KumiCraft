@@ -7,10 +7,10 @@ import {
 import { ExternalLink, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import { useSelectionStore } from '../../../core/selection-store.ts';
 import { errorText } from '../../../routes/error-text.ts';
 import { askAiAboutElement } from '../../chat/ask-ai-about-element.ts';
 import { useOpenInEditor } from '../../editor/use-open-in-editor.ts';
-import { useSelectionStore } from '../../selection/selection-store.ts';
 import type { InspectorLockReason, InspectorTarget, InspectorWarning } from '../types.ts';
 import { canEnableSelectedState, GroupHoverParentPicker } from './inspector-scope-controls.tsx';
 import { ScreenSessionBar } from './screen-session-bar.tsx';

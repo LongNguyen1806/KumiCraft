@@ -1,9 +1,9 @@
 // Where an insert from the Library, the Component panel or the image picker goes (R-CP-11, R-LB-14).
 import type { ElementRef } from '@kumicraft/shared';
 
+import { useSelectionStore } from '../../core/selection-store.ts';
 import type { ErrorInfo } from '../../routes/error-text.ts';
 import { useComponentsStore } from '../components-panel/use-project-components.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { currentDesignFile } from './design-store.ts';
 import { insertAnchor } from './design-target.ts';
 

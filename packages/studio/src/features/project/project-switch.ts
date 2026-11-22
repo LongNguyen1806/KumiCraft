@@ -2,15 +2,15 @@
 // the selection, the undo list, the chat and the Canvas errors all belong to one project. The
 // Editor is also remounted per project (routes/project-screen.tsx), so what panels load when they
 // mount is read again; this module clears what lives outside React.
+import { useCanvasErrorStore } from '../../core/canvas-error-store.ts';
+import { useHistoryStore } from '../../core/history-store.ts';
+import { useProjectStore } from '../../core/project-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { useBuildCheckStore } from '../build-check/build-check-store.ts';
-import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
 import { useChatStore } from '../chat/chat-store.ts';
 import { useComponentsStore } from '../components-panel/use-project-components.ts';
 import { useDesignStore } from '../design/design-store.ts';
 import { useFilesStore } from '../files/files-store.ts';
-import { useHistoryStore } from '../history/history-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
-import { useProjectStore } from './project-store.ts';
 
 /** Clears every store that holds data of the open project. */
 export function resetProjectState(): void {

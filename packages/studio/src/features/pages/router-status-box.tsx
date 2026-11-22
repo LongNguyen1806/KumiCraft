@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { installProjectRouter, patchProject } from '../../api/project-client.ts';
+import { useProjectStore } from '../../core/project-store.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { FolderPicker } from '../files/folder-picker.tsx';
-import { useProjectStore } from '../project/project-store.ts';
 import { useInstallJob } from '../project/use-install-job.ts';
 
 const ROUTER_EXTENSIONS = ['.jsx', '.tsx', '.js', '.ts'] as const;

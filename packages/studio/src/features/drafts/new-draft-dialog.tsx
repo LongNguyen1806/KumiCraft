@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 
 import { createDraft } from '../../api/project-client.ts';
 import { Dialog } from '../../components/ui/dialog.tsx';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 
 export type NewDraftDialogProps = {
   readonly open: boolean;

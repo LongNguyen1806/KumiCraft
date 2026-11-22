@@ -1,5 +1,5 @@
 // The per-side and per-corner border fields the Borders group can switch to (R-IN-10).
-import type { ClassToken, PropertyId } from '@kumicraft/shared';
+import type { ClassToken, PropertyId } from '@kumicraft/style-tailwind';
 
 import type { PropertyFieldDef } from './property-groups-config.ts';
 

@@ -3,8 +3,8 @@ import type { ElementRef, TreeNode } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { studioBridgeChannel } from '../../selection/bridge-channel.ts';
-import { useSelectionStore } from '../../selection/selection-store.ts';
+import { studioBridgeChannel } from '../../../core/bridge-channel.ts';
+import { useSelectionStore } from '../../../core/selection-store.ts';
 
 /** Tổ tiên có data-rc-loc theo tree, từ gốc tới phần tử; không có trong tree → []. */
 export function buildElementPath(treeNodes: readonly TreeNode[], ref: ElementRef): TreeNode[] {

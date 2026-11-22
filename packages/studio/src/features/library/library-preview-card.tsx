@@ -1,4 +1,4 @@
-import type { LibraryBlock } from '@kumicraft/shared';
+import type { LibraryBlock } from '@kumicraft/content';
 
 import { renderBlockPreview } from './previews/index.tsx';
 

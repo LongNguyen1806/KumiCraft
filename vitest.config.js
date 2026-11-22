@@ -15,6 +15,8 @@ export default defineConfig({
   test: {
     projects: [
       nodeProject('shared'),
+      nodeProject('style-tailwind'),
+      nodeProject('content'),
       nodeProject('bridge'),
       nodeProject('server'),
       nodeProject('cli'),
@@ -54,6 +56,7 @@ export default defineConfig({
       thresholds: {
         lines: 70,
         'packages/shared/src/**': { lines: 90 },
+        'packages/style-tailwind/src/**': { lines: 90 },
         'packages/server/src/{kernel,lib,services,stacks}/**': { lines: 80 },
         'packages/studio/src/store/**': { lines: 80 },
       },

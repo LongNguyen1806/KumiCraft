@@ -1,15 +1,15 @@
 // Free frame inspector section with X/Y/W/H, layer order, align and distribute (SPEC-04 section 18E, WP-2.12b).
-import type { ElementRef, ElementSource } from '@kumicraft/shared';
-import { applyPlacement, applySize, readClassPx } from '@kumicraft/shared';
+import type { ClassStep, ElementRef, ElementSource } from '@kumicraft/shared';
+import { readClassPx } from '@kumicraft/style-tailwind';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { editSource } from '../../api/source-client.ts';
+import { sendEdit } from '../../core/edits.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { scopeCanvasChange } from '../inspector/screen-scope.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
+import { canvasScope } from '../inspector/screen-scope.ts';
 import { type AlignMode, runAlign, useFreeFrameErrorStore } from './align.ts';
+import { planClassEdit } from './class-edit.ts';
 import { freeFrameOfRef } from './free-context.ts';
 import { type LayerOrderCommand, layerOrderTarget, runLayerOrder } from './layer-order.ts';
 
@@ -82,41 +82,33 @@ function commitPosition(
   prop: 'x' | 'y' | 'w' | 'h',
   val: string,
   staticClass: string,
-  loc: string,
-  tag: string,
+  target: { readonly loc: string; readonly tag: string },
   inits: { readonly x?: number | undefined; readonly y?: number | undefined },
-  tailwindMajor: 3 | 4,
 ) {
   const parsed = Number(val.trim());
   if (val.trim() === '' || Number.isNaN(parsed) || parsed < 0) return;
 
-  const after =
+  // Same screen scope as an Inspector edit (spec-log #144).
+  const canvas = canvasScope(target.loc);
+  const step: ClassStep =
     prop === 'x' || prop === 'y'
-      ? applyPlacement(
-          staticClass,
-          {
+      ? {
+          kind: 'place',
+          placement: {
             kind: 'free',
             left: prop === 'x' ? parsed : (inits.x ?? 0),
             top: prop === 'y' ? parsed : (inits.y ?? 0),
           },
-          tailwindMajor,
-        )
-      : applySize(
-          staticClass,
-          prop === 'w' ? { width: parsed } : { height: parsed },
-          tailwindMajor,
-        );
-
-  if (after === staticClass) return;
-  // Same screen scope as an Inspector edit (spec-log #144).
-  const scoped = scopeCanvasChange(loc, staticClass, after);
-  if (scoped === undefined) {
-    useFreeFrameErrorStore.getState().setError({ code: 'E023', params: { reason: 'screenSplit' } });
+          canvas,
+        }
+      : { kind: 'size', ...(prop === 'w' ? { width: parsed } : { height: parsed }), canvas };
+  const planned = planClassEdit(target, staticClass, [step]);
+  if (!planned.ok) {
+    useFreeFrameErrorStore.getState().setError(planned.error);
     return;
   }
-  editSource({
-    edit: { kind: 'setClassName', loc, tag, before: staticClass, after: scoped },
-  }).catch((e: unknown) => {
+  if (planned.value.after === staticClass) return;
+  sendEdit({ edit: planned.value.edit }).catch((e: unknown) => {
     useFreeFrameErrorStore.getState().setError(toErrorInfo(e));
   });
 }
@@ -179,12 +171,11 @@ function FreeFramePositionSection({
   readonly disabled: boolean;
 }) {
   const { t } = useTranslation();
-  const tailwindMajor = useCanvasViewStore((s) => s.tailwindMajor);
   const staticClass = source.className.kind === 'static' ? source.className.value : '';
   const key = `${refObj.loc}#${String(refObj.index)}`;
   const { vals, setters, inits } = usePositionState(staticClass, key);
   const commit = (prop: 'x' | 'y' | 'w' | 'h', val: string) => {
-    commitPosition(prop, val, staticClass, refObj.loc, source.tag, inits, tailwindMajor);
+    commitPosition(prop, val, staticClass, { loc: refObj.loc, tag: source.tag }, inits);
   };
 
   return (

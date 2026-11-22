@@ -10,8 +10,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { editTheme, fetchThemeUsage } from '../../api/project-client.ts';
+import { useHistoryStore } from '../../core/history-store.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
-import { useHistoryStore } from '../history/history-store.ts';
 import { useProjectTheme, useThemeStore } from '../inspector/use-project-theme.ts';
 import { BrandFontPairsPanel } from './brand-font-pairs.tsx';
 import { BrandHeader } from './brand-header.tsx';

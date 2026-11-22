@@ -5,8 +5,8 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { ApiError } from '../../../api/http.ts';
 import * as sourceClient from '../../../api/source-client.ts';
+import { useSelectionStore } from '../../../core/selection-store.ts';
 import { initI18n } from '../../../i18n/i18n.ts';
-import { useSelectionStore } from '../../selection/selection-store.ts';
 import { useStructureErrorStore } from '../../structure/structure-error-store.ts';
 import type { InspectorTarget } from '../types.ts';
 import { StructureActions } from './structure-actions.tsx';

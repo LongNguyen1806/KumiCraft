@@ -3,7 +3,7 @@ import type { BackendInfo } from '@kumicraft/shared';
 import { useCallback, useEffect, useState } from 'react';
 
 import { fetchProject } from '../../api/project-client.ts';
-import { useProjectStore } from '../project/project-store.ts';
+import { useProjectStore } from '../../core/project-store.ts';
 
 export function useProjectBackends() {
   const [backends, setBackends] = useState<readonly BackendInfo[]>([]);

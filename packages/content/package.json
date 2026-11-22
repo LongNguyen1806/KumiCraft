@@ -1,0 +1,15 @@
+{
+  "name": "@kumicraft/content",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The block library and UI kit blocks the Studio inserts and the server writes",
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@kumicraft/shared": "workspace:*",
+    "@kumicraft/style-tailwind": "workspace:*"
+  }
+}

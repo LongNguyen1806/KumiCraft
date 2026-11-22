@@ -1,5 +1,6 @@
 // Library Panel listing draggable / insertable UI blocks grouped by category (SPEC-04 M-LB).
-import type { LibraryBlock, LibraryBlockCategory, UiKitReport } from '@kumicraft/shared';
+import type { LibraryBlock, LibraryBlockCategory } from '@kumicraft/content';
+import type { UiKitReport } from '@kumicraft/shared';
 import { useTranslation } from 'react-i18next';
 
 import { ImagePickerDialog } from '../draw/image-picker-dialog.tsx';

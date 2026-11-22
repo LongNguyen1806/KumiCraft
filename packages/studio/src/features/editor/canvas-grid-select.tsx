@@ -2,8 +2,12 @@ import { Magnet } from 'lucide-react';
 import { type ChangeEvent, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useBridgeChannel } from '../selection/bridge-channel.ts';
-import { CANVAS_GRID_SIZES, type CanvasGridSize, useCanvasViewStore } from './canvas-view-store.ts';
+import { useBridgeChannel } from '../../core/bridge-channel.ts';
+import {
+  CANVAS_GRID_SIZES,
+  type CanvasGridSize,
+  useCanvasViewStore,
+} from '../../core/canvas-view-store.ts';
 
 /**
  * Snap on or off (spec-log #125). The Bridge gets the switch and the zoom with the grid, again on

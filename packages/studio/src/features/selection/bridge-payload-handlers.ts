@@ -19,15 +19,15 @@ import {
 } from '@kumicraft/shared';
 
 import { isApplePlatform } from '../../app/platform.ts';
-import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
-import { useDndStore } from '../dnd/dnd-store.ts';
+import { useCanvasErrorStore } from '../../core/canvas-error-store.ts';
+import { placementTailwindMajor } from '../../core/canvas-view-store.ts';
+import { useDndStore } from '../../core/dnd-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { executeDropMove } from '../dnd/drop-actions.ts';
 import { handleDrawEnd } from '../draw/draw-commands.ts';
-import { placementTailwindMajor } from '../editor/canvas-view-store.ts';
 import { useLayerMenuStore } from '../layer-menu/layer-menu-store.ts';
 import { runShortcut } from '../shortcuts/shortcut-actions.ts';
 import { isTypingTarget } from '../shortcuts/use-shortcuts.ts';
-import { useSelectionStore } from './selection-store.ts';
 
 /**
  * A click on the Canvas selects without moving the keyboard focus (the Bridge cancels the press so

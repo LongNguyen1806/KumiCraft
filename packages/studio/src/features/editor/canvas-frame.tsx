@@ -3,14 +3,14 @@ import type { Frame } from '@kumicraft/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { CanvasDropLayer } from '../dnd/canvas-drop-layer.tsx';
-import { LayerMenu } from '../layer-menu/layer-menu.tsx';
 import {
   type BridgeChannel,
   bridgeChannels,
   studioBridgeChannel,
-} from '../selection/bridge-channel.ts';
-import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
+} from '../../core/bridge-channel.ts';
+import { type CanvasMode, useSelectionStore } from '../../core/selection-store.ts';
+import { CanvasDropLayer } from '../dnd/canvas-drop-layer.tsx';
+import { LayerMenu } from '../layer-menu/layer-menu.tsx';
 
 /** S-100: the project's page runs scripts but cannot navigate the Studio window. */
 export const IFRAME_SANDBOX =

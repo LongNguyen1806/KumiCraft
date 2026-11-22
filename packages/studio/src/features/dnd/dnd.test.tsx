@@ -1,18 +1,18 @@
 // @vitest-environment happy-dom
-import { LIBRARY_BLOCKS } from '@kumicraft/shared';
+import { LIBRARY_BLOCKS } from '@kumicraft/content';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '../../api/http.ts';
 import * as sourceClient from '../../api/source-client.ts';
+import { useDndStore } from '../../core/dnd-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { DEFAULT_THEME, useThemeStore } from '../inspector/use-project-theme.ts';
 import { localizedBlockJsx, resetThemeLookAttempt } from '../library/insert-block.ts';
 import { setSelectedVariant } from '../library/library-variants.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { toFrameCoords } from './canvas-drop-layer.tsx';
 import { DndErrorBanner } from './dnd-error-banner.tsx';
-import { useDndStore } from './dnd-store.ts';
 import { handleDrop } from './drop-actions.ts';
 
 describe('Canvas Drag and Drop (Scenarios #14, #15)', () => {

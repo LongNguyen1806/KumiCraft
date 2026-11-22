@@ -4,7 +4,8 @@ import { promises as fs } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { err, LIBRARY_BLOCKS, renderBlock } from '@kumicraft/shared';
+import { LIBRARY_BLOCKS, renderBlock } from '@kumicraft/content';
+import { err } from '@kumicraft/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { FileSystemPort } from '../../../../ports/file-system-port.ts';

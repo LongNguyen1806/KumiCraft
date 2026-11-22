@@ -6,8 +6,8 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import * as eventsClientModule from '../../api/events-client.ts';
 import * as projectClient from '../../api/project-client.ts';
+import { useHistoryStore } from '../../core/history-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
-import { useHistoryStore } from '../history/history-store.ts';
 import { useThemeStore } from '../inspector/use-project-theme.ts';
 import { BrandPanel } from './brand-panel.tsx';
 

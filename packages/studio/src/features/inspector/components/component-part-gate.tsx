@@ -7,8 +7,8 @@ import { Component } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useSelectionStore } from '../../../core/selection-store.ts';
 import { useDesignStore } from '../../design/design-store.ts';
-import { useSelectionStore } from '../../selection/selection-store.ts';
 
 export type ComponentPart =
   | {

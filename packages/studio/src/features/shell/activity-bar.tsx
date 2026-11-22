@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { useCanvasErrorStore } from '../canvas-errors/canvas-error-store.ts';
+import { useCanvasErrorStore } from '../../core/canvas-error-store.ts';
 import { useDrafts } from '../drafts/use-drafts.ts';
 import { usePanelLayoutStore } from '../editor/use-panel-layout.ts';
 import { useStyleLayerSupported } from '../project/use-style-edit.ts';

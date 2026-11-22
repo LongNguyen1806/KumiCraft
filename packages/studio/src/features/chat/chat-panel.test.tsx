@@ -7,10 +7,10 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import * as agentClient from '../../api/agent-client.ts';
 import { ApiError } from '../../api/http.ts';
 import * as projectClient from '../../api/project-client.ts';
+import { useProjectStore } from '../../core/project-store.ts';
 import { useAgentsStore } from '../../store/agents-store.ts';
 import { RightPanel } from '../editor/side-panels.tsx';
 import { DEFAULT_THEME } from '../inspector/use-project-theme.ts';
-import { useProjectStore } from '../project/project-store.ts';
 import { ChatPanel } from './chat-panel.tsx';
 import { useChatStore } from './chat-store.ts';
 

@@ -1,15 +1,11 @@
-import {
-  type ElementRef,
-  type ElementSource,
-  isContainerTag,
-  type TreeNode,
-} from '@kumicraft/shared';
+import { type ElementRef, type ElementSource, type TreeNode } from '@kumicraft/shared';
+import { isContainerTag } from '@kumicraft/style-tailwind';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { type ErrorInfo, errorText } from '../../routes/error-text.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { requestFreeMeasure } from './free-context.ts';
 import {
   executeDisableFreeFrame,
@@ -30,7 +26,6 @@ function useEnableFreeFrame(
   setError: (e: ToggleError | undefined) => void,
 ) {
   const grid = useCanvasViewStore((s) => s.grid);
-  const tailwindMajor = useCanvasViewStore((s) => s.tailwindMajor);
   const projectId = useCanvasViewStore((s) => s.currentProjectId);
 
   return useCallback(() => {
@@ -51,7 +46,6 @@ function useEnableFreeFrame(
           tag: source.tag,
           currentClassName,
           grid,
-          tailwindMajor,
           measurePayload: payload,
           remember:
             projectId === undefined
@@ -62,7 +56,7 @@ function useEnableFreeFrame(
         }),
       );
     })();
-  }, [source, primaryRef, grid, tailwindMajor, projectId, setError]);
+  }, [source, primaryRef, grid, projectId, setError]);
 }
 
 /** Turns the frame off with its record and reports what came back (spec-log #126). */

@@ -3,7 +3,7 @@ import type { ElementSource, SetAttributeEdit } from '@kumicraft/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { applyStructureEdit, editSource, editSourceBatch } from '../../../api/source-client.ts';
+import { sendEdit, sendEdits, sendStructureEdit } from '../../../core/edits.ts';
 import { IconPickerDialog } from '../../icons/icon-picker.tsx';
 import { InspectorGroup } from './inspector-group.tsx';
 
@@ -174,7 +174,7 @@ async function batchUpdateIconSize(source: ElementSource, nextSize: string): Pro
       after: nextSize,
     },
   ];
-  await editSourceBatch({ edits });
+  await sendEdits({ edits });
 }
 
 async function updateSvgAttr(
@@ -182,7 +182,7 @@ async function updateSvgAttr(
   name: 'strokeWidth' | 'stroke',
   after: string,
 ): Promise<void> {
-  await editSource({
+  await sendEdit({
     edit: {
       kind: 'setAttribute',
       loc: source.loc,
@@ -327,7 +327,7 @@ export function InspectorIconSection(props: InspectorIconSectionProps) {
         onPick={(icon) => {
           const entry = { name: icon.name, node: [...icon.node] };
           runBusy(() =>
-            applyStructureEdit({ kind: 'replaceSvg', loc: source.loc, tag: 'svg', icon: entry }),
+            sendStructureEdit({ kind: 'replaceSvg', loc: source.loc, tag: 'svg', icon: entry }),
           );
         }}
       />

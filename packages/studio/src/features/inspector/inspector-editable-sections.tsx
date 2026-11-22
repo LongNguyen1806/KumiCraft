@@ -1,12 +1,11 @@
+import type { ElementRef, ElementSource } from '@kumicraft/shared';
 import type {
   ClassContext,
   ClassToken,
   ClassValue,
-  ElementRef,
-  ElementSource,
   PropertyId,
   Scope,
-} from '@kumicraft/shared';
+} from '@kumicraft/style-tailwind';
 import type { ReactNode } from 'react';
 
 import { InspectorImageSection } from './components/inspector-image-section.tsx';

@@ -3,11 +3,11 @@ import { matchShortcut } from '@kumicraft/shared';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { DrawToolbar } from '../draw/draw-toolbar.tsx';
 import { runShortcut } from '../shortcuts/shortcut-actions.ts';
 import { CanvasPanSurface, PannedContent } from './canvas-pan.tsx';
-import { useCanvasViewStore } from './canvas-view-store.ts';
 
 function PannedCanvas() {
   return (

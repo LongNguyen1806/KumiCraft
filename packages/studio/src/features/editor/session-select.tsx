@@ -16,10 +16,10 @@ import {
   resetSessionProbeCache,
   SESSION_PROBE_TIMEOUT_MS,
 } from '../../api/project-client.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useProjectStore } from '../../core/project-store.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { useSettingsStore } from '../../store/settings-store.ts';
-import { useProjectStore } from '../project/project-store.ts';
-import { useCanvasViewStore } from './canvas-view-store.ts';
 import { nextFreeSessionId, sessionLabel, SessionPopover } from './session-popover.tsx';
 
 export { nextFreeSessionId, probeSessionOrigin, resetSessionProbeCache, SESSION_PROBE_TIMEOUT_MS };

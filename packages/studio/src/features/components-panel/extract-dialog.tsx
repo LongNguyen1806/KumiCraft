@@ -6,10 +6,10 @@ import { useTranslation } from 'react-i18next';
 
 import { extractComponent } from '../../api/project-client.ts';
 import { Dialog } from '../../components/ui/dialog.tsx';
+import { useProjectInfo } from '../../core/project-store.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { DirInputWithPicker } from '../files/dir-input-with-picker.tsx';
 import type { InspectorTarget } from '../inspector/types.ts';
-import { useProjectInfo } from '../project/project-store.ts';
 import { useComponentsStore } from './use-project-components.ts';
 
 export type ExtractDialogProps = {

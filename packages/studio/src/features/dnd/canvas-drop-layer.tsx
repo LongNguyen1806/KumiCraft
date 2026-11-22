@@ -2,9 +2,9 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useDndStore } from '../../core/dnd-store.ts';
 import { useEditMode } from '../project/use-edit-mode.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useDndStore } from './dnd-store.ts';
 import { handleDrop } from './drop-actions.ts';
 
 export function toFrameCoords(

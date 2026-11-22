@@ -12,6 +12,7 @@ import {
   type RevealRequest,
   type RevealResult,
   RevealResultSchema,
+  type SetClassesEdit,
   type SourceEdit,
   type StructureEdit,
   type StructureResult,
@@ -27,7 +28,7 @@ export type FetchElementSourceParams = {
 };
 
 export type SingleFileEditRequest = {
-  readonly edit: SourceEdit;
+  readonly edit: SourceEdit | SetClassesEdit;
   readonly coalesceKey?: string | undefined;
 };
 

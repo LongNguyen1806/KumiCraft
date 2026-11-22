@@ -1,22 +1,18 @@
 // Studio commands for handling Bridge draw-end messages (WP-2.09b, R-DT-11..R-DT-15).
-import {
-  type BridgeDrawEndPayload,
-  type InsertTarget,
-  LIBRARY_BLOCKS,
-  type Placement,
-  pxClass,
-} from '@kumicraft/shared';
+import { LIBRARY_BLOCKS } from '@kumicraft/content';
+import { type BridgeDrawEndPayload, type InsertTarget, type Placement } from '@kumicraft/shared';
+import { pxClass } from '@kumicraft/style-tailwind';
 import i18next from 'i18next';
 import { create } from 'zustand';
 
-import { applyStructureEdit } from '../../api/source-client.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { placementTailwindMajor, useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useDndStore } from '../../core/dnd-store.ts';
+import { sendStructureEdit } from '../../core/edits.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';
-import { useDndStore } from '../dnd/dnd-store.ts';
-import { placementTailwindMajor, useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { localizedBlockJsx } from '../library/insert-block.ts';
 import { getSelectedVariant } from '../library/library-variants.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { insertImageAt, type InsertImageChoice } from './insert-image.ts';
 
 const FULL_WIDTH_TOLERANCE_PX = 8;
@@ -133,7 +129,7 @@ export async function handleDrawEnd(payload: BridgeDrawEndPayload): Promise<void
   const jsx = payload.tool === 'frame' ? buildFrameJsx(payload, tailwindMajor) : paragraphJsx();
 
   try {
-    const res = await applyStructureEdit({
+    const res = await sendStructureEdit({
       kind: 'insert',
       target: payload.target,
       jsx,

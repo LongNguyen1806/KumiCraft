@@ -4,9 +4,10 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';
+import { asWritten, writtenClass } from '../../api/written-class-test-support.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { FreeFrameSection } from './free-frame-section.tsx';
 
 const FRAME = 'src/pages/Home.tsx:1:1';
@@ -89,7 +90,7 @@ describe('FreeFrameSection [R-FF-11, R-FF-14, R-FF-17]', () => {
 
     expect(editSpy).toHaveBeenCalledTimes(1);
     const callArg = editSpy.mock.calls[0]?.[0];
-    expect(callArg?.edit).toEqual({
+    expect(callArg === undefined ? undefined : asWritten(callArg.edit)).toEqual({
       kind: 'setClassName',
       loc: CHILD_A,
       tag: 'div',
@@ -133,8 +134,7 @@ describe('FreeFrameSection [R-FF-11, R-FF-14, R-FF-17]', () => {
 
     expect(editSpy).toHaveBeenCalledTimes(1);
     const firstEdit = editSpy.mock.calls[0]?.[0].edit;
-    const afterClass =
-      firstEdit !== undefined && 'after' in firstEdit ? (firstEdit.after ?? '') : '';
+    const afterClass = writtenClass(firstEdit) ?? '';
     expect(afterClass).toContain('w-[122px]');
     expect(afterClass).not.toContain('w-full');
 

@@ -1,15 +1,16 @@
 // @vitest-environment happy-dom
-import { type InsertTarget, LIBRARY_BLOCKS } from '@kumicraft/shared';
+import { LIBRARY_BLOCKS } from '@kumicraft/content';
+import { type InsertTarget } from '@kumicraft/shared';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import i18next from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../api/source-client.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
 import { localizedBlockJsx } from '../library/insert-block.ts';
-import { studioBridgeChannel } from '../selection/bridge-channel.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { runShortcut } from '../shortcuts/shortcut-actions.ts';
 import { handleDrawEnd, useImagePickerStore } from './draw-commands.ts';
 import { DrawToolbar } from './draw-toolbar.tsx';

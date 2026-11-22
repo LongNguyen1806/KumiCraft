@@ -1,11 +1,11 @@
 // "Gradient text" makes the text transparent; turning it off must give the old color back. The
 // owner's hand test of 2026-11-15: a white button text came back black.
-import { type ClassContext, type ClassToken, parseClasses } from '@kumicraft/shared';
+import { type ClassContext, type ClassToken, parseClasses } from '@kumicraft/style-tailwind';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { useSelectionStore } from '../../../core/selection-store.ts';
 import { initI18n } from '../../../i18n/i18n.ts';
-import { useSelectionStore } from '../../selection/selection-store.ts';
 import type { BatchPropEntry } from '../use-live-edit.ts';
 import { GradientControls } from './effects-gradient.tsx';
 

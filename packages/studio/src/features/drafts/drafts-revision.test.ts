@@ -1,7 +1,7 @@
 // Deleting a draft from the Files tree closes it on the Canvas and refreshes the drafts lists.
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
 import { afterDraftPathDeleted, useDraftsRevision } from './drafts-revision.ts';
 
 afterEach(() => {

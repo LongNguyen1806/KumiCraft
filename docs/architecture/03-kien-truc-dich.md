@@ -140,6 +140,8 @@ Tailwind trả `classes` nên chạy được trên mọi ngôn ngữ có `setCl
 | **B. Một package Tailwind thuần, dùng ở cả hai đầu** | Gom logic Tailwind (`shared/src/tailwind` + phần tính class trong Inspector) thành package `style-tailwind` chỉ gồm hàm thuần. Studio dùng nó để **hiện giá trị và xem trước tức thì**; khi xác nhận, Studio gửi **ý định**, Server chạy **cùng hàm đó** để ra `ClassChange` rồi đi đường sửa chung | Vừa: chuyển code, không viết lại; Inspector đổi chỗ gọi | Như hiện nay                                                     | **Có**                                                                        |
 | C. Giữ nguyên                                        | Studio tự tính class, gửi `setClassName`                                                                                                                                                                                                                                                            | Không                                                   | Như hiện nay                                                     | Không: hai đường, Server không kiểm được ý định, không dùng cho ngôn ngữ khác |
 
+Đã làm ở Đợt S: Studio gửi edit `setClasses` gồm các bước ý định (`shared/src/class-intent.ts`), Server chạy `applyClassSteps` của `style-tailwind` (`services/edit/class-edits.ts`).
+
 Với B, **chỉ có một bản logic Tailwind**; Server là nơi quyết định cuối cùng; Studio vẫn nhanh. Xem trước khi kéo thanh trượt vẫn dùng inline style tạm (giá trị CSS), như `sendStylePreview` hiện nay.
 
 ### 3.4. Ghép ba trục: hồ sơ và bảng tổ hợp
@@ -205,7 +207,8 @@ server/src/
               (features.ts), interface bộ sửa (editing.ts), FileWriter, History, Result, đường dẫn
   ports/      file, tiến trình, hệ thống, log, sự kiện, theo dõi file, CSS đã biên dịch
   lib/        tiện ích trung lập: đọc JS/TS (Babel), phiên bản gói, cây file, ảnh, workspace root
-  services/   dự án (mở, tạo, nhận diện theo bảng tổ hợp, cài đặt), runner, AI, mirror, tác vụ nền,
+  services/   dự án (mở, tạo, nhận diện theo bảng tổ hợp, cài đặt), sửa class theo ý định (edit),
+              runner, AI, mirror, tác vụ nền,
               cấu hình người dùng, khóa workspace, kiểm build, đọc dữ liệu backend
   stacks/     hiện thực theo trục
     index.ts           bảng tổ hợp (vite + jsx, express + pug)
@@ -244,9 +247,9 @@ studio/src/
   features/<x>/   mỗi tính năng; chỉ lộ ra ngoài qua features/<x>/index.ts
 ```
 
-**`core/` của Studio chứa** những gì nhiều tính năng cùng cần, hiện đang nằm rải trong các tính năng (29 store zustand):
+**`core/` của Studio chứa** những gì nhiều tính năng cùng cần. Đã dựng ở Đợt S (cột phải là nơi ở trước đó):
 
-| Trong `core/`                       | Hiện nằm ở                                                                                  |
+| Trong `core/`                       | Trước Đợt S                                                                                 |
 | ----------------------------------- | ------------------------------------------------------------------------------------------- |
 | Dự án đang mở, hồ sơ, capability    | `features/project/project-store.ts`                                                         |
 | Phần tử đang chọn                   | `features/selection/selection-store.ts`                                                     |
@@ -259,7 +262,9 @@ studio/src/
 Quy tắc:
 
 - Tính năng dùng `core`, `api`, `components`, `shared`. Tính năng dùng tính năng khác **chỉ qua `index.ts`** của nó và **không có vòng**.
-- Tính năng không tự gọi API sửa file; mọi sửa đi qua hàm gửi `EditIntent` trong `core`.
+- Tính năng không tự gọi API sửa file; mọi sửa đi qua `core/edits.ts` (lint kiểm).
+- `core` không dùng tính năng nào (`studio-core-not-features`); tính năng tự đăng ký với `core` khi cần, vd. hàm xử lý tin nhắn Bridge đăng ký ở `main.tsx`.
+- Cài đặt người dùng hiện vẫn ở `store/settings-store.ts`.
 - `features/editor` (hiện dính 23 nhóm) chỉ còn là **bố cục màn hình** ghép các tính năng; trạng thái của nó xuống `core`.
 - Studio đọc `Capability` để hiện / ẩn công cụ, kèm lý do khi người dùng hỏi (UX first).
 
@@ -267,7 +272,7 @@ Quy tắc:
 
 - **Bridge client** giữ nguyên nguyên tắc: chỉ biết DOM, `SourceLoc`, `UseLoc`.
 - Bộ đánh dấu (`LocStamper`) thuộc về hiện thực `ViewLanguage`, đóng gói sao cho runner (tiến trình con, hoặc công cụ ngoài như chương trình .NET đánh dấu Razor) nạp được. Cách gắn vào từng runtime (plugin Vite, loader Turbopack, proxy) ở `bridge/integrations`.
-- **Shared** chỉ chứa hợp đồng: schema API, sự kiện, thông điệp Bridge, `EditIntent`, `StyleIntent`, `ProjectProfile`, `Capability`. Bộ đọc Tailwind ra package `style-tailwind`; thư viện khối ra package nội dung.
+- **Shared** chỉ chứa hợp đồng: schema API, sự kiện, thông điệp Bridge, `EditIntent`, `StyleIntent`, `ProjectProfile`, `Capability`. Bộ đọc Tailwind đã ra package `@kumicraft/style-tailwind`, thư viện khối ra `@kumicraft/content` (Đợt S).
 
 ### 6.4. Máy kiểm quy tắc
 

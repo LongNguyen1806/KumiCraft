@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 
 import { shortcutLabel } from '../../app/platform.ts';
 import { PanelLeftIcon, PanelRightIcon, RedoIcon, UndoIcon } from '../../components/ui/icons.tsx';
+import { useHistoryStore } from '../../core/history-store.ts';
 import { HistoryErrorNotice } from '../history/history-error-notice.tsx';
-import { useHistoryStore } from '../history/history-store.ts';
 import { FramePager } from './frame-focus-controls.tsx';
 import { RunnerStatusBadge } from './runner-status-badge.tsx';
 import type { Side } from './use-panel-layout.ts';

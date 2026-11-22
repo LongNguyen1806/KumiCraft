@@ -1,12 +1,9 @@
 // Multi-element Inspector queue: changes made while a batch is saving (SPEC-04 R-CB-15).
-import {
-  type BatchEditRequest,
-  BREAKPOINT_WIDTHS,
-  type ClassContext,
-  type ElementSource,
-} from '@kumicraft/shared';
+import { type BatchEditRequest, BREAKPOINT_WIDTHS, type ElementSource } from '@kumicraft/shared';
+import { type ClassContext } from '@kumicraft/style-tailwind';
 import { describe, expect, it, vi } from 'vitest';
 
+import { writtenClass } from '../../api/written-class-test-support.ts';
 import { MultiEditQueue } from './multi-edit-queue.ts';
 import type { MultiTargetItem } from './types.ts';
 import { DEFAULT_THEME } from './use-project-theme.ts';
@@ -69,10 +66,10 @@ describe('MultiEditQueue [R-CB-15]', () => {
 
     expect(sent).toHaveLength(2);
     const second = sent[1]?.edits ?? [];
-    expect(second.map((e) => e.before)).toEqual(sent[0]?.edits.map((e) => e.after));
+    expect(second.map((e) => e.before)).toEqual(sent[0]?.edits.map((e) => writtenClass(e)));
     for (const e of second) {
-      expect(e.after).toContain('p-6');
-      expect(e.after).toContain('bg-white');
+      expect(writtenClass(e)).toContain('p-6');
+      expect(writtenClass(e)).toContain('bg-white');
     }
     vi.useRealTimers();
   });

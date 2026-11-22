@@ -1,12 +1,12 @@
-import {
-  DEFAULT_LOGIN_SESSIONS,
-  type Frame,
-  type ProjectInfo,
-  tailwindMajorOf,
-} from '@kumicraft/shared';
+import { DEFAULT_LOGIN_SESSIONS, type Frame, type ProjectInfo } from '@kumicraft/shared';
+import { tailwindMajorOf } from '@kumicraft/style-tailwind';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { bridgeChannels } from '../../core/bridge-channel.ts';
+import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { defaultInitialOpenFrames } from '../../core/open-frames-storage.ts';
+import { type CanvasMode, useSelectionStore } from '../../core/selection-store.ts';
 import { errorText } from '../../routes/error-text.ts';
 import { BuildErrorBanner } from '../canvas-errors/build-error-banner.tsx';
 import { DesignBar } from '../design/design-bar.tsx';
@@ -14,14 +14,10 @@ import { DndErrorBanner } from '../dnd/dnd-error-banner.tsx';
 import { CanvasImagePicker } from '../draw/draw-toolbar.tsx';
 import { registerFreeFrameCommands } from '../free-frame/free-frame-commands.ts';
 import { useEditMode } from '../project/use-edit-mode.ts';
-import { bridgeChannels } from '../selection/bridge-channel.ts';
-import { type CanvasMode, useSelectionStore } from '../selection/selection-store.ts';
 import { InlineTextBar } from '../text-edit/inline-text-bar.tsx';
 import { useCanvasTextEdit } from '../text-edit/use-canvas-text-edit.ts';
 import { TextEditOverlay } from './canvas-text-edit-overlay.tsx';
-import { useCanvasViewStore } from './canvas-view-store.ts';
 import { CanvasViewport } from './canvas-viewport.tsx';
-import { defaultInitialOpenFrames } from './open-frames-storage.ts';
 import { PageSelect } from './page-select.tsx';
 import { PortBusyBanner } from './port-busy-banner.tsx';
 import { readStoredSessionId, useCanvasSession } from './session-select.tsx';

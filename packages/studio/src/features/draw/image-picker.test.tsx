@@ -5,8 +5,8 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import * as assetsClient from '../../api/assets-client.ts';
 import * as sourceClient from '../../api/source-client.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { ImagePickerDialog } from './image-picker-dialog.tsx';
 import { insertImageAt } from './insert-image.ts';
 

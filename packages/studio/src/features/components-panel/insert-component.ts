@@ -1,14 +1,14 @@
 // Component insertion logic (SPEC-04 R-CP-11..13, spec-log #23).
 import type { InsertTarget, Placement, ProjectComponent } from '@kumicraft/shared';
 
-import { applyStructureEdit } from '../../api/source-client.ts';
+import { placementTailwindMajor } from '../../core/canvas-view-store.ts';
+import { sendStructureEdit } from '../../core/edits.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';
 import { currentDesignFile } from '../design/design-store.ts';
 import { selectionAnchor } from '../design/selection-anchor.ts';
-import { placementTailwindMajor } from '../editor/canvas-view-store.ts';
 import { freeStackPlacement } from '../free-frame/free-frame-placement.ts';
 import { determineInsertTarget } from '../library/insert-block.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
 import { useStructureErrorStore } from '../structure/structure-error-store.ts';
 
@@ -23,7 +23,7 @@ export async function insertComponentAt(
   tailwindMajor?: 3 | 4,
 ): Promise<InsertComponentResult> {
   try {
-    const res = await applyStructureEdit({
+    const res = await sendStructureEdit({
       kind: 'insert',
       target,
       // Required props come filled in, so the project still type-checks (K9.5).

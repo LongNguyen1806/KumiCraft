@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { createEventsClient, type StudioServerEvent } from '../../api/events-client.ts';
 import { isRecord } from '../../api/http.ts';
 import { fetchDrafts, fetchProject } from '../../api/project-client.ts';
-import { getStoredDraftFile, useCanvasViewStore } from '../editor/canvas-view-store.ts';
+import { getStoredDraftFile, useCanvasViewStore } from '../../core/canvas-view-store.ts';
 import { useDraftsRevision } from './drafts-revision.ts';
 
 export type DraftsData = {

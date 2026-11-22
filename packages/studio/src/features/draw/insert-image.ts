@@ -1,12 +1,12 @@
 // Insert image operation (WP-2.09a, R-DT-13, R-DT-14).
 import type { ImageSource, InsertTarget, Placement } from '@kumicraft/shared';
 
-import { applyStructureEdit } from '../../api/source-client.ts';
+import { placementTailwindMajor } from '../../core/canvas-view-store.ts';
+import { sendStructureEdit } from '../../core/edits.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { type ErrorInfo, toErrorInfo } from '../../routes/error-text.ts';
 import { selectionAnchor } from '../design/selection-anchor.ts';
-import { placementTailwindMajor } from '../editor/canvas-view-store.ts';
 import { determineInsertTarget } from '../library/insert-block.ts';
-import { useSelectionStore } from '../selection/selection-store.ts';
 import { resolveTargetTag } from '../structure/structure-commands.ts';
 
 export type InsertImageChoice = {
@@ -33,7 +33,7 @@ export async function insertImageAt(
   const tailwindMajor = placementTailwindMajor(placement);
 
   try {
-    const res = await applyStructureEdit({
+    const res = await sendStructureEdit({
       kind: 'insertImage',
       target,
       image: choice.image,

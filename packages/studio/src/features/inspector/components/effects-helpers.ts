@@ -1,15 +1,13 @@
 // Pure helpers and option tables for Inspector Effects controls (gradient, glow, backdrop blur, transform, filter) (K9.7-2 TK-12..14).
+import { BREAKPOINT_WIDTHS, extractCompositeSubValue, type StyleReading } from '@kumicraft/shared';
 import {
-  BREAKPOINT_WIDTHS,
   type ClassContext,
   type ClassToken,
   type ClassValue,
-  extractCompositeSubValue,
   type PropertyId,
   readValue,
   type Scope,
-  type StyleReading,
-} from '@kumicraft/shared';
+} from '@kumicraft/style-tailwind';
 
 const DEFAULT_READ_CTX: ClassContext = {
   theme: { colors: [], fontSizes: [], radii: [], fonts: [], shadows: [], breakpoints: [] },

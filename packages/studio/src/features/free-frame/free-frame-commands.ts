@@ -1,26 +1,22 @@
 // Commands for handling Bridge free-move and free-resize messages (R-FF-13, R-FF-14).
 import type {
-  AttributeLevelEdit,
+  BatchEdit,
   BridgeFreeMovePayload,
   BridgeFreeResizePayload,
+  CanvasScope,
+  ClassStep,
   Result,
 } from '@kumicraft/shared';
-import {
-  applyPlacement,
-  applySize,
-  clearSize,
-  err,
-  hasFreePosition,
-  ok,
-  readClassPx,
-} from '@kumicraft/shared';
+import { err, ok } from '@kumicraft/shared';
+import { hasFreePosition, readClassPx } from '@kumicraft/style-tailwind';
 
-import { editSource, editSourceBatch, fetchElementSourceByLoc } from '../../api/source-client.ts';
+import { fetchElementSourceByLoc } from '../../api/source-client.ts';
+import { type BridgeChannel, studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useDndStore } from '../../core/dnd-store.ts';
+import { sendEdit, sendEdits } from '../../core/edits.ts';
 import { toErrorInfo } from '../../routes/error-text.ts';
-import { useDndStore } from '../dnd/dnd-store.ts';
-import { useCanvasViewStore } from '../editor/canvas-view-store.ts';
-import { scopeCanvasChange } from '../inspector/screen-scope.ts';
-import { type BridgeChannel, studioBridgeChannel } from '../selection/bridge-channel.ts';
+import { canvasScope } from '../inspector/screen-scope.ts';
+import { planClassEdit } from './class-edit.ts';
 
 /** Current static className of an element; `className={…}` cannot be rewritten (E023). */
 export async function readStaticClassName(loc: string): Promise<Result<string>> {
@@ -32,8 +28,7 @@ export async function readStaticClassName(loc: string): Promise<Result<string>> 
 }
 
 export async function handleFreeMove(payload: BridgeFreeMovePayload): Promise<void> {
-  const { tailwindMajor } = useCanvasViewStore.getState();
-  const edits: AttributeLevelEdit[] = [];
+  const edits: BatchEdit[] = [];
   for (const item of payload.items) {
     const beforeRes = await readStaticClassName(item.ref.loc);
     if (!beforeRes.ok) {
@@ -41,38 +36,40 @@ export async function handleFreeMove(payload: BridgeFreeMovePayload): Promise<vo
       return;
     }
     const before = beforeRes.value;
-    // No width/height in the placement: the element keeps its current w-/h- classes.
-    const placed = applyPlacement(
-      before,
-      { kind: 'free', left: item.left, top: item.top },
-      tailwindMajor,
-    );
-    // Same screen scope as an Inspector edit (spec-log #144).
-    const after = scopeCanvasChange(item.ref.loc, before, placed);
-    if (after === undefined) {
-      useDndStore.getState().setError({ code: 'E023', params: { reason: 'screenSplit' } });
+    // No width/height in the placement: the element keeps its current w-/h- classes. Same screen
+    // scope as an Inspector edit (spec-log #144).
+    const planned = planClassEdit({ loc: item.ref.loc, tag: item.tag }, before, [
+      {
+        kind: 'place',
+        placement: { kind: 'free', left: item.left, top: item.top },
+        canvas: canvasScope(item.ref.loc),
+      },
+    ]);
+    if (!planned.ok) {
+      useDndStore.getState().setError(planned.error);
       return;
     }
-    edits.push({ kind: 'setClassName', loc: item.ref.loc, tag: item.tag, before, after });
+    edits.push(planned.value.edit);
   }
-  await editSourceBatch({ edits });
+  await sendEdits({ edits });
 }
 
-export function computeNextClassNameForResize(
+/** The steps of a Canvas resize: back to auto size, a new size, or a new free box. */
+export function resizeSteps(
   payload: BridgeFreeResizePayload,
   currentClassName: string,
-  tailwindMajor: 3 | 4 = 4,
-): string {
-  if (payload.resetSize) return clearSize(currentClassName);
+  canvas: CanvasScope,
+): ClassStep[] {
+  if (payload.resetSize) return [{ kind: 'clearSize', canvas }];
 
   const size = { width: payload.width, height: payload.height };
   const isFree =
     payload.left !== undefined || payload.top !== undefined || hasFreePosition(currentClassName);
-  if (!isFree) return applySize(currentClassName, size, tailwindMajor);
+  if (!isFree) return [{ kind: 'size', ...size, canvas }];
 
   const left = payload.left ?? readClassPx(currentClassName, 'left') ?? 0;
   const top = payload.top ?? readClassPx(currentClassName, 'top') ?? 0;
-  return applyPlacement(currentClassName, { kind: 'free', left, top, ...size }, tailwindMajor);
+  return [{ kind: 'place', placement: { kind: 'free', left, top, ...size }, canvas }];
 }
 
 export async function handleFreeResize(payload: BridgeFreeResizePayload): Promise<void> {
@@ -82,20 +79,14 @@ export async function handleFreeResize(payload: BridgeFreeResizePayload): Promis
     return;
   }
   const before = beforeRes.value;
-  const resized = computeNextClassNameForResize(
-    payload,
-    before,
-    useCanvasViewStore.getState().tailwindMajor,
-  );
   // Same screen scope as an Inspector edit (spec-log #144).
-  const after = scopeCanvasChange(payload.ref.loc, before, resized);
-  if (after === undefined) {
-    useDndStore.getState().setError({ code: 'E023', params: { reason: 'screenSplit' } });
+  const steps = resizeSteps(payload, before, canvasScope(payload.ref.loc));
+  const planned = planClassEdit({ loc: payload.ref.loc, tag: payload.tag }, before, steps);
+  if (!planned.ok) {
+    useDndStore.getState().setError(planned.error);
     return;
   }
-  await editSource({
-    edit: { kind: 'setClassName', loc: payload.ref.loc, tag: payload.tag, before, after },
-  });
+  await sendEdit({ edit: planned.value.edit });
 }
 
 function reportFailure(task: Promise<void>): void {

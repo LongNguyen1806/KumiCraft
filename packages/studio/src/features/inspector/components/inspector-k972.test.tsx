@@ -1,17 +1,13 @@
 // Component tests for Inspector K9.7-2 features (tag switcher, list actions, attributes, image, effects, motion, reveal) (Tests 2, 9, 14, 15).
-import {
-  type ClassContext,
-  type ElementSource,
-  parseClasses,
-  type TreeNode,
-} from '@kumicraft/shared';
+import { type ElementSource, type TreeNode } from '@kumicraft/shared';
+import { type ClassContext, parseClasses } from '@kumicraft/style-tailwind';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import * as sourceClient from '../../../api/source-client.ts';
+import { studioBridgeChannel } from '../../../core/bridge-channel.ts';
+import { useSelectionStore } from '../../../core/selection-store.ts';
 import { initI18n } from '../../../i18n/i18n.ts';
-import { studioBridgeChannel } from '../../selection/bridge-channel.ts';
-import { useSelectionStore } from '../../selection/selection-store.ts';
 import type { InspectorTarget } from '../types.ts';
 import type { BatchPropEntry } from '../use-live-edit.ts';
 import { AttributesEditorSection } from './attributes-editor.tsx';

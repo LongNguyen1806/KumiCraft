@@ -1,4 +1,4 @@
-import type { LibraryBlock } from '@kumicraft/shared';
+import type { LibraryBlock } from '@kumicraft/content';
 import { Plus, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 

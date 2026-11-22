@@ -4,8 +4,9 @@ import { type ElementInfo, type ElementRef, type TreeNode } from '@kumicraft/sha
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { editSource, fetchElementSourceByLoc } from '../../../api/source-client.ts';
-import { useSelectionStore } from '../../selection/selection-store.ts';
+import { fetchElementSourceByLoc } from '../../../api/source-client.ts';
+import { sendEdit } from '../../../core/edits.ts';
+import { useSelectionStore } from '../../../core/selection-store.ts';
 import type { InspectorTarget } from '../types.ts';
 
 type ElementTarget = Extract<InspectorTarget, { readonly kind: 'element' }>;
@@ -51,9 +52,14 @@ async function ensureGroupClassOnAncestor(ancRef: ElementRef): Promise<boolean> 
   if (src.className.kind !== 'static' && src.className.kind !== 'none') return false;
   const before = src.className.kind === 'static' ? src.className.value : '';
   if (/\bgroup\b/.test(before)) return true;
-  const after = before === '' ? 'group' : `group ${before}`;
-  await editSource({
-    edit: { kind: 'setClassName', loc: src.loc, tag: src.tag, before, after },
+  await sendEdit({
+    edit: {
+      kind: 'setClasses',
+      loc: src.loc,
+      tag: src.tag,
+      before,
+      steps: [{ kind: 'addClass', name: 'group' }],
+    },
   });
   return true;
 }
