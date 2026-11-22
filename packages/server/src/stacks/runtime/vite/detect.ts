@@ -96,6 +96,13 @@ async function detectPackageManager(
   return undefined;
 }
 
+/**
+ * Vite majors the Canvas runs: the Bridge plugin uses only hooks Vite has had since 5 (transform with
+ * `order`, configureServer, resolveId, load, transformIndexHtml). Each one has a sample project
+ * in fixtures/projects and an E2E run (round 1 of 04-lo-trinh.md).
+ */
+export const VITE_MAJORS: readonly number[] = [5, 6, 7, 8];
+
 function checkDependencyReasons(
   allDeps: Record<string, string>,
   viteInfo: { readonly major?: number | undefined },
@@ -115,7 +122,7 @@ function checkDependencyReasons(
 
   if (allDeps['vite'] === undefined) {
     reasons.push('noVite');
-  } else if (viteInfo.major !== 7 && viteInfo.major !== 8) {
+  } else if (viteInfo.major === undefined || !VITE_MAJORS.includes(viteInfo.major)) {
     reasons.push('viteVersion');
   }
 

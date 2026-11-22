@@ -1,5 +1,7 @@
 packages:
   - packages/*
+  - fixtures/projects/vite5-react18-js
+  - fixtures/projects/vite6-react18-js
   - fixtures/projects/vite7-react18-js
 
 # Pin exact versions when adding dependencies (SPEC-01.1 section 13.3).

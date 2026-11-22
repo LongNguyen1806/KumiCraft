@@ -9,6 +9,7 @@ import { createKumiCraftBridgePlugin } from '@kumicraft/bridge';
 import type { RunnerOptions, RunnerToChildMessage, RunnerToParentMessage } from '@kumicraft/shared';
 
 import { devScriptPort, portInMessage } from './dev-script-port.ts';
+import { resolveViteEntry } from './vite-entry.ts';
 import { devServerOptions } from './vite-server-config.ts';
 
 interface ViteDevServer {
@@ -150,7 +151,7 @@ async function startServer(options: RunnerOptions): Promise<void> {
 
   let vitePath: string;
   try {
-    vitePath = require.resolve('vite');
+    vitePath = resolveViteEntry(require);
   } catch {
     sendToParent({
       type: 'error',

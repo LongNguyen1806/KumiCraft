@@ -278,7 +278,7 @@
     "reasons": {
       "noPackageJson": "Thư mục không có file package.json",
       "noVite": "Dự án không có Vite trong dependencies",
-      "viteVersion": "Vite phải là phiên bản 7 hoặc 8",
+      "viteVersion": "Vite phải là phiên bản 5, 6, 7 hoặc 8",
       "noReact": "Dự án không có React trong dependencies",
       "reactVersion": "React phải là phiên bản 18 hoặc 19",
       "noTailwind": "Dự án không có Tailwind CSS",

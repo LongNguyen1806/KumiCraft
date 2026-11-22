@@ -156,7 +156,7 @@ describe('opening a project', () => {
     const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8')) as {
       devDependencies: Record<string, string>;
     };
-    pkg.devDependencies['vite'] = '^6.0.0';
+    pkg.devDependencies['vite'] = '^4.5.0';
     await writeFile(join(dir, 'package.json'), JSON.stringify(pkg));
     await writeWorkspace();
 

@@ -93,6 +93,12 @@ Làm **trọn trong một đợt** (chủ dự án, 2026-11-22), không tách du
 
 Thứ tự Đợt 1 – 4 giữ như đã chốt trong nhan-dien-du-an.md (Vite cũ → Next → template phía server → Vue / Angular), thêm Đợt S trước Đợt 1 vì nó dọn đường sửa chung mà mọi ngôn ngữ mới cần.
 
+**Kết quả Đợt 1 (2026-11-22, spec-log #163):** đạt. Dự án mẫu `vite5-react18-js` (Vite 5.4.21) và `vite6-react18-js` (Vite 6.4.5) mở, chọn, sửa class, Undo đúng từng byte (`e2e/vite-versions.e2e.ts` chạy cho Vite 5, 6, 7). Toàn bộ E2E 92/92.
+
+- Chặn phiên bản chỉ là một dòng kiểm số (`stacks/runtime/vite/detect.ts`); nay `viteRuntime.supportedMajors` = 5, 6, 7, 8 (`RuntimeAdapter.supportedMajors`, 03 mục 3.1).
+- Lỗi thật tìm được khi chạy thử: runner tìm Vite bằng `require.resolve('vite')`, Vite 5 trả bản CommonJS cũ nên Canvas báo "Invalid Vite module". Sửa: `runners/vite-entry.ts` đọc `exports` của Vite và nạp bản ES module.
+- React 17: chưa làm. Mở thêm cần một dự án mẫu React 17 và chạy thử như trên; để khi có người dùng cần.
+
 Từ Đợt 1, mỗi đợt làm **trọn một lần**, không chia thành các phần nhỏ để duyệt riêng (chủ dự án, 2026-11-22).
 
 **Kết quả Đợt S (2026-11-22, spec-log #162):**

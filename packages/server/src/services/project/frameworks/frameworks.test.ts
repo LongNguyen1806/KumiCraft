@@ -106,10 +106,10 @@ describe('M-FW: Framework detection', () => {
   });
 
   it('accurately identifies each failure reason [R-PJ-03, R-PJ-04]', async () => {
-    // Missing tailwind, vite 6, react 17, missing vite.config, missing tailwind CSS
+    // Missing tailwind, vite 4, react 17, missing vite.config, missing tailwind CSS
     const pkg = {
       dependencies: { react: '^17.0.0' },
-      devDependencies: { vite: '^6.0.0' },
+      devDependencies: { vite: '^4.5.0' },
     };
     await writeFile(join(dir, 'package.json'), JSON.stringify(pkg));
 
@@ -153,6 +153,27 @@ describe('M-FW: Framework detection', () => {
     );
 
     expect(result.report.versions.vite).toBe('8.0.2');
+  });
+
+  it.each([
+    ['5.4.21', true],
+    ['6.4.5', true],
+    ['4.5.14', false],
+  ])('Vite %s installed: supported is %s [round 1, R-PJ-03]', async (version, supported) => {
+    const pkg = {
+      devDependencies: { vite: `^${version}`, tailwindcss: '^4.0.0' },
+      dependencies: { react: '^18.3.1' },
+    };
+    await writeFile(join(dir, 'package.json'), JSON.stringify(pkg));
+    await mkdir(join(dir, 'node_modules/vite'), { recursive: true });
+    await writeFile(join(dir, 'node_modules/vite/package.json'), JSON.stringify({ version }));
+    await writeFile(join(dir, 'vite.config.js'), 'export default {}');
+    await mkdir(join(dir, 'src'), { recursive: true });
+    await writeFile(join(dir, 'src/index.css'), '@import "tailwindcss";');
+
+    const result = await detectStack({ root: dir, fs: nodeFs, packageJson: pkg }, STACKS);
+
+    expect(result.report.reasons.includes('viteVersion')).toBe(!supported);
   });
 
   it('detects package manager in order [R-PJ-05]', async () => {

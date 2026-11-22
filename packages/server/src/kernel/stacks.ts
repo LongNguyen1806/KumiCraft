@@ -56,6 +56,11 @@ export interface RuntimeAdapter {
   readonly id: 'vite' | 'express';
   /** Package that names this runtime in a project, to pick the right "unsupported" reason. */
   readonly primaryDependency: string;
+  /**
+   * Major versions of `primaryDependency` this runtime is tested with (03 section 3.1). A project
+   * on another major is refused with a clear reason instead of failing later. Absent: any.
+   */
+  readonly supportedMajors?: readonly number[] | undefined;
   readonly stampHost: StampHost;
   /** Read-only look at the project's files; says whether this runtime (and its view) fits. */
   detect(input: DetectInput): Promise<SupportReport>;
