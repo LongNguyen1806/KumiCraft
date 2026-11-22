@@ -93,7 +93,7 @@ Vậy phần "style chung" đã có. Thứ còn gắn với React chỉ là **c�
 - Bộ đọc (parse) là code thuần trong `@kumicraft/content` (không dùng Babel), chỉ nhận đúng tập JSX tĩnh mà khối dùng; khối nào ra ngoài tập đó thì test báo đỏ ngay.
 - Mỗi ngôn ngữ có một bộ render. Razor thêm việc thoát ký tự `@` trong chữ (`@@`). Vue dùng HTML.
 - Kit tương tác (modal, carousel…) là component của một framework: mỗi ngôn ngữ có bộ kit riêng, làm cùng đợt của ngôn ngữ đó.
-- Đợt này **chưa đổi đường chèn khối của dự án JSX**: nó vẫn dùng chuỗi JSX như cũ. Cây được dùng từ Đợt 4 (Vue). Lý do: không đổi một đường đang chạy tốt khi chưa có người dùng cần.
+- Đợt này **chưa đổi đường chèn khối của dự án JSX**: nó vẫn dùng chuỗi JSX như cũ. Cây được dùng từ Đợt 4 (Razor). Lý do: không đổi một đường đang chạy tốt khi chưa có người dùng cần.
 
 ### 2.3. Xong khi (test cần và đủ)
 

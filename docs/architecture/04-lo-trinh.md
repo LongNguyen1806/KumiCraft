@@ -87,12 +87,12 @@ Làm **trọn trong một đợt** (chủ dự án, 2026-11-22), không tách du
 | **1**   | Vite 5, 6. Không chặn theo phiên bản Vite, React                                                                                                                                                      | Mở, chọn, sửa, Undo trên dự án Vite mọi bản                           | Xong (spec-log #163, #164)                        |
 | **2**   | Next.js: runtime `next` (bọc cấu hình lúc nạp, loader cho Turbopack và webpack, proxy Bridge) + trang theo `app/`, `pages/` ([03b](03b-next-va-khoi-chung.md) mục 1)                                  | Mở, chọn, đọc style, sửa, chèn khối, Undo; thêm / đổi tên / xóa trang | Xong (spec-log #164); trang nháp chưa có cho Next |
 | **3**   | Thư viện khối dạng chung: cây phần tử + bộ viết JSX, HTML, Pug ([03b](03b-next-va-khoi-chung.md) mục 2)                                                                                               | Không đổi; khối sẵn sàng cho ngôn ngữ khác                            | Xong (spec-log #164)                              |
-| **4**   | Vue (+ Vite): đánh dấu `.vue` + bộ sửa ghi ngược `.vue`, chèn khối qua cây                                                                                                                            | Đủ thao tác như React trên dự án Vue                                  |                                                   |
-| **5**   | ASP.NET Razor: bản sao có đánh dấu (`ShadowSync`) + bộ sửa `.cshtml`; đo độ trễ                                                                                                                       | Đủ thao tác trên dự án Razor                                          |                                                   |
+| **4**   | ASP.NET Razor: bản sao có đánh dấu (`ShadowSync`) + bộ sửa `.cshtml`, chèn khối qua cây; đo độ trễ                                                                                                    | Đủ thao tác trên dự án Razor                                          |                                                   |
+| **5**   | Vue (+ Vite): đánh dấu `.vue` + bộ sửa ghi ngược `.vue`, chèn khối qua cây                                                                                                                            | Đủ thao tác như React trên dự án Vue                                  |                                                   |
 | **6**   | Express + Pug: bộ sửa `.pug` (hiện chỉ xem)                                                                                                                                                           | Đủ thao tác trên dự án Pug                                            |                                                   |
 | **Sau** | Django, Laravel Blade, Angular, webpack / CRA, Svelte, HTML thuần                                                                                                                                     | Mỗi đợt thêm một loại dự án, đủ thao tác                              |                                                   |
 
-Thứ tự: Vite cũ → Next → thư viện khối dạng chung (Vue, Razor, Pug đều cần) → Vue → Razor → Pug. Đợt S làm trước Đợt 1 vì nó dọn đường sửa chung mà mọi ngôn ngữ mới cần.
+Thứ tự: Vite cũ → Next → thư viện khối dạng chung (Vue, Razor, Pug đều cần) → Razor → Vue → Pug. Razor đưa lên trước Vue theo chủ dự án (2026-11-23). Đợt S làm trước Đợt 1 vì nó dọn đường sửa chung mà mọi ngôn ngữ mới cần.
 
 **Kết quả Đợt 1 (2026-11-22, spec-log #163):** đạt. Dự án mẫu `vite5-react18-js` (Vite 5.4.21) và `vite6-react18-js` (Vite 6.4.5) mở, chọn, sửa class, Undo đúng từng byte (`e2e/vite-versions.e2e.ts` chạy cho Vite 5, 6, 7). Toàn bộ E2E 92/92.
 
@@ -137,8 +137,8 @@ Chưa làm, ghi lại để không quên:
 
 Hai điểm bản thử chưa trả lời được (03 mục 11) trở thành điều kiện có số đo:
 
-1. **Độ trễ Razor (Đợt 3):** đo "sửa ô Inspector → Canvas đổi" trên dự án mẫu Razor Pages. Nếu vượt xa PB-02 (500 ms) đến mức khó dùng, ghi rõ và xét lại ADR-A3 cho template phía server trước khi làm Blade / Django.
-2. **Interface đứng vững với ngôn ngữ thứ hai (Đợt 4b):** `ViewEditor` qua contract test cho cả JSX và Vue mà lõi, Studio, Bridge client không phải sửa. Nếu phải sửa, sửa interface rồi mới đóng băng.
+1. **Độ trễ Razor (Đợt 4):** đo "sửa ô Inspector → Canvas đổi" trên dự án mẫu Razor Pages. Nếu vượt xa PB-02 (500 ms) đến mức khó dùng, ghi rõ và xét lại ADR-A3 cho template phía server trước khi làm Blade / Django.
+2. **Interface đứng vững với ngôn ngữ thứ hai (Đợt 4):** `ViewEditor` qua contract test cho cả JSX và Razor mà lõi, Studio, Bridge client không phải sửa. Nếu phải sửa, sửa interface rồi mới đóng băng.
 
 ## 6. Tài liệu
 
