@@ -23,7 +23,7 @@
     "@kumicraft/content": "workspace:*",
     "@kumicraft/shared": "workspace:*",
     "@kumicraft/style-tailwind": "workspace:*",
-    "chokidar": "5.0.0",
+    "chokidar": "6.0.0",
     "cross-spawn": "7.0.6",
     "diff": "9.0.0",
     "env-paths": "4.0.0",
