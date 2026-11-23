@@ -79,13 +79,15 @@ export async function probeProject(path: string, deps: ProbeDeps): Promise<Resul
     return ok({ kind: 'missing', canCreate });
   }
 
-  const hasPackageJson = await deps.fs.exists(path, 'package.json');
-  if (hasPackageJson) {
-    return probePackageJsonProject(path, deps);
-  }
-
   const entriesResult = await deps.fs.readDir(path, '.');
   if (!entriesResult.ok) return entriesResult;
+  // A Node project (package.json) or a .NET one (a .csproj, maybe with a package.json for its CSS).
+  const isProject = entriesResult.value.some(
+    (e) => e.kind === 'file' && (e.name === 'package.json' || e.name.endsWith('.csproj')),
+  );
+  if (isProject) {
+    return probePackageJsonProject(path, deps);
+  }
 
   const isEmpty = entriesResult.value.every((entry) => EMPTY_ALLOWED_NAMES.has(entry.name));
   if (isEmpty) return ok({ kind: 'empty' });

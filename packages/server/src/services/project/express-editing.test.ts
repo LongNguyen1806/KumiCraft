@@ -1,4 +1,5 @@
-// Test A5: View-only mode guards on server operations (SPEC-04 R-FW-01, WP-4.00).
+// Test A5: an Express + Pug project is edited through the server services (03d): the Pug editor
+// and the Express pages are the ones the open project uses. (It was view only until round 6.)
 import { cp, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,17 +27,12 @@ const config: Pick<ConfigStore, 'isTrusted' | 'setTrusted' | 'settings'> = {
   settings: () => ({ editor: 'vscode', agent: { preferred: 'auto' } }),
 };
 
-describe('View-Only Guards [WP-4.00]', () => {
-  it('[WP-4.00] A5: Dự án viewOnly: edit batch, chèn, xóa trang, style apply → E023 viewOnly; file không đổi', async () => {
+describe('Express + Pug through the services [WP-4.00, 03d]', () => {
+  it('[WP-4.00] A5: class edit, block insert, page add and delete reach the Pug editor and Express pages', async () => {
     const { dir: tempDir, cleanup } = await makeTempDir();
     try {
       const expressDir = join(tempDir, 'express-project');
       await cp(EXPRESS_FIXTURE, expressDir, { recursive: true });
-
-      // Snapshot files before any mutation attempts
-      const beforeIndex = await readFile(join(expressDir, 'views/index.pug'), 'utf8');
-      const beforeAbout = await readFile(join(expressDir, 'views/about.pug'), 'utf8');
-      const beforeApp = await readFile(join(expressDir, 'app.js'), 'utf8');
 
       const services = createServices(
         {
@@ -79,72 +75,33 @@ describe('View-Only Guards [WP-4.00]', () => {
 
       const openRes = await services.projectService.open(expressDir);
       expect(openRes.ok).toBe(true);
+      const index = join(expressDir, 'views/index.pug');
 
-      // 1. applyEditBatch fails with E023 viewOnly
+      // 1. A class edit goes to the Pug editor (not the JSX one) and keeps shorthand classes.
       const batchRes = await services.sourceEditorService.applyEditBatch(expressDir, [
-        {
-          kind: 'setClassName',
-          loc: 'views/index.pug:5:3',
-          tag: 'h1',
-          before: '',
-          after: 'new-class',
-        },
+        { kind: 'setClassName', loc: 'views/index.pug:5:3', tag: 'h1', after: 'hero-title big' },
       ]);
-      expect(batchRes.ok).toBe(false);
-      if (!batchRes.ok) {
-        expect(batchRes.error.code).toBe('E023');
-        expect(batchRes.error.params?.['reason']).toBe('viewOnly');
-      }
+      expect(batchRes.ok).toBe(true);
+      expect(await readFile(index, 'utf8')).toContain('  h1.hero-title.big Sản phẩm hôm nay');
 
-      // 2. applyStructureEdit (insert) fails with E023 viewOnly
+      // 2. A library block is inserted as Pug lines.
       const structRes = await services.sourceEditorService.applyStructureEdit(expressDir, {
         kind: 'insert',
         target: { kind: 'sibling', ref: { loc: 'views/index.pug:5:3', tag: 'h1' }, where: 'after' },
         jsx: '<p>Inserted</p>',
       });
-      expect(structRes.ok).toBe(false);
-      if (!structRes.ok) {
-        expect(structRes.error.code).toBe('E023');
-        expect(structRes.error.params?.['reason']).toBe('viewOnly');
-      }
+      expect(structRes.ok).toBe(true);
+      expect(await readFile(index, 'utf8')).toContain(
+        '  h1.hero-title.big Sản phẩm hôm nay\n  p Inserted\n',
+      );
 
-      // 3. deletePage fails with E023 viewOnly
-      const deleteRes = await services.projectService.deletePage({ path: '/about' });
-      expect(deleteRes.ok).toBe(false);
-      if (!deleteRes.ok) {
-        expect(deleteRes.error.code).toBe('E023');
-        expect(deleteRes.error.params?.['reason']).toBe('viewOnly');
-      }
-
-      // 4. addPage fails with E023 viewOnly
+      // 3. Pages: a route and a view are added, and an existing one removed with its view.
       const addRes = await services.projectService.addPage({ name: 'Contact', path: '/contact' });
-      expect(addRes.ok).toBe(false);
-      if (!addRes.ok) {
-        expect(addRes.error.code).toBe('E023');
-        expect(addRes.error.params?.['reason']).toBe('viewOnly');
-      }
-
-      // 5. editTheme (style apply) fails with E023 viewOnly
-      const themeRes = await services.projectService.editTheme({
-        op: 'set',
-        kind: 'color',
-        name: 'primary',
-        value: '#123456',
-      });
-      expect(themeRes.ok).toBe(false);
-      if (!themeRes.ok) {
-        expect(themeRes.error.code).toBe('E023');
-        expect(themeRes.error.params?.['reason']).toBe('viewOnly');
-      }
-
-      // 6. Verify files on disk remain strictly unchanged
-      const afterIndex = await readFile(join(expressDir, 'views/index.pug'), 'utf8');
-      const afterAbout = await readFile(join(expressDir, 'views/about.pug'), 'utf8');
-      const afterApp = await readFile(join(expressDir, 'app.js'), 'utf8');
-
-      expect(afterIndex).toBe(beforeIndex);
-      expect(afterAbout).toBe(beforeAbout);
-      expect(afterApp).toBe(beforeApp);
+      expect(addRes.ok).toBe(true);
+      expect(await readFile(join(expressDir, 'app.js'), 'utf8')).toContain("app.get('/contact'");
+      const deleteRes = await services.projectService.deletePage({ path: '/about' });
+      expect(deleteRes.ok).toBe(true);
+      expect(await readFile(join(expressDir, 'app.js'), 'utf8')).not.toContain("'/about'");
     } finally {
       await cleanup();
     }

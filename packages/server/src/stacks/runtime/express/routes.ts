@@ -1,4 +1,6 @@
 // Static route finder for Express + Pug apps (SPEC-04 K4, Section 3.4).
+import { posix } from 'node:path';
+
 import type { PageInfo, PagesInfo, RouterStatus } from '@kumicraft/shared';
 
 import { asAstNode, type AstNode, isAstNode, parseJsxAst } from '../../../lib/ast-helpers.ts';
@@ -13,6 +15,11 @@ type ParsedRoute = {
 type FileAnalysis = {
   readonly routes: readonly ParsedRoute[];
   readonly mountedRouters: readonly { readonly prefix: string; readonly targetFile: string }[];
+  readonly localRequires: readonly string[];
+};
+
+export type ExpressRoutesScan = PagesInfo & {
+  readonly scannedFiles: readonly { readonly file: string; readonly prefix: string }[];
 };
 
 function stringLiteralValue(node: AstNode | undefined): string | undefined {
@@ -111,7 +118,8 @@ async function resolveModulePath(
   }
   const baseDir = baseFile.includes('/') ? baseFile.slice(0, baseFile.lastIndexOf('/')) : '';
   const rawPath = baseDir === '' ? specifier.replace(/^\.\//, '') : `${baseDir}/${specifier}`;
-  const normalized = rawPath.replaceAll('\\', '/');
+  const normalized = posix.normalize(rawPath.replaceAll('\\', '/'));
+  if (normalized === '..' || normalized.startsWith('../')) return undefined;
 
   const exts = ['', '.js', '.cjs', '.mjs', '/index.js', '/index.cjs', '/index.mjs'];
   for (const ext of exts) {
@@ -121,6 +129,15 @@ async function resolveModulePath(
     }
   }
   return undefined;
+}
+
+function isRouteGetCall(args: readonly unknown[]): string | undefined {
+  if (args.length < 2) return undefined;
+  const routePath = stringLiteralValue(asAstNode(args[0]));
+  if (routePath === undefined || !routePath.startsWith('/')) return undefined;
+  const lastArg = asAstNode(args.at(-1));
+  if (lastArg?.type === 'ObjectExpression') return undefined;
+  return routePath;
 }
 
 function inspectCall(
@@ -136,7 +153,7 @@ function inspectCall(
   const args: unknown[] = Array.isArray(call['arguments']) ? call['arguments'] : [];
 
   if (method === 'get') {
-    const routePath = stringLiteralValue(asAstNode(args[0]));
+    const routePath = isRouteGetCall(args);
     if (routePath !== undefined) {
       const viewName = findRenderView(args.slice(1));
       const file = resolveViewPath(viewsDir, viewName);
@@ -161,6 +178,9 @@ function analyzeAst(ast: AstNode, viewsDir: string): FileAnalysis {
   const program = asAstNode(ast['program']);
   const body: readonly unknown[] = Array.isArray(program?.['body']) ? program['body'] : [];
   const requires = collectRequires(body);
+  const localRequires = [...requires.values()].filter(
+    (t) => t.startsWith('./') || t.startsWith('../'),
+  );
 
   function walk(node: unknown): void {
     if (!node || typeof node !== 'object') return;
@@ -180,7 +200,7 @@ function analyzeAst(ast: AstNode, viewsDir: string): FileAnalysis {
   }
 
   walk(program);
-  return { routes, mountedRouters: mounts };
+  return { routes, mountedRouters: mounts, localRequires };
 }
 
 async function parseFileRoutes(
@@ -199,34 +219,55 @@ async function parseFileRoutes(
   }
 }
 
+function addFileRoutes(
+  routes: readonly ParsedRoute[],
+  prefix: string,
+  seenPaths: Set<string>,
+  pages: PageInfo[],
+): void {
+  for (const r of routes) {
+    const fullPath = joinExpressPath(prefix, r.path);
+    if (!seenPaths.has(fullPath)) {
+      seenPaths.add(fullPath);
+      pages.push({
+        path: fullPath,
+        ...(r.file !== undefined ? { file: r.file } : {}),
+        dynamic: fullPath.includes(':'),
+      });
+    }
+  }
+}
+
 async function collectAllRoutes(
   fs: FileSystemPort,
   root: string,
   entryFile: string,
   viewsDir: string,
-): Promise<PageInfo[]> {
+): Promise<{
+  readonly pages: PageInfo[];
+  readonly routesFile: string;
+  readonly scannedFiles: { readonly file: string; readonly prefix: string }[];
+}> {
   const pages: PageInfo[] = [];
   const seenPaths = new Set<string>();
   const visited = new Set<string>();
+  const scannedFiles: { readonly file: string; readonly prefix: string }[] = [];
+  let routesFile: string | undefined;
 
   async function traverse(currentFile: string, prefix: string): Promise<void> {
-    if (visited.has(currentFile)) return;
+    if (visited.has(currentFile) || visited.size >= 30) return;
     visited.add(currentFile);
 
     const analysis = await parseFileRoutes(fs, root, currentFile, viewsDir);
     if (analysis === undefined) return;
 
-    for (const r of analysis.routes) {
-      const fullPath = joinExpressPath(prefix, r.path);
-      if (!seenPaths.has(fullPath)) {
-        seenPaths.add(fullPath);
-        pages.push({
-          path: fullPath,
-          ...(r.file !== undefined ? { file: r.file } : {}),
-          dynamic: fullPath.includes(':'),
-        });
-      }
+    const hasOwnRoutesOrMounts = analysis.routes.length > 0 || analysis.mountedRouters.length > 0;
+    if (hasOwnRoutesOrMounts) {
+      routesFile ??= currentFile;
+      scannedFiles.push({ file: currentFile, prefix });
     }
+
+    addFileRoutes(analysis.routes, prefix, seenPaths, pages);
 
     for (const mount of analysis.mountedRouters) {
       const resolved = await resolveModulePath(fs, root, currentFile, mount.targetFile);
@@ -234,25 +275,40 @@ async function collectAllRoutes(
         await traverse(resolved, joinExpressPath(prefix, mount.prefix));
       }
     }
+
+    // A launcher script (`bin/www`) has no routes or mounts of its own and requires `../app`.
+    if (!hasOwnRoutesOrMounts && prefix === '') {
+      for (const reqTarget of analysis.localRequires) {
+        const resolved = await resolveModulePath(fs, root, currentFile, reqTarget);
+        if (resolved !== undefined) {
+          await traverse(resolved, '');
+        }
+      }
+    }
   }
 
   await traverse(entryFile, '');
-  return pages;
+  return { pages, routesFile: routesFile ?? entryFile, scannedFiles };
 }
 
-export async function findExpressRoutes(
+export async function scanExpressRoutes(
   fs: FileSystemPort,
   root: string,
   serverEntry: string,
   viewsDir: string,
-): Promise<PagesInfo> {
-  const pages = await collectAllRoutes(fs, root, serverEntry, viewsDir);
+): Promise<ExpressRoutesScan> {
+  const { pages, routesFile, scannedFiles } = await collectAllRoutes(
+    fs,
+    root,
+    serverEntry,
+    viewsDir,
+  );
   const hasRoutes = pages.length > 0;
 
   const router: RouterStatus = hasRoutes
     ? {
         status: 'found',
-        file: serverEntry,
+        file: routesFile,
         line: 1,
         kind: 'express',
         chosen: true,
@@ -264,8 +320,24 @@ export async function findExpressRoutes(
 
   return {
     convention: hasRoutes,
-    ...(hasRoutes ? { routesFile: serverEntry } : {}),
+    ...(hasRoutes ? { routesFile } : {}),
     router,
     pages,
+    scannedFiles,
   };
+}
+
+export async function findExpressRoutes(
+  fs: FileSystemPort,
+  root: string,
+  serverEntry: string,
+  viewsDir: string,
+): Promise<PagesInfo> {
+  const { scannedFiles: _scanned, ...info } = await scanExpressRoutes(
+    fs,
+    root,
+    serverEntry,
+    viewsDir,
+  );
+  return info;
 }

@@ -4,6 +4,8 @@ node_modules/
 # Build output
 dist/
 *.tsbuildinfo
+# The MVC sample ships Bootstrap as the .NET template does (wwwroot/lib/bootstrap/dist, 03c).
+!fixtures/projects/mvc-net10/wwwroot/lib/bootstrap/dist/
 
 # Test and benchmark output
 coverage/

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 2,
+  "id": "mvcnet1001",
+  "name": "MVC .NET 10 Bootstrap Fixture",
+  "createdAt": "2026-11-23T00:00:00.000Z",
+  "framework": "aspnet-mvc",
+  "sourceDir": ".",
+  "backends": [],
+  "responsiveMode": "desktop-first",
+  "frames": [
+    { "id": "desktop", "label": "Desktop", "width": 1440, "height": 900 },
+    { "id": "mobile", "label": "Mobile", "width": 375, "height": 812 }
+  ],
+  "primaryFrameId": "desktop"
+}

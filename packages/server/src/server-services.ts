@@ -8,12 +8,14 @@ import {
   type SetupEnvironment,
   terminalCommand,
 } from './adapters/system/agent-setup-plans.ts';
+import { editorByView } from './kernel/editing.ts';
 import { createHistoryService, type HistoryService } from './kernel/history/history-service.ts';
 import { ok } from './kernel/result.ts';
 import type { EventBusPort } from './ports/event-bus-port.ts';
 import type { FileSystemPort } from './ports/file-system-port.ts';
 import type { ProcessPort } from './ports/process-port.ts';
 import type { WatcherPort } from './ports/watcher-port.ts';
+import { createRazorCodeReader } from './runners/razor/helper.ts';
 import { agyAdapter } from './services/agent/adapters/agy.ts';
 import { claudeAdapter } from './services/agent/adapters/claude.ts';
 import { type AgentService, createAgentService } from './services/agent/agent-service.ts';
@@ -47,6 +49,8 @@ import {
   createSourceEditorService,
   type SourceEditorService,
 } from './stacks/view/jsx/source-editor-service.ts';
+import { createPugEditor } from './stacks/view/pug/editor.ts';
+import { createRazorEditor } from './stacks/view/razor/editor.ts';
 
 export type ServiceDeps = Omit<ProjectServiceDeps, 'runnerService'> & {
   readonly runnerScriptPath?: string | undefined;
@@ -160,6 +164,45 @@ function createProjectSnippetFormatter(
   });
 }
 
+/** Each view language edits with its own editor (03c section 2.1): JSX, Pug, and Razor. */
+function createViewEditors(
+  deps: ServiceDeps,
+  processPort: ProcessPort,
+  fs: FileSystemPort,
+  projectService: ProjectService,
+  usageCounter: UsageCounter,
+): SourceEditorService {
+  const styling = () => {
+    const info = projectService.getProjectInfo();
+    return info.ok ? info.value.support.styling : undefined;
+  };
+  const jsxEditor = createSourceEditorService({
+    fs,
+    usageCounter,
+    formatSnippet: createProjectSnippetFormatter(deps, processPort, fs, projectService),
+    styling,
+    newCssDir: () => {
+      const info = projectService.getProjectInfo();
+      return info.ok ? info.value.styleFiles?.newCssDir : undefined;
+    },
+    getView: () => projectService.getStack().view,
+    getProjectSourceDir: () => {
+      const info = projectService.getProjectInfo();
+      return info.ok ? info.value.sourceDir : undefined;
+    },
+  });
+  const razorCode = createRazorCodeReader();
+  return editorByView(() => projectService.getStack().view.id, {
+    default: jsxEditor,
+    pug: createPugEditor({ fs, styling }),
+    razor: createRazorEditor({
+      fs,
+      codeRanges: (root, file, text) => razorCode.codeRanges(root, file, text),
+      styling,
+    }),
+  });
+}
+
 function createAuxiliaryServices(
   deps: ServiceDeps,
   processPort: ProcessPort,
@@ -175,24 +218,13 @@ function createAuxiliaryServices(
   const fallbackCommands = buildFallbackCommands(plans);
   const terminalAvailable = terminalCommand(setupEnv, '') !== undefined;
   const usageCounter = createUsageCounter(fs);
-  const sourceEditorService = createSourceEditorService({
+  const sourceEditorService = createViewEditors(
+    deps,
+    processPort,
     fs,
+    projectService,
     usageCounter,
-    formatSnippet: createProjectSnippetFormatter(deps, processPort, fs, projectService),
-    styling: () => {
-      const info = projectService.getProjectInfo();
-      return info.ok ? info.value.support.styling : undefined;
-    },
-    newCssDir: () => {
-      const info = projectService.getProjectInfo();
-      return info.ok ? info.value.styleFiles?.newCssDir : undefined;
-    },
-    getView: () => projectService.getStack().view,
-    getProjectSourceDir: () => {
-      const info = projectService.getProjectInfo();
-      return info.ok ? info.value.sourceDir : undefined;
-    },
-  });
+  );
   const agentService = createAgentService({
     process: processPort,
     settings: () => deps.config.settings(),

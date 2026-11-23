@@ -5,6 +5,7 @@ packages:
   - fixtures/projects/vite7-react18-js
   - fixtures/projects/next15-react19-js
   - fixtures/projects/next16-react19-js
+  - fixtures/projects/razor-pages-net10
 
 # Pin exact versions when adding dependencies (SPEC-01.1 section 13.3).
 saveExact: true

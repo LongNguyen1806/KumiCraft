@@ -5,9 +5,14 @@ import { createRequire } from 'node:module';
 import { isAbsolute, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import type { RunnerOptions, RunnerToChildMessage, RunnerToParentMessage } from '@kumicraft/shared';
+import {
+  type RunnerOptions,
+  RunnerToChildMessageSchema,
+  type RunnerToParentMessage,
+} from '@kumicraft/shared';
 
 import { createBridgeProxy } from './bridge-proxy.ts';
+import { startCssWatch } from './css-watch.ts';
 import { installListenHook, type ListenHook } from './listen-hook.ts';
 import { hookPug } from './pug-loc-plugin.ts';
 
@@ -56,6 +61,7 @@ function isEsmEntry(root: string, entryPath: string): boolean {
 }
 
 let activeProxy: { close(): Promise<void> } | undefined;
+let stopCss: (() => void) | undefined;
 let activeHook: ListenHook | undefined;
 
 async function loadApp(root: string, entryPath: string): Promise<void> {
@@ -110,6 +116,8 @@ async function startServer(options: RunnerOptions): Promise<void> {
   }
 
   hookPug(options.root);
+  // A Tailwind app's own `--watch` script builds the classes KumiCraft writes (03d section 0).
+  stopCss = startCssWatch(options.root);
   const timeoutMs =
     process.env.KUMICRAFT_LISTEN_TIMEOUT_MS !== undefined
       ? Number(process.env.KUMICRAFT_LISTEN_TIMEOUT_MS)
@@ -150,6 +158,7 @@ async function startServer(options: RunnerOptions): Promise<void> {
 async function stopServer(): Promise<void> {
   try {
     activeHook?.dispose();
+    stopCss?.();
     if (activeProxy !== undefined) {
       await activeProxy.close();
       activeProxy = undefined;
@@ -160,14 +169,12 @@ async function stopServer(): Promise<void> {
 }
 
 function handleMessage(raw: unknown): void {
-  const msg = raw as RunnerToChildMessage | undefined;
-  if (!msg || typeof msg !== 'object') return;
-
-  if (msg.type === 'start') {
-    void startServer(msg.options);
-  } else {
-    void stopServer();
-  }
+  const msg = RunnerToChildMessageSchema.safeParse(raw);
+  if (!msg.success) return;
+  if (msg.data.type === 'start') void startServer(msg.data.options);
+  else if (msg.data.type === 'stop') void stopServer();
+  // `filesWritten` (a file KumiCraft wrote twice in a row): Express renders views on each request,
+  // so there is nothing to read again. It must not stop the app (it did, once views were editable).
 }
 
 process.on('message', (raw: unknown) => {

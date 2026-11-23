@@ -29,7 +29,11 @@ export async function detectStack(input: DetectInput, stacks: StackTable): Promi
 
   const special = reports.find(({ report }) =>
     report.reasons.some(
-      (r) => r === 'craUnsupported' || r === 'nextUnsupported' || r === 'webpackUnsupported',
+      (r) =>
+        r === 'craUnsupported' ||
+        r === 'nextUnsupported' ||
+        r === 'webpackUnsupported' ||
+        r === 'noRazorViews',
     ),
   );
   if (special !== undefined) return special;

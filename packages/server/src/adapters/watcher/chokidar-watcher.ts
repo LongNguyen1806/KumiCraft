@@ -8,7 +8,8 @@ import type { WatchHandle } from '../../ports/watcher-port.ts';
 
 export const WATCH_BATCH_MS = 300;
 
-const IGNORED_DIRS = new Set(['node_modules', '.git', 'dist']);
+// `obj` and `bin`: .NET build output, and the stamped copy of an ASP.NET project (03c section 2.4).
+const IGNORED_DIRS = new Set(['node_modules', '.git', 'dist', 'obj', 'bin']);
 const IGNORED_PATHS = ['.kumicraft/lock', '.kumicraft/cache'];
 
 /** Relative path with '/' separators, or undefined for the root itself. */

@@ -1,13 +1,26 @@
 // Bar indicating currently designed target (SPEC-04 R-CP-11, R-CP-15, spec-log #23, #24).
 import { useTranslation } from 'react-i18next';
 
+import { useProjectInfo } from '../../core/project-store.ts';
 import { useComponentsStore } from '../components-panel/use-project-components.ts';
 import { useDesignStore } from './design-store.ts';
+
+function isIdentityLibraryRoute(
+  framework: string | undefined,
+  route: string | undefined,
+  isComponentMode: boolean,
+): boolean {
+  if (isComponentMode) return false;
+  if (framework !== 'aspnet-mvc' && framework !== 'aspnet-razor-pages') return false;
+  const normalized = (route ?? '').toLowerCase();
+  return normalized === '/identity' || normalized.startsWith('/identity/');
+}
 
 function useDesignBarState() {
   const target = useDesignStore((s) => s.target);
   const componentMode = useDesignStore((s) => s.componentMode);
   const components = useComponentsStore((s) => s.components);
+  const project = useProjectInfo();
 
   const isComponentMode = componentMode !== undefined;
   const kind = isComponentMode ? 'component' : (target?.kind ?? 'page');
@@ -15,6 +28,11 @@ function useDesignBarState() {
     ? componentMode.componentName
     : (target?.name ?? target?.route ?? '');
   const file = isComponentMode ? componentMode.filePath : target?.file;
+  const identityLibrary = isIdentityLibraryRoute(
+    project?.support.framework,
+    target?.route,
+    isComponentMode,
+  );
 
   const matchedComp = isComponentMode
     ? components.find(
@@ -23,16 +41,22 @@ function useDesignBarState() {
     : undefined;
   const usages = matchedComp?.usages ?? 0;
 
-  return { isComponentMode, kind, name, file, usages };
+  return { isComponentMode, kind, name, file, usages, identityLibrary };
 }
 
 /** The file being designed, or a warning when KumiCraft does not know it yet. */
-function DesignFile({ file }: { readonly file?: string | undefined }) {
+function DesignFile({
+  file,
+  identityLibrary,
+}: {
+  readonly file?: string | undefined;
+  readonly identityLibrary: boolean;
+}) {
   const { t } = useTranslation();
   if (file === undefined || file === '') {
     return (
       <span className="min-w-0 truncate rounded-md bg-sun-soft px-1.5 py-0.5 text-[11px] text-warn">
-        {t('design.unknownFile')}
+        {t(identityLibrary ? 'design.identityLibraryPage' : 'design.unknownFile')}
       </span>
     );
   }
@@ -49,7 +73,7 @@ function DesignFile({ file }: { readonly file?: string | undefined }) {
 
 export function DesignBar() {
   const { t } = useTranslation();
-  const { isComponentMode, kind, name, file, usages } = useDesignBarState();
+  const { isComponentMode, kind, name, file, usages, identityLibrary } = useDesignBarState();
 
   return (
     <div
@@ -67,7 +91,7 @@ export function DesignBar() {
       <span data-testid="design-bar-name" className="shrink-0 font-medium text-ink">
         {name}
       </span>
-      <DesignFile file={file} />
+      <DesignFile file={file} identityLibrary={identityLibrary} />
       {isComponentMode && usages > 1 && (
         <span
           data-testid="design-bar-usages"

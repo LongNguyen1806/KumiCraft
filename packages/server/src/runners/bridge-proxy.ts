@@ -14,6 +14,11 @@ export type BridgeProxyOptions = {
   readonly nonce: string;
   readonly studioOrigin: string;
   readonly root: string;
+  /**
+   * A page the Canvas loaded (its path and HTML as the app sent it): the ASP.NET runner asks for it
+   * again to know when a change is served (03c section 3.3).
+   */
+  readonly onPage?: ((path: string, html: string) => void) | undefined;
 };
 
 /**
@@ -99,6 +104,47 @@ export function rewriteLocation(location: string, appPort: number, host?: string
   return location.replace(re, `http://${host}`);
 }
 
+/**
+ * The Canvas iframe runs on `localhost` / `*.localhost` while Studio runs on `127.0.0.1`
+ * (`sessionOrigin`), which Chromium treats as cross-site: `SameSite=Strict`/`Lax` cookies (such
+ * as ASP.NET AntiForgery) are dropped on iframe POSTs unless rewritten to `SameSite=None; Secure`.
+ */
+function isCrossSiteCanvasHost(host?: string): boolean {
+  if (host === undefined) return false;
+  const name = host.toLowerCase().replace(/:\d+$/, '');
+  return name === 'localhost' || name.endsWith('.localhost');
+}
+
+export function patchSetCookie(cookie: string): string {
+  const withSameSite = /;\s*samesite=/i.test(cookie)
+    ? cookie.replace(/;\s*samesite=(?:strict|lax|none)\b/gi, '; SameSite=None')
+    : `${cookie}; SameSite=None`;
+  return /;\s*secure\b/i.test(withSameSite) ? withSameSite : `${withSameSite}; Secure`;
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function isHtmlNavigationRequest(req: http.IncomingMessage): boolean {
+  const dest = req.headers['sec-fetch-dest'];
+  if (typeof dest === 'string') return dest === 'iframe' || dest === 'document';
+  return (req.headers.accept ?? '').toLowerCase().includes('text/html');
+}
+
+function shouldWrapErrorPage(req: http.IncomingMessage, proxyRes: http.IncomingMessage): boolean {
+  if ((proxyRes.statusCode ?? 200) < 400) return false;
+  const cType = (proxyRes.headers['content-type'] ?? '').toLowerCase();
+  if (cType.includes('text/html')) return false;
+  if (cType !== '' && !cType.startsWith('text/plain')) return false;
+  return isHtmlNavigationRequest(req);
+}
+
 function filterHeaders(
   headers: http.IncomingHttpHeaders,
   appPort: number,
@@ -112,6 +158,8 @@ function filterHeaders(
     if (lower === 'x-frame-options') continue;
     if (lower === 'location' && typeof val === 'string') {
       out[key] = rewriteLocation(val, appPort, host);
+    } else if (lower === 'set-cookie' && val !== undefined && isCrossSiteCanvasHost(host)) {
+      out[key] = Array.isArray(val) ? val.map(patchSetCookie) : patchSetCookie(val);
     } else if (
       (lower === 'content-security-policy' || lower === 'content-security-policy-report-only') &&
       typeof val === 'string' &&
@@ -151,11 +199,12 @@ function streamResponse(
 }
 
 function sendInjectedHtml(
-  chunks: Buffer[],
+  rawHtml: string,
   res: http.ServerResponse,
   opts: BridgeProxyOptions,
   proxyRes: http.IncomingMessage,
   host?: string,
+  forceHtmlContentType = false,
 ): void {
   const cspNonce = randomBytes(16).toString('base64');
   const bridgeHtml = bridgeHeadHtml({
@@ -165,22 +214,44 @@ function sendInjectedHtml(
     navigation: 'document',
     cspNonce,
   });
-  const rawHtml = Buffer.concat(chunks).toString('utf8');
   const modifiedHtml = injectBridgeHtml(rawHtml, bridgeHtml);
   const outBuf = Buffer.from(modifiedHtml, 'utf8');
 
   const headers = filterHeaders(proxyRes.headers, opts.appPort, host, cspNonce, opts.studioOrigin);
+  if (forceHtmlContentType) {
+    delete headers['content-type'];
+    headers['content-type'] = 'text/html; charset=utf-8';
+  }
+  // The page is sent whole now: a chunked answer (ASP.NET sends one) has a length instead.
+  delete headers['transfer-encoding'];
+  // The HTML body was mutated (Bridge script + current run's nonce): drop upstream ETag/Last-Modified.
+  delete headers['etag'];
+  delete headers['last-modified'];
   headers['content-length'] = outBuf.byteLength;
   res.writeHead(proxyRes.statusCode ?? 200, proxyRes.statusMessage, headers);
   res.end(outBuf);
+}
+
+function wrapErrorHtml(proxyRes: http.IncomingMessage, bodyText: string): string {
+  const code = String(proxyRes.statusCode ?? 500);
+  const statusText = proxyRes.statusMessage ?? '';
+  const heading = statusText === '' ? `HTTP ${code}` : `HTTP ${code} ${statusText}`;
+  const trimmed = bodyText.trim();
+  const detail =
+    trimmed === ''
+      ? ''
+      : `<pre style="white-space:pre-wrap;font-size:13px;background:#f5f5f5;padding:12px;border-radius:6px">${escapeHtml(trimmed)}</pre>`;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(heading)}</title></head><body><main style="font-family:system-ui,sans-serif;padding:24px;color:#111"><h1 style="font-size:18px;margin:0 0 12px">${escapeHtml(heading)}</h1>${detail}</main></body></html>`;
 }
 
 function handleHtmlResponse(
   proxyRes: http.IncomingMessage,
   res: http.ServerResponse,
   opts: BridgeProxyOptions,
-  host?: string,
+  req: http.IncomingMessage,
+  wrapError = false,
 ): void {
+  const host = req.headers.host;
   const chunks: Buffer[] = [];
   let totalBytes = 0;
   let tooLarge = false;
@@ -207,7 +278,12 @@ function handleHtmlResponse(
       res.end();
       return;
     }
-    sendInjectedHtml(chunks, res, opts, proxyRes, host);
+    const rawText = Buffer.concat(chunks).toString('utf8');
+    const html = wrapError ? wrapErrorHtml(proxyRes, rawText) : rawText;
+    sendInjectedHtml(html, res, opts, proxyRes, host, wrapError);
+    if (!wrapError && req.method === 'GET' && proxyRes.statusCode === 200) {
+      opts.onPage?.(req.url ?? '/', rawText);
+    }
   });
 }
 
@@ -216,7 +292,11 @@ function forwardRequest(
   res: http.ServerResponse,
   opts: BridgeProxyOptions,
 ): void {
-  const clientHeaders = { ...req.headers, 'accept-encoding': 'identity' };
+  const clientHeaders: http.IncomingHttpHeaders = { ...req.headers, 'accept-encoding': 'identity' };
+  if (isHtmlNavigationRequest(req)) {
+    delete clientHeaders['if-none-match'];
+    delete clientHeaders['if-modified-since'];
+  }
   const proxyReq = http.request(
     {
       hostname: '127.0.0.1',
@@ -229,7 +309,9 @@ function forwardRequest(
       const cType = proxyRes.headers['content-type'] ?? '';
       const isHtml = cType.includes('text/html');
       if (isHtml) {
-        handleHtmlResponse(proxyRes, res, opts, req.headers.host);
+        handleHtmlResponse(proxyRes, res, opts, req);
+      } else if (shouldWrapErrorPage(req, proxyRes)) {
+        handleHtmlResponse(proxyRes, res, opts, req, true);
       } else {
         streamResponse(proxyRes, res, opts.appPort, req.headers.host);
       }

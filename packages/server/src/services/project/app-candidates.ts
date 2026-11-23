@@ -34,6 +34,32 @@ type ScanItem = {
   readonly depth: number;
 };
 
+/** An ASP.NET project (03c): a .csproj the .NET stacks recognize as a web app with views. */
+async function evaluateDotnetCandidate(
+  fs: FileSystemPort,
+  root: string,
+  relDir: string,
+  stacks: StackTable,
+): Promise<AppCandidate | undefined> {
+  const appRoot = `${root.replaceAll('\\', '/').replace(/\/+$/, '')}/${relDir}`;
+  const read = await fs.readText(root, `${relDir}/package.json`, { maxBytes: 512 * 1024 });
+  let packageJson: unknown;
+  try {
+    packageJson = read.ok ? JSON.parse(read.value) : {};
+  } catch {
+    packageJson = {};
+  }
+  const { report } = await detectStack({ root: appRoot, fs, packageJson }, stacks);
+  if (report.framework === undefined) return undefined;
+  return {
+    path: relDir,
+    framework: report.framework,
+    kind: 'aspnet',
+    supported: report.supported,
+    reasons: report.reasons,
+  };
+}
+
 async function evaluateCandidate(
   fs: FileSystemPort,
   root: string,
@@ -96,9 +122,12 @@ export async function findAppCandidates(
     const hasPackageJson = dirRes.value.some(
       (e) => e.kind === 'file' && e.name.toLowerCase() === 'package.json',
     );
+    const hasCsproj = dirRes.value.some((e) => e.kind === 'file' && e.name.endsWith('.csproj'));
 
-    if (item.depth > 0 && hasPackageJson) {
-      const candidate = await evaluateCandidate(fs, normRoot, item.relDir, stacks);
+    if (item.depth > 0 && (hasPackageJson || hasCsproj)) {
+      const candidate = hasCsproj
+        ? await evaluateDotnetCandidate(fs, normRoot, item.relDir, stacks)
+        : await evaluateCandidate(fs, normRoot, item.relDir, stacks);
       if (candidate !== undefined) {
         candidates.push(candidate);
       }

@@ -10,7 +10,14 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 import { LIBRARY_BLOCKS } from '../blocks.ts';
-import { parseBlockJsx, renderHtml, renderJsx, renderPug } from './index.ts';
+import {
+  parseBlockJsx,
+  renderHtml,
+  renderJsx,
+  renderPug,
+  renderPugSource,
+  renderRazor,
+} from './index.ts';
 
 const pugModule: unknown = createRequire(import.meta.url)('pug');
 
@@ -71,7 +78,7 @@ describe('neutral block tree [03b section 2.3]', () => {
   });
 
   it.each(SAMPLES)(
-    '$name: HTML, JSX and Pug from the tree build the page React builds',
+    '$name: HTML, JSX, Pug (both) and Razor from the tree build the page React builds',
     ({ jsx }) => {
       const expected = reactHtml(jsx);
       const tree = parseBlockJsx(jsx);
@@ -79,6 +86,10 @@ describe('neutral block tree [03b section 2.3]', () => {
       expect(renderHtml(tree)).toBe(expected);
       expect(reactHtml(renderJsx(tree))).toBe(expected);
       expect(sortAttrs(pugRender(renderPug(tree)))).toBe(sortAttrs(expected));
+      expect(sortAttrs(pugRender(renderPugSource(tree).join('\n')))).toBe(sortAttrs(expected));
+      // Razor: `@@` is an `@`; the line breaks it adds sit only between laid-out elements.
+      const razor = renderRazor(tree, '  ');
+      expect(razor.replaceAll(/\n\s*/g, '').replaceAll('@@', '@')).toBe(expected);
     },
   );
 });

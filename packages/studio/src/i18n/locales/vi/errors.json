@@ -19,7 +19,8 @@
       "noNext": "Dự án chưa cài Next.js.",
       "noNextPages": "Không thấy thư mục app/ hoặc pages/.",
       "nextUnsupported": "Next.js chưa có ở KumiCraft 1.0, dự kiến bản 1.1.",
-      "webpackUnsupported": "Dự án React chạy webpack tự cấu hình chưa được hỗ trợ; KumiCraft 1.0 hỗ trợ React + Vite."
+      "webpackUnsupported": "Dự án React chạy webpack tự cấu hình chưa được hỗ trợ; KumiCraft 1.0 hỗ trợ React + Vite.",
+      "noRazorViews": "Dự án ASP.NET này không có Razor Pages (Pages/) hay view MVC (Views/ và Controllers/) để thiết kế."
     }
   },
   "E002": {
@@ -186,7 +187,14 @@
       "noSelectItems": "Không tìm thấy SelectItem nào trong SelectGroup.",
       "missingOpening": "Thiếu thẻ mở JSX.",
       "blockedAttribute": "Thuộc tính {{name}} không được phép sửa ở đây.",
-      "screenSplit": "Không tách được riêng cho màn hình này: khung này quá sát khung bên cạnh, không có mốc màn hình nào ở giữa."
+      "screenSplit": "Không tách được riêng cho màn hình này: khung này quá sát khung bên cạnh, không có mốc màn hình nào ở giữa.",
+      "notRazorFile": "Phần tử không nằm trong một view Razor (.cshtml).",
+      "razorNotRead": "Trình biên dịch Razor trong .NET SDK của bạn không đọc được file này.",
+      "crossesCode": "Không thể chuyển phần tử ra khỏi hoặc vào trong một khối C# (@if, @foreach) theo cách này.",
+      "notForRazor": "Công cụ này chưa dùng được với view Razor.",
+      "notPugFile": "Phần tử không nằm trong một view Pug (.pug).",
+      "pugNotRead": "Pug không đọc được file này. Hãy sửa lỗi cú pháp Pug trước.",
+      "notForPug": "Công cụ này chưa dùng được với phần tử Pug này."
     }
   },
   "E024": {
@@ -208,7 +216,8 @@
       "timeout": "Dev server khởi động quá thời gian cho phép.",
       "crashed": "Tiến trình dev server bị tắt đột ngột.",
       "entryNotFound": "Không tìm thấy file entry của server.",
-      "noListen": "Server không lắng nghe trên cổng mạng nào."
+      "noListen": "Server không lắng nghe trên cổng mạng nào.",
+      "dotnetNotFound": "Không tìm thấy .NET SDK. Hãy cài .NET SDK mà dự án dùng rồi mở lại."
     }
   },
   "E026": {

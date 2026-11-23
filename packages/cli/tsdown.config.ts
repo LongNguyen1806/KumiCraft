@@ -14,6 +14,7 @@ export default defineConfig([
       'runners/next-react': '../server/src/runners/next-react.ts',
       'runners/format-snippet': '../server/src/runners/format-snippet.ts',
       'runners/express-pug': '../server/src/runners/express-pug.ts',
+      'runners/dotnet-razor': '../server/src/runners/dotnet-razor.ts',
       'runners/pug-check': '../server/src/runners/pug-check.ts',
       'runners/prop-types': '../server/src/runners/prop-types.ts',
       'runners/ts-inspect': '../server/src/runners/ts-inspect.ts',
@@ -30,6 +31,8 @@ export default defineConfig([
       { from: '../studio/dist', to: 'dist', rename: 'studio' },
       // ADR-BE-25: the project template ships inside the package (ADR-BE-32).
       { from: '../../templates', to: 'dist', rename: 'templates' },
+      // 03c section 2.2: the Razor helper's C# source, built on the user's machine by their SDK.
+      { from: '../server/src/razor-helper', to: 'dist', rename: 'razor-helper' },
     ],
   },
   {

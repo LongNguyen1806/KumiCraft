@@ -2,6 +2,7 @@
 // puts the Bridge into its HTML; Pug views are stamped by a compiler hook.
 import type { RuntimeAdapter } from '../../../kernel/stacks.ts';
 import { detectExpressPug } from './detect.ts';
+import { expressPages } from './pages-write.ts';
 import { findExpressRoutes } from './routes.ts';
 
 export * from './detect.ts';
@@ -38,3 +39,13 @@ export const expressRuntime: RuntimeAdapter = {
       ctx.support.viewsDir ?? 'views',
     ),
 };
+
+/** Express pages (03d section 2.2): read from the routes, added, renamed and removed as route + view. */
+export const expressPugPages = expressPages((ctx) =>
+  findExpressRoutes(
+    ctx.fs,
+    ctx.root,
+    ctx.support.serverEntry ?? 'app.js',
+    ctx.support.viewsDir ?? 'views',
+  ),
+);

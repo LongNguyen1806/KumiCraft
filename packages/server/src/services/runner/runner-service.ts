@@ -186,6 +186,10 @@ class RunnerExecution {
   }
 
   private onChildMessage(msg: RunnerToParentMessage): void {
+    if (msg.type === 'pageChanged') {
+      this.deps.eventBus?.publish('runner.pageChanged', {});
+      return;
+    }
     this.clearStartupTimer();
     if (msg.type === 'ready') {
       this.currentStatus = {
@@ -257,7 +261,7 @@ class RunnerExecution {
         };
         this.emitStatus();
       })();
-    }, this.startupTimeoutMs);
+    }, this.deps.getRuntime().startupTimeoutMs ?? this.startupTimeoutMs);
   }
 
   private spawnProcess(

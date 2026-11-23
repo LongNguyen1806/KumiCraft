@@ -40,6 +40,26 @@ describe('matchPage and designTargetOf', () => {
       route: '/unknown',
     });
   });
+
+  it('[R-CP-11] ASP.NET addresses: any letter case, /Home and /X/Index', () => {
+    const mvcPages: readonly PageInfo[] = [
+      { path: '/', file: 'Views/Home/Index.cshtml', dynamic: false },
+      { path: '/Home/Privacy', file: 'Views/Home/Privacy.cshtml', dynamic: false },
+      { path: '/Shop', file: 'Views/Shop/Index.cshtml', dynamic: false },
+    ];
+    expect(matchPage(mvcPages, '/home/privacy')?.file).toBe('Views/Home/Privacy.cshtml');
+    expect(matchPage(mvcPages, '/Home')?.file).toBe('Views/Home/Index.cshtml');
+    expect(matchPage(mvcPages, '/Home/Index')?.file).toBe('Views/Home/Index.cshtml');
+    expect(matchPage(mvcPages, '/home/index/')?.file).toBe('Views/Home/Index.cshtml');
+    expect(matchPage(mvcPages, '/Shop/Index')?.file).toBe('Views/Shop/Index.cshtml');
+    expect(matchPage(mvcPages, '/Other/Index')).toBeUndefined();
+
+    const casedPages: readonly PageInfo[] = [
+      { path: '/About', file: 'about-upper.tsx', dynamic: false },
+      { path: '/about', file: 'about-lower.tsx', dynamic: false },
+    ];
+    expect(matchPage(casedPages, '/about')?.file).toBe('about-lower.tsx');
+  });
 });
 
 describe('insertAnchor', () => {

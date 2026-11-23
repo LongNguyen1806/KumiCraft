@@ -288,6 +288,7 @@
       "craUnsupported": "Create React App đã bị React ngừng phát triển (2025). KumiCraft 1.0 hỗ trợ React + Vite; chuyển dự án sang Vite là cách được React khuyên.",
       "noNext": "Dự án không có Next.js trong dependencies",
       "noNextPages": "Không thấy thư mục app/ hoặc pages/ (Next.js đặt trang ở đó)",
+      "noRazorViews": "Dự án ASP.NET này không có Razor Pages (Pages/) hay view MVC (Views/ và Controllers/) để thiết kế.",
       "nextUnsupported": "Next.js chưa có ở KumiCraft 1.0, dự kiến bản 1.1.",
       "webpackUnsupported": "Dự án React chạy webpack tự cấu hình chưa được hỗ trợ; KumiCraft 1.0 hỗ trợ React + Vite."
     },
@@ -752,6 +753,7 @@
       "draft": "Bản nháp"
     },
     "unknownFile": "Chưa biết file của trang này",
+    "identityLibraryPage": "Trang thuộc gói ASP.NET Identity (chưa có file trong dự án)",
     "selectInFile": "Chọn một phần tử trong {{file}}",
     "selectInFileForeign": "{{name}} nằm trong {{foreignFile}}, ngoài file đang thiết kế. Chọn một phần tử trong {{file}}, hoặc mở {{name}} để chèn vào đó.",
     "openForeign": "Mở {{name}}",
@@ -762,6 +764,7 @@
     "title": "Bản nháp",
     "new": "Bản nháp mới…",
     "unavailableNext": "Trang nháp chưa dùng được với dự án Next.js",
+    "unavailableRazor": "Trang nháp chưa dùng được với dự án ASP.NET",
     "loading": "Đang tải bản nháp…",
     "empty": "Chưa có bản nháp nào",
     "blank": "Trắng",
@@ -780,7 +783,8 @@
     "freeWarning": "Bản nháp tự do dùng vị trí tuyệt đối; hãy kiểm tra hiển thị responsive trên điện thoại sau khi chuyển đổi.",
     "providerHint": "Bản nháp chạy ngoài app; component này cần Provider",
     "loadFailed": "Không tải được danh sách bản nháp.",
-    "openOnCanvas": "Mở bản nháp này trên Canvas"
+    "openOnCanvas": "Mở bản nháp này trên Canvas",
+    "unavailableExpress": "Trang nháp chưa dùng được với dự án Express"
   },
   "components": {
     "title": "Component",

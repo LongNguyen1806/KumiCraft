@@ -64,3 +64,25 @@ export interface SourceEditorService {
 export interface ClassEditResolver {
   resolve(edits: readonly SetClassesEdit[]): Promise<Result<SetClassNameEdit[]>>;
 }
+
+/**
+ * The editor of the open project's view language (03c section 2.1): one SourceEditorService the
+ * routes use, handing each call to the editor of the language the project is written in.
+ */
+export function editorByView(
+  viewId: () => string,
+  editors: { readonly default: SourceEditorService } & Readonly<
+    Record<string, SourceEditorService>
+  >,
+): SourceEditorService {
+  const pick = (): SourceEditorService => editors[viewId()] ?? editors.default;
+  return {
+    getElement: (root, loc) => pick().getElement(root, loc),
+    getElementText: (root, loc) => pick().getElementText(root, loc),
+    getPageTree: (root, file, maxDepth) => pick().getPageTree(root, file, maxDepth),
+    listFiles: (root) => pick().listFiles(root),
+    applyEdit: (root, edit, onWritten) => pick().applyEdit(root, edit, onWritten),
+    applyStructureEdit: (root, edit, onWritten) => pick().applyStructureEdit(root, edit, onWritten),
+    applyEditBatch: (root, edits, onWritten) => pick().applyEditBatch(root, edits, onWritten),
+  };
+}

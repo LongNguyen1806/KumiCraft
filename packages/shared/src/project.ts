@@ -42,6 +42,8 @@ export const UNSUPPORTED_REASONS = [
   'webpackUnsupported',
   'noNext',
   'noNextPages',
+  /** ASP.NET (03c): a web project with no Razor views to design (an API, Blazor). */
+  'noRazorViews',
 ] as const;
 export const UnsupportedReasonSchema = z.enum(UNSUPPORTED_REASONS);
 export type UnsupportedReason = z.infer<typeof UnsupportedReasonSchema>;
@@ -101,6 +103,8 @@ export const SupportReportSchema = z.strictObject({
     express: z.string().optional(),
     pug: z.string().optional(),
     next: z.string().optional(),
+    /** ASP.NET: the project's target framework (`net10.0`). */
+    dotnet: z.string().optional(),
   }),
   language: z.enum(['ts', 'js']),
   packageManager: PackageManagerSchema.optional(),
@@ -119,7 +123,7 @@ export type SupportReport = z.infer<typeof SupportReportSchema>;
 export const AppCandidateSchema = z.strictObject({
   path: RelPathSchema,
   framework: z.enum(FRAMEWORK_IDS).optional(),
-  kind: z.enum(['vite-react', 'express-pug', 'cra', 'next', 'webpack', 'other']),
+  kind: z.enum(['vite-react', 'express-pug', 'cra', 'next', 'webpack', 'aspnet', 'other']),
   supported: z.boolean(),
   reasons: z.array(UnsupportedReasonSchema).readonly(),
 });
@@ -322,6 +326,8 @@ export const SERVER_EVENT_TYPES = [
   'project.filesChanged',
   'runner.status',
   'runner.log',
+  /** The runner served a change of the page the Canvas shows (ASP.NET): the Canvas reloads. */
+  'runner.pageChanged',
   'history.changed',
   'settings.changed',
   'job.progress',

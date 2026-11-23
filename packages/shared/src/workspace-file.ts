@@ -30,7 +30,13 @@ export type BackendLink = z.infer<typeof BackendLinkSchema>;
 /** A port the user picks for the project's dev server in the Canvas (SPEC-04 R-RN-04). */
 export const DevPortSchema = z.int().min(1024).max(65535);
 
-export const FRAMEWORK_IDS = ['vite-react', 'express-pug', 'next-react'] as const;
+export const FRAMEWORK_IDS = [
+  'vite-react',
+  'express-pug',
+  'next-react',
+  'aspnet-razor-pages',
+  'aspnet-mvc',
+] as const;
 export type FrameworkId = (typeof FRAMEWORK_IDS)[number];
 
 type FrameRules = {

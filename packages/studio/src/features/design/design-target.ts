@@ -17,10 +17,11 @@ function normalizeRouteSegments(path: string): string[] {
   return trimmed.split('/').filter(Boolean);
 }
 
-/** Matches current route against project pages: segment-by-segment, :param matches any, strips query and trailing slash. */
-export function matchPage(pages: readonly PageInfo[], route: string): PageInfo | undefined {
-  const targetSegments = normalizeRouteSegments(route);
-
+function findPage(
+  pages: readonly PageInfo[],
+  targetSegments: readonly string[],
+  same: (a: string, b: string) => boolean,
+): PageInfo | undefined {
   for (const page of pages) {
     const pageSegments = normalizeRouteSegments(page.path);
     if (pageSegments.length !== targetSegments.length) continue;
@@ -29,7 +30,7 @@ export function matchPage(pages: readonly PageInfo[], route: string): PageInfo |
     for (let i = 0; i < pageSegments.length; i++) {
       const pageSeg = pageSegments[i];
       const targetSeg = targetSegments[i];
-      if (pageSeg && targetSeg && !pageSeg.startsWith(':') && pageSeg !== targetSeg) {
+      if (pageSeg && targetSeg && !pageSeg.startsWith(':') && !same(pageSeg, targetSeg)) {
         matches = false;
         break;
       }
@@ -38,6 +39,24 @@ export function matchPage(pages: readonly PageInfo[], route: string): PageInfo |
     if (matches) return page;
   }
   return undefined;
+}
+
+const exact = (a: string, b: string): boolean => a === b;
+const anyCase = (a: string, b: string): boolean => a.toLowerCase() === b.toLowerCase();
+
+/**
+ * Matches current route against project pages: segment-by-segment, :param matches any, strips
+ * query and trailing slash. Then, as ASP.NET routes do (React Router too, by default), letter case
+ * aside; then `/Shop/Index` as `/Shop` and `/Home` as `/` (the MVC default action and controller).
+ */
+export function matchPage(pages: readonly PageInfo[], route: string): PageInfo | undefined {
+  const target = normalizeRouteSegments(route);
+  const found = findPage(pages, target, exact) ?? findPage(pages, target, anyCase);
+  if (found !== undefined) return found;
+  const withoutIndex = target.at(-1)?.toLowerCase() === 'index' ? target.slice(0, -1) : target;
+  const home = withoutIndex.length === 1 && withoutIndex[0]?.toLowerCase() === 'home';
+  const alias = home ? [] : withoutIndex;
+  return alias.length === target.length ? undefined : findPage(pages, alias, anyCase);
 }
 
 export function designTargetOf(pages: readonly PageInfo[], route: string): DesignTarget {

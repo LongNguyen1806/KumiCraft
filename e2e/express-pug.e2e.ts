@@ -1,7 +1,11 @@
-// Express + Pug, view only (Phase 4 K4, spec-log #80): KumiCraft runs the app behind its Bridge
-// proxy, so a page helmet() forbids framing still shows on the Canvas, an element names its own
-// .pug line (layout, partial and mixin included), the page list follows Express routes, and
-// nothing in the Studio offers to edit the code.
+// Express + Pug (Phase 4 K4, spec-log #80; editable since 03d): KumiCraft runs the app behind its
+// Bridge proxy, so a page helmet() forbids framing still shows on the Canvas, an element names its
+// own .pug line (layout, partial and mixin included), text is edited on the Canvas into the .pug,
+// a duplicate shows once Express renders the view again, Undo gives the file back, and the page
+// list follows Express routes and can be added to.
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
 import { expect, type Page, test } from '@playwright/test';
 
 import { type CliSession, startCli } from './support/cli-session.ts';
@@ -13,7 +17,7 @@ let config: TempDir;
 const sessions: CliSession[] = [];
 
 /** Clicks the start of an element's text in the Canvas, scaled to the Canvas zoom. */
-async function clickInCanvas(page: Page, selector: string): Promise<void> {
+async function clickInCanvas(page: Page, selector: string, clickCount = 1): Promise<void> {
   const iframe = page.locator('iframe[data-testid="canvas-iframe"]');
   const outer = (await iframe.boundingBox()) ?? undefined;
   const frame = page.frames().find((f) => f !== page.mainFrame());
@@ -29,6 +33,7 @@ async function clickInCanvas(page: Page, selector: string): Promise<void> {
   await page.mouse.click(
     outer.x + (inner.x + 15) * scale,
     outer.y + (inner.y + inner.height / 2) * scale,
+    { clickCount },
   );
 }
 
@@ -43,8 +48,9 @@ test.afterEach(async () => {
   await config.remove();
 });
 
-test('an Express + Pug app shows on the Canvas, view only, each element naming its .pug line [K4]', async ({
+test('an Express + Pug app shows on the Canvas, edits its .pug, Undo, and lists its routes [K4, 03d]', async ({
   page,
+  browserName,
 }) => {
   const session = await startCli(folder.path, config.path);
   sessions.push(session);
@@ -55,7 +61,7 @@ test('an Express + Pug app shows on the Canvas, view only, each element naming i
   // helmet() sends X-Frame-Options and frame-ancestors 'self'; the proxy lets the Studio frame it.
   const hero = canvas.locator('h1.hero-title');
   await expect(hero).toHaveText('Sản phẩm hôm nay', { timeout: 30_000 });
-  await expect(page.getByTestId('view-only-chip')).toBeVisible();
+  await expect(page.getByTestId('view-only-chip')).toHaveCount(0);
 
   // Each element carries the .pug line it comes from, in the page, a partial and a mixin.
   await expect(hero).toHaveAttribute('data-rc-loc', 'views/index.pug:5:3');
@@ -70,14 +76,33 @@ test('an Express + Pug app shows on the Canvas, view only, each element naming i
   // The app's own CSS loads through the proxy.
   await expect(canvas.locator('nav.site-nav')).toHaveCSS('display', 'flex');
 
-  // Selecting an element: the Inspector names the line and offers the editor, no edit fields.
-  // Click where a person would, on the title's text. Playwright places an element of a scaled
-  // iframe as if it were not scaled, so the point is worked out from the frame's own layout.
+  // Text edited on the Canvas is written to the .pug line, and Undo gives the file back.
+  const file = join(folder.path, 'views/index.pug');
+  const original = await readFile(file, 'utf8');
+  await clickInCanvas(page, 'h1.hero-title', 2);
+  await expect(hero).toHaveAttribute('contenteditable', /plaintext-only|true/);
+  await page.keyboard.press('End');
+  await page.keyboard.type(' mới');
+  await page.keyboard.press('Enter');
+  await expect
+    .poll(() => readFile(file, 'utf8'), { timeout: 15_000 })
+    .toContain('  h1.hero-title Sản phẩm hôm nay mới\n');
+  const undo = browserName === 'webkit' ? 'Meta+z' : 'Control+z';
+  await page.keyboard.press(undo);
+  await expect.poll(() => readFile(file, 'utf8'), { timeout: 15_000 }).toBe(original);
+
+  // A duplicate shows only once Express renders the view again: it has the stamp of its line.
   await clickInCanvas(page, 'h1.hero-title');
-  const banner = page.getByTestId('view-only-inspector-banner');
-  await expect(banner).toContainText('views/index.pug:5:3');
-  await expect(banner.getByTestId('open-in-editor-btn')).toBeVisible();
-  await expect(page.getByTestId('raw-class-details')).toHaveCount(0);
+  await page.keyboard.press(browserName === 'webkit' ? 'Meta+d' : 'Control+d');
+  await expect
+    .poll(() => readFile(file, 'utf8'), { timeout: 15_000 })
+    .toContain('  h1.hero-title Sản phẩm hôm nay\n  h1.hero-title Sản phẩm hôm nay\n');
+  await expect(canvas.locator('[data-rc-loc="views/index.pug:6:3"]')).toHaveText(
+    'Sản phẩm hôm nay',
+    { timeout: 20_000 },
+  );
+  await page.keyboard.press(undo);
+  await expect.poll(() => readFile(file, 'utf8'), { timeout: 15_000 }).toBe(original);
 
   // The page list follows the Express routes, the mounted router included; choosing one loads it.
   const select = page.getByTestId('canvas-page-select');
@@ -88,8 +113,8 @@ test('an Express + Pug app shows on the Canvas, view only, each element naming i
   });
   await expect(canvas.locator('h1')).toHaveAttribute('data-rc-loc', 'views/about.pug:4:3');
 
-  // No page editing in a view-only project.
+  // Pages can be added: a route and a view (03d section 2.2).
   await page.getByTestId('activity-pages').click();
   await expect(page.getByTestId('pages-panel')).toContainText('/about');
-  await expect(page.getByTestId('page-add')).toHaveCount(0);
+  await expect(page.getByTestId('page-add')).toBeVisible();
 });

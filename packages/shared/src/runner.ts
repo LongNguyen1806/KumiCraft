@@ -68,6 +68,8 @@ export const RunnerToChildMessageSchema = z.discriminatedUnion('type', [
 export type RunnerToChildMessage = z.infer<typeof RunnerToChildMessageSchema>;
 
 export const RunnerToParentMessageSchema = z.discriminatedUnion('type', [
+  /** The page the Canvas shows changed on the server: the Canvas reloads it (ASP.NET, 03c 3.3). */
+  z.strictObject({ type: z.literal('pageChanged') }),
   z.strictObject({
     type: z.literal('ready'),
     port: z.number().int(),
@@ -75,7 +77,14 @@ export const RunnerToParentMessageSchema = z.discriminatedUnion('type', [
   }),
   z.strictObject({
     type: z.literal('error'),
-    reason: z.enum(['viteNotFound', 'nextNotFound', 'config', 'entryNotFound', 'noListen']),
+    reason: z.enum([
+      'viteNotFound',
+      'nextNotFound',
+      'dotnetNotFound',
+      'config',
+      'entryNotFound',
+      'noListen',
+    ]),
     message: z.string().optional(),
     file: z.string().optional(),
     line: z.number().int().optional(),

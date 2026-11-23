@@ -47,7 +47,7 @@ import {
   withKnownPackageManager,
 } from './project-info.ts';
 import { checkNeedsInstall, startProjectInstall } from './project-install.ts';
-import { readStackPages } from './project-pages.ts';
+import { editPages, readStackPages, type ViaFeatures, type ViaStack } from './project-pages.ts';
 import { editProjectTheme, queryThemeUsage, readProjectTheme } from './project-theme-ops.ts';
 import type { ProjectService, ProjectServiceDeps, WorkspaceState } from './project-types.ts';
 import {
@@ -321,32 +321,35 @@ class ProjectServiceImpl implements ProjectService {
     return deps.ok ? ok({ deps: deps.value, features }) : deps;
   }
 
-  // A meta-framework's pages (Next.js files) first, else the view language's route list.
-  async addPage(input: AddPageInput): Promise<Result<StructureResult>> {
-    const tools = this.projectTools();
-    if (!tools.ok) return tools;
-    const pages = this.currentStack.pages;
-    return pages
-      ? pages.add(tools.value.deps, input)
-      : tools.value.features.addPage(tools.value.deps, input);
+  private pageEdit(viaStack: ViaStack, viaFeatures: ViaFeatures): Promise<Result<StructureResult>> {
+    return editPages(
+      { stack: this.currentStack, open: this.current.status === 'open' },
+      () => buildPageEditDeps(this.current, this.deps),
+      () => this.projectTools(),
+      viaStack,
+      viaFeatures,
+    );
   }
 
-  async renamePage(input: RenamePageInput): Promise<Result<StructureResult>> {
-    const tools = this.projectTools();
-    if (!tools.ok) return tools;
-    const pages = this.currentStack.pages;
-    return pages
-      ? pages.rename(tools.value.deps, input)
-      : tools.value.features.renamePage(tools.value.deps, input);
+  addPage(input: AddPageInput): Promise<Result<StructureResult>> {
+    return this.pageEdit(
+      (p, d) => p.add(d, input),
+      (f, d) => f.addPage(d, input),
+    );
   }
 
-  async deletePage(input: DeletePageInput): Promise<Result<StructureResult>> {
-    const tools = this.projectTools();
-    if (!tools.ok) return tools;
-    const pages = this.currentStack.pages;
-    return pages
-      ? pages.remove(tools.value.deps, input)
-      : tools.value.features.deletePage(tools.value.deps, input);
+  renamePage(input: RenamePageInput): Promise<Result<StructureResult>> {
+    return this.pageEdit(
+      (p, d) => p.rename(d, input),
+      (f, d) => f.renamePage(d, input),
+    );
+  }
+
+  deletePage(input: DeletePageInput): Promise<Result<StructureResult>> {
+    return this.pageEdit(
+      (p, d) => p.remove(d, input),
+      (f, d) => f.deletePage(d, input),
+    );
   }
 
   async extractComponent(input: ExtractComponent): Promise<Result<StructureResult>> {

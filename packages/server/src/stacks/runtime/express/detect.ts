@@ -8,6 +8,7 @@ import {
   isPackageWorkspace,
 } from '../../../lib/workspace-root.ts';
 import type { FileSystemPort } from '../../../ports/file-system-port.ts';
+import { expressStyling } from './styling.ts';
 
 type PkgJson = {
   readonly scripts?: Readonly<Record<string, string>>;
@@ -220,6 +221,7 @@ export async function detectExpressPug(input: DetectInput): Promise<SupportRepor
     deps['express'],
   );
   const pugVersion = await resolveInstalledVersion(input.fs, input.root, 'pug', deps['pug']);
+  const { styling, tailwindCss } = await expressStyling(input.fs, input.root, deps);
 
   return {
     supported: reasons.length === 0,
@@ -232,12 +234,8 @@ export async function detectExpressPug(input: DetectInput): Promise<SupportRepor
     },
     language: 'js',
     ...(packageManager !== undefined ? { packageManager } : {}),
-    styling: {
-      systems: [],
-      editable: false,
-      globalCss: [],
-    },
-    editMode: 'viewOnly',
+    styling,
+    ...(tailwindCss === undefined ? {} : { tailwindCss }),
     ...(serverEntry !== undefined ? { serverEntry } : {}),
     viewsDir,
   };

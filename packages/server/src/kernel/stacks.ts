@@ -56,12 +56,15 @@ export type PagesContext = {
   readonly viewsDir?: string | undefined;
 };
 
-/** How the location stamp gets into the page (03 section 3.1; the third kind, shadowCopy, later). */
-export type StampHost = 'buildPlugin' | 'templateHook';
+/**
+ * How the location stamp gets into the page (03 section 3.1): a plugin of the build tool, a hook
+ * of the template compiler, or a stamped copy of the project that runs instead (Razor, 03c).
+ */
+export type StampHost = 'buildPlugin' | 'templateHook' | 'shadowCopy';
 
 /** Axis A: runs the project's page on the Canvas with the Bridge in it. */
 export interface RuntimeAdapter {
-  readonly id: 'vite' | 'express' | 'next';
+  readonly id: 'vite' | 'express' | 'next' | 'dotnet';
   /** Package that names this runtime in a project, to pick the right "unsupported" reason. */
   readonly primaryDependency: string;
   readonly stampHost: StampHost;
@@ -69,6 +72,8 @@ export interface RuntimeAdapter {
   detect(input: DetectInput): Promise<SupportReport>;
   /** M-BC: `vite` = `tsc` then `vite build` in a temp folder, `pug` = compile every view. */
   readonly buildCheck?: 'vite' | 'pug' | undefined;
+  /** How long the first start may take; absent: the runner's default (one minute). */
+  readonly startupTimeoutMs?: number | undefined;
   /** Packages that must sit in node_modules before the project runs (R-PJ-06). */
   readonly requiredPackages: readonly string[];
   /** Child process that serves the page, and its options. */
@@ -94,7 +99,7 @@ export type Capability =
 
 /** Axis B: the language the project's views are written in. */
 export interface ViewLanguage {
-  readonly id: 'jsx' | 'pug';
+  readonly id: 'jsx' | 'pug' | 'razor';
   /** Files KumiCraft can change; empty when the language has no editor yet. */
   readonly sourceExtensions: readonly string[];
   /** Files whose elements carry the location stamp (open in editor, element tree). */

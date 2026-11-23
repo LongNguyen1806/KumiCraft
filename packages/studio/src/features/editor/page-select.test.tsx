@@ -108,4 +108,31 @@ describe('PageSelect [R-PG-15]', () => {
       expect(fetchSpy.mock.calls.length).toBeGreaterThan(before);
     });
   });
+
+  it('reads the pages again when .cs or .cshtml files change on disk', async () => {
+    const handlers: ((event: StudioServerEvent) => void)[] = [];
+    vi.spyOn(eventsClient, 'createEventsClient').mockImplementation((options) => {
+      if (options?.onEvent) handlers.push(options.onEvent);
+      return { close: vi.fn(), isConnected: () => true };
+    });
+    const fetchSpy = vi.spyOn(projectClient, 'fetchPages');
+    render(<PageSelect />);
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalled();
+    });
+    const before = fetchSpy.mock.calls.length;
+
+    for (const handler of handlers) {
+      handler({
+        v: 1,
+        type: 'project.filesChanged',
+        at: new Date().toISOString(),
+        payload: { files: ['Controllers/BankController.cs'] },
+      });
+    }
+
+    await waitFor(() => {
+      expect(fetchSpy.mock.calls.length).toBeGreaterThan(before);
+    });
+  });
 });

@@ -44,7 +44,9 @@ describe('Express + Pug Framework Adapter [WP-4.00]', () => {
     expect(res.report.framework).toBe('express-pug');
     expect(res.report.serverEntry).toBe('app.js');
     expect(res.report.viewsDir).toBe('views');
-    expect(res.report.editMode).toBe('viewOnly');
+    // Editable since 03d: no view-only mode; the app's stylesheet in public/ is its CSS.
+    expect(res.report.editMode).toBeUndefined();
+    expect(res.report.styling?.globalCss).toEqual(['public/style.css']);
     expect(res.report.language).toBe('js');
     expect(res.report.styling?.editable).toBe(false);
 
@@ -244,6 +246,51 @@ describe('Express + Pug Framework Adapter [WP-4.00]', () => {
     const testPaths = testPages.pages.map((p) => p.path);
     expect(testPaths).not.toContain('/foo');
     expect(testPaths).toContain('/valid');
+  });
+
+  it('follows bin/www -> require("../app") -> mounted routers and ignores app.get("env"), req.get("host"), axios.get("/x", {})', async () => {
+    await mkdir(join(dir, 'bin'), { recursive: true });
+    await mkdir(join(dir, 'routes'), { recursive: true });
+    await writeFile(
+      join(dir, 'bin/www'),
+      `var app = require('../app');\nvar http = require('http');\nhttp.createServer(app).listen(3000);\n`,
+    );
+    await writeFile(
+      join(dir, 'app.js'),
+      `
+      var express = require('express');
+      var carsRouter = require('./routes/cars');
+      var app = express();
+      app.use('/cars', carsRouter);
+      app.use(function(err, req, res, next) {
+        res.locals.error = req.app.get('env') === 'development' ? err : {};
+        res.render('error');
+      });
+      module.exports = app;
+    `,
+    );
+    await writeFile(
+      join(dir, 'routes/cars.js'),
+      `
+      var express = require('express');
+      var router = express.Router();
+      router.get('/', (req, res) => {
+        const host = req.get('host');
+        axios.get('/api/external', { timeout: 1000 });
+        res.render('cars/index');
+      });
+      router.get('/create', (req, res) => res.render('cars/create'));
+      module.exports = router;
+    `,
+    );
+
+    const pagesInfo = await findExpressRoutes(nodeFs, dir, 'bin/www', 'views');
+    expect(pagesInfo.convention).toBe(true);
+    expect(pagesInfo.routesFile).toBe('app.js');
+    expect(pagesInfo.pages).toEqual([
+      { path: '/cars', file: 'views/cars/index.pug', dynamic: false },
+      { path: '/cars/create', file: 'views/cars/create.pug', dynamic: false },
+    ]);
   });
 
   it('[WP-4.00] B6: restartOn: app.js, routes/products.js -> đúng; views/index.pug, public/style.css -> sai', () => {

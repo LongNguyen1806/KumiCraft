@@ -19,7 +19,8 @@
       "noNext": "Next.js is not installed in the project.",
       "noNextPages": "No app/ or pages/ folder was found.",
       "nextUnsupported": "Next.js is not yet supported in KumiCraft 1.0, planned for 1.1.",
-      "webpackUnsupported": "React projects with custom webpack configuration are not yet supported; KumiCraft 1.0 supports React + Vite."
+      "webpackUnsupported": "React projects with custom webpack configuration are not yet supported; KumiCraft 1.0 supports React + Vite.",
+      "noRazorViews": "This ASP.NET project has no Razor Pages (Pages/) or MVC views (Views/ and Controllers/) to design."
     }
   },
   "E002": {
@@ -186,7 +187,14 @@
       "noSelectItems": "No SelectItem children found inside SelectGroup.",
       "missingOpening": "Opening JSX tag is missing.",
       "blockedAttribute": "Attribute {{name}} cannot be edited here.",
-      "screenSplit": "Can't set this screen on its own: this frame is too close to the next one, with no screen breakpoint between them."
+      "screenSplit": "Can't set this screen on its own: this frame is too close to the next one, with no screen breakpoint between them.",
+      "notRazorFile": "The element is not in a Razor view (.cshtml).",
+      "razorNotRead": "The Razor compiler of your .NET SDK could not read this file.",
+      "crossesCode": "An element cannot be moved out of or into a C# block (@if, @foreach) this way.",
+      "notForRazor": "This tool is not available for Razor views yet.",
+      "notPugFile": "The element is not in a Pug view (.pug).",
+      "pugNotRead": "Pug could not read this file. Fix the Pug syntax first.",
+      "notForPug": "This tool is not available for this Pug element yet."
     }
   },
   "E024": {
@@ -208,7 +216,8 @@
       "timeout": "Dev server timed out during startup.",
       "crashed": "Dev server process terminated unexpectedly.",
       "entryNotFound": "Server entry file was not found.",
-      "noListen": "Server did not listen on a port."
+      "noListen": "Server did not listen on a port.",
+      "dotnetNotFound": "No .NET SDK was found. Install the .NET SDK the project uses, then open it again."
     }
   },
   "E026": {

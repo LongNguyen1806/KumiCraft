@@ -81,7 +81,7 @@ describe('Adapter Switch [WP-4.00]', () => {
 
       const expressStack = services.projectService.getStack();
       expect(expressStack.id).toBe('express-pug');
-      expect(expressStack.view.capability).toEqual({ edit: false, reason: 'viewOnly' });
+      expect(expressStack.view.capability).toEqual({ edit: true });
 
       // Pages uses Express route finder
       const expressPages = await services.projectService.pages();
@@ -90,7 +90,8 @@ describe('Adapter Switch [WP-4.00]', () => {
         expect(expressPages.value.pages.some((p) => p.path === '/products/:id')).toBe(true);
       }
 
-      // Source editor rejects edit because editMode is viewOnly
+      // The Pug editor reads the .pug: the stale 'before' text is refused as changed (a JSX editor
+      // would refuse the file itself).
       const editRes = await services.sourceEditorService.applyEdit(expressDir, {
         kind: 'setText',
         loc: 'views/index.pug:5:3',
@@ -100,8 +101,8 @@ describe('Adapter Switch [WP-4.00]', () => {
       });
       expect(editRes.ok).toBe(false);
       if (!editRes.ok) {
-        expect(editRes.error.code).toBe('E023');
-        expect(editRes.error.params?.['reason']).toBe('viewOnly');
+        expect(editRes.error.code).toBe('E017');
+        expect(editRes.error.params?.['reason']).toBe('valueChanged');
       }
 
       // 2. Open Vite project in the same server
@@ -116,7 +117,7 @@ describe('Adapter Switch [WP-4.00]', () => {
       const vitePages = await services.projectService.pages();
       expect(vitePages.ok).toBe(true);
 
-      // Source editor is no longer blocked by viewOnly
+      // The JSX editor is used again, not the Pug one
       const viteEditRes = await services.sourceEditorService.applyEdit(viteDir, {
         kind: 'setText',
         loc: 'src/App.tsx:1:1',
@@ -124,9 +125,9 @@ describe('Adapter Switch [WP-4.00]', () => {
         before: 'Old',
         after: 'New',
       });
-      // It fails because file/loc doesn't exist, NOT because of viewOnly!
+      // It fails because file/loc doesn't exist, NOT because the Pug editor refused a non-.pug file
       if (!viteEditRes.ok) {
-        expect(viteEditRes.error.params?.['reason']).not.toBe('viewOnly');
+        expect(viteEditRes.error.params?.['reason']).not.toBe('notPugFile');
       }
     } finally {
       await cleanup();

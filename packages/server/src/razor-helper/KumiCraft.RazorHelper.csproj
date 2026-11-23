@@ -1,0 +1,26 @@
+<!--
+  KumiCraft's Razor helper (docs/architecture/03c section 2.2). It is built on the user's machine
+  with the user's own .NET SDK: the Razor compiler and Roslyn are referenced from that SDK, so the
+  helper reads .cshtml exactly as the project's own build does and nothing is downloaded.
+  Built with: dotnet build -p:KumiSdkDir=<sdk folder> -p:TargetFramework=net<major>.0 -o <cache>
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework Condition="'$(TargetFramework)' == ''">net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <KumiSdkDir Condition="'$(KumiSdkDir)' == ''">$(MSBuildExtensionsPath)</KumiSdkDir>
+    <RazorTools>$(KumiSdkDir)\Sdks\Microsoft.NET.Sdk.Razor\tools</RazorTools>
+    <RoslynDir>$(KumiSdkDir)\Roslyn\bincore</RoslynDir>
+    <RollForward>Major</RollForward>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CodeAnalysis.Razor.Compiler" HintPath="$(RazorTools)\Microsoft.CodeAnalysis.Razor.Compiler.dll" />
+    <Reference Include="Microsoft.AspNetCore.Razor.Utilities.Shared" HintPath="$(RazorTools)\Microsoft.AspNetCore.Razor.Utilities.Shared.dll" />
+    <Reference Include="Microsoft.Extensions.ObjectPool" HintPath="$(RazorTools)\Microsoft.Extensions.ObjectPool.dll" />
+    <Reference Include="Microsoft.CodeAnalysis" HintPath="$(RoslynDir)\Microsoft.CodeAnalysis.dll" />
+    <Reference Include="Microsoft.CodeAnalysis.CSharp" HintPath="$(RoslynDir)\Microsoft.CodeAnalysis.CSharp.dll" />
+  </ItemGroup>
+</Project>

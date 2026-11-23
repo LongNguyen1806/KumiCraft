@@ -15,7 +15,7 @@ import { useSelectionStore } from '../../core/selection-store.ts';
 import { NewDraftDialog } from '../drafts/new-draft-dialog.tsx';
 import { useDrafts } from '../drafts/use-drafts.ts';
 
-const CODE_FILE = /\.(tsx|jsx|ts|js)$/;
+const CODE_FILE = /\.(tsx|jsx|ts|js|cs|cshtml|pug)$/;
 
 export type PagesData = {
   readonly pages: readonly PageInfo[];
@@ -118,12 +118,21 @@ function ParamInput({
 function DraftSelectOptGroup({ drafts }: { readonly drafts: readonly DraftInfo[] }) {
   const { t } = useTranslation();
   const project = useProjectInfo();
-  // A Next.js project has no draft page yet (03b section 1.5): say so instead of offering one.
-  if (project?.support.framework === 'next-react') {
+  // Next.js, ASP.NET and Express projects have no draft page yet (03b 1.5, 03c 6, 03d 6): say so
+  // instead of offering one.
+  const framework = project?.support.framework;
+  const aspnet = framework === 'aspnet-razor-pages' || framework === 'aspnet-mvc';
+  if (framework === 'next-react' || framework === 'express-pug' || aspnet) {
     return (
       <optgroup label={t('drafts.title')}>
         <option value="draft:unavailable" disabled>
-          {t('drafts.unavailableNext')}
+          {t(
+            aspnet
+              ? 'drafts.unavailableRazor'
+              : framework === 'express-pug'
+                ? 'drafts.unavailableExpress'
+                : 'drafts.unavailableNext',
+          )}
         </option>
       </optgroup>
     );

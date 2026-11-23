@@ -289,6 +289,7 @@
       "nextUnsupported": "Next.js is not yet supported in KumiCraft 1.0, planned for 1.1.",
       "noNext": "Project does not include Next.js in dependencies",
       "noNextPages": "No app/ or pages/ folder found (Next.js keeps its pages there)",
+      "noRazorViews": "This ASP.NET project has no Razor Pages (Pages/) or MVC views (Views/ and Controllers/) to design.",
       "webpackUnsupported": "React projects with custom webpack configuration are not yet supported; KumiCraft 1.0 supports React + Vite."
     },
     "appsCount": "This folder contains {{count}} applications",
@@ -752,6 +753,7 @@
       "draft": "Draft"
     },
     "unknownFile": "The file of this page is unknown",
+    "identityLibraryPage": "Built-in ASP.NET Identity page (no file in project)",
     "selectInFile": "Select an element in {{file}}",
     "selectInFileForeign": "{{name}} lives in {{foreignFile}}, outside the file you are designing. Select an element in {{file}}, or open {{name}} to insert there.",
     "openForeign": "Open {{name}}",
@@ -762,6 +764,7 @@
     "title": "Drafts",
     "new": "New draft…",
     "unavailableNext": "Drafts are not available for Next.js projects yet",
+    "unavailableRazor": "Drafts are not available for ASP.NET projects yet",
     "loading": "Loading drafts…",
     "empty": "No drafts yet",
     "blank": "Blank",
@@ -780,7 +783,8 @@
     "freeWarning": "Freeform drafts use fixed positions; check responsive display on mobile after promoting.",
     "providerHint": "Draft runs outside the app; this component may need a Provider.",
     "loadFailed": "Could not load the drafts.",
-    "openOnCanvas": "Open this draft on the Canvas"
+    "openOnCanvas": "Open this draft on the Canvas",
+    "unavailableExpress": "Drafts are not available for Express projects yet"
   },
   "components": {
     "title": "Components",

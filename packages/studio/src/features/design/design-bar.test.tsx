@@ -1,11 +1,35 @@
 // @vitest-environment happy-dom
+import type { ProjectInfo } from '@kumicraft/shared';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
+import { useProjectStore } from '../../core/project-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { useComponentsStore } from '../components-panel/use-project-components.ts';
 import { DesignBar } from './design-bar.tsx';
 import { useDesignStore } from './design-store.ts';
+
+function makeProject(framework: ProjectInfo['support']['framework']): ProjectInfo {
+  return {
+    id: 'proj000001',
+    name: 'Test Project',
+    root: '/test',
+    sourceDir: '.',
+    support: { supported: true, reasons: [], framework, versions: {}, language: 'js' },
+    needsInstall: false,
+    responsiveMode: 'desktop-first',
+    frames: [{ id: 'desktop', label: 'Desktop', width: 1440, height: 900 }],
+    primaryFrameId: 'desktop',
+    backends: [],
+    designDirs: {
+      pages: ['Views'],
+      layouts: ['Views/Shared'],
+      components: ['Views/Shared'],
+      drafts: 'drafts',
+    },
+    trusted: true,
+  };
+}
 
 describe('DesignBar (Scenario #10) [R-CP-11]', () => {
   beforeAll(async () => {
@@ -15,6 +39,7 @@ describe('DesignBar (Scenario #10) [R-CP-11]', () => {
   afterEach(() => {
     cleanup();
     useDesignStore.getState().setTarget(undefined);
+    useProjectStore.getState().setProject(undefined);
   });
 
   it('renders page name and file when design target has a file', () => {
@@ -43,6 +68,40 @@ describe('DesignBar (Scenario #10) [R-CP-11]', () => {
 
     expect(screen.getByTestId('design-bar')).toBeDefined();
     expect(screen.getByTestId('design-bar-name').textContent).toBe('Custom');
+    expect(
+      screen.getByText(/The file of this page is unknown|Chưa biết file của trang này/),
+    ).toBeDefined();
+  });
+
+  it('renders ASP.NET Identity library notice for /Identity routes without a file on ASP.NET projects', () => {
+    useProjectStore.getState().setProject(makeProject('aspnet-mvc'));
+    useDesignStore.getState().setTarget({
+      kind: 'page',
+      name: '/Identity/Account/Login',
+      route: '/Identity/Account/Login',
+    });
+
+    render(<DesignBar />);
+
+    expect(
+      screen.getByText(/Built-in ASP\.NET Identity page|Trang thuộc gói ASP\.NET Identity/),
+    ).toBeDefined();
+
+    cleanup();
+    useProjectStore.getState().setProject(makeProject('vite-react'));
+    render(<DesignBar />);
+    expect(
+      screen.getByText(/The file of this page is unknown|Chưa biết file của trang này/),
+    ).toBeDefined();
+
+    cleanup();
+    useProjectStore.getState().setProject(makeProject('aspnet-mvc'));
+    useDesignStore.getState().setTarget({
+      kind: 'page',
+      name: '/custom',
+      route: '/custom',
+    });
+    render(<DesignBar />);
     expect(
       screen.getByText(/The file of this page is unknown|Chưa biết file của trang này/),
     ).toBeDefined();
