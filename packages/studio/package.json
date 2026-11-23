@@ -13,7 +13,7 @@
     "@kumicraft/style-tailwind": "workspace:*",
     "@tanstack/react-virtual": "3.14.13",
     "clsx": "2.1.1",
-    "i18next": "26.4.3",
+    "i18next": "27.2.2",
     "lucide-react": "1.48.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
