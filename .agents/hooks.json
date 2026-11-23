@@ -1,0 +1,11 @@
+{
+  "kumicraft-stop-verify": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node .agents/hooks/stop-verify.mjs",
+        "timeout": 30
+      }
+    ]
+  }
+}
