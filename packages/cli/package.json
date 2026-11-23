@@ -30,7 +30,7 @@
     "open": "11.0.4",
     "pino": "10.4.0",
     "postcss": "8.5.29",
-    "postcss-less": "6.0.0",
+    "postcss-less": "7.1.1",
     "postcss-scss": "4.0.9",
     "pug-lexer": "5.0.1",
     "write-file-atomic": "7.0.1",
