@@ -25,10 +25,13 @@ Tài liệu này tổng hợp phương án cấu hình và vận hành **Google 
 
 ## 2. Các Cơ Chế Mới Của Antigravity (2026) Áp Dụng Cho KumiCraft
 
-### 2.1. Kiểm toán token nền bằng `/context`
+### 2.1. Dọn dẹp Skills, Plugins và MCP không dùng để giảm nhiễu context
 
-- Lệnh `/context` hiển thị lượng token bị tiêu thụ bởi Rules, Skills, Plugins, MCP tool schemas và lịch sử hội thoại.
-- **Hành động:** Trước khi bước vào phiên code KumiCraft, kiểm tra `/context` và tắt các plugin/skill/MCP không liên quan đến dự án (như `banner-design`, `brand`, `design`, `slides`, `gdocs`, `gslides`, `photoshop-assistant`…) để giảm nhiễu context và tiết kiệm quota Pro ở mọi lượt gửi.
+- Dù Antigravity dùng Progressive Disclosure cho Skills và Lazy loading cho một số MCP, danh sách tên + mô tả của tất cả skill/plugin đang bật vẫn nằm trong System Prompt ở mỗi lượt gửi (và các plugin có câu nhắc bắt buộc dễ bị kích hoạt nhầm).
+- **Hành động:**
+  - **Trên giao diện Antigravity (GUI):** Mở mục **Skills & Customizations** (hoặc **Plugins / MCP**) ở thanh bên trái để tắt các plugin/MCP không liên quan khi làm KumiCraft (ví dụ: `gdocs`, `gslides`, `superpowers`, `photoshop-assistant`…).
+  - **Với các skill cài rời trên máy:** Kiểm tra thư mục `~/.gemini/config/skills/` (như `banner-design`, `brand`, `design`, `design-system`, `slides`…), di chuyển ra chỗ khác hoặc xóa bớt những skill không còn dùng.
+  - **Nếu dùng Antigravity CLI (`agy`):** Có thể gõ `/context` trong CLI để xem chi tiết số token của từng mục.
 
 ### 2.2. Project-Level Settings & Command Allowlist (Antigravity 2.0)
 
@@ -54,7 +57,7 @@ Tài liệu này tổng hợp phương án cấu hình và vận hành **Google 
 ### 2.5. Chu kỳ `/learn` và `/compact`
 
 - **`/learn`:** Gọi ngay sau khi xử lý xong một lỗi đặc thù của KumiCraft (như `SameSite=None; Secure` cho iframe, HTTP `304` trên HTML navigation, `stacks-apart` của `dependency-cruiser`) để lưu lại thành kinh nghiệm cho các phiên sau.
-- **`/compact`:** Gọi sau mỗi task lớn (hoặc khi `/context` báo lịch sử dài) để nén ngữ cảnh, giữ độ chính xác của model và giảm lượng token lặp lại mỗi lượt.
+- **`/compact`:** Gọi sau mỗi task lớn (hoặc khi cuộc hội thoại đã kéo dài nhiều lượt) để nén ngữ cảnh, giữ độ chính xác của model và giảm lượng token lặp lại mỗi lượt.
 
 ---
 
@@ -85,9 +88,9 @@ Tài liệu này tổng hợp phương án cấu hình và vận hành **Google 
   - Sửa `runners`, `stacks`, `bridge-proxy`, `packages/bridge`, hoặc luồng UI Canvas/Editor: bắt buộc thêm `pnpm build` (cập nhật `packages/cli/dist`) + chạy Playwright E2E tương ứng (`npx playwright test e2e/<file>.e2e.ts --workers=1`).
   - Thêm tính năng hoặc stack mới chưa có E2E: đề xuất viết bổ sung test E2E/tour thật.
 
-### Giai đoạn 3: Dọn dẹp `/context`, cấu hình Allowlist và cài đặt `hooks.json` nhẹ
+### Giai đoạn 3: Dọn dẹp Skills/Plugins thừa, cấu hình Allowlist và cài đặt `hooks.json` nhẹ
 
-1. Mở `/context`, tắt các plugin/MCP không liên quan khi làm việc trên KumiCraft.
+1. Mở mục **Skills & Customizations** (và thư mục `~/.gemini/config/skills/`), tắt hoặc gỡ các plugin/skill/MCP không liên quan khi làm việc trên KumiCraft.
 2. Thêm nhóm lệnh verify an toàn vào **Project-Level Command Allowlist** của KumiCraft trong Antigravity 2.0.
 3. Tạo `.agents/hooks.json` (event `Stop`) gọi script nhỏ kiểm tra `pnpm lint:deps` và `pnpm check:i18n` chỉ khi working tree có file `.ts`/`.tsx`/`.json` liên quan vừa thay đổi.
 
