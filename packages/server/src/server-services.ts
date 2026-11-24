@@ -41,7 +41,7 @@ import {
   type ProjectServiceDeps,
 } from './services/project/project-service.ts';
 import { createProjectWatch, type ProjectWatch } from './services/project/project-watch.ts';
-import { attachAutoRestart } from './services/runner/runner-restart.ts';
+import { attachAutoRestart, restartRunnerIfNeeded } from './services/runner/runner-restart.ts';
 import { createRunnerService, type RunnerService } from './services/runner/runner-service.ts';
 import { createUsageCounter, type UsageCounter } from './stacks/view/jsx/component-usages.ts';
 import { createSnippetFormatter } from './stacks/view/jsx/snippet-format.ts';
@@ -86,8 +86,15 @@ function createFileServices(
   eventBus: EventBusPort,
   watcher: WatcherPort,
   projectHolder: { readonly current?: ProjectService | undefined },
+  runnerHolder: { readonly current?: RunnerService | undefined },
 ): { historyService: HistoryService; jobService: JobService; watch: ProjectWatch } {
-  const historyService = createHistoryService({ fs: deps.fs, eventBus });
+  const historyService = createHistoryService({
+    fs: deps.fs,
+    eventBus,
+    onFilesApplied: (files) => {
+      restartRunnerIfNeeded(files, projectHolder.current, runnerHolder);
+    },
+  });
   const jobService = createJobService({ system: deps.system, logger: deps.logger, eventBus });
   const watch = createProjectWatch({
     watcher,
@@ -127,6 +134,7 @@ function createRunnerProxy(runnerHolder: { current?: RunnerService | undefined }
   return {
     start: () => runnerHolder.current?.start() ?? stopped(),
     stop: () => runnerHolder.current?.stop() ?? stopped(),
+    restart: () => runnerHolder.current?.restart() ?? stopped(),
   };
 }
 
@@ -335,6 +343,7 @@ function initProjectServices(
     eventBus,
     watcher,
     projectHolder,
+    runnerHolder,
   );
   const mirrorService = createMirrorService({ fs, cacheDir: deps.cacheDir, logger: deps.logger });
   const projectService = createProjectWithWatch(

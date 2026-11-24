@@ -117,4 +117,30 @@ describe('Express pages [03d 2.2]', () => {
     await expressPugPages.remove(deps(), { path: '/lien-he' });
     expect(await readFile(join(root, 'app.js'), 'utf8')).toBe(appCode);
   });
+
+  it('supports nested routes like /blog/post with relative layout extends', async () => {
+    await writeFile(join(root, 'views/layout.pug'), 'html\n  body\n    block content\n');
+    await writeFile(join(root, 'views/index.pug'), 'extends layout\n\nblock content\n  h1 Home\n');
+    const appCode = [
+      "const express = require('express');",
+      'const app = express();',
+      "app.get('/', (req, res) => res.render('index'));",
+      'module.exports = app;',
+      '',
+    ].join('\n');
+    await writeFile(join(root, 'app.js'), appCode);
+    await writeFile(
+      join(root, 'package.json'),
+      JSON.stringify({ dependencies: { express: '^4.21.0', pug: '^3.0.3' } }),
+    );
+
+    const added = await expressPugPages.add(deps(), { name: 'Post', path: '/blog/post' });
+    expect(added).toEqual({
+      ok: true,
+      value: { changed: true, files: ['views/blog/post.pug'], locs: [], pagePath: '/blog/post' },
+    });
+    expect(await readFile(join(root, 'views/blog/post.pug'), 'utf8')).toContain(
+      'extends ../layout\n',
+    );
+  });
 });

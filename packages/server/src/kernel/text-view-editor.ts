@@ -230,6 +230,9 @@ function guardsOf(edit: StructureEdit): { elements: readonly ElementGuard[]; ref
     }
     case 'unwrap':
       return { elements: [edit.element] };
+    case 'wrapText':
+    case 'replaceSvg':
+      return { elements: [{ loc: edit.loc, tag: edit.tag }] };
     case 'remove':
     case 'duplicate':
     case 'wrap':

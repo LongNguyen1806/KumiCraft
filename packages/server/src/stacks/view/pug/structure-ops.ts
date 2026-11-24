@@ -2,14 +2,19 @@
 // lines indented under it, so insert, remove, duplicate, move, wrap and unwrap are edits of whole
 // lines with their indentation set for the new place. An element never moves out of or into an
 // `each` / `if` block.
+import { posix } from 'node:path';
+
 import { parseBlockJsx, renderPugSource, TreeParseError } from '@kumicraft/content';
 import {
   err,
   type InsertTarget,
   ok,
+  parseLocString,
+  type ReplaceSvgEdit,
   type Result,
   type StructureEdit,
   type StylingReport,
+  type WrapTextEdit,
 } from '@kumicraft/shared';
 
 import type { Splice, StructurePlan } from '../../../kernel/text-view-editor.ts';
@@ -249,6 +254,73 @@ function imageLine(src: string, alt: string, className: string): string {
   return `img${dots}(src=${JSON.stringify(src)}, alt=${JSON.stringify(alt)}${cls})`;
 }
 
+function insertIncludeLine(
+  target: InsertTarget,
+  jsx: string,
+  fromFile: string | undefined,
+  indent: string,
+): Result<string[]> | undefined {
+  if (fromFile !== undefined && fromFile.endsWith('.pug')) {
+    const targetLoc = target.kind === 'sibling' ? target.ref.loc : target.parent.loc;
+    const targetFile = parseLocString(targetLoc)?.file;
+    if (targetFile !== undefined) {
+      const rel = posix.relative(posix.dirname(targetFile), fromFile).replace(/\.pug$/i, '');
+      const spec = rel.startsWith('.') ? rel : `./${rel}`;
+      return ok([`${indent}include ${spec}`]);
+    }
+  }
+  if (/^\s*include\s+\S+/.test(jsx)) {
+    return ok([`${indent}${jsx.trim()}`]);
+  }
+  return undefined;
+}
+
+function planWrapText(input: PugStructureInput, edit: WrapTextEdit): Result<StructurePlan> {
+  const el = input.elements[0];
+  if (el === undefined) return refuse('E017', 'moved');
+  if (el.expanded || el.inline.kind !== 'text') return refuse('E023', 'notForPug');
+  const raw = el.inline.value;
+  const leadSpaces = raw.length - raw.trimStart().length;
+  const text = raw.slice(leadSpaces);
+  if (edit.start < 0 || edit.end > text.length || edit.start >= edit.end) {
+    return err({ code: 'E016', params: { reason: 'invalidRange' } });
+  }
+  const classes = (edit.wrapper.className ?? '').split(/\s+/).filter((c) => c !== '');
+  const dots = classes.every((c) => /^-?[_a-zA-Z][_a-zA-Z0-9-]*$/.test(c))
+    ? classes.map((c) => `.${c}`).join('')
+    : '';
+  const attr =
+    dots === '' && classes.length > 0 ? `(class=${JSON.stringify(classes.join(' '))})` : '';
+  const wrapped = `#[${edit.wrapper.tag}${dots}${attr} ${text.slice(edit.start, edit.end)}]`;
+  const nextInline = `${raw.slice(0, leadSpaces)}${text.slice(0, edit.start)}${wrapped}${text.slice(edit.end)}`;
+  return ok({
+    changes: [{ start: el.inline.start, end: el.inline.end, text: nextInline }],
+    made: [],
+  });
+}
+
+function planReplaceSvg(
+  input: PugStructureInput,
+  edit: ReplaceSvgEdit,
+  unit: string,
+): Result<StructurePlan> {
+  const el = input.elements[0];
+  if (el === undefined) return refuse('E017', 'moved');
+  if (el.expanded || el.tag.toLowerCase() !== 'svg') return refuse('E023', 'notForPug');
+  const childIndent = `${indentText(input.doc, el)}${unit}`;
+  const lines = edit.icon.node.map(([tag, attrs]) => {
+    const entries = Object.entries(attrs).map(([k, v]) => `${k}=${JSON.stringify(String(v))}`);
+    return `${childIndent}${tag}${entries.length > 0 ? `(${entries.join(', ')})` : ''}`;
+  });
+  const body = lines.join(input.newline) + input.newline;
+  const childStart = Math.min(el.lineEnd + 1, input.doc.text.length);
+  const lead = el.lineEnd + 1 > input.doc.text.length ? input.newline : '';
+  return ok({
+    changes: [{ start: childStart, end: el.blockEnd, text: `${lead}${body}` }],
+    made: [],
+  });
+}
+
 /** The text changes of a structure edit on one .pug file. */
 export function planPugStructure(
   input: PugStructureInput,
@@ -257,7 +329,10 @@ export function planPugStructure(
   const unit = pugIndentUnit(input.doc.text);
   switch (edit.kind) {
     case 'insert':
-      return planInsert(input, edit.target, (indent) => blockLines(edit.jsx, indent, unit));
+      return planInsert(input, edit.target, (indent) => {
+        const inc = insertIncludeLine(edit.target, edit.jsx, edit.from?.file, indent);
+        return inc ?? blockLines(edit.jsx, indent, unit);
+      });
     case 'insertImage':
       return planInsert(input, edit.target, (indent) =>
         ok([`${indent}${imageLine(input.imageSrc, edit.alt, edit.className)}`]),
@@ -273,7 +348,9 @@ export function planPugStructure(
     case 'unwrap':
       return planUnwrap(input);
     case 'wrapText':
+      return planWrapText(input, edit);
     case 'replaceSvg':
+      return planReplaceSvg(input, edit, unit);
     case 'setDataArray':
       return refuse('E023', 'notForPug');
   }

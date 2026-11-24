@@ -1,8 +1,8 @@
 // Child process runner for Express + Pug projects (SPEC-04 M-RN, Phase 4 K4).
 // QC-52: This file is an isolated child process runner and is allowed to call process.exit().
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { isAbsolute, join } from 'node:path';
+import { isAbsolute, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import {
@@ -80,6 +80,66 @@ function resolveEntryPath(root: string, serverEntry?: string): string {
   return isAbsolute(rel) ? rel : join(root, rel);
 }
 
+function collectPublicCssLinks(root: string): string {
+  const links: string[] = [];
+  for (const dir of ['public', 'public/css', 'public/stylesheets']) {
+    const absDir = join(root, dir);
+    if (!existsSync(absDir)) continue;
+    for (const entry of readdirSync(absDir, { withFileTypes: true })) {
+      if (!entry.isFile() || !entry.name.endsWith('.css') || entry.name.endsWith('.min.css')) {
+        continue;
+      }
+      const sub = dir === 'public' ? '' : `${dir.slice('public/'.length)}/`;
+      links.push(`<link rel="stylesheet" href="/${sub}${entry.name}">`);
+    }
+  }
+  return links.join('\n');
+}
+
+function escapeHtml(value: string): string {
+  return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+}
+
+function renderPugDraft(
+  root: string,
+  relFile: string,
+): { readonly status: number; readonly html: string } | undefined {
+  const norm = relFile.replaceAll('\\', '/').replace(/^\/+/, '');
+  if (!norm.endsWith('.pug') || norm.includes('..')) return undefined;
+  const absRoot = resolve(root);
+  const absFile = resolve(absRoot, norm);
+  const relCheck = relative(absRoot, absFile).replaceAll('\\', '/');
+  if (
+    relCheck === '' ||
+    relCheck.startsWith('..') ||
+    isAbsolute(relCheck) ||
+    !existsSync(absFile)
+  ) {
+    return undefined;
+  }
+  try {
+    const projectRequire = createRequire(join(root, 'package.json'));
+    const pug = projectRequire('pug') as {
+      renderFile(path: string, opts?: Record<string, unknown>): string;
+    };
+    const body = pug.renderFile(absFile, { basedir: join(root, 'views'), filename: absFile });
+    if (/<html[\s>]/i.test(body)) {
+      return { status: 200, html: body };
+    }
+    const cssLinks = collectPublicCssLinks(root);
+    return {
+      status: 200,
+      html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${cssLinks}</head><body>${body}</body></html>`,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      status: 200,
+      html: `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><pre style="padding:16px;font-family:monospace;color:#b91c1c">${escapeHtml(msg)}</pre></body></html>`,
+    };
+  }
+}
+
 async function startProxy(options: RunnerOptions, appPort: number): Promise<void> {
   try {
     const proxy = createBridgeProxy({
@@ -88,6 +148,7 @@ async function startProxy(options: RunnerOptions, appPort: number): Promise<void
       nonce: options.nonce,
       studioOrigin: options.studioOrigin,
       root: options.root,
+      renderDraft: (file) => renderPugDraft(options.root, file),
     });
     await proxy.start();
     activeProxy = proxy;

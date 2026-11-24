@@ -32,6 +32,8 @@ export type HistoryServiceDeps = {
   readonly fs: FileSystemPort;
   readonly eventBus?: EventBusPort | undefined;
   readonly now?: () => number;
+  /** Called with project-relative paths after push, undo, or redo commits file changes. */
+  readonly onFilesApplied?: ((files: readonly string[]) => void) | undefined;
 };
 
 type HistoryContext = {
@@ -221,11 +223,13 @@ async function executeUndo(
   ctx.undoStack.pop();
   ctx.redoStack.push(top);
   ctx.undoneSinceLastPush = true;
+  const files = top.files.map((f) => f.path);
+  deps.onFilesApplied?.(files);
   deps.eventBus?.publish('history.changed', getHistoryState(ctx));
 
   return ok({
     state: getHistoryState(ctx),
-    files: top.files.map((f) => f.path),
+    files,
   });
 }
 
@@ -256,11 +260,13 @@ async function executeRedo(
 
   ctx.redoStack.pop();
   ctx.undoStack.push(top);
+  const files = top.files.map((f) => f.path);
+  deps.onFilesApplied?.(files);
   deps.eventBus?.publish('history.changed', getHistoryState(ctx));
 
   return ok({
     state: getHistoryState(ctx),
-    files: top.files.map((f) => f.path),
+    files,
   });
 }
 
@@ -298,6 +304,7 @@ export function createHistoryService(deps: HistoryServiceDeps): HistoryService {
     getState: () => getHistoryState(ctx),
     push: (input) => {
       executePush(ctx, input, nowFn());
+      deps.onFilesApplied?.(input.files.map((f) => f.path));
       deps.eventBus?.publish('history.changed', getHistoryState(ctx));
     },
     undo: (projectRoot) =>

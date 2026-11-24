@@ -106,6 +106,8 @@ export type AddPageInput = {
   readonly path?: string | undefined;
   readonly dir?: string | undefined;
   readonly fileName?: string | undefined;
+  readonly body?: string | undefined;
+  readonly removeFile?: { readonly path: string; readonly before: string } | undefined;
 };
 
 export type RenamePageInput = {

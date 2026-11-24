@@ -159,4 +159,33 @@ describe('Pug editor [03d 4]', () => {
     });
     expect(!moved.ok && moved.error.params?.['reason']).toBe('crossesCode');
   });
+
+  it('supports wrapText inline interpolation and replaceSvg on Pug elements', async () => {
+    await editor.applyStructureEdit(root, {
+      kind: 'wrapText',
+      loc: `${FILE}:4:3`,
+      tag: 'h1',
+      start: 0,
+      end: 8,
+      wrapper: { tag: 'strong', className: 'text-accent' },
+    });
+    expect(await text()).toContain('h1.hero-title #[strong.text-accent Sản phẩm] hôm nay');
+
+    await editor.applyStructureEdit(root, {
+      kind: 'insert',
+      target: { kind: 'sibling', ref: { loc: `${FILE}:4:3`, tag: 'h1' }, where: 'after' },
+      jsx: '<svg viewBox="0 0 24 24"><path d="M0 0" /></svg>',
+    });
+    const svgRes = await editor.applyStructureEdit(root, {
+      kind: 'replaceSvg',
+      loc: `${FILE}:5:3`,
+      tag: 'svg',
+      icon: {
+        name: 'check',
+        node: [['path', { d: 'M5 13l4 4L19 7' }]],
+      },
+    });
+    expect(svgRes.ok).toBe(true);
+    expect(await text()).toContain('  svg(viewBox="0 0 24 24")\n    path(d="M5 13l4 4L19 7")\n');
+  });
 });

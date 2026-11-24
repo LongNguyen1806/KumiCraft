@@ -13,7 +13,12 @@ import type { Platform } from '../../kernel/session.ts';
 import { getInstallCommand } from './project-install.ts';
 import type { OpenWorkspace } from './project-types.ts';
 
-export function projectInfoOf(state: OpenWorkspace): ProjectInfo {
+export type ProjectCapabilities = NonNullable<ProjectInfo['capabilities']>;
+
+export function projectInfoOf(
+  state: OpenWorkspace,
+  capabilities?: ProjectCapabilities,
+): ProjectInfo {
   return {
     id: state.file.id,
     name: state.file.name,
@@ -32,6 +37,7 @@ export function projectInfoOf(state: OpenWorkspace): ProjectInfo {
     ...(state.file.styleFiles !== undefined ? { styleFiles: state.file.styleFiles } : {}),
     sessions: normalizeSessions(state.file.sessions),
     ai: normalizeWorkspaceAi(state.file.ai),
+    ...(capabilities === undefined ? {} : { capabilities }),
   };
 }
 

@@ -1,6 +1,8 @@
 // Adding, renaming and removing an Express page (docs/architecture/03d section 2.2): a page is a
 // route (`app.get('/x', …)` or `router.get(…)`) that renders a view, so a page change edits the
 // route in the server code and the view file together, in one Undo step.
+import { posix } from 'node:path';
+
 import {
   err,
   ok,
@@ -165,21 +167,47 @@ const viewFile = (project: Project, view: string): string =>
 
 const writer = (deps: PageEditDeps) => ({ fs: deps.fs, history: deps.history });
 
+const VALID_SLUG = /^[a-z0-9][a-z0-9-]*(?:\/[a-z0-9][a-z0-9-]*)*$/;
+
+function wrapPugBody(body: string, layout: string | undefined, block: string, nl: string): string {
+  const normalized = body.endsWith('\n') ? body : `${body}${nl}`;
+  if (layout === undefined || /^\s*(?:extends\s|doctype\s)/i.test(normalized)) {
+    return normalized;
+  }
+  const indented = normalized
+    .split(/\r?\n/)
+    .map((line) => (line.trim() === '' ? '' : `  ${line}`))
+    .join(nl);
+  return `extends ${layout}${nl}${nl}block ${block}${nl}${indented}`;
+}
+
 /** A new view: like the others, extending the layout when they do. */
 async function newView(
   deps: PageEditDeps,
   project: Project,
   sites: readonly RouteSite[],
   title: string,
+  slug: string,
+  body?: string,
 ) {
   const sample = sites.find((s) => s.view !== undefined)?.view?.value;
   const text =
     sample === undefined
       ? undefined
       : await deps.fs.readText(deps.projectRoot, viewFile(project, sample));
-  const layout = text?.ok === true ? /^extends\s+(\S+)/m.exec(text.value)?.[1] : undefined;
+  const rawLayout = text?.ok === true ? /^extends\s+(\S+)/m.exec(text.value)?.[1] : undefined;
+  const layout =
+    rawLayout !== undefined && sample !== undefined
+      ? posix.relative(
+          posix.dirname(viewFile(project, slug)),
+          posix.normalize(posix.join(posix.dirname(viewFile(project, sample)), rawLayout)),
+        )
+      : rawLayout;
   const block =
     text?.ok === true ? (/^block\s+(\S+)/m.exec(text.value)?.[1] ?? 'content') : 'content';
+  if (body !== undefined) {
+    return wrapPugBody(body, layout, block, '\n');
+  }
   const heading = title.replaceAll('#{', '\\#{');
   return layout === undefined
     ? `h1 ${heading}\n`
@@ -191,8 +219,7 @@ async function addPage(deps: PageEditDeps, input: AddPageInput): Promise<Result<
   if (!project.ok) return project;
   const path = input.path ?? toRoutePath(input.name);
   const slug = path.replace(/^\/+/, '');
-  if (!/^[a-z0-9][a-z0-9-]*$/.test(slug))
-    return err({ code: 'E016', params: { reason: 'invalidPath' } });
+  if (!VALID_SLUG.test(slug)) return err({ code: 'E016', params: { reason: 'invalidPath' } });
   const sites = await allSites(deps, project.value);
   const view = viewFile(project.value, slug);
   if (sites.some((s) => s.fullPath === path) || (await deps.fs.exists(deps.projectRoot, view))) {
@@ -214,12 +241,20 @@ async function addPage(deps: PageEditDeps, input: AddPageInput): Promise<Result<
   const at = anchorEnd === undefined ? code.length : anchorEnd + bom;
   const changes: FileChange[] = [
     { path: project.value.entry, before: code, after: code.slice(0, at) + route + code.slice(at) },
-    { path: view, before: undefined, after: await newView(deps, project.value, sites, input.name) },
+    {
+      path: view,
+      before: undefined,
+      after: await newView(deps, project.value, sites, input.name, slug, input.body),
+    },
+    ...(input.removeFile === undefined
+      ? []
+      : [{ path: input.removeFile.path, before: input.removeFile.before, after: undefined }]),
   ];
   const label = { key: 'history:pageAdd', params: { name: input.name } };
   const written = await commitFileChanges(writer(deps), deps.projectRoot, changes, { label });
   if (!written.ok) return written;
-  return ok({ changed: true, files: [view], locs: [], pagePath: path });
+  const files = input.removeFile === undefined ? [view] : [view, input.removeFile.path];
+  return ok({ changed: true, files, locs: [], pagePath: path });
 }
 
 async function siteOf(deps: PageEditDeps, path: string) {
@@ -243,8 +278,7 @@ async function renamePage(
   const { project, sites, site, code } = found.value;
   const path = input.newPath ?? toRoutePath(input.newName ?? '');
   const slug = path.replace(/^\/+/, '');
-  if (!/^[a-z0-9][a-z0-9-]*$/.test(slug))
-    return err({ code: 'E016', params: { reason: 'invalidPath' } });
+  if (!VALID_SLUG.test(slug)) return err({ code: 'E016', params: { reason: 'invalidPath' } });
   if (sites.some((s) => s.fullPath === path))
     return err({ code: 'E016', params: { reason: 'pathExists' } });
   const bom = code.startsWith('\uFEFF') ? 1 : 0;

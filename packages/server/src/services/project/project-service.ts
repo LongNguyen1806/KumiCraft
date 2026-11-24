@@ -179,7 +179,7 @@ class ProjectServiceImpl implements ProjectService {
 
     this.current = { status: 'open', root, file, support, trusted, needsInstall, backends };
     this.deps.watch?.start(root);
-    const info = projectInfoOf(this.current);
+    const info = projectInfoOf(this.current, this.projectCapabilities());
     this.deps.eventBus?.publish('session.changed', undefined);
     this.deps.eventBus?.publish('project.changed', info);
     if (trusted && !needsInstall && support.supported) void this.deps.runnerService?.start();
@@ -228,10 +228,26 @@ class ProjectServiceImpl implements ProjectService {
     this.deps.eventBus?.publish('session.changed', undefined);
   }
 
+  private projectCapabilities(): NonNullable<ProjectInfo['capabilities']> {
+    const hasViewFeatures =
+      this.currentStack.view.capability.edit && this.currentStack.view.features !== undefined;
+    const isJsx = this.currentStack.view.id === 'jsx' && hasViewFeatures;
+    return {
+      drafts:
+        (isJsx && this.currentStack.id === 'vite-react') || this.currentStack.id === 'express-pug',
+      components: hasViewFeatures,
+      extractComponent: hasViewFeatures,
+      componentProps: isJsx,
+      interactions: isJsx,
+      reveal: isJsx,
+      routerInstall: isJsx,
+    };
+  }
+
   getProjectInfo(): Result<ProjectInfo> {
     if (this.current.status !== 'open')
       return err({ code: 'E021', params: { missing: 'project' } });
-    return ok(projectInfoOf(this.current));
+    return ok(projectInfoOf(this.current, this.projectCapabilities()));
   }
 
   async patchProject(updates: PatchWorkspaceUpdates): Promise<Result<ProjectInfo>> {
@@ -241,7 +257,7 @@ class ProjectServiceImpl implements ProjectService {
     const write = await applyPatchProject(this.deps, this.current, updates);
     if (!write.ok) return write;
     this.current = write.value;
-    const info = projectInfoOf(this.current);
+    const info = projectInfoOf(this.current, this.projectCapabilities());
     this.deps.eventBus?.publish('project.changed', info);
     return ok(info);
   }
@@ -253,7 +269,7 @@ class ProjectServiceImpl implements ProjectService {
     const saved = await applySetTrusted(this.deps, this.current, trusted);
     if (!saved.ok) return saved;
     this.current = saved.value;
-    const info = projectInfoOf(this.current);
+    const info = projectInfoOf(this.current, this.projectCapabilities());
     this.deps.eventBus?.publish('session.changed', undefined);
     this.deps.eventBus?.publish('project.changed', info);
     if (trusted && !this.current.needsInstall && this.current.support.supported) {
@@ -296,7 +312,7 @@ class ProjectServiceImpl implements ProjectService {
     );
     if (this.current.status !== 'open' || this.current.root !== root) return;
     this.current = { ...this.current, needsInstall };
-    const info = projectInfoOf(this.current);
+    const info = projectInfoOf(this.current, this.projectCapabilities());
     this.deps.eventBus?.publish('project.changed', info);
     if (!needsInstall && this.current.trusted && this.current.support.supported) {
       void this.deps.runnerService?.start();
@@ -397,7 +413,7 @@ class ProjectServiceImpl implements ProjectService {
   }
 
   async promoteDraft(input: PromoteDraft): Promise<Result<StructureResult>> {
-    return handlePromoteDraft(this.projectTools(), input);
+    return handlePromoteDraft(this.projectTools(), input, this.currentStack.pages);
   }
 
   theme(): Promise<Result<ThemeInfo>> {
@@ -433,7 +449,7 @@ class ProjectServiceImpl implements ProjectService {
     // Skip when nothing changed, or the project was closed or switched meanwhile.
     if (next === undefined || this.current !== before) return;
     this.current = next;
-    this.deps.eventBus?.publish('project.changed', projectInfoOf(next));
+    this.deps.eventBus?.publish('project.changed', projectInfoOf(next, this.projectCapabilities()));
     if (next.trusted === before.trusted) return;
     this.deps.eventBus?.publish('session.changed', undefined);
     // S-84: links changed from outside put the project back in restricted mode (S-81).

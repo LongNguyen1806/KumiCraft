@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ProjectStack } from '../../kernel/stacks.ts';
 import { createEventBus } from '../../ports/event-bus-port.ts';
 import { pugView } from '../../stacks/view/pug/view.ts';
-import { attachAutoRestart } from './runner-restart.ts';
+import { attachAutoRestart, restartRunnerIfNeeded } from './runner-restart.ts';
 import type { RunnerService } from './runner-service.ts';
 
 describe('Auto Restart Runner [WP-4.00]', () => {
@@ -62,5 +62,45 @@ describe('Auto Restart Runner [WP-4.00]', () => {
     expect(restartSpy).toHaveBeenCalledTimes(1);
 
     cleanup();
+  });
+
+  it('restarts runner immediately on restartRunnerIfNeeded when internal/Undo files match restartOn', () => {
+    const restartSpy = vi.fn();
+    const mockRunner: RunnerService = {
+      getStatus: () => ({ state: 'ready' }),
+      start: vi.fn(),
+      restart: restartSpy,
+      stop: vi.fn(),
+      dispose: vi.fn(),
+      notifyWritten: () => undefined,
+    };
+    const mockStack: ProjectStack = {
+      id: 'express-pug',
+      view: pugView,
+      runtime: {
+        id: 'express',
+        primaryDependency: 'express',
+        stampHost: 'templateHook',
+        detect: vi.fn(),
+        requiredPackages: ['express', 'pug'],
+        runner: { entry: 'runners/express-pug', options: (c) => ({ ...c, host: '127.0.0.1' }) },
+        restartOn: (rel) => rel.endsWith('.js') && !rel.startsWith('views/'),
+        pages: vi.fn(),
+      },
+    };
+
+    restartRunnerIfNeeded(
+      ['views/landing.pug'],
+      { getStack: () => mockStack },
+      { current: mockRunner },
+    );
+    expect(restartSpy).not.toHaveBeenCalled();
+
+    restartRunnerIfNeeded(
+      ['app.js', 'views/landing.pug'],
+      { getStack: () => mockStack },
+      { current: mockRunner },
+    );
+    expect(restartSpy).toHaveBeenCalledTimes(1);
   });
 });

@@ -75,6 +75,21 @@ describe('Express + Pug through the services [WP-4.00, 03d]', () => {
 
       const openRes = await services.projectService.open(expressDir);
       expect(openRes.ok).toBe(true);
+      if (openRes.ok) {
+        expect(openRes.value.capabilities).toEqual({
+          drafts: true,
+          components: true,
+          extractComponent: true,
+          componentProps: false,
+          interactions: false,
+          reveal: false,
+          routerInstall: false,
+        });
+      }
+
+      const draftsRes = await services.projectService.listDrafts();
+      expect(draftsRes).toEqual(ok({ drafts: [], dir: 'views/_drafts', ignored: false }));
+
       const index = join(expressDir, 'views/index.pug');
 
       // 1. A class edit goes to the Pug editor (not the JSX one) and keeps shorthand classes.
@@ -102,6 +117,39 @@ describe('Express + Pug through the services [WP-4.00, 03d]', () => {
       const deleteRes = await services.projectService.deletePage({ path: '/about' });
       expect(deleteRes.ok).toBe(true);
       expect(await readFile(join(expressDir, 'app.js'), 'utf8')).not.toContain("'/about'");
+
+      // 4. Component extraction creates a Pug partial and replaces the element with include.
+      const extractRes = await services.projectService.extractComponent({
+        loc: 'views/index.pug:6:3',
+        tag: 'p',
+        name: 'PromoNote',
+        dir: 'views/components',
+        fileName: 'promo-note.pug',
+      });
+      expect(extractRes.ok).toBe(true);
+      expect(await readFile(join(expressDir, 'views/components/promo-note.pug'), 'utf8')).toBe(
+        'p Inserted\n',
+      );
+      expect(await readFile(index, 'utf8')).toContain('  include ./components/promo-note\n');
+
+      // 5. Drafts: create -> list -> promote to page wraps with extends layout + route (with Undo).
+      const draftRes = await services.projectService.createDraft({
+        name: 'LandingDraft',
+        free: false,
+      });
+      expect(draftRes.ok && draftRes.value.draftFile).toBe('views/_drafts/landing-draft.pug');
+      const promoteRes = await services.projectService.promoteDraft({
+        file: 'views/_drafts/landing-draft.pug',
+        as: 'page',
+        name: 'Landing',
+        path: '/landing',
+        keepDraft: false,
+      });
+      expect(promoteRes.ok && promoteRes.value.pagePath).toBe('/landing');
+      expect(await readFile(join(expressDir, 'app.js'), 'utf8')).toContain("app.get('/landing'");
+      expect(await readFile(join(expressDir, 'views/landing.pug'), 'utf8')).toContain(
+        "extends layout\n\nblock content\n  div(style='min-height: 100vh; background: #fff; padding: 32px')",
+      );
     } finally {
       await cleanup();
     }

@@ -78,7 +78,13 @@ export type ProjectServiceDeps = {
   readonly homeDir?: string | undefined;
   readonly templateDir: string;
   readonly initialRoot?: string | undefined;
-  readonly runnerService?: { start(): Promise<unknown>; stop(): Promise<unknown> } | undefined;
+  readonly runnerService?:
+    | {
+        start(): Promise<unknown>;
+        stop(): Promise<unknown>;
+        restart?: (() => Promise<unknown>) | undefined;
+      }
+    | undefined;
   readonly jobs?: JobService | undefined;
   readonly history?: HistoryService | Pick<HistoryService, 'clear'> | undefined;
   readonly watch?: { start(root: string): void; stop(): Promise<void> } | undefined;

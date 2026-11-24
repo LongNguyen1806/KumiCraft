@@ -13,6 +13,8 @@ import {
 import { customAlphabet } from 'nanoid';
 
 import type { WrittenFile } from '../../kernel/editing.ts';
+import { commitFileChanges } from '../../kernel/file-writer.ts';
+import type { FileSystemPort } from '../../ports/file-system-port.ts';
 import { ensureKeyframesBlock, resolveMergedCssValue } from './css-composite-apply.ts';
 import {
   hasModifiersInSelector,
@@ -24,9 +26,10 @@ import {
 } from './css-edit.ts';
 import { findRuleSource } from './css-locate.ts';
 import { locateBySourceMap } from './mapped-source.ts';
+import { projectFileOfSheet } from './project-file.ts';
 import { tryApplyBootstrapChange } from './style-apply-bootstrap.ts';
 import { applyModulesChange, isModulesApplicable } from './style-apply-modules.ts';
-import { primarySystem, projectFileOf, winnerFor } from './style-service.ts';
+import { primarySystem, winnerFor } from './style-service.ts';
 
 /** Classes made by KumiCraft for one element end in `-` and four letters or digits. */
 const OWN_CLASS = /^[A-Za-z][\w-]*-[a-z0-9]{4}$/;
@@ -38,11 +41,16 @@ type ProjectRule = {
   readonly anchor?: { readonly line: number; readonly column: number } | undefined;
 };
 
-function projectRule(root: string, rule: MatchedRule | undefined): ProjectRule | undefined {
-  if (rule?.sheet.kind !== 'module' || /\.module\.\w+$/.test(rule.sheet.id.split('?')[0] ?? '')) {
+function projectRule(
+  root: string,
+  rule: MatchedRule | undefined,
+  globalCss?: readonly string[],
+): ProjectRule | undefined {
+  if (rule === undefined) return undefined;
+  if (rule.sheet.kind === 'module' && /\.module\.\w+$/.test(rule.sheet.id.split('?')[0] ?? '')) {
     return undefined;
   }
-  const file = projectFileOf(root, rule.sheet.id);
+  const file = projectFileOfSheet(root, rule.sheet, globalCss);
   return file === undefined ? undefined : { rule, file };
 }
 
@@ -57,14 +65,16 @@ async function resolveProjectRule(
   rule: MatchedRule | undefined,
   longhand: string,
 ): Promise<ProjectRule | 'generated' | undefined> {
-  const base = projectRule(root, rule);
+  const base = projectRule(root, rule, deps.styling?.globalCss);
   if (base === undefined) return undefined;
-  const mapped = await locateBySourceMap(deps, root, base.rule, longhand);
-  if (mapped?.kind === 'external') return undefined;
-  if (mapped?.kind === 'project') {
-    return mapped.editable
-      ? { rule: base.rule, file: mapped.file, anchor: mapped.anchor }
-      : 'generated';
+  if (base.rule.sheet.kind === 'module') {
+    const mapped = await locateBySourceMap(deps, root, base.rule, longhand);
+    if (mapped?.kind === 'external') return undefined;
+    if (mapped?.kind === 'project') {
+      return mapped.editable
+        ? { rule: base.rule, file: mapped.file, anchor: mapped.anchor }
+        : 'generated';
+    }
   }
   if (/\.(scss|sass|less)$/.test(base.file)) {
     const src = await findRuleSource(deps.fs, root, base.file, base.rule);
@@ -174,7 +184,14 @@ async function buildNewElementCss(
     readonly plan: Extract<Awaited<ReturnType<typeof planCssFile>>, { readonly ok: true }>['value'];
   }>
 > {
-  const plan = await planCssFile(deps, root, jsxFile, winner, deps.newCssDir);
+  const plan = await planCssFile(
+    deps,
+    root,
+    jsxFile,
+    winner,
+    deps.newCssDir,
+    deps.styling?.globalCss,
+  );
   if (!plan.ok) return plan;
   const css = await readFile(deps.fs, root, plan.value.file);
   const before = css.ok ? css.value : undefined;
@@ -214,6 +231,68 @@ function ownRuleOf(
   return rules.find((r) => re.test(r.selector));
 }
 
+async function rollbackWrites(
+  fs: FileSystemPort,
+  root: string,
+  writes: readonly WrittenFile[],
+): Promise<void> {
+  if (writes.length === 0) return;
+  const reverted = [...writes].reverse().map((w) => ({
+    path: w.path,
+    before: w.after,
+    after: w.before,
+  }));
+  await commitFileChanges({ fs }, root, reverted);
+}
+
+async function commitElementWrites(
+  deps: StyleApplyDeps,
+  root: string,
+  request: StyleApplyRequest,
+  ctx: ElementContext,
+  own: string | undefined,
+  newClass: string,
+  built: {
+    readonly file: string;
+    readonly before: string | undefined;
+    readonly after: string;
+    readonly plan: CssFilePlan;
+  },
+): Promise<Result<StyleApplied>> {
+  const writes: WrittenFile[] = [];
+  try {
+    if (own === undefined) {
+      const classEdit = await addClass(
+        deps,
+        root,
+        request,
+        ctx,
+        [...ctx.classes, newClass],
+        writes,
+      );
+      if (!classEdit.ok) {
+        await rollbackWrites(deps.fs, root, writes);
+        return classEdit;
+      }
+    }
+    const written = await writeFile(deps.fs, root, built.file, built.before, built.after);
+    if (!written.ok) {
+      await rollbackWrites(deps.fs, root, writes);
+      return written;
+    }
+    writes.push(written.value);
+    const imported = await addPlannedImport(deps, root, ctx.jsxFile, built.plan, writes);
+    if (!imported.ok) {
+      await rollbackWrites(deps.fs, root, writes);
+      return imported;
+    }
+    return ok({ files: mergeWrites(writes), className: newClass });
+  } catch (caught: unknown) {
+    await rollbackWrites(deps.fs, root, writes);
+    throw caught;
+  }
+}
+
 async function applyToElement(
   deps: StyleApplyDeps,
   root: string,
@@ -225,7 +304,7 @@ async function applyToElement(
   const ctx = await elementContext(deps, root, probe.ref.loc);
   if (!ctx.ok) return ctx;
   const own = ctx.value.classes.find((c) => OWN_CLASS.test(c));
-  const ownTarget = projectRule(root, ownRuleOf(probe.rules, own));
+  const ownTarget = projectRule(root, ownRuleOf(probe.rules, own), deps.styling?.globalCss);
   if (ownTarget !== undefined) return applyToRule(deps, root, ownTarget, longhand, change);
   if (change.value === undefined) return ok({ files: [] });
 
@@ -246,19 +325,7 @@ async function applyToElement(
     winner,
   );
   if (!built.ok) return built;
-  const writes: WrittenFile[] = [];
-  if (own === undefined) {
-    const classes = [...ctx.value.classes, newClass];
-    const classEdit = await addClass(deps, root, request, ctx.value, classes, writes);
-    if (!classEdit.ok) return classEdit;
-  }
-  const { file, before, after } = built.value;
-  const written = await writeFile(deps.fs, root, file, before, after);
-  if (!written.ok) return written;
-  writes.push(written.value);
-  const imported = await addPlannedImport(deps, root, ctx.value.jsxFile, built.value.plan, writes);
-  if (!imported.ok) return imported;
-  return ok({ files: mergeWrites(writes), className: newClass });
+  return commitElementWrites(deps, root, request, ctx.value, own, newClass, built.value);
 }
 
 /** `.card__title`: one class, no combinator, pseudo-class or list. */

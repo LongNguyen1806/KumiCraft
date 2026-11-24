@@ -3,6 +3,19 @@ import type { EventBusPort } from '../../ports/event-bus-port.ts';
 import type { ProjectService } from '../project/project-service.ts';
 import type { RunnerService } from './runner-service.ts';
 
+export function restartRunnerIfNeeded(
+  files: readonly string[],
+  projectService: Pick<ProjectService, 'getStack'> | undefined,
+  runnerHolder: { readonly current?: RunnerService | undefined },
+): void {
+  if (projectService === undefined) return;
+  const runtime = projectService.getStack().runtime;
+  if (typeof runtime.restartOn !== 'function') return;
+  if (!files.some((f) => runtime.restartOn?.(f))) return;
+  if (runnerHolder.current?.getStatus().state !== 'ready') return;
+  void runnerHolder.current.restart();
+}
+
 export function attachAutoRestart(
   eventBus: EventBusPort | undefined,
   projectService: Pick<ProjectService, 'getStack'>,

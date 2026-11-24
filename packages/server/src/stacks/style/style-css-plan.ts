@@ -1,11 +1,10 @@
 // Planning and import management for CSS files in style application (SPEC-04 M-ST, R-ST-06).
 import { posix } from 'node:path';
 
-import { ok, type Result } from '@kumicraft/shared';
+import { err, ok, type Result } from '@kumicraft/shared';
 
 import type { WrittenFile } from '../../kernel/editing.ts';
-import { parseJsxAst } from '../../lib/ast-helpers.ts';
-import { findImportInsertPosition } from '../../lib/ast-helpers.ts';
+import { findImportInsertPosition, parseJsxAst } from '../../lib/ast-helpers.ts';
 import type { FileSystemPort } from '../../ports/file-system-port.ts';
 import { readFile, writeFile } from './style-apply-common.ts';
 
@@ -14,6 +13,10 @@ export type CssFilePlan = {
   /** Set when `file` is new: the name the JSX file must import once the file exists. */
   readonly importAs?: string | undefined;
 };
+
+export function isJsxLikeFile(file: string): boolean {
+  return /\.[jt]sx?$/i.test(file);
+}
 
 /** The plain `.css`, `.scss`, or `.less` file the element's own file imports, if any. */
 export function importedCss(code: string, jsxFile: string): string | undefined {
@@ -41,8 +44,14 @@ export async function planCssFile(
   jsxFile: string,
   winner: { readonly file: string } | undefined,
   newCssDir?: string,
+  globalCss?: readonly string[],
 ): Promise<Result<CssFilePlan>> {
   if (winner !== undefined) return ok({ file: winner.file });
+  if (!isJsxLikeFile(jsxFile)) {
+    const target = globalCss?.[0];
+    if (target === undefined) return err({ code: 'E016', params: { reason: 'noStylesheet' } });
+    return ok({ file: target });
+  }
   const jsx = await readFile(deps.fs, root, jsxFile);
   if (!jsx.ok) return jsx;
   const imported = importedCss(jsx.value, jsxFile);
@@ -74,7 +83,7 @@ export async function addPlannedImport(
   plan: CssFilePlan,
   writes: WrittenFile[],
 ): Promise<Result<WrittenFile | undefined>> {
-  if (plan.importAs === undefined) return ok(undefined);
+  if (plan.importAs === undefined || !isJsxLikeFile(jsxFile)) return ok(undefined);
   const jsx = await readFile(deps.fs, root, jsxFile);
   if (!jsx.ok) return jsx;
   if (importedCss(jsx.value, jsxFile) === plan.file) return ok(undefined);

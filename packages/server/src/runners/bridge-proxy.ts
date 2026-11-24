@@ -19,6 +19,10 @@ export type BridgeProxyOptions = {
    * again to know when a change is served (03c section 3.3).
    */
   readonly onPage?: ((path: string, html: string) => void) | undefined;
+  /** Optional local draft renderer (used by Express + Pug for `/__kumicraft/draft?file=...`). */
+  readonly renderDraft?:
+    | ((relFile: string) => { readonly status: number; readonly html: string } | undefined)
+    | undefined;
 };
 
 /**
@@ -367,6 +371,41 @@ export function isLocalHost(host: string | undefined): boolean {
   return name === '127.0.0.1' || name === 'localhost' || name.endsWith('.localhost');
 }
 
+function handleDraftRoute(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+  options: BridgeProxyOptions,
+): boolean {
+  if (options.renderDraft === undefined || req.method !== 'GET') return false;
+  const reqUrl = req.url ?? '';
+  if (!reqUrl.startsWith('/__kumicraft/draft')) return false;
+  const parsed = new URL(reqUrl, 'http://localhost');
+  if (parsed.pathname !== '/__kumicraft/draft') return false;
+  const file = parsed.searchParams.get('file') ?? '';
+  const rendered = options.renderDraft(file);
+  if (rendered === undefined) {
+    res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+    res.end('Draft not found.');
+    return true;
+  }
+  const cspNonce = randomBytes(16).toString('base64');
+  const bridgeHtml = bridgeHeadHtml({
+    nonce: options.nonce,
+    studioOrigin: options.studioOrigin,
+    rootDir: options.root,
+    navigation: 'document',
+    cspNonce,
+  });
+  const body = Buffer.from(injectBridgeHtml(rendered.html, bridgeHtml), 'utf8');
+  res.writeHead(rendered.status, {
+    'content-type': 'text/html; charset=utf-8',
+    'cache-control': 'no-store',
+    'content-length': body.byteLength,
+  });
+  res.end(body);
+  return true;
+}
+
 export function createBridgeProxy(options: BridgeProxyOptions): {
   server: http.Server;
   start(): Promise<void>;
@@ -379,6 +418,7 @@ export function createBridgeProxy(options: BridgeProxyOptions): {
       return;
     }
     if (handleBridgeClientRoute(req, res)) return;
+    if (handleDraftRoute(req, res, options)) return;
     forwardRequest(req, res, options);
   });
 

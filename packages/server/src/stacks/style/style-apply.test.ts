@@ -447,4 +447,97 @@ export function Card() {
     // Verify first file untouched
     expect(await fs.readFile(path.join(root, 'src/styles/Home.css'), 'utf8')).toBe('/* first */\n');
   });
+
+  it('planCssFile targets globalCss[0] without importAs for non-JSX (.pug) files', async () => {
+    await fs.mkdir(path.join(root, 'views/products'), { recursive: true });
+    await fs.writeFile(path.join(root, 'views/products/index.pug'), 'h1 Danh sách sản phẩm\n');
+    const plan = await planCssFile(
+      { fs: nodeFs },
+      root,
+      'views/products/index.pug',
+      undefined,
+      undefined,
+      ['public/stylesheets/style.css'],
+    );
+    expect(plan).toEqual({ ok: true, value: { file: 'public/stylesheets/style.css' } });
+  });
+
+  it('edits a <link> stylesheet rule in place when matched via styling.globalCss', async () => {
+    await fs.mkdir(path.join(root, 'public/stylesheets'), { recursive: true });
+    await fs.writeFile(
+      path.join(root, 'public/stylesheets/style.css'),
+      '.page-header h1 {\n  font-size: 26px;\n}\n',
+    );
+    const linkRule: MatchedRule = {
+      sheet: { kind: 'link', href: 'http://localhost:60127/stylesheets/style.css' },
+      selector: '.page-header h1',
+      media: [],
+      occurrence: 0,
+      ruleIndex: 0,
+      declarations: [{ property: 'font-size', value: '26px', important: false }],
+      affects: 1,
+    };
+    const res = await applyStyleChange(
+      {
+        fs: nodeFs,
+        sourceEditor: createSourceEditorService({ fs: nodeFs }),
+        styling: {
+          systems: [{ id: 'css' }],
+          editable: false,
+          globalCss: ['public/stylesheets/style.css'],
+        },
+        newId: () => 'ab01',
+      },
+      root,
+      {
+        tag: 'h1',
+        probe: {
+          found: true,
+          rules: [linkRule],
+          inline: [],
+          computed: { 'font-size': '26px' },
+          ref: { loc: 'views/products/index.pug:5:5', index: 0 },
+        },
+        change: { property: 'fontSize', value: '32px', target: 'rule' },
+      },
+    );
+    expect(res.ok).toBe(true);
+    expect(await read('public/stylesheets/style.css')).toContain('font-size: 32px;');
+  });
+
+  it('rolls back class edit if a subsequent write fails during applyToElement', async () => {
+    const res = await applyStyleChange(
+      {
+        fs: {
+          ...nodeFs,
+          writeTextAtomic: (r, relPath, content, opts) => {
+            if (relPath.endsWith('Card.css')) {
+              return Promise.resolve({
+                ok: false,
+                error: { code: 'E013', params: { file: relPath } },
+              });
+            }
+            return nodeFs.writeTextAtomic(r, relPath, content, opts);
+          },
+        },
+        sourceEditor: createSourceEditorService({ fs: nodeFs }),
+        styling: { systems: [{ id: 'css' }], editable: true, globalCss: ['src/Card.css'] },
+        newId: () => 'fail',
+      },
+      root,
+      {
+        tag: 'h3',
+        probe: {
+          found: true,
+          rules: [],
+          inline: [],
+          computed: { 'font-size': '16px' },
+          ref: { loc: 'src/Card.tsx:6:7', index: 0 },
+        },
+        change: { property: 'fontSize', value: '20px', target: 'element' },
+      },
+    );
+    expect(res.ok).toBe(false);
+    expect(await read('src/Card.tsx')).toBe(CARD_TSX);
+  });
 });

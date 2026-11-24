@@ -343,4 +343,82 @@ describe('createStyleService().read [R-ST-04, R-ST-05]', () => {
       editable: true,
     });
   });
+
+  it('resolves <link> stylesheet rules to project globalCss when matched uniquely (Express + Pug)', async () => {
+    await fs.mkdir(path.join(root, 'public/stylesheets'), { recursive: true });
+    await fs.writeFile(
+      path.join(root, 'public/stylesheets/style.css'),
+      '.page-header h1 {\n  font-size: 26px;\n}\n',
+    );
+
+    const service = createStyleService({ fs: nodeFs });
+    const reading = await service.read(
+      {
+        root,
+        styling: {
+          systems: [{ id: 'css' }],
+          editable: false,
+          globalCss: ['public/stylesheets/style.css'],
+        },
+      },
+      probe({
+        rules: [
+          rule({
+            sheet: { kind: 'link', href: 'http://localhost:60127/stylesheets/style.css' },
+            selector: '.page-header h1',
+            declarations: [{ property: 'font-size', value: '26px', important: false }],
+          }),
+        ],
+        computed: { 'font-size': '26px' },
+      }),
+    );
+
+    const byId = Object.fromEntries(reading.properties.map((p) => [p.id, p]));
+    expect(byId['fontSize']).toEqual({
+      id: 'fontSize',
+      value: { css: '26px' },
+      source: {
+        kind: 'rule',
+        system: 'css',
+        file: 'public/stylesheets/style.css',
+        line: 2,
+        selector: '.page-header h1',
+        affects: 3,
+      },
+      editable: true,
+    });
+  });
+
+  it('keeps external CDN <link> sheets non-editable even when globalCss is present', async () => {
+    const service = createStyleService({ fs: nodeFs });
+    const reading = await service.read(
+      {
+        root,
+        styling: {
+          systems: [{ id: 'css' }],
+          editable: false,
+          globalCss: ['public/stylesheets/style.css'],
+        },
+      },
+      probe({
+        rules: [
+          rule({
+            sheet: { kind: 'link', href: 'https://cdn.example.com/reset.css' },
+            selector: 'h1',
+            declarations: [{ property: 'font-size', value: '26px', important: false }],
+          }),
+        ],
+        computed: { 'font-size': '26px' },
+      }),
+    );
+
+    const byId = Object.fromEntries(reading.properties.map((p) => [p.id, p]));
+    expect(byId['fontSize']).toEqual({
+      id: 'fontSize',
+      value: { css: '26px' },
+      source: { kind: 'external', href: 'https://cdn.example.com/reset.css' },
+      editable: false,
+      reason: 'external',
+    });
+  });
 });

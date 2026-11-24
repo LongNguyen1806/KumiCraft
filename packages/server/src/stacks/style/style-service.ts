@@ -22,7 +22,7 @@ import { parseUtility } from './bootstrap-utilities.ts';
 import { extractRuleOrComputedSubValue } from './css-composite-apply.ts';
 import { findRuleSource, locateRule, locateRuleByIndex } from './css-locate.ts';
 import { type CompiledCache, locateBySourceMap } from './mapped-source.ts';
-import { projectFileOf } from './project-file.ts';
+import { projectFileOf, projectFileOfSheet } from './project-file.ts';
 
 export { primarySystem, projectFileOf };
 
@@ -136,6 +136,7 @@ type ReadContext = {
   readonly compiledCss?: CompiledCssPort | undefined;
   readonly root: string;
   readonly primary: StyleSystemId | undefined;
+  readonly globalCss?: readonly string[] | undefined;
   /** Source files read so far in this reading. */
   readonly cache: Map<string, string | undefined>;
   readonly compiled: CompiledCache;
@@ -173,16 +174,19 @@ async function ruleSource(
   rule: MatchedRule,
   longhand: string,
 ): Promise<RuleSource> {
-  const { fs, root, cache, primary } = ctx;
-  if (rule.sheet.kind !== 'module') {
-    const href = rule.sheet.kind === 'link' ? rule.sheet.href : '';
+  const { fs, root, cache, primary, globalCss } = ctx;
+  const file = projectFileOfSheet(root, rule.sheet, globalCss);
+  if (file === undefined) {
+    const href =
+      rule.sheet.kind === 'link'
+        ? rule.sheet.href
+        : rule.sheet.kind === 'module'
+          ? rule.sheet.id
+          : '';
     return externalRuleSource(rule, href, primary);
   }
-  const file = projectFileOf(root, rule.sheet.id);
-  if (file === undefined) {
-    return externalRuleSource(rule, rule.sheet.id, primary);
-  }
-  const mapped = await mappedRuleSource(ctx, rule, longhand);
+  const mapped =
+    rule.sheet.kind === 'module' ? await mappedRuleSource(ctx, rule, longhand) : undefined;
   if (mapped !== undefined) return mapped;
   if (!cache.has(file)) {
     const read = await fs.readText(root, file, { maxBytes: MAX_CSS_BYTES });
@@ -275,6 +279,7 @@ export function createStyleService(deps: {
         compiledCss: deps.compiledCss,
         root: project.root,
         primary,
+        globalCss: project.styling?.globalCss,
         cache: new Map(),
         compiled: new Map(),
       };
