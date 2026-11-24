@@ -1,7 +1,7 @@
 // Page list on the Canvas toolbar (SPEC-04 M-PG R-PG-15): pick a page of the project to show it
 // in the Canvas; a page with `:param` asks for the value first.
 import type { DraftInfo, PageInfo, RouterStatus } from '@kumicraft/shared';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { createEventsClient } from '../../api/events-client.ts';
@@ -122,7 +122,8 @@ function DraftSelectOptGroup({ drafts }: { readonly drafts: readonly DraftInfo[]
   // instead of offering one.
   const framework = project?.support.framework;
   const aspnet = framework === 'aspnet-razor-pages' || framework === 'aspnet-mvc';
-  if (framework === 'next-react' || framework === 'express-pug' || aspnet) {
+  const unsupportedByCap = project?.capabilities?.drafts === false;
+  if (unsupportedByCap || framework === 'next-react' || aspnet) {
     return (
       <optgroup label={t('drafts.title')}>
         <option value="draft:unavailable" disabled>
@@ -266,6 +267,15 @@ function PageSelectDialogs({
   );
 }
 
+function matchesAnyPage(pages: readonly PageInfo[], route: string): boolean {
+  return pages.some((p) => {
+    if (p.path === route) return true;
+    if (!p.dynamic && !p.path.includes(':')) return false;
+    const escaped = p.path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/:[^/]+/g, '[^/]+');
+    return new RegExp(`^${escaped}$`).test(route);
+  });
+}
+
 function computeCurrentRoute(
   draftFile: string | undefined,
   pages: readonly PageInfo[],
@@ -298,6 +308,25 @@ export function PageSelect() {
   const [paramDraft, setParamDraft] = useState<string>();
   const [newDraftOpen, setNewDraftOpen] = useState(false);
   const current = computeCurrentRoute(draftFile, pages, route);
+  const prevPagesRef = useRef<readonly PageInfo[]>(pages);
+
+  useEffect(() => {
+    const prevPages = prevPagesRef.current;
+    prevPagesRef.current = pages;
+    if (
+      prevPages.length > 0 &&
+      pages.length > 0 &&
+      draftFile === undefined &&
+      route !== '/' &&
+      !isDraftAddress(route) &&
+      matchesAnyPage(prevPages, route) &&
+      !matchesAnyPage(pages, route) &&
+      pages.some((p) => p.path === '/')
+    ) {
+      useSelectionStore.getState().setRoute('/');
+      studioBridgeChannel.navigate('/');
+    }
+  }, [pages, draftFile, route]);
 
   return (
     <div className="flex min-w-0 items-center gap-2">

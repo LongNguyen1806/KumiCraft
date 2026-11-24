@@ -7,6 +7,7 @@ import * as eventsClient from '../../api/events-client.ts';
 import * as projectClient from '../../api/project-client.ts';
 import { studioBridgeChannel } from '../../core/bridge-channel.ts';
 import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useProjectStore } from '../../core/project-store.ts';
 import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { DesignBar } from '../design/design-bar.tsx';
@@ -22,6 +23,7 @@ describe('Studio Drafts [R-DR-10 .. R-DR-15]', () => {
   });
 
   beforeEach(() => {
+    useProjectStore.setState({ project: undefined });
     useSelectionStore.getState().reset();
     useCanvasViewStore.setState({ draftFile: undefined });
     useDesignStore.setState({ target: undefined, componentMode: undefined });
@@ -233,5 +235,170 @@ describe('Studio Drafts [R-DR-10 .. R-DR-15]', () => {
     fireEvent.click(screen.getByRole('button', { name: /Try again|Thử lại/ }));
     expect(await screen.findByTestId('drafts-empty')).toBeDefined();
     expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('skips fetchDrafts and shows unavailable notice when project is aspnet-mvc', () => {
+    const fetchSpy = vi.spyOn(projectClient, 'fetchDrafts');
+    useProjectStore.setState({
+      project: {
+        id: 'aspnet001',
+        name: 'AspNetMvc',
+        root: '/projects/aspnet-mvc',
+        sourceDir: 'Views',
+        support: {
+          supported: true,
+          reasons: [],
+          framework: 'aspnet-mvc',
+          versions: { dotnet: 'net10.0' },
+          language: 'js',
+        },
+        needsInstall: false,
+        responsiveMode: 'desktop-first',
+        frames: [{ id: 'desktop', label: 'Desktop', width: 1440, height: 900 }],
+        primaryFrameId: 'desktop',
+        backends: [],
+        trusted: true,
+        designDirs: {
+          pages: ['src/pages'],
+          layouts: ['src/layouts'],
+          components: ['src/components'],
+          drafts: 'src/drafts',
+        },
+        capabilities: {
+          drafts: false,
+          components: false,
+          extractComponent: false,
+          componentProps: false,
+          interactions: false,
+          reveal: false,
+          routerInstall: false,
+        },
+      },
+    });
+
+    render(<DraftsPanel />);
+
+    expect(screen.getByTestId('drafts-unavailable')).toBeDefined();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('fetches drafts when project is express-pug with capabilities.drafts true', async () => {
+    const fetchSpy = vi.spyOn(projectClient, 'fetchDrafts').mockResolvedValue({
+      drafts: [
+        { name: 'HeroDraft', file: 'views/_drafts/hero-draft.pug', free: false, inUse: false },
+      ],
+      dir: 'views/_drafts',
+      ignored: false,
+    });
+    useProjectStore.setState({
+      project: {
+        id: 'express001',
+        name: 'ExpressPug',
+        root: '/projects/express-pug',
+        sourceDir: 'src',
+        support: {
+          supported: true,
+          reasons: [],
+          framework: 'express-pug',
+          viewsDir: 'views',
+          versions: { express: '4.21.0', pug: '3.0.3' },
+          language: 'js',
+        },
+        needsInstall: false,
+        responsiveMode: 'desktop-first',
+        frames: [{ id: 'desktop', label: 'Desktop', width: 1440, height: 900 }],
+        primaryFrameId: 'desktop',
+        backends: [],
+        trusted: true,
+        designDirs: {
+          pages: ['src/pages'],
+          layouts: ['src/layouts'],
+          components: ['src/components'],
+          drafts: 'src/drafts',
+        },
+        capabilities: {
+          drafts: true,
+          components: true,
+          extractComponent: true,
+          componentProps: false,
+          interactions: false,
+          reveal: false,
+          routerInstall: false,
+        },
+      },
+    });
+
+    render(<DraftsPanel />);
+
+    expect(await screen.findByText('HeroDraft')).toBeDefined();
+    expect(fetchSpy).toHaveBeenCalled();
+  });
+
+  it('reloads drafts on history.changed events so badge and select stay in sync after Undo', async () => {
+    let onEvent: ((event: eventsClient.StudioServerEvent) => void) | undefined;
+    vi.spyOn(eventsClient, 'createEventsClient').mockImplementation((opts) => {
+      onEvent = opts?.onEvent;
+      return { close: vi.fn(), isConnected: () => true };
+    });
+    const fetchSpy = vi.spyOn(projectClient, 'fetchDrafts');
+    render(<DraftsPanel />);
+
+    expect(await screen.findByText('BanNhap1')).toBeDefined();
+    const callsBefore = fetchSpy.mock.calls.length;
+
+    onEvent?.({
+      v: 1,
+      type: 'history.changed',
+      at: new Date().toISOString(),
+      payload: { undoCount: 0, redoCount: 1 },
+    });
+
+    await waitFor(() => {
+      expect(fetchSpy.mock.calls.length).toBeGreaterThan(callsBefore);
+    });
+  });
+
+  it('redirects Canvas to / when the active route is removed by Undo or delete', async () => {
+    vi.spyOn(projectClient, 'fetchPages')
+      .mockResolvedValueOnce({
+        convention: true,
+        router: { status: 'found', file: 'app.js', line: 1, kind: 'express', chosen: false },
+        pages: [
+          { path: '/', dynamic: false },
+          { path: '/landing-test', dynamic: false },
+        ],
+      })
+      .mockResolvedValue({
+        convention: true,
+        router: { status: 'found', file: 'app.js', line: 1, kind: 'express', chosen: false },
+        pages: [{ path: '/', dynamic: false }],
+      });
+    const listeners: ((event: eventsClient.StudioServerEvent) => void)[] = [];
+    vi.spyOn(eventsClient, 'createEventsClient').mockImplementation((opts) => {
+      if (opts?.onEvent !== undefined) listeners.push(opts.onEvent);
+      return { close: vi.fn(), isConnected: () => true };
+    });
+    useSelectionStore.setState({ currentRoute: '/landing-test' });
+    const navSpy = vi.spyOn(studioBridgeChannel, 'navigate').mockImplementation(() => undefined);
+    render(<PageSelect />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId('canvas-page-select').querySelectorAll('option').length,
+      ).toBeGreaterThan(3);
+    });
+
+    const event: eventsClient.StudioServerEvent = {
+      v: 1,
+      type: 'history.changed',
+      at: new Date().toISOString(),
+      payload: { undoCount: 0, redoCount: 1 },
+    };
+    for (const listener of listeners) listener(event);
+
+    await waitFor(() => {
+      expect(useSelectionStore.getState().currentRoute).toBe('/');
+    });
+    expect(navSpy).toHaveBeenCalledWith('/');
   });
 });

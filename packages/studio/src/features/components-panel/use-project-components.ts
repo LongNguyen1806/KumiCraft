@@ -7,7 +7,7 @@ import { createEventsClient } from '../../api/events-client.ts';
 import { isRecord } from '../../api/http.ts';
 import { fetchComponents } from '../../api/project-client.ts';
 
-const COMPONENT_FILE = /\.(tsx|jsx)$/;
+const COMPONENT_FILE = /\.(tsx|jsx|pug)$/;
 const CONFIG_FILE = /(^|[\\/])\.kumicraft[\\/]components\.json$/;
 
 function isRelevantFile(file: string): boolean {

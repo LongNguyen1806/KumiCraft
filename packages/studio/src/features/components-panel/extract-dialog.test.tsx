@@ -4,6 +4,8 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { ApiError } from '../../api/http.ts';
 import * as projectClient from '../../api/project-client.ts';
+import { useProjectStore } from '../../core/project-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import type { InspectorTarget } from '../inspector/types.ts';
 import { ExtractDialog } from './extract-dialog.tsx';
@@ -141,5 +143,63 @@ describe('ExtractDialog (Scenario #11) [R-CP-14]', () => {
     // Valid unique name
     fireEvent.change(nameInput, { target: { value: 'NewComponent' } });
     expect(submitBtn.disabled).toBe(false);
+  });
+
+  it('defaults dir to views/components and generates .pug filename on express-pug', () => {
+    useProjectStore.setState({
+      project: {
+        id: 'express001',
+        name: 'ExpressPug',
+        root: '/projects/express-pug',
+        sourceDir: 'src',
+        support: {
+          supported: true,
+          reasons: [],
+          framework: 'express-pug',
+          viewsDir: 'views',
+          versions: {},
+          language: 'js',
+        },
+        needsInstall: false,
+        responsiveMode: 'desktop-first',
+        frames: [{ id: 'desktop', label: 'Desktop', width: 1440, height: 900 }],
+        primaryFrameId: 'desktop',
+        backends: [],
+        trusted: true,
+        designDirs: {
+          pages: ['src/pages'],
+          layouts: ['src/layouts'],
+          components: ['src/components'],
+          drafts: 'src/drafts',
+        },
+      },
+    });
+
+    render(<ExtractDialog open={true} target={mockTarget} onClose={vi.fn()} />);
+
+    const dirInput = screen.getByTestId<HTMLInputElement>('extract-dir');
+    const nameInput = screen.getByTestId<HTMLInputElement>('extract-name');
+    const fileInput = screen.getByTestId<HTMLInputElement>('extract-file');
+    expect(dirInput.value).toBe('views/components');
+    fireEvent.change(nameInput, { target: { value: 'ProductCard' } });
+    expect(fileInput.value).toBe('product-card.pug');
+  });
+
+  it('clears selection when extractComponent returns empty locs (Pug partial)', async () => {
+    useSelectionStore.getState().setSelectedRefs([{ loc: 'views/index.pug:4:3', index: 0 }]);
+    vi.spyOn(projectClient, 'extractComponent').mockResolvedValue({
+      changed: true,
+      files: ['views/index.pug', 'views/components/test-banner.pug'],
+      locs: [],
+    });
+
+    render(<ExtractDialog open={true} target={mockTarget} onClose={vi.fn()} />);
+
+    fireEvent.change(screen.getByTestId('extract-name'), { target: { value: 'TestBanner' } });
+    fireEvent.click(screen.getByTestId('extract-submit'));
+
+    await waitFor(() => {
+      expect(useSelectionStore.getState().selectedRefs).toEqual([]);
+    });
   });
 });

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { deleteProjectPage } from '../../api/project-client.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { usePagesData } from '../editor/page-select.tsx';
 import { useEditMode } from '../project/use-edit-mode.ts';
@@ -77,14 +78,31 @@ function PageRow({
     );
   }
 
+  const canNavigate = !page.dynamic && page.path.startsWith('/');
   return (
-    <div className="flex items-center justify-between rounded-[7px] border border-line bg-card-solid px-2.5 py-2 text-xs">
-      <div className="flex flex-col min-w-0">
-        <span className="font-medium text-ink truncate">
-          {page.component !== undefined ? page.component : page.path}
-        </span>
-        <span className="font-mono text-[11px] text-ink-faint truncate">{page.path}</span>
-      </div>
+    <div className="flex items-center justify-between gap-2 rounded-[7px] border border-line bg-card-solid px-2.5 py-2 text-xs">
+      {canNavigate ? (
+        <button
+          type="button"
+          data-testid={`page-open-${page.path}`}
+          onClick={() => {
+            studioBridgeChannel.navigate(page.path);
+          }}
+          className="flex flex-col min-w-0 flex-1 text-left rounded hover:opacity-80"
+        >
+          <span className="font-medium text-ink truncate">
+            {page.component !== undefined ? page.component : page.path}
+          </span>
+          <span className="font-mono text-[11px] text-ink-faint truncate">{page.path}</span>
+        </button>
+      ) : (
+        <div className="flex flex-col min-w-0 flex-1">
+          <span className="font-medium text-ink truncate">
+            {page.component !== undefined ? page.component : page.path}
+          </span>
+          <span className="font-mono text-[11px] text-ink-faint truncate">{page.path}</span>
+        </div>
+      )}
       <PageRowActions
         path={page.path}
         convention={convention}

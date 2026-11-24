@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { extractComponent } from '../../api/project-client.ts';
 import { Dialog } from '../../components/ui/dialog.tsx';
 import { useProjectInfo } from '../../core/project-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { DirInputWithPicker } from '../files/dir-input-with-picker.tsx';
 import type { InspectorTarget } from '../inspector/types.ts';
@@ -77,6 +78,9 @@ async function submitExtract(
     dir: dir.trim() || undefined,
     fileName: fileName.trim() || undefined,
   });
+  if (res.locs.length === 0) {
+    useSelectionStore.getState().clearSelection();
+  }
   onExtracted?.(res);
   return res;
 }
@@ -106,13 +110,26 @@ function useExtractSubmit(
   return { busy, errorMsg, runSubmit };
 }
 
+function toPugComponentFileName(name: string): string {
+  const kebab = name
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase();
+  return kebab === '' ? '' : `${kebab}.pug`;
+}
+
 function useExtractForm(
   target: Extract<InspectorTarget, { readonly kind: 'element' }>,
   onClose: () => void,
   onExtracted?: (res: StructureResult) => void,
 ) {
   const project = useProjectInfo();
-  const defaultDir = project?.designDirs.components[0] ?? 'src/components';
+  const isPug = project?.support.framework === 'express-pug';
+  const defaultDir = isPug
+    ? `${project.support.viewsDir ?? 'views'}/components`
+    : (project?.designDirs.components[0] ?? 'src/components');
   const components = useComponentsStore((s) => s.components);
   const [name, setName] = useState('');
   const [dir, setDir] = useState(defaultDir);
@@ -123,7 +140,9 @@ function useExtractForm(
 
   const handleNameChange = (val: string) => {
     setName(val);
-    if (!isFileManual) setFileName(pageNames(val, 'ts').fileName);
+    if (!isFileManual) {
+      setFileName(isPug ? toPugComponentFileName(val) : pageNames(val, 'ts').fileName);
+    }
   };
 
   const handleFileChange = (val: string) => {

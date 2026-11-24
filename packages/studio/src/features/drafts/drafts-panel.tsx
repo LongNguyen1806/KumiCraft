@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { deleteDraft, duplicateDraft, renameDraft } from '../../api/project-client.ts';
 import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useProjectInfo } from '../../core/project-store.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { DraftRowActions } from './draft-row-actions.tsx';
 import { DraftsDialogs } from './drafts-dialogs.tsx';
@@ -307,12 +308,33 @@ export type DraftsPanelProps = {
   readonly onReload?: (() => void) | undefined;
 };
 
+function DraftsUnavailableNotice({ framework }: { readonly framework: string | undefined }) {
+  const { t } = useTranslation();
+  const aspnet = framework === 'aspnet-razor-pages' || framework === 'aspnet-mvc';
+  const messageKey = aspnet
+    ? 'drafts.unavailableRazor'
+    : framework === 'express-pug'
+      ? 'drafts.unavailableExpress'
+      : 'drafts.unavailableNext';
+  return (
+    <div data-testid="drafts-panel" className="flex flex-col gap-3">
+      <div
+        data-testid="drafts-unavailable"
+        className="rounded-lg border border-line bg-field/60 p-3 text-xs text-ink-soft"
+      >
+        {t(messageKey)}
+      </div>
+    </div>
+  );
+}
+
 export function DraftsPanel({
   drafts: propDrafts,
   ignored: propIgnored,
   projectId: propProjectId,
   onReload: propReload,
 }: DraftsPanelProps = {}) {
+  const project = useProjectInfo();
   const storeData = useDrafts();
   const drafts = propDrafts ?? storeData.drafts;
   const ignored = propIgnored ?? storeData.ignored;
@@ -326,6 +348,9 @@ export function DraftsPanel({
   const [errorMsg, setErrorMsg] = useState<string | undefined>();
   const actions = useDraftItemActions({ projectId, onReload, setErrorMsg, tError });
 
+  if (propDrafts === undefined && !storeData.supported) {
+    return <DraftsUnavailableNotice framework={project?.support.framework} />;
+  }
   return (
     <div data-testid="drafts-panel" className="flex flex-col gap-3">
       <DraftsContent

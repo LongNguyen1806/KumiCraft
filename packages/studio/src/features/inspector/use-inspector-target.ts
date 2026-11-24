@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { createEventsClient, type StudioServerEvent } from '../../api/events-client.ts';
 import { fetchElementSource } from '../../api/source-client.ts';
 import { studioBridgeChannel } from '../../core/bridge-channel.ts';
+import { useProjectInfo } from '../../core/project-store.ts';
 import { useSelectionStore } from '../../core/selection-store.ts';
 import { type ErrorInfo, errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { useStructureErrorStore } from '../structure/structure-error-store.ts';
@@ -300,7 +301,8 @@ function useSingleInspectorTarget(
     interaction.state,
     projectBps,
   );
-  useServerRefresh(enabled, locParsed?.file, refresh);
+  const framework = useProjectInfo()?.support.framework;
+  useServerRefresh(enabled, locParsed?.file, framework, singleRef !== undefined, refresh);
   useSyncActiveSource(singleRef, loader.source);
 
   if (singleRef === undefined) return { kind: 'empty' };
@@ -337,30 +339,58 @@ export function useInspectorTarget(options: UseInspectorTargetOptions = {}): Ins
 function useServerRefresh(
   enabled: boolean,
   activeFile: string | undefined,
+  framework: string | undefined,
+  hasSelection: boolean,
   onRefresh: () => void,
 ): void {
+  const treeNodes = useSelectionStore((s) => s.treeNodes);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const pendingTreeRefreshRef = useRef(false);
+  const prevTreeRef = useRef(treeNodes);
 
-  const schedule = useCallback(() => {
-    if (timerRef.current !== undefined) return;
-    timerRef.current = setTimeout(() => {
-      timerRef.current = undefined;
+  const schedule = useCallback(
+    (delayMs = 100) => {
+      if (timerRef.current !== undefined) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        timerRef.current = undefined;
+        onRefresh();
+      }, delayMs);
+    },
+    [onRefresh],
+  );
+
+  useEffect(() => {
+    if (prevTreeRef.current === treeNodes) return;
+    prevTreeRef.current = treeNodes;
+    if (!pendingTreeRefreshRef.current) return;
+    pendingTreeRefreshRef.current = false;
+    if (enabled && hasSelection) {
       onRefresh();
-    }, 100);
-  }, [onRefresh]);
+    }
+  }, [enabled, treeNodes, hasSelection, onRefresh]);
 
   useEffect(() => {
     if (!enabled) return undefined;
+    const isExpressPug = framework === 'express-pug';
     const client = createEventsClient({
       onEvent: (event: StudioServerEvent) => {
         if (event.type === 'history.changed') {
-          // Undo or Redo rewrote the file: read it at once, so a field changed right after
-          // starts from the restored class, not the undone one (K9.5, E017 otherwise).
-          onRefresh();
+          if (isExpressPug) {
+            // Wait for iframe reload + Bridge setTree() so removed elements are pruned first.
+            pendingTreeRefreshRef.current = true;
+          } else {
+            // Undo or Redo rewrote the file: read it at once, so a field changed right after
+            // starts from the restored class, not the undone one (K9.5, E017 otherwise).
+            onRefresh();
+          }
         } else if (event.type === 'project.filesChanged') {
           const payload = event.payload as { readonly files?: readonly string[] } | undefined;
           if (activeFile !== undefined && payload?.files?.includes(activeFile)) {
-            schedule();
+            if (isExpressPug) {
+              pendingTreeRefreshRef.current = true;
+            } else {
+              schedule(100);
+            }
           }
         }
       },
@@ -372,5 +402,5 @@ function useServerRefresh(
       }
       client.close();
     };
-  }, [enabled, activeFile, schedule, onRefresh]);
+  }, [enabled, activeFile, framework, schedule, onRefresh]);
 }

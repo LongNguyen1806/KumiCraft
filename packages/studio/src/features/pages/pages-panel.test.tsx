@@ -6,6 +6,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import * as eventsClient from '../../api/events-client.ts';
 import * as jobsClient from '../../api/jobs-client.ts';
 import * as projectClient from '../../api/project-client.ts';
+import { studioBridgeChannel } from '../../core/bridge-channel.ts';
 import { useProjectStore } from '../../core/project-store.ts';
 import { initI18n } from '../../i18n/i18n.ts';
 import { FilesContextMenu } from '../files/files-context-menu.tsx';
@@ -230,5 +231,54 @@ describe('PagesPanel & AddPageForm [WP-2.05]', () => {
     await waitFor(() => {
       expect(patchSpy).toHaveBeenCalledWith({ routing: { file: 'src/routes.jsx' } });
     });
+  });
+
+  it('navigates Canvas when clicking a non-dynamic page row', async () => {
+    vi.spyOn(projectClient, 'fetchPages').mockResolvedValue({
+      convention: true,
+      router: { status: 'found', file: 'src/App.tsx', line: 1, kind: 'jsxRoutes', chosen: false },
+      pages: [{ path: '/about', component: 'About', dynamic: false }],
+    });
+    const navSpy = vi.spyOn(studioBridgeChannel, 'navigate').mockImplementation(() => undefined);
+    render(<PagesPanel />);
+
+    const aboutBtn = await screen.findByTestId('page-open-/about');
+    fireEvent.click(aboutBtn);
+    expect(navSpy).toHaveBeenCalledWith('/about');
+  });
+
+  it('hides React-only dir/file inputs and router actions on express-pug', async () => {
+    useProjectStore.setState({
+      project: {
+        ...MOCK_PROJECT,
+        support: {
+          ...MOCK_PROJECT.support,
+          framework: 'express-pug',
+          viewsDir: 'views',
+        },
+        capabilities: {
+          drafts: false,
+          components: true,
+          extractComponent: true,
+          componentProps: false,
+          interactions: false,
+          reveal: false,
+          routerInstall: false,
+        },
+      },
+    });
+    vi.spyOn(projectClient, 'fetchPages').mockResolvedValue({
+      convention: true,
+      router: { status: 'found', file: 'app.js', line: 1, kind: 'express', chosen: true },
+      pages: [{ path: '/', dynamic: false }],
+    });
+
+    render(<PagesPanel />);
+
+    expect(await screen.findByTestId('router-status-found')).toBeDefined();
+    expect(screen.queryByTestId('router-change-file')).toBeNull();
+    expect(screen.queryByTestId('router-auto-file')).toBeNull();
+    expect(screen.queryByTestId('page-dir')).toBeNull();
+    expect(screen.queryByTestId('page-file')).toBeNull();
   });
 });

@@ -4,6 +4,7 @@ import { type SyntheticEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { addProjectPage } from '../../api/project-client.ts';
+import { useProjectInfo } from '../../core/project-store.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { DirInputWithPicker } from '../files/dir-input-with-picker.tsx';
 import { useDirSuggestions } from '../files/use-dir-suggestions.ts';
@@ -257,6 +258,8 @@ export function PageDirAndFileFields({
 
 export function AddPageForm({ convention, defaultDir = 'src/pages', onAdded }: AddPageFormProps) {
   const { t } = useTranslation();
+  const project = useProjectInfo();
+  const isExpressPug = project?.support.framework === 'express-pug';
   const dirs = useDirSuggestions();
   const state = useAddPageState(defaultDir, onAdded);
 
@@ -276,17 +279,19 @@ export function AddPageForm({ convention, defaultDir = 'src/pages', onAdded }: A
           onNameChange={state.handleNameChange}
           onPathChange={state.setPath}
         />
-        <PageDirAndFileFields
-          dir={state.dir}
-          fileName={state.fileName}
-          filePlaceholder={
-            state.autoFileName ? t('pages.fileAuto', { name: state.autoFileName }) : undefined
-          }
-          dirs={dirs}
-          disabled={!convention || state.busy}
-          onDirChange={state.setDir}
-          onFileChange={state.setFileName}
-        />
+        {!isExpressPug ? (
+          <PageDirAndFileFields
+            dir={state.dir}
+            fileName={state.fileName}
+            filePlaceholder={
+              state.autoFileName ? t('pages.fileAuto', { name: state.autoFileName }) : undefined
+            }
+            dirs={dirs}
+            disabled={!convention || state.busy}
+            onDirChange={state.setDir}
+            onFileChange={state.setFileName}
+          />
+        ) : undefined}
       </div>
       {state.errorMsg !== undefined && (
         <div role="alert" className="text-xs text-danger">

@@ -7,12 +7,14 @@ import { Dialog } from '../../components/ui/dialog.tsx';
 import { studioBridgeChannel } from '../../core/bridge-channel.ts';
 import { useCanvasViewStore } from '../../core/canvas-view-store.ts';
 import { useProjectInfo } from '../../core/project-store.ts';
+import { useSelectionStore } from '../../core/selection-store.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import {
   PageDirAndFileFields,
   PageNameAndPathFields,
   useDirSuggestions,
 } from '../pages/add-page-form.tsx';
+import { useDraftsRevision } from './drafts-revision.ts';
 
 export type PromoteDraftDialogProps = {
   readonly open: boolean;
@@ -126,8 +128,12 @@ async function executePromote({
     });
     if (target === 'page') {
       closeDraft(projectId);
-      if (res.pagePath !== undefined) studioBridgeChannel.navigate(res.pagePath);
+      if (res.pagePath !== undefined) {
+        useSelectionStore.getState().setRoute(res.pagePath);
+        studioBridgeChannel.navigate(res.pagePath);
+      }
     }
+    useDraftsRevision.getState().bump();
     onPromoted?.(res);
     return undefined;
   } catch (err) {
@@ -206,6 +212,16 @@ function usePromoteSubmit(
   return { busy, errorMsg, runSubmit };
 }
 
+function toPugComponentFileName(name: string): string {
+  const kebab = name
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase();
+  return kebab === '' ? '' : `${kebab}.pug`;
+}
+
 function usePromoteDraftState(
   draft: DraftInfo | undefined,
   projectId: string | undefined,
@@ -213,8 +229,11 @@ function usePromoteDraftState(
   onPromoted?: (res: StructureResult) => void,
 ) {
   const project = useProjectInfo();
+  const isExpressPug = project?.support.framework === 'express-pug';
   const defaultPageDir = project?.designDirs.pages[0] ?? 'src/pages';
-  const defaultComponentDir = project?.designDirs.components[0] ?? 'src/components';
+  const defaultComponentDir = isExpressPug
+    ? `${project.support.viewsDir ?? 'views'}/components`
+    : (project?.designDirs.components[0] ?? 'src/components');
 
   const [target, setTarget] = useState<'page' | 'component'>('page');
   const fields = usePromoteFormFields(draft?.name ?? '', defaultPageDir);
@@ -232,10 +251,15 @@ function usePromoteDraftState(
     fields.setName(val);
     const names = pageNames(val, 'ts');
     if (target === 'page' && !fields.isPathManual) fields.setPath(names.path);
-    if (!fields.isFileManual) fields.setFileName(names.fileName);
+    if (!fields.isFileManual) {
+      fields.setFileName(
+        isExpressPug && target === 'component' ? toPugComponentFileName(val) : names.fileName,
+      );
+    }
   };
 
   return {
+    isExpressPug,
     target,
     ...fields,
     keepDraft,
@@ -244,6 +268,9 @@ function usePromoteDraftState(
     handleTargetChange: (newTarget: 'page' | 'component') => {
       setTarget(newTarget);
       fields.setDir(newTarget === 'page' ? defaultPageDir : defaultComponentDir);
+      if (isExpressPug && !fields.isFileManual && newTarget === 'component') {
+        fields.setFileName(toPugComponentFileName(fields.name));
+      }
     },
     handleNameChange,
     setKeepDraft,
@@ -285,14 +312,16 @@ function PromoteFormFields({
           onNameChange={state.handleNameChange}
         />
       )}
-      <PageDirAndFileFields
-        dir={state.dir}
-        fileName={state.fileName}
-        dirs={dirs}
-        disabled={state.busy}
-        onDirChange={state.setDir}
-        onFileChange={state.setFileName}
-      />
+      {!(state.isExpressPug && state.target === 'page') ? (
+        <PageDirAndFileFields
+          dir={state.dir}
+          fileName={state.fileName}
+          dirs={dirs}
+          disabled={state.busy}
+          onDirChange={state.setDir}
+          onFileChange={state.setFileName}
+        />
+      ) : undefined}
     </div>
   );
 }

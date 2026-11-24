@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as eventsClient from '../../api/events-client.ts';
 import { ApiError } from '../../api/http.ts';
 import * as sourceClient from '../../api/source-client.ts';
+import { useProjectStore } from '../../core/project-store.ts';
 import { useSelectionStore } from '../../core/selection-store.ts';
 import {
   computeWritePrefix,
@@ -40,6 +41,7 @@ const mockElementSource: ElementSource = {
 
 describe('useInspectorTarget and helpers [SPEC-04 section 9 M-IN]', () => {
   beforeEach(() => {
+    useProjectStore.setState({ project: undefined });
     vi.spyOn(eventsClient, 'createEventsClient').mockReturnValue({
       close: vi.fn(),
       isConnected: () => true,
@@ -258,6 +260,95 @@ describe('useInspectorTarget and helpers [SPEC-04 section 9 M-IN]', () => {
       });
       const target = result.current;
       expect(target.kind === 'element' ? target.error : '').not.toContain('API request failed');
+    });
+
+    it('defers history.changed refresh on express-pug until iframe reload settles', async () => {
+      let onEvent: ((event: eventsClient.StudioServerEvent) => void) | undefined;
+      vi.spyOn(eventsClient, 'createEventsClient').mockImplementation((opts) => {
+        onEvent = opts?.onEvent;
+        return { close: vi.fn(), isConnected: () => true };
+      });
+      const fetchSpy = vi
+        .spyOn(sourceClient, 'fetchElementSource')
+        .mockResolvedValue(mockElementSource);
+      useProjectStore.setState({
+        project: {
+          id: 'express001',
+          name: 'ExpressPug',
+          root: '/projects/express-pug',
+          sourceDir: 'src',
+          support: {
+            supported: true,
+            reasons: [],
+            framework: 'express-pug',
+            versions: {},
+            language: 'js',
+          },
+          needsInstall: false,
+          responsiveMode: 'desktop-first',
+          frames: [{ id: 'desktop', label: 'Desktop', width: 1440, height: 900 }],
+          primaryFrameId: 'desktop',
+          backends: [],
+          trusted: true,
+          designDirs: {
+            pages: ['src/pages'],
+            layouts: ['src/layouts'],
+            components: ['src/components'],
+            drafts: 'src/drafts',
+          },
+        },
+      });
+      act(() => {
+        useSelectionStore.getState().setSelectedRefs([{ loc: 'views/index.pug:5:3', index: 0 }]);
+      });
+      const { result } = renderHook(() => useInspectorTarget());
+      await waitFor(() => {
+        expect(result.current.kind === 'element' && result.current.source).toEqual(
+          mockElementSource,
+        );
+      });
+      fetchSpy.mockClear();
+
+      // 1. history.changed does NOT query immediately; it waits for setTree from iframe reload.
+      act(() => {
+        onEvent?.({
+          v: 1,
+          type: 'history.changed',
+          at: new Date().toISOString(),
+          payload: undefined,
+        });
+      });
+      expect(fetchSpy).not.toHaveBeenCalled();
+
+      // 2. When setTree keeps the element, Inspector refreshes once.
+      act(() => {
+        useSelectionStore.getState().setTree([
+          {
+            ref: { loc: 'views/index.pug:5:3', index: 0 },
+            tag: 'h1',
+            instances: 1,
+          },
+        ]);
+      });
+      await waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledTimes(1);
+      });
+      fetchSpy.mockClear();
+
+      // 3. When Undo removes the element and setTree prunes selectedRefs, Inspector does NOT query (no 409).
+      act(() => {
+        onEvent?.({
+          v: 1,
+          type: 'history.changed',
+          at: new Date().toISOString(),
+          payload: undefined,
+        });
+      });
+      act(() => {
+        useSelectionStore.getState().setTree([]);
+      });
+      expect(useSelectionStore.getState().selectedRefs).toEqual([]);
+      expect(fetchSpy).not.toHaveBeenCalled();
     });
   });
 });

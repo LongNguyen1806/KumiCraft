@@ -1,10 +1,11 @@
-import type { DraftInfo, DraftsInfo } from '@kumicraft/shared';
+import type { DraftInfo, DraftsInfo, ProjectInfo } from '@kumicraft/shared';
 import { useEffect, useState } from 'react';
 
 import { createEventsClient, type StudioServerEvent } from '../../api/events-client.ts';
 import { isRecord } from '../../api/http.ts';
 import { fetchDrafts, fetchProject } from '../../api/project-client.ts';
 import { getStoredDraftFile, useCanvasViewStore } from '../../core/canvas-view-store.ts';
+import { useProjectInfo } from '../../core/project-store.ts';
 import { useDraftsRevision } from './drafts-revision.ts';
 
 export type DraftsData = {
@@ -16,8 +17,16 @@ export type DraftsData = {
   readonly loaded: boolean;
   /** The read failed and there is no list to show (spec-log #122). */
   readonly failed: boolean;
+  readonly supported: boolean;
   readonly reload: () => void;
 };
+
+function isDraftsSupported(project: ProjectInfo | undefined): boolean {
+  if (project === undefined) return true;
+  if (project.capabilities !== undefined) return project.capabilities.drafts;
+  const fw = project.support.framework;
+  return fw !== 'next-react' && fw !== 'aspnet-razor-pages' && fw !== 'aspnet-mvc';
+}
 
 function hasDraftFileChange(payload: unknown, draftsDir: string): boolean {
   if (!isRecord(payload)) return false;
@@ -26,7 +35,11 @@ function hasDraftFileChange(payload: unknown, draftsDir: string): boolean {
   return files.some(
     (f) =>
       typeof f === 'string' &&
-      (f.startsWith(draftsDir) || f.includes('/drafts/') || f.endsWith('.tsx')),
+      (f.startsWith(draftsDir) ||
+        f.includes('/drafts/') ||
+        f.includes('/_drafts/') ||
+        f.endsWith('.tsx') ||
+        f.endsWith('.pug')),
   );
 }
 
@@ -54,7 +67,7 @@ function restoreStoredDraft(
 }
 
 function handleDraftsEvent(event: StudioServerEvent, dir: string, onReload: () => void): void {
-  if (event.type === 'project.changed') {
+  if (event.type === 'project.changed' || event.type === 'history.changed') {
     onReload();
     return;
   }
@@ -98,19 +111,21 @@ function followDraftEvents(dir: string, isActive: () => boolean, load: () => Pro
 }
 
 export function useDrafts(): DraftsData {
-  const [data, setData] = useState<DraftsInfo>({
-    drafts: [],
-    dir: 'src/drafts',
-    ignored: false,
-  });
+  const project = useProjectInfo();
+  const supported = isDraftsSupported(project);
+  const [data, setData] = useState<DraftsInfo>({ drafts: [], dir: 'src/drafts', ignored: false });
   const [projectId, setProjectId] = useState<string | undefined>();
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [refreshCount, setRefreshCount] = useState(0);
   const openDraft = useCanvasViewStore((s) => s.openDraft);
   const revision = useDraftsRevision((s) => s.revision);
+  const reload = () => {
+    setRefreshCount((c) => c + 1);
+  };
 
   useEffect(() => {
+    if (!supported) return undefined;
     let active = true;
     const load = async () => {
       const ok = await readDrafts(
@@ -131,8 +146,20 @@ export function useDrafts(): DraftsData {
       active = false;
       client.close();
     };
-  }, [data.dir, openDraft, refreshCount, revision]);
+  }, [supported, data.dir, openDraft, refreshCount, revision]);
 
+  if (!supported) {
+    return {
+      drafts: [],
+      draftsDir: '',
+      ignored: false,
+      projectId: project?.id,
+      loaded: true,
+      failed: false,
+      supported: false,
+      reload,
+    };
+  }
   return {
     drafts: data.drafts,
     draftsDir: data.dir,
@@ -140,8 +167,7 @@ export function useDrafts(): DraftsData {
     projectId,
     loaded,
     failed,
-    reload: () => {
-      setRefreshCount((c) => c + 1);
-    },
+    supported: true,
+    reload,
   };
 }

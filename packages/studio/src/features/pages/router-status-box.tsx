@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { installProjectRouter, patchProject } from '../../api/project-client.ts';
-import { useProjectStore } from '../../core/project-store.ts';
+import { useProjectInfo, useProjectStore } from '../../core/project-store.ts';
 import { errorText, toErrorInfo } from '../../routes/error-text.ts';
 import { FolderPicker } from '../files/folder-picker.tsx';
 import { useInstallJob } from '../project/use-install-job.ts';
@@ -21,6 +21,9 @@ type RouterFoundBarProps = {
 
 function RouterFoundBar({ file, chosen, busy, onOpenPicker, onAutoDetect }: RouterFoundBarProps) {
   const { t } = useTranslation();
+  const project = useProjectInfo();
+  const canManageRouter =
+    project?.capabilities?.routerInstall !== false && project?.support.framework !== 'express-pug';
   return (
     <div
       data-testid="router-status-found"
@@ -29,28 +32,30 @@ function RouterFoundBar({ file, chosen, busy, onOpenPicker, onAutoDetect }: Rout
       <span className="truncate font-mono text-[11px] text-ink-soft">
         {t('pages.routerFile', { file })}
       </span>
-      <div className="flex items-center gap-1.5 shrink-0">
-        <button
-          type="button"
-          data-testid="router-change-file"
-          disabled={busy}
-          onClick={onOpenPicker}
-          className="h-6 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-ink-soft hover:text-ink disabled:opacity-40"
-        >
-          {t('pages.changeRouterFile')}
-        </button>
-        {chosen ? (
+      {canManageRouter ? (
+        <div className="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
-            data-testid="router-auto-file"
+            data-testid="router-change-file"
             disabled={busy}
-            onClick={onAutoDetect}
+            onClick={onOpenPicker}
             className="h-6 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-ink-soft hover:text-ink disabled:opacity-40"
           >
-            {t('pages.autoRouterFile')}
+            {t('pages.changeRouterFile')}
           </button>
-        ) : undefined}
-      </div>
+          {chosen ? (
+            <button
+              type="button"
+              data-testid="router-auto-file"
+              disabled={busy}
+              onClick={onAutoDetect}
+              className="h-6 rounded-md border border-line bg-card-solid px-2 hover:bg-field text-ink-soft hover:text-ink disabled:opacity-40"
+            >
+              {t('pages.autoRouterFile')}
+            </button>
+          ) : undefined}
+        </div>
+      ) : undefined}
     </div>
   );
 }
