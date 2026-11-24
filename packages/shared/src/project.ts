@@ -165,6 +165,17 @@ export const BackendInfoSchema = BackendLinkSchema.extend({
 });
 export type BackendInfo = z.infer<typeof BackendInfoSchema>;
 
+export const ProjectCapabilitiesSchema = z.strictObject({
+  drafts: z.boolean(),
+  components: z.boolean(),
+  extractComponent: z.boolean(),
+  componentProps: z.boolean(),
+  interactions: z.boolean(),
+  reveal: z.boolean(),
+  routerInstall: z.boolean(),
+});
+export type ProjectCapabilities = z.infer<typeof ProjectCapabilitiesSchema>;
+
 export const ProjectInfoSchema = z.strictObject({
   id: z.string().regex(/^[A-Za-z0-9_-]{10}$/),
   name: z.string().min(1).max(64),
@@ -186,6 +197,7 @@ export const ProjectInfoSchema = z.strictObject({
   styleFiles: StyleFilesSchema.optional(),
   sessions: LoginSessionsSchema.readonly().default(DEFAULT_LOGIN_SESSIONS),
   ai: WorkspaceAiSchema.default(DEFAULT_WORKSPACE_AI),
+  capabilities: ProjectCapabilitiesSchema.optional(),
 });
 export type ProjectInfo = z.input<typeof ProjectInfoSchema>;
 
